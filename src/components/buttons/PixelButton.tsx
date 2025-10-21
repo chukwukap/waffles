@@ -1,38 +1,68 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils"; // Assuming a utility like tailwind-merge
 
 interface PixelButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
-  icon?: React.ReactNode;
-  backgroundColor?: string; // e.g., '#00CFF2'
-  borderColor?: string; // e.g., '#000000'
-  textColor?: string; // e.g., '#FFFFFF'
+  asChild?: boolean;
+  backgroundColor?: string;
+  borderColor?: string;
+  textColor?: string;
+  borderWidth?: number; // Border width in pixels
 }
 
-export function PixelButton({
-  children,
-  icon,
-  className,
-  ...props
-}: PixelButtonProps) {
-  return (
-    <button
-      className={cn(
-        "relative inline-flex w-full max-w-sm items-center justify-center gap-2 px-6 py-3 text-sm font-[var(--font-pixel)] uppercase tracking-wider transition-all duration-200 select-none active:translate-y-[2px] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed",
-        pixelClipPath,
-        "transition-all active:translate-y-[1px]",
-        className
-      )}
-      {...props}
-    >
-      {icon && <span className="inline-block">{icon}</span>}
-      {children}
-    </button>
-  );
-}
+const PixelButton = React.forwardRef<HTMLButtonElement, PixelButtonProps>(
+  (
+    {
+      className,
+      children,
+      backgroundColor = "#000000",
+      borderColor = "#FFC931",
+      textColor = "#FFD972",
+      borderWidth = 4, // Default to a 4px border
+      ...props
+    },
+    ref
+  ) => {
+    const containerStyle = {
+      backgroundColor: borderColor,
+      padding: `${borderWidth}px`,
+    };
 
-const pixelClipPath =
-  "[clip-path:polygon(0_12px,6px_12px,6px_6px,12px_6px,12px_0,calc(100%-12px)_0,calc(100%-12px)_6px,calc(100%-6px)_6px,calc(100%-6px)_12px,100%_12px,100%_calc(100%-12px),calc(100%-6px)_calc(100%-12px),calc(100%-6px)_calc(100%-6px),calc(100%-12px)_calc(100%-6px),calc(100%-12px)_100%,12px_100%,12px_calc(100%-6px),6px_calc(100%-6px),6px_calc(100%-12px),0_calc(100%-12px))]";
+    const buttonStyle = {
+      backgroundColor: backgroundColor,
+      color: textColor,
+    };
+
+    return (
+      <div
+        style={containerStyle}
+        className={cn(
+          // This is now a full-width block by default to fill its container
+          "pixel-corners w-full transition-transform duration-100 ease-in-out",
+          // Apply hover/active states to the container to move the whole unit
+          "hover:-translate-y-0.5 active:translate-y-0"
+        )}
+      >
+        <button
+          style={buttonStyle}
+          className={cn(
+            "pixel-corners flex h-full w-full items-center justify-center px-6 py-3 font-mono text-sm uppercase tracking-wider",
+            "disabled:cursor-not-allowed disabled:opacity-60",
+            className
+          )}
+          ref={ref}
+          {...props}
+        >
+          {children}
+        </button>
+      </div>
+    );
+  }
+);
+
+PixelButton.displayName = "PixelButton";
+
+export { PixelButton };

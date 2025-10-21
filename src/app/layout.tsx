@@ -1,3 +1,4 @@
+import DeviceGate from "@/components/DeviceGate";
 import "./globals.css";
 import { fontBody, fontDisplay, fontInput } from "@/lib/fonts";
 
@@ -16,7 +17,11 @@ export default function RootLayout({
       lang="en"
       className={`${fontBody.variable} ${fontDisplay.variable} ${fontInput.variable}`}
     >
-      <body className="text-foreground bg-figma noise">{children}</body>
+      <body className="text-foreground bg-figma noise">
+        <DeviceGate continueAnyway={process.env.NODE_ENV == "production"}>
+          {children}
+        </DeviceGate>
+      </body>
     </html>
   );
 }

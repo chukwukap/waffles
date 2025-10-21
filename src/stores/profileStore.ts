@@ -1,4 +1,3 @@
-// Install Zustand: `npm install zustand`
 import { create } from "zustand";
 
 export interface Game {

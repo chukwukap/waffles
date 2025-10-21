@@ -1,51 +1,149 @@
 "use client";
 
+import { useEffect, useMemo } from "react";
 import { useGameStore } from "@/stores/gameStore";
+import ChatTickerOverlay from "./ChatTickerOverlay";
+import ChatDrawer from "./ChatDrawer";
 
-const CountdownView = () => {
-  const roundTimer = useGameStore((state) => state.roundTimer);
-  const initialTime = 15; // Or get from store if dynamic
-  const circumference = 2 * Math.PI * 56; // 2 * pi * radius
-  const strokeDashoffset =
-    circumference - (roundTimer / initialTime) * circumference;
+/** blue used in mocks */
+const BLUE = "#1E8BFF";
+
+export default function RoundCountdownStage() {
+  const { gameState, roundTimer, tickRoundTimer } = useGameStore();
+
+  // tick every 1s while in ROUND_COUNTDOWN
+  useEffect(() => {
+    if (gameState !== "ROUND_COUNTDOWN") return;
+    // const id = setInterval(() => tickRoundTimer(), 1000);
+    // return () => clearInterval(id);
+  }, [gameState, tickRoundTimer]);
+
+  const TOTAL = 15;
+  const ratio = useMemo(
+    () => Math.max(0, Math.min(1, roundTimer / TOTAL)),
+    [roundTimer]
+  );
 
   return (
-    <div className="flex flex-col items-center justify-center text-center w-full">
-      <p className="font-edit-undo text-sm text-gray-400 mb-4">PLEASE WAIT</p>
-      <h2 className="font-edit-undo text-3xl mb-4">NEXT ROUND IN</h2>
-      <div className="relative w-40 h-40 flex items-center justify-center">
-        <svg className="absolute w-full h-full" viewBox="0 0 120 120">
-          <circle
-            cx="60"
-            cy="60"
-            r="56"
-            stroke="#1E1E1E"
-            strokeWidth="8"
-            fill="none"
-          />
-          <circle
-            cx="60"
-            cy="60"
-            r="56"
-            stroke="#00CFF2"
-            strokeWidth="8"
-            fill="none"
-            strokeLinecap="round"
-            transform="rotate(-90 60 60)"
-            style={{
-              strokeDasharray: circumference,
-              strokeDashoffset: strokeDashoffset,
-              transition: "stroke-dashoffset 1s linear",
-            }}
-          />
-        </svg>
-        <span className="font-edit-undo text-6xl text-white z-10">
-          {roundTimer}
-        </span>
-      </div>
-      <p className="mt-6 text-lg">Get ready for the next round!</p>
+    <div>
+      <section className="mx-auto w-full max-w-screen-sm px-4 pt-10 pb-8">
+        <p className="mb-6 text-center text-white/85">PLEASE WAIT</p>
+
+        <h1
+          className="mb-8 text-center font-bold leading-tight whitespace-nowrap overflow-hidden text-ellipsis"
+          style={{
+            fontSize: "clamp(1.15rem, 7vw, 2.5rem)",
+            letterSpacing: "-0.03em",
+          }}
+        >
+          NEXT&nbsp;ROUND&nbsp;IN
+        </h1>
+
+        <div className="grid place-items-center">
+          <CountdownCircle total={TOTAL} ratio={ratio} />
+        </div>
+
+        <p className="mt-10 text-center text-muted text-lg font-display">
+          Get ready for the next round!
+        </p>
+      </section>
+      <section>
+        <ChatTickerOverlay />
+        <ChatDrawer />
+      </section>
     </div>
   );
-};
+}
 
-export default CountdownView;
+/* ——————————— visual countdown ring ——————————— */
+function CountdownCircle({ total, ratio }: { total: number; ratio: number }) {
+  // SVG geometry
+  const size = 240; // px
+  const stroke = 14;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+
+  // stroke animation (start at top)
+  const dashOffset = c * (1 - ratio);
+  const angle = 360 * ratio - 90; // -90 to start from top
+
+  return (
+    <div
+      className="relative"
+      style={{ width: size, height: size }}
+      aria-label="Next round countdown"
+      role="timer"
+      aria-live="polite"
+    >
+      <svg
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        className="block"
+      >
+        {/* track */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke="rgba(255,255,255,0.15)"
+          strokeWidth={stroke}
+        />
+        {/* progress */}
+        <g transform={`rotate(-90 ${size / 2} ${size / 2})`}>
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            fill="none"
+            stroke={BLUE}
+            strokeWidth={stroke}
+            strokeLinecap="round"
+            strokeDasharray={c}
+            strokeDashoffset={dashOffset}
+            style={{ transition: "stroke-dashoffset 1s linear" }}
+          />
+        </g>
+      </svg>
+
+      {/* orbiting dot */}
+      <div
+        className="absolute left-1/2 top-1/2"
+        style={{
+          transform: `translate(-50%, -50%) rotate(${angle}deg)`,
+          transition: "transform 1s linear",
+          width: size,
+          height: size,
+          pointerEvents: "none",
+        }}
+      >
+        <span
+          className="absolute block rounded-full"
+          style={{
+            width: stroke + 6,
+            height: stroke + 6,
+            background: BLUE,
+            left: "50%",
+            top: stroke / 2,
+            transform: "translate(-50%, -50%)",
+            boxShadow: "0 0 0 2px rgba(30,139,255,0.35)",
+          }}
+        />
+      </div>
+
+      {/* numeric value */}
+      <div className="pointer-events-none absolute inset-0 grid place-items-center">
+        <span
+          className="text-[12vw] sm:text-7xl md:text-8xl lg:text-9xl font-bold leading-none text-white"
+          style={{
+            // This clamp makes font-size responsive in both directions
+            fontSize: "clamp(2.5rem, 10vw, 7rem)",
+          }}
+        >
+          {String(Math.ceil(total * ratio)).padStart(2, "0")}
+        </span>
+      </div>
+    </div>
+  );
+}

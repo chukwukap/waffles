@@ -3,56 +3,45 @@
 import { Clock } from "@/components/icons";
 import { AvatarDiamond } from "./AvatarDiamond";
 import ChatDrawer from "./ChatDrawer";
-
 import ChatTickerOverlay from "./ChatTickerOverlay";
-import GradientMask from "./GradientMask";
 
-export default function GameLobby() {
+export default function LobbyView() {
   const players = 125;
-  return (
-    <div className="relative mx-auto min-h-screen w-full text-foreground flex flex-col ">
-      {/* Main scrollable section */}
-      <section
-        className="
-          flex-1 flex flex-col items-center gap-3 p-0
-          overflow-y-auto
-          w-full
-          pt-20 pb-4
 
-        "
-      >
-        {/* Content (top bar) */}
-        <div className="flex w-full  h-10 items-center justify-center gap-1.5 px-2">
-          {/* Title */}
-          <div className="flex h-7 w-full flex-col justify-center">
-            <div className="flex h-7 w-full items-center gap-2">
-              <Clock />
-              <div className="truncate">GAME STARTS IN</div>
+  return (
+    /**
+     * Root takes full height and acts as the positioning context for overlays.
+     * Max width lives here, so the whole lobby sits within the game screen nicely.
+     */
+    <div className="relative mx-auto w-full max-w-screen-sm px-4 pt-6 pb-24 min-h-[100dvh] text-foreground flex flex-col">
+      {/* Main scrollable column */}
+      <section className="flex-1 flex flex-col items-center gap-3 overflow-y-auto w-full pt-16 pb-4">
+        {/* Top bar */}
+        <div className="flex w-full h-10 min-h-[38px] items-center justify-center gap-0.5 p-2 sm:p-3">
+          {/* Title + clock */}
+          <div className="order-0 flex h-7 sm:h-[28px] min-w-0 flex-1 flex-col justify-center gap-3.5 font-body">
+            <div className="order-0 flex h-7 sm:h-[28px] min-w-0 w-full flex-row items-center gap-2">
+              <span
+                className="h-7 w-7 flex-none sm:h-[28px] sm:w-[28px]"
+                aria-label="Countdown"
+              >
+                <Clock />
+              </span>
+              <span
+                className="truncate pl-1 select-none text-white font-normal leading-[0.92] tracking-tight"
+                style={{
+                  fontSize: "clamp(1rem,4vw,1.6rem)",
+                  letterSpacing: "-0.03em",
+                }}
+              >
+                GAME STARTS IN
+              </span>
             </div>
           </div>
 
           {/* Timer pill */}
-          <div
-            className="
-              flex flex-row items-center justify-center
-              px-5 py-2 gap-1
-              min-w-[72px] max-w-[120px] w-fit
-              h-10 sm:h-9
-              border-2 border-[#FB72FF] rounded-full
-              flex-none order-1
-              box-border
-            "
-          >
-            <span
-              className="
-                flex items-end justify-center text-center
-                min-w-[48px] w-auto
-                h-[1.1em] not-italic font-normal
-                text-[clamp(5px,2vw,16px)] leading-[115%]
-                text-[#FB72FF]
-                flex-none order-0 select-none
-              "
-            >
+          <div className="order-1 box-border z-0 flex h-10 min-w-[64px] w-[clamp(72px,20vw,110px)] max-w-[140px] flex-none flex-row items-center justify-center rounded-full border-2 border-[var(--color-neon-pink)] bg-transparent px-4 py-1 sm:px-5 sm:py-2">
+            <span className="px-0 flex items-end justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%] text-[var(--color-neon-pink)]">
               24M 03s
             </span>
           </div>
@@ -60,34 +49,11 @@ export default function GameLobby() {
 
         {/* Prize copy */}
         <div className="flex w-full min-h-[6rem] flex-col items-center justify-end gap-1 pb-2.5">
-          <p
-            className="
-              text-center
-              font-medium font-display
-              text-[0.95rem] sm:text-base md:text-lg
-              leading-[1.3] tracking-tight
-              text-muted
-              w-auto
-              min-w-[60px] sm:min-w-[80px]
-              select-none
-            "
-          >
+          <p className="w-auto min-w-[60px] sm:min-w-[80px] select-none text-center font-display font-medium leading-[1.3] tracking-tight text-muted text-[0.95rem] sm:text-base md:text-lg">
             Current prize pool
           </p>
           <div className="flex min-h-[2.5rem] sm:min-h-[2.7rem] w-full items-center justify-center px-2 sm:px-4">
-            <span
-              className="
-                block text-center
-                font-body
-                font-normal
-                text-[clamp(2rem,6vw,3rem)]
-                leading-[0.92]
-                tracking-tight
-                text-success
-                min-w-[70px] sm:min-w-[90px]
-                select-none
-              "
-            >
+            <span className="block min-w-[70px] sm:min-w-[90px] select-none text-center font-body font-normal leading-[0.92] tracking-tight text-success text-[clamp(2rem,6vw,3rem)]">
               $2,500
             </span>
           </div>
@@ -133,32 +99,29 @@ export default function GameLobby() {
             cellMin={32}
             cellMax={54}
             gap={2}
-            className="sm:scale-100 scale-95"
+            className="scale-95 sm:scale-100"
           />
         </div>
 
         {/* joined count */}
-        <p className="text-center mt-1 min-w-[120px] font-display font-medium text-[clamp(13px,4vw,16px)] leading-[130%] tracking-[-0.03em] text-muted">
+        <p className="mt-1 min-w-[120px] text-center font-display font-medium tracking-[-0.03em] text-muted text-[clamp(13px,4vw,16px)] leading-[130%]">
           {players} players have joined
         </p>
       </section>
 
-      {/* bottom shadow mask (the gradient group) */}
-      <div className="pointer-events-none absolute left-0 right-0 bottom-[78px] h-28 w-full mx-auto">
+      {/* bottom shadow mask (kept, anchored to root) */}
+      <div className="pointer-events-none absolute left-0 right-0 bottom-[78px] h-28 w-full">
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 opacity-0"
           style={{
             background:
               "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0) 6%, #FFFFFF 100%)",
-            opacity: 0,
           }}
         />
-        {/* If you want to place an image under the gradient, keep this DIV and set a bg image */}
         <div className="absolute inset-0 opacity-0" />
       </div>
 
-      {/* Cards row at the very bottom */}
-      <GradientMask className="bottom-28 sm:bottom-32" height={136} />
+      {/* overlays anchored to this view */}
       <ChatTickerOverlay
         className="bottom-[7.5rem] sm:bottom-36"
         maxItems={4}

@@ -75,8 +75,58 @@ const MOCK_QUESTIONS: Question[] = [
   {
     id: "q1",
     questionText: "WHAT LOGO IS THIS?",
-    imageUrl: "/images/logo.png", // Placeholder for a first question
-    options: [{ id: "a1", text: "WAFFLE" }],
+    imageUrl: "/images/same-question-img.png", // Placeholder for a first question
+    options: [
+      { id: "a1", text: "James Scolt" },
+      {
+        id: "a2",
+        text: "Scoolt Mehem",
+      },
+      {
+        id: "a3",
+        text: "Peter Alan",
+      },
+      {
+        id: "a4",
+        text: "Jennifer breski",
+      },
+    ],
+    correctAnswerId: "a1",
+  },
+  {
+    id: "q2",
+    questionText: "WHAT LOGO IS THIS?",
+    imageUrl: "/images/same-question-img.png", // Placeholder for a first question
+    options: [
+      { id: "a1", text: "James Scolt" },
+      { id: "a2", text: "Scoolt Mehem" },
+      { id: "a3", text: "Peter Alan" },
+      { id: "a4", text: "Jennifer breski" },
+    ],
+    correctAnswerId: "a1",
+  },
+  {
+    id: "q3",
+    questionText: "WHAT LOGO IS THIS?",
+    imageUrl: "/images/same-question-img.png", // Placeholder for a first question
+    options: [
+      { id: "a1", text: "James Scolt" },
+      { id: "a2", text: "Scoolt Mehem" },
+      { id: "a3", text: "Peter Alan" },
+      { id: "a4", text: "Jennifer breski" },
+    ],
+    correctAnswerId: "a1",
+  },
+  {
+    id: "q4",
+    questionText: "WHAT LOGO IS THIS?",
+    imageUrl: "/images/same-question-img.png", // Placeholder for a first question
+    options: [
+      { id: "a1", text: "James Scolt" },
+      { id: "a2", text: "Scoolt Mehem" },
+      { id: "a3", text: "Peter Alan" },
+      { id: "a4", text: "Jennifer breski" },
+    ],
     correctAnswerId: "a1",
   },
 ];
@@ -132,10 +182,10 @@ export const defaultInitialState: GameStoreState = {
   gameState: "LOBBY",
   roundTimer: 15,
   questionTimer: 10,
-  currentQuestion: null,
+  currentQuestion: MOCK_QUESTIONS[0],
   selectedAnswer: null,
   messages: MOCK_MESSAGES,
-  currentQuestionIndex: -1,
+  currentQuestionIndex: 0,
   totalQuestions: MOCK_QUESTIONS.length,
 };
 
@@ -149,7 +199,7 @@ export const useGameStore = create<GameStore>()((set, get) => ({
 
   startGame: () => {
     set({
-      gameState: "ROUND_COUNTDOWN",
+      gameState: "QUESTION_ACTIVE",
       roundTimer: 15,
       currentQuestionIndex: -1, // Reset index before starting
       selectedAnswer: null,

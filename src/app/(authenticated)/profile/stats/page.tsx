@@ -1,4 +1,5 @@
 "use client";
+
 import { useProfileStore } from "@/stores/profileStore";
 import Link from "next/link";
 import Image from "next/image";
@@ -6,22 +7,63 @@ import { ArrowLeftIcon, WalletIcon } from "@/components/icons";
 import LogoIcon from "@/components/logo/LogoIcon";
 import { BottomNav } from "@/components/BottomNav";
 
-// Re-using the SubPageHeader from the history page
+/* ---------- Header (same style as other profile screens) ---------- */
+const TopBar = () => (
+  <header
+    className={`
+      sticky top-0 z-10 w-full
+      border-b border-[color:var(--surface-stroke)]
+      bg-[color:var(--brand-ink-900)]
+    `}
+  >
+    <div className="mx-auto flex w-full max-w-lg items-center justify-between px-4 py-3">
+      <LogoIcon />
+      <div className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5">
+        <WalletIcon className="h-4 w-4 text-[color:var(--text-primary)]" />
+        <span
+          className="text-center text-[color:var(--text-primary)]"
+          style={{
+            fontFamily: "Edit Undo BRK",
+            fontSize: "clamp(.95rem,1.9vw,1rem)",
+            lineHeight: "1.1",
+          }}
+        >
+          $983.23
+        </span>
+      </div>
+    </div>
+  </header>
+);
+
+/* ---------- Sub page header ---------- */
 const SubPageHeader = ({ title }: { title: string }) => (
-  <div className="flex items-center justify-between px-4 pt-4">
+  <div className="mx-auto flex w-full max-w-lg items-center justify-between px-4 pt-4">
     <Link
       href="/profile"
-      className="w-[34px] h-[34px] rounded-full bg-button-bg flex items-center justify-center transition-opacity hover:opacity-80"
+      className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-white/15 transition-opacity hover:opacity-80"
+      aria-label="Back"
     >
       <ArrowLeftIcon />
     </Link>
-    <h1 className="font-edit-undo text-2xl text-center flex-grow -tracking-[0.03em]">
+
+    <h1
+      className="font-body flex-grow text-center text-white"
+      style={{
+        fontWeight: 400,
+        fontSize: "clamp(0.94rem, 3vw, 0.98rem)", // ~15px target
+        lineHeight: ".92",
+        letterSpacing: "-0.03em",
+      }}
+    >
       {title}
     </h1>
-    <div className="w-[34px] h-[34px]"></div> {/* Spacer */}
+
+    {/* spacer to balance the back button */}
+    <div className="h-[34px] w-[34px]" />
   </div>
 );
 
+/* ---------- Stat atoms ---------- */
 const LargeStat = ({
   label,
   value,
@@ -29,9 +71,27 @@ const LargeStat = ({
   label: string;
   value: string | number;
 }) => (
-  <div className="flex flex-col items-center justify-center w-[162px] h-[70px]">
-    <p className="font-brockmann text-base text-waffle-gray">{label}</p>
-    <p className="font-edit-undo text-4xl">{value}</p>
+  <div className="flex flex-col items-center justify-center gap-2">
+    <p
+      className="text-muted font-display"
+      style={{
+        fontWeight: 500,
+        fontSize: "clamp(.9rem,2.8vw,1rem)",
+        lineHeight: "1.3",
+        letterSpacing: "-0.03em",
+      }}
+    >
+      {label}
+    </p>
+    <p
+      className="text-white font-body"
+      style={{
+        fontSize: "clamp(1.15rem,4vw,1.25rem)", // ~20px target
+        lineHeight: "1",
+      }}
+    >
+      {value}
+    </p>
   </div>
 );
 
@@ -44,64 +104,123 @@ const IconStat = ({
   label: string;
   value: string | number;
 }) => (
-  <div className="flex flex-col items-center justify-center w-[156px] h-[99px] gap-1">
-    <Image src={icon} alt={label} width={36} height={36} />
-    <p className="font-brockmann text-base text-waffle-gray">{label}</p>
-    <p className="font-edit-undo text-4xl leading-none">{value}</p>
+  <div className="flex flex-col items-center justify-center gap-1">
+    <Image
+      src={icon}
+      alt={label}
+      width={36}
+      height={36}
+      className="h-9 w-9"
+      sizes="(max-width: 420px) 36px, 36px"
+      priority
+    />
+    <p
+      className="text-waffle-gray text-center font-display"
+      style={{
+        fontWeight: 500,
+        fontSize: "clamp(.9rem,2.8vw,1rem)",
+        lineHeight: "1.3",
+        letterSpacing: "-0.03em",
+      }}
+    >
+      {label}
+    </p>
+    <p
+      className="text-white leading-none font-body"
+      style={{
+        fontSize: "clamp(1.15rem,4vw,1.25rem)", // ~20px target
+        lineHeight: "1",
+      }}
+    >
+      {value}
+    </p>
   </div>
 );
 
+/* ---------- Page ---------- */
 export default function AllTimeStatsPage() {
   const { allTimeStats } = useProfileStore();
 
   return (
-    <div className="min-h-screen  flex flex-col">
-      <div
-        className={
-          "p-4 flex items-center justify-between border-b border-border bg-figma"
-        }
-      >
-        <LogoIcon />
-        <div className="flex items-center gap-1.5 bg-figma rounded-full px-3 py-1.5">
-          <WalletIcon className="w-4 h-4 text-foreground" />
-          <span className="text-xs text-foreground">{`$983.23`}</span>
-        </div>
-      </div>
+    <div
+      className={`
+        min-h-screen flex flex-col
+        bg-figma
+        noise
+      `}
+    >
+      <TopBar />
       <SubPageHeader title="ALL-TIME STATS" />
-      <div className="p-4 space-y-3.5 mt-5">
-        <div className="p-3 border border-card-border rounded-2xl">
-          <div className="grid grid-cols-2 gap-y-3 justify-items-center">
+
+      <main
+        className={`
+          mx-auto w-full max-w-lg
+          px-4
+          pb-[calc(env(safe-area-inset-bottom)+84px)]
+          flex flex-col
+          gap-5 sm:gap-6
+          mt-4
+        `}
+      >
+        {/* ---- Block 1: Totals ---- */}
+        <section
+          className={`
+            rounded-2xl border border-white/20
+            p-4 sm:p-5
+          `}
+        >
+          <div
+            className={`
+              grid grid-cols-2
+              gap-x-4 gap-y-4 sm:gap-y-6
+              justify-items-center
+            `}
+          >
             <LargeStat label="Total games" value={allTimeStats.totalGames} />
             <LargeStat label="Wins" value={allTimeStats.wins} />
             <LargeStat label="Win rate" value={allTimeStats.winRate} />
             <LargeStat label="Total won" value={allTimeStats.totalWon} />
           </div>
-        </div>
-        <div className="p-3 border border-card-border rounded-2xl">
-          <div className="grid grid-cols-2 gap-y-6 justify-items-center">
+        </section>
+
+        {/* ---- Block 2: Icon stats ---- */}
+        <section
+          className={`
+            rounded-2xl border border-white/20
+            p-4 sm:p-5
+          `}
+        >
+          <div
+            className={`
+              grid grid-cols-2
+              gap-x-6 gap-y-6 sm:gap-y-8
+              justify-items-center
+            `}
+          >
             <IconStat
-              icon="/trophy.png"
+              icon="/images/icons/trophy.svg"
               label="Highest score"
               value={allTimeStats.highestScore}
             />
             <IconStat
-              icon="/average.png"
+              icon="/images/icons/average.svg"
               label="Average score"
               value={allTimeStats.averageScore}
             />
             <IconStat
-              icon="/streak-flame.png"
+              icon="/images/icons/streak-flame.svg"
               label="Current streak"
               value={allTimeStats.currentStreak}
             />
             <IconStat
-              icon="/rank.png"
+              icon="/images/icons/rank.svg"
               label="Best rank"
               value={allTimeStats.bestRank}
             />
           </div>
-        </div>
-      </div>
+        </section>
+      </main>
+
       <BottomNav />
     </div>
   );
