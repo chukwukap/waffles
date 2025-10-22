@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/server/db";
+import { prisma } from "@/lib/db";
 
 const prizePoolTypeEnum = z.enum(["FIXED", "DYNAMIC"]);
 
@@ -50,7 +50,10 @@ export async function GET() {
     return NextResponse.json(config);
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -85,8 +88,9 @@ export async function PUT(request: Request) {
     return NextResponse.json(updated);
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
-
-

@@ -1,4 +1,3 @@
-// /src/lib/streaks.ts
 export function calculateStreak(gameDates: Date[]): number {
   if (gameDates.length === 0) return 0;
 
