@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/server/db";
+import { prisma } from "@/lib/db";
 
 // GET /api/referrals
 export async function GET(request: Request) {

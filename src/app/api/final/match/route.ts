@@ -1,4 +1,4 @@
-import { prisma } from "@/server/db";
+import { prisma } from "@/lib/db";
 import { isMatch } from "@/lib/scoring";
 
 export async function POST(req: Request) {
