@@ -1,12 +1,26 @@
 import { NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
 
-export async function GET() {
-  // mock data for history; in a real app, you'd fetch from db or session
-  const history = [
-    { round: "Round 1", winnings: 50 },
-    { round: "Round 2", winnings: 100 },
-    { round: "Round 3", winnings: 0 },
-    { round: "Round 4", winnings: 200 },
-  ];
+const prisma = new PrismaClient();
+
+// GET /api/profile/history
+export async function GET(request: Request) {
+  const farcasterId = request.headers.get("x-farcaster-id");
+  if (!farcasterId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const user = await prisma.user.findUnique({ where: { farcasterId } });
+  if (!user) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+  const scores = await prisma.score.findMany({
+    where: { userId: user.id },
+    include: { game: true },
+    orderBy: { game: { endTime: "asc" } },
+  });
+  const history = scores.map((s, index) => ({
+    round: `Round ${index + 1}`,
+    winnings: s.points,
+  }));
   return NextResponse.json(history);
 }

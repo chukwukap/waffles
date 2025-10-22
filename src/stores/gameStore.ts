@@ -1,285 +1,189 @@
 import { create } from "zustand";
+import { startCountdown } from "@/lib/time";
+import SoundManager from "@/lib/SoundManager";
+import { INITIAL_ROUND_TIMER } from "@/lib/constants";
+import { INITIAL_QUESTION_TIMER } from "@/lib/constants";
 
-export type GameState =
-  | "LOBBY" // Players are waiting for the game to start.
-  | "ROUND_COUNTDOWN" // The countdown before a new question is shown.
-  | "QUESTION_ACTIVE" // The question is displayed, and players can answer.
-  | "ANSWER_SUBMITTED"; // The player has selected an answer and is waiting for the next round.
-
-/**
- * Defines the structure for a single chat message object.
- */
-export interface ChatMessage {
-  id: string; // Unique identifier for the message.
-  username: string; // The name of the user who sent the message.
-  avatarUrl?: string; // Optional URL for the user's avatar image.
-  timestamp: string; // A formatted string representing when the message was sent (e.g., "13:42").
-  message: string; // The content of the chat message.
+interface Question {
+  id: number;
+  questionText: string;
+  imageUrl: string;
+  options: string[];
+  correctAnswerId: string;
 }
 
-/**
- * Defines the structure for a single multiple-choice answer option.
- */
-export interface AnswerOption {
-  id: string; // Unique identifier for this answer (e.g., 'a1', 'a2').
-  text: string; // The text content of the answer option.
-}
+type GameStatus =
+  | "idle"
+  | "playing"
+  | "ended"
+  | "QUESTION_ACTIVE"
+  | "ANSWER_SUBMITTED"
+  | "GAME_OVER";
 
-/**
- * Defines the structure for a single trivia question.
- */
-export interface Question {
-  id: string; // Unique identifier for the question.
-  questionText: string; // The main text of the question (e.g., "WHO IS THIS?").
-  imageUrl: string; // URL for the image associated with the question.
-  options: AnswerOption[]; // An array of possible answer options.
-  correctAnswerId: string; // The ID of the correct AnswerOption.
-}
-
-/**
- * Represents the complete shape of the state managed by the Zustand store.
- */
-export interface GameStoreState {
-  gameState: GameState; // The current phase of the game.
-  roundTimer: number; // Countdown timer value between rounds.
-  questionTimer: number; // Countdown timer value for the active question.
-  currentQuestion: Question | null; // The currently active question object, or null if none.
-  selectedAnswer: string | null; // The ID of the answer selected by the user, or null.
-  messages: ChatMessage[]; // An array of all chat messages in the lobby.
-  currentQuestionIndex: number; // The index of the current question in the question array.
-  totalQuestions: number; // The total number of questions in the game.
-}
-
-/**
- * Defines all the actions (functions) that can be called to mutate the game state.
- */
-export interface GameStoreActions {
-  startGame: () => void;
-  selectAnswer: (answerId: string) => void;
-  postMessage: (message: { username: string; message: string }) => void;
-  tickRoundTimer: () => void;
-  tickQuestionTimer: () => void;
-  advanceToNextQuestion: () => void;
+interface GameState {
+  round: number;
+  current: number;
+  questions: Question[];
+  timeLeft: number;
+  score: number;
+  status: GameStatus;
+  selectedAnswer: string | null;
+  // Actions
+  fetchQuestions: () => Promise<void>;
+  answerQuestion: (
+    questionId: number,
+    selected: string,
+    timeTaken: number
+  ) => Promise<void>;
+  nextQuestion: () => void;
   resetGame: () => void;
+  // New SoundManager-based/GameActions API
+  startGame: () => void;
+  tickRoundTimer: () => void;
+  selectAnswer: (answerId: string, isCorrect: boolean) => void;
+  gameOver: () => void;
+  advanceToNextQuestion: () => void;
 }
 
-/**
- * The final, combined type for the Zustand store, merging the state and actions.
- */
-export type GameStore = GameStoreState & GameStoreActions;
-
-// --- MOCK DATA ---
-// This data is derived from the UI screenshots to simulate a real game flow.
-
-const MOCK_QUESTIONS: Question[] = [
-  {
-    id: "q1",
-    questionText: "WHAT LOGO IS THIS?",
-    imageUrl: "/images/same-question-img.png", // Placeholder for a first question
-    options: [
-      { id: "a1", text: "James Scolt" },
-      {
-        id: "a2",
-        text: "Scoolt Mehem",
-      },
-      {
-        id: "a3",
-        text: "Peter Alan",
-      },
-      {
-        id: "a4",
-        text: "Jennifer breski",
-      },
-    ],
-    correctAnswerId: "a1",
-  },
-  {
-    id: "q2",
-    questionText: "WHAT LOGO IS THIS?",
-    imageUrl: "/images/same-question-img.png", // Placeholder for a first question
-    options: [
-      { id: "a1", text: "James Scolt" },
-      { id: "a2", text: "Scoolt Mehem" },
-      { id: "a3", text: "Peter Alan" },
-      { id: "a4", text: "Jennifer breski" },
-    ],
-    correctAnswerId: "a1",
-  },
-  {
-    id: "q3",
-    questionText: "WHAT LOGO IS THIS?",
-    imageUrl: "/images/same-question-img.png", // Placeholder for a first question
-    options: [
-      { id: "a1", text: "James Scolt" },
-      { id: "a2", text: "Scoolt Mehem" },
-      { id: "a3", text: "Peter Alan" },
-      { id: "a4", text: "Jennifer breski" },
-    ],
-    correctAnswerId: "a1",
-  },
-  {
-    id: "q4",
-    questionText: "WHAT LOGO IS THIS?",
-    imageUrl: "/images/same-question-img.png", // Placeholder for a first question
-    options: [
-      { id: "a1", text: "James Scolt" },
-      { id: "a2", text: "Scoolt Mehem" },
-      { id: "a3", text: "Peter Alan" },
-      { id: "a4", text: "Jennifer breski" },
-    ],
-    correctAnswerId: "a1",
-  },
-];
-
-const MOCK_MESSAGES: ChatMessage[] = [
-  {
-    id: "msg-1",
-    username: "John",
-    message: "Hello, how are you?",
-    timestamp: "13:42",
-    avatarUrl: "/images/avatars/a.png",
-  },
-  {
-    id: "msg-2",
-    username: "thecyberverse",
-    message: "Hello, how are you?",
-    timestamp: "13:43",
-    avatarUrl: "/images/avatars/b.png",
-  },
-  {
-    id: "msg-3",
-    username: "cryptoking",
-    message: "Hello, how are you?",
-    timestamp: "13:44",
-    avatarUrl: "/images/avatars/c.png",
-  },
-  {
-    id: "msg-4",
-    username: "wafflequeen",
-    message: "Hello, how are you?",
-    timestamp: "13:45",
-    avatarUrl: "/images/avatars/d.png",
-  },
-  {
-    id: "msg-5",
-    username: "superman",
-    message: "Hello, how are you?",
-    timestamp: "13:46",
-    avatarUrl: "/images/avatars/a.png",
-  },
-  {
-    id: "msg-6",
-    username: "flash",
-    message: "Hello, how are you?",
-    timestamp: "13:47",
-    avatarUrl: "/images/avatars/b.png",
-  },
-];
-
-// --- INITIAL STATE DEFINITION ---
-
-export const defaultInitialState: GameStoreState = {
-  gameState: "LOBBY",
-  roundTimer: 15,
-  questionTimer: 10,
-  currentQuestion: MOCK_QUESTIONS[0],
+export const useGameStore = create<GameState>((set, get) => ({
+  round: 1,
+  current: 0,
+  questions: [],
+  timeLeft: INITIAL_QUESTION_TIMER,
+  score: 0,
+  status: "idle",
   selectedAnswer: null,
-  messages: MOCK_MESSAGES,
-  currentQuestionIndex: 0,
-  totalQuestions: MOCK_QUESTIONS.length,
-};
 
-// --- ZUSTAND STORE CREATION ---
-
-// FIX: Changed the generic from create<GameStoreState> to create<GameStore> to include actions in the store's type.
-export const useGameStore = create<GameStore>()((set, get) => ({
-  ...defaultInitialState,
-
-  // --- ACTIONS ---
-
-  startGame: () => {
-    set({
-      gameState: "QUESTION_ACTIVE",
-      roundTimer: 15,
-      currentQuestionIndex: -1, // Reset index before starting
-      selectedAnswer: null,
-      currentQuestion: null,
-    });
+  fetchQuestions: async () => {
+    const res = await fetch("/api/game/start");
+    const data = await res.json();
+    set({ questions: data.questions, status: "playing" });
+    startCountdown(
+      INITIAL_QUESTION_TIMER,
+      (t) => set({ timeLeft: t }),
+      () => get().nextQuestion()
+    );
   },
 
-  selectAnswer: (answerId: string) => {
-    if (get().gameState === "QUESTION_ACTIVE") {
-      set({ selectedAnswer: answerId, gameState: "ANSWER_SUBMITTED" });
+  answerQuestion: async (questionId, selected, timeTaken) => {
+    const res = await fetch("/api/game/answer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: 1, // will be replaced with real fid from auth store
+        gameId: 1,
+        questionId,
+        selected,
+        timeTaken,
+      }),
+    });
+    const { correct, points } = await res.json();
+    if (correct) set((s) => ({ score: s.score + points }));
+  },
 
-      setTimeout(() => {
-        get().advanceToNextQuestion();
-      }, 2000);
+  nextQuestion: () => {
+    const { current, questions } = get();
+    if (current < questions.length - 1) {
+      set({ current: current + 1, timeLeft: INITIAL_QUESTION_TIMER });
+      startCountdown(
+        INITIAL_QUESTION_TIMER,
+        (t) => set({ timeLeft: t }),
+        () => get().nextQuestion()
+      );
+    } else {
+      set({ status: "ended" });
     }
   },
 
-  // FIX: Explicitly typed the parameters for type safety.
-  postMessage: ({
-    username,
-    message,
-  }: {
-    username: string;
-    message: string;
-  }) => {
-    const newMessage: ChatMessage = {
-      id: `msg-${Date.now()}`,
-      username,
-      message,
-      timestamp: new Date().toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      }),
-      avatarUrl: "/avatars/avatar-user.png", // A default avatar for the current user
-    };
+  resetGame: () =>
+    set({
+      round: 1,
+      current: 0,
+      questions: [],
+      score: 0,
+      status: "idle",
+      selectedAnswer: null,
+    }),
 
-    set((state) => ({
-      messages: [...state.messages, newMessage],
-    }));
+  // --- SoundManager-based/GameActions API ---
+  startGame: () => {
+    SoundManager.play("countdown");
+    set({
+      status: "QUESTION_ACTIVE",
+      timeLeft: INITIAL_ROUND_TIMER,
+      current: 0,
+      score: 0,
+      selectedAnswer: null,
+      round: 1,
+    });
+    // Optionally (re)fetch questions, otherwise rely on previous fetchQuestions
+    fetch("/api/game/start")
+      .then((res) => res.json())
+      .then((data) => {
+        set({ questions: data.questions });
+      });
   },
 
   tickRoundTimer: () => {
-    const newTime = get().roundTimer - 1;
+    const newTime = get().timeLeft - 1;
+    if (get().status !== "QUESTION_ACTIVE") return;
     if (newTime <= 0) {
-      get().advanceToNextQuestion();
+      get().selectAnswer("", false); // treat as wrong if time runs out
     } else {
-      set({ roundTimer: newTime });
+      set({ timeLeft: newTime });
     }
   },
 
-  tickQuestionTimer: () => {
-    const newTime = get().questionTimer - 1;
-    if (newTime <= 0) {
-      set({ questionTimer: 0, gameState: "ANSWER_SUBMITTED" });
-      setTimeout(() => {
-        get().advanceToNextQuestion();
-      }, 2000);
-    } else {
-      set({ questionTimer: newTime });
+  selectAnswer: (answerId: string, isCorrect: boolean) => {
+    if (get().status !== "QUESTION_ACTIVE") return;
+    set({ selectedAnswer: answerId, status: "ANSWER_SUBMITTED" });
+    SoundManager.play("click");
+    SoundManager.play(isCorrect ? "correct" : "wrong");
+
+    // Optionally submit answer asynchronously
+    const currentQuestion = get().questions[get().current];
+    if (currentQuestion) {
+      fetch("/api/game/answer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: 1, // Replace with real fid from auth store
+          gameId: 1, // Replace with actual if needed
+          questionId: currentQuestion.id,
+          selected: answerId,
+          timeTaken: INITIAL_QUESTION_TIMER - get().timeLeft,
+        }),
+      })
+        .then((res) => res.json())
+        .then(({ correct, points }) => {
+          if (correct) set((s) => ({ score: s.score + points }));
+        })
+        .catch(() => {});
     }
+
+    setTimeout(() => {
+      get().advanceToNextQuestion();
+    }, 2000);
   },
 
   advanceToNextQuestion: () => {
-    const nextIndex = get().currentQuestionIndex + 1;
-
-    if (nextIndex < MOCK_QUESTIONS.length) {
+    const idx = get().current;
+    const total = get().questions.length;
+    if (idx < total - 1) {
       set({
-        currentQuestionIndex: nextIndex,
-        currentQuestion: MOCK_QUESTIONS[nextIndex],
-        gameState: "QUESTION_ACTIVE",
-        questionTimer: 10,
+        current: idx + 1,
+        timeLeft: INITIAL_QUESTION_TIMER,
         selectedAnswer: null,
+        status: "QUESTION_ACTIVE",
+        round: get().round + 1,
       });
     } else {
-      get().resetGame();
+      get().gameOver();
     }
   },
 
-  resetGame: () => {
-    set({ ...defaultInitialState, gameState: "LOBBY" });
+  gameOver: () => {
+    set({ status: "GAME_OVER" });
+    SoundManager.play("gameOver");
   },
 }));
