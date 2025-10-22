@@ -3,7 +3,7 @@ export async function validateInviteCode(
 ): Promise<{ valid: boolean; message?: string }> {
   // Simulate network delay
   await new Promise((res) => setTimeout(res, 500));
-  const validCodes = ["WAFFLE2025", "INVITE123", "FCASTER"]; // sample valid codes
+  const validCodes = ["WAFF"]; // sample valid codes
   const normalized = code.trim().toUpperCase();
   if (validCodes.includes(normalized)) {
     return { valid: true };
