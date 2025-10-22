@@ -99,34 +99,36 @@ export default function InviteCodeScreen() {
 
         {status === "invalid" && error && (
           <PixelButton
-            className="bg-destructive"
+            className="flex items-center gap-2 font-body"
+            backgroundColor="#FF5252"
+            borderColor="#FF5252"
+            textColor="#FFFFFF"
             onClick={() => {}}
-            icon={
-              <Image
-                src="/images/icons/icon-invalid.png"
-                alt="Invalid Invite Code"
-                width={20}
-                height={20}
-              />
-            }
           >
-            Invalid
+            <Image
+              src="/images/icons/icon-invalid.png"
+              alt="Invalid Invite Code"
+              width={20}
+              height={20}
+            />
+            <span>Invalid</span>
           </PixelButton>
         )}
         {status === "valid" && (
           <PixelButton
-            className="bg-[#14B985]"
+            className="flex items-center gap-2 font-body"
+            backgroundColor="#14B985"
+            borderColor="#14B985"
+            textColor="#FFFFFF"
             onClick={() => {}}
-            icon={
-              <Image
-                src="/images/icons/icon-valid.png"
-                alt="Invalid Invite Code"
-                width={20}
-                height={20}
-              />
-            }
           >
-            Invalid
+            <Image
+              src="/images/icons/icon-valid.png"
+              alt="Invalid Invite Code"
+              width={20}
+              height={20}
+            />
+            <span>Valid</span>
           </PixelButton>
         )}
       </form>

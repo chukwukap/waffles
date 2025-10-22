@@ -1,24 +1,37 @@
-import { Inter, Press_Start_2P, VT323 } from "next/font/google";
+import localFont from "next/font/local";
 
-// @TODO: ADD NDOT 47 (inspired by NOTHING) font for input
-
-export const fontDisplay = Inter({
-  subsets: ["latin"],
-  weight: "400",
+export const fontDisplay = localFont({
+  src: [
+    {
+      path: "./fonts/brockmann_bd.otf",
+      weight: "400",
+      style: "normal",
+    },
+  ],
   display: "swap",
   variable: "--font-display",
 });
 
-export const fontBody = Press_Start_2P({
-  subsets: ["latin"],
-  weight: "400",
+export const fontBody = localFont({
+  src: [
+    {
+      path: "./fonts/editundo_bd.ttf",
+      weight: "400",
+      style: "normal",
+    },
+  ],
   display: "swap",
   variable: "--font-body",
 });
 
-export const fontInput = VT323({
-  subsets: ["latin"],
-  weight: "400",
+export const fontInput = localFont({
+  src: [
+    {
+      path: "./fonts/ndot47_bd.woff2",
+      weight: "400",
+      style: "normal",
+    },
+  ],
   display: "swap",
   variable: "--font-input",
 });
