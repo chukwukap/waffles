@@ -1,0 +1,416 @@
+src/stores/authStore.ts
+// /src/store/authStore.ts
+import { create } from "zustand";
+
+interface SafeArea {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+}
+
+interface AuthState {
+  fid: number | null;
+  username: string;
+  pfpUrl: string;
+  walletAddress: string;
+  safeArea: SafeArea;
+  setUser: (u: Partial<AuthState>) => void;
+  setWallet: (addr: string) => void;
+  setSafeArea: (a: SafeArea) => void;
+  reset: () => void;
+}
+
+export const useAuthStore = create<AuthState>((set) => ({
+  fid: null,
+  username: "",
+  pfpUrl: "",
+  walletAddress: "",
+  safeArea: { top: 0, bottom: 0, left: 0, right: 0 },
+  setUser: (u) => set((s) => ({ ...s, ...u })),
+  setWallet: (addr) => set({ walletAddress: addr }),
+  setSafeArea: (a) => set({ safeArea: a }),
+  reset: () =>
+    set({
+      fid: null,
+      username: "",
+      pfpUrl: "",
+      walletAddress: "",
+      safeArea: { top: 0, bottom: 0, left: 0, right: 0 },
+    }),
+}));
+
+
+src/stores/finalRoundStore.ts
+import { create } from "zustand";
+
+interface Pair {
+  id: number;
+  originalUrl: string;
+  generatedUrl: string;
+}
+
+interface FinalRoundState {
+  pairs: Pair[];
+  score: number;
+  timeLeft: number;
+  status: "idle" | "playing" | "ended";
+  fetchPairs: () => Promise<void>;
+  submitMatch: (choiceId: number, targetId: number) => Promise<void>;
+  startTimer: () => void;
+  reset: () => void;
+}
+
+export const useFinalRoundStore = create<FinalRoundState>((set, get) => ({
+  pairs: [],
+  score: 0,
+  timeLeft: 30,
+  status: "idle",
+
+  fetchPairs: async () => {
+    const res = await fetch("/api/final/start");
+    const data = await res.json();
+    set({ pairs: data.pairs, status: "playing" });
+    get().startTimer();
+  },
+
+  submitMatch: async (choiceId, targetId) => {
+    try {
+      const res = await fetch("/api/final/match", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: 1, gameId: 1, choiceId, targetId }),
+      });
+      const { points } = await res.json();
+      set((s) => ({ score: s.score + points }));
+    } catch (e) {
+      console.error(e);
+    }
+  },
+
+  startTimer: () => {
+    const interval = setInterval(() => {
+      set((s) => {
+        if (s.timeLeft <= 1) {
+          clearInterval(interval);
+          return { ...s, status: "ended", timeLeft: 0 };
+        }
+        return { ...s, timeLeft: s.timeLeft - 1 };
+      });
+    }, 1000);
+  },
+
+  reset: () => set({ pairs: [], score: 0, timeLeft: 30, status: "idle" }),
+}));
+
+
+src/stores/gameStore.ts
+import { create } from "zustand";
+import { startCountdown } from "@/lib/time";
+
+interface Question {
+  id: number;
+  text: string;
+  options: string[];
+  correctAnswer: string;
+}
+
+interface GameState {
+  round: number;
+  current: number;
+  questions: Question[];
+  timeLeft: number;
+  score: number;
+  status: "idle" | "playing" | "ended";
+  fetchQuestions: () => Promise<void>;
+  answerQuestion: (
+    questionId: number,
+    selected: string,
+    timeTaken: number
+  ) => Promise<void>;
+  nextQuestion: () => void;
+  resetGame: () => void;
+}
+
+export const useGameStore = create<GameState>((set, get) => ({
+  round: 1,
+  current: 0,
+  questions: [],
+  timeLeft: 10,
+  score: 0,
+  status: "idle",
+
+  fetchQuestions: async () => {
+    const res = await fetch("/api/game/start");
+    const data = await res.json();
+    set({ questions: data.questions, status: "playing" });
+    startCountdown(
+      10,
+      (t) => set({ timeLeft: t }),
+      () => get().nextQuestion()
+    );
+  },
+
+  answerQuestion: async (questionId, selected, timeTaken) => {
+    const res = await fetch("/api/game/answer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: 1, // will be replaced with real fid from auth store
+        gameId: 1,
+        questionId,
+        selected,
+        timeTaken,
+      }),
+    });
+    const { correct, points } = await res.json();
+    if (correct) set((s) => ({ score: s.score + points }));
+  },
+
+  nextQuestion: () => {
+    const { current, questions } = get();
+    if (current < questions.length - 1) {
+      set({ current: current + 1, timeLeft: 10 });
+      startCountdown(
+        10,
+        (t) => set({ timeLeft: t }),
+        () => get().nextQuestion()
+      );
+    } else {
+      set({ status: "ended" });
+    }
+  },
+
+  resetGame: () =>
+    set({ round: 1, current: 0, questions: [], score: 0, status: "idle" }),
+}));
+
+
+src/stores/leaderboardStore.ts
+import { create } from "zustand";
+
+interface Entry {
+  rank: number;
+  username: string;
+  points: number;
+  pfpUrl: string | null;
+}
+
+interface MyRank {
+  username?: string;
+  rank?: number;
+  points?: number;
+}
+
+interface LeaderboardState {
+  entries: Entry[];
+  me: MyRank | null;
+  fetchLeaderboard: (gameId: number, userId: number) => Promise<void>;
+}
+
+export const useLeaderboardStore = create<LeaderboardState>((set) => ({
+  entries: [],
+  me: null,
+  fetchLeaderboard: async (gameId, userId) => {
+    try {
+      const res = await fetch(
+        `/api/leaderboard?gameId=${gameId}&userId=${userId}`
+      );
+      const data = await res.json();
+      set({ entries: data.top, me: data.me });
+    } catch (e) {
+      console.error(e);
+    }
+  },
+}));
+
+
+src/stores/lobbyStore.ts
+import { create } from "zustand";
+
+interface Player {
+  username: string;
+  wallet: string;
+  pfpUrl: string | null;
+}
+
+interface LobbyStats {
+  totalTickets: number;
+  totalPrize: number;
+  players: Player[];
+}
+
+interface ReferralData {
+  code: string;
+  inviterId: number;
+  inviteeId?: number;
+}
+
+type ReferralStatus = "idle" | "validating" | "success" | "failed";
+
+interface LobbyState {
+  // Referral part
+  referralCode: string;
+  referralStatus: ReferralStatus;
+  referralData?: ReferralData;
+  createReferral: (inviterId: number) => Promise<void>;
+  validateReferral: (code: string, inviteeId: number) => Promise<void>;
+  // Lobby stats & countdown
+  stats: LobbyStats | null;
+  countdown: string;
+  fetchStats: () => Promise<void>;
+  startCountdown: (target: Date) => void;
+}
+
+export const useLobbyStore = create<LobbyState>((set) => ({
+  // Referral state
+  referralCode: "",
+  referralStatus: "idle",
+  referralData: undefined,
+  createReferral: async (inviterId) => {
+    set({ referralStatus: "validating" });
+    try {
+      const res = await fetch("/api/referral/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ inviterId }),
+      });
+      const data = await res.json();
+      set({
+        referralCode: data.code,
+        referralData: data,
+        referralStatus: "success",
+      });
+    } catch {
+      set({ referralStatus: "failed" });
+    }
+  },
+  validateReferral: async (code, inviteeId) => {
+    set({ referralStatus: "validating" });
+    try {
+      const res = await fetch("/api/referral/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, inviteeId }),
+      });
+      const data = await res.json();
+      set({
+        referralStatus: data.success ? "success" : "failed",
+        referralData: data.referral,
+      });
+    } catch {
+      set({ referralStatus: "failed" });
+    }
+  },
+  // Lobby stats & countdown
+  stats: null,
+  countdown: "00:00",
+  fetchStats: async () => {
+    try {
+      const res = await fetch("/api/lobby/stats");
+      const data = await res.json();
+      set({ stats: data });
+    } catch (e) {
+      console.error(e);
+    }
+  },
+  startCountdown: (target) => {
+    const interval = setInterval(() => {
+      const diff = target.getTime() - Date.now();
+      if (diff <= 0) {
+        clearInterval(interval);
+        set({ countdown: "00:00" });
+      } else {
+        const minutes = Math.floor(diff / 60000);
+        const seconds = Math.floor((diff % 60000) / 1000);
+        const formatted = `${String(minutes).padStart(2, "0")}:${String(
+          seconds
+        ).padStart(2, "0")}`;
+        set({ countdown: formatted });
+      }
+    }, 1000);
+  },
+}));
+
+
+src/stores/profileStore.ts
+import { create } from "zustand";
+
+interface GameHistory {
+  gameTitle: string;
+  points: number;
+  date: string;
+}
+
+interface ProfileData {
+  username: string;
+  wallet: string;
+  totalPoints: number;
+  wins: number;
+  streak: number;
+  badges: string[];
+  history: GameHistory[];
+}
+
+interface ProfileState {
+  profile: ProfileData | null;
+  fetchProfile: (userId: number) => Promise<void>;
+}
+
+export const useProfileStore = create<ProfileState>((set) => ({
+  profile: null,
+  fetchProfile: async (userId) => {
+    try {
+      const res = await fetch(`/api/profile?userId=${userId}`);
+      const data = await res.json();
+      set({ profile: data });
+    } catch (e) {
+      console.error(e);
+    }
+  },
+}));
+
+
+src/stores/ticketStore.ts
+import { create } from "zustand";
+
+interface Ticket {
+  id?: number;
+  txHash?: string;
+  amountUSDC?: number;
+  status?: "idle" | "pending" | "confirmed" | "failed";
+}
+
+interface TicketState {
+  ticket: Ticket | null;
+  purchaseStatus: Ticket["status"];
+  buyTicket: (userId: number, gameId: number, amount: number) => Promise<void>;
+  confirmTicket: (ticketId: number) => Promise<void>;
+}
+
+export const useTicketStore = create<TicketState>((set) => ({
+  ticket: null,
+  purchaseStatus: "idle",
+  buyTicket: async (userId, gameId, amount) => {
+    set({ purchaseStatus: "pending" });
+    try {
+      const res = await fetch("/api/tickets/buy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, gameId, amount }),
+      });
+      const data = await res.json();
+      set({ ticket: data, purchaseStatus: "confirmed" });
+    } catch {
+      set({ purchaseStatus: "failed" });
+    }
+  },
+  confirmTicket: async (ticketId) => {
+    await fetch(`/api/tickets/confirm`, {
+      method: "POST",
+      body: JSON.stringify({ ticketId }),
+    });
+  },
+}));
+
+

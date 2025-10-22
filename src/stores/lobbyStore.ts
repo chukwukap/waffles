@@ -1,123 +1,105 @@
-"use client";
 import { create } from "zustand";
-import * as api from "@/lib/apiMocks";
 
-interface WaffleType {
-  id: string;
-  name: string;
-  description: string;
-  remaining: number;
+interface Player {
+  username: string;
+  wallet: string;
+  pfpUrl: string | null;
 }
 
-interface Ticket {
-  ticketId: number;
-  waffleType: string;
-  message: string;
+interface LobbyStats {
+  totalTickets: number;
+  totalPrize: number;
+  players: Player[];
 }
+
+interface ReferralData {
+  code: string;
+  inviterId: number;
+  inviteeId?: number;
+}
+
+type ReferralStatus = "idle" | "validating" | "success" | "failed";
 
 interface LobbyState {
-  inviteCode: string;
-  inviteCodeStatus: "idle" | "checking" | "valid" | "invalid";
-  codeError: string | null;
-  waffleTypes: WaffleType[];
-  selectedWaffleType: WaffleType | null;
-  purchaseStatus: "idle" | "loading" | "success" | "error";
-  purchasedTicket: Ticket | null;
-  setInviteCode: (code: string) => void;
-  validateInviteCode: (code: string) => Promise<void>;
-  selectWaffleType: (id: string) => void;
-  purchaseWaffle: () => Promise<void>;
-  reset: () => void;
+  // Referral part
+  referralCode: string;
+  referralStatus: ReferralStatus;
+  referralData?: ReferralData;
+  createReferral: (inviterId: number) => Promise<void>;
+  validateReferral: (code: string, inviteeId: number) => Promise<void>;
+  // Lobby stats & countdown
+  stats: LobbyStats | null;
+  countdown: string;
+  fetchStats: () => Promise<void>;
+  startCountdown: (target: Date) => void;
 }
 
-const useLobbyStore = create<LobbyState>((set, get) => ({
-  inviteCode: "",
-  inviteCodeStatus: "idle",
-  codeError: null,
-  waffleTypes: [
-    {
-      id: "football",
-      name: "Football Waffle",
-      description: "Entry ticket for Football-themed Waffles tournament",
-      remaining: 120,
-    },
-    {
-      id: "basketball",
-      name: "Basketball Waffle",
-      description: "Entry ticket for Basketball-themed Waffles tournament",
-      remaining: 80,
-    },
-    // Add more types as needed
-  ],
-  selectedWaffleType: null,
-  purchaseStatus: "idle",
-  purchasedTicket: null,
-  setInviteCode: (code) => {
-    // Reset validation state when code changes
-    const currentStatus = get().inviteCodeStatus;
-    set({
-      inviteCode: code,
-      inviteCodeStatus: currentStatus === "checking" ? "checking" : "idle",
-      codeError: null,
-    });
-  },
-  validateInviteCode: async (code) => {
-    set({ inviteCodeStatus: "checking", inviteCode: code });
+export const useLobbyStore = create<LobbyState>((set) => ({
+  // Referral state
+  referralCode: "",
+  referralStatus: "idle",
+  referralData: undefined,
+  createReferral: async (inviterId) => {
+    set({ referralStatus: "validating" });
     try {
-      const res = await api.validateInviteCode(code);
-      // If inviteCode has changed since we started validation, ignore this result
-      if (get().inviteCode !== code) return;
-      if (res.valid) {
-        set({ inviteCodeStatus: "valid", codeError: null });
-      } else {
-        set({
-          inviteCodeStatus: "invalid",
-          codeError: res.message || "Invalid invite code",
-        });
-      }
-    } catch (error) {
-      console.error(error);
-      set({
-        inviteCodeStatus: "invalid",
-        codeError: "Network error, please try again",
+      const res = await fetch("/api/referral/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ inviterId }),
       });
+      const data = await res.json();
+      set({
+        referralCode: data.code,
+        referralData: data,
+        referralStatus: "success",
+      });
+    } catch {
+      set({ referralStatus: "failed" });
     }
   },
-  selectWaffleType: (id) => {
-    const type = get().waffleTypes.find((w) => w.id === id) || null;
-    set({ selectedWaffleType: type });
-  },
-  purchaseWaffle: async () => {
-    const selected = get().selectedWaffleType;
-    if (!selected) return;
-    set({ purchaseStatus: "loading" });
+  validateReferral: async (code, inviteeId) => {
+    set({ referralStatus: "validating" });
     try {
-      const ticket = await api.purchaseWaffle(selected.id);
-      // Optionally update inventory count:
-      set((state) => ({
-        purchaseStatus: "success",
-        purchasedTicket: ticket,
-        waffleTypes: state.waffleTypes.map((w) =>
-          w.id === selected.id
-            ? { ...w, remaining: Math.max(w.remaining - 1, 0) }
-            : w
-        ),
-      }));
-    } catch (error) {
-      console.error(error);
-      set({ purchaseStatus: "error" });
+      const res = await fetch("/api/referral/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, inviteeId }),
+      });
+      const data = await res.json();
+      set({
+        referralStatus: data.success ? "success" : "failed",
+        referralData: data.referral,
+      });
+    } catch {
+      set({ referralStatus: "failed" });
     }
   },
-  reset: () => {
-    set({
-      inviteCode: "",
-      inviteCodeStatus: "idle",
-      codeError: null,
-      selectedWaffleType: null,
-      purchaseStatus: "idle",
-      purchasedTicket: null,
-    });
+  // Lobby stats & countdown
+  stats: null,
+  countdown: "00:00",
+  fetchStats: async () => {
+    try {
+      const res = await fetch("/api/lobby/stats");
+      const data = await res.json();
+      set({ stats: data });
+    } catch (e) {
+      console.error(e);
+    }
+  },
+  startCountdown: (target) => {
+    const interval = setInterval(() => {
+      const diff = target.getTime() - Date.now();
+      if (diff <= 0) {
+        clearInterval(interval);
+        set({ countdown: "00:00" });
+      } else {
+        const minutes = Math.floor(diff / 60000);
+        const seconds = Math.floor((diff % 60000) / 1000);
+        const formatted = `${String(minutes).padStart(2, "0")}:${String(
+          seconds
+        ).padStart(2, "0")}`;
+        set({ countdown: formatted });
+      }
+    }, 1000);
   },
 }));
-
-export default useLobbyStore;

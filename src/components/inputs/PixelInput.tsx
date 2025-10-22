@@ -1,4 +1,3 @@
-// components/ui/pixel-input.tsx
 import type { InputHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 

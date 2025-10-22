@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int        @id @default(autoincrement())
+  farcasterId String?    @unique
+  name        String?
+  email       String?    @unique
+  imageUrl    String?
+  wallet      String?    @unique
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  invitations Referral[] @relation("UserInviter") // referrals sent by this user
+  referrals   Referral[] @relation("UserInvitee") // referrals used by this user
+  tickets     Ticket[]
+  scores      Score[]
+  chats       Chat[]
+}
+
+model Referral {
+  id         Int       @id @default(autoincrement())
+  code       String    @unique
+  inviter    User      @relation("UserInviter", fields: [inviterId], references: [id])
+  inviterId  Int
+  invitee    User?     @relation("UserInvitee", fields: [inviteeId], references: [id])
+  inviteeId  Int?
+  createdAt  DateTime  @default(now())
+  acceptedAt DateTime?
+
+  @@index([code])
+}
+
+model Game {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String?
+  startTime   DateTime?
+  endTime     DateTime?
+  createdAt   DateTime    @default(now())
+  questions   Question[]
+  tickets     Ticket[]
+  scores      Score[]
+  chats       Chat[]
+  config      GameConfig?
+}
+
+model GameConfig {
+  id                      Int           @id @default(autoincrement())
+  gameId                  Int           @unique
+  game                    Game          @relation(fields: [gameId], references: [id])
+  // Configuration fields (per-game overrides)
+  roundTimeLimit          Int // in seconds
+  questionsPerGame        Int
+  scoreMultiplier         Float         @default(1.0)
+  scorePenalty            Float?
+  maxPlayers              Int
+  soundEnabled            Boolean       @default(true)
+  animationEnabled        Boolean       @default(true)
+  prizePoolType           PrizePoolType @default(FIXED)
+  prizePoolFixedAmount    Int?
+  prizePoolDynamicTickets Int?
+  timeBonusEnabled        Boolean       @default(false)
+  difficultyScaling       Float         @default(1.0)
+  // (Add other optional tuning params here)
+}
+
+model GlobalConfig {
+  id                      Int           @id @default(autoincrement())
+  // Same fields as GameConfig for defaults
+  roundTimeLimit          Int
+  questionsPerGame        Int
+  scoreMultiplier         Float         @default(1.0)
+  scorePenalty            Float?
+  maxPlayers              Int
+  soundEnabled            Boolean       @default(true)
+  animationEnabled        Boolean       @default(true)
+  prizePoolType           PrizePoolType @default(FIXED)
+  prizePoolFixedAmount    Int?
+  prizePoolDynamicTickets Int?
+  timeBonusEnabled        Boolean       @default(false)
+  difficultyScaling       Float         @default(1.0)
+  // (Other default tuning params)
+}
+
+enum PrizePoolType {
+  FIXED
+  DYNAMIC
+}
+
+model Question {
+  id            Int      @id @default(autoincrement())
+  game          Game     @relation(fields: [gameId], references: [id])
+  gameId        Int
+  text          String
+  imageUrl      String
+  options       String[] // multiple-choice options
+  correctAnswer String
+  createdAt     DateTime @default(now())
+
+  @@index([gameId])
+}
+
+model Ticket {
+  id          Int       @id @default(autoincrement())
+  code        String    @unique
+  game        Game      @relation(fields: [gameId], references: [id])
+  gameId      Int
+  user        User      @relation(fields: [userId], references: [id])
+  userId      Int
+  amountUSDC  Float
+  txHash      String?
+  status      String    @default("pending") // pending | confirmed | failed
+  purchasedAt DateTime  @default(now())
+  usedAt      DateTime?
+
+  @@unique([gameId, userId])
+}
+
+model Score {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  game      Game     @relation(fields: [gameId], references: [id])
+  gameId    Int
+  points    Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, gameId]) // one score record per user-game pair
+}
+
+model Chat {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  game      Game     @relation(fields: [gameId], references: [id])
+  gameId    Int
+  message   String
+  createdAt DateTime @default(now())
+}

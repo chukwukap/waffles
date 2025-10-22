@@ -1,0 +1,426 @@
+src/app/api/chat/send/route.ts
+export async function POST(req: Request) {
+  const { text } = await req.json();
+  console.log("Chat message:", text);
+  return Response.json({ ok: true });
+}
+
+
+src/app/api/final/match/route.ts
+import { prisma } from "@/server/db";
+import { isMatch } from "@/lib/scoring";
+
+export async function POST(req: Request) {
+  try {
+    const { userId, gameId, choiceId, targetId } = await req.json();
+    if (!userId || !gameId)
+      return Response.json({ error: "Missing fields" }, { status: 400 });
+
+    const correct = isMatch(choiceId, targetId);
+    const points = correct ? 100 : 0;
+
+    await prisma.score.upsert({
+      where: { userId_gameId: { userId, gameId } },
+      update: { points: { increment: points } },
+      create: { userId, gameId, points },
+    });
+
+    return Response.json({ correct, points });
+  } catch (e) {
+    console.error(e);
+    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+
+src/app/api/final/start/route.ts
+import { prisma } from "@/server/db";
+
+export async function GET() {
+  try {
+    const allQuestions = await prisma.question.findMany({
+      take: 20,
+      orderBy: { id: "asc" },
+    });
+
+    const pairs = allQuestions.map((q) => ({
+      id: q.id,
+      originalUrl: q.imageUrl,
+      generatedUrl: q.imageUrl.replace("original", "ai"), // simple mock pattern
+    }));
+
+    return Response.json({ pairs });
+  } catch (e) {
+    console.error(e);
+    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+
+src/app/api/game/answer/route.ts
+import { prisma } from "@/server/db";
+import { calculateScore } from "@/lib/scoring";
+
+export async function POST(req: Request) {
+  try {
+    const { userId, gameId, questionId, selected, timeTaken } =
+      await req.json();
+
+    if (!userId || !gameId || !questionId || !selected)
+      return Response.json({ error: "Missing fields" }, { status: 400 });
+
+    const question = await prisma.question.findUnique({
+      where: { id: questionId },
+    });
+    if (!question)
+      return Response.json({ error: "Question not found" }, { status: 404 });
+
+    const correct = selected === question.correctAnswer;
+    const points = correct ? calculateScore(timeTaken, 10) : 0;
+
+    await prisma.score.upsert({
+      where: { userId_gameId: { userId, gameId } },
+      update: { points: { increment: points } },
+      create: { userId, gameId, points },
+    });
+
+    return Response.json({ correct, points });
+  } catch (e) {
+    console.error(e);
+    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+
+src/app/api/game/start/route.ts
+import { prisma } from "@/server/db";
+
+export async function GET() {
+  try {
+    const questions = await prisma.question.findMany({
+      take: 6,
+      orderBy: { id: "asc" },
+    });
+    return Response.json({ questions });
+  } catch (e) {
+    console.error(e);
+    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+
+src/app/api/leaderboard/route.ts
+import { prisma } from "@/server/db";
+
+export async function GET(req: Request) {
+  try {
+    const url = new URL(req.url);
+    const gameId = parseInt(url.searchParams.get("gameId") || "1");
+    const userId = parseInt(url.searchParams.get("userId") || "1");
+
+    // Get top 20 players
+    const top = await prisma.score.findMany({
+      where: { gameId },
+      include: { user: true },
+      orderBy: { points: "desc" },
+      take: 20,
+    });
+
+    // Get user's rank
+    const userScore = await prisma.score.findUnique({
+      where: { userId_gameId: { userId, gameId } },
+      include: { user: true },
+    });
+
+    const rank = await prisma.score.count({
+      where: {
+        gameId,
+        points: { gt: userScore?.points || 0 },
+      },
+    });
+
+    return Response.json({
+      top: top.map((s, i) => ({
+        rank: i + 1,
+        username: s.user.username,
+        points: s.points,
+        pfpUrl: s.user.pfpUrl,
+      })),
+      me: {
+        username: userScore?.user.username,
+        points: userScore?.points,
+        rank: rank + 1,
+      },
+    });
+  } catch (e) {
+    console.error(e);
+    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+
+src/app/api/lobby/join/route.ts
+import { prisma } from "@/server/db";
+
+export async function POST(req: Request) {
+  try {
+    const { userId, gameId } = await req.json();
+    if (!userId || !gameId)
+      return Response.json({ error: "Missing fields" }, { status: 400 });
+
+    await prisma.chat.create({
+      data: {
+        userId,
+        gameId,
+        message: "joined the lobby.",
+      },
+    });
+
+    return Response.json({ success: true });
+  } catch (e) {
+    console.error(e);
+    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+
+src/app/api/lobby/stats/route.ts
+import { prisma } from "@/server/db";
+
+export async function GET() {
+  try {
+    const tickets = await prisma.ticket.findMany({
+      where: { status: "confirmed" },
+      include: { user: true },
+    });
+
+    const totalTickets = tickets.length;
+    const totalPrize = totalTickets * 50; // each ticket costs 50 USDC
+
+    // Return top 10 players by activity
+    const players = tickets.map((t) => ({
+      username: t.user.username,
+      wallet: t.user.wallet,
+      pfpUrl: t.user.pfpUrl,
+    }));
+
+    return Response.json({
+      totalTickets,
+      totalPrize,
+      players,
+    });
+  } catch (e) {
+    console.error(e);
+    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+
+src/app/api/profile/history/route.ts
+import { NextResponse } from "next/server";
+
+export async function GET() {
+  // mock data for history; in a real app, you'd fetch from db or session
+  const history = [
+    { round: "Round 1", winnings: 50 },
+    { round: "Round 2", winnings: 100 },
+    { round: "Round 3", winnings: 0 },
+    { round: "Round 4", winnings: 200 },
+  ];
+  return NextResponse.json(history);
+}
+
+
+src/app/api/profile/route.ts
+import { prisma } from "@/server/db";
+import { calculateStreak } from "@/lib/streaks";
+import { assignBadges } from "@/lib/badges";
+
+export async function GET(req: Request) {
+  try {
+    const url = new URL(req.url);
+    const userId = parseInt(url.searchParams.get("userId") || "1");
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        scores: {
+          include: { game: true },
+          orderBy: { createdAt: "desc" },
+          take: 20,
+        },
+      },
+    });
+
+    if (!user)
+      return Response.json({ error: "User not found" }, { status: 404 });
+
+    const totalPoints = user.scores.reduce((a, s) => a + s.points, 0);
+    const wins = user.scores.filter((s) => s.points >= 25000).length;
+
+    const gameDates = user.scores.map((s) => s.createdAt);
+    const streak = calculateStreak(gameDates);
+    const badges = assignBadges(totalPoints, wins);
+
+    const history = user.scores.map((s) => ({
+      gameTitle: s.game.title,
+      points: s.points,
+      date: s.createdAt,
+    }));
+
+    return Response.json({
+      username: user.username,
+      wallet: user.wallet,
+      totalPoints,
+      wins,
+      streak,
+      badges,
+      history,
+    });
+  } catch (e) {
+    console.error(e);
+    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+
+src/app/api/profile/stats/route.ts
+import { NextResponse } from "next/server";
+
+export async function GET() {
+  // mock stats data
+  const stats = {
+    totalGames: 42,
+    wins: 18,
+    winRate: 42.9,
+    totalWon: 5400,
+    highestScore: 98,
+    avgScore: 76,
+    currentStreak: 3,
+    bestRank: 1,
+  };
+  return NextResponse.json(stats);
+}
+
+
+src/app/api/referral/create/route.ts
+import { prisma } from "@/server/db";
+import { randomBytes } from "crypto";
+
+export async function POST(req: Request) {
+  try {
+    const { inviterId } = await req.json();
+    if (!inviterId)
+      return Response.json({ error: "Missing inviterId" }, { status: 400 });
+
+    const existing = await prisma.referral.findFirst({ where: { inviterId } });
+    if (existing) return Response.json(existing);
+
+    const code = randomBytes(3).toString("hex"); // 6-char code
+
+    const referral = await prisma.referral.create({
+      data: { code, inviterId },
+    });
+
+    return Response.json(referral);
+  } catch (e) {
+    console.error(e);
+    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+
+src/app/api/referral/validate/route.ts
+import { prisma } from "@/server/db";
+
+export async function POST(req: Request) {
+  try {
+    const { code, inviteeId } = await req.json();
+    if (!code || !inviteeId)
+      return Response.json({ error: "Missing fields" }, { status: 400 });
+
+    const referral = await prisma.referral.findUnique({ where: { code } });
+    if (!referral)
+      return Response.json({ error: "Invalid code" }, { status: 404 });
+
+    if (referral.inviteeId)
+      return Response.json({ error: "Code already used" }, { status: 409 });
+
+    const updated = await prisma.referral.update({
+      where: { id: referral.id },
+      data: { inviteeId, acceptedAt: new Date() },
+    });
+
+    return Response.json({ success: true, referral: updated });
+  } catch (e) {
+    console.error(e);
+    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+
+src/app/api/tickets/buy/route.ts
+import { prisma } from "@/server/db";
+import { randomBytes } from "crypto";
+
+export async function POST(req: Request) {
+  try {
+    const { userId, gameId, amount, txHash } = await req.json();
+    if (!userId || !gameId || !amount)
+      return Response.json({ error: "Missing fields" }, { status: 400 });
+
+    const code = randomBytes(4).toString("hex").toUpperCase();
+
+    const ticket = await prisma.ticket.create({
+      data: {
+        userId,
+        gameId,
+        amountUSDC: amount,
+        code,
+        txHash: txHash || null,
+        status: txHash ? "confirmed" : "pending",
+      },
+    });
+
+    return Response.json(ticket);
+  } catch (e) {
+    console.error(e);
+    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+
+src/app/api/user/init/route.ts
+import { prisma } from "@/server/db";
+
+export async function POST(req: Request) {
+  try {
+    const { fid, username, pfpUrl, walletAddress } = await req.json();
+
+    if (!fid) {
+      return Response.json({ error: "Missing fid" }, { status: 400 });
+    }
+
+    const user = await prisma.user.upsert({
+      where: { farcasterId: fid.toString() },
+      update: {
+        username,
+        wallet: walletAddress || undefined,
+        pfpUrl,
+      },
+      create: {
+        farcasterId: fid.toString(),
+        username,
+        wallet: walletAddress,
+        pfpUrl,
+      },
+    });
+
+    return Response.json(user);
+  } catch (error: any) {
+    console.error("Error initializing user:", error);
+    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+
