@@ -19,9 +19,9 @@ export async function GET(request: Request) {
     orderBy: { game: { endTime: "desc" } },
   });
 
-  const history = scores.map((s, index) => ({
+  const history = scores.map((s) => ({
     id: s.id,
-    name: s.game.title,
+    name: s.game.name,
     score: s.points,
     winnings: s.points,
     winningsColor: s.points > 0 ? "green" : "gray",

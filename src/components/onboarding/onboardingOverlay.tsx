@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { OnboardingCarousel } from "./onboarding-carousel";
+import { OnboardingCarousel } from "./OnboardingCarousel";
 
 interface OnboardingOverlayProps {
   onComplete: () => void;
@@ -14,7 +14,7 @@ interface OnboardingOverlayProps {
 export function OnboardingOverlay({ onComplete }: OnboardingOverlayProps) {
   return (
     <div className="fixed inset-0 z-50 bg-figma noise flex flex-col">
-      <div className="p-10 flex items-center justify-center">
+      <div className="p-8 flex items-center justify-center">
         <Image
           src="/logo-icon.png"
           alt="Logo"

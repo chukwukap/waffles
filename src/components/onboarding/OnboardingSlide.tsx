@@ -33,5 +33,3 @@ export function OnboardingSlide({
     </div>
   );
 }
-
-

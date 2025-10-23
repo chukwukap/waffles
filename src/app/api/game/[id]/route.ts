@@ -1,15 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 // GET /api/games/[id]
 export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
-  const gameId = parseInt(params.id, 10);
-  if (isNaN(gameId)) {
+  const resolvedParams = await context.params;
+  const gameId = parseInt(resolvedParams.id, 10);
+  if (Number.isNaN(gameId)) {
     return NextResponse.json({ error: "Invalid game ID" }, { status: 400 });
   }
   const game = await prisma.game.findUnique({
@@ -26,10 +27,10 @@ export async function GET(
     imageUrl: q.imageUrl,
     options: q.options,
   }));
-  const { id, title, description, startTime, endTime } = game;
+  const { id, name, description, startTime, endTime } = game;
   return NextResponse.json({
     id,
-    title,
+    name,
     description,
     startTime,
     endTime,

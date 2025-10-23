@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { OnboardingSlide } from "./onboarding-slide";
+import { OnboardingSlide } from "./OnboardingSlide";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 
 interface Slide {
@@ -55,7 +55,7 @@ export function OnboardingCarousel({ onComplete }: OnboardingCarouselProps) {
         />
       </div>
 
-      <div className="p-6 space-y-3">
+      <div className="p-6 space-y-3 mb-10">
         <FancyBorderButton onClick={handleNext} className="w-full">
           {currentSlide === 0 ? "Next" : "Let's Go"}
         </FancyBorderButton>
@@ -63,5 +63,3 @@ export function OnboardingCarousel({ onComplete }: OnboardingCarouselProps) {
     </div>
   );
 }
-
-

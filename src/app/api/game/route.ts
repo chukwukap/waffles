@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 
@@ -11,9 +11,9 @@ export async function GET() {
 }
 
 // POST /api/games
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const schema = z.object({
-    title: z.string().min(1),
+    name: z.string().min(1),
     description: z.string().optional(),
     startTime: z.string(),
     endTime: z.string(),
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   if (!parseResult.success) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
-  const { title, description, startTime, endTime } = parseResult.data;
+  const { name, description, startTime, endTime } = parseResult.data;
   const start = new Date(startTime);
   const end = new Date(endTime);
   if (isNaN(start.getTime()) || isNaN(end.getTime())) {
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
   }
   const game = await prisma.game.create({
     data: {
-      title,
+      name,
       description,
       startTime: start,
       endTime: end,

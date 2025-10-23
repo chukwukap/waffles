@@ -15,11 +15,13 @@ export function useOnboarding() {
 
   useEffect(() => {
     try {
-      const stored = typeof window !== "undefined"
-        ? window.localStorage.getItem(ONBOARDING_STORAGE_KEY)
-        : null;
+      const stored =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem(ONBOARDING_STORAGE_KEY)
+          : null;
       setIsOnboarded(stored === "true");
     } catch (_err) {
+      console.log(_err);
       // If storage is blocked, default to showing onboarding once
       setIsOnboarded(false);
     } finally {
@@ -33,6 +35,7 @@ export function useOnboarding() {
         window.localStorage.setItem(ONBOARDING_STORAGE_KEY, "true");
       }
     } catch (_err) {
+      console.log(_err);
       // Non-fatal: proceed even if storage fails
     }
     setIsOnboarded(true);
@@ -45,5 +48,3 @@ export function useOnboarding() {
     completeOnboarding,
   };
 }
-
-

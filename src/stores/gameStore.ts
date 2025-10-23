@@ -4,8 +4,13 @@
 import { create } from "zustand";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
-import { useAuthStore } from "@/stores/authStore";
 import SoundManager from "@/lib/SoundManager";
+
+export interface User {
+  fid: number;
+  username: string;
+  pfpUrl: string;
+}
 
 // ───────────────────────── TYPES ─────────────────────────
 export interface ChatMessage {
@@ -65,15 +70,15 @@ export interface GameStore {
 
   // Chat
   messages: ChatMessage[];
-  fetchMessages: (gameId: number) => Promise<void>;
-  sendMessage: (text: string) => Promise<void>;
+  fetchMessages: (gameId: number, user: User) => Promise<void>;
+  sendMessage: (text: string, user: User) => Promise<void>;
 
   // Realtime
   subscribeToChat: (gameId: number) => void;
   unsubscribeFromChat: () => void;
 
   // Game flow
-  fetchQuestions: (gameId: number) => Promise<void>;
+  fetchQuestions: (gameId: number, user: User) => Promise<void>;
   startRoundCountdown: () => void;
   tickRoundTimer: () => void;
   selectAnswer: (answerId: string) => void;
@@ -120,21 +125,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   // ───────── Chat Logic ─────────
-  fetchMessages: async (gameId: number) => {
+  fetchMessages: async (
+    gameId: number,
+    user: { fid: number; username: string; pfpUrl: string }
+  ) => {
     try {
-      const fid = useAuthStore.getState().fid;
-      if (!fid) return;
       const res = await fetch(`/api/chat?gameId=${gameId}`, {
-        headers: { "x-farcaster-id": String(fid) },
+        headers: { "x-farcaster-id": String(user.fid) },
       });
       if (!res.ok) throw new Error("Failed to fetch chat");
       const data: ChatApiResponse[] = await res.json();
 
       const formatted: ChatMessage[] = data.map((m) => ({
         id: m.messageId,
-        username: m.userName ?? "Anon",
+        username: user.username,
         message: m.message,
-        avatarUrl: m.avatarUrl ?? "/images/avatars/default.png",
+        avatarUrl: user.pfpUrl,
         time: new Date(m.createdAt).toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
@@ -147,17 +153,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
   },
 
-  sendMessage: async (text: string) => {
+  sendMessage: async (text: string, user: User) => {
     const { gameId, messages } = get();
-    const { fid, username, pfpUrl } = useAuthStore.getState();
-    if (!fid || !gameId) return;
+    if (!user.fid || !gameId) {
+      console.error("No Farcaster ID or game ID found");
+      return;
+    }
 
     try {
       const temp: ChatMessage = {
         id: Date.now(),
-        username: username || "You",
+        username: user.username,
         message: text,
-        avatarUrl: pfpUrl || "/images/avatars/a.png",
+        avatarUrl: user.pfpUrl,
         time: new Date().toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
@@ -169,7 +177,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-farcaster-id": String(fid),
+          "x-farcaster-id": String(user.fid),
         },
         body: JSON.stringify({ gameId, message: text }),
       });
@@ -241,7 +249,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   // ───────── Game Logic ─────────
-  fetchQuestions: async (gameId: number) => {
+  fetchQuestions: async (gameId: number, user: User) => {
     if (!gameId) {
       console.warn("fetchQuestions called without a gameId");
       return;
@@ -256,7 +264,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         gameState: "LOBBY",
         messages: [],
       });
-      await get().fetchMessages(gameId);
+      await get().fetchMessages(gameId, user);
       get().subscribeToChat(gameId);
     } catch (e) {
       console.error("Failed to fetch questions:", e);

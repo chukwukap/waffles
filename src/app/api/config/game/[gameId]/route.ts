@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { type Prisma } from "@prisma/client";
 
+// Define enum and config schema as before
 const prizePoolTypeEnum = z.enum(["FIXED", "DYNAMIC"]);
 
 const baseConfigSchema = z.object({
@@ -20,18 +21,22 @@ const baseConfigSchema = z.object({
   difficultyScaling: z.number().positive().max(10).optional(),
 });
 
-function isAuthorizedAdmin(request: Request): boolean {
+// Helper: authorization for PUT (admins only)
+function isAuthorizedAdmin(request: NextRequest): boolean {
   const headerToken = request.headers.get("x-admin-token");
   const envToken = process.env.ADMIN_TOKEN;
   return Boolean(envToken && headerToken && headerToken === envToken);
 }
 
+// --- TYPE FIX: Next.js expects "params" to be a Promise in context ---
+// See type error in build output (params: Promise<{ gameId: string; }>;)
 export async function GET(
-  request: Request,
-  { params }: { params: { gameId: string } }
+  request: NextRequest,
+  context: { params: Promise<{ gameId: string }> }
 ) {
   try {
-    const gameId = Number(params.gameId);
+    const resolvedParams = await context.params;
+    const gameId = Number(resolvedParams.gameId);
     if (!Number.isInteger(gameId)) {
       return NextResponse.json({ error: "Invalid gameId" }, { status: 400 });
     }
@@ -53,15 +58,16 @@ export async function GET(
 }
 
 export async function PUT(
-  request: Request,
-  { params }: { params: { gameId: string } }
+  request: NextRequest,
+  context: { params: Promise<{ gameId: string }> }
 ) {
   try {
     if (!isAuthorizedAdmin(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const gameId = Number(params.gameId);
+    const resolvedParams = await context.params;
+    const gameId = Number(resolvedParams.gameId);
     if (!Number.isInteger(gameId)) {
       return NextResponse.json({ error: "Invalid gameId" }, { status: 400 });
     }

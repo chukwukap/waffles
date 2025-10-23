@@ -17,7 +17,6 @@ export default function InviteCodePage() {
   // ───────────────────────── STATE ─────────────────────────
   const {
     referralCode,
-    referralStatus,
     validateReferral,
     referralData,
     referralStatus: status,
@@ -37,6 +36,7 @@ export default function InviteCodePage() {
       try {
         await validateReferral(inputCode, 1); // ✅ inviteeId = 1 placeholder (auth to replace later)
       } catch (err) {
+        console.log(err);
         setError("Validation failed");
       }
     }, 500);
