@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { LEADERBOARD_PAGE_SIZE } from "@/lib/constants";
+import { env } from "@/lib/env";
 
 export type LeaderboardUser = {
   id: string;
@@ -90,8 +90,8 @@ export async function GET(request: Request) {
   }
 
   // pagination
-  const start = page * LEADERBOARD_PAGE_SIZE;
-  const end = start + LEADERBOARD_PAGE_SIZE;
+  const start = page * env.nextPublicLeaderboardPageSize;
+  const end = start + env.nextPublicLeaderboardPageSize;
   const pageUsers = users.slice(start, end);
   const hasMore = end < users.length;
 

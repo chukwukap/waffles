@@ -1,7 +1,9 @@
-// ───────────────────────── src/app/lobby/buy/page.tsx ─────────────────────────
+// src/app/(authenticated)/lobby/buy/page.tsx
+// If a ticket was already purchased, skip buying and go to confirmation.
+
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import LogoIcon from "@/components/logo/LogoIcon";
 import { cn } from "@/lib/utils";
@@ -14,41 +16,45 @@ import { useLobbyStore } from "@/stores/lobbyStore";
 
 // ───────────────────────── CONSTANTS ─────────────────────────
 const TICKET_PRICE = 50;
-const GAME_ID = 1; // update if dynamic
+const GAME_ID = 1;
 
 export default function BuyWafflePage() {
   const router = useRouter();
-  const { buyTicket, purchaseStatus } = useLobbyStore();
+  const { buyTicket, purchaseStatus, ticket } = useLobbyStore();
   const [isPurchasing, setIsPurchasing] = useState(false);
 
-  // For visual placeholders (mocked stats)
+  // If already have a ticket, redirect to confirmation
+  useEffect(() => {
+    if (ticket && purchaseStatus === "confirmed") {
+      router.replace("/lobby/confirm");
+    }
+  }, [ticket, purchaseStatus, router]);
 
+  // Placeholder stats
   const playerCount = 250;
 
   // ───────────────────────── HANDLER ─────────────────────────
   const handlePurchase = async () => {
     if (isPurchasing) return;
     setIsPurchasing(true);
-    await buyTicket(1, GAME_ID, TICKET_PRICE); // userId=1 placeholder (replace with auth user later)
+    await buyTicket(1, GAME_ID, TICKET_PRICE); // userId=1 placeholder
     setIsPurchasing(false);
 
-    // If confirmed, move to confirm page
-    if (purchaseStatus === "confirmed") {
+    if (useLobbyStore.getState().purchaseStatus === "confirmed") {
       router.push("/lobby/confirm");
     }
   };
 
-  // ───────────────────────── RENDER ─────────────────────────
   return (
-    <div className="h-screen flex flex-col bg-figma noise relative font-body">
+    <div className="h-screen flex flex-col bg-figmaYay noise relative font-body">
       {/* HEADER */}
       <div
         className={cn(
-          "p-4 flex items-center justify-between border-b border-border bg-figma"
+          "p-4 flex items-center justify-between border-b border-border bg-figmaYay"
         )}
       >
         <LogoIcon />
-        <div className="flex items-center gap-1.5 bg-figma rounded-full px-3 py-1.5">
+        <div className="flex items-center gap-1.5 bg-figmaYay rounded-full px-3 py-1.5">
           <WalletIcon className="w-4 h-4 text-foreground" />
           <span className="text-xs text-foreground">{`$983.23`}</span>
         </div>

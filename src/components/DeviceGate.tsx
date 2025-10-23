@@ -40,7 +40,7 @@ export default function DeviceGate({
   if (isMobile) return <>{children}</>;
 
   return (
-    <div className="relative min-h-dvh w-full bg-figma text-foreground noise">
+    <div className="relative min-h-dvh w-full bg-figmaYay text-foreground noise">
       {/* subtle radial glow */}
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.06),transparent_60%)]" />
 

@@ -24,7 +24,7 @@ export async function GET(request: Request) {
   const result = tickets.map((ticket) => ({
     ticketId: ticket.id,
     gameId: ticket.gameId,
-    gameTitle: ticket.game.title,
+    gameTitle: ticket.game.name,
     code: ticket.code,
     amountUSDC: ticket.amountUSDC,
     purchasedAt: ticket.purchasedAt,
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
   });
   return NextResponse.json({
     ticketId: ticket.id,
-    waffleType: game.title,
+    waffleType: game.name,
     message: "Purchase successful",
   });
 }

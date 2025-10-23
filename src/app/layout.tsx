@@ -6,24 +6,23 @@ import "./globals.css";
 import { MinikitProvider } from "@/components/providers/MinikitProvider";
 import GlobalToaster from "@/components/ui/Toaster";
 import { Metadata } from "next";
-import * as constants from "@/lib/constants";
+import { env } from "@/lib/env";
 import { OnboardingGate } from "@/components/onboarding/OnboardingGate";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const URL = constants.BASE_URL;
   return {
     other: {
       "fc:miniapp": JSON.stringify({
         version: "next",
-        imageUrl: constants.FARCASTER_ICON_URL,
+        imageUrl: `${env.rootUrl}/logo.png`,
         button: {
-          title: constants.FARCASTER_TAGLINE,
+          title: "Waffles",
           action: {
             type: "launch_miniapp",
             name: "Waffles",
-            url: URL,
-            splashImageUrl: constants.FARCASTER_SPLASH_IMAGE_URL,
-            splashBackgroundColor: constants.FARCASTER_SPLASH_BACKGROUND_COLOR,
+            url: env.rootUrl,
+            splashImageUrl: `${env.rootUrl}/images/splash-icon.png`,
+            splashBackgroundColor: "#000000",
           },
         },
       }),

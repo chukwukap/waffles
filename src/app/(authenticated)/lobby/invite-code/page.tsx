@@ -1,4 +1,6 @@
-// ───────────────────────── src/app/lobby/invite/_components/InviteCodeScreen.tsx ─────────────────────────
+// src/app/(authenticated)/lobby/invite-code/page.tsx
+// If a valid invite code is already present, skip this page.
+
 "use client";
 import LogoIcon from "@/components/logo/LogoIcon";
 import React, { useEffect, useState } from "react";
@@ -8,68 +10,82 @@ import { useLobbyStore } from "@/stores/lobbyStore";
 import { PixelInput } from "@/components/inputs/PixelInput";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { PixelButton } from "@/components/buttons/PixelButton";
-
-// ───────────────────────── COMPONENT ─────────────────────────
+import { useMiniUser } from "@/hooks/useMiniUser";
 
 export default function InviteCodePage() {
   const router = useRouter();
-
-  // ───────────────────────── STATE ─────────────────────────
   const {
     referralCode,
     validateReferral,
     referralData,
     referralStatus: status,
+    ticket, // added to check if ticket already exists
   } = useLobbyStore();
+  const user = useMiniUser();
+  // If invite code is already valid, skip to Buy or directly into the game
+  useEffect(() => {
+    if (status === "success") {
+      if (ticket) {
+        // already have ticket: go straight into the game
+        router.replace("/game");
+      } else {
+        // have code but no ticket: go to buy page
+        router.replace("/lobby/buy");
+      }
+    }
+  }, [status, ticket, router]);
 
   const [inputCode, setInputCode] = useState(referralCode || "");
   const [error, setError] = useState<string | null>(null);
 
-  // ───────────────────────── DEBOUNCED VALIDATION ─────────────────────────
+  // Debounced code validation as user types
   useEffect(() => {
-    if (inputCode.trim().length < 4) {
+    if (inputCode.trim().length < 4 || !user.fid) {
       setError(null);
       return;
     }
-
     const timer = setTimeout(async () => {
       try {
-        await validateReferral(inputCode, 1); // ✅ inviteeId = 1 placeholder (auth to replace later)
+        if (!user.fid) {
+          console.error("User FID is null");
+          return;
+        }
+        await validateReferral(inputCode, user.fid);
       } catch (err) {
         console.log(err);
         setError("Validation failed");
       }
     }, 500);
-
     return () => clearTimeout(timer);
-  }, [inputCode, validateReferral]);
+  }, [inputCode, validateReferral, user.fid]);
 
-  // ───────────────────────── HANDLE SUBMIT ─────────────────────────
+  // On form submit: if code is valid, go to buy page
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!inputCode.trim()) return;
-
-    // Trigger validation if not valid yet
+    if (!inputCode.trim() || inputCode.trim().length !== 4) return;
+    if (!user.fid) {
+      console.error("User FID is null");
+      return;
+    }
     if (status !== "success") {
-      await validateReferral(inputCode, 1);
+      if (!user.fid) {
+        console.error("User FID is null");
+        return;
+      }
+      await validateReferral(inputCode, user.fid);
       if (useLobbyStore.getState().referralStatus !== "success") {
         setError("Invalid code");
         return;
       }
     }
-
-    // ✅ Proceed only if valid
     router.push("/lobby/buy");
   };
 
-  // ───────────────────────── RENDER ─────────────────────────
-
   return (
-    <div className="min-h-screen  flex flex-col">
+    <div className="min-h-screen max-w-screen-sm mx-auto px-8 flex flex-col">
       <div
         className={
-          "p-4 flex items-center justify-center border-y border-border bg-figma-gradient"
+          "p-4 flex items-center justify-center border-y border-border bg-figmaYay-gradient"
         }
       >
         <LogoIcon />
@@ -116,7 +132,7 @@ export default function InviteCodePage() {
             GET IN
           </FancyBorderButton>
 
-          {/* STATUS */}
+          {/* STATUS MESSAGES */}
           {status === "validating" && (
             <p
               className="text-xs mt-2"

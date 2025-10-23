@@ -1,11 +1,5 @@
 import { MiniAppManifest } from "@coinbase/onchainkit/minikit";
-
-const ROOT_URL =
-  // "https://0b967d9de060.ngrok-free.app" ||
-  process.env.NEXT_PUBLIC_URL ||
-  (process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : "http://localhost:3000");
+import { env } from "@/lib/env";
 
 /**
  * MiniApp configuration object. Must follow the Farcaster MiniApp specification.
@@ -26,18 +20,18 @@ export const minikitConfig: MiniAppManifest = {
     name: "Waffles",
     subtitle: "Waffles",
     description: "Pattern-matching tournaments built for Farcaster.",
-    screenshotUrls: [`${ROOT_URL}/screenshot-portrait.png`],
-    iconUrl: `${ROOT_URL}/logo.png`,
-    splashImageUrl: `${ROOT_URL}/images/splash-icon.png`,
+    screenshotUrls: [`${env.rootUrl}/screenshot-portrait.png`],
+    iconUrl: `${env.rootUrl}/logo.png`,
+    splashImageUrl: `${env.rootUrl}/images/splash-icon.png`,
     splashBackgroundColor: "#000000",
-    homeUrl: ROOT_URL,
-    webhookUrl: `${ROOT_URL}/api/webhook`,
+    homeUrl: env.rootUrl,
+    webhookUrl: `${env.rootUrl}/api/webhook`,
     primaryCategory: "games",
     tags: ["waffles", "miniapp", "social"],
-    heroImageUrl: `${ROOT_URL}/images/splash-image.png`,
+    heroImageUrl: `${env.rootUrl}/images/splash-image.png`,
     tagline: "Play instantly",
     ogTitle: "Waffles",
     ogDescription: "Pattern-matching tournaments built for Farcaster.",
-    ogImageUrl: `${ROOT_URL}/og.png`,
+    ogImageUrl: `${env.rootUrl}/og.png`,
   },
 };

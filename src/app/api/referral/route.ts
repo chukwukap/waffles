@@ -26,7 +26,7 @@ export async function GET(request: Request) {
 // POST /api/referrals
 export async function POST(request: Request) {
   const schema = z.object({
-    code: z.string().min(1),
+    code: z.string().min(4),
   });
   let body;
   try {

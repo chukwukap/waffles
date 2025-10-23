@@ -8,7 +8,7 @@ export default function GameOverView() {
   const { score, resetGame, fetchQuestions, gameId } = useGameStore();
   const user = useMiniUser();
   return (
-    <main className="flex flex-col items-center justify-center min-h-[100dvh] bg-figma text-center space-y-6 px-6">
+    <main className="flex flex-col items-center justify-center min-h-[100dvh] bg-figmaYay text-center space-y-6 px-6">
       {/* ───────────────────────── HEADER ───────────────────────── */}
       <h1 className="font-body text-3xl md:text-4xl text-white font-bold tracking-wide">
         GAME&nbsp;OVER

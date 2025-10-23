@@ -15,7 +15,7 @@ export function BottomNav() {
   const router = useRouter();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-figma noise border-t-2 border-border z-50">
+    <nav className="fixed bottom-0 left-0 right-0 bg-figmaYay noise border-t-2 border-border z-50">
       <div className="flex items-center justify-around max-w-2xl mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
