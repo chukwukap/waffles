@@ -1,7 +1,7 @@
 "use client";
 
 import { useOnboarding } from "@/hooks/useOnboarding";
-import { OnboardingOverlay } from "./onboardingOverlay";
+import { OnboardingOverlay } from "./OnboardingOverlay";
 
 interface Props {
   children: React.ReactNode;
@@ -25,5 +25,3 @@ export function OnboardingGate({ children }: Props) {
     </>
   );
 }
-
-

@@ -5,13 +5,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { ForwardMessageIcon, MessageIcon } from "@/components/icons";
 import { useGameStore } from "@/stores/gameStore";
+import { useMiniUser } from "@/hooks/useMiniUser";
 
 export default function ChatDrawer() {
   const [open, setOpen] = useState(false);
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { messages, sendMessage } = useGameStore();
-
+  const user = useMiniUser();
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -23,8 +24,12 @@ export default function ChatDrawer() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = newMessage.trim();
-    if (!trimmed) return;
-    sendMessage(trimmed);
+    if (!trimmed || !user.fid) return;
+    sendMessage(trimmed, {
+      fid: user.fid,
+      username: user.username,
+      pfpUrl: user.pfpUrl,
+    });
     setNewMessage("");
   };
 

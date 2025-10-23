@@ -7,7 +7,7 @@ import { MinikitProvider } from "@/components/providers/MinikitProvider";
 import GlobalToaster from "@/components/ui/Toaster";
 import { Metadata } from "next";
 import * as constants from "@/lib/constants";
-import { OnboardingGate } from "@/components/onboarding/gate";  
+import { OnboardingGate } from "@/components/onboarding/OnboardingGate";
 
 export async function generateMetadata(): Promise<Metadata> {
   const URL = constants.BASE_URL;
@@ -44,9 +44,7 @@ export default function RootLayout({
       <body className="text-foreground bg-figma noise">
         <DeviceGate continueAnyway={process.env.NODE_ENV == "production"}>
           <MinikitProvider>
-            <OnboardingGate>
-              {children}
-            </OnboardingGate>
+            <OnboardingGate>{children}</OnboardingGate>
           </MinikitProvider>
         </DeviceGate>
         <GlobalToaster />

@@ -11,7 +11,7 @@ import {
   WaffleIcon,
   ZapIcon,
 } from "@/components/icons";
-
+import type { GameHistory } from "@/stores/profileStore";
 /* ---------- Top bar (shared look) ---------- */
 const TopBar = () => (
   <header
@@ -68,15 +68,8 @@ const SubPageHeader = ({ title }: { title: string }) => (
 );
 
 /* ---------- List item ---------- */
-type Game = {
-  id: string;
-  name: string;
-  score: number | string;
-  winnings: number;
-  winningsColor?: "green" | "gray";
-};
 
-const GameHistoryItem = ({ game }: { game: Game }) => (
+const GameHistoryItem = ({ game }: { game: GameHistory }) => (
   <div
     className={`
       flex items-center justify-between
@@ -136,7 +129,7 @@ const GameHistoryItem = ({ game }: { game: Game }) => (
 
 /* ---------- Page ---------- */
 export default function GameHistoryPage() {
-  const { pastGames } = useProfileStore();
+  const { gameHistory } = useProfileStore();
 
   return (
     <div
@@ -159,7 +152,7 @@ export default function GameHistoryPage() {
       >
         {/* List */}
         <ul className="flex flex-col gap-3.5 sm:gap-4">
-          {pastGames.map((g) => (
+          {gameHistory.map((g) => (
             <li key={g.id}>
               <GameHistoryItem game={g} />
             </li>

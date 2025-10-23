@@ -1,7 +1,7 @@
 import { MiniAppManifest } from "@coinbase/onchainkit/minikit";
 
 const ROOT_URL =
-  "https://0b967d9de060.ngrok-free.app" ||
+  // "https://0b967d9de060.ngrok-free.app" ||
   process.env.NEXT_PUBLIC_URL ||
   (process.env.VERCEL_PROJECT_PRODUCTION_URL
     ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`

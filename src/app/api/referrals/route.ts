@@ -59,15 +59,17 @@ export async function POST(request: Request) {
       { status: 404 }
     );
   }
-  const inviter = await prisma.user.findUnique({
-    where: { referralCode: code },
+  const referral = await prisma.referral.findUnique({
+    where: { code },
+    include: { inviter: true },
   });
-  if (!inviter) {
+  if (!referral || !referral.inviter) {
     return NextResponse.json(
       { valid: false, message: "Invite code not found" },
       { status: 400 }
     );
   }
+  const inviter = referral.inviter;
   if (inviter.id === user.id) {
     return NextResponse.json(
       { valid: false, message: "Cannot use your own invite code" },

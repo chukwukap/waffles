@@ -6,16 +6,24 @@ import CountdownView from "./_components/CountdownView";
 import QuestionView from "./_components/QuestionView";
 import LobbyView from "./_components/LobbyView";
 import GameOverView from "./_components/GameOverView";
+import { useMiniUser } from "@/hooks/useMiniUser";
 
 export default function GameScreen() {
   const gameState = useGameStore((s) => s.gameState);
   const gameId = useGameStore((s) => s.gameId);
+  const user = useMiniUser();
 
   useEffect(() => {
-    if (gameId) {
-      useGameStore.getState().fetchMessages(gameId);
+    if (gameId && user.fid && user.username && user.pfpUrl) {
+      useGameStore.getState().fetchMessages(gameId, {
+        fid: user.fid,
+        username: user.username,
+        pfpUrl: user.pfpUrl,
+      });
+    } else {
+      console.error("No user found");
     }
-  }, [gameId]);
+  }, [gameId, user]);
 
   const view = (() => {
     switch (gameState) {

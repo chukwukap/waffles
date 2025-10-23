@@ -4,8 +4,7 @@ import { useEffect } from "react";
 import { useMiniUser } from "@/hooks/useMiniUser";
 
 export function useSyncUser() {
-  const { fid, username, pfpUrl, wallet, isConnected, isMiniAppReady } =
-    useMiniUser();
+  const { fid, username, pfpUrl, wallet, isMiniAppReady } = useMiniUser();
 
   useEffect(() => {
     if (!isMiniAppReady || !fid || !wallet) return;
