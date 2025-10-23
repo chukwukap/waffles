@@ -11,7 +11,7 @@ import { useCountdown } from "@/hooks/useCountdown";
 export default function LobbyView() {
   const game = useGameStore((state) => state.game);
   const ticket = useLobbyStore((state) => state.ticket);
-  const setGameState = useGameStore((state) => state.setGameState);
+  const setGameView = useGameStore((state) => state.setGameView);
 
   // Countdown to game start time if available
   const startTimeMs = game?.startTime ? new Date(game.startTime).getTime() : 0;
@@ -19,14 +19,14 @@ export default function LobbyView() {
   // If the start time is in the past, immediately move to QUESTION_ACTIVE
   useEffect(() => {
     if (game?.startTime && new Date(game.startTime).getTime() < Date.now()) {
-      setGameState("QUESTION_ACTIVE");
+      setGameView("QUESTION_ACTIVE");
     }
-  }, [game?.startTime, setGameState]);
+  }, [game?.startTime, setGameView]);
   const { millisecondsLeft } = useCountdown({
     target: startTimeMs,
     autoStart: true,
     onComplete: () => {
-      setGameState("QUESTION_ACTIVE");
+      setGameView("QUESTION_ACTIVE");
     },
   });
   const totalSec = Math.max(0, Math.ceil(millisecondsLeft / 1000));

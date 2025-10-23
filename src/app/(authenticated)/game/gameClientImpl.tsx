@@ -12,7 +12,7 @@ import { useLobbyStore } from "@/stores/lobbyStore";
 
 export function GameClientImpl() {
   const router = useRouter();
-  const gameState = useGameStore((s) => s.gameState);
+  const gameView = useGameStore((s) => s.gameView);
   const game = useGameStore((s) => s.game);
   const ticket = useLobbyStore((state) => state.ticket);
   const user = useMiniUser();
@@ -39,7 +39,7 @@ export function GameClientImpl() {
   }, [ticket, router]);
 
   const view = (() => {
-    switch (gameState) {
+    switch (gameView) {
       case "ROUND_COUNTDOWN":
         return <CountdownView />;
       case "QUESTION_ACTIVE":

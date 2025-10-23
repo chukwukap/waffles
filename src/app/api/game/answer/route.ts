@@ -4,19 +4,26 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const { farcasterId, gameId, questionId, selected, timeTaken } = await req.json();
+    const { farcasterId, gameId, questionId, selected, timeTaken } =
+      await req.json();
 
     if (!farcasterId || !gameId || !questionId || !selected)
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
 
-    const user = await prisma.user.findUnique({ where: { farcasterId: String(farcasterId) } });
-    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+    const user = await prisma.user.findUnique({
+      where: { farcasterId: String(farcasterId) },
+    });
+    if (!user)
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
 
     const question = await prisma.question.findUnique({
       where: { id: questionId },
     });
     if (!question)
-      return NextResponse.json({ error: "Question not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Question not found" },
+        { status: 404 }
+      );
 
     const correct = selected === question.correctAnswer;
     const points = correct ? calculateScore(timeTaken, 10) : 0;
@@ -26,8 +33,14 @@ export async function POST(req: Request) {
     const prismaAny = prisma as any;
     await prisma.$transaction([
       prismaAny.answer.upsert({
-        where: { userId_gameId_questionId: { userId: user.id, gameId, questionId } },
-        update: { selected, isCorrect: correct, timeTaken: Math.max(0, Number(timeTaken) || 0) },
+        where: {
+          userId_gameId_questionId: { userId: user.id, gameId, questionId },
+        },
+        update: {
+          selected,
+          isCorrect: correct,
+          timeTaken: Math.max(0, Number(timeTaken) || 0),
+        },
         create: {
           userId: user.id,
           gameId,
@@ -47,6 +60,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ correct, points });
   } catch (e) {
     console.error(e);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
