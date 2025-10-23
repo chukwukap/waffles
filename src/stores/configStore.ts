@@ -1,8 +1,7 @@
 import { create } from "zustand";
 
-type PrizePoolType = "FIXED" | "DYNAMIC";
-
 export interface BaseConfig {
+  ticketPrice: number;
   roundTimeLimit: number;
   questionsPerGame: number;
   scoreMultiplier: number;
@@ -10,9 +9,6 @@ export interface BaseConfig {
   maxPlayers: number;
   soundEnabled: boolean;
   animationEnabled: boolean;
-  prizePoolType: PrizePoolType;
-  prizePoolFixedAmount: number | null;
-  prizePoolDynamicTickets: number | null;
   timeBonusEnabled: boolean;
   difficultyScaling: number;
 }
