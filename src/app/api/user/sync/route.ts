@@ -33,7 +33,10 @@ export async function POST(req: Request) {
   } catch (err) {
     console.error("User sync failed", err);
     return NextResponse.json(
-      { success: false, error: "User sync failed" },
+      {
+        success: false,
+        error: "User sync failed",
+      },
       { status: 500 }
     );
   }

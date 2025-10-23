@@ -1,6 +1,3 @@
-// src/app/(authenticated)/lobby/invite-code/page.tsx
-// If a valid invite code is already present, skip this page.
-
 "use client";
 import LogoIcon from "@/components/logo/LogoIcon";
 import React, { useEffect, useState } from "react";

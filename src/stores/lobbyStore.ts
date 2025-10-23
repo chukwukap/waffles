@@ -1,5 +1,5 @@
 // ───────────────────────── src/stores/lobbyStore.ts ─────────────────────────
-// Fully fixed for Zustand v5 typing + persistence + single ticket per game.
+// Fully fixed for Zustand v5 typing + persistence + single ticket per game and fixed referral state per new API.
 
 "use client";
 
@@ -41,9 +41,9 @@ interface LobbyState {
   // Referral
   referralCode: string;
   referralStatus: ReferralStatus;
-  referralData?: ReferralData;
-  createReferral: (inviterId: number, farcasterId: number) => Promise<void>;
-  validateReferral: (code: string, farcasterId: number) => Promise<void>;
+  referralData: ReferralData | null;
+  createReferral: (fid: number) => Promise<void>;
+  validateReferral: (code: string, fid: number) => Promise<void>;
 
   // Stats
   stats: LobbyStats | null;
@@ -69,57 +69,50 @@ export const useLobbyStore = create<LobbyState>()(
         // ───────────────────────── REFERRAL ─────────────────────────
         referralCode: "",
         referralStatus: "idle",
-        referralData: undefined,
+        referralData: null,
 
-        // Note: createReferral kept as-is (hits /api/referral/create), adjust if not used
-
-        async createReferral(inviterId: number, farcasterId: number) {
+        async createReferral(fid: number) {
           set({ referralStatus: "validating" });
           try {
             const res = await fetch("/api/referral/create", {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "x-farcaster-id": farcasterId.toString(),
-              },
-              body: JSON.stringify({ inviterId }),
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ fid }),
             });
-            if (!res.ok) throw new Error("Failed to create referral");
-            const data: ReferralData = await res.json();
+            const data = await res.json();
+            if (!res.ok)
+              throw new Error(data.error || "Failed to create referral");
             set({
               referralCode: data.code,
-              referralData: data,
               referralStatus: "success",
+              referralData: data,
             });
-          } catch {
+          } catch (err) {
+            console.error(err);
             set({ referralStatus: "failed" });
           }
         },
 
-        async validateReferral(code: string, farcasterId: number) {
+        async validateReferral(code: string, fid: number) {
           set({ referralStatus: "validating" });
           try {
-            const res = await fetch("/api/referrals", {
+            const res = await fetch("/api/referral/validate", {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "x-farcaster-id": farcasterId.toString(),
-              },
-              body: JSON.stringify({ code }),
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ code, fid }),
             });
             const data = await res.json();
-            if (!res.ok || data.valid !== true) {
+            if (data.valid) {
+              set({
+                referralCode: code,
+                referralStatus: "success",
+                referralData: data.referral,
+              });
+            } else {
               set({ referralStatus: "failed" });
-              return;
             }
-            set({
-              referralStatus: "success",
-              referralCode: code,
-              // The /api/referrals POST does not return full referralData.
-              // For consistency, only set code here. Extend if backend returns more.
-              referralData: data.referral ?? { code },
-            });
-          } catch {
+          } catch (err) {
+            console.error(err);
             set({ referralStatus: "failed" });
           }
         },
@@ -137,7 +130,7 @@ export const useLobbyStore = create<LobbyState>()(
             console.error("fetchStats error:", e);
           }
         },
-        startCountdown(target) {
+        startCountdown(target: Date) {
           if (countdownInterval) clearInterval(countdownInterval);
           countdownInterval = setInterval(() => {
             const diff = target.getTime() - Date.now();
@@ -165,7 +158,7 @@ export const useLobbyStore = create<LobbyState>()(
         // ───────────────────────── TICKETS ─────────────────────────
         ticket: null,
         purchaseStatus: "idle",
-        async buyTicket(userId, gameId, amount) {
+        async buyTicket(userId: number, gameId: number, amount: number) {
           // 🧠 One-ticket-per-game rule
           const current = get().ticket;
           if (current && current.gameId === gameId) {
@@ -173,7 +166,6 @@ export const useLobbyStore = create<LobbyState>()(
             set({ purchaseStatus: "confirmed" });
             return;
           }
-
           set({ purchaseStatus: "pending" });
           try {
             const res = await fetch("/api/tickets/buy", {
@@ -199,7 +191,7 @@ export const useLobbyStore = create<LobbyState>()(
           }
         },
 
-        async confirmTicket(ticketId) {
+        async confirmTicket(ticketId: number) {
           try {
             const res = await fetch("/api/tickets/confirm", {
               method: "POST",

@@ -1,9 +1,6 @@
-// src/app/(authenticated)/lobby/buy/page.tsx
-// If a ticket was already purchased, skip buying and go to confirmation.
-
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import LogoIcon from "@/components/logo/LogoIcon";
 import { cn } from "@/lib/utils";
@@ -13,15 +10,22 @@ import Image from "next/image";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { SpotsLeft } from "./_components/SpotsLeft";
 import { useLobbyStore } from "@/stores/lobbyStore";
+import { useConfigStore } from "@/stores/configStore";
+import { useMiniUser } from "@/hooks/useMiniUser";
+import { useSendToken } from "@coinbase/onchainkit/minikit";
+import { env } from "@/lib/env";
+import { useGameStore } from "@/stores/gameStore";
 
 // ───────────────────────── CONSTANTS ─────────────────────────
-const TICKET_PRICE = 50;
-const GAME_ID = 1;
 
 export default function BuyWafflePage() {
   const router = useRouter();
-  const { buyTicket, purchaseStatus, ticket } = useLobbyStore();
-  const [isPurchasing, setIsPurchasing] = useState(false);
+  const byGameId = useConfigStore((state) => state.byGameId);
+  const { buyTicket, purchaseStatus, ticket, stats } = useLobbyStore();
+  const gameId = useGameStore((state) => state.gameId);
+
+  const user = useMiniUser();
+  const { sendTokenAsync } = useSendToken();
 
   // If already have a ticket, redirect to confirmation
   useEffect(() => {
@@ -30,19 +34,30 @@ export default function BuyWafflePage() {
     }
   }, [ticket, purchaseStatus, router]);
 
-  // Placeholder stats
-  const playerCount = 250;
-
   // ───────────────────────── HANDLER ─────────────────────────
   const handlePurchase = async () => {
-    if (isPurchasing) return;
-    setIsPurchasing(true);
-    await buyTicket(1, GAME_ID, TICKET_PRICE); // userId=1 placeholder
-    setIsPurchasing(false);
-
-    if (useLobbyStore.getState().purchaseStatus === "confirmed") {
-      router.push("/lobby/confirm");
+    if (!user.fid) {
+      console.error("User FID is not set");
+      return;
     }
+    if (!gameId) {
+      console.error("Game ID is not set");
+      return;
+    }
+    const price = byGameId[gameId]?.ticketPrice;
+    if (!price) {
+      console.error("Ticket price is not set");
+      return;
+    }
+    sendTokenAsync({
+      amount: (price * 10 ** 6).toString(),
+      recipientAddress: env.waffleMainAddress || "",
+    }).then(async () => {
+      await buyTicket(user.fid!, gameId, price);
+      if (purchaseStatus === "confirmed") {
+        router.replace("/lobby/confirm");
+      }
+    });
   };
 
   return (
@@ -81,10 +96,11 @@ export default function BuyWafflePage() {
 
         {/* BUY BUTTON */}
         <div className="w-full max-w-[400px] px-4">
-          <FancyBorderButton onClick={handlePurchase} disabled={isPurchasing}>
-            {isPurchasing || purchaseStatus === "pending"
-              ? "PROCESSING..."
-              : "BUY WAFFLE"}
+          <FancyBorderButton
+            onClick={handlePurchase}
+            disabled={purchaseStatus === "pending"}
+          >
+            {purchaseStatus === "pending" ? "PROCESSING..." : "BUY WAFFLE"}
           </FancyBorderButton>
         </div>
 
@@ -98,16 +114,18 @@ export default function BuyWafflePage() {
           <span className="text-xs font-bold ml-1">(20% BOOST!)</span>
         </button>
 
-        <SpotsLeft
-          current={playerCount}
-          total={300}
-          avatars={[
-            "/images/avatars/a.png",
-            "/images/avatars/b.png",
-            "/images/avatars/c.png",
-            "/images/avatars/d.png",
-          ]}
-        />
+        {gameId && byGameId[gameId] && (
+          <SpotsLeft
+            current={stats?.totalTickets || 0}
+            total={byGameId[gameId]!.maxPlayers}
+            avatars={(stats?.players ?? []).map(
+              (p) => p.pfpUrl || "/images/avatars/a.png"
+            )}
+            subtitle={`${stats?.totalTickets} / ${
+              byGameId[gameId]!.maxPlayers
+            }`}
+          />
+        )}
       </div>
 
       <BottomNav />
