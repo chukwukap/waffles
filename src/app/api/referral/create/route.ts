@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { z } from "zod";
 
 // Generate a code using modern crypto
-function generateCode(length = 4) {
+function generateCode(length = 6) {
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   const bytes = new Uint8Array(length);
   // Use crypto.getRandomValues for secure randomness
@@ -65,7 +65,7 @@ export async function POST(req: Request) {
     let code: string;
     let tries = 0;
     while (true) {
-      code = generateCode(4);
+      code = generateCode();
       const already = await prisma.referral.findUnique({ where: { code } });
       if (!already) break;
       tries++;

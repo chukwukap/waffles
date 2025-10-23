@@ -13,6 +13,7 @@ export default function ChatDrawer() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { messages, sendMessage } = useGameStore();
   const user = useMiniUser();
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -24,12 +25,14 @@ export default function ChatDrawer() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = newMessage.trim();
-    if (!trimmed || !user.fid) return;
+    if (!trimmed || !user?.fid || !user?.username) return;
+
     sendMessage(trimmed, {
       fid: user.fid,
       username: user.username,
       pfpUrl: user.pfpUrl,
     });
+
     setNewMessage("");
   };
 
@@ -87,44 +90,53 @@ export default function ChatDrawer() {
 
               {/* Messages */}
               <div className="flex flex-col items-start gap-3 sm:gap-4 pb-4 pt-6 px-4 flex-1 min-h-0 overflow-y-scroll scrollbar-none w-full">
-                {messages.map((msg, idx) => (
-                  <div
-                    key={msg.id}
-                    className="flex flex-col items-start gap-2 w-full"
-                    style={{ order: idx }}
-                  >
-                    <div className="flex flex-row items-center gap-1.5 sm:gap-2 min-h-5 mb-0.5">
-                      <div className="w-5 h-5 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center">
-                        {msg.avatarUrl ? (
-                          <Image
-                            src={msg.avatarUrl}
-                            alt={msg.username}
-                            width={20}
-                            height={20}
-                            className="w-5 h-5 object-cover"
-                          />
-                        ) : (
-                          <span className="text-gray-400 text-xs font-semibold">
-                            {msg.username?.[0]?.toUpperCase() ?? "•"}
-                          </span>
-                        )}
-                      </div>
-                      <span className="ml-1 font-brockmann font-medium text-[0.92rem] leading-[130%] tracking-[-0.03em] text-white">
-                        {msg.username}
-                      </span>
-                      <span className="mx-1 w-[0.28rem] h-[0.28rem] bg-[#D9D9D9] rounded-full inline-block" />
-                      <span className="font-brockmann font-medium text-[0.72rem] leading-[130%] tracking-[-0.03em] text-[#99A0AE]">
-                        {msg.time}
-                      </span>
-                    </div>
+                {messages.map((msg, idx) => {
+                  const username = msg.user?.name ?? "anon";
+                  const avatar = msg.user?.imageUrl ?? null;
+                  const time = new Date(msg.createdAt).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  });
 
-                    <div className="w-full bg-white/[0.10] border border-white/[0.03] rounded-[0px_0.75rem_0.75rem_0.75rem] px-4 py-3 flex flex-col justify-center">
-                      <p className="font-brockmann font-medium text-base leading-[130%] tracking-[-0.03em] text-white break-words">
-                        {msg.message}
-                      </p>
+                  return (
+                    <div
+                      key={msg.id}
+                      className="flex flex-col items-start gap-2 w-full"
+                      style={{ order: idx }}
+                    >
+                      <div className="flex flex-row items-center gap-1.5 sm:gap-2 min-h-5 mb-0.5">
+                        <div className="w-5 h-5 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center">
+                          {avatar ? (
+                            <Image
+                              src={avatar}
+                              alt={username}
+                              width={20}
+                              height={20}
+                              className="w-5 h-5 object-cover"
+                            />
+                          ) : (
+                            <span className="text-gray-400 text-xs font-semibold">
+                              {username?.[0]?.toUpperCase() ?? "•"}
+                            </span>
+                          )}
+                        </div>
+                        <span className="ml-1 font-brockmann font-medium text-[0.92rem] leading-[130%] tracking-[-0.03em] text-white">
+                          {username}
+                        </span>
+                        <span className="mx-1 w-[0.28rem] h-[0.28rem] bg-[#D9D9D9] rounded-full inline-block" />
+                        <span className="font-brockmann font-medium text-[0.72rem] leading-[130%] tracking-[-0.03em] text-[#99A0AE]">
+                          {time}
+                        </span>
+                      </div>
+
+                      <div className="w-full bg-white/[0.10] border border-white/[0.03] rounded-[0px_0.75rem_0.75rem_0.75rem] px-4 py-3 flex flex-col justify-center">
+                        <p className="font-brockmann font-medium text-base leading-[130%] tracking-[-0.03em] text-white break-words">
+                          {msg.message}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 <div ref={messagesEndRef} />
               </div>
 

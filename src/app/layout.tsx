@@ -1,13 +1,10 @@
-import DeviceGate from "@/components/DeviceGate";
 import "./globals.css";
 import { fontBody, fontDisplay, fontInput } from "@/lib/fonts";
 import "./globals.css";
 
-import { MinikitProvider } from "@/components/providers/MinikitProvider";
-import GlobalToaster from "@/components/ui/Toaster";
 import { Metadata } from "next";
 import { env } from "@/lib/env";
-import { OnboardingGate } from "@/components/onboarding/OnboardingGate";
+import { Providers } from "@/components/providers";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -41,12 +38,7 @@ export default function RootLayout({
       className={`${fontBody.variable} ${fontDisplay.variable} ${fontInput.variable}`}
     >
       <body className="text-foreground bg-figma noise">
-        <DeviceGate continueAnyway={process.env.NODE_ENV == "production"}>
-          <MinikitProvider>
-            <OnboardingGate>{children}</OnboardingGate>
-          </MinikitProvider>
-        </DeviceGate>
-        <GlobalToaster />
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

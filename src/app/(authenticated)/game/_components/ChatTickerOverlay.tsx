@@ -16,10 +16,10 @@ export default function ChatTickerOverlay({
   const items = useMemo(() => {
     const trimmed = messages.slice(-maxItems);
     return trimmed.map((m, i) => ({
-      id: `${i}-${m.username}-${m.message.slice(0, 6)}`,
-      username: m.username ?? "anon",
+      id: `${i}-${m.user.name}-${m.message.slice(0, 6)}`,
+      username: m.user.name ?? "anon",
       message: m.message ?? "",
-      avatar: m.avatarUrl as string | undefined,
+      avatar: m.user.imageUrl as string | undefined,
     }));
   }, [messages, maxItems]);
 

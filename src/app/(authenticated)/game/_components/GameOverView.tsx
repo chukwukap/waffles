@@ -5,8 +5,11 @@ import { PixelButton } from "@/components/buttons/PixelButton";
 import { useMiniUser } from "@/hooks/useMiniUser";
 
 export default function GameOverView() {
-  const { score, resetGame, fetchQuestions, gameId } = useGameStore();
+  const score = useGameStore((s) => s.score);
+  const resetGame = useGameStore((s) => s.resetGame);
+  const fetchActiveGame = useGameStore((s) => s.fetchActiveGame);
   const user = useMiniUser();
+
   return (
     <main className="flex flex-col items-center justify-center min-h-[100dvh] bg-figmaYay text-center space-y-6 px-6">
       {/* ───────────────────────── HEADER ───────────────────────── */}
@@ -29,14 +32,10 @@ export default function GameOverView() {
           borderColor="#FFC931"
           textColor="#151515"
           onClick={() => {
-            if (gameId && user.fid && user.username && user.pfpUrl) {
-              fetchQuestions(gameId, {
-                fid: user.fid,
-                username: user.username,
-                pfpUrl: user.pfpUrl,
-              });
+            if (user?.fid && user?.username && user?.pfpUrl) {
+              fetchActiveGame(); // reloads most recent active game
             } else {
-              console.error("No user found");
+              console.error("User info missing — cannot start new game");
             }
           }}
         >
