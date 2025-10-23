@@ -31,7 +31,9 @@ interface UseCountdownResult {
  * - Uses a fixed end timestamp to avoid drift across ticks.
  * - Supports either relative duration or absolute target time.
  */
-export function useCountdown(options: UseCountdownOptions = {}): UseCountdownResult {
+export function useCountdown(
+  options: UseCountdownOptions = {}
+): UseCountdownResult {
   const {
     durationSeconds,
     target,
@@ -51,10 +53,15 @@ export function useCountdown(options: UseCountdownOptions = {}): UseCountdownRes
     return 0; // inactive until started
   });
 
-  const [isRunning, setIsRunning] = useState<boolean>(Boolean(autoStart && (durationSeconds || target)));
+  const [isRunning, setIsRunning] = useState<boolean>(
+    Boolean(autoStart && (durationSeconds || target))
+  );
   const intervalRef = useRef<number | null>(null);
 
-  const millisecondsLeft = useMemo(() => Math.max(0, endAt - Date.now()), [endAt]);
+  const millisecondsLeft = useMemo(
+    () => Math.max(0, endAt - Date.now()),
+    [endAt]
+  );
   const secondsLeft = Math.ceil(millisecondsLeft / 1000);
 
   const clearTimer = useCallback(() => {
@@ -101,11 +108,15 @@ export function useCountdown(options: UseCountdownOptions = {}): UseCountdownRes
           : durationSeconds;
 
       if (typeof nextTarget !== "undefined") {
-        const ts = nextTarget instanceof Date ? nextTarget.getTime() : nextTarget;
+        const ts =
+          nextTarget instanceof Date ? nextTarget.getTime() : nextTarget;
         setEndAt(ts);
         setIsRunning(Boolean(autoStart));
         if (autoStart) {
-          intervalRef.current = window.setInterval(tick, Math.max(16, intervalMs));
+          intervalRef.current = window.setInterval(
+            tick,
+            Math.max(16, intervalMs)
+          );
         }
         return;
       }
@@ -114,7 +125,10 @@ export function useCountdown(options: UseCountdownOptions = {}): UseCountdownRes
         setEndAt(ts);
         setIsRunning(Boolean(autoStart));
         if (autoStart) {
-          intervalRef.current = window.setInterval(tick, Math.max(16, intervalMs));
+          intervalRef.current = window.setInterval(
+            tick,
+            Math.max(16, intervalMs)
+          );
         }
         return;
       }
@@ -132,7 +146,10 @@ export function useCountdown(options: UseCountdownOptions = {}): UseCountdownRes
       setEndAt(ts);
       setIsRunning(Boolean(autoStart));
       if (autoStart) {
-        intervalRef.current = window.setInterval(tick, Math.max(16, intervalMs));
+        intervalRef.current = window.setInterval(
+          tick,
+          Math.max(16, intervalMs)
+        );
       }
     },
     [autoStart, clearTimer, intervalMs, tick]
@@ -157,5 +174,3 @@ export function useCountdown(options: UseCountdownOptions = {}): UseCountdownRes
     setTarget,
   };
 }
-
-
