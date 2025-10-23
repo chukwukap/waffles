@@ -1,17 +1,10 @@
 // Past Games Section
 import { WaffleIcon, ZapIcon } from "@/components/icons";
+import type { GameHistory } from "@/stores/profileStore";
 import Link from "next/link";
 import React from "react";
 
-type Game = {
-  id: string;
-  name: string;
-  score: number | string;
-  winnings: number;
-  winningsColor?: "green" | "gray";
-};
-
-export function PastGames({ pastGames }: { pastGames: Game[] }) {
+export function GameHistory({ gameHistory }: { gameHistory: GameHistory[] }) {
   return (
     <section aria-labelledby="past-games-heading" className="w-full">
       <div className="flex items-center justify-between mb-3.5 font-semibold">
@@ -39,7 +32,7 @@ export function PastGames({ pastGames }: { pastGames: Game[] }) {
 
       {/* Show two items like the design; spacing scales with screen */}
       <ul className="space-y-2">
-        {pastGames.slice(0, 2).map((game) => (
+        {gameHistory.slice(0, 2).map((game) => (
           <li key={game.id}>
             <GameHistoryItem game={game} />
           </li>
@@ -49,7 +42,7 @@ export function PastGames({ pastGames }: { pastGames: Game[] }) {
   );
 }
 
-export const GameHistoryItem = ({ game }: { game: Game }) => {
+export const GameHistoryItem = ({ game }: { game: GameHistory }) => {
   const amount = "$" + game.winnings;
 
   return (

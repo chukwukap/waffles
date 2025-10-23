@@ -283,3 +283,43 @@
     0% calc(100% - 12px)
   );
 }
+
+/* ───────────────────────── Base Interaction Animations ───────────────────────── */
+
+/* Fade-in */
+.fade-in {
+  animation: fadeIn 0.6s ease forwards;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Slide-up */
+.slide-up {
+  animation: slideUp 0.5s ease forwards;
+}
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Subtle scale pop for tap feedback */
+.tap-pop {
+  transition: transform 0.12s ease;
+}
+.tap-pop:active {
+  transform: scale(0.96);
+}

@@ -1,22 +1,23 @@
+// ───────────────────────── /app/api/profile/stats/route.ts ─────────────────────────
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/db";
 
-const prisma = new PrismaClient();
-
-// GET /api/profile/stats
 export async function GET(request: Request) {
   const farcasterId = request.headers.get("x-farcaster-id");
   if (!farcasterId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
   const user = await prisma.user.findUnique({ where: { farcasterId } });
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
+
   const scores = await prisma.score.findMany({
     where: { userId: user.id },
     include: { game: true },
   });
+
   const totalGames = scores.length;
   if (totalGames === 0) {
     return NextResponse.json({
@@ -30,43 +31,49 @@ export async function GET(request: Request) {
       bestRank: 0,
     });
   }
+
   let wins = 0;
-  let bestRank = totalGames > 0 ? totalGames : 0;
   let totalWon = 0;
   let highestScore = 0;
-  // Sort scores by game endTime descending for streak
-  scores.sort((a, b) => {
-    const aTime = a.game.endTime?.getTime() || 0;
-    const bTime = b.game.endTime?.getTime() || 0;
+  let bestRank = Infinity;
+
+  // Sort by endTime (latest first)
+  const sortedScores = [...scores].sort((a, b) => {
+    const aTime = a.game.endTime?.getTime() ?? 0;
+    const bTime = b.game.endTime?.getTime() ?? 0;
     return bTime - aTime;
   });
+
+  // Preload all game results to calculate ranks efficiently
+  const gameIds = [...new Set(sortedScores.map((s) => s.gameId))];
+  const allGameScores = await prisma.score.findMany({
+    where: { gameId: { in: gameIds } },
+    select: { gameId: true, points: true },
+  });
+
+  // Compute stats
   let currentStreak = 0;
-  let streakCounting = false;
-  for (const s of scores) {
+  for (const s of sortedScores) {
     totalWon += s.points;
     highestScore = Math.max(highestScore, s.points);
-    // Calculate rank for this game
-    const countBetter = await prisma.score.count({
-      where: { gameId: s.gameId, points: { gt: s.points } },
-    });
-    const rank = countBetter + 1;
+
+    // Rank calculation
+    const rank =
+      allGameScores.filter((g) => g.gameId === s.gameId && g.points > s.points)
+        .length + 1;
     bestRank = Math.min(bestRank, rank);
-    if (!streakCounting) {
-      if (rank === 1) {
-        currentStreak = 1;
-        streakCounting = true;
-      }
+
+    if (rank === 1) {
+      wins++;
+      currentStreak++;
     } else {
-      if (rank === 1) {
-        currentStreak++;
-      } else {
-        break;
-      }
+      break;
     }
-    if (rank === 1) wins++;
   }
+
   const avgScore = totalWon / totalGames;
   const winRate = (wins / totalGames) * 100;
+
   return NextResponse.json({
     totalGames,
     wins,
@@ -75,6 +82,6 @@ export async function GET(request: Request) {
     highestScore,
     avgScore: Math.round(avgScore * 100) / 100,
     currentStreak,
-    bestRank,
+    bestRank: bestRank === Infinity ? 0 : bestRank,
   });
 }

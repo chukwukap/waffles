@@ -1,26 +1,31 @@
+// ───────────────────────── /app/api/profile/history/route.ts ─────────────────────────
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/db";
 
-const prisma = new PrismaClient();
-
-// GET /api/profile/history
 export async function GET(request: Request) {
   const farcasterId = request.headers.get("x-farcaster-id");
   if (!farcasterId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
   const user = await prisma.user.findUnique({ where: { farcasterId } });
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
+
   const scores = await prisma.score.findMany({
     where: { userId: user.id },
     include: { game: true },
-    orderBy: { game: { endTime: "asc" } },
+    orderBy: { game: { endTime: "desc" } },
   });
+
   const history = scores.map((s, index) => ({
-    round: `Round ${index + 1}`,
+    id: s.id,
+    name: s.game.title,
+    score: s.points,
     winnings: s.points,
+    winningsColor: s.points > 0 ? "green" : "gray",
   }));
+
   return NextResponse.json(history);
 }

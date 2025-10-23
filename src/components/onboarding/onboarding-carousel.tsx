@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { OnboardingSlide } from "./onboarding-slide";
-
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 
 interface Slide {
@@ -47,7 +46,6 @@ export function OnboardingCarousel({ onComplete }: OnboardingCarouselProps) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Slide content */}
       <div className="flex-1 flex items-center justify-center">
         <OnboardingSlide
           key={currentSlide}
@@ -57,7 +55,6 @@ export function OnboardingCarousel({ onComplete }: OnboardingCarouselProps) {
         />
       </div>
 
-      {/* Navigation buttons */}
       <div className="p-6 space-y-3">
         <FancyBorderButton onClick={handleNext} className="w-full">
           {currentSlide === 0 ? "Next" : "Let's Go"}
@@ -66,3 +63,5 @@ export function OnboardingCarousel({ onComplete }: OnboardingCarouselProps) {
     </div>
   );
 }
+
+

@@ -38,14 +38,14 @@ function useOptionHotkeys(
 
 export default function QuestionView() {
   // ── Store selectors
-  const gameState = useGameStore((s) => s.gameState);
   const currentQuestion = useGameStore((s) => s.currentQuestion);
   const currentQuestionIndex = useGameStore((s) => s.currentQuestionIndex);
   const totalQuestions = useGameStore((s) => s.totalQuestions);
   const questionTimer = useGameStore((s) => s.questionTimer);
-  const roundTimer = useGameStore((s) => s.roundTimer);
   const selectedAnswer = useGameStore((s) => s.selectedAnswer);
   const selectAnswer = useGameStore((s) => s.selectAnswer);
+  const gameState = useGameStore((s) => s.gameState);
+  const roundTimer = useGameStore((s) => s.roundTimer);
 
   const locked = gameState !== "QUESTION_ACTIVE";
   const onPick = React.useCallback(

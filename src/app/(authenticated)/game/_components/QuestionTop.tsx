@@ -18,8 +18,8 @@ function mmss(total: number) {
 export default function QuestionTop() {
   const currentQuestionIndex = useGameStore((s) => s.currentQuestionIndex);
   const totalQuestions = useGameStore((s) => s.totalQuestions);
-  const roundTimer = useGameStore((s) => s.roundTimer);
-  const questionTimer = useGameStore((s) => s.questionTimer);
+  const roundTimer = useGameStore((s) => s.timeLeft);
+  const questionTimer = useGameStore((s) => s.timeLeft);
   const currentQuestion = useGameStore((s) => s.currentQuestion);
 
   const qCount = useMemo(() => {
