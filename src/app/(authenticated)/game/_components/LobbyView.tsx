@@ -4,9 +4,20 @@ import { Clock } from "@/components/icons";
 import { AvatarDiamond } from "./AvatarDiamond";
 import ChatDrawer from "./ChatDrawer";
 import ChatTickerOverlay from "./ChatTickerOverlay";
+import { useGameStore } from "@/stores/gameStore";
+import { useLobbyStore } from "@/stores/lobbyStore";
+import { useCountdown } from "@/hooks/useCountdown";
 
 export default function LobbyView() {
-  const players = 125;
+  const game = useGameStore((state) => state.game);
+  const ticket = useLobbyStore((state) => state.ticket);
+
+  // Countdown to game start time if available
+  const startTimeMs = game?.startTime ? new Date(game.startTime).getTime() : 0;
+  const { millisecondsLeft } = useCountdown({ target: startTimeMs, autoStart: true });
+  const totalSec = Math.max(0, Math.ceil(millisecondsLeft / 1000));
+  const minutes = Math.floor(totalSec / 60);
+  const seconds = totalSec % 60;
 
   return (
     /**
@@ -42,7 +53,7 @@ export default function LobbyView() {
           {/* Timer pill */}
           <div className="order-1 box-border z-0 flex h-10 min-w-[64px] w-[clamp(72px,20vw,110px)] max-w-[140px] flex-none flex-row items-center justify-center rounded-full border-2 border-[var(--color-neon-pink)] bg-transparent px-4 py-1 sm:px-5 sm:py-2">
             <span className="px-0 flex items-end justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%] text-[var(--color-neon-pink)]">
-              24M 03s
+              {minutes}M {String(seconds).padStart(2, "0")}s
             </span>
           </div>
         </div>
@@ -105,7 +116,7 @@ export default function LobbyView() {
 
         {/* joined count */}
         <p className="mt-1 min-w-[120px] text-center font-display font-medium tracking-[-0.03em] text-muted text-[clamp(13px,4vw,16px)] leading-[130%]">
-          {players} players have joined
+          {ticket?.id} players have joined
         </p>
       </section>
 

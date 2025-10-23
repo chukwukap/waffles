@@ -16,7 +16,10 @@ export default function RoundCountdownStage() {
     durationSeconds: totalSeconds,
     autoStart: gameState === "ROUND_COUNTDOWN",
   });
-  const ratio = totalSeconds > 0 ? Math.max(0, Math.min(1, millisecondsLeft / (totalSeconds * 1000))) : 0;
+  const ratio =
+    totalSeconds > 0
+      ? Math.max(0, Math.min(1, millisecondsLeft / (totalSeconds * 1000)))
+      : 0;
 
   return (
     <div>
@@ -34,10 +37,7 @@ export default function RoundCountdownStage() {
         </h1>
 
         <div className="grid place-items-center">
-          <CountdownCircle
-            ratio={ratio}
-            total={totalSeconds}
-          />
+          <CountdownCircle ratio={ratio} total={totalSeconds} />
         </div>
 
         <p className="mt-10 text-center text-muted text-lg font-display">
