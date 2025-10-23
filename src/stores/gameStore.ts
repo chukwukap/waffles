@@ -10,11 +10,16 @@ import { Prisma } from "@prisma/client";
 
 export type ChatWithUser = Prisma.ChatGetPayload<{
   include: {
-    user: true;
+    user: {
+      select: {
+        name: true;
+        imageUrl: true;
+      };
+    };
   };
 }>;
 
-export type GameState =
+export type GameView =
   | "LOBBY"
   | "ROUND_COUNTDOWN"
   | "QUESTION_ACTIVE"
@@ -27,8 +32,7 @@ export interface GameStore {
   game: GameWithConfigAndQuestions | null;
   currentQuestionIndex: number;
   round: number;
-  score: number;
-  gameState: GameState;
+  gameView: GameView;
   selectedAnswer: string | null;
 
   // Chat
@@ -41,9 +45,11 @@ export interface GameStore {
 
   // Game flow
   fetchActiveGame: () => Promise<void>;
+  fetchQuestions: () => Promise<void>;
+  submitAnswer: (params: { farcasterId: number; selected: string; timeTaken: number }) => Promise<{ correct: boolean; points: number } | null>;
   setGame: (game: GameWithConfigAndQuestions) => void;
-  setGameState: (gameState: GameState) => void;
-  selectAnswer: (answerId: string) => void;
+  setGameView: (gameView: GameView) => void;
+  selectAnswer: (answer: string) => void;
   advanceToNextQuestion: () => void;
   resetGame: () => void;
   gameOver: () => void;
@@ -59,8 +65,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   game: null,
   currentQuestionIndex: 0,
   round: 1,
-  score: 0,
-  gameState: "LOBBY",
+  gameView: "LOBBY",
   selectedAnswer: null,
   messages: [],
   // _chatChannel: null,
@@ -89,14 +94,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       gameId: game.id,
       userId: 0, // Note: Not used in backend, but required by Prisma,
       user: {
-        id: 0,
         name: user.username,
         imageUrl: user.pfpUrl,
-        createdAt: new Date(),
-        email: null,
-        farcasterId: String(user.fid),
-        wallet: null,
-        updatedAt: new Date(),
       },
       message: text,
       createdAt: new Date(),
@@ -186,8 +185,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         game: data as GameWithConfigAndQuestions,
         currentQuestionIndex: 0,
         round: 1,
-        score: 0,
-        gameState: "LOBBY",
+        gameView: "LOBBY",
         selectedAnswer: null,
       });
     } catch (err) {
@@ -195,40 +193,75 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
   },
 
+  // ───────── Questions ─────────
+  fetchQuestions: async () => {
+    const { game } = get();
+    if (!game?.id) return;
+    try {
+      const res = await fetch(`/api/game/${game.id}/questions`);
+      if (!res.ok) throw new Error("Failed to fetch questions");
+      const data = await res.json();
+      set({
+        game: { ...game, questions: data.questions },
+        currentQuestionIndex: 0,
+      });
+    } catch (e) {
+      console.error("fetchQuestions error:", e);
+    }
+  },
+
+  // ───────── Submit Answer ─────────
+  submitAnswer: async ({ farcasterId, selected, timeTaken }) => {
+    const { game, currentQuestionIndex } = get();
+    const q = game?.questions?.[currentQuestionIndex];
+    if (!game?.id || !q) return null;
+    try {
+      const res = await fetch(`/api/game/answer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          farcasterId,
+          gameId: game.id,
+          questionId: q.id,
+          selected,
+          timeTaken,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to submit answer");
+      return (await res.json()) as { correct: boolean; points: number };
+    } catch (e) {
+      console.error("submitAnswer error:", e);
+      return null;
+    }
+  },
+
   // ───────── Set Game (SSR hydration) ─────────
   setGame: (game) => {
     set({
       game,
-      currentQuestionIndex: 0,
-      round: 1,
-      score: 0,
-      gameState: "LOBBY",
-      selectedAnswer: null,
     });
   },
 
-  setGameState: (gameState: GameState) => {
-    set({ gameState });
+  setGameView: (gameView: GameView) => {
+    set({ gameView });
   },
 
-  selectAnswer: (answerId) => {
+  selectAnswer: (answer: string) => {
     const { currentQuestionIndex, game } = get();
     const q = game?.questions?.[currentQuestionIndex];
     if (!q) return;
 
-    const isCorrect = q.correctAnswer === answerId;
+    const isCorrect = q.correctAnswer === answer;
 
     set({
-      selectedAnswer: answerId,
-      gameState: "ANSWER_SUBMITTED",
+      selectedAnswer: answer,
+      gameView: "ANSWER_SUBMITTED",
     });
 
     if (game?.config?.soundEnabled) {
       SoundManager.play("click");
       SoundManager.play(isCorrect ? "correct" : "wrong");
     }
-
-    // if (earned > 0) set({ score: score + earned });
 
     setTimeout(() => {
       get().advanceToNextQuestion();
@@ -256,9 +289,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       game: null,
       currentQuestionIndex: 0,
       round: 1,
-      score: 0,
       selectedAnswer: null,
-      gameState: "LOBBY",
+      gameView: "LOBBY",
       messages: [],
       // _chatChannel: null,
     });
@@ -266,7 +298,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   gameOver: () => {
     // get().unsubscribeFromChat();
-    set({ gameState: "GAME_OVER" });
+    set({ gameView: "GAME_OVER" });
     SoundManager.play("gameOver");
   },
 }));

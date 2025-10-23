@@ -21,6 +21,7 @@ model User {
   tickets     Ticket[]
   scores      Score[]
   chats       Chat[]
+  answers     Answer[]
 }
 
 model Referral {
@@ -48,6 +49,7 @@ model Game {
   scores      Score[]
   chats       Chat[]
   config      GameConfig?
+  answers     Answer[]
 }
 
 model GameConfig {
@@ -73,6 +75,7 @@ model Question {
   options       String[] // multiple-choice options
   correctAnswer String
   createdAt     DateTime @default(now())
+  answers       Answer[]
 
   @@index([gameId])
 }
@@ -113,4 +116,20 @@ model Chat {
   gameId    Int
   message   String
   createdAt DateTime @default(now())
+}
+
+model Answer {
+  id         Int      @id @default(autoincrement())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     Int
+  game       Game     @relation(fields: [gameId], references: [id])
+  gameId     Int
+  question   Question @relation(fields: [questionId], references: [id])
+  questionId Int
+  selected   String
+  isCorrect  Boolean
+  timeTaken  Int // time in seconds or ms, as appropriate
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, gameId, questionId]) // Only one answer per user per question per game
 }
