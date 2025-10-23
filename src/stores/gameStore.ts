@@ -34,6 +34,7 @@ export interface GameStore {
   round: number;
   gameView: GameView;
   selectedAnswer: string | null;
+  roundBoundaries: number[];
 
   // Chat
   messages: ChatWithUser[];
@@ -72,6 +73,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   gameView: "LOBBY",
   selectedAnswer: null,
   messages: [],
+  roundBoundaries: [],
   // _chatChannel: null,
 
   // ───────── Chat Logic ─────────
@@ -185,12 +187,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const data = await res.json();
       console.log("fetchActiveGame data:", data);
 
+      const game = data as GameWithConfigAndQuestions;
       set({
-        game: data as GameWithConfigAndQuestions,
+        game,
         currentQuestionIndex: 0,
         round: 1,
         gameView: "LOBBY",
         selectedAnswer: null,
+        roundBoundaries: computeRoundBoundaries(game?.questions?.length ?? 0),
       });
     } catch (err) {
       console.error("fetchActiveGame error:", err);
@@ -205,9 +209,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const res = await fetch(`/api/game/${game.id}/questions`);
       if (!res.ok) throw new Error("Failed to fetch questions");
       const data = await res.json();
+      const updated = { ...game, questions: data.questions } as GameWithConfigAndQuestions;
       set({
-        game: { ...game, questions: data.questions },
+        game: updated,
         currentQuestionIndex: 0,
+        round: 1,
+        roundBoundaries: computeRoundBoundaries(updated.questions?.length ?? 0),
       });
     } catch (e) {
       console.error("fetchQuestions error:", e);
@@ -243,6 +250,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setGame: (game) => {
     set({
       game,
+      round: 1,
+      currentQuestionIndex: 0,
+      roundBoundaries: computeRoundBoundaries(game?.questions?.length ?? 0),
     });
   },
 
@@ -273,17 +283,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   advanceToNextQuestion: () => {
-    const { currentQuestionIndex, game } = get();
+    const { currentQuestionIndex, game, round, roundBoundaries } = get();
     const total = game?.questions?.length ?? 0;
-
-    if (currentQuestionIndex < total - 1) {
-      set({
-        currentQuestionIndex: currentQuestionIndex + 1,
-        selectedAnswer: null,
-      });
-      SoundManager.play("nextQuestion");
-    } else {
+    const nextIndex = currentQuestionIndex + 1;
+    if (nextIndex >= total) {
       get().gameOver();
+      return;
+    }
+
+    const currentRoundEnd = roundBoundaries[(round - 1) as number] ?? (total - 1);
+    set({ currentQuestionIndex: nextIndex, selectedAnswer: null });
+    SoundManager.play("nextQuestion");
+    if (nextIndex > currentRoundEnd) {
+      set({ round: round + 1, gameView: "ROUND_COUNTDOWN" });
+      setTimeout(() => {
+        set({ gameView: "QUESTION_ACTIVE" });
+      }, 3000);
+    } else {
+      set({ gameView: "QUESTION_ACTIVE" });
     }
   },
 
@@ -296,6 +313,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       selectedAnswer: null,
       gameView: "LOBBY",
       messages: [],
+      roundBoundaries: [],
       // _chatChannel: null,
     });
   },
@@ -306,3 +324,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
     SoundManager.play("gameOver");
   },
 }));
+
+// Split questions into 3 roughly equal rounds
+function computeRoundBoundaries(total: number): number[] {
+  if (total <= 0) return [];
+  const per = Math.ceil(total / 3);
+  const r1End = Math.min(total - 1, per - 1);
+  const r2End = Math.min(total - 1, r1End + per);
+  const r3End = total - 1;
+  return [r1End, r2End, r3End];
+}

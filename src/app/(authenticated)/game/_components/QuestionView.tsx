@@ -56,7 +56,14 @@ export default function QuestionView() {
         }
       }
     },
-    [locked, selectAnswer, submitAnswer, user.fid, game?.config?.roundTimeLimit, questionTimer]
+    [
+      locked,
+      selectAnswer,
+      submitAnswer,
+      user.fid,
+      game?.config?.roundTimeLimit,
+      questionTimer,
+    ]
   );
 
   // ── HUD bits for the lower UI
@@ -167,7 +174,10 @@ export default function QuestionView() {
         )}
       >
         <Image
-          src={game?.questions?.[currentQuestionIndex]?.imageUrl || "/images/avatars/a.png"}
+          src={
+            game?.questions?.[currentQuestionIndex]?.imageUrl ||
+            "/images/avatars/a.png"
+          }
           alt="Question image"
           width={1120}
           height={1120}
