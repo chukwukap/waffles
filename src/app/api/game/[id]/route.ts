@@ -1,11 +1,8 @@
-import { NextResponse, type NextRequest } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/db";
+import { NextResponse } from "next/server";
 
-const prisma = new PrismaClient();
-
-// GET /api/games/[id]
 export async function GET(
-  request: NextRequest,
+  _req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await context.params;

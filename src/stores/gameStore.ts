@@ -46,7 +46,11 @@ export interface GameStore {
   // Game flow
   fetchActiveGame: () => Promise<void>;
   fetchQuestions: () => Promise<void>;
-  submitAnswer: (params: { farcasterId: number; selected: string; timeTaken: number }) => Promise<{ correct: boolean; points: number } | null>;
+  submitAnswer: (params: {
+    farcasterId: number;
+    selected: string;
+    timeTaken: number;
+  }) => Promise<{ correct: boolean; points: number } | null>;
   setGame: (game: GameWithConfigAndQuestions) => void;
   setGameView: (gameView: GameView) => void;
   selectAnswer: (answer: string) => void;

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { PixelButton } from "@/components/buttons/PixelButton";
 import { useGameStore } from "@/stores/gameStore";
+import { useMiniUser } from "@/hooks/useMiniUser";
 
 /** Shared cap so the image and buttons are exactly the same width */
 const CONTENT_CAP = "max-w-[560px]";
@@ -23,14 +24,39 @@ export default function QuestionView() {
   const currentQuestionIndex = useGameStore((s) => s.currentQuestionIndex);
   const selectedAnswer = useGameStore((s) => s.selectedAnswer);
   const selectAnswer = useGameStore((s) => s.selectAnswer);
-  const gameState = useGameStore((s) => s.gameState);
+  const gameView = useGameStore((s) => s.gameView);
+  const submitAnswer = useGameStore((s) => s.submitAnswer);
+  const fetchQuestions = useGameStore((s) => s.fetchQuestions);
+  const user = useMiniUser();
 
-  const locked = gameState !== "QUESTION_ACTIVE";
+  const locked = gameView !== "QUESTION_ACTIVE";
+  // Define timers early so they are in scope for onPick deps
+  const [questionTimer, setQuestionTimer] = React.useState(
+    game?.config?.roundTimeLimit ?? 0
+  );
+  const [roundTimer, setRoundTimer] = React.useState(
+    game?.config?.roundTimeLimit ?? 0
+  );
+
   const onPick = React.useCallback(
-    (val: string) => {
-      if (!locked) selectAnswer(val);
+    async (val: string) => {
+      if (locked) return;
+      selectAnswer(val);
+      const elapsed = (game?.config?.roundTimeLimit ?? 0) - questionTimer;
+      const timeTaken = Math.max(0, elapsed);
+      if (user.fid) {
+        try {
+          await submitAnswer({
+            farcasterId: user.fid,
+            selected: val,
+            timeTaken,
+          });
+        } catch (e) {
+          console.error("submitAnswer failed", e);
+        }
+      }
     },
-    [locked, selectAnswer]
+    [locked, selectAnswer, submitAnswer, user.fid, game?.config?.roundTimeLimit, questionTimer]
   );
 
   // ── HUD bits for the lower UI
@@ -40,26 +66,28 @@ export default function QuestionView() {
   if (!maxTime) throw new Error("Round time limit not set"); // safety
 
   // Two timers: one for question, one for "locked" state
-  const [questionTimer, setQuestionTimer] = React.useState(maxTime);
-  const [roundTimer, setRoundTimer] = React.useState(maxTime);
+  React.useEffect(() => {
+    setQuestionTimer(maxTime);
+    setRoundTimer(maxTime);
+  }, [maxTime]);
 
   // When question/answer state changes, reset timers accordingly
   React.useEffect(() => {
-    if (gameState === "QUESTION_ACTIVE") {
+    if (gameView === "QUESTION_ACTIVE") {
       setQuestionTimer(maxTime);
-    } else if (gameState === "ANSWER_SUBMITTED") {
+    } else if (gameView === "ANSWER_SUBMITTED") {
       setRoundTimer(maxTime);
     }
-  }, [gameState, maxTime]);
+  }, [gameView, maxTime]);
 
   // Tick down appropriate timer
   React.useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
-    if (gameState === "QUESTION_ACTIVE") {
+    if (gameView === "QUESTION_ACTIVE") {
       interval = setInterval(() => {
         setQuestionTimer((t) => Math.max(0, t - 1));
       }, 1000);
-    } else if (gameState === "ANSWER_SUBMITTED") {
+    } else if (gameView === "ANSWER_SUBMITTED") {
       interval = setInterval(() => {
         setRoundTimer((t) => Math.max(0, t - 1));
       }, 1000);
@@ -67,11 +95,18 @@ export default function QuestionView() {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [gameState]);
+  }, [gameView]);
+
+  // Ensure questions are loaded if not present
+  React.useEffect(() => {
+    if (game?.id && (!game.questions || game.questions.length === 0)) {
+      fetchQuestions();
+    }
+  }, [game?.id, game?.questions?.length, fetchQuestions]);
 
   // Render the correct time and progress
   const time =
-    gameState === "QUESTION_ACTIVE"
+    gameView === "QUESTION_ACTIVE"
       ? Math.max(0, questionTimer)
       : Math.max(0, roundTimer);
 
@@ -79,7 +114,7 @@ export default function QuestionView() {
     0,
     Math.min(
       1,
-      (gameState === "QUESTION_ACTIVE" ? questionTimer : roundTimer) / maxTime
+      (gameView === "QUESTION_ACTIVE" ? questionTimer : roundTimer) / maxTime
     )
   );
 
@@ -105,7 +140,7 @@ export default function QuestionView() {
             aria-valuemin={0}
             aria-valuemax={maxTime}
             aria-valuenow={
-              gameState === "QUESTION_ACTIVE" ? questionTimer : roundTimer
+              gameView === "QUESTION_ACTIVE" ? questionTimer : roundTimer
             }
           >
             <div
@@ -132,8 +167,7 @@ export default function QuestionView() {
         )}
       >
         <Image
-          // src={game?.questions?.[currentQuestionIndex]?.imageUrl}
-          src="/images/avatars/a.png"
+          src={game?.questions?.[currentQuestionIndex]?.imageUrl || "/images/avatars/a.png"}
           alt="Question image"
           width={1120}
           height={1120}
@@ -182,7 +216,7 @@ export default function QuestionView() {
         className={cn(
           "mx-auto mt-6 text-center text-sm text-muted transition-opacity md:text-base",
           CONTENT_CAP,
-          gameState === "ANSWER_SUBMITTED" ? "opacity-100" : "opacity-0"
+          gameView === "ANSWER_SUBMITTED" ? "opacity-100" : "opacity-0"
         )}
         aria-live="polite"
       >
