@@ -11,33 +11,26 @@ import { useMiniUser } from "@/hooks/useMiniUser";
 
 export default function InviteCodePage() {
   const router = useRouter();
-  const {
-    referralCode,
-    validateReferral,
-    referralData,
-    referralStatus: status,
-    ticket, // added to check if ticket already exists
-  } = useLobbyStore();
+
+  const validateReferral = useLobbyStore((state) => state.validateReferral);
+  const referralData = useLobbyStore((state) => state.referralData);
+  const ticket = useLobbyStore((state) => state.ticket);
   const user = useMiniUser();
+
   // If invite code is already valid, skip to Buy or directly into the game
   useEffect(() => {
-    if (status === "success") {
-      if (ticket) {
-        // already have ticket: go straight into the game
-        router.replace("/game");
-      } else {
-        // have code but no ticket: go to buy page
-        router.replace("/lobby/buy");
-      }
+    if (ticket) {
+      // already have ticket: go straight into the game
+      router.replace("/game");
     }
-  }, [status, ticket, router]);
+  }, [ticket, router]);
 
-  const [inputCode, setInputCode] = useState(referralCode || "");
+  const [inputCode, setInputCode] = useState(referralData?.code || "");
   const [error, setError] = useState<string | null>(null);
 
   // Debounced code validation as user types
   useEffect(() => {
-    if (inputCode.trim().length < 4 || !user.fid) {
+    if (inputCode.trim().length < 6 || !user.fid) {
       setError(null);
       return;
     }
@@ -47,9 +40,9 @@ export default function InviteCodePage() {
           console.error("User FID is null");
           return;
         }
-        await validateReferral(inputCode, user.fid);
+        await validateReferral(inputCode, user.fid.toString());
       } catch (err) {
-        console.log(err);
+        console.error(err);
         setError("Validation failed");
       }
     }, 500);
@@ -59,18 +52,18 @@ export default function InviteCodePage() {
   // On form submit: if code is valid, go to buy page
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputCode.trim() || inputCode.trim().length !== 4) return;
+    if (!inputCode.trim() || inputCode.trim().length !== 6) return;
     if (!user.fid) {
       console.error("User FID is null");
       return;
     }
-    if (status !== "success") {
+    if (!ticket) {
       if (!user.fid) {
         console.error("User FID is null");
         return;
       }
-      await validateReferral(inputCode, user.fid);
-      if (useLobbyStore.getState().referralStatus !== "success") {
+      await validateReferral(inputCode, user.fid.toString());
+      if (!ticket) {
         setError("Invalid code");
         return;
       }
@@ -121,11 +114,11 @@ export default function InviteCodePage() {
             value={inputCode}
             onChange={(e) => setInputCode(e.target.value.toUpperCase())}
             placeholder="INVITE CODE"
-            maxLength={4}
+            maxLength={6}
             autoFocus
           />
 
-          <FancyBorderButton disabled={inputCode.trim().length !== 4}>
+          <FancyBorderButton disabled={inputCode.trim().length !== 6}>
             GET IN
           </FancyBorderButton>
 

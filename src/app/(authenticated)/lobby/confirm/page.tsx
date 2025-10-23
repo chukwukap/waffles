@@ -9,15 +9,16 @@ import { useLobbyStore } from "@/stores/lobbyStore";
 
 export default function ConfirmPage() {
   const router = useRouter();
-  const { ticket, purchaseStatus } = useLobbyStore();
+  const ticket = useLobbyStore((state) => state.ticket);
+
   const shareButtonRef = useRef<HTMLButtonElement | null>(null);
 
   // Redirect if no ticket
   useEffect(() => {
-    if (!ticket || purchaseStatus !== "confirmed") {
+    if (!ticket) {
       router.replace("/lobby/buy");
     }
-  }, [ticket, purchaseStatus, router]);
+  }, [ticket, router]);
 
   // Autofocus share
   useEffect(() => {

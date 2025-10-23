@@ -1,65 +1,111 @@
 // /prisma/seed.ts
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
+// $> pnpm prisma db seed
 
 async function main() {
-  // Seed Game 1 with two questions
+  // 1. USERS
+  const testUser = await prisma.user.upsert({
+    where: { email: "test@example.com" },
+    update: {},
+    create: {
+      name: "Test User",
+      email: "test@example.com",
+      farcasterId: "123",
+      imageUrl: "https://picsum.photos/100?test",
+      wallet: "0xTest0000000000000000000000000000000001234567",
+    },
+  });
+
+  // 3. GAMES
   const game1 = await prisma.game.upsert({
     where: { id: 1 },
     update: {},
     create: {
-      name: "Trivia Time",
-      description: "A fun trivia game",
+      name: "Test Game",
+      description: "A fun test game",
+      startTime: new Date(),
       questions: {
         create: [
           {
-            text: "What is 2 + 2?",
-            options: ["3", "4", "5", "6"],
-            correctAnswer: "4",
-            imageUrl: "https://picsum.photos/200/300",
+            text: "Which movie is this scene from?",
+            options: ["The Matrix", "Inception", "Pulp Fiction", "Fight Club"],
+            correctAnswer: "The Matrix",
+            imageUrl: "https://picsum.photos/200/300?matrix-pose",
             createdAt: new Date(),
           },
           {
-            text: "What is the capital of France?",
-            options: ["Berlin", "London", "Paris", "Rome"],
-            correctAnswer: "Paris",
-            imageUrl: "https://picsum.photos/200/300",
+            text: "Name this crypto event.",
+            options: [
+              "Mt. Gox Collapse",
+              "Coinbase IPO",
+              "Ethereum Merge",
+              "Dogecoin Surge",
+            ],
+            correctAnswer: "Coinbase IPO",
+            imageUrl: "https://picsum.photos/200/300?coinbase-ipo",
+            createdAt: new Date(),
+          },
+          {
+            text: "Which film is this dream scene?",
+            options: ["Inception", "Blade Runner", "Tenet", "The Prestige"],
+            correctAnswer: "Inception",
+            imageUrl: "https://picsum.photos/200/300?inception-dream",
+            createdAt: new Date(),
+          },
+          {
+            text: "Which event is this NFT launch?",
+            options: [
+              "CryptoPunks",
+              "Bored Ape Yacht Club",
+              "Doodles",
+              "Cool Cats",
+            ],
+            correctAnswer: "Bored Ape Yacht Club",
+            imageUrl: "https://picsum.photos/200/300?bayc",
+            createdAt: new Date(),
+          },
+          {
+            text: "Which movie is this force scene?",
+            options: [
+              "Star Wars",
+              "Star Trek",
+              "The Lord of the Rings",
+              "Avatar",
+            ],
+            correctAnswer: "Star Wars",
+            imageUrl: "https://picsum.photos/200/300?star-wars-force",
+            createdAt: new Date(),
+          },
+          {
+            text: "Which event is this crypto crash?",
+            options: [
+              "Mt. Gox Collapse",
+              "Terra Luna Crash",
+              "Silk Road Bust",
+              "Bitfinex Hack",
+            ],
+            correctAnswer: "Mt. Gox Collapse",
+            imageUrl: "https://picsum.photos/200/300?mtgox-collapse",
             createdAt: new Date(),
           },
         ],
       },
-    },
-  });
-
-  // Seed Game 2 with two questions
-  const game2 = await prisma.game.upsert({
-    where: { id: 2 },
-    update: {},
-    create: {
-      name: "Math Marathon",
-      description: "Test your math skills",
-      questions: {
-        create: [
-          {
-            text: "What is 10 * 10?",
-            options: ["100", "90", "110", "10"],
-            correctAnswer: "100",
-            imageUrl: "https://picsum.photos/200/300",
-            createdAt: new Date(),
-          },
-          {
-            text: "What is the square root of 16?",
-            options: ["2", "3", "4", "5"],
-            correctAnswer: "4",
-            imageUrl: "https://picsum.photos/200/300",
-            createdAt: new Date(),
-          },
-        ],
+      config: {
+        create: {
+          ticketPrice: 50,
+          roundTimeLimit: 15,
+          questionsPerGame: 6,
+          scoreMultiplier: 1.0,
+          scorePenalty: 0,
+          maxPlayers: 200,
+          soundEnabled: true,
+        },
       },
     },
   });
 
-  console.log(`Seeded games: ${game1.name}, ${game2.name}`);
+  console.log(`Seeded users: ${testUser.name}\nSeeded games: ${game1.name}`);
 }
 
 main()

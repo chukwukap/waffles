@@ -10,29 +10,25 @@ import Image from "next/image";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { SpotsLeft } from "./_components/SpotsLeft";
 import { useLobbyStore } from "@/stores/lobbyStore";
-import { useConfigStore } from "@/stores/configStore";
 import { useMiniUser } from "@/hooks/useMiniUser";
-import { useSendToken } from "@coinbase/onchainkit/minikit";
-import { env } from "@/lib/env";
 import { useGameStore } from "@/stores/gameStore";
 
 // ───────────────────────── CONSTANTS ─────────────────────────
 
 export default function BuyWafflePage() {
   const router = useRouter();
-  const byGameId = useConfigStore((state) => state.byGameId);
-  const { buyTicket, purchaseStatus, ticket, stats } = useLobbyStore();
-  const gameId = useGameStore((state) => state.gameId);
-
+  const game = useGameStore((state) => state.game);
   const user = useMiniUser();
-  const { sendTokenAsync } = useSendToken();
+  const buyTicket = useLobbyStore((state) => state.buyTicket);
+  const ticket = useLobbyStore((state) => state.ticket);
+  const stats = useLobbyStore((state) => state.stats);
 
   // If already have a ticket, redirect to confirmation
   useEffect(() => {
-    if (ticket && purchaseStatus === "confirmed") {
-      router.replace("/lobby/confirm");
+    if (ticket) {
+      router.replace("/game");
     }
-  }, [ticket, purchaseStatus, router]);
+  }, [ticket, router]);
 
   // ───────────────────────── HANDLER ─────────────────────────
   const handlePurchase = async () => {
@@ -40,24 +36,30 @@ export default function BuyWafflePage() {
       console.error("User FID is not set");
       return;
     }
-    if (!gameId) {
-      console.error("Game ID is not set");
+    if (!game) {
+      console.error("Game is not set");
       return;
     }
-    const price = byGameId[gameId]?.ticketPrice;
-    if (!price) {
-      console.error("Ticket price is not set");
+    if (!game.config) {
+      console.error("Game config is not set");
       return;
     }
-    sendTokenAsync({
-      amount: (price * 10 ** 6).toString(),
-      recipientAddress: env.waffleMainAddress || "",
-    }).then(async () => {
-      await buyTicket(user.fid!, gameId, price);
-      if (purchaseStatus === "confirmed") {
-        router.replace("/lobby/confirm");
-      }
-    });
+
+    // sendTokenAsync({
+    //   amount: (game.config.ticketPrice * 10 ** 6).toString(),
+    //   recipientAddress: env.waffleMainAddress || "",
+    // })
+    //   .then(async () => {
+    //     // await buyTicket(user.fid!, game.id, game.config!.ticketPrice);
+    //     // if (purchaseStatus === "confirmed") {
+    //     //   router.replace("/lobby/confirm");
+    //     // }
+    //   })
+    //   .catch(async () => {
+    //
+    //   });
+
+    await buyTicket(user.fid, game.id);
   };
 
   return (
@@ -98,9 +100,9 @@ export default function BuyWafflePage() {
         <div className="w-full max-w-[400px] px-4">
           <FancyBorderButton
             onClick={handlePurchase}
-            disabled={purchaseStatus === "pending"}
+            disabled={ticket !== null}
           >
-            {purchaseStatus === "pending" ? "PROCESSING..." : "BUY WAFFLE"}
+            {ticket !== null ? "PROCESSING..." : "BUY WAFFLE"}
           </FancyBorderButton>
         </div>
 
@@ -114,16 +116,14 @@ export default function BuyWafflePage() {
           <span className="text-xs font-bold ml-1">(20% BOOST!)</span>
         </button>
 
-        {gameId && byGameId[gameId] && (
+        {game && (
           <SpotsLeft
             current={stats?.totalTickets || 0}
-            total={byGameId[gameId]!.maxPlayers}
+            total={game.config!.maxPlayers}
             avatars={(stats?.players ?? []).map(
               (p) => p.pfpUrl || "/images/avatars/a.png"
             )}
-            subtitle={`${stats?.totalTickets} / ${
-              byGameId[gameId]!.maxPlayers
-            }`}
+            subtitle={`${stats?.totalTickets} / ${game.config!.maxPlayers}`}
           />
         )}
       </div>

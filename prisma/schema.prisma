@@ -51,37 +51,17 @@ model Game {
 }
 
 model GameConfig {
-  id                Int     @id @default(autoincrement())
-  gameId            Int     @unique
-  game              Game    @relation(fields: [gameId], references: [id])
+  id               Int     @id @default(autoincrement())
+  gameId           Int     @unique
+  game             Game    @relation(fields: [gameId], references: [id])
   // Configuration fields (per-game overrides)
-  ticketPrice       Int     @default(50)
-  roundTimeLimit    Int // in seconds
-  questionsPerGame  Int
-  scoreMultiplier   Float   @default(1.0)
-  scorePenalty      Float?
-  maxPlayers        Int
-  soundEnabled      Boolean @default(true)
-  animationEnabled  Boolean @default(true)
-  timeBonusEnabled  Boolean @default(false)
-  difficultyScaling Float   @default(1.0)
-  // (Other optional tuning params here)
-}
-
-model GlobalConfig {
-  id                Int     @id @default(autoincrement())
-  // Same fields as GameConfig for defaults
-  ticketPrice       Int     @default(50)
-  roundTimeLimit    Int
-  questionsPerGame  Int
-  scoreMultiplier   Float   @default(1.0)
-  scorePenalty      Float?
-  maxPlayers        Int
-  soundEnabled      Boolean @default(true)
-  animationEnabled  Boolean @default(true)
-  timeBonusEnabled  Boolean @default(false)
-  difficultyScaling Float   @default(1.0)
-  // (Other default tuning params)
+  ticketPrice      Int     @default(50)
+  roundTimeLimit   Int // in seconds
+  questionsPerGame Int
+  scoreMultiplier  Float   @default(1.0)
+  scorePenalty     Float?
+  maxPlayers       Int
+  soundEnabled     Boolean @default(true)
 }
 
 model Question {

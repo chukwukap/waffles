@@ -9,10 +9,10 @@ import { env } from "@/lib/env";
 export const minikitConfig: MiniAppManifest = {
   accountAssociation: {
     header:
-      "eyJmaWQiOjc1NTA3NCwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDlmNWM5MzcyNzI3ZjdmNURjNTFiZUVmNjM1NGEyNTcwN0JjODk5MjgifQ",
-    payload: "eyJkb21haW4iOiIwYjk2N2Q5ZGUwNjAubmdyb2stZnJlZS5hcHAifQ",
+      "eyJmaWQiOjc1NTA3NCwidHlwZSI6ImF1dGgiLCJrZXkiOiIweERBYjk0NWQwODFFMDVlOEM0NzFlNTRGNTE0QURCOUM4NmYzYTJlYTQifQ",
+    payload: "eyJkb21haW4iOiJkZGZkNzE2OTczZjUubmdyb2stZnJlZS5hcHAifQ",
     signature:
-      "thymDMXybJ5E0qkYvXSJQiHcQxelMxcani6ZRSFTj00IgAYcIeDLNc2HqRh0FfrG3GR8c/HQeCsCLGtW1ppksBs=",
+      "TrxowPCC+bB9M4Hx/0X8F6DSzULWvTU2WhX9U54gz61BRdiNtqVTO2lf4xntItR+IYEfvn+tFcZylhsm7tCsORs=",
   },
 
   miniapp: {

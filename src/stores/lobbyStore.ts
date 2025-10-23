@@ -1,10 +1,6 @@
-// ───────────────────────── src/stores/lobbyStore.ts ─────────────────────────
-// Fully fixed for Zustand v5 typing + persistence + single ticket per game and fixed referral state per new API.
-
 "use client";
 
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
 
 // ───────────────────────── TYPES ─────────────────────────
 interface Player {
@@ -21,206 +17,143 @@ interface LobbyStats {
 
 interface ReferralData {
   code: string;
-  inviterId: number;
+  inviterFarcasterId: string;
   inviteeId?: number;
 }
-
-type ReferralStatus = "idle" | "validating" | "success" | "failed";
-type TicketStatus = "idle" | "pending" | "confirmed" | "failed";
 
 interface Ticket {
   id?: number;
   txHash?: string;
-  amountUSDC?: number;
-  status: TicketStatus;
   gameId?: number;
 }
 
 // ───────────────────────── STATE INTERFACE ─────────────────────────
 interface LobbyState {
   // Referral
-  referralCode: string;
-  referralStatus: ReferralStatus;
   referralData: ReferralData | null;
-  createReferral: (fid: number) => Promise<void>;
-  validateReferral: (code: string, fid: number) => Promise<void>;
-
+  createReferral: (farcasterId: string) => Promise<void>;
+  validateReferral: (code: string, farcasterId: string) => Promise<void>;
   // Stats
   stats: LobbyStats | null;
-  countdown: string;
   fetchStats: () => Promise<void>;
-  startCountdown: (target: Date) => void;
-  stopCountdown: () => void;
 
   // Ticket
   ticket: Ticket | null;
-  purchaseStatus: TicketStatus;
-  buyTicket: (userId: number, gameId: number, amount: number) => Promise<void>;
-  confirmTicket: (ticketId: number) => Promise<void>;
+  buyTicket: (fid: number, gameId: number) => Promise<void>;
+  fetchTicket: (farcasterId: string, gameId: number) => Promise<void>;
 }
 
 // ───────────────────────── STORE ─────────────────────────
-export const useLobbyStore = create<LobbyState>()(
-  persist(
-    (set, get) => {
-      let countdownInterval: ReturnType<typeof setInterval> | null = null;
+export const useLobbyStore = create<LobbyState>()((set, get) => {
+  return {
+    // ───────────────────────── REFERRAL ─────────────────────────
+    referralData: null,
 
-      return {
-        // ───────────────────────── REFERRAL ─────────────────────────
-        referralCode: "",
-        referralStatus: "idle",
-        referralData: null,
-
-        async createReferral(fid: number) {
-          set({ referralStatus: "validating" });
-          try {
-            const res = await fetch("/api/referral/create", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ fid }),
-            });
-            const data = await res.json();
-            if (!res.ok)
-              throw new Error(data.error || "Failed to create referral");
-            set({
-              referralCode: data.code,
-              referralStatus: "success",
-              referralData: data,
-            });
-          } catch (err) {
-            console.error(err);
-            set({ referralStatus: "failed" });
-          }
-        },
-
-        async validateReferral(code: string, fid: number) {
-          set({ referralStatus: "validating" });
-          try {
-            const res = await fetch("/api/referral/validate", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ code, fid }),
-            });
-            const data = await res.json();
-            if (data.valid) {
-              set({
-                referralCode: code,
-                referralStatus: "success",
-                referralData: data.referral,
-              });
-            } else {
-              set({ referralStatus: "failed" });
-            }
-          } catch (err) {
-            console.error(err);
-            set({ referralStatus: "failed" });
-          }
-        },
-
-        // ───────────────────────── STATS ─────────────────────────
-        stats: null,
-        countdown: "00:00",
-        async fetchStats() {
-          try {
-            const res = await fetch("/api/lobby/stats");
-            if (!res.ok) throw new Error("Failed to fetch lobby stats");
-            const data = await res.json();
-            set({ stats: data });
-          } catch (e) {
-            console.error("fetchStats error:", e);
-          }
-        },
-        startCountdown(target: Date) {
-          if (countdownInterval) clearInterval(countdownInterval);
-          countdownInterval = setInterval(() => {
-            const diff = target.getTime() - Date.now();
-            if (diff <= 0) {
-              clearInterval(countdownInterval!);
-              countdownInterval = null;
-              set({ countdown: "00:00" });
-            } else {
-              const m = Math.floor(diff / 60000);
-              const s = Math.floor((diff % 60000) / 1000);
-              set({
-                countdown: `${String(m).padStart(2, "0")}:${String(s).padStart(
-                  2,
-                  "0"
-                )}`,
-              });
-            }
-          }, 1000);
-        },
-        stopCountdown() {
-          if (countdownInterval) clearInterval(countdownInterval);
-          countdownInterval = null;
-        },
-
-        // ───────────────────────── TICKETS ─────────────────────────
-        ticket: null,
-        purchaseStatus: "idle",
-        async buyTicket(userId: number, gameId: number, amount: number) {
-          // 🧠 One-ticket-per-game rule
-          const current = get().ticket;
-          if (current && current.gameId === gameId) {
-            console.warn("User already owns a ticket for this game.");
-            set({ purchaseStatus: "confirmed" });
-            return;
-          }
-          set({ purchaseStatus: "pending" });
-          try {
-            const res = await fetch("/api/tickets/buy", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ userId, gameId, amount }),
-            });
-            if (!res.ok) throw new Error("Ticket purchase failed");
-            const data = await res.json();
-            set({
-              ticket: {
-                id: data.ticketId,
-                status: "confirmed",
-                amountUSDC: amount,
-                gameId,
-              },
-              purchaseStatus: "confirmed",
-            });
-            await get().fetchStats();
-          } catch (e) {
-            console.error("buyTicket error:", e);
-            set({ purchaseStatus: "failed" });
-          }
-        },
-
-        async confirmTicket(ticketId: number) {
-          try {
-            const res = await fetch("/api/tickets/confirm", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ ticketId }),
-            });
-            if (!res.ok) throw new Error("Failed to confirm ticket");
-            set((s) => ({
-              ticket: s.ticket
-                ? { ...s.ticket, status: "confirmed" }
-                : { id: ticketId, status: "confirmed" },
-              purchaseStatus: "confirmed",
-            }));
-          } catch (e) {
-            console.error("confirmTicket error:", e);
-          }
-        },
-      };
+    async createReferral(farcasterId: string) {
+      try {
+        const res = await fetch("/api/referral/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ farcasterId }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to create referral");
+        set({
+          referralData: data,
+        });
+      } catch (err) {
+        console.error(err);
+      }
     },
-    {
-      name: "lobby-store",
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
-        referralCode: state.referralCode,
-        referralStatus: state.referralStatus,
-        referralData: state.referralData,
-        ticket: state.ticket,
-        purchaseStatus: state.purchaseStatus,
-      }),
-    }
-  )
-);
+
+    async validateReferral(code: string, farcasterId: string) {
+      try {
+        const res = await fetch("/api/referral/validate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code, farcasterId }),
+        });
+
+        const data = await res.json();
+        console.log("validateReferral data:", data);
+        if (data.valid) {
+          set({
+            referralData: data.referral,
+          });
+        } else {
+          set({ referralData: null });
+        }
+      } catch (err) {
+        console.error(err);
+        set({ referralData: null });
+      }
+    },
+
+    // ───────────────────────── STATS ─────────────────────────
+    stats: null,
+    async fetchStats() {
+      try {
+        const res = await fetch("/api/lobby/stats");
+        if (!res.ok) throw new Error("Failed to fetch lobby stats");
+        const data = await res.json();
+        set({ stats: data });
+      } catch (e) {
+        console.error("fetchStats error:", e);
+      }
+    },
+
+    // ───────────────────────── TICKETS ─────────────────────────
+    ticket: null,
+    async buyTicket(fid: number, gameId: number) {
+      // 🧠 One-ticket-per-game rule
+      const current = get().ticket;
+      if (current && current.gameId === gameId) {
+        console.warn("User already owns a ticket for this game.");
+        return;
+      }
+      try {
+        const res = await fetch("/api/tickets/buy", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ farcasterId: fid.toString(), gameId }),
+        });
+        if (!res.ok) throw new Error("Ticket purchase failed");
+        const ticket = await res.json();
+        set({ ticket });
+        await get().fetchStats();
+      } catch (e) {
+        console.error("buyTicket error:", e);
+        set({ ticket: null });
+      }
+    },
+
+    // ───────────────────────── FETCH TICKET (from /api/tickets -- route.ts) ─────────────────────────
+    async fetchTicket(farcasterId: string, gameId: number) {
+      try {
+        const res = await fetch("/api/tickets", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "x-farcaster-id": farcasterId,
+          },
+        });
+        if (!res.ok) throw new Error("Failed to fetch tickets");
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          // Find the ticket for the gameId
+          const ticket = data.find((t) => t.gameId === gameId);
+          if (ticket) {
+            set({ ticket });
+          } else {
+            set({ ticket: null });
+          }
+        } else {
+          set({ ticket: null });
+        }
+      } catch (e) {
+        console.error("fetchTicket error:", e);
+        set({ ticket: null });
+      }
+    },
+  };
+});

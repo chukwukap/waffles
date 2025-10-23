@@ -1,35 +1,41 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { PrismaClient } from "@prisma/client";
 import { randomBytes } from "crypto";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/db";
 
 // GET /api/tickets
 export async function GET(request: Request) {
-  const farcasterId = request.headers.get("x-farcaster-id");
-  if (!farcasterId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const farcasterId = request.headers.get("x-farcaster-id");
+    if (!farcasterId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const user = await prisma.user.findUnique({
+      where: { farcasterId },
+    });
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+    const tickets = await prisma.ticket.findMany({
+      where: { userId: user.id },
+      include: { game: true },
+    });
+    const result = tickets.map((ticket) => ({
+      ticketId: ticket.id,
+      gameId: ticket.gameId,
+      gameTitle: ticket.game.name,
+      code: ticket.code,
+      amountUSDC: ticket.amountUSDC,
+      purchasedAt: ticket.purchasedAt,
+    }));
+    return NextResponse.json(result);
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
-  const user = await prisma.user.findUnique({
-    where: { farcasterId },
-  });
-  if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
-  }
-  const tickets = await prisma.ticket.findMany({
-    where: { userId: user.id },
-    include: { game: true },
-  });
-  const result = tickets.map((ticket) => ({
-    ticketId: ticket.id,
-    gameId: ticket.gameId,
-    gameTitle: ticket.game.name,
-    code: ticket.code,
-    amountUSDC: ticket.amountUSDC,
-    purchasedAt: ticket.purchasedAt,
-  }));
-  return NextResponse.json(result);
 }
 
 // POST /api/tickets

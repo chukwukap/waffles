@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
 import { useGameStore } from "@/stores/gameStore";
 import ChatTickerOverlay from "./ChatTickerOverlay";
 import ChatDrawer from "./ChatDrawer";
@@ -9,20 +8,8 @@ import ChatDrawer from "./ChatDrawer";
 const BLUE = "#1E8BFF";
 
 export default function RoundCountdownStage() {
-  const { gameState, roundTimer, tickRoundTimer } = useGameStore();
-
-  // tick every 1s while in ROUND_COUNTDOWN
-  useEffect(() => {
-    if (gameState !== "ROUND_COUNTDOWN") return;
-    // const id = setInterval(() => tickRoundTimer(), 1000);
-    // return () => clearInterval(id);
-  }, [gameState, tickRoundTimer]);
-
-  const TOTAL = 15;
-  const ratio = useMemo(
-    () => Math.max(0, Math.min(1, roundTimer / TOTAL)),
-    [roundTimer]
-  );
+  const gameState = useGameStore((s) => s.gameState);
+  const game = useGameStore((s) => s.game);
 
   return (
     <div>
@@ -40,13 +27,17 @@ export default function RoundCountdownStage() {
         </h1>
 
         <div className="grid place-items-center">
-          <CountdownCircle total={TOTAL} ratio={ratio} />
+          <CountdownCircle
+            ratio={game?.config?.roundTimeLimit ?? 0}
+            total={game?.config?.roundTimeLimit ?? 0}
+          />
         </div>
 
         <p className="mt-10 text-center text-muted text-lg font-display">
           Get ready for the next round!
         </p>
       </section>
+
       <section>
         <ChatTickerOverlay />
         <ChatDrawer />
@@ -137,7 +128,6 @@ function CountdownCircle({ total, ratio }: { total: number; ratio: number }) {
         <span
           className="text-[12vw] sm:text-7xl md:text-8xl lg:text-9xl font-bold leading-none text-white"
           style={{
-            // This clamp makes font-size responsive in both directions
             fontSize: "clamp(2.5rem, 10vw, 7rem)",
           }}
         >

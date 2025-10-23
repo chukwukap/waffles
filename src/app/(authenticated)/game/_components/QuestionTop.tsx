@@ -17,21 +17,14 @@ function mmss(total: number) {
  */
 export default function QuestionTop() {
   const currentQuestionIndex = useGameStore((s) => s.currentQuestionIndex);
-  const totalQuestions = useGameStore((s) => s.totalQuestions);
-  const roundTimer = useGameStore((s) => s.timeLeft);
-  const questionTimer = useGameStore((s) => s.timeLeft);
-  const currentQuestion = useGameStore((s) => s.currentQuestion);
+  const game = useGameStore((s) => s.game);
 
   const qCount = useMemo(() => {
     const now = Math.max(0, currentQuestionIndex + 1);
-    return `${String(now).padStart(2, "0")}/${String(totalQuestions).padStart(
-      2,
-      "0"
-    )}`;
-  }, [currentQuestionIndex, totalQuestions]);
-
-  const tRound = useMemo(() => mmss(roundTimer), [roundTimer]);
-  const tQuestion = useMemo(() => mmss(questionTimer), [questionTimer]);
+    return `${String(now).padStart(2, "0")}/${String(
+      game?.questions?.length ?? 0
+    ).padStart(2, "0")}`;
+  }, [currentQuestionIndex, game?.questions?.length]);
 
   return (
     <div className="w-full max-w-md sm:max-w-lg mx-auto mt-14">
@@ -46,13 +39,13 @@ export default function QuestionTop() {
             aria-label="Round timer"
             className="font-edit-undo text-white text-sm sm:text-base leading-[0.92] tracking-tight"
           >
-            {tRound}
+            {mmss(game?.config?.roundTimeLimit ?? 0)}
           </span>
           <span
             aria-label="Question timer"
             className="font-edit-undo text-white text-sm sm:text-base leading-[0.92] tracking-tight"
           >
-            {tQuestion}
+            {mmss(game?.config?.roundTimeLimit ?? 0)}
           </span>
         </div>
       </div>
@@ -60,7 +53,7 @@ export default function QuestionTop() {
       {/* Row 2: title */}
       <div className="flex flex-col items-center gap-0.5">
         <h1 className="font-edit-undo text-white text-3xl sm:text-4xl md:text-5xl leading-[0.92] tracking-tight text-center">
-          {currentQuestion?.questionText ?? "—"}
+          {game?.questions?.[currentQuestionIndex]?.text ?? "—"}
         </h1>
       </div>
     </div>

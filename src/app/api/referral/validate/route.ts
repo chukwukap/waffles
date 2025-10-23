@@ -5,7 +5,7 @@ import { z } from "zod";
 
 // Accept referral code, and invitee's Farcaster ID (fid)
 const bodySchema = z.object({
-  code: z.string().length(4),
+  code: z.string().length(6),
   fid: z.number().int().positive(), // invitee’s Farcaster ID
 });
 
@@ -18,6 +18,7 @@ export async function POST(req: Request) {
     const invitee = await prisma.user.findUnique({
       where: { farcasterId: String(fid) },
     });
+    console.log("invitee farcasterId:", invitee?.farcasterId);
     if (!invitee) {
       return NextResponse.json(
         {

@@ -1,6 +1,6 @@
 export const env = {
   rootUrl:
-    // "https://0b967d9de060.ngrok-free.app" ||
+    "https://ddfd716973f5.ngrok-free.app" ||
     process.env.NEXT_PUBLIC_URL ||
     (process.env.VERCEL_PROJECT_PRODUCTION_URL
       ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`

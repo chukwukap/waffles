@@ -4,14 +4,6 @@ import { prisma } from "@/lib/db";
 
 // GET /api/chat?gameId=
 export async function GET(request: Request) {
-  const farcasterId = request.headers.get("x-farcaster-id");
-  if (!farcasterId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  const user = await prisma.user.findUnique({ where: { farcasterId } });
-  if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
-  }
   const url = new URL(request.url);
   const gameIdParam = url.searchParams.get("gameId");
   if (!gameIdParam) {
