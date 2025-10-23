@@ -7,7 +7,7 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace("/lobby");
+    router.replace("/game");
   }, [router]);
 
   return null;

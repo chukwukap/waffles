@@ -145,7 +145,7 @@ export default function AllTimeStatsPage() {
     <div
       className={`
         min-h-screen flex flex-col
-        bg-figma
+        bg-figmaYay
         noise
       `}
     >

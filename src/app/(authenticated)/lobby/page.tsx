@@ -1,4 +1,6 @@
-// ───────────────────────── src/app/lobby/page.tsx ─────────────────────────
+// src/app/(authenticated)/lobby/page.tsx
+// If user already has code and ticket, skip to gameplay (the /game page).
+
 "use client";
 
 import React, { useEffect } from "react";
@@ -12,13 +14,26 @@ import { cn } from "@/lib/utils";
 import { WalletIcon } from "@/components/icons";
 import { BottomNav } from "@/components/BottomNav";
 
-// ───────────────────────── COMPONENT ─────────────────────────
 export default function LobbyPage() {
   const router = useRouter();
-  const { stats, countdown, fetchStats, startCountdown, stopCountdown } =
-    useLobbyStore();
+  const {
+    stats,
+    countdown,
+    fetchStats,
+    startCountdown,
+    stopCountdown,
+    referralStatus,
+    ticket, // added to check if user already progressed
+  } = useLobbyStore();
 
-  // Fetch stats on mount
+  // If invite code is valid AND ticket exists, go directly into the game
+  useEffect(() => {
+    if (referralStatus === "success" && ticket) {
+      router.replace("/game");
+    }
+  }, [referralStatus, ticket, router]);
+
+  // Fetch stats and start countdown normally if not redirected
   useEffect(() => {
     fetchStats();
     // Mock game start: 5 minutes from now
@@ -29,15 +44,15 @@ export default function LobbyPage() {
   }, [fetchStats, startCountdown, stopCountdown]);
 
   return (
-    <div className="h-screen flex flex-col bg-figma noise relative font-body">
+    <div className="h-screen flex flex-col bg-figmaYay noise relative font-body">
       {/* HEADER */}
       <div
         className={cn(
-          "p-4 flex items-center justify-between border-b border-border bg-figma"
+          "p-4 flex items-center justify-between border-b border-border bg-figmaYay"
         )}
       >
         <LogoIcon />
-        <div className="flex items-center gap-1.5 bg-figma rounded-full px-3 py-1.5">
+        <div className="flex items-center gap-1.5 bg-figmaYay rounded-full px-3 py-1.5">
           <WalletIcon className="w-4 h-4 text-foreground" />
           <span className="text-xs text-foreground">$983.23</span>
         </div>

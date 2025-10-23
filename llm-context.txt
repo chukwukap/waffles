@@ -1,6 +1,3 @@
---- File: ./next.config.js ---
-[File is empty]
-
 --- File: ./.next/package.json ---
 {"type": "commonjs"}
 --- File: ./package.json ---
@@ -15,9 +12,13 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@coinbase/onchainkit": "^1.1.1",
     "@farcaster/miniapp-sdk": "^0.2.1",
+    "@farcaster/quick-auth": "^0.0.8",
+    "@neynar/nodejs-sdk": "^3.34.0",
     "@prisma/client": "6.18.0",
     "@radix-ui/react-dialog": "^1.1.15",
+    "@supabase/supabase-js": "^2.76.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.24",
@@ -62,7 +63,22 @@
 # one found in a remote Prisma Postgres URL, does not contain any sensitive information.
 
 DATABASE_URL="prisma+postgres://localhost:51213/?api_key=eyJkYXRhYmFzZVVybCI6InBvc3RncmVzOi8vcG9zdGdyZXM6cG9zdGdyZXNAbG9jYWxob3N0OjUxMjE0L3RlbXBsYXRlMT9zc2xtb2RlPWRpc2FibGUmY29ubmVjdGlvbl9saW1pdD0xJmNvbm5lY3RfdGltZW91dD0wJm1heF9pZGxlX2Nvbm5lY3Rpb25fbGlmZXRpbWU9MCZwb29sX3RpbWVvdXQ9MCZzaW5nbGVfdXNlX2Nvbm5lY3Rpb25zPXRydWUmc29ja2V0X3RpbWVvdXQ9MCIsIm5hbWUiOiJkZWZhdWx0Iiwic2hhZG93RGF0YWJhc2VVcmwiOiJwb3N0Z3JlczovL3Bvc3RncmVzOnBvc3RncmVzQGxvY2FsaG9zdDo1MTIxNS90ZW1wbGF0ZTE_c3NsbW9kZT1kaXNhYmxlJmNvbm5lY3Rpb25fbGltaXQ9MSZjb25uZWN0X3RpbWVvdXQ9MCZtYXhfaWRsZV9jb25uZWN0aW9uX2xpZmV0aW1lPTAmcG9vbF90aW1lb3V0PTAmc2luZ2xlX3VzZV9jb25uZWN0aW9ucz10cnVlJnNvY2tldF90aW1lb3V0PTAifQ"
-NEYNAR_API_KEY
+NEYNAR_API_KEY=
+
+NEXT_PUBLIC_ONCHAINKIT_API_KEY=jrY4mos7-wh-8MFia-Am2Bii7mGStOxx
+NEXT_PUBLIC_URL=
+
+# 
+
+# Connect to Supabase via connection pooling
+# DATABASE_URL="postgresql://postgres.fuoqnzdloxjgbmqcvuqs:vjvKrnek7Kip6qhO@aws-1-eu-west-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+
+# Direct connection to the database. Used for migrations
+# DIRECT_URL="postgresql://postgres.fuoqnzdloxjgbmqcvuqs:vjvKrnek7Kip6qhO@aws-1-eu-west-1.pooler.supabase.com:5432/postgres"
+
+NEXT_PUBLIC_SUPABASE_URL=https://fuoqnzdloxjgbmqcvuqs.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1b3FuemRsb3hqZ2JtcWN2dXFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyMTM1MDEsImV4cCI6MjA3Njc4OTUwMX0.trxful3F7TAu5Y0NDt7xGOh46EO5wLImLs8vuTMH__Q
+
 --- File: ./next.config.ts ---
 import type { NextConfig } from "next";
 
@@ -81,211 +97,259 @@ export default nextConfig;
 --- File: ./src/app/.DS_Store ---
 [Content not included: Binary file]
 
---- File: ./src/app/(authenticated)/lobby/invite-code/_components/InviteCodeScreen.tsx ---
+--- File: ./src/app/.well-known/farcaster.json/route.ts ---
+import { withValidManifest } from "@coinbase/onchainkit/minikit";
+import { minikitConfig } from "../../../../minikit.config";
+
+export async function GET() {
+  return Response.json(withValidManifest(minikitConfig));
+}
+
+--- File: ./src/app/(authenticated)/lobby/invite-code/page.tsx ---
+// src/app/(authenticated)/lobby/invite-code/page.tsx
+// If a valid invite code is already present, skip this page.
+
 "use client";
-import React, { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import useLobbyStore from "@/stores/lobbyStore";
+import LogoIcon from "@/components/logo/LogoIcon";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useLobbyStore } from "@/stores/lobbyStore";
 import { PixelInput } from "@/components/inputs/PixelInput";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { PixelButton } from "@/components/buttons/PixelButton";
+import { useMiniUser } from "@/hooks/useMiniUser";
 
-export default function InviteCodeScreen() {
+export default function InviteCodePage() {
   const router = useRouter();
-  const inviteCode = useLobbyStore((state) => state.inviteCode);
-  const status = useLobbyStore((state) => state.inviteCodeStatus);
-  const error = useLobbyStore((state) => state.codeError);
-  const setInviteCode = useLobbyStore((state) => state.setInviteCode);
-  const validateInviteCode = useLobbyStore((state) => state.validateInviteCode);
-
-  // Auto-validate invite code in "real-time" with debounce
+  const {
+    referralCode,
+    validateReferral,
+    referralData,
+    referralStatus: status,
+    ticket, // added to check if ticket already exists
+  } = useLobbyStore();
+  const user = useMiniUser();
+  // If invite code is already valid, skip to Buy or directly into the game
   useEffect(() => {
-    if (inviteCode.trim().length < 4) {
-      // don't validate if code is too short
+    if (status === "success") {
+      if (ticket) {
+        // already have ticket: go straight into the game
+        router.replace("/game");
+      } else {
+        // have code but no ticket: go to buy page
+        router.replace("/lobby/buy");
+      }
+    }
+  }, [status, ticket, router]);
+
+  const [inputCode, setInputCode] = useState(referralCode || "");
+  const [error, setError] = useState<string | null>(null);
+
+  // Debounced code validation as user types
+  useEffect(() => {
+    if (inputCode.trim().length < 4 || !user.fid) {
+      setError(null);
       return;
     }
-    const timer = setTimeout(() => {
-      validateInviteCode(inviteCode);
+    const timer = setTimeout(async () => {
+      try {
+        if (!user.fid) {
+          console.error("User FID is null");
+          return;
+        }
+        await validateReferral(inputCode, user.fid);
+      } catch (err) {
+        console.log(err);
+        setError("Validation failed");
+      }
     }, 500);
     return () => clearTimeout(timer);
-  }, [inviteCode, validateInviteCode]);
+  }, [inputCode, validateReferral, user.fid]);
 
-  // Handle form submission
+  // On form submit: if code is valid, go to buy page
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inviteCode) return;
-    // If not already valid, validate on submit
-    if (status !== "valid") {
-      await validateInviteCode(inviteCode);
-      if (useLobbyStore.getState().inviteCodeStatus !== "valid") {
-        // validation failed, do not proceed
+    if (!inputCode.trim() || inputCode.trim().length !== 4) return;
+    if (!user.fid) {
+      console.error("User FID is null");
+      return;
+    }
+    if (status !== "success") {
+      if (!user.fid) {
+        console.error("User FID is null");
+        return;
+      }
+      await validateReferral(inputCode, user.fid);
+      if (useLobbyStore.getState().referralStatus !== "success") {
+        setError("Invalid code");
         return;
       }
     }
-    // If valid, proceed to next step
     router.push("/lobby/buy");
   };
 
   return (
-    <div className="flex flex-col items-center justify-center py-16">
-      {/* Key Icon */}
-      <div className="mb-6">
-        <Image
-          src="/images/illustration/invite-key.png"
-          alt="Invite Key"
-          width={105}
-          height={105}
-          style={{ imageRendering: "pixelated" }}
-        />
-      </div>
-      {/* Title */}
-      <h2 className="mb-8 text-center text-3xl leading-tight font-bold uppercase tracking-wider">
-        <span style={{ display: "block" }}>ENTER YOUR</span>
-        <span style={{ display: "block" }}>INVITE CODE</span>
-      </h2>
-      {/* Form */}
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-md flex flex-col items-center gap-6"
-        autoComplete="off"
-      >
-        <label htmlFor="inviteCodeInput" className="sr-only">
-          Invite Code
-        </label>
-        <PixelInput
-          id="inviteCodeInput"
-          type="text"
-          value={inviteCode}
-          onChange={(e) => setInviteCode(e.target.value)}
-          placeholder="INVITE CODE"
-          maxLength={4}
-          autoFocus
-        />
-
-        <FancyBorderButton disabled={inviteCode.trim().length !== 4}>
-          GET IN
-        </FancyBorderButton>
-
-        {/* Status Messages */}
-        {status === "checking" && (
-          <p
-            className="text-xs mt-2"
-            style={{
-              color: "#a0a0a0",
-              fontFamily: "'Press Start 2P', 'Geist Mono', monospace",
-              letterSpacing: "0.04em",
-            }}
-          >
-            Validating...
-          </p>
-        )}
-
-        {status === "invalid" && error && (
-          <PixelButton
-            className="flex items-center gap-2 font-body"
-            backgroundColor="#FF5252"
-            borderColor="#FF5252"
-            textColor="#FFFFFF"
-            onClick={() => {}}
-          >
-            <Image
-              src="/images/icons/icon-invalid.png"
-              alt="Invalid Invite Code"
-              width={20}
-              height={20}
-            />
-            <span>Invalid</span>
-          </PixelButton>
-        )}
-        {status === "valid" && (
-          <PixelButton
-            className="flex items-center gap-2 font-body"
-            backgroundColor="#14B985"
-            borderColor="#14B985"
-            textColor="#FFFFFF"
-            onClick={() => {}}
-          >
-            <Image
-              src="/images/icons/icon-valid.png"
-              alt="Invalid Invite Code"
-              width={20}
-              height={20}
-            />
-            <span>Valid</span>
-          </PixelButton>
-        )}
-      </form>
-    </div>
-  );
-}
-
---- File: ./src/app/(authenticated)/lobby/invite-code/page.tsx ---
-import LogoIcon from "@/components/logo/LogoIcon";
-import InviteCodeScreen from "./_components/InviteCodeScreen";
-
-export default function InviteCodePage() {
-  return (
-    <div className="min-h-screen  flex flex-col">
+    <div className="min-h-screen max-w-screen-sm mx-auto px-8 flex flex-col">
       <div
         className={
-          "p-4 flex items-center justify-center border-y border-border bg-figma-gradient"
+          "p-4 flex items-center justify-center border-y border-border bg-figmaYay-gradient"
         }
       >
         <LogoIcon />
       </div>
-      <InviteCodeScreen />
+      <div className="flex flex-col items-center justify-center py-16">
+        {/* ICON */}
+        <div className="mb-6">
+          <Image
+            src="/images/illustration/invite-key.png"
+            alt="Invite Key"
+            width={105}
+            height={105}
+            style={{ imageRendering: "pixelated" }}
+          />
+        </div>
+
+        {/* TITLE */}
+        <h2 className="mb-8 text-center text-3xl leading-tight font-bold uppercase tracking-wider">
+          <span className="block">ENTER YOUR</span>
+          <span className="block">INVITE CODE</span>
+        </h2>
+
+        {/* FORM */}
+        <form
+          onSubmit={handleSubmit}
+          className="w-full max-w-md flex flex-col items-center gap-6"
+          autoComplete="off"
+        >
+          <label htmlFor="inviteCodeInput" className="sr-only">
+            Invite Code
+          </label>
+
+          <PixelInput
+            id="inviteCodeInput"
+            type="text"
+            value={inputCode}
+            onChange={(e) => setInputCode(e.target.value.toUpperCase())}
+            placeholder="INVITE CODE"
+            maxLength={4}
+            autoFocus
+          />
+
+          <FancyBorderButton disabled={inputCode.trim().length !== 4}>
+            GET IN
+          </FancyBorderButton>
+
+          {/* STATUS MESSAGES */}
+          {status === "validating" && (
+            <p
+              className="text-xs mt-2"
+              style={{
+                color: "#a0a0a0",
+                fontFamily: "'Press Start 2P', 'Geist Mono', monospace",
+                letterSpacing: "0.04em",
+              }}
+            >
+              Validating...
+            </p>
+          )}
+
+          {status === "failed" && (
+            <PixelButton
+              className="flex items-center gap-2 font-body"
+              backgroundColor="#FF5252"
+              borderColor="#FF5252"
+              textColor="#FFFFFF"
+              onClick={() => setError(null)}
+            >
+              <Image
+                src="/images/icons/icon-invalid.png"
+                alt="Invalid Invite Code"
+                width={20}
+                height={20}
+              />
+              <span>{error || "Invalid"}</span>
+            </PixelButton>
+          )}
+
+          {status === "success" && referralData && (
+            <PixelButton
+              className="flex items-center gap-2 font-body"
+              backgroundColor="#14B985"
+              borderColor="#14B985"
+              textColor="#FFFFFF"
+              onClick={() => router.push("/lobby/buy")}
+            >
+              <Image
+                src="/images/icons/icon-valid.png"
+                alt="Valid Invite Code"
+                width={20}
+                height={20}
+              />
+              <span>Valid</span>
+            </PixelButton>
+          )}
+        </form>
+      </div>
     </div>
   );
 }
 
---- File: ./src/app/(authenticated)/lobby/confirm/_components/ConfirmScreen.tsx ---
+--- File: ./src/app/(authenticated)/lobby/confirm/page.tsx ---
+// ───────────────────────── src/app/lobby/confirm/_components/ConfirmScreen.tsx ─────────────────────────
 "use client";
+
 import React, { useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import useLobbyStore from "@/stores/lobbyStore";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
-// PixelButton not required here; using FancyBorderButton for CTA
+import { useLobbyStore } from "@/stores/lobbyStore";
 
-export default function ConfirmScreen() {
+export default function ConfirmPage() {
   const router = useRouter();
-  const ticket = useLobbyStore((state) => state.purchasedTicket);
-  const selectedType = useLobbyStore((state) => state.selectedWaffleType);
-  const purchaseStatus = useLobbyStore((state) => state.purchaseStatus);
-  const selectWaffleType = useLobbyStore((state) => state.selectWaffleType);
-  const purchaseWaffle = useLobbyStore((state) => state.purchaseWaffle);
-  const shareButtonRef = useRef<HTMLAnchorElement | null>(null);
+  const { ticket, purchaseStatus } = useLobbyStore();
+  const shareButtonRef = useRef<HTMLButtonElement | null>(null);
 
-  // just for testing this page
+  // Redirect if no ticket
   useEffect(() => {
-    selectWaffleType("football");
-    purchaseWaffle();
-  }, [selectWaffleType, purchaseWaffle]);
+    if (!ticket || purchaseStatus !== "confirmed") {
+      router.replace("/lobby/buy");
+    }
+  }, [ticket, purchaseStatus, router]);
 
-  // Redirect to invite if accessed without completing purchase
-  useEffect(() => {
-    // if (purchaseStatus !== "success" || !ticket) {
-    //   router.replace("/lobby/invite");
-    // }
-  }, [purchaseStatus, ticket, router]);
-
-  // Auto-focus the share button on load
+  // Autofocus share
   useEffect(() => {
     shareButtonRef.current?.focus();
   }, []);
 
-  if (!ticket || !selectedType) {
-    return null;
-  }
+  const handleShare = async () => {
+    if (!ticket) return;
+    const shareData = {
+      title: "Waffle Secured!",
+      text: "I just grabbed my Waffle ticket for the next on-chain game. See you Friday!",
+      url:
+        typeof window !== "undefined" ? window.location.origin + "/lobby" : "",
+    };
 
-  function handleShare() {
-    console.log("share");
-  }
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(shareData.url);
+        alert("Link copied to clipboard!");
+      }
+      router.replace("/game"); // ✅ Must share before returning
+    } catch (err) {
+      console.error("Share failed:", err);
+      alert("Please share to continue!");
+    }
+  };
+
+  if (!ticket) return null;
 
   return (
-    <div className="bg-figma noise min-h-[100svh] w-full px-5 py-8">
-      {/* Hero */}
+    <div className="bg-figmaYay noise min-h-[100svh] w-full px-5 py-8">
+      {/* HERO */}
       <div className="mx-auto flex max-w-md flex-col items-center gap-3 animate-up">
         <Image
           src="/images/illustration/waffle-ticket.png"
@@ -295,10 +359,7 @@ export default function ConfirmScreen() {
           priority
           style={{ imageRendering: "pixelated" }}
         />
-        <h1
-          className="text-center font-[var(--font-body)] text-4xl tracking-tight uppercase"
-          style={{ letterSpacing: "0.02em" }}
-        >
+        <h1 className="text-center font-[var(--font-body)] text-4xl tracking-tight uppercase">
           WAFFLE SECURED!
         </h1>
         <p className="text-center text-[13px] text-muted">
@@ -306,7 +367,7 @@ export default function ConfirmScreen() {
         </p>
       </div>
 
-      {/* Ticket Card */}
+      {/* TICKET CARD */}
       <div
         className="mx-auto mt-6 w-full max-w-md rounded-[16px] border border-[color:var(--color-waffle-gold)] bg-[color:var(--white-a10)] p-4 animate-up"
         style={{ animationDelay: "60ms" }}
@@ -324,7 +385,7 @@ export default function ConfirmScreen() {
           </div>
           <div className="pixel-corners bg-[color:var(--color-waffle-gold)] px-3 py-2">
             <span className="font-[var(--font-body)] text-[12px] text-black uppercase">
-              TICKET #{ticket.ticketId}
+              TICKET #{ticket.id}
             </span>
           </div>
         </div>
@@ -351,32 +412,27 @@ export default function ConfirmScreen() {
             />
             <div className="flex flex-col">
               <span className="text-[11px] text-muted">Theme</span>
-              <span className="font-[var(--font-body)]">
-                {selectedType.name}
-              </span>
+              <span className="font-[var(--font-body)]">Football</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Share CTA */}
+      {/* MANDATORY SHARE CTA */}
       <div className="mx-auto mt-6 max-w-md">
         <FancyBorderButton
+          ref={shareButtonRef as React.RefObject<HTMLButtonElement>}
           aria-label="Share Ticket"
           onClick={handleShare}
           className="h-[64px] bg-white text-[color:var(--color-neon-pink)]"
-          autoFocus
         >
           <span className="font-[var(--font-body)] text-2xl">SHARE TICKET</span>
         </FancyBorderButton>
       </div>
 
-      {/* Back link */}
-      <div className="mx-auto mt-4 flex max-w-md justify-center">
-        <button
-          onClick={() => router.replace("/game")}
-          className="text-[color:var(--color-neon-cyan)] font-[var(--font-body)] text-base uppercase active:translate-y-[1px]"
-        >
+      {/* Back Button — now hidden until share */}
+      <div className="mx-auto mt-4 flex max-w-md justify-center opacity-40 select-none pointer-events-none">
+        <button className="text-[color:var(--color-neon-cyan)] font-[var(--font-body)] text-base uppercase">
           BACK TO HOME
         </button>
       </div>
@@ -384,25 +440,141 @@ export default function ConfirmScreen() {
   );
 }
 
---- File: ./src/app/(authenticated)/lobby/confirm/page.tsx ---
-import ConfirmScreen from "./_components/ConfirmScreen";
-
-export default function ConfirmPage() {
-  return <ConfirmScreen />;
-}
-
 --- File: ./src/app/(authenticated)/lobby/page.tsx ---
+// src/app/(authenticated)/lobby/page.tsx
+// If user already has code and ticket, skip to gameplay (the /game page).
+
 "use client";
 
-import { useEffect } from "react";
+import React, { useEffect } from "react";
+import Image from "next/image";
+import { useLobbyStore } from "@/stores/lobbyStore";
+import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
+import { SpotsLeft } from "./buy/_components/SpotsLeft";
 import { useRouter } from "next/navigation";
+import LogoIcon from "@/components/logo/LogoIcon";
+import { cn } from "@/lib/utils";
+import { WalletIcon } from "@/components/icons";
+import { BottomNav } from "@/components/BottomNav";
 
-export default function LobbyRedirect() {
+export default function LobbyPage() {
   const router = useRouter();
+  const {
+    stats,
+    countdown,
+    fetchStats,
+    startCountdown,
+    stopCountdown,
+    referralStatus,
+    ticket, // added to check if user already progressed
+  } = useLobbyStore();
+
+  // If invite code is valid AND ticket exists, go directly into the game
   useEffect(() => {
-    router.replace("/game");
-  }, [router]);
-  return null;
+    if (referralStatus === "success" && ticket) {
+      router.replace("/game");
+    }
+  }, [referralStatus, ticket, router]);
+
+  // Fetch stats and start countdown normally if not redirected
+  useEffect(() => {
+    fetchStats();
+    // Mock game start: 5 minutes from now
+    const startTime = new Date(Date.now() + 5 * 60 * 1000);
+    startCountdown(startTime);
+
+    return () => stopCountdown();
+  }, [fetchStats, startCountdown, stopCountdown]);
+
+  return (
+    <div className="h-screen flex flex-col bg-figmaYay noise relative font-body">
+      {/* HEADER */}
+      <div
+        className={cn(
+          "p-4 flex items-center justify-between border-b border-border bg-figmaYay"
+        )}
+      >
+        <LogoIcon />
+        <div className="flex items-center gap-1.5 bg-figmaYay rounded-full px-3 py-1.5">
+          <WalletIcon className="w-4 h-4 text-foreground" />
+          <span className="text-xs text-foreground">$983.23</span>
+        </div>
+      </div>
+
+      {/* MAIN */}
+      <main className="flex-1 flex flex-col items-center justify-center gap-6 text-center">
+        {/* Title */}
+        <h1 className="text-3xl font-bold uppercase tracking-wide">
+          GAME LOBBY
+        </h1>
+
+        {/* Countdown */}
+        <div className="flex flex-col items-center gap-1">
+          <span className="text-sm text-muted">Next round starts in</span>
+          <span className="text-5xl font-display tracking-tight text-[#00CFF2]">
+            {countdown}
+          </span>
+        </div>
+
+        {/* Prize Pool */}
+        <div className="flex flex-col items-center">
+          <span className="text-[13px] text-muted uppercase tracking-wide">
+            Total Prize Pool
+          </span>
+          <span className="text-3xl font-display text-white">
+            ${stats?.totalPrize ?? "0"}
+          </span>
+        </div>
+
+        {/* Players */}
+        <SpotsLeft
+          current={stats?.totalTickets ?? 0}
+          total={300}
+          avatars={(stats?.players ?? [])
+            .slice(0, 4)
+            .map((p) => p.pfpUrl || "/images/avatars/a.png")}
+        />
+
+        {/* CTA */}
+        <div className="mt-8 w-full max-w-[300px] px-4">
+          <FancyBorderButton onClick={() => router.push("/game")}>
+            ENTER GAME
+          </FancyBorderButton>
+        </div>
+
+        {/* Leaderboard Preview */}
+        <div className="mt-8 w-full max-w-sm">
+          <h3 className="text-lg font-semibold mb-3 text-white/80">
+            Top Players
+          </h3>
+          <ul className="flex flex-col gap-2 items-center">
+            {(stats?.players ?? []).slice(0, 5).map((p, i) => (
+              <li
+                key={i}
+                className="flex items-center justify-between w-full bg-white/5 rounded-lg px-4 py-2"
+              >
+                <div className="flex items-center gap-3">
+                  <Image
+                    src={p.pfpUrl || "/images/avatars/a.png"}
+                    alt={p.username || "player"}
+                    width={28}
+                    height={28}
+                    className="rounded-full"
+                  />
+                  <span className="text-white text-sm">{p.username}</span>
+                </div>
+                <span className="text-xs text-[#00CFF2] uppercase font-semibold">
+                  Joined
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </main>
+
+      <BottomNav />
+    </div>
+  );
 }
 
 --- File: ./src/app/(authenticated)/lobby/buy/_components/SpotsLeft.tsx ---
@@ -485,10 +657,13 @@ export function SpotsLeft({
 }
 
 --- File: ./src/app/(authenticated)/lobby/buy/page.tsx ---
+// src/app/(authenticated)/lobby/buy/page.tsx
+// If a ticket was already purchased, skip buying and go to confirmation.
+
 "use client";
-import React, { useState } from "react";
+
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-// import useLobbyStore from "@/stores/lobbyStore";
 import LogoIcon from "@/components/logo/LogoIcon";
 import { cn } from "@/lib/utils";
 import { InviteIcon, WalletIcon } from "@/components/icons";
@@ -496,47 +671,56 @@ import { BottomNav } from "@/components/BottomNav";
 import Image from "next/image";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { SpotsLeft } from "./_components/SpotsLeft";
+import { useLobbyStore } from "@/stores/lobbyStore";
 
+// ───────────────────────── CONSTANTS ─────────────────────────
 const TICKET_PRICE = 50;
+const GAME_ID = 1;
 
 export default function BuyWafflePage() {
   const router = useRouter();
+  const { buyTicket, purchaseStatus, ticket } = useLobbyStore();
   const [isPurchasing, setIsPurchasing] = useState(false);
-  const [purchased, setPurchased] = useState(false);
-  const [prizePool] = useState(12500); // Mock data
-  const [playerCount] = useState(250); // Mock data
-  const [ticketNumber] = useState(251); // Mock data
 
+  // If already have a ticket, redirect to confirmation
+  useEffect(() => {
+    if (ticket && purchaseStatus === "confirmed") {
+      router.replace("/lobby/confirm");
+    }
+  }, [ticket, purchaseStatus, router]);
+
+  // Placeholder stats
+  const playerCount = 250;
+
+  // ───────────────────────── HANDLER ─────────────────────────
   const handlePurchase = async () => {
+    if (isPurchasing) return;
     setIsPurchasing(true);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setPurchased(true);
+    await buyTicket(1, GAME_ID, TICKET_PRICE); // userId=1 placeholder
     setIsPurchasing(false);
+
+    if (useLobbyStore.getState().purchaseStatus === "confirmed") {
+      router.push("/lobby/confirm");
+    }
   };
 
-  if (purchased) {
-    router.push("/lobby");
-    return null;
-  }
-
   return (
-    <div className="h-screen flex flex-col bg-figma noise relative font-body">
-      {/* Header */}
+    <div className="h-screen flex flex-col bg-figmaYay noise relative font-body">
+      {/* HEADER */}
       <div
         className={cn(
-          "p-4 flex items-center justify-between border-b border-border bg-figma"
+          "p-4 flex items-center justify-between border-b border-border bg-figmaYay"
         )}
       >
         <LogoIcon />
-        <div className="flex items-center gap-1.5 bg-figma rounded-full px-3 py-1.5">
+        <div className="flex items-center gap-1.5 bg-figmaYay rounded-full px-3 py-1.5">
           <WalletIcon className="w-4 h-4 text-foreground" />
           <span className="text-xs text-foreground">{`$983.23`}</span>
         </div>
       </div>
 
-      {/* Main content */}
+      {/* MAIN CONTENT */}
       <div className="flex-1 flex flex-col items-center gap-6 justify-center overflow-y-auto">
-        {/* Ticket illustration */}
         <div className="mb-6">
           <Image
             src="/images/illustration/waffle-ticket.png"
@@ -544,26 +728,26 @@ export default function BuyWafflePage() {
             width={152}
             height={93}
             className="mx-auto"
-            style={{
-              imageRendering: "pixelated",
-            }}
+            style={{ imageRendering: "pixelated" }}
             priority
           />
         </div>
 
-        <h1 className="text-foreground  text-3xl text-center leading-tight">
+        <h1 className="text-foreground text-3xl text-center leading-tight">
           <span className="block">GET YOUR</span>
           <span className="block">WAFFLE</span>
         </h1>
 
-        {/* Buy Button */}
+        {/* BUY BUTTON */}
         <div className="w-full max-w-[400px] px-4">
           <FancyBorderButton onClick={handlePurchase} disabled={isPurchasing}>
-            {isPurchasing ? "PROCESSING..." : "BUY WAFFLE"}
+            {isPurchasing || purchaseStatus === "pending"
+              ? "PROCESSING..."
+              : "BUY WAFFLE"}
           </FancyBorderButton>
         </div>
 
-        {/* Invite Friends */}
+        {/* INVITE */}
         <button
           className="mt-5 flex items-center gap-1 text-xs font-bold text-[#00CFF2] hover:underline focus:outline-none"
           tabIndex={0}
@@ -574,8 +758,8 @@ export default function BuyWafflePage() {
         </button>
 
         <SpotsLeft
-          current={23}
-          total={100}
+          current={playerCount}
+          total={300}
           avatars={[
             "/images/avatars/a.png",
             "/images/avatars/b.png",
@@ -584,7 +768,7 @@ export default function BuyWafflePage() {
           ]}
         />
       </div>
-      {/* Bottom navigation */}
+
       <BottomNav />
     </div>
   );
@@ -650,7 +834,7 @@ export function Tabs({
               // Responsive paddings and text size
               "px-4 py-2 text-xs sm:px-6 sm:py-2 sm:text-sm",
               selected ? "font-bold" : "opacity-80 hover:opacity-100",
-              selected ? "noise" : "bg-figma noise",
+              selected ? "noise" : "bg-figmaYay noise",
               "transition",
             ].join(" ")}
             tabIndex={selected ? 0 : -1}
@@ -664,33 +848,40 @@ export function Tabs({
 }
 
 --- File: ./src/app/(authenticated)/leaderboard/_components/Row.tsx ---
-import { LeaderboardUser } from "@/app/api/leaderboard/route";
+import { Entry } from "@/stores/leaderboardStore";
 import { UsdcIcon } from "@/components/icons";
 import Image from "next/image";
 
-export function Row({ user }: { user: LeaderboardUser }) {
+export function Row({ entry }: { entry: Entry }) {
   return (
     <div className="panel flex h-12 items-center justify-between rounded-xl px-4">
       <div className="flex items-center gap-2">
         <div className="grid h-7 w-7 place-items-center rounded-full bg-white/10">
-          <span className="text-xs leading-tight">{user.rank}</span>
+          <span className="text-xs leading-tight">{entry.rank}</span>
         </div>
         <div className="flex items-center gap-2">
-          <Image
-            src={user.avatarUrl}
-            alt={user.name}
-            width={30}
-            height={30}
-            className="rounded-full bg-[#F0F3F4] object-cover"
-            draggable={false}
-          />
-          <div className="text-sm leading-tight">{user.name}</div>
+          {entry.pfpUrl && (
+            <Image
+              src={entry.pfpUrl}
+              alt={entry.username}
+              width={30}
+              height={30}
+              className="rounded-full bg-[#F0F3F4] object-cover"
+              draggable={false}
+            />
+          )}
+          {!entry.pfpUrl && (
+            <div className="grid h-7 w-7 place-items-center rounded-full bg-white/10">
+              <span className="text-xs leading-tight">{entry.rank}</span>
+            </div>
+          )}
+          <div className="text-sm leading-tight">{entry.username}</div>
         </div>
       </div>
       <div className="flex items-center gap-2">
         <UsdcIcon className="h-4 w-4" />
         <div className="font-display font-medium text-base tracking-tight">
-          {user.score.toLocaleString(undefined, {
+          {entry.points.toLocaleString(undefined, {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           })}
@@ -701,12 +892,12 @@ export function Row({ user }: { user: LeaderboardUser }) {
 }
 
 --- File: ./src/app/(authenticated)/leaderboard/_components/Top3.tsx ---
-import { LeaderboardUser } from "@/app/api/leaderboard/route";
+import { Entry } from "@/stores/leaderboardStore";
 import { TrophyIcon, UsdcIcon } from "@/components/icons";
 
 /** Top3: fixed single row (no wrap), fully responsive, no overflow */
-export function Top3({ users }: { users: LeaderboardUser[] }) {
-  if (!users?.length) return null;
+export function Top3({ entries }: { entries: Entry[] }) {
+  if (!entries?.length) return null;
 
   const cardStyles = [
     {
@@ -739,9 +930,9 @@ export function Top3({ users }: { users: LeaderboardUser[] }) {
         } as React.CSSProperties
       }
     >
-      {users.slice(0, 3).map((user, i) => (
+      {entries.slice(0, 3).map((entry, i) => (
         <article
-          key={user.id}
+          key={entry.rank}
           className={[
             "basis-1/3 min-w-0 flex-1",
             "rounded-[var(--radius)] border border-white/10",
@@ -766,8 +957,8 @@ export function Top3({ users }: { users: LeaderboardUser[] }) {
           <div className="flex min-w-0 items-center gap-[calc(var(--pad)*0.5)]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={user.avatarUrl || "/avatar.png"}
-              alt={user.name}
+              src={entry.pfpUrl || "/avatar.png"}
+              alt={entry.username}
               draggable={false}
               className="rounded-full bg-[#F0F3F4] object-cover flex-shrink-0"
               style={{
@@ -776,13 +967,13 @@ export function Top3({ users }: { users: LeaderboardUser[] }) {
               }}
             />
             <span
-              title={user.name}
+              title={entry.username}
               className="
                 min-w-0 truncate text-white font-body font-normal leading-tight
               "
               style={{ fontSize: "clamp(0.7rem, 2.3vw, 0.95rem)" }}
             >
-              {user.name}
+              {entry.username}
             </span>
           </div>
 
@@ -799,7 +990,7 @@ export function Top3({ users }: { users: LeaderboardUser[] }) {
               className="font-display font-medium tracking-tight leading-[1.1]"
               style={{ fontSize: "clamp(0.85rem, 2.6vw, 1rem)" }}
             >
-              {user.score.toLocaleString(undefined, {
+              {entry.points.toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
@@ -817,10 +1008,7 @@ export function Top3({ users }: { users: LeaderboardUser[] }) {
 import Image from "next/image";
 import { useEffect, useMemo, useRef } from "react";
 import { Tabs } from "./_components/Tabs";
-import {
-  useLeaderboardStore,
-  type LeaderboardUser,
-} from "@/stores/leaderboardStore";
+import { useLeaderboardStore, Entry } from "@/stores/leaderboardStore";
 import { Top3 } from "./_components/Top3";
 import { Row } from "./_components/Row";
 import { WalletIcon } from "@/components/icons";
@@ -828,30 +1016,29 @@ import LogoIcon from "@/components/logo/LogoIcon";
 import { BottomNav } from "@/components/BottomNav";
 
 export default function LeaderboardPage() {
-  const { activeTab, slices, setActiveTab, fetchPage, rememberScroll } =
+  const { activeTab, slices, setActiveTab, fetchLeaderboard, rememberScroll } =
     useLeaderboardStore();
 
   const slice = slices[activeTab];
-  const top3 = useMemo<LeaderboardUser[]>(
-    () => slice.items.slice(0, 3),
-    [slice.items]
-  );
-  const rest = useMemo<LeaderboardUser[]>(
-    () => slice.items.slice(3),
-    [slice.items]
-  );
 
-  // progress drives only the CROWN fade/scale (0 → 1 as it leaves)
+  // ───────────────────────── DATA PREP ─────────────────────────
+  const top3 = useMemo<Entry[]>(
+    () => slice.entries.slice(0, 3),
+    [slice.entries]
+  );
+  const rest = useMemo<Entry[]>(() => slice.entries.slice(3), [slice.entries]);
+
+  // ───────────────────────── HERO ANIMATION ─────────────────────────
   const crownRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = crownRef.current;
     if (!el) return;
     const io = new IntersectionObserver(
       ([e]) => {
-        const r = 1 - e.intersectionRatio;
+        const ratio = 1 - e.intersectionRatio;
         document.documentElement.style.setProperty(
           "--lb-progress",
-          `${Math.min(Math.max(r, 0), 1)}`
+          `${Math.min(Math.max(ratio, 0), 1)}`
         );
       },
       { threshold: Array.from({ length: 21 }, (_, i) => i / 20) }
@@ -860,13 +1047,15 @@ export default function LeaderboardPage() {
     return () => io.disconnect();
   }, []);
 
-  // lazy + remember/restore scroll
+  // ───────────────────────── SCROLL PERSISTENCE ─────────────────────────
   useEffect(() => setActiveTab(activeTab), [activeTab, setActiveTab]);
+
   useEffect(() => {
     const onScroll = () => rememberScroll(activeTab, window.scrollY);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, [activeTab, rememberScroll]);
+
   useEffect(() => {
     requestAnimationFrame(() =>
       window.scrollTo({
@@ -876,12 +1065,37 @@ export default function LeaderboardPage() {
     );
   }, [activeTab, slices]);
 
-  const loadMore = () =>
-    !slice.isLoading && slice.hasMore && fetchPage(activeTab);
+  // ───────────────────────── FETCHING ─────────────────────────
+  useEffect(() => {
+    const s = slices[activeTab];
+    if (!s.entries.length && !s.isLoading) {
+      fetchLeaderboard(activeTab).catch(console.error);
+    }
+  }, [activeTab, slices, fetchLeaderboard]);
 
+  const loadMore = () => {
+    const s = slices[activeTab];
+    if (!s.isLoading && s.hasMore) {
+      fetchLeaderboard(activeTab).catch(console.error);
+    }
+  };
+
+  // ───────────────────────── OPTIONAL AUTO-REFRESH ─────────────────────────
+  // 💡 Toggle ON/OFF easily by commenting this block ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+  useEffect(() => {
+    if (activeTab !== "current") return; // refresh only for current game
+    const interval = setInterval(() => {
+      fetchLeaderboard("current").catch(console.error);
+    }, 15000); // every 15 seconds
+    return () => clearInterval(interval);
+  }, [activeTab, fetchLeaderboard]);
+  // 💡 End of auto-refresh block ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+
+  // ───────────────────────── RENDER ─────────────────────────
   return (
     <main className="min-h-[100dvh] bg-transparent">
-      <header className="sticky top-0 z-20 w-full border-b border-white/20 px-4 py-3 bg-figma">
+      {/* HEADER */}
+      <header className="sticky top-0 z-20 w-full border-b border-white/20 px-4 py-3 bg-figmaYay">
         <div className="mx-auto max-w-screen-sm flex w-full items-center justify-between ">
           <div className="flex min-w-0 flex-row items-center justify-center">
             <LogoIcon />
@@ -899,10 +1113,10 @@ export default function LeaderboardPage() {
           </div>
         </div>
       </header>
-      {/* ───────────────────────── HERO SECTION (single source of truth) ───────────────────────── */}
+
+      {/* HERO + TABS */}
       <section className="mx-auto max-w-screen-sm px-4 pt-6 md:pt-10 relative">
-        {/* crown: scrolls away; only element that fades/scales */}
-        <div ref={crownRef} className="relative grid place-items-center  ">
+        <div ref={crownRef} className="relative grid place-items-center">
           <Image
             src="/images/chest-crown.png"
             alt=""
@@ -917,7 +1131,6 @@ export default function LeaderboardPage() {
           />
         </div>
 
-        {/* this block docks under the app bar and stays there — it’s the SAME content */}
         <div className="sticky top-14 z-10 -mx-4 px-4 pb-2 pt-1 bg-transparent">
           <h1 className="text-center font-body text-2xl md:text-3xl tracking-wide">
             LEADERBOARD
@@ -935,12 +1148,13 @@ export default function LeaderboardPage() {
         </div>
       </section>
 
-      {/* ───────────────────────── LIST ───────────────────────── */}
+      {/* LIST */}
       <section className="mx-auto max-w-screen-sm px-4 pb-24 pt-4 space-y-4">
-        <Top3 users={top3} />
+        <Top3 entries={top3} />
+
         <div className="space-y-3">
-          {rest.map((u) => (
-            <Row key={u.id} user={u} />
+          {rest.map((e) => (
+            <Row key={e.rank} entry={e} />
           ))}
 
           {slice.isLoading && (
@@ -951,7 +1165,7 @@ export default function LeaderboardPage() {
               {slice.error}
             </div>
           )}
-          {!slice.isLoading && !slice.items.length && !slice.error && (
+          {!slice.isLoading && !slice.entries.length && !slice.error && (
             <div className="panel px-4 py-6 text-center text-sm text-muted">
               Nothing here yet.
             </div>
@@ -961,7 +1175,8 @@ export default function LeaderboardPage() {
             onFocus={loadMore}
             onMouseEnter={loadMore}
             onClick={loadMore}
-            className="mx-auto block h-10 w-full max-w-[220px] rounded-xl border border-white/10 bg-white/5 text-sm"
+            disabled={slice.isLoading}
+            className="mx-auto block h-10 w-full max-w-[220px] rounded-xl border border-white/10 bg-white/5 text-sm transition disabled:opacity-50"
           >
             {slice.hasMore
               ? slice.isLoading
@@ -971,6 +1186,7 @@ export default function LeaderboardPage() {
           </button>
         </div>
       </section>
+
       <BottomNav />
     </main>
   );
@@ -1045,8 +1261,6 @@ export default function GradientMask({
 }
 
 --- File: ./src/app/(authenticated)/game/_components/ChatTickerOverlay.tsx ---
-"use client";
-
 import { useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
 import clsx from "clsx";
@@ -1128,6 +1342,65 @@ function AvatarCircle({ src, name }: { src?: string; name: string }) {
   );
 }
 
+--- File: ./src/app/(authenticated)/game/_components/GameOverView.tsx ---
+"use client";
+
+import { useGameStore } from "@/stores/gameStore";
+import { PixelButton } from "@/components/buttons/PixelButton";
+import { useMiniUser } from "@/hooks/useMiniUser";
+
+export default function GameOverView() {
+  const { score, resetGame, fetchQuestions, gameId } = useGameStore();
+  const user = useMiniUser();
+  return (
+    <main className="flex flex-col items-center justify-center min-h-[100dvh] bg-figmaYay text-center space-y-6 px-6">
+      {/* ───────────────────────── HEADER ───────────────────────── */}
+      <h1 className="font-body text-3xl md:text-4xl text-white font-bold tracking-wide">
+        GAME&nbsp;OVER
+      </h1>
+
+      {/* ───────────────────────── SCORE PANEL ───────────────────────── */}
+      <div className="panel px-8 py-6 rounded-2xl bg-white/10 border border-white/20">
+        <p className="text-white/80 text-lg font-body mb-2">Your total score</p>
+        <p className="text-5xl font-display text-[color:var(--color-waffle-gold)]">
+          {score}
+        </p>
+      </div>
+
+      {/* ───────────────────────── ACTION BUTTONS ───────────────────────── */}
+      <div className="flex flex-col sm:flex-row gap-4 mt-4">
+        <PixelButton
+          backgroundColor="#FFE8BA"
+          borderColor="#FFC931"
+          textColor="#151515"
+          onClick={() => {
+            if (gameId && user.fid && user.username && user.pfpUrl) {
+              fetchQuestions(gameId, {
+                fid: user.fid,
+                username: user.username,
+                pfpUrl: user.pfpUrl,
+              });
+            } else {
+              console.error("No user found");
+            }
+          }}
+        >
+          Play Again
+        </PixelButton>
+
+        <PixelButton
+          backgroundColor="#EFD6FF"
+          borderColor="#B45CFF"
+          textColor="#151515"
+          onClick={resetGame}
+        >
+          Back to Lobby
+        </PixelButton>
+      </div>
+    </main>
+  );
+}
+
 --- File: ./src/app/(authenticated)/game/_components/QuestionTop.tsx ---
 "use client";
 
@@ -1149,8 +1422,8 @@ function mmss(total: number) {
 export default function QuestionTop() {
   const currentQuestionIndex = useGameStore((s) => s.currentQuestionIndex);
   const totalQuestions = useGameStore((s) => s.totalQuestions);
-  const roundTimer = useGameStore((s) => s.roundTimer);
-  const questionTimer = useGameStore((s) => s.questionTimer);
+  const roundTimer = useGameStore((s) => s.timeLeft);
+  const questionTimer = useGameStore((s) => s.timeLeft);
   const currentQuestion = useGameStore((s) => s.currentQuestion);
 
   const qCount = useMemo(() => {
@@ -1239,14 +1512,14 @@ function useOptionHotkeys(
 
 export default function QuestionView() {
   // ── Store selectors
-  const gameState = useGameStore((s) => s.gameState);
   const currentQuestion = useGameStore((s) => s.currentQuestion);
   const currentQuestionIndex = useGameStore((s) => s.currentQuestionIndex);
   const totalQuestions = useGameStore((s) => s.totalQuestions);
   const questionTimer = useGameStore((s) => s.questionTimer);
-  const roundTimer = useGameStore((s) => s.roundTimer);
   const selectedAnswer = useGameStore((s) => s.selectedAnswer);
   const selectAnswer = useGameStore((s) => s.selectAnswer);
+  const gameState = useGameStore((s) => s.gameState);
+  const roundTimer = useGameStore((s) => s.roundTimer);
 
   const locked = gameState !== "QUESTION_ACTIVE";
   const onPick = React.useCallback(
@@ -1530,7 +1803,9 @@ export default function GameScreen() {
 
   return (
     // Full-bleed container; child views handle their own max-width & padding.
-    <div className="w-full min-h-[100dvh] overflow-hidden bg-figma">{view}</div>
+    <div className="w-full min-h-[100dvh] overflow-hidden bg-figmaYay">
+      {view}
+    </div>
   );
 }
 
@@ -1541,44 +1816,15 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { ForwardMessageIcon, MessageIcon } from "@/components/icons";
-
-interface Message {
-  id: number;
-  username: string;
-  message: string;
-  time: string;
-  avatarUrl: string;
-}
+import { useGameStore } from "@/stores/gameStore";
+import { useMiniUser } from "@/hooks/useMiniUser";
 
 export default function ChatDrawer() {
   const [open, setOpen] = useState(false);
   const [newMessage, setNewMessage] = useState("");
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 1,
-      username: "rugpull847",
-      message: "game tuff man",
-      time: "13:42",
-      avatarUrl: "/images/avatars/a.png",
-    },
-    {
-      id: 2,
-      username: "ianbowenthe",
-      message: "LFGGGG",
-      time: "13:42",
-      avatarUrl: "/images/avatars/b.png",
-    },
-    {
-      id: 3,
-      username: "funddswen",
-      message: "Next round come onnnn",
-      time: "13:42",
-      avatarUrl: "/images/avatars/c.png",
-    },
-  ]);
-
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
+  const { messages, sendMessage } = useGameStore();
+  const user = useMiniUser();
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -1590,26 +1836,20 @@ export default function ChatDrawer() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = newMessage.trim();
-    if (!trimmed) return; // solid validation
-    const newMsg = {
-      id: Date.now(),
-      username: "You",
-      message: trimmed,
-      time: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      avatarUrl: "/images/avatars/a.png",
-    };
-    setMessages((prev) => [...prev, newMsg]);
+    if (!trimmed || !user.fid) return;
+    sendMessage(trimmed, {
+      fid: user.fid,
+      username: user.username,
+      pfpUrl: user.pfpUrl,
+    });
     setNewMessage("");
   };
 
   return (
     <>
-      {/* 🔹 Trigger Input (always visible at bottom) */}
+      {/* Trigger Input */}
       <div
-        className="absolute left-0 bottom-0 w-full  mx-auto flex flex-row items-start px-4 pb-5 pt-3 gap-3 bg-[#0E0E0E] z-30"
+        className="absolute left-0 bottom-0 w-full mx-auto flex flex-row items-start px-4 pb-5 pt-3 gap-3 bg-[#0E0E0E] z-30"
         onClick={() => setOpen(true)}
       >
         <div className="flex flex-col justify-center items-start flex-grow bg-white/5 rounded-full px-5 py-3 gap-1">
@@ -1621,7 +1861,7 @@ export default function ChatDrawer() {
         </div>
       </div>
 
-      {/* 🔹 Drawer (Chat Panel) */}
+      {/* Drawer */}
       <AnimatePresence>
         {open && (
           <motion.div
@@ -1632,19 +1872,9 @@ export default function ChatDrawer() {
             onClick={() => setOpen(false)}
           >
             <motion.div
-              className="
-                relative
-                w-full
-                mx-auto
-                flex flex-col
-                rounded-t-full
-                bg-figma noise
-                h-[85vh] max-h-[90dvh] sm:max-h-[600px] min-h-[60dvh]
-                overflow-hidden
-              "
+              className="relative w-full mx-auto flex flex-col rounded-t-full bg-figmaYay noise h-[85vh] max-h-[90dvh] sm:max-h-[600px] min-h-[60dvh] overflow-hidden"
               style={{
                 width: "100%",
-
                 borderTopLeftRadius: "1.25rem",
                 borderTopRightRadius: "1.25rem",
               }}
@@ -1654,22 +1884,8 @@ export default function ChatDrawer() {
               transition={{ type: "spring", stiffness: 200, damping: 25 }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Grabber */}
-              <div className="absolute left-1/2 -translate-x-1/2 top-3 opacity-40">
-                <div className="w-9 sm:w-10 h-1.5 bg-white rounded-full" />
-              </div>
-
               {/* Header */}
-              <div
-                className="
-                  flex flex-row items-center justify-between
-                  px-4 pt-8 pb-3
-                  border-b border-white/5
-                  bg-[#191919]
-                  rounded-t-2xl
-                  font-body
-                "
-              >
+              <div className="flex flex-row items-center justify-between px-4 pt-8 pb-3 border-b border-white/5 bg-[#191919] rounded-t-2xl font-body">
                 <div className="flex flex-row items-center gap-2">
                   <MessageIcon />
                   <h2 className="font-pixel text-white text-lg md:text-xl select-none">
@@ -1681,39 +1897,16 @@ export default function ChatDrawer() {
                 </span>
               </div>
 
-              {/* Message List */}
-              <div
-                className="
-                  flex flex-col items-start
-                  gap-3 sm:gap-4
-                  pb-4 pt-6
-                  px-4
-                  flex-1
-                  min-h-0
-                  overflow-y-scroll
-                  scrollbar-none
-                  w-full 
-                "
-                style={{
-                  margin: "0 auto",
-                  width: "100%",
-                }}
-              >
+              {/* Messages */}
+              <div className="flex flex-col items-start gap-3 sm:gap-4 pb-4 pt-6 px-4 flex-1 min-h-0 overflow-y-scroll scrollbar-none w-full">
                 {messages.map((msg, idx) => (
                   <div
                     key={msg.id}
-                    className="
-                      flex flex-col items-start gap-2 w-full
-                      "
-                    style={{
-                      order: idx,
-                    }}
+                    className="flex flex-col items-start gap-2 w-full"
+                    style={{ order: idx }}
                   >
-                    {/* User + Time */}
                     <div className="flex flex-row items-center gap-1.5 sm:gap-2 min-h-5 mb-0.5">
-                      {/* Avatar */}
                       <div className="w-5 h-5 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center">
-                        {/* Optionally show avatar image if provided */}
                         {msg.avatarUrl ? (
                           <Image
                             src={msg.avatarUrl}
@@ -1728,35 +1921,16 @@ export default function ChatDrawer() {
                           </span>
                         )}
                       </div>
-                      {/* Username */}
                       <span className="ml-1 font-brockmann font-medium text-[0.92rem] leading-[130%] tracking-[-0.03em] text-white">
                         {msg.username}
                       </span>
-                      {/* Dot */}
                       <span className="mx-1 w-[0.28rem] h-[0.28rem] bg-[#D9D9D9] rounded-full inline-block" />
-                      {/* Time */}
                       <span className="font-brockmann font-medium text-[0.72rem] leading-[130%] tracking-[-0.03em] text-[#99A0AE]">
                         {msg.time}
                       </span>
                     </div>
-                    {/* Comment Body */}
-                    <div
-                      className="
-                        w-full
-                        bg-white/[0.10]
-                        border
-                        border-white/[0.03]
-                        rounded-[0px_0.75rem_0.75rem_0.75rem]
-                        px-4 py-3
-                        flex flex-col justify-center
-                        "
-                      style={{
-                        borderTopLeftRadius: 0,
-                        borderTopRightRadius: "0.75rem",
-                        borderBottomRightRadius: "0.75rem",
-                        borderBottomLeftRadius: "0.75rem",
-                      }}
-                    >
+
+                    <div className="w-full bg-white/[0.10] border border-white/[0.03] rounded-[0px_0.75rem_0.75rem_0.75rem] px-4 py-3 flex flex-col justify-center">
                       <p className="font-brockmann font-medium text-base leading-[130%] tracking-[-0.03em] text-white break-words">
                         {msg.message}
                       </p>
@@ -1766,18 +1940,10 @@ export default function ChatDrawer() {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Input area */}
+              {/* Input */}
               <form
                 onSubmit={handleSubmit}
-                className="
-                  absolute
-                  left-0 bottom-0
-                  w-full
-                  flex flex-row items-center
-                  bg-[#0E0E0E]
-                  px-4 py-5 gap-3
-                  border-t border-white/5
-                "
+                className="absolute left-0 bottom-0 w-full flex flex-row items-center bg-[#0E0E0E] px-4 py-5 gap-3 border-t border-white/5"
                 style={{
                   minHeight: "min(90px,12vh)",
                   maxHeight: "18vh",
@@ -1795,13 +1961,7 @@ export default function ChatDrawer() {
                   {newMessage.trim() && (
                     <motion.button
                       type="submit"
-                      className="
-                        ml-3 bg-[#1B8FF5] rounded-full
-                        w-10 h-10 min-w-[2.25rem] min-h-[2.25rem]
-                        flex items-center justify-center
-                        active:scale-95 transition-transform
-                        shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400
-                      "
+                      className="ml-3 bg-[#1B8FF5] rounded-full w-10 h-10 flex items-center justify-center active:scale-95 transition-transform shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       exit={{ scale: 0 }}
@@ -2105,136 +2265,69 @@ export default function LobbyView() {
 }
 
 --- File: ./src/app/(authenticated)/game/page.tsx ---
+// src/app/(authenticated)/game/page.tsx
+// Ensure user has invite code and ticket; otherwise redirect appropriately.
+
 "use client";
 
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { useGameStore } from "@/stores/gameStore";
-import { PixelButton } from "@/components/buttons/PixelButton";
-import LogoIcon from "@/components/logo/LogoIcon";
-import { LeaveGameIcon } from "@/components/icons";
-import GameScreen from "./_components/GameScreen";
+import CountdownView from "./_components/CountdownView";
+import QuestionView from "./_components/QuestionView";
+import LobbyView from "./_components/LobbyView";
+import GameOverView from "./_components/GameOverView";
+import { useMiniUser } from "@/hooks/useMiniUser";
+import { useRouter } from "next/navigation";
+import { useLobbyStore } from "@/stores/lobbyStore";
 
-/* Brand palettes for the 4 answer rows (match your mock) */
-const PALETTES = [
-  { bg: "#FFE8BA", border: "#FFC931", text: "#151515" }, // gold
-  { bg: "#EFD6FF", border: "#B45CFF", text: "#151515" }, // purple
-  { bg: "#D7EBFF", border: "#2E7DFF", text: "#151515" }, // blue
-  { bg: "#D8FFF1", border: "#18DCA5", text: "#151515" }, // green
-] as const;
+export default function GameScreen() {
+  const router = useRouter();
+  const gameState = useGameStore((s) => s.gameState);
+  const gameId = useGameStore((s) => s.gameId);
+  const user = useMiniUser();
 
-export default function GamePage() {
-  const { gameState, currentQuestion, tickQuestionTimer, resetGame } =
-    useGameStore();
+  const { referralStatus, ticket } = useLobbyStore();
 
-  // Tick every 1s while the question is active
+  // Redirect if missing invite code or ticket
   useEffect(() => {
-    if (gameState !== "QUESTION_ACTIVE") return;
-    const id = setInterval(() => tickQuestionTimer(), 1000);
-    return () => clearInterval(id);
-  }, [gameState, tickQuestionTimer]);
+    if (referralStatus !== "success") {
+      router.replace("/lobby/invite-code");
+    } else if (!ticket) {
+      router.replace("/lobby/buy");
+    }
+  }, [referralStatus, ticket, router]);
 
-  if (!currentQuestion) {
-    return (
-      <main className="grid min-h-[100dvh] place-items-center bg-figma px-6 text-center">
-        <div className="space-y-4">
-          <p className="text-lg text-white/90">No active question.</p>
-          <PixelButton
-            backgroundColor={PALETTES[0].bg}
-            borderColor={PALETTES[0].border}
-            textColor={PALETTES[0].text}
-            onClick={resetGame}
-          >
-            Back to Lobby
-          </PixelButton>
-        </div>
-      </main>
-    );
-  }
+  // Fetch messages if we have a valid game and user
+  useEffect(() => {
+    if (gameId && user.fid && user.username && user.pfpUrl) {
+      useGameStore.getState().fetchMessages(gameId, {
+        fid: user.fid,
+        username: user.username,
+        pfpUrl: user.pfpUrl,
+      });
+    } else {
+      console.error("No user found");
+    }
+  }, [gameId, user]);
+
+  const view = (() => {
+    switch (gameState) {
+      case "ROUND_COUNTDOWN":
+        return <CountdownView />;
+      case "QUESTION_ACTIVE":
+      case "ANSWER_SUBMITTED":
+        return <QuestionView />;
+      case "GAME_OVER":
+        return <GameOverView />;
+      case "LOBBY":
+      default:
+        return <LobbyView />;
+    }
+  })();
 
   return (
-    <main className="min-h-[100dvh] overflow-x-hidden bg-figma">
-      {/* ───────── Sticky Header ───────── */}
-      <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[color:var(--surface-popover)]/70 backdrop-blur">
-        <div className="mx-auto grid w-full max-w-screen-sm grid-cols-[1fr_auto] items-center gap-3 px-4 py-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <LogoIcon />
-            <LiveBadge />
-          </div>
-          <div className="justify-self-end max-w-full">
-            <button
-              type="button"
-              onClick={resetGame}
-              aria-label="Leave game"
-              className={`
-                flex flex-row items-center justify-center gap-2 
-                px-3 sm:px-4 py-1.5 
-                min-w-[0] w-full max-w-[180px] sm:max-w-[160px] 
-                h-8 sm:h-7 
-                rounded-full 
-                bg-white/[0.10] 
-                hover:bg-white/[0.20] 
-                active:bg-white/[0.16] 
-                transition-colors 
-                border-none 
-                overflow-hidden
-              `}
-              style={{
-                fontWeight: 400,
-                fontSize: "clamp(13px, 4vw, 16px)",
-                lineHeight: "1.1",
-                color: "#FFF",
-              }}
-            >
-              <span className="sr-only">Leave game</span>
-              <span
-                aria-hidden="true"
-                className="flex flex-row items-center gap-2 min-w-0 truncate"
-              >
-                <span className="flex items-center flex-shrink-0">
-                  <LeaveGameIcon width={18} height={18} />
-                </span>
-                <span
-                  className={`
-                    leading-snug flex items-center
-                    min-w-0 truncate font-semibold
-                    text-xs sm:text-sm md:text-base
-                    uppercase tracking-wide
-                  `}
-                  style={{
-                    height: "1.1em",
-                  }}
-                >
-                  <span className="truncate block">LEAVE&nbsp;GAME</span>
-                </span>
-              </span>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <GameScreen />
-    </main>
-  );
-}
-
-/* ——— Small helper badge ——— */
-function LiveBadge() {
-  return (
-    <div className="flex flex-row items-center gap-[5px] w-[47px] h-[17px] p-0">
-      <span className="w-[10px] h-[10px] rounded-full bg-[#FC1919] flex-none order-0" />
-      <span
-        className="flex-none order-1 text-center font-body"
-        style={{
-          fontStyle: "normal",
-          fontWeight: 400,
-          fontSize: "18px",
-          lineHeight: "92%",
-          letterSpacing: "-0.03em",
-          color: "#FC1919",
-        }}
-      >
-        LIVE
-      </span>
+    <div className="w-full min-h-[100dvh] overflow-hidden bg-figmaYay">
+      {view}
     </div>
   );
 }
@@ -2496,18 +2589,11 @@ export function InviteFriendsDrawer({ open, code, onClose }: Props) {
 --- File: ./src/app/(authenticated)/profile/_components/GameHistory.tsx ---
 // Past Games Section
 import { WaffleIcon, ZapIcon } from "@/components/icons";
+import type { GameHistory } from "@/stores/profileStore";
 import Link from "next/link";
 import React from "react";
 
-type Game = {
-  id: string;
-  name: string;
-  score: number | string;
-  winnings: number;
-  winningsColor?: "green" | "gray";
-};
-
-export function PastGames({ pastGames }: { pastGames: Game[] }) {
+export function GameHistory({ gameHistory }: { gameHistory: GameHistory[] }) {
   return (
     <section aria-labelledby="past-games-heading" className="w-full">
       <div className="flex items-center justify-between mb-3.5 font-semibold">
@@ -2535,7 +2621,7 @@ export function PastGames({ pastGames }: { pastGames: Game[] }) {
 
       {/* Show two items like the design; spacing scales with screen */}
       <ul className="space-y-2">
-        {pastGames.slice(0, 2).map((game) => (
+        {gameHistory.slice(0, 2).map((game) => (
           <li key={game.id}>
             <GameHistoryItem game={game} />
           </li>
@@ -2545,7 +2631,7 @@ export function PastGames({ pastGames }: { pastGames: Game[] }) {
   );
 }
 
-export const GameHistoryItem = ({ game }: { game: Game }) => {
+export const GameHistoryItem = ({ game }: { game: GameHistory }) => {
   const amount = "$" + game.winnings;
 
   return (
@@ -2839,7 +2925,7 @@ import {
   WaffleIcon,
   ZapIcon,
 } from "@/components/icons";
-
+import type { GameHistory } from "@/stores/profileStore";
 /* ---------- Top bar (shared look) ---------- */
 const TopBar = () => (
   <header
@@ -2896,15 +2982,8 @@ const SubPageHeader = ({ title }: { title: string }) => (
 );
 
 /* ---------- List item ---------- */
-type Game = {
-  id: string;
-  name: string;
-  score: number | string;
-  winnings: number;
-  winningsColor?: "green" | "gray";
-};
 
-const GameHistoryItem = ({ game }: { game: Game }) => (
+const GameHistoryItem = ({ game }: { game: GameHistory }) => (
   <div
     className={`
       flex items-center justify-between
@@ -2964,7 +3043,7 @@ const GameHistoryItem = ({ game }: { game: Game }) => (
 
 /* ---------- Page ---------- */
 export default function GameHistoryPage() {
-  const { pastGames } = useProfileStore();
+  const { gameHistory } = useProfileStore();
 
   return (
     <div
@@ -2987,7 +3066,7 @@ export default function GameHistoryPage() {
       >
         {/* List */}
         <ul className="flex flex-col gap-3.5 sm:gap-4">
-          {pastGames.map((g) => (
+          {gameHistory.map((g) => (
             <li key={g.id}>
               <GameHistoryItem game={g} />
             </li>
@@ -3010,7 +3089,7 @@ import {
   WalletIcon,
 } from "@/components/icons";
 import { useProfileStore } from "@/stores/profileStore";
-import { PastGames } from "./_components/GameHistory";
+import { GameHistory } from "./_components/GameHistory";
 import LogoIcon from "@/components/logo/LogoIcon";
 import { BottomNav } from "@/components/BottomNav";
 import { ProfileCard } from "./_components/ProfileCard";
@@ -3019,12 +3098,12 @@ import { InviteFriendsDrawer } from "./_components/InviteFriendsDrawer";
 import { useState } from "react";
 
 export default function ProfilePage() {
-  const { username, streak, stats, pastGames } = useProfileStore();
+  const { username, streak, stats, gameHistory } = useProfileStore();
   const [inviteOpen, setInviteOpen] = useState(false);
   const inviteCode = "EVWE";
 
   return (
-    <div className="min-h-screen flex flex-col bg-figma noise ">
+    <div className="min-h-screen flex flex-col bg-figmaYay noise ">
       {/* Header */}
       <header className="sticky top-0 z-10 w-full border-b border-white/20 px-4 py-3">
         <div className="mx-auto max-w-screen-sm flex w-full items-center justify-between">
@@ -3121,7 +3200,7 @@ export default function ProfilePage() {
         </div>
 
         <div className="mt-4">
-          <PastGames pastGames={pastGames} />
+          <GameHistory gameHistory={gameHistory} />
         </div>
       </main>
 
@@ -3285,7 +3364,7 @@ export default function AllTimeStatsPage() {
     <div
       className={`
         min-h-screen flex flex-col
-        bg-figma
+        bg-figmaYay
         noise
       `}
     >
@@ -3366,83 +3445,38 @@ export default function AllTimeStatsPage() {
   );
 }
 
---- File: ./src/app/(authenticated)/buy/page.tsx ---
-"use client";
-
-import { useState } from "react";
-import { useAccount } from "wagmi";
-import { sendUSDC } from "@/lib/payments";
-import { useAuthStore } from "@/stores/authStore";
-import { useTicketStore } from "@/stores/ticketStore";
-
-export default function BuyPage() {
-  const { address } = useAccount();
-  const { fid } = useAuthStore();
-  const { ticket, purchaseStatus, buyTicket } = useTicketStore();
-
-  const [amount] = useState("50");
-  const [loading, setLoading] = useState(false);
-  const [txHash, setTxHash] = useState("");
-
-  const handleBuy = async () => {
-    if (!address || !fid) return alert("Wallet or user not detected");
-    try {
-      setLoading(true);
-      const hash = await sendUSDC(amount);
-      setTxHash(hash);
-      await buyTicket(fid, 1, parseFloat(amount)); // assume gameId = 1
-    } catch (err) {
-      console.error(err);
-      alert("Transaction failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <main className="flex flex-col items-center justify-center min-h-screen gap-4">
-      <h1 className="text-2xl font-bold">Buy Your Waffle 🎟️</h1>
-      <p className="text-gray-300">Entry Fee: {amount} USDC</p>
-
-      <button
-        disabled={loading}
-        onClick={handleBuy}
-        className="bg-blue-600 px-5 py-3 rounded-lg hover:bg-blue-700"
-      >
-        {loading ? "Processing..." : "Buy Ticket"}
-      </button>
-
-      {txHash && (
-        <p className="mt-3 text-xs text-gray-400">
-          TX Hash: {txHash.slice(0, 8)}...
-        </p>
-      )}
-
-      {purchaseStatus === "confirmed" && (
-        <a
-          href="/confirm"
-          className="mt-4 bg-green-600 px-4 py-2 rounded-lg hover:bg-green-700"
-        >
-          View Confirmation
-        </a>
-      )}
-    </main>
-  );
-}
-
 --- File: ./src/app/layout.tsx ---
 import DeviceGate from "@/components/DeviceGate";
 import "./globals.css";
 import { fontBody, fontDisplay, fontInput } from "@/lib/fonts";
 import "./globals.css";
-import WalletProvider from "@/components/providers/WalletProvider";
-import FarcasterProvider from "@/components/providers/FarcasterProvider";
-import GlobalToaster from "@/components/ui/Toaster";
 
-export const metadata = {
-  title: "Waffles Game ",
-  description: "Waffles",
-};
+import { MinikitProvider } from "@/components/providers/MinikitProvider";
+import GlobalToaster from "@/components/ui/Toaster";
+import { Metadata } from "next";
+import { env } from "@/lib/env";
+import { OnboardingGate } from "@/components/onboarding/OnboardingGate";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    other: {
+      "fc:miniapp": JSON.stringify({
+        version: "next",
+        imageUrl: `${env.rootUrl}/logo.png`,
+        button: {
+          title: "Waffles",
+          action: {
+            type: "launch_miniapp",
+            name: "Waffles",
+            url: env.rootUrl,
+            splashImageUrl: `${env.rootUrl}/images/splash-icon.png`,
+            splashBackgroundColor: "#000000",
+          },
+        },
+      }),
+    },
+  };
+}
 
 export default function RootLayout({
   children,
@@ -3456,9 +3490,9 @@ export default function RootLayout({
     >
       <body className="text-foreground bg-figma noise">
         <DeviceGate continueAnyway={process.env.NODE_ENV == "production"}>
-          <WalletProvider>
-            <FarcasterProvider>{children}</FarcasterProvider>
-          </WalletProvider>
+          <MinikitProvider>
+            <OnboardingGate>{children}</OnboardingGate>
+          </MinikitProvider>
         </DeviceGate>
         <GlobalToaster />
       </body>
@@ -3539,7 +3573,7 @@ export async function GET(request: Request) {
   const result = tickets.map((ticket) => ({
     ticketId: ticket.id,
     gameId: ticket.gameId,
-    gameTitle: ticket.game.title,
+    gameTitle: ticket.game.name,
     code: ticket.code,
     amountUSDC: ticket.amountUSDC,
     purchasedAt: ticket.purchasedAt,
@@ -3606,7 +3640,7 @@ export async function POST(request: Request) {
   });
   return NextResponse.json({
     ticketId: ticket.id,
-    waffleType: game.title,
+    waffleType: game.name,
     message: "Purchase successful",
   });
 }
@@ -3723,10 +3757,12 @@ export async function POST(request: Request) {
 }
 
 --- File: ./src/app/api/config/game/[gameId]/route.ts ---
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { type Prisma } from "@prisma/client";
 
+// Define enum and config schema as before
 const prizePoolTypeEnum = z.enum(["FIXED", "DYNAMIC"]);
 
 const baseConfigSchema = z.object({
@@ -3744,18 +3780,22 @@ const baseConfigSchema = z.object({
   difficultyScaling: z.number().positive().max(10).optional(),
 });
 
-function isAuthorizedAdmin(request: Request): boolean {
+// Helper: authorization for PUT (admins only)
+function isAuthorizedAdmin(request: NextRequest): boolean {
   const headerToken = request.headers.get("x-admin-token");
   const envToken = process.env.ADMIN_TOKEN;
   return Boolean(envToken && headerToken && headerToken === envToken);
 }
 
+// --- TYPE FIX: Next.js expects "params" to be a Promise in context ---
+// See type error in build output (params: Promise<{ gameId: string; }>;)
 export async function GET(
-  request: Request,
-  { params }: { params: { gameId: string } }
+  request: NextRequest,
+  context: { params: Promise<{ gameId: string }> }
 ) {
   try {
-    const gameId = Number(params.gameId);
+    const resolvedParams = await context.params;
+    const gameId = Number(resolvedParams.gameId);
     if (!Number.isInteger(gameId)) {
       return NextResponse.json({ error: "Invalid gameId" }, { status: 400 });
     }
@@ -3777,15 +3817,16 @@ export async function GET(
 }
 
 export async function PUT(
-  request: Request,
-  { params }: { params: { gameId: string } }
+  request: NextRequest,
+  context: { params: Promise<{ gameId: string }> }
 ) {
   try {
     if (!isAuthorizedAdmin(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const gameId = Number(params.gameId);
+    const resolvedParams = await context.params;
+    const gameId = Number(resolvedParams.gameId);
     if (!Number.isInteger(gameId)) {
       return NextResponse.json({ error: "Invalid gameId" }, { status: 400 });
     }
@@ -3807,10 +3848,15 @@ export async function PUT(
     }
 
     const existing = await prisma.gameConfig.findUnique({ where: { gameId } });
-    const data = { ...parsed.data, gameId } as any;
+    const data = {
+      ...parsed.data,
+      gameId,
+    } as Prisma.GameConfigUncheckedUpdateInput;
     let updated;
     if (!existing) {
-      updated = await prisma.gameConfig.create({ data });
+      updated = await prisma.gameConfig.create({
+        data: data as Prisma.GameConfigCreateInput,
+      });
     } else {
       updated = await prisma.gameConfig.update({ where: { gameId }, data });
     }
@@ -3828,7 +3874,7 @@ export async function PUT(
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-
+import { type Prisma } from "@prisma/client";
 const prizePoolTypeEnum = z.enum(["FIXED", "DYNAMIC"]);
 
 const baseConfigSchema = z.object({
@@ -3905,11 +3951,13 @@ export async function PUT(request: Request) {
     const existing = await prisma.globalConfig.findFirst();
     let updated;
     if (!existing) {
-      updated = await prisma.globalConfig.create({ data: parsed.data as any });
+      updated = await prisma.globalConfig.create({
+        data: parsed.data as Prisma.GlobalConfigCreateInput,
+      });
     } else {
       updated = await prisma.globalConfig.update({
         where: { id: existing.id },
-        data: parsed.data as any,
+        data: parsed.data as Prisma.GlobalConfigUncheckedUpdateInput,
       });
     }
     return NextResponse.json(updated);
@@ -3922,6 +3970,89 @@ export async function PUT(request: Request) {
   }
 }
 
+--- File: ./src/app/api/auth/route.ts ---
+import { Errors, createClient } from "@farcaster/quick-auth";
+import { NextRequest, NextResponse } from "next/server";
+
+const client = createClient();
+
+// Helper function to determine the correct domain for JWT verification
+function getUrlHost(request: NextRequest): string {
+  // First try to get the origin from the Origin header (most reliable for CORS requests)
+  const origin = request.headers.get("origin");
+  if (origin) {
+    try {
+      const url = new URL(origin);
+      return url.host;
+    } catch (error) {
+      console.warn("Invalid origin header:", origin, error);
+    }
+  }
+
+  // Fallback to Host header
+  const host = request.headers.get("host");
+  if (host) {
+    return host;
+  }
+
+  // Final fallback to environment variables (your original logic)
+  let urlValue: string;
+  if (process.env.VERCEL_ENV === "production") {
+    urlValue = process.env.NEXT_PUBLIC_URL!;
+  } else if (process.env.VERCEL_URL) {
+    urlValue = `https://${process.env.VERCEL_URL}`;
+  } else {
+    urlValue = "http://localhost:3000";
+  }
+
+  const url = new URL(urlValue);
+  return url.host;
+}
+
+export async function GET(request: NextRequest) {
+  // Because we're fetching this endpoint via `sdk.quickAuth.fetch`,
+  // if we're in a mini app, the request will include the necessary `Authorization` header.
+  const authorization = request.headers.get("Authorization");
+
+  // Here we ensure that we have a valid token.
+  if (!authorization || !authorization.startsWith("Bearer ")) {
+    return NextResponse.json({ message: "Missing token" }, { status: 401 });
+  }
+
+  try {
+    // Now we verify the token. `domain` must match the domain of the request.
+    // In our case, we're using the `getUrlHost` function to get the domain of the request
+    // based on the Vercel environment. This will vary depending on your hosting provider.
+    const payload = await client.verifyJwt({
+      token: authorization.split(" ")[1] as string,
+      domain: getUrlHost(request),
+    });
+
+    console.log("payload", payload);
+
+    // If the token was valid, `payload.sub` will be the user's Farcaster ID.
+    const userFid = payload.sub;
+
+    // Return user information for your waitlist application
+    return NextResponse.json({
+      success: true,
+      user: {
+        fid: userFid,
+        issuedAt: payload.iat,
+        expiresAt: payload.exp,
+      },
+    });
+
+  } catch (e) {
+    if (e instanceof Errors.InvalidTokenError) {
+      return NextResponse.json({ message: "Invalid token" }, { status: 401 });
+    }
+    if (e instanceof Error) {
+      return NextResponse.json({ message: e.message }, { status: 500 });
+    }
+    throw e;
+  }
+}
 --- File: ./src/app/api/referrals/route.ts ---
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -3951,7 +4082,7 @@ export async function GET(request: Request) {
 // POST /api/referrals
 export async function POST(request: Request) {
   const schema = z.object({
-    code: z.string().min(1),
+    code: z.string().min(4),
   });
   let body;
   try {
@@ -3984,15 +4115,17 @@ export async function POST(request: Request) {
       { status: 404 }
     );
   }
-  const inviter = await prisma.user.findUnique({
-    where: { referralCode: code },
+  const referral = await prisma.referral.findUnique({
+    where: { code },
+    include: { inviter: true },
   });
-  if (!inviter) {
+  if (!referral || !referral.inviter) {
     return NextResponse.json(
       { valid: false, message: "Invite code not found" },
       { status: 400 }
     );
   }
+  const inviter = referral.inviter;
   if (inviter.id === user.id) {
     return NextResponse.json(
       { valid: false, message: "Cannot use your own invite code" },
@@ -4069,42 +4202,90 @@ export async function GET() {
   }
 }
 
---- File: ./src/app/api/user/init/route.ts ---
+--- File: ./src/app/api/user/route.ts ---
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+
+// GET /api/user?farcasterId=123
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const farcasterId = searchParams.get("farcasterId");
+
+  if (!farcasterId) {
+    return NextResponse.json(
+      { success: false, error: "Missing farcasterId parameter" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { farcasterId: farcasterId },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true, user });
+  } catch (err) {
+    console.error("User get failed", err);
+    return NextResponse.json(
+      { success: false, error: "User get failed" },
+      { status: 500 }
+    );
+  }
+}
+
+--- File: ./src/app/api/user/sync/route.ts ---
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { z } from "zod";
+
+const schema = z.object({
+  fid: z.number(),
+  username: z.string().optional(),
+  pfpUrl: z.string().url().optional(),
+  wallet: z.string().optional(),
+});
 
 export async function POST(req: Request) {
   try {
-    const { fid, username, pfpUrl, walletAddress } = await req.json();
-
-    if (!fid) {
-      return Response.json({ error: "Missing fid" }, { status: 400 });
-    }
+    const body = await req.json();
+    const data = schema.parse(body);
 
     const user = await prisma.user.upsert({
-      where: { farcasterId: fid.toString() },
+      where: { farcasterId: String(data.fid) },
       update: {
-        name: username,
-        wallet: walletAddress || undefined,
-        imageUrl: pfpUrl,
+        name: data.username ?? undefined,
+        imageUrl: data.pfpUrl ?? undefined,
+        wallet: data.wallet ?? undefined,
       },
       create: {
-        farcasterId: fid.toString(),
-        name: username,
-        wallet: walletAddress,
-        imageUrl: pfpUrl,
+        farcasterId: String(data.fid),
+        name: data.username ?? null,
+        imageUrl: data.pfpUrl ?? null,
+        wallet: data.wallet ?? null,
       },
     });
 
-    return Response.json(user);
-  } catch (error) {
-    console.error("Error initializing user:", error);
-    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({ success: true, user });
+  } catch (err) {
+    console.error("User sync failed", err);
+    return NextResponse.json(
+      { success: false, error: "User sync failed" },
+      { status: 500 }
+    );
   }
 }
 
 --- File: ./src/app/api/leaderboard/route.ts ---
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { env } from "@/lib/env";
 
 export type LeaderboardUser = {
   id: string;
@@ -4114,89 +4295,100 @@ export type LeaderboardUser = {
   points: number;
 };
 
-const PAGE_SIZE = 25;
-
-// GET /api/leaderboard?tab=current|allTime&page=0
+// GET /api/leaderboard?tab=current|allTime&page=0&gameId=&userId=
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const tabParam = (searchParams.get("tab") || "allTime") as
     | "current"
     | "allTime";
-  const pageParam = searchParams.get("page") ?? "0";
+  const page = Number(searchParams.get("page") ?? "0");
+  const gameIdParam = searchParams.get("gameId");
+  const userIdParam = searchParams.get("userId");
 
-  if (tabParam !== "current" && tabParam !== "allTime") {
-    return NextResponse.json(
-      { error: "Invalid `tab`. Use `current` or `allTime`." },
-      { status: 400 }
-    );
+  if (!["current", "allTime"].includes(tabParam)) {
+    return NextResponse.json({ error: "Invalid tab" }, { status: 400 });
   }
-  const page = Number(pageParam);
   if (!Number.isFinite(page) || page < 0) {
-    return NextResponse.json(
-      { error: "Invalid `page` (>= 0)." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Invalid page" }, { status: 400 });
   }
 
-  // Determine dataset
   let users: LeaderboardUser[] = [];
+
   if (tabParam === "current") {
-    // Find current active game (ongoing or latest)
-    const now = new Date();
-    let game = await prisma.game.findFirst({
-      where: { startTime: { lte: now }, endTime: { gte: now } },
-      orderBy: { startTime: "desc" },
-    });
-    if (!game) {
-      // fallback to latest finished game
-      game = await prisma.game.findFirst({
-        where: { endTime: { lte: now } },
-        orderBy: { endTime: "desc" },
+    // Determine which game is "current"
+    let game = null;
+    if (gameIdParam) {
+      game = await prisma.game.findUnique({
+        where: { id: Number(gameIdParam) },
       });
+    } else {
+      const now = new Date();
+      game =
+        (await prisma.game.findFirst({
+          where: { startTime: { lte: now }, endTime: { gte: now } },
+          orderBy: { startTime: "desc" },
+        })) ??
+        (await prisma.game.findFirst({
+          where: { endTime: { lte: now } },
+          orderBy: { endTime: "desc" },
+        }));
     }
+
     if (game) {
       const scores = await prisma.score.findMany({
         where: { gameId: game.id },
         include: { user: true },
         orderBy: { points: "desc" },
       });
-      users = scores.map((s, idx) => ({
+
+      users = scores.map((s, i) => ({
         id: s.userId.toString(),
-        rank: idx + 1,
+        rank: i + 1,
         name: s.user?.name || "",
         imageUrl: s.user?.imageUrl || "",
         points: s.points,
       }));
     }
   } else {
-    // All-time: sum scores for each user
-    const groups = await prisma.score.groupBy({
+    // All-time leaderboard (sum of points per user)
+    const grouped = await prisma.score.groupBy({
       by: ["userId"],
       _sum: { points: true },
       orderBy: { _sum: { points: "desc" } },
     });
-    const userIds = groups.map((g) => g.userId);
+
+    const userIds = grouped.map((g) => g.userId);
     const usersData = await prisma.user.findMany({
       where: { id: { in: userIds } },
     });
-    users = groups.map((g, idx) => {
+
+    users = grouped.map((g, i) => {
       const user = usersData.find((u) => u.id === g.userId);
       return {
         id: g.userId.toString(),
-        rank: idx + 1,
+        rank: i + 1,
         name: user?.name || "",
         imageUrl: user?.imageUrl || "",
-        points: g._sum?.points || 0,
+        points: g._sum.points || 0,
       };
     });
   }
 
-  // Paginate
-  const start = page * PAGE_SIZE;
-  const end = start + PAGE_SIZE;
+  // pagination
+  const start = page * env.nextPublicLeaderboardPageSize;
+  const end = start + env.nextPublicLeaderboardPageSize;
   const pageUsers = users.slice(start, end);
   const hasMore = end < users.length;
-  return NextResponse.json({ users: pageUsers, hasMore });
+
+  // optional "me"
+  let me = null;
+  if (userIdParam) {
+    const userId = Number(userIdParam);
+    const found = users.find((u) => Number(u.id) === userId);
+    if (found) me = found;
+  }
+
+  return NextResponse.json({ users: pageUsers, hasMore, me });
 }
 
 export const dynamic = "force-dynamic";
@@ -4236,7 +4428,7 @@ export async function POST(req: Request) {
 }
 
 --- File: ./src/app/api/game/route.ts ---
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 
@@ -4249,9 +4441,9 @@ export async function GET() {
 }
 
 // POST /api/games
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const schema = z.object({
-    title: z.string().min(1),
+    name: z.string().min(1),
     description: z.string().optional(),
     startTime: z.string(),
     endTime: z.string(),
@@ -4266,7 +4458,7 @@ export async function POST(request: Request) {
   if (!parseResult.success) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
-  const { title, description, startTime, endTime } = parseResult.data;
+  const { name, description, startTime, endTime } = parseResult.data;
   const start = new Date(startTime);
   const end = new Date(endTime);
   if (isNaN(start.getTime()) || isNaN(end.getTime())) {
@@ -4280,7 +4472,7 @@ export async function POST(request: Request) {
   }
   const game = await prisma.game.create({
     data: {
-      title,
+      name,
       description,
       startTime: start,
       endTime: end,
@@ -4290,18 +4482,19 @@ export async function POST(request: Request) {
 }
 
 --- File: ./src/app/api/game/[id]/route.ts ---
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 // GET /api/games/[id]
 export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
-  const gameId = parseInt(params.id, 10);
-  if (isNaN(gameId)) {
+  const resolvedParams = await context.params;
+  const gameId = parseInt(resolvedParams.id, 10);
+  if (Number.isNaN(gameId)) {
     return NextResponse.json({ error: "Invalid game ID" }, { status: 400 });
   }
   const game = await prisma.game.findUnique({
@@ -4318,10 +4511,10 @@ export async function GET(
     imageUrl: q.imageUrl,
     options: q.options,
   }));
-  const { id, title, description, startTime, endTime } = game;
+  const { id, name, description, startTime, endTime } = game;
   return NextResponse.json({
     id,
-    title,
+    name,
     description,
     startTime,
     endTime,
@@ -4330,82 +4523,105 @@ export async function GET(
 }
 
 --- File: ./src/app/api/game/[id]/questions/route.ts ---
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 
-// GET /api/games/[id]/questions
+// GET /api/game/[id]/questions
 export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
-  const gameId = parseInt(params.id, 10);
-  if (isNaN(gameId)) {
-    return NextResponse.json({ error: "Invalid game ID" }, { status: 400 });
-  }
-  const questions = await prisma.question.findMany({
-    where: { gameId },
-    select: {
-      id: true,
-      text: true,
-      imageUrl: true,
-      options: true,
-    },
-  });
-  return NextResponse.json(questions);
-}
-
-// POST /api/games/[id]/questions
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  const gameId = parseInt(params.id, 10);
-  if (isNaN(gameId)) {
-    return NextResponse.json({ error: "Invalid game ID" }, { status: 400 });
-  }
-  // imageUrl is now required
-  const schema = z.object({
-    text: z.string().min(1),
-    imageUrl: z.string().min(1), // made required
-    options: z.array(z.string().min(1)).min(2),
-    correctIndex: z.number().min(0),
-  });
-  let body;
   try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
-  const parseResult = schema.safeParse(body);
-  if (!parseResult.success) {
-    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
-  }
-  const { text, imageUrl, options, correctIndex } = parseResult.data;
-  if (correctIndex >= options.length) {
+    const resolvedParams = await context.params;
+    const gameId = Number(resolvedParams.id);
+    if (!Number.isInteger(gameId)) {
+      return NextResponse.json({ error: "Invalid game ID" }, { status: 400 });
+    }
+    const questions = await prisma.question.findMany({
+      where: { gameId },
+      select: {
+        id: true,
+        text: true,
+        imageUrl: true,
+        options: true,
+      },
+    });
+    return NextResponse.json(questions);
+  } catch (error) {
+    console.error(error);
     return NextResponse.json(
-      { error: "correctIndex out of range" },
-      { status: 400 }
+      { error: "Internal Server Error" },
+      { status: 500 }
     );
   }
-  // Check game exists
-  const game = await prisma.game.findUnique({ where: { id: gameId } });
-  if (!game) {
-    return NextResponse.json({ error: "Game not found" }, { status: 404 });
+}
+
+// POST /api/game/[id]/questions
+export async function POST(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const resolvedParams = await context.params;
+    const gameId = Number(resolvedParams.id);
+    if (!Number.isInteger(gameId)) {
+      return NextResponse.json({ error: "Invalid game ID" }, { status: 400 });
+    }
+
+    const schema = z.object({
+      text: z.string().min(1),
+      imageUrl: z.string().min(1),
+      options: z.array(z.string().min(1)).min(2),
+      correctIndex: z.number().min(0),
+    });
+
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+    const parseResult = schema.safeParse(body);
+    if (!parseResult.success) {
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+    }
+    const { text, imageUrl, options, correctIndex } = parseResult.data;
+    if (correctIndex >= options.length) {
+      return NextResponse.json(
+        { error: "correctIndex out of range" },
+        { status: 400 }
+      );
+    }
+
+    // Check game exists
+    const game = await prisma.game.findUnique({ where: { id: gameId } });
+    if (!game) {
+      return NextResponse.json({ error: "Game not found" }, { status: 404 });
+    }
+
+    const question = await prisma.question.create({
+      data: {
+        gameId,
+        text,
+        imageUrl,
+        options,
+        correctAnswer: options[correctIndex],
+      },
+    });
+
+    return NextResponse.json(question);
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
-  const question = await prisma.question.create({
-    data: {
-      gameId,
-      text,
-      imageUrl: imageUrl,
-      options: options,
-      correctAnswer: options[correctIndex],
-    },
-  });
-  return NextResponse.json(question);
 }
 
 --- File: ./src/app/api/profile/route.ts ---
+// ───────────────────────── /app/api/profile/route.ts ─────────────────────────
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
@@ -4416,112 +4632,112 @@ export async function GET(request: Request) {
   if (!farcasterId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
   const user = await prisma.user.findUnique({
     where: { farcasterId },
+    select: { id: true, name: true, wallet: true, imageUrl: true },
   });
+
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
-  const { id, name, wallet, imageUrl } = user;
-  return NextResponse.json({ id, name, wallet, imageUrl });
+
+  return NextResponse.json(user);
 }
 
 // PUT /api/profile
 export async function PUT(request: Request) {
   const schema = z.object({
-    name: z.string().optional(),
-    wallet: z.string().optional(),
+    name: z.string().trim().optional(),
+    wallet: z.string().trim().optional(),
     imageUrl: z.string().url().optional(),
   });
+
   let body;
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
-  const parseResult = schema.safeParse(body);
-  if (!parseResult.success) {
+
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
-  const { name, wallet, imageUrl } = parseResult.data;
+
   const farcasterId = request.headers.get("x-farcaster-id");
   if (!farcasterId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
   const user = await prisma.user.findUnique({ where: { farcasterId } });
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
+
   const updated = await prisma.user.update({
     where: { id: user.id },
-    data: {
-      name: name !== undefined ? name : user.name,
-      wallet: wallet !== undefined ? wallet : user.wallet,
-      imageUrl: imageUrl !== undefined ? imageUrl : user.imageUrl,
-    },
+    data: parsed.data,
+    select: { id: true, name: true, wallet: true, imageUrl: true },
   });
-  const {
-    id,
-    name: newName,
-    wallet: newWallet,
-    imageUrl: newImageUrl,
-  } = updated;
-  return NextResponse.json({
-    id,
-    name: newName,
-    wallet: newWallet,
-    imageUrl: newImageUrl,
-  });
+
+  return NextResponse.json(updated);
 }
 
 --- File: ./src/app/api/profile/history/route.ts ---
+// ───────────────────────── /app/api/profile/history/route.ts ─────────────────────────
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/db";
 
-const prisma = new PrismaClient();
-
-// GET /api/profile/history
 export async function GET(request: Request) {
   const farcasterId = request.headers.get("x-farcaster-id");
   if (!farcasterId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
   const user = await prisma.user.findUnique({ where: { farcasterId } });
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
+
   const scores = await prisma.score.findMany({
     where: { userId: user.id },
     include: { game: true },
-    orderBy: { game: { endTime: "asc" } },
+    orderBy: { game: { endTime: "desc" } },
   });
-  const history = scores.map((s, index) => ({
-    round: `Round ${index + 1}`,
+
+  const history = scores.map((s) => ({
+    id: s.id,
+    name: s.game.name,
+    score: s.points,
     winnings: s.points,
+    winningsColor: s.points > 0 ? "green" : "gray",
   }));
+
   return NextResponse.json(history);
 }
 
 --- File: ./src/app/api/profile/stats/route.ts ---
+// ───────────────────────── /app/api/profile/stats/route.ts ─────────────────────────
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/db";
 
-const prisma = new PrismaClient();
-
-// GET /api/profile/stats
 export async function GET(request: Request) {
   const farcasterId = request.headers.get("x-farcaster-id");
   if (!farcasterId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
   const user = await prisma.user.findUnique({ where: { farcasterId } });
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
+
   const scores = await prisma.score.findMany({
     where: { userId: user.id },
     include: { game: true },
   });
+
   const totalGames = scores.length;
   if (totalGames === 0) {
     return NextResponse.json({
@@ -4535,43 +4751,49 @@ export async function GET(request: Request) {
       bestRank: 0,
     });
   }
+
   let wins = 0;
-  let bestRank = totalGames > 0 ? totalGames : 0;
   let totalWon = 0;
   let highestScore = 0;
-  // Sort scores by game endTime descending for streak
-  scores.sort((a, b) => {
-    const aTime = a.game.endTime?.getTime() || 0;
-    const bTime = b.game.endTime?.getTime() || 0;
+  let bestRank = Infinity;
+
+  // Sort by endTime (latest first)
+  const sortedScores = [...scores].sort((a, b) => {
+    const aTime = a.game.endTime?.getTime() ?? 0;
+    const bTime = b.game.endTime?.getTime() ?? 0;
     return bTime - aTime;
   });
+
+  // Preload all game results to calculate ranks efficiently
+  const gameIds = [...new Set(sortedScores.map((s) => s.gameId))];
+  const allGameScores = await prisma.score.findMany({
+    where: { gameId: { in: gameIds } },
+    select: { gameId: true, points: true },
+  });
+
+  // Compute stats
   let currentStreak = 0;
-  let streakCounting = false;
-  for (const s of scores) {
+  for (const s of sortedScores) {
     totalWon += s.points;
     highestScore = Math.max(highestScore, s.points);
-    // Calculate rank for this game
-    const countBetter = await prisma.score.count({
-      where: { gameId: s.gameId, points: { gt: s.points } },
-    });
-    const rank = countBetter + 1;
+
+    // Rank calculation
+    const rank =
+      allGameScores.filter((g) => g.gameId === s.gameId && g.points > s.points)
+        .length + 1;
     bestRank = Math.min(bestRank, rank);
-    if (!streakCounting) {
-      if (rank === 1) {
-        currentStreak = 1;
-        streakCounting = true;
-      }
+
+    if (rank === 1) {
+      wins++;
+      currentStreak++;
     } else {
-      if (rank === 1) {
-        currentStreak++;
-      } else {
-        break;
-      }
+      break;
     }
-    if (rank === 1) wins++;
   }
+
   const avgScore = totalWon / totalGames;
   const winRate = (wins / totalGames) * 100;
+
   return NextResponse.json({
     totalGames,
     wins,
@@ -4580,7 +4802,7 @@ export async function GET(request: Request) {
     highestScore,
     avgScore: Math.round(avgScore * 100) / 100,
     currentStreak,
-    bestRank,
+    bestRank: bestRank === Infinity ? 0 : bestRank,
   });
 }
 
@@ -4681,7 +4903,7 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace("/lobby");
+    router.replace("/game");
   }, [router]);
 
   return null;
@@ -4974,168 +5196,44 @@ export default function Home() {
   );
 }
 
---- File: ./src/app/onboarding/_components/onboarding-carousel.tsx ---
-"use client";
+/* ───────────────────────── Base Interaction Animations ───────────────────────── */
 
-import { useState } from "react";
-import { OnboardingSlide } from "./onboarding-slide";
-
-import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
-
-interface Slide {
-  icon: string;
-  title: string;
-  description: string;
+/* Fade-in */
+.fade-in {
+  animation: fadeIn 0.6s ease forwards;
 }
-
-const slides: Slide[] = [
-  {
-    icon: "/images/illustration/waffle-ticket.png",
-    title: "Buy a Waffle",
-    description:
-      "Buy your ticket, play the game, and share in the prize pool with other winners",
-  },
-  {
-    icon: "/images/illustration/money-bag.png",
-    title: "Win Big",
-    description: "The faster you connect the dots, the bigger your share",
-  },
-  {
-    icon: "/images/illustration/crown.png",
-    title: "Take Your",
-    description: "Recognize the images, climb the leaderboard. EZ",
-  },
-];
-
-interface OnboardingCarouselProps {
-  onComplete: () => void;
-}
-
-export function OnboardingCarousel({ onComplete }: OnboardingCarouselProps) {
-  const [currentSlide, setCurrentSlide] = useState(0);
-
-  const handleNext = () => {
-    if (currentSlide < slides.length - 1) {
-      setCurrentSlide(currentSlide + 1);
-    } else {
-      onComplete();
-    }
-  };
-
-  return (
-    <div className="flex flex-col h-full">
-      {/* Slide content */}
-      <div className="flex-1 flex items-center justify-center">
-        <OnboardingSlide
-          key={currentSlide}
-          icon={slides[currentSlide].icon}
-          title={slides[currentSlide].title}
-          description={slides[currentSlide].description}
-        />
-      </div>
-
-      {/* Navigation buttons */}
-      <div className="p-6 space-y-3">
-        <FancyBorderButton onClick={handleNext} className="w-full">
-          {currentSlide === 0 ? "Next" : "Let's Go"}
-        </FancyBorderButton>
-      </div>
-    </div>
-  );
-}
-
---- File: ./src/app/onboarding/_components/onboarding-slide.tsx ---
-import { cn } from "@/lib/utils";
-import Image from "next/image";
-
-interface OnboardingSlideProps {
-  icon: string;
-  title: string;
-  description: string;
-  className?: string;
-}
-
-export function OnboardingSlide({
-  icon,
-  title,
-  description,
-  className,
-}: OnboardingSlideProps) {
-  return (
-    <div
-      className={cn(
-        "flex flex-col items-center justify-center text-center px-8 py-12",
-        className
-      )}
-    >
-      <div className="mb-8 animate-in-right relative w-48 h-48">
-        <Image src={icon} alt={title} fill className="object-contain" />
-      </div>
-      <h2 className="text-3xl font-bold mb-4 text-balance animate-in-right uppercase tracking-wider">
-        {title}
-      </h2>
-      <p className="text-lg text-center font-display text-muted max-w-md text-pretty animate-in-right">
-        {description}
-      </p>
-    </div>
-  );
-}
-
---- File: ./src/app/onboarding/page.tsx ---
-"use client";
-
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { OnboardingCarousel } from "./_components/onboarding-carousel";
-import Image from "next/image";
-export default function OnboardingPage() {
-  const router = useRouter();
-  const [showSplash, setShowSplash] = useState(true);
-
-  const handleComplete = () => {
-    router.push("/lobby/invite-code");
-  };
-
-  if (showSplash) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6">
-        <div className="animate-slide-up flex flex-col items-center justify-center">
-          <Image
-            src="/images/splash-icon.png"
-            alt="Splash Icon"
-            width={100}
-            height={100}
-            priority
-            className="mb-8"
-          />
-
-          <button
-            onClick={() => setShowSplash(false)}
-            className="w-full px-8 py-4 bg-waffle-gold text-primary-foreground font-bold text-lg rounded-xl hover:brightness-110 transition-all active:scale-95"
-          >
-            Close Splash
-          </button>
-        </div>
-      </div>
-    );
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-  return (
-    <div className="min-h-screen  flex flex-col">
-      <div className="p-10 flex items-center justify-center ">
-        <Image
-          src="/logo-icon.png"
-          alt="Logo"
-          width={150}
-          height={80}
-          priority
-        />
-      </div>
-      <div className="flex-1">
-        <OnboardingCarousel onComplete={handleComplete} />
-      </div>
-    </div>
-  );
+/* Slide-up */
+.slide-up {
+  animation: slideUp 0.5s ease forwards;
+}
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Subtle scale pop for tap feedback */
+.tap-pop {
+  transition: transform 0.12s ease;
+}
+.tap-pop:active {
+  transform: scale(0.96);
 }
 
 --- File: ./src/stores/finalRoundStore.ts ---
@@ -5201,313 +5299,690 @@ export const useFinalRoundStore = create<FinalRoundState>((set, get) => ({
 }));
 
 --- File: ./src/stores/leaderboardStore.ts ---
+"use client";
 import { create } from "zustand";
 
-interface Entry {
+export type TabKey = "current" | "allTime";
+
+export interface Entry {
   rank: number;
   username: string;
   points: number;
   pfpUrl: string | null;
 }
 
-interface MyRank {
-  username?: string;
-  rank?: number;
-  points?: number;
+interface Slice {
+  entries: Entry[];
+  page: number;
+  hasMore: boolean;
+  isLoading: boolean;
+  error?: string | null;
+  scrollTop?: number;
 }
 
 interface LeaderboardState {
-  entries: Entry[];
-  me: MyRank | null;
-  fetchLeaderboard: (gameId: number, userId: number) => Promise<void>;
+  activeTab: TabKey;
+  slices: Record<TabKey, Slice>;
+  me: Entry | null;
+
+  // Actions
+  setActiveTab: (tab: TabKey) => void;
+  rememberScroll: (tab: TabKey, scrollY: number) => void;
+  fetchLeaderboard: (tab: TabKey) => Promise<void>;
+  reset: () => void;
 }
 
-export const useLeaderboardStore = create<LeaderboardState>((set) => ({
-  entries: [],
+export const useLeaderboardStore = create<LeaderboardState>((set, get) => ({
+  activeTab: "current",
+  slices: {
+    current: {
+      entries: [],
+      page: 0,
+      hasMore: true,
+      isLoading: false,
+      scrollTop: 0,
+    },
+    allTime: {
+      entries: [],
+      page: 0,
+      hasMore: true,
+      isLoading: false,
+      scrollTop: 0,
+    },
+  },
   me: null,
-  fetchLeaderboard: async (gameId, userId) => {
+
+  setActiveTab: (tab) => set({ activeTab: tab }),
+
+  rememberScroll: (tab, scrollY) =>
+    set((state) => ({
+      slices: {
+        ...state.slices,
+        [tab]: { ...state.slices[tab], scrollTop: scrollY },
+      },
+    })),
+
+  fetchLeaderboard: async (tab) => {
+    const { slices } = get();
+    const slice = slices[tab];
+
+    if (slice.isLoading || !slice.hasMore) return;
+
+    set({
+      slices: {
+        ...slices,
+        [tab]: { ...slice, isLoading: true, error: null },
+      },
+    });
+
     try {
-      const res = await fetch(
-        `/api/leaderboard?gameId=${gameId}&userId=${userId}`
-      );
+      const res = await fetch(`/api/leaderboard?tab=${tab}&page=${slice.page}`);
+      if (!res.ok) throw new Error(`Failed to fetch ${tab} leaderboard`);
       const data = await res.json();
-      set({ entries: data.top, me: data.me });
-    } catch (e) {
-      console.error(e);
+
+      const newEntries: Entry[] = (data.users || []).map(
+        (u: {
+          rank: number;
+          name: string;
+          points: number;
+          imageUrl: string | null;
+        }) => ({
+          rank: u.rank,
+          username: u.name,
+          points: u.points,
+          pfpUrl: u.imageUrl || null,
+        })
+      );
+
+      set((state) => ({
+        slices: {
+          ...state.slices,
+          [tab]: {
+            ...state.slices[tab],
+            entries: [...state.slices[tab].entries, ...newEntries],
+            page: state.slices[tab].page + 1,
+            hasMore: data.hasMore,
+            isLoading: false,
+          },
+        },
+        me: data.me
+          ? {
+              rank: data.me.rank,
+              username: data.me.name,
+              points: data.me.points,
+              pfpUrl: data.me.imageUrl || null,
+            }
+          : state.me,
+      }));
+    } catch (err: unknown) {
+      set((state) => ({
+        slices: {
+          ...state.slices,
+          [tab]: {
+            ...state.slices[tab],
+            isLoading: false,
+            error: err instanceof Error ? err.message : "Unknown error",
+          },
+        },
+      }));
     }
   },
+
+  reset: () =>
+    set({
+      slices: {
+        current: {
+          entries: [],
+          page: 0,
+          hasMore: true,
+          isLoading: false,
+          scrollTop: 0,
+        },
+        allTime: {
+          entries: [],
+          page: 0,
+          hasMore: true,
+          isLoading: false,
+          scrollTop: 0,
+        },
+      },
+      me: null,
+    }),
 }));
 
 --- File: ./src/stores/profileStore.ts ---
+// ───────────────────────── src/stores/profileStore.ts ─────────────────────────
 import { create } from "zustand";
 
-interface GameHistory {
-  gameTitle: string;
-  points: number;
-  date: string;
+export interface GameHistory {
+  id: number | string;
+  name: string;
+  score: number;
+  winnings: number;
+  winningsColor?: "green" | "gray";
 }
 
-interface ProfileData {
-  username: string;
-  wallet: string;
-  totalPoints: number;
+export interface AllTimeStats {
+  totalGames: number;
   wins: number;
-  streak: number;
-  badges: string[];
-  history: GameHistory[];
+  winRate: string; // formatted "80%"
+  totalWon: string; // formatted "$50.00"
+  highestScore: number;
+  averageScore: number;
+  currentStreak: number;
+  bestRank: number | string;
 }
 
 interface ProfileState {
-  profile: ProfileData | null;
-  fetchProfile: (userId: number) => Promise<void>;
+  id: number | null;
+  username: string;
+  wallet: string;
+  imageUrl: string;
+  streak: number;
+
+  stats: { games: number; wins: number; winnings: number };
+  gameHistory: GameHistory[];
+  allTimeStats: AllTimeStats;
+
+  loading: boolean;
+  error: string | null;
+
+  fetchProfile: () => Promise<void>;
+  updateProfile: (
+    payload: Partial<{ name: string; wallet: string; imageUrl: string }>
+  ) => Promise<void>;
 }
 
+// ───────────────────────── STORE ─────────────────────────
 export const useProfileStore = create<ProfileState>((set) => ({
-  profile: null,
-  fetchProfile: async (userId) => {
+  id: null,
+  username: "",
+  wallet: "",
+  imageUrl: "",
+  streak: 0,
+
+  stats: { games: 0, wins: 0, winnings: 0 },
+  gameHistory: [],
+  allTimeStats: {
+    totalGames: 0,
+    wins: 0,
+    winRate: "0%",
+    totalWon: "$0",
+    highestScore: 0,
+    averageScore: 0,
+    currentStreak: 0,
+    bestRank: "-",
+  },
+
+  loading: false,
+  error: null,
+
+  // Unified fetch (calls 3 API routes)
+  fetchProfile: async () => {
+    set({ loading: true, error: null });
+
     try {
-      const res = await fetch(`/api/profile?userId=${userId}`);
-      const data = await res.json();
-      set({ profile: data });
-    } catch (e) {
-      console.error(e);
+      // 1️⃣ Fetch basic info
+      const [profileRes, statsRes, historyRes] = await Promise.all([
+        fetch("/api/profile"),
+        fetch("/api/profile/stats"),
+        fetch("/api/profile/history"),
+      ]);
+
+      if (!profileRes.ok) throw new Error("Profile fetch failed");
+      if (!statsRes.ok) throw new Error("Stats fetch failed");
+      if (!historyRes.ok) throw new Error("History fetch failed");
+
+      const profile = await profileRes.json();
+      const stats = await statsRes.json();
+      const history = await historyRes.json();
+
+      const winRateStr = `${Math.round(stats.winRate)}%`;
+      const totalWonStr = `$${stats.totalWon.toFixed(2)}`;
+
+      set({
+        id: profile.id,
+        username: profile.name || "Anonymous",
+        wallet: profile.wallet || "",
+        imageUrl: profile.imageUrl || "/images/avatars/a.png",
+        streak: stats.currentStreak || 0,
+
+        stats: {
+          games: stats.totalGames || 0,
+          wins: stats.wins || 0,
+          winnings: stats.totalWon || 0,
+        },
+        allTimeStats: {
+          totalGames: stats.totalGames,
+          wins: stats.wins,
+          winRate: winRateStr,
+          totalWon: totalWonStr,
+          highestScore: stats.highestScore,
+          averageScore: stats.avgScore,
+          currentStreak: stats.currentStreak,
+          bestRank: stats.bestRank,
+        },
+        gameHistory: history,
+        loading: false,
+      });
+    } catch (err: unknown) {
+      console.error("Profile load failed:", err);
+      set({
+        error: err instanceof Error ? err.message : "Failed to load profile",
+        loading: false,
+      });
+    }
+  },
+
+  // Update basic info
+  updateProfile: async (payload) => {
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error("Failed to update profile");
+      const updated = await res.json();
+      set({
+        username: updated.name ?? "",
+        wallet: updated.wallet ?? "",
+        imageUrl: updated.imageUrl ?? "",
+      });
+    } catch (e: unknown) {
+      console.error("Profile update failed:", e);
+      set({
+        error: e instanceof Error ? e.message : "Failed to update profile",
+        loading: false,
+      });
     }
   },
 }));
 
 --- File: ./src/stores/gameStore.ts ---
+// ───────────────────────── src/stores/gameStore.ts ─────────────────────────
+"use client";
+
 import { create } from "zustand";
-import { startCountdown } from "@/lib/time";
+import { RealtimeChannel } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabaseClient";
 import SoundManager from "@/lib/SoundManager";
 
-interface Question {
+export interface User {
+  fid: number;
+  username: string;
+  pfpUrl: string;
+}
+
+// ───────────────────────── TYPES ─────────────────────────
+export interface ChatMessage {
+  id: number;
+  username: string;
+  message: string;
+  avatarUrl: string;
+  time: string;
+}
+
+export interface ChatApiResponse {
+  messageId: number;
+  userId: number;
+  userName: string | null;
+  message: string;
+  createdAt: string;
+  avatarUrl?: string | null;
+}
+
+export interface AnswerOption {
+  id: string;
+  text: string;
+}
+
+export interface Question {
   id: number;
   questionText: string;
   imageUrl: string;
-  options: string[];
-  correctAnswerId: string;
+  options: AnswerOption[];
+  correctAnswerId?: string;
 }
 
-type GameStatus =
-  | "idle"
-  | "playing"
-  | "ended"
+export type GameState =
+  | "LOBBY"
+  | "ROUND_COUNTDOWN"
   | "QUESTION_ACTIVE"
   | "ANSWER_SUBMITTED"
   | "GAME_OVER";
 
-interface GameState {
+export interface GameStore {
+  gameId: number | null;
+  gameState: GameState;
   round: number;
   current: number;
   questions: Question[];
   timeLeft: number;
   score: number;
-  status: GameStatus;
   selectedAnswer: string | null;
-  // Actions
-  fetchQuestions: () => Promise<void>;
-  answerQuestion: (
-    questionId: number,
-    selected: string,
-    timeTaken: number
-  ) => Promise<void>;
-  nextQuestion: () => void;
-  resetGame: () => void;
-  // New SoundManager-based/GameActions API
-  startGame: () => void;
+  visualCue: "none" | "correct" | "wrong";
+
+  // Derived
+  currentQuestion: Question | null;
+  currentQuestionIndex: number;
+  totalQuestions: number;
+  questionTimer: number;
+  roundTimer: number;
+
+  // Chat
+  messages: ChatMessage[];
+  fetchMessages: (gameId: number, user: User) => Promise<void>;
+  sendMessage: (text: string, user: User) => Promise<void>;
+
+  // Realtime
+  subscribeToChat: (gameId: number) => void;
+  unsubscribeFromChat: () => void;
+
+  // Game flow
+  fetchQuestions: (gameId: number, user: User) => Promise<void>;
+  startRoundCountdown: () => void;
   tickRoundTimer: () => void;
-  selectAnswer: (answerId: string, isCorrect: boolean) => void;
-  gameOver: () => void;
+  selectAnswer: (answerId: string) => void;
   advanceToNextQuestion: () => void;
+  resetGame: () => void;
+  gameOver: () => void;
+
+  _chatChannel?: RealtimeChannel | null;
 }
 
-export const useGameStore = create<GameState>((set, get) => ({
+// ───────────────────────── CONSTANTS ─────────────────────────
+const QUESTION_DURATION = 15;
+
+// ───────────────────────── STORE ─────────────────────────
+export const useGameStore = create<GameStore>((set, get) => ({
+  gameId: null,
+  gameState: "LOBBY",
   round: 1,
   current: 0,
   questions: [],
-  timeLeft: ,
+  timeLeft: QUESTION_DURATION,
   score: 0,
-  status: "idle",
   selectedAnswer: null,
+  visualCue: "none",
+  messages: [],
+  _chatChannel: null,
 
-  fetchQuestions: async () => {
-    const res = await fetch("/api/game/start");
-    const data = await res.json();
-    set({ questions: data.questions, status: "playing" });
-    startCountdown(
-,
-      (t) => set({ timeLeft: t }),
-      () => get().nextQuestion()
-    );
+  // Derived fields
+  get currentQuestion() {
+    const { questions, current } = get();
+    return questions[current] ?? null;
+  },
+  get currentQuestionIndex() {
+    return get().current;
+  },
+  get totalQuestions() {
+    return get().questions.length;
+  },
+  get questionTimer() {
+    return get().timeLeft;
+  },
+  get roundTimer() {
+    return get().timeLeft;
   },
 
-  answerQuestion: async (questionId, selected, timeTaken) => {
-    const res = await fetch("/api/game/answer", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId: 1, // will be replaced with real fid from auth store
-        gameId: 1,
-        questionId,
-        selected,
-        timeTaken,
-      }),
-    });
-    const { correct, points } = await res.json();
-    if (correct) set((s) => ({ score: s.score + points }));
-  },
+  // ───────── Chat Logic ─────────
+  fetchMessages: async (
+    gameId: number,
+    user: { fid: number; username: string; pfpUrl: string }
+  ) => {
+    try {
+      const res = await fetch(`/api/chat?gameId=${gameId}`, {
+        headers: { "x-farcaster-id": String(user.fid) },
+      });
+      if (!res.ok) throw new Error("Failed to fetch chat");
+      const data: ChatApiResponse[] = await res.json();
 
-  nextQuestion: () => {
-    const { current, questions } = get();
-    if (current < questions.length - 1) {
-      set({ current: current + 1, timeLeft:  });
-      startCountdown(
-        ,
-        (t) => set({ timeLeft: t }),
-        () => get().nextQuestion()
-      );
-    } else {
-      set({ status: "ended" });
+      const formatted: ChatMessage[] = data.map((m) => ({
+        id: m.messageId,
+        username: user.username,
+        message: m.message,
+        avatarUrl: user.pfpUrl,
+        time: new Date(m.createdAt).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      }));
+
+      set({ messages: formatted });
+    } catch (err) {
+      console.error("fetchMessages error:", err);
     }
   },
 
-  resetGame: () =>
+  sendMessage: async (text: string, user: User) => {
+    const { gameId, messages } = get();
+    if (!user.fid || !gameId) {
+      console.error("No Farcaster ID or game ID found");
+      return;
+    }
+
+    try {
+      const temp: ChatMessage = {
+        id: Date.now(),
+        username: user.username,
+        message: text,
+        avatarUrl: user.pfpUrl,
+        time: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      };
+      set({ messages: [...messages, temp] });
+
+      await fetch(`/api/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-farcaster-id": String(user.fid),
+        },
+        body: JSON.stringify({ gameId, message: text }),
+      });
+    } catch (err) {
+      console.error("sendMessage error:", err);
+    }
+  },
+
+  // ───────── Realtime Chat ─────────
+  subscribeToChat: (gameId: number) => {
+    const store = get();
+    if (store._chatChannel) {
+      store._chatChannel.unsubscribe();
+      set({ _chatChannel: null });
+    }
+
+    const channel = supabase
+      .channel(`chat_game_${gameId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "Chat",
+          filter: `gameId=eq.${gameId}`,
+        },
+        (payload) => {
+          const msg = payload.new as {
+            id: number;
+            message: string;
+            createdAt: string;
+          };
+          set((s) => ({
+            messages: [
+              ...s.messages,
+              {
+                id: msg.id,
+                username: "Player",
+                message: msg.message,
+                avatarUrl: "/images/avatars/default.png",
+                time: new Date(msg.createdAt).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }),
+              },
+            ],
+          }));
+        }
+      )
+      .subscribe();
+
+    // ✅ Cleanup automatically when tab closes
+    const cleanup = () => {
+      channel.unsubscribe();
+      set({ _chatChannel: null });
+      window.removeEventListener("beforeunload", cleanup);
+    };
+    window.addEventListener("beforeunload", cleanup);
+
+    set({ _chatChannel: channel });
+  },
+
+  unsubscribeFromChat: () => {
+    const { _chatChannel } = get();
+    if (_chatChannel) {
+      _chatChannel.unsubscribe();
+      set({ _chatChannel: null });
+    }
+  },
+
+  // ───────── Game Logic ─────────
+  fetchQuestions: async (gameId: number, user: User) => {
+    if (!gameId) {
+      console.warn("fetchQuestions called without a gameId");
+      return;
+    }
+    try {
+      const res = await fetch(`/api/games/${gameId}`);
+      const data = await res.json();
+      set({
+        questions: data.questions || [],
+        gameId,
+        current: 0,
+        gameState: "LOBBY",
+        messages: [],
+      });
+      await get().fetchMessages(gameId, user);
+      get().subscribeToChat(gameId);
+    } catch (e) {
+      console.error("Failed to fetch questions:", e);
+    }
+  },
+
+  startRoundCountdown: () => {
+    SoundManager.play("countdown");
+    set({ gameState: "ROUND_COUNTDOWN" });
+    setTimeout(() => {
+      set({
+        gameState: "QUESTION_ACTIVE",
+        timeLeft: QUESTION_DURATION,
+        selectedAnswer: null,
+        visualCue: "none",
+      });
+    }, 3000);
+  },
+
+  tickRoundTimer: () => {
+    const { gameState, timeLeft } = get();
+    if (gameState !== "QUESTION_ACTIVE") return;
+    if (timeLeft <= 1) get().selectAnswer("");
+    else set({ timeLeft: timeLeft - 1 });
+  },
+
+  selectAnswer: (answerId: string) => {
+    const { current, questions, timeLeft, score, gameState } = get();
+    if (gameState !== "QUESTION_ACTIVE") return;
+
+    const q = questions[current];
+    const isCorrect = q?.correctAnswerId
+      ? q.correctAnswerId === answerId
+      : Math.random() > 0.5;
+
+    set({
+      selectedAnswer: answerId,
+      gameState: "ANSWER_SUBMITTED",
+      visualCue: isCorrect ? "correct" : "wrong",
+    });
+
+    SoundManager.play("click");
+    SoundManager.play(isCorrect ? "correct" : "wrong");
+
+    if (q) {
+      fetch("/api/game/answer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: 1,
+          gameId: get().gameId,
+          questionId: q.id,
+          selected: answerId,
+          timeTaken: QUESTION_DURATION - timeLeft,
+        }),
+      })
+        .then((r) => r.json())
+        .then(({ correct, points }: { correct: boolean; points: number }) => {
+          if (correct) set({ score: score + (points || 0) });
+        })
+        .catch(console.error);
+    }
+
+    setTimeout(() => {
+      set({ visualCue: "none" });
+      get().advanceToNextQuestion();
+    }, 1800);
+  },
+
+  advanceToNextQuestion: () => {
+    const { current, questions } = get();
+    if (current < questions.length - 1) {
+      set({
+        current: current + 1,
+        timeLeft: QUESTION_DURATION,
+        selectedAnswer: null,
+      });
+      SoundManager.play("nextQuestion");
+      get().startRoundCountdown();
+    } else get().gameOver();
+  },
+
+  resetGame: () => {
+    get().unsubscribeFromChat();
     set({
       round: 1,
       current: 0,
       questions: [],
       score: 0,
-      status: "idle",
+      gameState: "LOBBY",
       selectedAnswer: null,
-    }),
-
-  // --- SoundManager-based/GameActions API ---
-  startGame: () => {
-    SoundManager.play("countdown");
-    set({
-      status: "QUESTION_ACTIVE",
-      timeLeft: ,
-      current: 0,
-      score: 0,
-      selectedAnswer: null,
-      round: 1,
+      visualCue: "none",
+      timeLeft: QUESTION_DURATION,
+      messages: [],
+      gameId: null,
+      _chatChannel: null,
     });
-    // Optionally (re)fetch questions, otherwise rely on previous fetchQuestions
-    fetch("/api/game/start")
-      .then((res) => res.json())
-      .then((data) => {
-        set({ questions: data.questions });
-      });
-  },
-
-  tickRoundTimer: () => {
-    const newTime = get().timeLeft - 1;
-    if (get().status !== "QUESTION_ACTIVE") return;
-    if (newTime <= 0) {
-      get().selectAnswer("", false); // treat as wrong if time runs out
-    } else {
-      set({ timeLeft: newTime });
-    }
-  },
-
-  selectAnswer: (answerId: string, isCorrect: boolean) => {
-    if (get().status !== "QUESTION_ACTIVE") return;
-    set({ selectedAnswer: answerId, status: "ANSWER_SUBMITTED" });
-    SoundManager.play("click");
-    SoundManager.play(isCorrect ? "correct" : "wrong");
-
-    // Optionally submit answer asynchronously
-    const currentQuestion = get().questions[get().current];
-    if (currentQuestion) {
-      fetch("/api/game/answer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: 1, // Replace with real fid from auth store
-          gameId: 1, // Replace with actual if needed
-          questionId: currentQuestion.id,
-          selected: answerId,
-          timeTaken:  - get().timeLeft,
-        }),
-      })
-        .then((res) => res.json())
-        .then(({ correct, points }) => {
-          if (correct) set((s) => ({ score: s.score + points }));
-        })
-        .catch(() => {});
-    }
-
-    setTimeout(() => {
-      get().advanceToNextQuestion();
-    }, 2000);
-  },
-
-  advanceToNextQuestion: () => {
-    const idx = get().current;
-    const total = get().questions.length;
-    if (idx < total - 1) {
-      set({
-        current: idx + 1,
-        timeLeft: ,
-        selectedAnswer: null,
-        status: "QUESTION_ACTIVE",
-        round: get().round + 1,
-      });
-    } else {
-      get().gameOver();
-    }
   },
 
   gameOver: () => {
-    set({ status: "GAME_OVER" });
+    get().unsubscribeFromChat();
+    set({ gameState: "GAME_OVER", messages: [] });
     SoundManager.play("gameOver");
   },
 }));
 
---- File: ./src/stores/authStore.ts ---
-import { create } from "zustand";
-
-interface SafeArea {
-  top: number;
-  bottom: number;
-  left: number;
-  right: number;
-}
-
-interface AuthState {
-  fid: number | null;
-  username: string;
-  pfpUrl: string;
-  walletAddress: string;
-  safeArea: SafeArea;
-  setUser: (u: Partial<AuthState>) => void;
-  setWallet: (addr: string) => void;
-  setSafeArea: (a: SafeArea) => void;
-  reset: () => void;
-}
-
-export const useAuthStore = create<AuthState>((set) => ({
-  fid: null,
-  username: "",
-  pfpUrl: "",
-  walletAddress: "",
-  safeArea: { top: 0, bottom: 0, left: 0, right: 0 },
-  setUser: (u) => set((s) => ({ ...s, ...u })),
-  setWallet: (addr) => set({ walletAddress: addr }),
-  setSafeArea: (a) => set({ safeArea: a }),
-  reset: () =>
-    set({
-      fid: null,
-      username: "",
-      pfpUrl: "",
-      walletAddress: "",
-      safeArea: { top: 0, bottom: 0, left: 0, right: 0 },
-    }),
-}));
-
 --- File: ./src/stores/lobbyStore.ts ---
-import { create } from "zustand";
+// ───────────────────────── src/stores/lobbyStore.ts ─────────────────────────
+// Fully fixed for Zustand v5 typing + persistence + single ticket per game.
 
+"use client";
+
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+
+// ───────────────────────── TYPES ─────────────────────────
 interface Player {
   username: string;
   wallet: string;
@@ -5527,90 +6002,212 @@ interface ReferralData {
 }
 
 type ReferralStatus = "idle" | "validating" | "success" | "failed";
+type TicketStatus = "idle" | "pending" | "confirmed" | "failed";
 
+interface Ticket {
+  id?: number;
+  txHash?: string;
+  amountUSDC?: number;
+  status: TicketStatus;
+  gameId?: number;
+}
+
+// ───────────────────────── STATE INTERFACE ─────────────────────────
 interface LobbyState {
-  // Referral part
+  // Referral
   referralCode: string;
   referralStatus: ReferralStatus;
   referralData?: ReferralData;
-  createReferral: (inviterId: number) => Promise<void>;
-  validateReferral: (code: string, inviteeId: number) => Promise<void>;
-  // Lobby stats & countdown
+  createReferral: (inviterId: number, farcasterId: number) => Promise<void>;
+  validateReferral: (code: string, farcasterId: number) => Promise<void>;
+
+  // Stats
   stats: LobbyStats | null;
   countdown: string;
   fetchStats: () => Promise<void>;
   startCountdown: (target: Date) => void;
+  stopCountdown: () => void;
+
+  // Ticket
+  ticket: Ticket | null;
+  purchaseStatus: TicketStatus;
+  buyTicket: (userId: number, gameId: number, amount: number) => Promise<void>;
+  confirmTicket: (ticketId: number) => Promise<void>;
 }
 
-export const useLobbyStore = create<LobbyState>((set) => ({
-  // Referral state
-  referralCode: "",
-  referralStatus: "idle",
-  referralData: undefined,
-  createReferral: async (inviterId) => {
-    set({ referralStatus: "validating" });
-    try {
-      const res = await fetch("/api/referral/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ inviterId }),
-      });
-      const data = await res.json();
-      set({
-        referralCode: data.code,
-        referralData: data,
-        referralStatus: "success",
-      });
-    } catch {
-      set({ referralStatus: "failed" });
+// ───────────────────────── STORE ─────────────────────────
+export const useLobbyStore = create<LobbyState>()(
+  persist(
+    (set, get) => {
+      let countdownInterval: ReturnType<typeof setInterval> | null = null;
+
+      return {
+        // ───────────────────────── REFERRAL ─────────────────────────
+        referralCode: "",
+        referralStatus: "idle",
+        referralData: undefined,
+
+        // Note: createReferral kept as-is (hits /api/referral/create), adjust if not used
+
+        async createReferral(inviterId: number, farcasterId: number) {
+          set({ referralStatus: "validating" });
+          try {
+            const res = await fetch("/api/referral/create", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-farcaster-id": farcasterId.toString(),
+              },
+              body: JSON.stringify({ inviterId }),
+            });
+            if (!res.ok) throw new Error("Failed to create referral");
+            const data: ReferralData = await res.json();
+            set({
+              referralCode: data.code,
+              referralData: data,
+              referralStatus: "success",
+            });
+          } catch {
+            set({ referralStatus: "failed" });
+          }
+        },
+
+        async validateReferral(code: string, farcasterId: number) {
+          set({ referralStatus: "validating" });
+          try {
+            const res = await fetch("/api/referrals", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-farcaster-id": farcasterId.toString(),
+              },
+              body: JSON.stringify({ code }),
+            });
+            const data = await res.json();
+            if (!res.ok || data.valid !== true) {
+              set({ referralStatus: "failed" });
+              return;
+            }
+            set({
+              referralStatus: "success",
+              referralCode: code,
+              // The /api/referrals POST does not return full referralData.
+              // For consistency, only set code here. Extend if backend returns more.
+              referralData: data.referral ?? { code },
+            });
+          } catch {
+            set({ referralStatus: "failed" });
+          }
+        },
+
+        // ───────────────────────── STATS ─────────────────────────
+        stats: null,
+        countdown: "00:00",
+        async fetchStats() {
+          try {
+            const res = await fetch("/api/lobby/stats");
+            if (!res.ok) throw new Error("Failed to fetch lobby stats");
+            const data = await res.json();
+            set({ stats: data });
+          } catch (e) {
+            console.error("fetchStats error:", e);
+          }
+        },
+        startCountdown(target) {
+          if (countdownInterval) clearInterval(countdownInterval);
+          countdownInterval = setInterval(() => {
+            const diff = target.getTime() - Date.now();
+            if (diff <= 0) {
+              clearInterval(countdownInterval!);
+              countdownInterval = null;
+              set({ countdown: "00:00" });
+            } else {
+              const m = Math.floor(diff / 60000);
+              const s = Math.floor((diff % 60000) / 1000);
+              set({
+                countdown: `${String(m).padStart(2, "0")}:${String(s).padStart(
+                  2,
+                  "0"
+                )}`,
+              });
+            }
+          }, 1000);
+        },
+        stopCountdown() {
+          if (countdownInterval) clearInterval(countdownInterval);
+          countdownInterval = null;
+        },
+
+        // ───────────────────────── TICKETS ─────────────────────────
+        ticket: null,
+        purchaseStatus: "idle",
+        async buyTicket(userId, gameId, amount) {
+          // 🧠 One-ticket-per-game rule
+          const current = get().ticket;
+          if (current && current.gameId === gameId) {
+            console.warn("User already owns a ticket for this game.");
+            set({ purchaseStatus: "confirmed" });
+            return;
+          }
+
+          set({ purchaseStatus: "pending" });
+          try {
+            const res = await fetch("/api/tickets/buy", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId, gameId, amount }),
+            });
+            if (!res.ok) throw new Error("Ticket purchase failed");
+            const data = await res.json();
+            set({
+              ticket: {
+                id: data.ticketId,
+                status: "confirmed",
+                amountUSDC: amount,
+                gameId,
+              },
+              purchaseStatus: "confirmed",
+            });
+            await get().fetchStats();
+          } catch (e) {
+            console.error("buyTicket error:", e);
+            set({ purchaseStatus: "failed" });
+          }
+        },
+
+        async confirmTicket(ticketId) {
+          try {
+            const res = await fetch("/api/tickets/confirm", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ticketId }),
+            });
+            if (!res.ok) throw new Error("Failed to confirm ticket");
+            set((s) => ({
+              ticket: s.ticket
+                ? { ...s.ticket, status: "confirmed" }
+                : { id: ticketId, status: "confirmed" },
+              purchaseStatus: "confirmed",
+            }));
+          } catch (e) {
+            console.error("confirmTicket error:", e);
+          }
+        },
+      };
+    },
+    {
+      name: "lobby-store",
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        referralCode: state.referralCode,
+        referralStatus: state.referralStatus,
+        referralData: state.referralData,
+        ticket: state.ticket,
+        purchaseStatus: state.purchaseStatus,
+      }),
     }
-  },
-  validateReferral: async (code, inviteeId) => {
-    set({ referralStatus: "validating" });
-    try {
-      const res = await fetch("/api/referral/validate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, inviteeId }),
-      });
-      const data = await res.json();
-      set({
-        referralStatus: data.success ? "success" : "failed",
-        referralData: data.referral,
-      });
-    } catch {
-      set({ referralStatus: "failed" });
-    }
-  },
-  // Lobby stats & countdown
-  stats: null,
-  countdown: "00:00",
-  fetchStats: async () => {
-    try {
-      const res = await fetch("/api/lobby/stats");
-      const data = await res.json();
-      set({ stats: data });
-    } catch (e) {
-      console.error(e);
-    }
-  },
-  startCountdown: (target) => {
-    const interval = setInterval(() => {
-      const diff = target.getTime() - Date.now();
-      if (diff <= 0) {
-        clearInterval(interval);
-        set({ countdown: "00:00" });
-      } else {
-        const minutes = Math.floor(diff / 60000);
-        const seconds = Math.floor((diff % 60000) / 1000);
-        const formatted = `${String(minutes).padStart(2, "0")}:${String(
-          seconds
-        ).padStart(2, "0")}`;
-        set({ countdown: formatted });
-      }
-    }, 1000);
-  },
-}));
+  )
+);
 
 --- File: ./src/stores/configStore.ts ---
 import { create } from "zustand";
@@ -5663,9 +6260,10 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
       if (!res.ok) throw new Error("Failed to load global config");
       const data = await res.json();
       set({ global: data, loading: false });
-    } catch (e: any) {
+    } catch (e) {
+      console.error(e);
       set({
-        error: e?.message ?? "Failed to load global config",
+        error: "Failed to load global config",
         loading: false,
       });
     }
@@ -5681,9 +6279,10 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
         byGameId: { ...s.byGameId, [gameId]: data },
         loading: false,
       }));
-    } catch (e: any) {
+    } catch (e) {
+      console.error(e);
       set({
-        error: e?.message ?? "Failed to load game config",
+        error: "Failed to load game config",
         loading: false,
       });
     }
@@ -5703,9 +6302,10 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
       if (!res.ok) throw new Error("Failed to update global config");
       const data = await res.json();
       set({ global: data, loading: false });
-    } catch (e: any) {
+    } catch (e) {
+      console.error(e);
       set({
-        error: e?.message ?? "Failed to update global config",
+        error: "Failed to update global config",
         loading: false,
       });
     }
@@ -5728,9 +6328,10 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
         byGameId: { ...s.byGameId, [gameId]: data },
         loading: false,
       }));
-    } catch (e: any) {
+    } catch (e) {
+      console.error(e);
       set({
-        error: e?.message ?? "Failed to update game config",
+        error: "Failed to update game config",
         loading: false,
       });
     }
@@ -5743,77 +6344,6 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
     return { ...(global ?? ({} as BaseConfig)), ...(game ?? {}) } as BaseConfig;
   },
 }));
-
---- File: ./src/stores/ticketStore.ts ---
-import { create } from "zustand";
-
-interface Ticket {
-  id?: number;
-  txHash?: string;
-  amountUSDC?: number;
-  status?: "idle" | "pending" | "confirmed" | "failed";
-}
-
-interface TicketState {
-  ticket: Ticket | null;
-  purchaseStatus: Ticket["status"];
-  buyTicket: (userId: number, gameId: number, amount: number) => Promise<void>;
-  confirmTicket: (ticketId: number) => Promise<void>;
-}
-
-export const useTicketStore = create<TicketState>((set) => ({
-  ticket: null,
-  purchaseStatus: "idle",
-  buyTicket: async (userId, gameId, amount) => {
-    set({ purchaseStatus: "pending" });
-    try {
-      const res = await fetch("/api/tickets/buy", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, gameId, amount }),
-      });
-      const data = await res.json();
-      set({ ticket: data, purchaseStatus: "confirmed" });
-    } catch {
-      set({ purchaseStatus: "failed" });
-    }
-  },
-  confirmTicket: async (ticketId) => {
-    await fetch(`/api/tickets/confirm`, {
-      method: "POST",
-      body: JSON.stringify({ ticketId }),
-    });
-  },
-}));
-
---- File: ./src/styles/animations.css ---
-.fade-in {
-  animation: fadeIn 0.6s ease forwards;
-}
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.slide-up {
-  animation: slideUp 0.5s ease forwards;
-}
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
 --- File: ./src/components/ui/ChatBox.tsx ---
 "use client";
@@ -5933,9 +6463,11 @@ interface FancyBorderButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
   fullWidth?: boolean;
+  ref?: React.RefObject<HTMLButtonElement>;
 }
 
 export function FancyBorderButton({
+  ref,
   children,
   fullWidth = true,
   className,
@@ -5943,6 +6475,7 @@ export function FancyBorderButton({
 }: FancyBorderButtonProps) {
   return (
     <button
+      ref={ref}
       className={cn(
         "relative flex items-center justify-center h-[54px] px-6 bg-white text-[#191919] font-[var(--font-pixel)] text-sm uppercase tracking-wider max-w-sm mx-auto",
         "rounded-[12px] border-[5px] border-t-0 border-l-0 border-[#00CFF2]",
@@ -6071,7 +6604,7 @@ export default function DeviceGate({
   if (isMobile) return <>{children}</>;
 
   return (
-    <div className="relative min-h-dvh w-full bg-figma text-foreground noise">
+    <div className="relative min-h-dvh w-full bg-figmaYay text-foreground noise">
       {/* subtle radial glow */}
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.06),transparent_60%)]" />
 
@@ -6184,7 +6717,7 @@ export function BottomNav() {
   const router = useRouter();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-figma noise border-t-2 border-border z-50">
+    <nav className="fixed bottom-0 left-0 right-0 bg-figmaYay noise border-t-2 border-border z-50">
       <div className="flex items-center justify-around max-w-2xl mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -6220,194 +6753,58 @@ export function BottomNav() {
   );
 }
 
---- File: ./src/components/providers/FarcasterProvider.tsx ---
+--- File: ./src/components/providers/MinikitProvider.tsx ---
 "use client";
-import { ReactNode } from "react";
-import { useFarcaster } from "@/hooks/useFarcaster";
 
-export default function FarcasterProvider({
-  children,
-}: {
-  children: ReactNode;
-}) {
-  useFarcaster();
-  return <>{children}</>;
-}
+import { OnchainKitProvider } from "@coinbase/onchainkit";
+import { base } from "wagmi/chains";
+import { env } from "@/lib/env";
+import { useSyncUser } from "@/hooks/useSyncUser";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
---- File: ./src/components/providers/WalletProvider.tsx ---
-// /src/components/providers/WalletProvider.tsx
-"use client";
-import { WagmiProvider } from "wagmi";
-import { wagmiConfig } from "@/lib/wagmiConfig";
+import { useEffect } from "react";
 
-export default function WalletProvider({
-  children,
-}: {
+interface Props {
   children: React.ReactNode;
-}) {
-  return <WagmiProvider config={wagmiConfig}>{children}</WagmiProvider>;
 }
 
---- File: ./src/components/modals/InviteShareModal.tsx ---
-"use client"
-
-import { useState } from "react"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
-import { Copy } from "lucide-react"
-import { cn } from "@/lib/utils"
-
-interface InviteShareModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  inviteCode: string
-}
-
-export function InviteShareModal({ open, onOpenChange, inviteCode }: InviteShareModalProps) {
-  const [copied, setCopied] = useState(false)
-
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(inviteCode)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
-  const handleShare = () => {
-    const text = encodeURIComponent(`Join me on Waffles! Use my invite code: ${inviteCode} 🧇`)
-    const url = `https://twitter.com/intent/tweet?text=${text}`
-    window.open(url, "_blank")
-  }
-
+export function MinikitProvider({ children }: Props) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-[#0a0a0a] border-none p-0 overflow-hidden">
-        <div className="relative">
-          {/* Header with pixel icon */}
-          <div className="bg-[#1a5a9e] py-6 text-center relative overflow-hidden">
-            {/* Pixelated clouds at top */}
-            <div className="absolute top-0 left-0 right-0 h-8 pixel-art">
-              <svg className="w-full h-full" viewBox="0 0 400 32" preserveAspectRatio="none">
-                <rect x="0" y="0" width="80" height="8" fill="#4a7ba7" opacity="0.3" />
-                <rect x="100" y="4" width="60" height="8" fill="#4a7ba7" opacity="0.3" />
-                <rect x="200" y="0" width="70" height="8" fill="#4a7ba7" opacity="0.3" />
-                <rect x="300" y="4" width="80" height="8" fill="#4a7ba7" opacity="0.3" />
-              </svg>
-            </div>
+    <OnchainKitProvider
+      apiKey={env.nextPublicOnchainkitApiKey}
+      chain={base}
+      config={{
+        appearance: {
+          mode: "auto",
+        },
+        wallet: {
+          display: "modal",
+          preference: "all",
+        },
+      }}
+      miniKit={{
+        enabled: true,
+        autoConnect: true,
+        notificationProxyUrl: undefined,
+      }}
+    >
+      <IsMiniAppReady>{children}</IsMiniAppReady>
+    </OnchainKitProvider>
+  );
+}
 
-            <h2
-              className="text-[#ffd700] font-black text-2xl tracking-wider flex items-center justify-center gap-2"
-              style={{ fontFamily: "monospace" }}
-            >
-              <span className="text-3xl">👥</span>
-              INVITE FRIENDS
-            </h2>
-          </div>
+function IsMiniAppReady({ children }: { children: React.ReactNode }) {
+  useSyncUser();
+  const { isFrameReady, setFrameReady } = useMiniKit();
 
-          {/* Pixelated sunset background with gift */}
-          <div className="relative h-64 pixel-art overflow-hidden">
-            {/* Sky gradient - sunset colors */}
-            <div className="absolute inset-0">
-              <svg className="w-full h-full" viewBox="0 0 400 256" preserveAspectRatio="none">
-                {/* Blue sky at top */}
-                <rect x="0" y="0" width="400" height="60" fill="#1a5a9e" />
+  // Initialize the  miniapp
+  useEffect(() => {
+    if (!isFrameReady) {
+      setFrameReady();
+    }
+  }, [setFrameReady, isFrameReady]);
 
-                {/* Sunset rays - radiating from center */}
-                <defs>
-                  <linearGradient id="ray1" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#ffd700" />
-                    <stop offset="100%" stopColor="#ffb347" />
-                  </linearGradient>
-                  <linearGradient id="ray2" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#ffb347" />
-                    <stop offset="100%" stopColor="#ff8c42" />
-                  </linearGradient>
-                </defs>
-
-                {/* Alternating sunset rays */}
-                <polygon points="200,80 0,256 50,256" fill="url(#ray1)" />
-                <polygon points="200,80 50,256 100,256" fill="url(#ray2)" />
-                <polygon points="200,80 100,256 150,256" fill="url(#ray1)" />
-                <polygon points="200,80 150,256 200,256" fill="url(#ray2)" />
-                <polygon points="200,80 200,256 250,256" fill="url(#ray1)" />
-                <polygon points="200,80 250,256 300,256" fill="url(#ray2)" />
-                <polygon points="200,80 300,256 350,256" fill="url(#ray1)" />
-                <polygon points="200,80 350,256 400,256" fill="url(#ray2)" />
-
-                {/* Ground - brown/dirt */}
-                <rect x="0" y="200" width="400" height="30" fill="#5a4a3a" />
-                <rect x="0" y="230" width="400" height="26" fill="#4a3a2a" />
-              </svg>
-            </div>
-
-            {/* Green grass at bottom */}
-            <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-b from-[#4a7c3e] to-[#3d6b34]" />
-
-            {/* Gift box centered */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="relative w-32 h-32 pixel-art">
-                {/* Gift box body - yellow/gold with dots */}
-                <div className="absolute inset-0 bg-[#ffd700] rounded-lg" style={{ imageRendering: "pixelated" }}>
-                  {/* Polka dots pattern */}
-                  <div className="absolute inset-0 grid grid-cols-4 grid-rows-4 p-2 gap-2">
-                    {[...Array(16)].map((_, i) => (
-                      <div key={i} className="w-2 h-2 bg-[#ff6b6b] rounded-full" />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Red ribbon - vertical */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-full bg-[#dc143c]" />
-
-                {/* Red ribbon - horizontal */}
-                <div className="absolute top-1/2 -translate-y-1/2 left-0 w-full h-8 bg-[#dc143c]" />
-
-                {/* Bow on top */}
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-16 h-8">
-                  <div className="absolute left-0 w-6 h-6 bg-[#dc143c] rounded-full" />
-                  <div className="absolute right-0 w-6 h-6 bg-[#dc143c] rounded-full" />
-                  <div className="absolute left-1/2 -translate-x-1/2 top-1 w-4 h-4 bg-[#b22222] rounded-sm" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Code section */}
-          <div className="bg-[#1a1a1a] px-8 py-8 space-y-6">
-            <div className="text-center space-y-4">
-              <p className="text-gray-400 text-lg">Your code is</p>
-              <div className="bg-[#0a0a0a] border-4 border-[#2a2a2a] rounded-2xl py-6">
-                <div className="text-6xl font-black tracking-[0.3em] text-white" style={{ fontFamily: "monospace" }}>
-                  {inviteCode}
-                </div>
-              </div>
-            </div>
-
-            {/* Buttons */}
-            <div className="space-y-3">
-              <button
-                onClick={handleShare}
-                className="w-full bg-white text-black font-black text-xl py-5 rounded-2xl hover:bg-gray-100 transition-colors border-4 border-[#ffd700]"
-                style={{ fontFamily: "monospace" }}
-              >
-                SHARE INVITE
-              </button>
-
-              <button
-                onClick={handleCopy}
-                className={cn(
-                  "w-full bg-transparent text-[#00d4ff] font-black text-lg py-4 rounded-2xl border-2 border-[#00d4ff] hover:bg-[#00d4ff]/10 transition-colors flex items-center justify-center gap-3",
-                  copied && "text-[#00ff00] border-[#00ff00]",
-                )}
-                style={{ fontFamily: "monospace" }}
-              >
-                <Copy className="w-5 h-5" />
-                {copied ? "COPIED!" : "COPY CODE"}
-              </button>
-            </div>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  )
+  return <>{children}</>;
 }
 
 --- File: ./src/components/logo/Logo.tsx ---
@@ -7303,6 +7700,172 @@ export function UsdcIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
+--- File: ./src/components/onboarding/OnboardingGate.tsx ---
+"use client";
+
+import { useOnboarding } from "@/hooks/useOnboarding";
+import { OnboardingOverlay } from "./OnboardingOverlay";
+
+interface Props {
+  children: React.ReactNode;
+}
+
+/**
+ * Wraps the app to present the onboarding overlay to first-time users.
+ * Blocks interaction until onboarding is completed to ensure key concepts are seen.
+ */
+export function OnboardingGate({ children }: Props) {
+  const { isReady, shouldShowOnboarding, completeOnboarding } = useOnboarding();
+
+  if (!isReady) return null;
+
+  return (
+    <>
+      {children}
+      {shouldShowOnboarding && (
+        <OnboardingOverlay onComplete={completeOnboarding} />
+      )}
+    </>
+  );
+}
+
+--- File: ./src/components/onboarding/OnboardingOverlay.tsx ---
+"use client";
+
+import Image from "next/image";
+import { OnboardingCarousel } from "./OnboardingCarousel";
+
+interface OnboardingOverlayProps {
+  onComplete: () => void;
+}
+
+/**
+ * Full-screen onboarding overlay that reuses the existing onboarding UI.
+ * Renders above the app and blocks interaction until completion.
+ */
+export function OnboardingOverlay({ onComplete }: OnboardingOverlayProps) {
+  return (
+    <div className="fixed inset-0 z-50 bg-figma noise flex flex-col">
+      <div className="p-8 flex items-center justify-center">
+        <Image
+          src="/logo-icon.png"
+          alt="Logo"
+          width={150}
+          height={80}
+          priority
+        />
+      </div>
+      <div className="flex-1">
+        <OnboardingCarousel onComplete={onComplete} />
+      </div>
+    </div>
+  );
+}
+
+--- File: ./src/components/onboarding/OnboardingCarousel.tsx ---
+"use client";
+
+import { useState } from "react";
+import { OnboardingSlide } from "./OnboardingSlide";
+import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
+
+interface Slide {
+  icon: string;
+  title: string;
+  description: string;
+}
+
+const slides: Slide[] = [
+  {
+    icon: "/images/illustration/waffle-ticket.png",
+    title: "Buy a Waffle",
+    description:
+      "Buy your ticket, play the game, and share in the prize pool with other winners",
+  },
+  {
+    icon: "/images/illustration/money-bag.png",
+    title: "Win Big",
+    description: "The faster you connect the dots, the bigger your share",
+  },
+  {
+    icon: "/images/illustration/crown.png",
+    title: "Take Your",
+    description: "Recognize the images, climb the leaderboard. EZ",
+  },
+];
+
+interface OnboardingCarouselProps {
+  onComplete: () => void;
+}
+
+export function OnboardingCarousel({ onComplete }: OnboardingCarouselProps) {
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const handleNext = () => {
+    if (currentSlide < slides.length - 1) {
+      setCurrentSlide(currentSlide + 1);
+    } else {
+      onComplete();
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex-1 flex items-center justify-center">
+        <OnboardingSlide
+          key={currentSlide}
+          icon={slides[currentSlide].icon}
+          title={slides[currentSlide].title}
+          description={slides[currentSlide].description}
+        />
+      </div>
+
+      <div className="p-6 space-y-3 mb-10">
+        <FancyBorderButton onClick={handleNext} className="w-full">
+          {currentSlide === 0 ? "Next" : "Let's Go"}
+        </FancyBorderButton>
+      </div>
+    </div>
+  );
+}
+
+--- File: ./src/components/onboarding/OnboardingSlide.tsx ---
+import { cn } from "@/lib/utils";
+import Image from "next/image";
+
+interface OnboardingSlideProps {
+  icon: string;
+  title: string;
+  description: string;
+  className?: string;
+}
+
+export function OnboardingSlide({
+  icon,
+  title,
+  description,
+  className,
+}: OnboardingSlideProps) {
+  return (
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center text-center px-8 py-12",
+        className
+      )}
+    >
+      <div className="mb-8 animate-in-right relative w-48 h-48">
+        <Image src={icon} alt={title} fill className="object-contain" />
+      </div>
+      <h2 className="text-3xl font-bold mb-4 text-balance animate-in-right uppercase tracking-wider">
+        {title}
+      </h2>
+      <p className="text-lg text-center font-display text-muted max-w-md text-pretty animate-in-right">
+        {description}
+      </p>
+    </div>
+  );
+}
+
 --- File: ./src/components/inputs/PixelInput.tsx ---
 import type { InputHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
@@ -7326,6 +7889,31 @@ export function PixelInput({ className, ...props }: PixelInputProps) {
   );
 }
 
+--- File: ./src/hooks/useMiniUser.ts ---
+"use client";
+
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
+import { useAccount } from "wagmi";
+
+/**
+ * Merges Farcaster + wallet identity into one consistent hook.
+ */
+export function useMiniUser() {
+  const { context, isMiniAppReady } = useMiniKit();
+  const { address, isConnected } = useAccount();
+
+  const user = {
+    fid: context?.user?.fid ?? null,
+    username: context?.user?.username ?? "",
+    pfpUrl: context?.user?.pfpUrl ?? "",
+    wallet: address ?? "",
+    isConnected,
+    isMiniAppReady,
+  };
+
+  return user;
+}
+
 --- File: ./src/hooks/useVibration.ts ---
 export function useVibration() {
   const vibrate = (pattern: number | number[] = 80) => {
@@ -7335,56 +7923,161 @@ export function useVibration() {
   return { vibrate };
 }
 
---- File: ./src/hooks/useFarcaster.ts ---
+--- File: ./src/hooks/useFlowRedirect.ts ---
 "use client";
-import { useEffect, useState } from "react";
-import { useAuthStore } from "@/stores/authStore";
 
-// Import Farcaster Mini-App SDK
-import { MiniAppSDK } from "@farcaster/miniapp-sdk";
+import { useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { useLobbyStore } from "@/stores/lobbyStore";
+import { useGameStore } from "@/stores/gameStore";
 
-export const useFarcaster = () => {
-  const [sdk, setSdk] = useState<MiniAppSDK | null>(null);
-  const setUser = useAuthStore((s) => s.setUser);
-  const setSafeArea = useAuthStore((s) => s.setSafeArea);
+/**
+ * Ensures user flow stays consistent:
+ * - skips invite if already entered
+ * - skips buy if ticket exists
+ * - skips lobby if ready to play
+ */
+export function useFlowRedirect() {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const { referralCode, referralStatus, ticket, purchaseStatus } =
+    useLobbyStore();
+
+  const { gameState } = useGameStore();
 
   useEffect(() => {
-    async function init() {
-      const instance = new MiniAppSDK();
-      await instance.actions.ready();
+    // wait until store is hydrated
+    if (referralStatus === "idle") return;
 
-      const context = await instance.context.get();
-      setSdk(instance);
+    const hasInvite = referralCode && referralStatus === "success";
+    const hasTicket = !!ticket;
+    const isConfirmed = purchaseStatus === "confirmed";
 
-      if (context?.user) {
-        setUser({
-          fid: context.user.fid,
-          username: context.user.username,
-          pfpUrl: context.user.pfp_url,
-        });
+    if (!hasInvite && pathname !== "/lobby/invite-code") {
+      router.replace("/lobby/invite-code");
+      return;
+    }
 
-        await fetch("/api/user/init", {
+    if (hasInvite && !hasTicket && pathname !== "/lobby/buy") {
+      router.replace("/lobby/buy");
+      return;
+    }
+
+    if (hasTicket && !isConfirmed && pathname !== "/lobby/confirm") {
+      router.replace("/lobby/confirm");
+      return;
+    }
+
+    if (hasInvite && hasTicket && isConfirmed) {
+      // if in lobby pages but user already ready
+      if (pathname.startsWith("/lobby")) {
+        router.replace("/game");
+      }
+      return;
+    }
+
+    // if game already in progress, always go to /game
+    if (gameState && gameState !== "LOBBY" && pathname !== "/game") {
+      router.replace("/game");
+    }
+  }, [
+    router,
+    pathname,
+    referralCode,
+    referralStatus,
+    ticket,
+    purchaseStatus,
+    gameState,
+  ]);
+}
+
+--- File: ./src/hooks/useOnboarding.ts ---
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+
+const ONBOARDING_STORAGE_KEY = "waffles:onboarded:v1";
+
+/**
+ * Manages first-time user onboarding state with safe, persistent storage.
+ * We intentionally scope persistence to the device (localStorage) to avoid
+ * leaking cross-account state and to keep UX snappy without server roundtrips.
+ */
+export function useOnboarding() {
+  const [isOnboarded, setIsOnboarded] = useState<boolean>(true);
+  const [isReady, setIsReady] = useState<boolean>(false);
+
+  useEffect(() => {
+    try {
+      const stored =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem(ONBOARDING_STORAGE_KEY)
+          : null;
+      setIsOnboarded(stored === "true");
+    } catch (_err) {
+      console.log(_err);
+      // If storage is blocked, default to showing onboarding once
+      setIsOnboarded(false);
+    } finally {
+      setIsReady(true);
+    }
+  }, []);
+
+  const completeOnboarding = useCallback(() => {
+    try {
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(ONBOARDING_STORAGE_KEY, "true");
+      }
+    } catch (_err) {
+      console.log(_err);
+      // Non-fatal: proceed even if storage fails
+    }
+    setIsOnboarded(true);
+  }, []);
+
+  return {
+    isReady,
+    isOnboarded,
+    shouldShowOnboarding: isReady && !isOnboarded,
+    // for testing
+    // shouldShowOnboarding: true,
+    completeOnboarding,
+  };
+}
+
+--- File: ./src/hooks/useSyncUser.ts ---
+"use client";
+
+import { useEffect } from "react";
+import { useMiniUser } from "@/hooks/useMiniUser";
+
+export function useSyncUser() {
+  const { fid, username, pfpUrl, wallet, isMiniAppReady } = useMiniUser();
+
+  useEffect(() => {
+    if (!isMiniAppReady || !fid || !wallet) return;
+
+    const syncUser = async () => {
+      try {
+        await fetch("/api/user/sync", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            fid: context.user.fid,
-            username: context.user.username,
-            pfpUrl: context.user.pfp_url,
-            walletAddress: useAuthStore.getState().walletAddress,
+            fid,
+            username,
+            pfpUrl,
+            wallet,
           }),
         });
+      } catch (err) {
+        console.error("Failed to sync user:", err);
       }
+    };
 
-      if (context?.client?.safeAreaInsets) {
-        setSafeArea(context.client.safeAreaInsets);
-      }
-    }
-
-    init();
-  }, [setUser, setSafeArea]);
-
-  return sdk;
-};
+    syncUser();
+  }, [fid, wallet, username, pfpUrl, isMiniAppReady]);
+}
 
 --- File: ./src/hooks/useSound.ts ---
 export function useSound() {
@@ -7428,6 +8121,19 @@ export function useIsMobile() {
   }, [ua, vw]);
 }
 
+--- File: ./src/lib/supabaseClient.ts ---
+// src/lib/supabaseClient.ts
+import { createClient } from "@supabase/supabase-js";
+import { env } from "./env";
+
+export const supabase = createClient(
+  env.nextPublicSupabaseUrl,
+  env.nextPublicSupabaseAnonKey,
+  {
+    realtime: { params: { eventsPerSecond: 1 } },
+  }
+);
+
 --- File: ./src/lib/utils.ts ---
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
@@ -7435,10 +8141,6 @@ import { twMerge } from "tailwind-merge"
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
-
---- File: ./src/lib/constants.ts ---
-export const WAFFLES_RECEIVER = process.env.NEXT_PUBLIC_RECEIVER_ADDRESS!; // EOA receiving funds
-export const USDC_ADDRESS = process.env.NEXT_PUBLIC_USDC_ADDRESS!; // Base USDC token address
 
 --- File: ./src/lib/scoring.ts ---
 export function calculateScore(timeTaken: number, maxTime: number): number {
@@ -7513,31 +8215,36 @@ class SoundManager {
 
 export default SoundManager.getInstance();
 
+--- File: ./src/lib/env.ts ---
+export const env = {
+  rootUrl:
+    // "https://0b967d9de060.ngrok-free.app" ||
+    process.env.NEXT_PUBLIC_URL ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : "http://localhost:3000"),
+
+  neynarApiKey: process.env.NEYNAR_API_KEY!,
+  databaseUrl: process.env.DATABASE_URL!,
+  nextPublicAppUrl: process.env.NEXT_PUBLIC_APP_URL!,
+  nextPublicOnchainkitApiKey: process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY!,
+  waffleMainAddress: process.env.WAFFLE_MAIN_ADDRESS as `0x${string}`,
+  nextPublicReceiverAddress: process.env
+    .NEXT_PUBLIC_RECEIVER_ADDRESS! as `0x${string}`, // EOA receiving funds
+  nextPublicUsdcAddress: process.env.NEXT_PUBLIC_USDC_ADDRESS! as `0x${string}`, // Base USDC token address
+  nextPublicLeaderboardPageSize:
+    Number(process.env.NEXT_PUBLIC_LEADERBOARD_PAGE_SIZE!) || 25,
+  nextPublicSupabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  nextPublicSupabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+};
+
 --- File: ./src/lib/neynarClient.ts ---
-// /src/lib/neynarClient.ts
-import NeynarAPIClient from "@neynar/nodejs-sdk";
+import { env } from "@/lib/env";
+import { NeynarAPIClient } from "@neynar/nodejs-sdk";
 
 export const neynar = new NeynarAPIClient({
-  apiKey: process.env.NEYNAR_API_KEY!,
+  apiKey: env.neynarApiKey,
 });
-
---- File: ./src/lib/payments.ts ---
-import { writeContract } from "wagmi/actions";
-import { parseUnits } from "viem";
-import { base } from "wagmi/chains";
-import { USDC_ADDRESS, WAFFLES_RECEIVER } from "./constants";
-
-export async function sendUSDC(amount: string) {
-  const value = parseUnits(amount, 6);
-  const tx = await writeContract({
-    address: USDC_ADDRESS,
-    abi: ["function transfer(address to, uint256 value) public returns (bool)"],
-    functionName: "transfer",
-    args: [WAFFLES_RECEIVER, value],
-    chainId: base.id,
-  });
-  return tx.hash;
-}
 
 --- File: ./src/lib/fonts/ndot47_bd.woff2 ---
 [Content not included: Binary file]
@@ -7548,7 +8255,7 @@ import localFont from "next/font/local";
 export const fontDisplay = localFont({
   src: [
     {
-      path: "./fonts/brockmann_bd.otf",
+      path: "./brockmann_bd.otf",
       weight: "400",
       style: "normal",
     },
@@ -7560,7 +8267,7 @@ export const fontDisplay = localFont({
 export const fontBody = localFont({
   src: [
     {
-      path: "./fonts/editundo_bd.ttf",
+      path: "./editundo_bd.ttf",
       weight: "400",
       style: "normal",
     },
@@ -7572,7 +8279,7 @@ export const fontBody = localFont({
 export const fontInput = localFont({
   src: [
     {
-      path: "./fonts/ndot47_bd.woff2",
+      path: "./ndot47_bd.woff2",
       weight: "400",
       style: "normal",
     },
@@ -7620,23 +8327,6 @@ export function formatCountdown(target: Date): string {
   )}`;
 }
 
-export function startCountdown(
-  duration: number,
-  onTick: (remaining: number) => void,
-  onComplete: () => void
-) {
-  let remaining = duration;
-  const interval = setInterval(() => {
-    remaining -= 1;
-    if (remaining <= 0) {
-      clearInterval(interval);
-      onComplete();
-    } else {
-      onTick(remaining);
-    }
-  }, 1000);
-}
-
 --- File: ./src/lib/wagmiConfig.ts ---
 import { createConfig, http } from "wagmi";
 import { base } from "wagmi/chains";
@@ -7665,11 +8355,4 @@ export function calculateStreak(gameDates: Date[]): number {
   }
   return streak;
 }
-
---- File: ./src/env.ts ---
-export const env = {
-  NEYNAR_API_KEY: process.env.NEYNAR_API_KEY!,
-  DATABASE_URL: process.env.DATABASE_URL!,
-  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL!,
-};
 

@@ -1,8 +1,11 @@
 // src/lib/supabaseClient.ts
 import { createClient } from "@supabase/supabase-js";
+import { env } from "./env";
 
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants";
-
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  realtime: { params: { eventsPerSecond: 1 } },
-});
+export const supabase = createClient(
+  env.nextPublicSupabaseUrl,
+  env.nextPublicSupabaseAnonKey,
+  {
+    realtime: { params: { eventsPerSecond: 1 } },
+  }
+);

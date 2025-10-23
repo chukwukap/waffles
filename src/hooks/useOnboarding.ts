@@ -45,6 +45,8 @@ export function useOnboarding() {
     isReady,
     isOnboarded,
     shouldShowOnboarding: isReady && !isOnboarded,
+    // for testing
+    // shouldShowOnboarding: true,
     completeOnboarding,
   };
 }
