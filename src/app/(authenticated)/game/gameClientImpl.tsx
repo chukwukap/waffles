@@ -14,19 +14,17 @@ export function GameClientImpl() {
   const router = useRouter();
   const gameState = useGameStore((s) => s.gameState);
   const game = useGameStore((s) => s.game);
-
-  const fetchActiveGame = useGameStore((state) => state.fetchActiveGame);
-  const fetchMessages = useGameStore((state) => state.fetchMessages);
-  const fetchTicket = useLobbyStore((state) => state.fetchTicket);
   const ticket = useLobbyStore((state) => state.ticket);
   const user = useMiniUser();
 
+  const fetchMessages = useGameStore((state) => state.fetchMessages);
+  const fetchTicket = useLobbyStore((state) => state.fetchTicket);
+
   useEffect(() => {
-    fetchActiveGame();
     if (game?.id && user.fid) {
       fetchTicket(user.fid.toString(), game.id);
     }
-  }, [fetchActiveGame, fetchTicket, user.fid, game?.id]);
+  }, [fetchTicket, user.fid, game?.id]);
 
   // Fetch messages if we have a valid game and user
   useEffect(() => {
