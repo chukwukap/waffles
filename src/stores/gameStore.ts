@@ -33,7 +33,7 @@ export interface GameStore {
 
   // Chat
   messages: ChatWithUser[];
-  fetchMessages: (gameId: number) => Promise<void>;
+  fetchMessages: () => Promise<void>;
   sendMessage: (
     text: string,
     user: { fid: number; username: string; pfpUrl: string }
