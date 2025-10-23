@@ -3,7 +3,7 @@ import localFont from "next/font/local";
 export const fontDisplay = localFont({
   src: [
     {
-      path: "./fonts/brockmann_bd.otf",
+      path: "./brockmann_bd.otf",
       weight: "400",
       style: "normal",
     },
@@ -15,7 +15,7 @@ export const fontDisplay = localFont({
 export const fontBody = localFont({
   src: [
     {
-      path: "./fonts/editundo_bd.ttf",
+      path: "./editundo_bd.ttf",
       weight: "400",
       style: "normal",
     },
@@ -27,7 +27,7 @@ export const fontBody = localFont({
 export const fontInput = localFont({
   src: [
     {
-      path: "./fonts/ndot47_bd.woff2",
+      path: "./ndot47_bd.woff2",
       weight: "400",
       style: "normal",
     },

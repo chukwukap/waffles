@@ -9,20 +9,3 @@ export function formatCountdown(target: Date): string {
     "0"
   )}`;
 }
-
-export function startCountdown(
-  duration: number,
-  onTick: (remaining: number) => void,
-  onComplete: () => void
-) {
-  let remaining = duration;
-  const interval = setInterval(() => {
-    remaining -= 1;
-    if (remaining <= 0) {
-      clearInterval(interval);
-      onComplete();
-    } else {
-      onTick(remaining);
-    }
-  }, 1000);
-}

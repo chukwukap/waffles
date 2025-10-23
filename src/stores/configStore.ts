@@ -49,7 +49,10 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
       const data = await res.json();
       set({ global: data, loading: false });
     } catch (e: any) {
-      set({ error: e?.message ?? "Failed to load global config", loading: false });
+      set({
+        error: e?.message ?? "Failed to load global config",
+        loading: false,
+      });
     }
   },
 
@@ -59,9 +62,15 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
       const res = await fetch(`/api/config/game/${gameId}`);
       if (!res.ok) throw new Error("Failed to load game config");
       const data = await res.json();
-      set((s) => ({ byGameId: { ...s.byGameId, [gameId]: data }, loading: false }));
+      set((s) => ({
+        byGameId: { ...s.byGameId, [gameId]: data },
+        loading: false,
+      }));
     } catch (e: any) {
-      set({ error: e?.message ?? "Failed to load game config", loading: false });
+      set({
+        error: e?.message ?? "Failed to load game config",
+        loading: false,
+      });
     }
   },
 
@@ -80,7 +89,10 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
       const data = await res.json();
       set({ global: data, loading: false });
     } catch (e: any) {
-      set({ error: e?.message ?? "Failed to update global config", loading: false });
+      set({
+        error: e?.message ?? "Failed to update global config",
+        loading: false,
+      });
     }
   },
 
@@ -97,9 +109,15 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
       });
       if (!res.ok) throw new Error("Failed to update game config");
       const data = await res.json();
-      set((s) => ({ byGameId: { ...s.byGameId, [gameId]: data }, loading: false }));
+      set((s) => ({
+        byGameId: { ...s.byGameId, [gameId]: data },
+        loading: false,
+      }));
     } catch (e: any) {
-      set({ error: e?.message ?? "Failed to update game config", loading: false });
+      set({
+        error: e?.message ?? "Failed to update game config",
+        loading: false,
+      });
     }
   },
 
@@ -107,8 +125,7 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
     const { global, byGameId } = get();
     const game = byGameId[gameId];
     if (!global && !game) return null;
-    return { ...(global ?? {} as BaseConfig), ...(game ?? {}) } as BaseConfig;
+    return { ...(global ?? ({} as BaseConfig)), ...(game ?? {}) } as BaseConfig;
   },
 }));
-
 

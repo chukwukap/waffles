@@ -7,7 +7,7 @@ import {
   WalletIcon,
 } from "@/components/icons";
 import { useProfileStore } from "@/stores/profileStore";
-import { PastGames } from "./_components/GameHistory";
+import { GameHistory } from "./_components/GameHistory";
 import LogoIcon from "@/components/logo/LogoIcon";
 import { BottomNav } from "@/components/BottomNav";
 import { ProfileCard } from "./_components/ProfileCard";
@@ -16,7 +16,7 @@ import { InviteFriendsDrawer } from "./_components/InviteFriendsDrawer";
 import { useState } from "react";
 
 export default function ProfilePage() {
-  const { username, streak, stats, pastGames } = useProfileStore();
+  const { username, streak, stats, gameHistory } = useProfileStore();
   const [inviteOpen, setInviteOpen] = useState(false);
   const inviteCode = "EVWE";
 
@@ -118,7 +118,7 @@ export default function ProfilePage() {
         </div>
 
         <div className="mt-4">
-          <PastGames pastGames={pastGames} />
+          <GameHistory gameHistory={gameHistory} />
         </div>
       </main>
 

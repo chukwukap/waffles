@@ -3,10 +3,7 @@
 import Image from "next/image";
 import { useEffect, useMemo, useRef } from "react";
 import { Tabs } from "./_components/Tabs";
-import {
-  useLeaderboardStore,
-  type LeaderboardUser,
-} from "@/stores/leaderboardStore";
+import { useLeaderboardStore, Entry } from "@/stores/leaderboardStore";
 import { Top3 } from "./_components/Top3";
 import { Row } from "./_components/Row";
 import { WalletIcon } from "@/components/icons";
@@ -14,30 +11,29 @@ import LogoIcon from "@/components/logo/LogoIcon";
 import { BottomNav } from "@/components/BottomNav";
 
 export default function LeaderboardPage() {
-  const { activeTab, slices, setActiveTab, fetchPage, rememberScroll } =
+  const { activeTab, slices, setActiveTab, fetchLeaderboard, rememberScroll } =
     useLeaderboardStore();
 
   const slice = slices[activeTab];
-  const top3 = useMemo<LeaderboardUser[]>(
-    () => slice.items.slice(0, 3),
-    [slice.items]
-  );
-  const rest = useMemo<LeaderboardUser[]>(
-    () => slice.items.slice(3),
-    [slice.items]
-  );
 
-  // progress drives only the CROWN fade/scale (0 → 1 as it leaves)
+  // ───────────────────────── DATA PREP ─────────────────────────
+  const top3 = useMemo<Entry[]>(
+    () => slice.entries.slice(0, 3),
+    [slice.entries]
+  );
+  const rest = useMemo<Entry[]>(() => slice.entries.slice(3), [slice.entries]);
+
+  // ───────────────────────── HERO ANIMATION ─────────────────────────
   const crownRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = crownRef.current;
     if (!el) return;
     const io = new IntersectionObserver(
       ([e]) => {
-        const r = 1 - e.intersectionRatio;
+        const ratio = 1 - e.intersectionRatio;
         document.documentElement.style.setProperty(
           "--lb-progress",
-          `${Math.min(Math.max(r, 0), 1)}`
+          `${Math.min(Math.max(ratio, 0), 1)}`
         );
       },
       { threshold: Array.from({ length: 21 }, (_, i) => i / 20) }
@@ -46,13 +42,15 @@ export default function LeaderboardPage() {
     return () => io.disconnect();
   }, []);
 
-  // lazy + remember/restore scroll
+  // ───────────────────────── SCROLL PERSISTENCE ─────────────────────────
   useEffect(() => setActiveTab(activeTab), [activeTab, setActiveTab]);
+
   useEffect(() => {
     const onScroll = () => rememberScroll(activeTab, window.scrollY);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, [activeTab, rememberScroll]);
+
   useEffect(() => {
     requestAnimationFrame(() =>
       window.scrollTo({
@@ -62,11 +60,36 @@ export default function LeaderboardPage() {
     );
   }, [activeTab, slices]);
 
-  const loadMore = () =>
-    !slice.isLoading && slice.hasMore && fetchPage(activeTab);
+  // ───────────────────────── FETCHING ─────────────────────────
+  useEffect(() => {
+    const s = slices[activeTab];
+    if (!s.entries.length && !s.isLoading) {
+      fetchLeaderboard(activeTab).catch(console.error);
+    }
+  }, [activeTab, slices, fetchLeaderboard]);
 
+  const loadMore = () => {
+    const s = slices[activeTab];
+    if (!s.isLoading && s.hasMore) {
+      fetchLeaderboard(activeTab).catch(console.error);
+    }
+  };
+
+  // ───────────────────────── OPTIONAL AUTO-REFRESH ─────────────────────────
+  // 💡 Toggle ON/OFF easily by commenting this block ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+  useEffect(() => {
+    if (activeTab !== "current") return; // refresh only for current game
+    const interval = setInterval(() => {
+      fetchLeaderboard("current").catch(console.error);
+    }, 15000); // every 15 seconds
+    return () => clearInterval(interval);
+  }, [activeTab, fetchLeaderboard]);
+  // 💡 End of auto-refresh block ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+
+  // ───────────────────────── RENDER ─────────────────────────
   return (
     <main className="min-h-[100dvh] bg-transparent">
+      {/* HEADER */}
       <header className="sticky top-0 z-20 w-full border-b border-white/20 px-4 py-3 bg-figma">
         <div className="mx-auto max-w-screen-sm flex w-full items-center justify-between ">
           <div className="flex min-w-0 flex-row items-center justify-center">
@@ -85,10 +108,10 @@ export default function LeaderboardPage() {
           </div>
         </div>
       </header>
-      {/* ───────────────────────── HERO SECTION (single source of truth) ───────────────────────── */}
+
+      {/* HERO + TABS */}
       <section className="mx-auto max-w-screen-sm px-4 pt-6 md:pt-10 relative">
-        {/* crown: scrolls away; only element that fades/scales */}
-        <div ref={crownRef} className="relative grid place-items-center  ">
+        <div ref={crownRef} className="relative grid place-items-center">
           <Image
             src="/images/chest-crown.png"
             alt=""
@@ -103,7 +126,6 @@ export default function LeaderboardPage() {
           />
         </div>
 
-        {/* this block docks under the app bar and stays there — it’s the SAME content */}
         <div className="sticky top-14 z-10 -mx-4 px-4 pb-2 pt-1 bg-transparent">
           <h1 className="text-center font-body text-2xl md:text-3xl tracking-wide">
             LEADERBOARD
@@ -121,12 +143,13 @@ export default function LeaderboardPage() {
         </div>
       </section>
 
-      {/* ───────────────────────── LIST ───────────────────────── */}
+      {/* LIST */}
       <section className="mx-auto max-w-screen-sm px-4 pb-24 pt-4 space-y-4">
-        <Top3 users={top3} />
+        <Top3 entries={top3} />
+
         <div className="space-y-3">
-          {rest.map((u) => (
-            <Row key={u.id} user={u} />
+          {rest.map((e) => (
+            <Row key={e.rank} entry={e} />
           ))}
 
           {slice.isLoading && (
@@ -137,7 +160,7 @@ export default function LeaderboardPage() {
               {slice.error}
             </div>
           )}
-          {!slice.isLoading && !slice.items.length && !slice.error && (
+          {!slice.isLoading && !slice.entries.length && !slice.error && (
             <div className="panel px-4 py-6 text-center text-sm text-muted">
               Nothing here yet.
             </div>
@@ -147,7 +170,8 @@ export default function LeaderboardPage() {
             onFocus={loadMore}
             onMouseEnter={loadMore}
             onClick={loadMore}
-            className="mx-auto block h-10 w-full max-w-[220px] rounded-xl border border-white/10 bg-white/5 text-sm"
+            disabled={slice.isLoading}
+            className="mx-auto block h-10 w-full max-w-[220px] rounded-xl border border-white/10 bg-white/5 text-sm transition disabled:opacity-50"
           >
             {slice.hasMore
               ? slice.isLoading
@@ -157,6 +181,7 @@ export default function LeaderboardPage() {
           </button>
         </div>
       </section>
+
       <BottomNav />
     </main>
   );

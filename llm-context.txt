@@ -15,17 +15,24 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@farcaster/miniapp-sdk": "^0.2.1",
+    "@prisma/client": "6.18.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.24",
     "lucide-react": "^0.546.0",
     "next": "15.5.6",
+    "next-themes": "^0.4.6",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
     "tw-animate-css": "^1.4.0",
+    "viem": "^2.38.3",
+    "wagmi": "^2.18.2",
+    "zod": "^4.1.12",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
@@ -36,11 +43,26 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.5.6",
+    "prisma": "6.18.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
 }
 
+--- File: ./.env ---
+# Environment variables declared in this file are NOT automatically loaded by Prisma.
+# Please add `import "dotenv/config";` to your `prisma.config.ts` file, or use the Prisma CLI with Bun
+# to load environment variables from .env files: https://pris.ly/prisma-config-env-vars.
+
+# Prisma supports the native connection string format for PostgreSQL, MySQL, SQLite, SQL Server, MongoDB and CockroachDB.
+# See the documentation for all the connection string options: https://pris.ly/d/connection-strings
+
+# The following `prisma+postgres` URL is similar to the URL produced by running a local Prisma Postgres 
+# server with the `prisma dev` CLI command, when not choosing any non-default ports or settings. The API key, unlike the 
+# one found in a remote Prisma Postgres URL, does not contain any sensitive information.
+
+DATABASE_URL="prisma+postgres://localhost:51213/?api_key=eyJkYXRhYmFzZVVybCI6InBvc3RncmVzOi8vcG9zdGdyZXM6cG9zdGdyZXNAbG9jYWxob3N0OjUxMjE0L3RlbXBsYXRlMT9zc2xtb2RlPWRpc2FibGUmY29ubmVjdGlvbl9saW1pdD0xJmNvbm5lY3RfdGltZW91dD0wJm1heF9pZGxlX2Nvbm5lY3Rpb25fbGlmZXRpbWU9MCZwb29sX3RpbWVvdXQ9MCZzaW5nbGVfdXNlX2Nvbm5lY3Rpb25zPXRydWUmc29ja2V0X3RpbWVvdXQ9MCIsIm5hbWUiOiJkZWZhdWx0Iiwic2hhZG93RGF0YWJhc2VVcmwiOiJwb3N0Z3JlczovL3Bvc3RncmVzOnBvc3RncmVzQGxvY2FsaG9zdDo1MTIxNS90ZW1wbGF0ZTE_c3NsbW9kZT1kaXNhYmxlJmNvbm5lY3Rpb25fbGltaXQ9MSZjb25uZWN0X3RpbWVvdXQ9MCZtYXhfaWRsZV9jb25uZWN0aW9uX2xpZmV0aW1lPTAmcG9vbF90aW1lb3V0PTAmc2luZ2xlX3VzZV9jb25uZWN0aW9ucz10cnVlJnNvY2tldF90aW1lb3V0PTAifQ"
+NEYNAR_API_KEY
 --- File: ./next.config.ts ---
 import type { NextConfig } from "next";
 
@@ -49,15 +71,6 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
-
---- File: ./src/types/api.d.ts ---
-[File is empty]
-
---- File: ./src/types/game.d.ts ---
-[File is empty]
-
---- File: ./src/types/profile.d.ts ---
-[File is empty]
 
 --- File: ./src/.DS_Store ---
 [Content not included: Binary file]
@@ -392,7 +405,86 @@ export default function LobbyRedirect() {
   return null;
 }
 
---- File: ./src/app/(authenticated)/lobby/buy/_components/BuyScreen.tsx ---
+--- File: ./src/app/(authenticated)/lobby/buy/_components/SpotsLeft.tsx ---
+import * as React from "react";
+
+type SpotsLeftProps = {
+  current: number; // e.g. 23
+  total: number; // e.g. 100
+  subtitle?: string; // default: "spots left"
+  avatars: string[]; // 1–4 avatar URLs (shown left→right, overlapped)
+  className?: string; // optional wrapper overrides
+};
+
+/**
+ * Matches the Figma specs:
+ * - Container: 228px wide, gap: 12px, centered
+ * - Avatars: 42.11px, 3.0078px white border, 6.0156px radius, overlap -22.0571px
+ * - Rotations: [-8.71, 5.85, -3.57, 7.56] deg
+ * - Count: 32px size, letter-spacing -0.02em, line-height 115%, color #00CFF2
+ * - Subtitle: 16px, weight 500, letter-spacing -0.03em, color #99A0AE
+ *
+ * Notes:
+ * - I kept the exact decimals (rounded visually identical in browsers).
+ * - If you use custom fonts (“Edit Undo BRK”, “Brockmann”), set them on body or replace the inline fontFamily below.
+ */
+export function SpotsLeft({
+  current,
+  total,
+  subtitle = "spots left",
+  avatars,
+  className = "",
+}: SpotsLeftProps) {
+  // Limit to 4 items (per your mock). Provide rotation per index.
+  const ROTATIONS = [-8.71, 5.85, -3.57, 7.56];
+
+  // Clamp/format
+  const clamped = Math.max(0, Math.min(current, total));
+
+  return (
+    <div
+      className={`flex flex-col items-center gap-[12px] w-[228px] ${className}`}
+      aria-label={`${clamped}/${total} ${subtitle}`}
+    >
+      {/* Avatars row */}
+      <div className="flex items-center h-[48px] w-[119.94px]">
+        {avatars.slice(0, 4).map((src, i) => (
+          <div
+            key={i}
+            className={[
+              "box-border w-[42.11px] h-[42.11px] rounded-[6.0156px] border-[3.0078px] border-white",
+              // Figma shows a light gray fallback under the image
+              "bg-[#F0F3F4] bg-cover bg-center",
+              // overlap spacing
+              i !== 0 ? "ml-[-22.0571px]" : "",
+              // lift above previous slightly so borders look right
+              "relative z-[1]",
+              // little shadow helps match the “stacked card” look (optional)
+              "shadow-[0_0_0_0_rgba(0,0,0,0)]",
+            ].join(" ")}
+            style={{
+              transform: `rotate(${ROTATIONS[i] ?? 0}deg)`,
+              backgroundImage: `url("${src}")`,
+            }}
+            aria-hidden="true"
+          />
+        ))}
+      </div>
+
+      {/* Text block */}
+      <div className="flex flex-col items-center w-[228px] h-[58px]">
+        <div className="flex items-end justify-center text-sm text-foreground font-display">
+          {clamped}/{total}
+        </div>
+        <div className="w-[228px] h-[21px] text-center tracking-[-0.03em] leading-[130%] text-[16px] font-medium font-display">
+          {subtitle}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+--- File: ./src/app/(authenticated)/lobby/buy/page.tsx ---
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -403,11 +495,11 @@ import { InviteIcon, WalletIcon } from "@/components/icons";
 import { BottomNav } from "@/components/BottomNav";
 import Image from "next/image";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
-import { SpotsLeft } from "./SpotsLeft";
+import { SpotsLeft } from "./_components/SpotsLeft";
 
 const TICKET_PRICE = 50;
 
-export default function BuyScreen() {
+export default function BuyWafflePage() {
   const router = useRouter();
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [purchased, setPurchased] = useState(false);
@@ -496,92 +588,6 @@ export default function BuyScreen() {
       <BottomNav />
     </div>
   );
-}
-
---- File: ./src/app/(authenticated)/lobby/buy/_components/SpotsLeft.tsx ---
-import * as React from "react";
-
-type SpotsLeftProps = {
-  current: number; // e.g. 23
-  total: number; // e.g. 100
-  subtitle?: string; // default: "spots left"
-  avatars: string[]; // 1–4 avatar URLs (shown left→right, overlapped)
-  className?: string; // optional wrapper overrides
-};
-
-/**
- * Matches the Figma specs:
- * - Container: 228px wide, gap: 12px, centered
- * - Avatars: 42.11px, 3.0078px white border, 6.0156px radius, overlap -22.0571px
- * - Rotations: [-8.71, 5.85, -3.57, 7.56] deg
- * - Count: 32px size, letter-spacing -0.02em, line-height 115%, color #00CFF2
- * - Subtitle: 16px, weight 500, letter-spacing -0.03em, color #99A0AE
- *
- * Notes:
- * - I kept the exact decimals (rounded visually identical in browsers).
- * - If you use custom fonts (“Edit Undo BRK”, “Brockmann”), set them on body or replace the inline fontFamily below.
- */
-export function SpotsLeft({
-  current,
-  total,
-  subtitle = "spots left",
-  avatars,
-  className = "",
-}: SpotsLeftProps) {
-  // Limit to 4 items (per your mock). Provide rotation per index.
-  const ROTATIONS = [-8.71, 5.85, -3.57, 7.56];
-
-  // Clamp/format
-  const clamped = Math.max(0, Math.min(current, total));
-
-  return (
-    <div
-      className={`flex flex-col items-center gap-[12px] w-[228px] ${className}`}
-      aria-label={`${clamped}/${total} ${subtitle}`}
-    >
-      {/* Avatars row */}
-      <div className="flex items-center h-[48px] w-[119.94px]">
-        {avatars.slice(0, 4).map((src, i) => (
-          <div
-            key={i}
-            className={[
-              "box-border w-[42.11px] h-[42.11px] rounded-[6.0156px] border-[3.0078px] border-white",
-              // Figma shows a light gray fallback under the image
-              "bg-[#F0F3F4] bg-cover bg-center",
-              // overlap spacing
-              i !== 0 ? "ml-[-22.0571px]" : "",
-              // lift above previous slightly so borders look right
-              "relative z-[1]",
-              // little shadow helps match the “stacked card” look (optional)
-              "shadow-[0_0_0_0_rgba(0,0,0,0)]",
-            ].join(" ")}
-            style={{
-              transform: `rotate(${ROTATIONS[i] ?? 0}deg)`,
-              backgroundImage: `url("${src}")`,
-            }}
-            aria-hidden="true"
-          />
-        ))}
-      </div>
-
-      {/* Text block */}
-      <div className="flex flex-col items-center w-[228px] h-[58px]">
-        <div className="flex items-end justify-center text-sm text-foreground font-display">
-          {clamped}/{total}
-        </div>
-        <div className="w-[228px] h-[21px] text-center tracking-[-0.03em] leading-[130%] text-[16px] font-medium font-display">
-          {subtitle}
-        </div>
-      </div>
-    </div>
-  );
-}
-
---- File: ./src/app/(authenticated)/lobby/buy/page.tsx ---
-import BuyScreen from "./_components/BuyScreen";
-
-export default function BuyPage() {
-  return <BuyScreen />;
 }
 
 --- File: ./src/app/(authenticated)/leaderboard/_components/useInfiniteLoader.ts ---
@@ -3360,16 +3366,81 @@ export default function AllTimeStatsPage() {
   );
 }
 
---- File: ./src/app/invite/page.tsx ---
-[File is empty]
+--- File: ./src/app/(authenticated)/buy/page.tsx ---
+"use client";
+
+import { useState } from "react";
+import { useAccount } from "wagmi";
+import { sendUSDC } from "@/lib/payments";
+import { useAuthStore } from "@/stores/authStore";
+import { useTicketStore } from "@/stores/ticketStore";
+
+export default function BuyPage() {
+  const { address } = useAccount();
+  const { fid } = useAuthStore();
+  const { ticket, purchaseStatus, buyTicket } = useTicketStore();
+
+  const [amount] = useState("50");
+  const [loading, setLoading] = useState(false);
+  const [txHash, setTxHash] = useState("");
+
+  const handleBuy = async () => {
+    if (!address || !fid) return alert("Wallet or user not detected");
+    try {
+      setLoading(true);
+      const hash = await sendUSDC(amount);
+      setTxHash(hash);
+      await buyTicket(fid, 1, parseFloat(amount)); // assume gameId = 1
+    } catch (err) {
+      console.error(err);
+      alert("Transaction failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <main className="flex flex-col items-center justify-center min-h-screen gap-4">
+      <h1 className="text-2xl font-bold">Buy Your Waffle 🎟️</h1>
+      <p className="text-gray-300">Entry Fee: {amount} USDC</p>
+
+      <button
+        disabled={loading}
+        onClick={handleBuy}
+        className="bg-blue-600 px-5 py-3 rounded-lg hover:bg-blue-700"
+      >
+        {loading ? "Processing..." : "Buy Ticket"}
+      </button>
+
+      {txHash && (
+        <p className="mt-3 text-xs text-gray-400">
+          TX Hash: {txHash.slice(0, 8)}...
+        </p>
+      )}
+
+      {purchaseStatus === "confirmed" && (
+        <a
+          href="/confirm"
+          className="mt-4 bg-green-600 px-4 py-2 rounded-lg hover:bg-green-700"
+        >
+          View Confirmation
+        </a>
+      )}
+    </main>
+  );
+}
 
 --- File: ./src/app/layout.tsx ---
 import DeviceGate from "@/components/DeviceGate";
 import "./globals.css";
 import { fontBody, fontDisplay, fontInput } from "@/lib/fonts";
+import "./globals.css";
+import WalletProvider from "@/components/providers/WalletProvider";
+import FarcasterProvider from "@/components/providers/FarcasterProvider";
+import GlobalToaster from "@/components/ui/Toaster";
 
 export const metadata = {
-  title: "Waffles Game",
+  title: "Waffles Game ",
   description: "Waffles",
 };
 
@@ -3385,169 +3456,667 @@ export default function RootLayout({
     >
       <body className="text-foreground bg-figma noise">
         <DeviceGate continueAnyway={process.env.NODE_ENV == "production"}>
-          {children}
+          <WalletProvider>
+            <FarcasterProvider>{children}</FarcasterProvider>
+          </WalletProvider>
         </DeviceGate>
+        <GlobalToaster />
       </body>
     </html>
   );
 }
 
---- File: ./src/app/api/leaderboard/route.ts ---
+--- File: ./src/app/api/tickets/verify/route.ts ---
 import { NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
 
-// ─────────────────────────────────────────────────────────────
-// Types (keep in sync with the client store)
-// ─────────────────────────────────────────────────────────────
-export type LeaderboardUser = {
-  id: string;
-  rank: number; // we’ll compute this server-side
-  name: string;
-  avatarUrl: string;
-  score: number;
-};
+const prisma = new PrismaClient();
 
-type Payload = {
-  users: LeaderboardUser[];
-  hasMore: boolean;
-};
-
-// ─────────────────────────────────────────────────────────────
-// Config
-// ─────────────────────────────────────────────────────────────
-const PAGE_SIZE = 25; // tune to your needs
-
-// When you flip to a real DB, remove this and query with ORDER BY score DESC
-const TOTAL_USERS = 500; // how many rows we synthesize for each tab
-
-// Optional caching semantics (can also export `revalidate` if you prefer ISR)
-export const dynamic = "force-dynamic"; // keep responses dynamic
-
-// ─────────────────────────────────────────────────────────────
-// Helpers: deterministic RNG + fake data
-// ─────────────────────────────────────────────────────────────
-
-// Mulberry32 PRNG - fast & deterministic given a seed.
-// Ref: https://stackoverflow.com/a/47593316
-function mulberry32(seed: number) {
-  return function () {
-    let t = (seed += 0x6d2b79f5);
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
+// GET /api/tickets/verify
+export async function GET(request: Request) {
+  const farcasterId = request.headers.get("x-farcaster-id");
+  if (!farcasterId) {
+    return NextResponse.json(
+      { valid: false, message: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+  const user = await prisma.user.findUnique({ where: { farcasterId } });
+  if (!user) {
+    return NextResponse.json(
+      { valid: false, message: "User not found" },
+      { status: 404 }
+    );
+  }
+  const url = new URL(request.url);
+  const gameIdParam = url.searchParams.get("gameId");
+  if (!gameIdParam) {
+    return NextResponse.json(
+      { valid: false, message: "Missing gameId" },
+      { status: 400 }
+    );
+  }
+  const gameId = parseInt(gameIdParam, 10);
+  if (isNaN(gameId)) {
+    return NextResponse.json(
+      { valid: false, message: "Invalid gameId" },
+      { status: 400 }
+    );
+  }
+  const ticket = await prisma.ticket.findFirst({
+    where: { userId: user.id, gameId },
+  });
+  if (!ticket) {
+    return NextResponse.json({ valid: false, message: "Ticket not found" });
+  }
+  return NextResponse.json({ valid: true });
 }
 
-// Stable “word list” for names
-const FIRST = [
-  "Alex",
-  "Bailey",
-  "Casey",
-  "Devon",
-  "Elliot",
-  "Frankie",
-  "Gray",
-  "Harper",
-  "Indie",
-  "Jules",
-  "Kai",
-  "Logan",
-  "Morgan",
-  "Nico",
-  "Oakley",
-  "Parker",
-  "Quinn",
-  "Riley",
-  "Sage",
-  "Taylor",
-];
-const LAST = [
-  "Blaze",
-  "Brook",
-  "Cedar",
-  "Dune",
-  "Echo",
-  "Fable",
-  "Grove",
-  "Haze",
-  "Isle",
-  "Jade",
-  "Knoll",
-  "Lark",
-  "Moss",
-  "North",
-  "Onyx",
-  "Pine",
-  "Quill",
-  "Rune",
-  "Snow",
-  "Vale",
-];
+--- File: ./src/app/api/tickets/route.ts ---
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { PrismaClient } from "@prisma/client";
+import { randomBytes } from "crypto";
 
-function makeName(rand: () => number) {
-  const f = FIRST[Math.floor(rand() * FIRST.length)];
-  const l = LAST[Math.floor(rand() * LAST.length)];
-  return `${f} ${l}`.toUpperCase();
+const prisma = new PrismaClient();
+
+// GET /api/tickets
+export async function GET(request: Request) {
+  const farcasterId = request.headers.get("x-farcaster-id");
+  if (!farcasterId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const user = await prisma.user.findUnique({
+    where: { farcasterId },
+  });
+  if (!user) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+  const tickets = await prisma.ticket.findMany({
+    where: { userId: user.id },
+    include: { game: true },
+  });
+  const result = tickets.map((ticket) => ({
+    ticketId: ticket.id,
+    gameId: ticket.gameId,
+    gameTitle: ticket.game.title,
+    code: ticket.code,
+    amountUSDC: ticket.amountUSDC,
+    purchasedAt: ticket.purchasedAt,
+  }));
+  return NextResponse.json(result);
 }
 
-/**
- * Build a *stable* dataset per tab (so page 0/1/2 are consistent).
- * - For “current” we still use a fixed seed so your UI stays predictable.
- *   (You can swap to a time-bucket seed if you want the list to churn hourly.)
- * - For “allTime” we use a different seed so datasets differ.
- */
-function buildDataset(
-  tab: "current" | "allTime",
-  count: number
-): LeaderboardUser[] {
-  const seed = tab === "current" ? 1337 : 4242; // change to a time-bucket if you want live churn
-  const rand = mulberry32(seed);
-
-  const rows: Omit<LeaderboardUser, "rank">[] = Array.from(
-    { length: count },
-    (_, i) => {
-      // Larger variance for “all time”, slightly tighter for “current”
-      const base = tab === "allTime" ? 50_000 : 1_500;
-      const swing = tab === "allTime" ? 75_000 : 1_000;
-      const score =
-        Math.floor(base + rand() * swing + rand() * (swing / 2)) + rand();
-
-      const avatarIndex = (i % 12) + 1; // assuming you have 12 avatar images in /public/images/avatars
-      const avatarUrl = `/images/avatars/a.png`;
-
-      return {
-        id: `${tab}-${i + 1}`,
-        name: makeName(rand),
-        avatarUrl,
-        score,
-      };
-    }
-  );
-
-  // Sort DESC by score; compute rank
-  const sorted = rows.sort((a, b) => b.score - a.score);
-  return sorted.map((u, idx) => ({ ...u, rank: idx + 1 }));
+// POST /api/tickets
+export async function POST(request: Request) {
+  const schema = z.object({
+    typeId: z.string().min(1),
+  });
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+  const parseResult = schema.safeParse(body);
+  if (!parseResult.success) {
+    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+  }
+  const { typeId } = parseResult.data;
+  const farcasterId = request.headers.get("x-farcaster-id");
+  if (!farcasterId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const user = await prisma.user.findUnique({ where: { farcasterId } });
+  if (!user) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+  // Find game by slug or typeId
+  const game = await prisma.game.findUnique({
+    where: { id: parseInt(typeId, 10) },
+  });
+  if (!game) {
+    return NextResponse.json({ error: "Game not found" }, { status: 404 });
+  }
+  const now = new Date();
+  if (game.startTime && now >= game.startTime) {
+    return NextResponse.json(
+      { error: "Game has already started" },
+      { status: 400 }
+    );
+  }
+  const existing = await prisma.ticket.findFirst({
+    where: { userId: user.id, gameId: game.id },
+  });
+  if (existing) {
+    return NextResponse.json(
+      { error: "Ticket already purchased" },
+      { status: 400 }
+    );
+  }
+  const ticket = await prisma.ticket.create({
+    data: {
+      userId: user.id,
+      gameId: game.id,
+      amountUSDC: 50,
+      code: randomBytes(4).toString("hex").toUpperCase(),
+      txHash: null,
+      status: "pending",
+    },
+  });
+  return NextResponse.json({
+    ticketId: ticket.id,
+    waffleType: game.title,
+    message: "Purchase successful",
+  });
 }
 
-/**
- * In-memory dataset cache (per process). In serverless it can be evicted,
- * which is fine—data will regenerate deterministically using the same seed.
- */
-let cachedCurrent: LeaderboardUser[] | null = null;
-let cachedAllTime: LeaderboardUser[] | null = null;
+--- File: ./src/app/api/tickets/buy/route.ts ---
+import { prisma } from "@/lib/db";
+import { randomBytes } from "crypto";
 
-function getDataset(tab: "current" | "allTime") {
-  if (tab === "current") {
-    if (!cachedCurrent) cachedCurrent = buildDataset("current", TOTAL_USERS);
-    return cachedCurrent;
-  } else {
-    if (!cachedAllTime) cachedAllTime = buildDataset("allTime", TOTAL_USERS);
-    return cachedAllTime;
+export async function POST(req: Request) {
+  try {
+    const { userId, gameId, amount, txHash } = await req.json();
+    if (!userId || !gameId || !amount)
+      return Response.json({ error: "Missing fields" }, { status: 400 });
+
+    const code = randomBytes(4).toString("hex").toUpperCase();
+
+    const ticket = await prisma.ticket.create({
+      data: {
+        user: { connect: { id: userId } },
+        game: { connect: { id: gameId } },
+        gameId,
+        amountUSDC: amount,
+        code,
+        txHash: txHash || null,
+        status: txHash ? "confirmed" : "pending",
+      },
+    });
+
+    return Response.json(ticket);
+  } catch (e) {
+    console.error(e);
+    return Response.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// GET /api/leaderboard?tab=current|allTime&page=n
-// ─────────────────────────────────────────────────────────────
+--- File: ./src/app/api/chat/route.ts ---
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { prisma } from "@/lib/db";
+
+// GET /api/chat?gameId=
+export async function GET(request: Request) {
+  const farcasterId = request.headers.get("x-farcaster-id");
+  if (!farcasterId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const user = await prisma.user.findUnique({ where: { farcasterId } });
+  if (!user) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+  const url = new URL(request.url);
+  const gameIdParam = url.searchParams.get("gameId");
+  if (!gameIdParam) {
+    return NextResponse.json({ error: "Missing gameId" }, { status: 400 });
+  }
+  const gameId = parseInt(gameIdParam, 10);
+  if (isNaN(gameId)) {
+    return NextResponse.json({ error: "Invalid gameId" }, { status: 400 });
+  }
+  const messages = await prisma.chat.findMany({
+    where: { gameId },
+    include: { user: true },
+    orderBy: { createdAt: "asc" },
+  });
+  const result = messages.map((msg) => ({
+    messageId: msg.id,
+    userId: msg.userId,
+    userName: msg.user.name,
+    message: msg.message,
+    createdAt: msg.createdAt,
+  }));
+  return NextResponse.json(result);
+}
+
+// POST /api/chat
+export async function POST(request: Request) {
+  const schema = z.object({
+    gameId: z.number(),
+    message: z.string().min(1),
+  });
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+  const parseResult = schema.safeParse(body);
+  if (!parseResult.success) {
+    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+  }
+  const { gameId, message } = parseResult.data;
+  const farcasterId = request.headers.get("x-farcaster-id");
+  if (!farcasterId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const user = await prisma.user.findUnique({
+    where: { farcasterId: farcasterId },
+  });
+  if (!user) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+  const game = await prisma.game.findUnique({ where: { id: gameId } });
+  if (!game) {
+    return NextResponse.json({ error: "Game not found" }, { status: 404 });
+  }
+  const chat = await prisma.chat.create({
+    data: {
+      userId: user.id,
+      gameId,
+      message,
+    },
+  });
+  return NextResponse.json(chat);
+}
+
+--- File: ./src/app/api/config/game/[gameId]/route.ts ---
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { prisma } from "@/lib/db";
+
+const prizePoolTypeEnum = z.enum(["FIXED", "DYNAMIC"]);
+
+const baseConfigSchema = z.object({
+  roundTimeLimit: z.number().int().positive().max(3600).optional(),
+  questionsPerGame: z.number().int().positive().max(200).optional(),
+  scoreMultiplier: z.number().positive().max(100).optional(),
+  scorePenalty: z.number().min(-1000).max(0).nullable().optional(),
+  maxPlayers: z.number().int().positive().max(100000).optional(),
+  soundEnabled: z.boolean().optional(),
+  animationEnabled: z.boolean().optional(),
+  prizePoolType: prizePoolTypeEnum.optional(),
+  prizePoolFixedAmount: z.number().int().nonnegative().nullable().optional(),
+  prizePoolDynamicTickets: z.number().int().nonnegative().nullable().optional(),
+  timeBonusEnabled: z.boolean().optional(),
+  difficultyScaling: z.number().positive().max(10).optional(),
+});
+
+function isAuthorizedAdmin(request: Request): boolean {
+  const headerToken = request.headers.get("x-admin-token");
+  const envToken = process.env.ADMIN_TOKEN;
+  return Boolean(envToken && headerToken && headerToken === envToken);
+}
+
+export async function GET(
+  request: Request,
+  { params }: { params: { gameId: string } }
+) {
+  try {
+    const gameId = Number(params.gameId);
+    if (!Number.isInteger(gameId)) {
+      return NextResponse.json({ error: "Invalid gameId" }, { status: 400 });
+    }
+
+    const game = await prisma.game.findUnique({ where: { id: gameId } });
+    if (!game) {
+      return NextResponse.json({ error: "Game not found" }, { status: 404 });
+    }
+
+    const config = await prisma.gameConfig.findUnique({ where: { gameId } });
+    return NextResponse.json(config ?? null);
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(
+  request: Request,
+  { params }: { params: { gameId: string } }
+) {
+  try {
+    if (!isAuthorizedAdmin(request)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const gameId = Number(params.gameId);
+    if (!Number.isInteger(gameId)) {
+      return NextResponse.json({ error: "Invalid gameId" }, { status: 400 });
+    }
+
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+    const parsed = baseConfigSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+    }
+
+    const game = await prisma.game.findUnique({ where: { id: gameId } });
+    if (!game) {
+      return NextResponse.json({ error: "Game not found" }, { status: 404 });
+    }
+
+    const existing = await prisma.gameConfig.findUnique({ where: { gameId } });
+    const data = { ...parsed.data, gameId } as any;
+    let updated;
+    if (!existing) {
+      updated = await prisma.gameConfig.create({ data });
+    } else {
+      updated = await prisma.gameConfig.update({ where: { gameId }, data });
+    }
+    return NextResponse.json(updated);
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
+
+--- File: ./src/app/api/config/global/route.ts ---
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { prisma } from "@/lib/db";
+
+const prizePoolTypeEnum = z.enum(["FIXED", "DYNAMIC"]);
+
+const baseConfigSchema = z.object({
+  roundTimeLimit: z.number().int().positive().max(3600).optional(),
+  questionsPerGame: z.number().int().positive().max(200).optional(),
+  scoreMultiplier: z.number().positive().max(100).optional(),
+  scorePenalty: z.number().min(-1000).max(0).nullable().optional(),
+  maxPlayers: z.number().int().positive().max(100000).optional(),
+  soundEnabled: z.boolean().optional(),
+  animationEnabled: z.boolean().optional(),
+  prizePoolType: prizePoolTypeEnum.optional(),
+  prizePoolFixedAmount: z.number().int().nonnegative().nullable().optional(),
+  prizePoolDynamicTickets: z.number().int().nonnegative().nullable().optional(),
+  timeBonusEnabled: z.boolean().optional(),
+  difficultyScaling: z.number().positive().max(10).optional(),
+});
+
+function isAuthorizedAdmin(request: Request): boolean {
+  const headerToken = request.headers.get("x-admin-token");
+  const envToken = process.env.ADMIN_TOKEN;
+  return Boolean(envToken && headerToken && headerToken === envToken);
+}
+
+export async function GET() {
+  try {
+    let config = await prisma.globalConfig.findFirst();
+    if (!config) {
+      // Ensure there is always a global config row
+      config = await prisma.globalConfig.create({
+        data: {
+          roundTimeLimit: 60,
+          questionsPerGame: 10,
+          scoreMultiplier: 1,
+          scorePenalty: null,
+          maxPlayers: 1000,
+          soundEnabled: true,
+          animationEnabled: true,
+          prizePoolType: "FIXED",
+          prizePoolFixedAmount: null,
+          prizePoolDynamicTickets: null,
+          timeBonusEnabled: false,
+          difficultyScaling: 1,
+        },
+      });
+    }
+    return NextResponse.json(config);
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    if (!isAuthorizedAdmin(request)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+
+    const parsed = baseConfigSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+    }
+
+    const existing = await prisma.globalConfig.findFirst();
+    let updated;
+    if (!existing) {
+      updated = await prisma.globalConfig.create({ data: parsed.data as any });
+    } else {
+      updated = await prisma.globalConfig.update({
+        where: { id: existing.id },
+        data: parsed.data as any,
+      });
+    }
+    return NextResponse.json(updated);
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
+
+--- File: ./src/app/api/referrals/route.ts ---
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { prisma } from "@/lib/db";
+
+// GET /api/referrals
+export async function GET(request: Request) {
+  const farcasterId = request.headers.get("x-farcaster-id");
+  if (!farcasterId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const user = await prisma.user.findUnique({
+    where: { farcasterId },
+    include: { referrals: { include: { invitee: true } } },
+  });
+  if (!user) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+  const referrals =
+    user.referrals.map((ref) => ({
+      inviteeId: ref.invitee?.id,
+      inviteeFarcasterId: ref.invitee?.farcasterId,
+    })) ?? [];
+  return NextResponse.json({ referrals });
+}
+
+// POST /api/referrals
+export async function POST(request: Request) {
+  const schema = z.object({
+    code: z.string().min(1),
+  });
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { valid: false, message: "Invalid JSON" },
+      { status: 400 }
+    );
+  }
+  const parseResult = schema.safeParse(body);
+  if (!parseResult.success) {
+    return NextResponse.json(
+      { valid: false, message: "Invalid input" },
+      { status: 400 }
+    );
+  }
+  const { code } = parseResult.data;
+  const farcasterId = request.headers.get("x-farcaster-id");
+  if (!farcasterId) {
+    return NextResponse.json(
+      { valid: false, message: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+  const user = await prisma.user.findUnique({ where: { farcasterId } });
+  if (!user) {
+    return NextResponse.json(
+      { valid: false, message: "User not found" },
+      { status: 404 }
+    );
+  }
+  const inviter = await prisma.user.findUnique({
+    where: { referralCode: code },
+  });
+  if (!inviter) {
+    return NextResponse.json(
+      { valid: false, message: "Invite code not found" },
+      { status: 400 }
+    );
+  }
+  if (inviter.id === user.id) {
+    return NextResponse.json(
+      { valid: false, message: "Cannot use your own invite code" },
+      { status: 400 }
+    );
+  }
+  const existing = await prisma.referral.findFirst({
+    where: { inviterId: inviter.id, inviteeId: user.id },
+  });
+  if (existing) {
+    return NextResponse.json(
+      { valid: false, message: "Referral already recorded" },
+      { status: 400 }
+    );
+  }
+  await prisma.referral.create({
+    data: { code, inviterId: inviter.id, inviteeId: user.id },
+  });
+  return NextResponse.json({ valid: true });
+}
+
+--- File: ./src/app/api/lobby/join/route.ts ---
+import { prisma } from "@/lib/db";
+
+export async function POST(req: Request) {
+  try {
+    const { userId, gameId } = await req.json();
+    if (!userId || !gameId)
+      return Response.json({ error: "Missing fields" }, { status: 400 });
+
+    await prisma.chat.create({
+      data: {
+        userId,
+        gameId,
+        message: "joined the lobby.",
+      },
+    });
+
+    return Response.json({ success: true });
+  } catch (e) {
+    console.error(e);
+    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+--- File: ./src/app/api/lobby/stats/route.ts ---
+import { prisma } from "@/lib/db";
+
+export async function GET() {
+  try {
+    const tickets = await prisma.ticket.findMany({
+      where: { status: "confirmed" },
+      include: { user: true },
+    });
+
+    const totalTickets = tickets.length;
+    const totalPrize = totalTickets * 50; // each ticket costs 50 USDC
+
+    // Return top 10 players by activity
+    const players = tickets.map((t) => ({
+      name: t.user.name,
+      wallet: t.user.wallet,
+      imageUrl: t.user.imageUrl,
+    }));
+
+    return Response.json({
+      totalTickets,
+      totalPrize,
+      players,
+    });
+  } catch (e) {
+    console.error(e);
+    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+--- File: ./src/app/api/user/init/route.ts ---
+import { prisma } from "@/lib/db";
+
+export async function POST(req: Request) {
+  try {
+    const { fid, username, pfpUrl, walletAddress } = await req.json();
+
+    if (!fid) {
+      return Response.json({ error: "Missing fid" }, { status: 400 });
+    }
+
+    const user = await prisma.user.upsert({
+      where: { farcasterId: fid.toString() },
+      update: {
+        name: username,
+        wallet: walletAddress || undefined,
+        imageUrl: pfpUrl,
+      },
+      create: {
+        farcasterId: fid.toString(),
+        name: username,
+        wallet: walletAddress,
+        imageUrl: pfpUrl,
+      },
+    });
+
+    return Response.json(user);
+  } catch (error) {
+    console.error("Error initializing user:", error);
+    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+--- File: ./src/app/api/leaderboard/route.ts ---
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+
+export type LeaderboardUser = {
+  id: string;
+  rank: number;
+  name: string;
+  imageUrl: string;
+  points: number;
+};
+
+const PAGE_SIZE = 25;
+
+// GET /api/leaderboard?tab=current|allTime&page=0
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const tabParam = (searchParams.get("tab") || "allTime") as
@@ -3555,14 +4124,12 @@ export async function GET(request: Request) {
     | "allTime";
   const pageParam = searchParams.get("page") ?? "0";
 
-  // Validate params
   if (tabParam !== "current" && tabParam !== "allTime") {
     return NextResponse.json(
       { error: "Invalid `tab`. Use `current` or `allTime`." },
       { status: 400 }
     );
   }
-
   const page = Number(pageParam);
   if (!Number.isFinite(page) || page < 0) {
     return NextResponse.json(
@@ -3571,81 +4138,554 @@ export async function GET(request: Request) {
     );
   }
 
-  // Get full dataset (sorted, ranked)
-  const all = getDataset(tabParam);
+  // Determine dataset
+  let users: LeaderboardUser[] = [];
+  if (tabParam === "current") {
+    // Find current active game (ongoing or latest)
+    const now = new Date();
+    let game = await prisma.game.findFirst({
+      where: { startTime: { lte: now }, endTime: { gte: now } },
+      orderBy: { startTime: "desc" },
+    });
+    if (!game) {
+      // fallback to latest finished game
+      game = await prisma.game.findFirst({
+        where: { endTime: { lte: now } },
+        orderBy: { endTime: "desc" },
+      });
+    }
+    if (game) {
+      const scores = await prisma.score.findMany({
+        where: { gameId: game.id },
+        include: { user: true },
+        orderBy: { points: "desc" },
+      });
+      users = scores.map((s, idx) => ({
+        id: s.userId.toString(),
+        rank: idx + 1,
+        name: s.user?.name || "",
+        imageUrl: s.user?.imageUrl || "",
+        points: s.points,
+      }));
+    }
+  } else {
+    // All-time: sum scores for each user
+    const groups = await prisma.score.groupBy({
+      by: ["userId"],
+      _sum: { points: true },
+      orderBy: { _sum: { points: "desc" } },
+    });
+    const userIds = groups.map((g) => g.userId);
+    const usersData = await prisma.user.findMany({
+      where: { id: { in: userIds } },
+    });
+    users = groups.map((g, idx) => {
+      const user = usersData.find((u) => u.id === g.userId);
+      return {
+        id: g.userId.toString(),
+        rank: idx + 1,
+        name: user?.name || "",
+        imageUrl: user?.imageUrl || "",
+        points: g._sum?.points || 0,
+      };
+    });
+  }
 
   // Paginate
   const start = page * PAGE_SIZE;
   const end = start + PAGE_SIZE;
-  const slice = all.slice(start, end);
-  const hasMore = end < all.length;
-
-  const body: Payload = {
-    users: slice,
-    hasMore,
-  };
-
-  // Cache headers: current = no-store; allTime = short cache
-  const headers: HeadersInit =
-    tabParam === "current"
-      ? { "Cache-Control": "no-store" }
-      : { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" };
-
-  return NextResponse.json(body, { headers });
+  const pageUsers = users.slice(start, end);
+  const hasMore = end < users.length;
+  return NextResponse.json({ users: pageUsers, hasMore });
 }
 
-// Optional: allow CORS if you’re testing cross-origin
-// export async function OPTIONS() {
-//   return NextResponse.json(null, {
-//     headers: {
-//       "Access-Control-Allow-Origin": "*",
-//       "Access-Control-Allow-Methods": "GET, OPTIONS",
-//       "Access-Control-Allow-Headers": "Content-Type",
-//     },
-//   });
-// }
+export const dynamic = "force-dynamic";
+
+--- File: ./src/app/api/game/answer/route.ts ---
+import { prisma } from "@/lib/db";
+import { calculateScore } from "@/lib/scoring";
+
+export async function POST(req: Request) {
+  try {
+    const { userId, gameId, questionId, selected, timeTaken } =
+      await req.json();
+
+    if (!userId || !gameId || !questionId || !selected)
+      return Response.json({ error: "Missing fields" }, { status: 400 });
+
+    const question = await prisma.question.findUnique({
+      where: { id: questionId },
+    });
+    if (!question)
+      return Response.json({ error: "Question not found" }, { status: 404 });
+
+    const correct = selected === question.correctAnswer;
+    const points = correct ? calculateScore(timeTaken, 10) : 0;
+
+    await prisma.score.upsert({
+      where: { userId_gameId: { userId, gameId } },
+      update: { points: { increment: points } },
+      create: { userId, gameId, points },
+    });
+
+    return Response.json({ correct, points });
+  } catch (e) {
+    console.error(e);
+    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+--- File: ./src/app/api/game/route.ts ---
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { prisma } from "@/lib/db";
+
+// GET /api/games
+export async function GET() {
+  const games = await prisma.game.findMany({
+    orderBy: { startTime: "asc" },
+  });
+  return NextResponse.json(games);
+}
+
+// POST /api/games
+export async function POST(request: Request) {
+  const schema = z.object({
+    title: z.string().min(1),
+    description: z.string().optional(),
+    startTime: z.string(),
+    endTime: z.string(),
+  });
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+  const parseResult = schema.safeParse(body);
+  if (!parseResult.success) {
+    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+  }
+  const { title, description, startTime, endTime } = parseResult.data;
+  const start = new Date(startTime);
+  const end = new Date(endTime);
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
+  }
+  if (start >= end) {
+    return NextResponse.json(
+      { error: "startTime must be before endTime" },
+      { status: 400 }
+    );
+  }
+  const game = await prisma.game.create({
+    data: {
+      title,
+      description,
+      startTime: start,
+      endTime: end,
+    },
+  });
+  return NextResponse.json(game);
+}
+
+--- File: ./src/app/api/game/[id]/route.ts ---
+import { NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+// GET /api/games/[id]
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  const gameId = parseInt(params.id, 10);
+  if (isNaN(gameId)) {
+    return NextResponse.json({ error: "Invalid game ID" }, { status: 400 });
+  }
+  const game = await prisma.game.findUnique({
+    where: { id: gameId },
+    include: { questions: true },
+  });
+  if (!game) {
+    return NextResponse.json({ error: "Game not found" }, { status: 404 });
+  }
+  // Exclude correct answers in questions
+  const questions = game.questions.map((q) => ({
+    id: q.id,
+    questionText: q.text,
+    imageUrl: q.imageUrl,
+    options: q.options,
+  }));
+  const { id, title, description, startTime, endTime } = game;
+  return NextResponse.json({
+    id,
+    title,
+    description,
+    startTime,
+    endTime,
+    questions,
+  });
+}
+
+--- File: ./src/app/api/game/[id]/questions/route.ts ---
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { prisma } from "@/lib/db";
+
+// GET /api/games/[id]/questions
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  const gameId = parseInt(params.id, 10);
+  if (isNaN(gameId)) {
+    return NextResponse.json({ error: "Invalid game ID" }, { status: 400 });
+  }
+  const questions = await prisma.question.findMany({
+    where: { gameId },
+    select: {
+      id: true,
+      text: true,
+      imageUrl: true,
+      options: true,
+    },
+  });
+  return NextResponse.json(questions);
+}
+
+// POST /api/games/[id]/questions
+export async function POST(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  const gameId = parseInt(params.id, 10);
+  if (isNaN(gameId)) {
+    return NextResponse.json({ error: "Invalid game ID" }, { status: 400 });
+  }
+  // imageUrl is now required
+  const schema = z.object({
+    text: z.string().min(1),
+    imageUrl: z.string().min(1), // made required
+    options: z.array(z.string().min(1)).min(2),
+    correctIndex: z.number().min(0),
+  });
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+  const parseResult = schema.safeParse(body);
+  if (!parseResult.success) {
+    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+  }
+  const { text, imageUrl, options, correctIndex } = parseResult.data;
+  if (correctIndex >= options.length) {
+    return NextResponse.json(
+      { error: "correctIndex out of range" },
+      { status: 400 }
+    );
+  }
+  // Check game exists
+  const game = await prisma.game.findUnique({ where: { id: gameId } });
+  if (!game) {
+    return NextResponse.json({ error: "Game not found" }, { status: 404 });
+  }
+  const question = await prisma.question.create({
+    data: {
+      gameId,
+      text,
+      imageUrl: imageUrl,
+      options: options,
+      correctAnswer: options[correctIndex],
+    },
+  });
+  return NextResponse.json(question);
+}
+
+--- File: ./src/app/api/profile/route.ts ---
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { prisma } from "@/lib/db";
+
+// GET /api/profile
+export async function GET(request: Request) {
+  const farcasterId = request.headers.get("x-farcaster-id");
+  if (!farcasterId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const user = await prisma.user.findUnique({
+    where: { farcasterId },
+  });
+  if (!user) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+  const { id, name, wallet, imageUrl } = user;
+  return NextResponse.json({ id, name, wallet, imageUrl });
+}
+
+// PUT /api/profile
+export async function PUT(request: Request) {
+  const schema = z.object({
+    name: z.string().optional(),
+    wallet: z.string().optional(),
+    imageUrl: z.string().url().optional(),
+  });
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+  const parseResult = schema.safeParse(body);
+  if (!parseResult.success) {
+    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+  }
+  const { name, wallet, imageUrl } = parseResult.data;
+  const farcasterId = request.headers.get("x-farcaster-id");
+  if (!farcasterId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const user = await prisma.user.findUnique({ where: { farcasterId } });
+  if (!user) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+  const updated = await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      name: name !== undefined ? name : user.name,
+      wallet: wallet !== undefined ? wallet : user.wallet,
+      imageUrl: imageUrl !== undefined ? imageUrl : user.imageUrl,
+    },
+  });
+  const {
+    id,
+    name: newName,
+    wallet: newWallet,
+    imageUrl: newImageUrl,
+  } = updated;
+  return NextResponse.json({
+    id,
+    name: newName,
+    wallet: newWallet,
+    imageUrl: newImageUrl,
+  });
+}
 
 --- File: ./src/app/api/profile/history/route.ts ---
 import { NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
 
-export async function GET() {
-  // mock data for history; in a real app, you'd fetch from db or session
-  const history = [
-    { round: "Round 1", winnings: 50 },
-    { round: "Round 2", winnings: 100 },
-    { round: "Round 3", winnings: 0 },
-    { round: "Round 4", winnings: 200 },
-  ];
+const prisma = new PrismaClient();
+
+// GET /api/profile/history
+export async function GET(request: Request) {
+  const farcasterId = request.headers.get("x-farcaster-id");
+  if (!farcasterId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const user = await prisma.user.findUnique({ where: { farcasterId } });
+  if (!user) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+  const scores = await prisma.score.findMany({
+    where: { userId: user.id },
+    include: { game: true },
+    orderBy: { game: { endTime: "asc" } },
+  });
+  const history = scores.map((s, index) => ({
+    round: `Round ${index + 1}`,
+    winnings: s.points,
+  }));
   return NextResponse.json(history);
 }
 
 --- File: ./src/app/api/profile/stats/route.ts ---
 import { NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+// GET /api/profile/stats
+export async function GET(request: Request) {
+  const farcasterId = request.headers.get("x-farcaster-id");
+  if (!farcasterId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const user = await prisma.user.findUnique({ where: { farcasterId } });
+  if (!user) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+  const scores = await prisma.score.findMany({
+    where: { userId: user.id },
+    include: { game: true },
+  });
+  const totalGames = scores.length;
+  if (totalGames === 0) {
+    return NextResponse.json({
+      totalGames: 0,
+      wins: 0,
+      winRate: 0,
+      totalWon: 0,
+      highestScore: 0,
+      avgScore: 0,
+      currentStreak: 0,
+      bestRank: 0,
+    });
+  }
+  let wins = 0;
+  let bestRank = totalGames > 0 ? totalGames : 0;
+  let totalWon = 0;
+  let highestScore = 0;
+  // Sort scores by game endTime descending for streak
+  scores.sort((a, b) => {
+    const aTime = a.game.endTime?.getTime() || 0;
+    const bTime = b.game.endTime?.getTime() || 0;
+    return bTime - aTime;
+  });
+  let currentStreak = 0;
+  let streakCounting = false;
+  for (const s of scores) {
+    totalWon += s.points;
+    highestScore = Math.max(highestScore, s.points);
+    // Calculate rank for this game
+    const countBetter = await prisma.score.count({
+      where: { gameId: s.gameId, points: { gt: s.points } },
+    });
+    const rank = countBetter + 1;
+    bestRank = Math.min(bestRank, rank);
+    if (!streakCounting) {
+      if (rank === 1) {
+        currentStreak = 1;
+        streakCounting = true;
+      }
+    } else {
+      if (rank === 1) {
+        currentStreak++;
+      } else {
+        break;
+      }
+    }
+    if (rank === 1) wins++;
+  }
+  const avgScore = totalWon / totalGames;
+  const winRate = (wins / totalGames) * 100;
+  return NextResponse.json({
+    totalGames,
+    wins,
+    winRate: Math.round(winRate * 10) / 10,
+    totalWon,
+    highestScore,
+    avgScore: Math.round(avgScore * 100) / 100,
+    currentStreak,
+    bestRank,
+  });
+}
+
+--- File: ./src/app/api/final/match/route.ts ---
+import { prisma } from "@/lib/db";
+import { isMatch } from "@/lib/scoring";
+
+export async function POST(req: Request) {
+  try {
+    const { userId, gameId, choiceId, targetId } = await req.json();
+    if (!userId || !gameId)
+      return Response.json({ error: "Missing fields" }, { status: 400 });
+
+    const correct = isMatch(choiceId, targetId);
+    const points = correct ? 100 : 0;
+
+    await prisma.score.upsert({
+      where: { userId_gameId: { userId, gameId } },
+      update: { points: { increment: points } },
+      create: { userId, gameId, points },
+    });
+
+    return Response.json({ correct, points });
+  } catch (e) {
+    console.error(e);
+    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+--- File: ./src/app/api/final/start/route.ts ---
+import { prisma } from "@/lib/db";
 
 export async function GET() {
-  // mock stats data
-  const stats = {
-    totalGames: 42,
-    wins: 18,
-    winRate: 42.9,
-    totalWon: 5400,
-    highestScore: 98,
-    avgScore: 76,
-    currentStreak: 3,
-    bestRank: 1,
-  };
-  return NextResponse.json(stats);
+  try {
+    const allQuestions = await prisma.question.findMany({
+      take: 20,
+      orderBy: { id: "asc" },
+    });
+
+    const pairs = allQuestions.map((q) => ({
+      id: q.id,
+      originalUrl: q.imageUrl,
+      generatedUrl: q.imageUrl.replace("original", "ai"), // simple mock pattern
+    }));
+
+    return Response.json({ pairs });
+  } catch (e) {
+    console.error(e);
+    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+--- File: ./src/app/og/image.tsx ---
+import { ImageResponse } from "next/og";
+
+export const runtime = "edge";
+
+export const size = { width: 1200, height: 630 };
+export const contentType = "image/png";
+
+export default async function Image({
+  searchParams,
+}: {
+  searchParams: { username?: string; score?: string };
+}) {
+  const { username = "Player", score = "0" } = searchParams;
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "linear-gradient(180deg, #1E1E1E 0%, #000000 100%)",
+          width: "100%",
+          height: "100%",
+          color: "white",
+          fontFamily: "sans-serif",
+        }}
+      >
+        <h1 style={{ fontSize: 64, color: "#FFD700" }}>Waffles Champion</h1>
+        <p style={{ fontSize: 36 }}>{username}</p>
+        <p style={{ fontSize: 28, color: "#BBB" }}>{score} pts</p>
+      </div>
+    ),
+    { ...size }
+  );
 }
 
 --- File: ./src/app/page.tsx ---
-import { redirect } from "next/navigation";
+"use client";
 
-export default function HomePage() {
-  // Redirect to onboarding for new users
-  redirect("/onboarding");
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
+export default function Home() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace("/lobby");
+  }, [router]);
+
+  return null;
 }
-
-// do not hardcode the figma values ofc -- make your coding of the figma codes responsive
 
 --- File: ./src/app/globals.css ---
 @layer base, components, utilities;
@@ -4004,56 +5044,6 @@ export function OnboardingCarousel({ onComplete }: OnboardingCarouselProps) {
   );
 }
 
---- File: ./src/app/onboarding/_components/pixel-button.tsx ---
-import { type ButtonHTMLAttributes, forwardRef } from "react"
-import { cn } from "@/lib/utils"
-
-export interface PixelButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "outline" | "ghost"
-  size?: "sm" | "md" | "lg"
-  isLoading?: boolean
-}
-
-export const PixelButton = forwardRef<HTMLButtonElement, PixelButtonProps>(
-  ({ className, variant = "primary", size = "md", isLoading, children, disabled, ...props }, ref) => {
-    const baseStyles =
-      "font-bold uppercase tracking-wide transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-
-    const variants = {
-      primary: "bg-waffle-gold text-primary-foreground hover:brightness-110 active:scale-95",
-      secondary: "bg-neon-purple text-secondary-foreground hover:brightness-110 active:scale-95",
-      outline: "border-2 border-waffle-gold text-waffle-gold hover:bg-waffle-gold hover:text-primary-foreground",
-      ghost: "text-foreground hover:bg-muted",
-    }
-
-    const sizes = {
-      sm: "px-4 py-2 text-sm rounded-md",
-      md: "px-6 py-3 text-base rounded-lg",
-      lg: "px-8 py-4 text-lg rounded-xl",
-    }
-
-    return (
-      <button
-        ref={ref}
-        className={cn(baseStyles, variants[variant], sizes[size], isLoading && "cursor-wait", className)}
-        disabled={disabled || isLoading}
-        {...props}
-      >
-        {isLoading ? (
-          <span className="flex items-center gap-2">
-            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-            Loading...
-          </span>
-        ) : (
-          children
-        )}
-      </button>
-    )
-  },
-)
-
-PixelButton.displayName = "PixelButton"
-
 --- File: ./src/app/onboarding/_components/onboarding-slide.tsx ---
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -4148,179 +5138,102 @@ export default function OnboardingPage() {
   );
 }
 
---- File: ./src/stores/leaderboardStore.ts ---
-// ──────────────────────────────────────────────────────────────────────────────
-// stores/leaderboardStore.ts
-// Efficient, cache-first Zustand store with SWR, pagination, and deduping.
-// ──────────────────────────────────────────────────────────────────────────────
-"use client";
-
+--- File: ./src/stores/finalRoundStore.ts ---
 import { create } from "zustand";
 
-export type TabKey = "current" | "allTime";
+interface Pair {
+  id: number;
+  originalUrl: string;
+  generatedUrl: string;
+}
 
-export type LeaderboardUser = {
-  id: string; // stable id from API
-  rank: number; // server rank or client-computed
-  name: string;
-  avatarUrl: string; // use <Image src=.../>
+interface FinalRoundState {
+  pairs: Pair[];
   score: number;
-};
+  timeLeft: number;
+  status: "idle" | "playing" | "ended";
+  fetchPairs: () => Promise<void>;
+  submitMatch: (choiceId: number, targetId: number) => Promise<void>;
+  startTimer: () => void;
+  reset: () => void;
+}
 
-type Slice = {
-  items: LeaderboardUser[];
-  page: number;
-  hasMore: boolean;
-  isLoading: boolean;
-  error: string | null;
-  lastFetched: number; // ms
-  inFlight?: AbortController; // dedupe/abort
-  scrollTop: number; // remember per-tab scroll
-};
+export const useFinalRoundStore = create<FinalRoundState>((set, get) => ({
+  pairs: [],
+  score: 0,
+  timeLeft: 30,
+  status: "idle",
 
-type State = {
-  activeTab: TabKey;
-  slices: Record<TabKey, Slice>;
-};
-
-type Actions = {
-  setActiveTab: (tab: TabKey) => void;
-  rememberScroll: (tab: TabKey, y: number) => void;
-
-  fetchPage: (
-    tab: TabKey,
-    opts?: { reset?: boolean; page?: number }
-  ) => Promise<void>;
-  refresh: (tab: TabKey) => Promise<void>;
-};
-
-const newSlice = (): Slice => ({
-  items: [],
-  page: 0,
-  hasMore: true,
-  isLoading: false,
-  error: null,
-  lastFetched: 0,
-  scrollTop: 0,
-});
-
-const STALE_TTL = 30_000; // 30s
-
-export const useLeaderboardStore = create<State & Actions>((set, get) => ({
-  activeTab: "allTime",
-  slices: {
-    current: newSlice(),
-    allTime: newSlice(),
+  fetchPairs: async () => {
+    const res = await fetch("/api/final/start");
+    const data = await res.json();
+    set({ pairs: data.pairs, status: "playing" });
+    get().startTimer();
   },
 
-  setActiveTab: (tab) => {
-    set({ activeTab: tab });
-    // lazy fetch if needed or stale
-    const s = get().slices[tab];
-    const stale = Date.now() - s.lastFetched > STALE_TTL;
-    if (!s.isLoading && (s.items.length === 0 || stale)) {
-      get().fetchPage(tab, { reset: s.items.length === 0 });
-    }
-  },
-
-  rememberScroll: (tab, y) => {
-    set((state) => ({
-      slices: {
-        ...state.slices,
-        [tab]: { ...state.slices[tab], scrollTop: y },
-      },
-    }));
-  },
-
-  refresh: async (tab) => get().fetchPage(tab, { reset: true, page: 0 }),
-
-  fetchPage: async (tab, opts) => {
-    const { reset = false } = opts ?? {};
-    const state = get();
-    const slice = state.slices[tab];
-
-    // Dedupe: abort prior request on this tab
-    slice.inFlight?.abort();
-
-    // SWR: if not reset and not stale, bail
-    if (
-      !reset &&
-      slice.items.length &&
-      Date.now() - slice.lastFetched < STALE_TTL
-    ) {
-      return;
-    }
-
-    const page = reset ? 0 : slice.page;
-
-    const ctrl = new AbortController();
-    set({
-      slices: {
-        ...state.slices,
-        [tab]: {
-          ...slice,
-          isLoading: true,
-          error: null,
-          inFlight: ctrl,
-          // keep items if not reset (SWR)
-          ...(reset ? { items: [], hasMore: true, page: 0 } : null),
-        },
-      },
-    });
-
+  submitMatch: async (choiceId, targetId) => {
     try {
-      // API contract: GET /api/leaderboard?tab=current|allTime&page=X
-      // should return: { users: LeaderboardUser[], hasMore: boolean }
-      const res = await fetch(`/api/leaderboard?tab=${tab}&page=${page}`, {
-        signal: ctrl.signal,
-        cache: "no-store",
+      const res = await fetch("/api/final/match", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: 1, gameId: 1, choiceId, targetId }),
       });
-      if (!res.ok) throw new Error("Failed to fetch leaderboard");
-      const json: { users: LeaderboardUser[]; hasMore?: boolean } =
-        await res.json();
+      const { points } = await res.json();
+      set((s) => ({ score: s.score + points }));
+    } catch (e) {
+      console.error(e);
+    }
+  },
 
-      // Rank fix-up if server omits ranks
-      const base = reset ? 0 : slice.items.length;
-      const users =
-        json.users?.map((u, i) => ({ ...u, rank: u.rank ?? base + i + 1 })) ??
-        [];
+  startTimer: () => {
+    const interval = setInterval(() => {
+      set((s) => {
+        if (s.timeLeft <= 1) {
+          clearInterval(interval);
+          return { ...s, status: "ended", timeLeft: 0 };
+        }
+        return { ...s, timeLeft: s.timeLeft - 1 };
+      });
+    }, 1000);
+  },
 
-      const merged = reset ? users : [...slice.items, ...users];
+  reset: () => set({ pairs: [], score: 0, timeLeft: 30, status: "idle" }),
+}));
 
-      set((curr) => ({
-        slices: {
-          ...curr.slices,
-          [tab]: {
-            ...curr.slices[tab],
-            items: merged,
-            page: page + 1,
-            hasMore: json.hasMore ?? users.length > 0,
-            isLoading: false,
-            error: null,
-            inFlight: undefined,
-            lastFetched: Date.now(),
-          },
-        },
-      }));
-    } catch (err) {
-      if ((err as { name: string })?.name === "AbortError") return; // aborted = ignore
-      const msg =
-        err instanceof Error
-          ? err.message
-          : typeof err === "string"
-          ? err
-          : "Something went wrong";
-      set((curr) => ({
-        slices: {
-          ...curr.slices,
-          [tab]: {
-            ...curr.slices[tab],
-            isLoading: false,
-            error: msg,
-            inFlight: undefined,
-          },
-        },
-      }));
+--- File: ./src/stores/leaderboardStore.ts ---
+import { create } from "zustand";
+
+interface Entry {
+  rank: number;
+  username: string;
+  points: number;
+  pfpUrl: string | null;
+}
+
+interface MyRank {
+  username?: string;
+  rank?: number;
+  points?: number;
+}
+
+interface LeaderboardState {
+  entries: Entry[];
+  me: MyRank | null;
+  fetchLeaderboard: (gameId: number, userId: number) => Promise<void>;
+}
+
+export const useLeaderboardStore = create<LeaderboardState>((set) => ({
+  entries: [],
+  me: null,
+  fetchLeaderboard: async (gameId, userId) => {
+    try {
+      const res = await fetch(
+        `/api/leaderboard?gameId=${gameId}&userId=${userId}`
+      );
+      const data = await res.json();
+      set({ entries: data.top, me: data.me });
+    } catch (e) {
+      console.error(e);
     }
   },
 }));
@@ -4328,637 +5241,687 @@ export const useLeaderboardStore = create<State & Actions>((set, get) => ({
 --- File: ./src/stores/profileStore.ts ---
 import { create } from "zustand";
 
-export interface Game {
-  id: string;
-  name: string;
-  score: number;
-  winnings: number;
-  winningsColor: "green" | "gray";
+interface GameHistory {
+  gameTitle: string;
+  points: number;
+  date: string;
 }
 
-export interface ProfileState {
+interface ProfileData {
   username: string;
+  wallet: string;
+  totalPoints: number;
+  wins: number;
   streak: number;
-  stats: {
-    games: number;
-    wins: number;
-    winnings: number;
-  };
-  pastGames: Game[];
-  allTimeStats: {
-    totalGames: number;
-    wins: number;
-    winRate: string;
-    totalWon: string;
-    highestScore: string;
-    averageScore: number;
-    currentStreak: number;
-    bestRank: number;
-  };
+  badges: string[];
+  history: GameHistory[];
 }
 
-const initialState: ProfileState = {
-  username: "POTAT0X",
-  streak: 8,
-  stats: {
-    games: 0,
-    wins: 0,
-    winnings: 0,
-  },
-  pastGames: [
-    {
-      id: "1",
-      name: "WAFFLE 567",
-      score: 456,
-      winnings: 0,
-      winningsColor: "green",
-    },
-    {
-      id: "2",
-      name: "WAFFLE 444",
-      score: 250,
-      winnings: 999.99,
-      winningsColor: "green",
-    },
-    {
-      id: "3",
-      name: "WAFFLE 342",
-      score: 512,
-      winnings: 150.75,
-      winningsColor: "green",
-    },
-    {
-      id: "4",
-      name: "WAFFLE 233",
-      score: 680,
-      winnings: 800.42,
-      winningsColor: "green",
-    },
-  ],
-  allTimeStats: {
-    totalGames: 8,
-    wins: 2,
-    winRate: "25%",
-    totalWon: "$4,200",
-    highestScore: "1,198",
-    averageScore: 880,
-    currentStreak: 8,
-    bestRank: 2,
-  },
-};
+interface ProfileState {
+  profile: ProfileData | null;
+  fetchProfile: (userId: number) => Promise<void>;
+}
 
-export const useProfileStore = create<ProfileState>(() => initialState);
+export const useProfileStore = create<ProfileState>((set) => ({
+  profile: null,
+  fetchProfile: async (userId) => {
+    try {
+      const res = await fetch(`/api/profile?userId=${userId}`);
+      const data = await res.json();
+      set({ profile: data });
+    } catch (e) {
+      console.error(e);
+    }
+  },
+}));
 
 --- File: ./src/stores/gameStore.ts ---
 import { create } from "zustand";
+import { startCountdown } from "@/lib/time";
+import SoundManager from "@/lib/SoundManager";
 
-export type GameState =
-  | "LOBBY" // Players are waiting for the game to start.
-  | "ROUND_COUNTDOWN" // The countdown before a new question is shown.
-  | "QUESTION_ACTIVE" // The question is displayed, and players can answer.
-  | "ANSWER_SUBMITTED"; // The player has selected an answer and is waiting for the next round.
-
-/**
- * Defines the structure for a single chat message object.
- */
-export interface ChatMessage {
-  id: string; // Unique identifier for the message.
-  username: string; // The name of the user who sent the message.
-  avatarUrl?: string; // Optional URL for the user's avatar image.
-  timestamp: string; // A formatted string representing when the message was sent (e.g., "13:42").
-  message: string; // The content of the chat message.
+interface Question {
+  id: number;
+  questionText: string;
+  imageUrl: string;
+  options: string[];
+  correctAnswerId: string;
 }
 
-/**
- * Defines the structure for a single multiple-choice answer option.
- */
-export interface AnswerOption {
-  id: string; // Unique identifier for this answer (e.g., 'a1', 'a2').
-  text: string; // The text content of the answer option.
-}
+type GameStatus =
+  | "idle"
+  | "playing"
+  | "ended"
+  | "QUESTION_ACTIVE"
+  | "ANSWER_SUBMITTED"
+  | "GAME_OVER";
 
-/**
- * Defines the structure for a single trivia question.
- */
-export interface Question {
-  id: string; // Unique identifier for the question.
-  questionText: string; // The main text of the question (e.g., "WHO IS THIS?").
-  imageUrl: string; // URL for the image associated with the question.
-  options: AnswerOption[]; // An array of possible answer options.
-  correctAnswerId: string; // The ID of the correct AnswerOption.
-}
-
-/**
- * Represents the complete shape of the state managed by the Zustand store.
- */
-export interface GameStoreState {
-  gameState: GameState; // The current phase of the game.
-  roundTimer: number; // Countdown timer value between rounds.
-  questionTimer: number; // Countdown timer value for the active question.
-  currentQuestion: Question | null; // The currently active question object, or null if none.
-  selectedAnswer: string | null; // The ID of the answer selected by the user, or null.
-  messages: ChatMessage[]; // An array of all chat messages in the lobby.
-  currentQuestionIndex: number; // The index of the current question in the question array.
-  totalQuestions: number; // The total number of questions in the game.
-}
-
-/**
- * Defines all the actions (functions) that can be called to mutate the game state.
- */
-export interface GameStoreActions {
-  startGame: () => void;
-  selectAnswer: (answerId: string) => void;
-  postMessage: (message: { username: string; message: string }) => void;
-  tickRoundTimer: () => void;
-  tickQuestionTimer: () => void;
-  advanceToNextQuestion: () => void;
+interface GameState {
+  round: number;
+  current: number;
+  questions: Question[];
+  timeLeft: number;
+  score: number;
+  status: GameStatus;
+  selectedAnswer: string | null;
+  // Actions
+  fetchQuestions: () => Promise<void>;
+  answerQuestion: (
+    questionId: number,
+    selected: string,
+    timeTaken: number
+  ) => Promise<void>;
+  nextQuestion: () => void;
   resetGame: () => void;
+  // New SoundManager-based/GameActions API
+  startGame: () => void;
+  tickRoundTimer: () => void;
+  selectAnswer: (answerId: string, isCorrect: boolean) => void;
+  gameOver: () => void;
+  advanceToNextQuestion: () => void;
 }
 
-/**
- * The final, combined type for the Zustand store, merging the state and actions.
- */
-export type GameStore = GameStoreState & GameStoreActions;
-
-// --- MOCK DATA ---
-// This data is derived from the UI screenshots to simulate a real game flow.
-
-const MOCK_QUESTIONS: Question[] = [
-  {
-    id: "q1",
-    questionText: "WHAT LOGO IS THIS?",
-    imageUrl: "/images/same-question-img.png", // Placeholder for a first question
-    options: [
-      { id: "a1", text: "James Scolt" },
-      {
-        id: "a2",
-        text: "Scoolt Mehem",
-      },
-      {
-        id: "a3",
-        text: "Peter Alan",
-      },
-      {
-        id: "a4",
-        text: "Jennifer breski",
-      },
-    ],
-    correctAnswerId: "a1",
-  },
-  {
-    id: "q2",
-    questionText: "WHAT LOGO IS THIS?",
-    imageUrl: "/images/same-question-img.png", // Placeholder for a first question
-    options: [
-      { id: "a1", text: "James Scolt" },
-      { id: "a2", text: "Scoolt Mehem" },
-      { id: "a3", text: "Peter Alan" },
-      { id: "a4", text: "Jennifer breski" },
-    ],
-    correctAnswerId: "a1",
-  },
-  {
-    id: "q3",
-    questionText: "WHAT LOGO IS THIS?",
-    imageUrl: "/images/same-question-img.png", // Placeholder for a first question
-    options: [
-      { id: "a1", text: "James Scolt" },
-      { id: "a2", text: "Scoolt Mehem" },
-      { id: "a3", text: "Peter Alan" },
-      { id: "a4", text: "Jennifer breski" },
-    ],
-    correctAnswerId: "a1",
-  },
-  {
-    id: "q4",
-    questionText: "WHAT LOGO IS THIS?",
-    imageUrl: "/images/same-question-img.png", // Placeholder for a first question
-    options: [
-      { id: "a1", text: "James Scolt" },
-      { id: "a2", text: "Scoolt Mehem" },
-      { id: "a3", text: "Peter Alan" },
-      { id: "a4", text: "Jennifer breski" },
-    ],
-    correctAnswerId: "a1",
-  },
-];
-
-const MOCK_MESSAGES: ChatMessage[] = [
-  {
-    id: "msg-1",
-    username: "John",
-    message: "Hello, how are you?",
-    timestamp: "13:42",
-    avatarUrl: "/images/avatars/a.png",
-  },
-  {
-    id: "msg-2",
-    username: "thecyberverse",
-    message: "Hello, how are you?",
-    timestamp: "13:43",
-    avatarUrl: "/images/avatars/b.png",
-  },
-  {
-    id: "msg-3",
-    username: "cryptoking",
-    message: "Hello, how are you?",
-    timestamp: "13:44",
-    avatarUrl: "/images/avatars/c.png",
-  },
-  {
-    id: "msg-4",
-    username: "wafflequeen",
-    message: "Hello, how are you?",
-    timestamp: "13:45",
-    avatarUrl: "/images/avatars/d.png",
-  },
-  {
-    id: "msg-5",
-    username: "superman",
-    message: "Hello, how are you?",
-    timestamp: "13:46",
-    avatarUrl: "/images/avatars/a.png",
-  },
-  {
-    id: "msg-6",
-    username: "flash",
-    message: "Hello, how are you?",
-    timestamp: "13:47",
-    avatarUrl: "/images/avatars/b.png",
-  },
-];
-
-// --- INITIAL STATE DEFINITION ---
-
-export const defaultInitialState: GameStoreState = {
-  gameState: "LOBBY",
-  roundTimer: 15,
-  questionTimer: 10,
-  currentQuestion: MOCK_QUESTIONS[0],
+export const useGameStore = create<GameState>((set, get) => ({
+  round: 1,
+  current: 0,
+  questions: [],
+  timeLeft: ,
+  score: 0,
+  status: "idle",
   selectedAnswer: null,
-  messages: MOCK_MESSAGES,
-  currentQuestionIndex: 0,
-  totalQuestions: MOCK_QUESTIONS.length,
-};
 
-// --- ZUSTAND STORE CREATION ---
-
-// FIX: Changed the generic from create<GameStoreState> to create<GameStore> to include actions in the store's type.
-export const useGameStore = create<GameStore>()((set, get) => ({
-  ...defaultInitialState,
-
-  // --- ACTIONS ---
-
-  startGame: () => {
-    set({
-      gameState: "QUESTION_ACTIVE",
-      roundTimer: 15,
-      currentQuestionIndex: -1, // Reset index before starting
-      selectedAnswer: null,
-      currentQuestion: null,
-    });
+  fetchQuestions: async () => {
+    const res = await fetch("/api/game/start");
+    const data = await res.json();
+    set({ questions: data.questions, status: "playing" });
+    startCountdown(
+,
+      (t) => set({ timeLeft: t }),
+      () => get().nextQuestion()
+    );
   },
 
-  selectAnswer: (answerId: string) => {
-    if (get().gameState === "QUESTION_ACTIVE") {
-      set({ selectedAnswer: answerId, gameState: "ANSWER_SUBMITTED" });
+  answerQuestion: async (questionId, selected, timeTaken) => {
+    const res = await fetch("/api/game/answer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: 1, // will be replaced with real fid from auth store
+        gameId: 1,
+        questionId,
+        selected,
+        timeTaken,
+      }),
+    });
+    const { correct, points } = await res.json();
+    if (correct) set((s) => ({ score: s.score + points }));
+  },
 
-      setTimeout(() => {
-        get().advanceToNextQuestion();
-      }, 2000);
+  nextQuestion: () => {
+    const { current, questions } = get();
+    if (current < questions.length - 1) {
+      set({ current: current + 1, timeLeft:  });
+      startCountdown(
+        ,
+        (t) => set({ timeLeft: t }),
+        () => get().nextQuestion()
+      );
+    } else {
+      set({ status: "ended" });
     }
   },
 
-  // FIX: Explicitly typed the parameters for type safety.
-  postMessage: ({
-    username,
-    message,
-  }: {
-    username: string;
-    message: string;
-  }) => {
-    const newMessage: ChatMessage = {
-      id: `msg-${Date.now()}`,
-      username,
-      message,
-      timestamp: new Date().toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      }),
-      avatarUrl: "/avatars/avatar-user.png", // A default avatar for the current user
-    };
+  resetGame: () =>
+    set({
+      round: 1,
+      current: 0,
+      questions: [],
+      score: 0,
+      status: "idle",
+      selectedAnswer: null,
+    }),
 
-    set((state) => ({
-      messages: [...state.messages, newMessage],
-    }));
+  // --- SoundManager-based/GameActions API ---
+  startGame: () => {
+    SoundManager.play("countdown");
+    set({
+      status: "QUESTION_ACTIVE",
+      timeLeft: ,
+      current: 0,
+      score: 0,
+      selectedAnswer: null,
+      round: 1,
+    });
+    // Optionally (re)fetch questions, otherwise rely on previous fetchQuestions
+    fetch("/api/game/start")
+      .then((res) => res.json())
+      .then((data) => {
+        set({ questions: data.questions });
+      });
   },
 
   tickRoundTimer: () => {
-    const newTime = get().roundTimer - 1;
+    const newTime = get().timeLeft - 1;
+    if (get().status !== "QUESTION_ACTIVE") return;
     if (newTime <= 0) {
-      get().advanceToNextQuestion();
+      get().selectAnswer("", false); // treat as wrong if time runs out
     } else {
-      set({ roundTimer: newTime });
+      set({ timeLeft: newTime });
     }
   },
 
-  tickQuestionTimer: () => {
-    const newTime = get().questionTimer - 1;
-    if (newTime <= 0) {
-      set({ questionTimer: 0, gameState: "ANSWER_SUBMITTED" });
-      setTimeout(() => {
-        get().advanceToNextQuestion();
-      }, 2000);
-    } else {
-      set({ questionTimer: newTime });
+  selectAnswer: (answerId: string, isCorrect: boolean) => {
+    if (get().status !== "QUESTION_ACTIVE") return;
+    set({ selectedAnswer: answerId, status: "ANSWER_SUBMITTED" });
+    SoundManager.play("click");
+    SoundManager.play(isCorrect ? "correct" : "wrong");
+
+    // Optionally submit answer asynchronously
+    const currentQuestion = get().questions[get().current];
+    if (currentQuestion) {
+      fetch("/api/game/answer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: 1, // Replace with real fid from auth store
+          gameId: 1, // Replace with actual if needed
+          questionId: currentQuestion.id,
+          selected: answerId,
+          timeTaken:  - get().timeLeft,
+        }),
+      })
+        .then((res) => res.json())
+        .then(({ correct, points }) => {
+          if (correct) set((s) => ({ score: s.score + points }));
+        })
+        .catch(() => {});
     }
+
+    setTimeout(() => {
+      get().advanceToNextQuestion();
+    }, 2000);
   },
 
   advanceToNextQuestion: () => {
-    const nextIndex = get().currentQuestionIndex + 1;
-
-    if (nextIndex < MOCK_QUESTIONS.length) {
+    const idx = get().current;
+    const total = get().questions.length;
+    if (idx < total - 1) {
       set({
-        currentQuestionIndex: nextIndex,
-        currentQuestion: MOCK_QUESTIONS[nextIndex],
-        gameState: "QUESTION_ACTIVE",
-        questionTimer: 10,
+        current: idx + 1,
+        timeLeft: ,
         selectedAnswer: null,
+        status: "QUESTION_ACTIVE",
+        round: get().round + 1,
       });
     } else {
-      get().resetGame();
+      get().gameOver();
     }
   },
 
-  resetGame: () => {
-    set({ ...defaultInitialState, gameState: "LOBBY" });
+  gameOver: () => {
+    set({ status: "GAME_OVER" });
+    SoundManager.play("gameOver");
   },
 }));
 
---- File: ./src/stores/useUIStore.ts ---
-[File is empty]
-
---- File: ./src/stores/lobbyStore.ts ---
-"use client";
+--- File: ./src/stores/authStore.ts ---
 import { create } from "zustand";
-import * as api from "@/lib/apiMocks";
 
-interface WaffleType {
-  id: string;
-  name: string;
-  description: string;
-  remaining: number;
+interface SafeArea {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
 }
 
-interface Ticket {
-  ticketId: number;
-  waffleType: string;
-  message: string;
-}
-
-interface LobbyState {
-  inviteCode: string;
-  inviteCodeStatus: "idle" | "checking" | "valid" | "invalid";
-  codeError: string | null;
-  waffleTypes: WaffleType[];
-  selectedWaffleType: WaffleType | null;
-  purchaseStatus: "idle" | "loading" | "success" | "error";
-  purchasedTicket: Ticket | null;
-  setInviteCode: (code: string) => void;
-  validateInviteCode: (code: string) => Promise<void>;
-  selectWaffleType: (id: string) => void;
-  purchaseWaffle: () => Promise<void>;
+interface AuthState {
+  fid: number | null;
+  username: string;
+  pfpUrl: string;
+  walletAddress: string;
+  safeArea: SafeArea;
+  setUser: (u: Partial<AuthState>) => void;
+  setWallet: (addr: string) => void;
+  setSafeArea: (a: SafeArea) => void;
   reset: () => void;
 }
 
-const useLobbyStore = create<LobbyState>((set, get) => ({
-  inviteCode: "",
-  inviteCodeStatus: "idle",
-  codeError: null,
-  waffleTypes: [
-    {
-      id: "football",
-      name: "Football Waffle",
-      description: "Entry ticket for Football-themed Waffles tournament",
-      remaining: 120,
-    },
-    {
-      id: "basketball",
-      name: "Basketball Waffle",
-      description: "Entry ticket for Basketball-themed Waffles tournament",
-      remaining: 80,
-    },
-    // Add more types as needed
-  ],
-  selectedWaffleType: null,
-  purchaseStatus: "idle",
-  purchasedTicket: null,
-  setInviteCode: (code) => {
-    // Reset validation state when code changes
-    const currentStatus = get().inviteCodeStatus;
+export const useAuthStore = create<AuthState>((set) => ({
+  fid: null,
+  username: "",
+  pfpUrl: "",
+  walletAddress: "",
+  safeArea: { top: 0, bottom: 0, left: 0, right: 0 },
+  setUser: (u) => set((s) => ({ ...s, ...u })),
+  setWallet: (addr) => set({ walletAddress: addr }),
+  setSafeArea: (a) => set({ safeArea: a }),
+  reset: () =>
     set({
-      inviteCode: code,
-      inviteCodeStatus: currentStatus === "checking" ? "checking" : "idle",
-      codeError: null,
-    });
-  },
-  validateInviteCode: async (code) => {
-    set({ inviteCodeStatus: "checking", inviteCode: code });
+      fid: null,
+      username: "",
+      pfpUrl: "",
+      walletAddress: "",
+      safeArea: { top: 0, bottom: 0, left: 0, right: 0 },
+    }),
+}));
+
+--- File: ./src/stores/lobbyStore.ts ---
+import { create } from "zustand";
+
+interface Player {
+  username: string;
+  wallet: string;
+  pfpUrl: string | null;
+}
+
+interface LobbyStats {
+  totalTickets: number;
+  totalPrize: number;
+  players: Player[];
+}
+
+interface ReferralData {
+  code: string;
+  inviterId: number;
+  inviteeId?: number;
+}
+
+type ReferralStatus = "idle" | "validating" | "success" | "failed";
+
+interface LobbyState {
+  // Referral part
+  referralCode: string;
+  referralStatus: ReferralStatus;
+  referralData?: ReferralData;
+  createReferral: (inviterId: number) => Promise<void>;
+  validateReferral: (code: string, inviteeId: number) => Promise<void>;
+  // Lobby stats & countdown
+  stats: LobbyStats | null;
+  countdown: string;
+  fetchStats: () => Promise<void>;
+  startCountdown: (target: Date) => void;
+}
+
+export const useLobbyStore = create<LobbyState>((set) => ({
+  // Referral state
+  referralCode: "",
+  referralStatus: "idle",
+  referralData: undefined,
+  createReferral: async (inviterId) => {
+    set({ referralStatus: "validating" });
     try {
-      const res = await api.validateInviteCode(code);
-      // If inviteCode has changed since we started validation, ignore this result
-      if (get().inviteCode !== code) return;
-      if (res.valid) {
-        set({ inviteCodeStatus: "valid", codeError: null });
-      } else {
-        set({
-          inviteCodeStatus: "invalid",
-          codeError: res.message || "Invalid invite code",
-        });
-      }
-    } catch (error) {
-      console.error(error);
+      const res = await fetch("/api/referral/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ inviterId }),
+      });
+      const data = await res.json();
       set({
-        inviteCodeStatus: "invalid",
-        codeError: "Network error, please try again",
+        referralCode: data.code,
+        referralData: data,
+        referralStatus: "success",
+      });
+    } catch {
+      set({ referralStatus: "failed" });
+    }
+  },
+  validateReferral: async (code, inviteeId) => {
+    set({ referralStatus: "validating" });
+    try {
+      const res = await fetch("/api/referral/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, inviteeId }),
+      });
+      const data = await res.json();
+      set({
+        referralStatus: data.success ? "success" : "failed",
+        referralData: data.referral,
+      });
+    } catch {
+      set({ referralStatus: "failed" });
+    }
+  },
+  // Lobby stats & countdown
+  stats: null,
+  countdown: "00:00",
+  fetchStats: async () => {
+    try {
+      const res = await fetch("/api/lobby/stats");
+      const data = await res.json();
+      set({ stats: data });
+    } catch (e) {
+      console.error(e);
+    }
+  },
+  startCountdown: (target) => {
+    const interval = setInterval(() => {
+      const diff = target.getTime() - Date.now();
+      if (diff <= 0) {
+        clearInterval(interval);
+        set({ countdown: "00:00" });
+      } else {
+        const minutes = Math.floor(diff / 60000);
+        const seconds = Math.floor((diff % 60000) / 1000);
+        const formatted = `${String(minutes).padStart(2, "0")}:${String(
+          seconds
+        ).padStart(2, "0")}`;
+        set({ countdown: formatted });
+      }
+    }, 1000);
+  },
+}));
+
+--- File: ./src/stores/configStore.ts ---
+import { create } from "zustand";
+
+type PrizePoolType = "FIXED" | "DYNAMIC";
+
+export interface BaseConfig {
+  roundTimeLimit: number;
+  questionsPerGame: number;
+  scoreMultiplier: number;
+  scorePenalty: number | null;
+  maxPlayers: number;
+  soundEnabled: boolean;
+  animationEnabled: boolean;
+  prizePoolType: PrizePoolType;
+  prizePoolFixedAmount: number | null;
+  prizePoolDynamicTickets: number | null;
+  timeBonusEnabled: boolean;
+  difficultyScaling: number;
+}
+
+type PartialConfig = Partial<BaseConfig>;
+
+interface ConfigState {
+  global: BaseConfig | null;
+  byGameId: Record<number, BaseConfig | null>;
+  loading: boolean;
+  error: string | null;
+  fetchGlobal: () => Promise<void>;
+  fetchGame: (gameId: number) => Promise<void>;
+  updateGlobal: (input: PartialConfig, adminToken: string) => Promise<void>;
+  updateGame: (
+    gameId: number,
+    input: PartialConfig,
+    adminToken: string
+  ) => Promise<void>;
+  getEffectiveForGame: (gameId: number) => BaseConfig | null;
+}
+
+export const useConfigStore = create<ConfigState>((set, get) => ({
+  global: null,
+  byGameId: {},
+  loading: false,
+  error: null,
+
+  fetchGlobal: async () => {
+    set({ loading: true, error: null });
+    try {
+      const res = await fetch("/api/config/global");
+      if (!res.ok) throw new Error("Failed to load global config");
+      const data = await res.json();
+      set({ global: data, loading: false });
+    } catch (e: any) {
+      set({
+        error: e?.message ?? "Failed to load global config",
+        loading: false,
       });
     }
   },
-  selectWaffleType: (id) => {
-    const type = get().waffleTypes.find((w) => w.id === id) || null;
-    set({ selectedWaffleType: type });
-  },
-  purchaseWaffle: async () => {
-    const selected = get().selectedWaffleType;
-    if (!selected) return;
-    set({ purchaseStatus: "loading" });
+
+  fetchGame: async (gameId) => {
+    set({ loading: true, error: null });
     try {
-      const ticket = await api.purchaseWaffle(selected.id);
-      // Optionally update inventory count:
-      set((state) => ({
-        purchaseStatus: "success",
-        purchasedTicket: ticket,
-        waffleTypes: state.waffleTypes.map((w) =>
-          w.id === selected.id
-            ? { ...w, remaining: Math.max(w.remaining - 1, 0) }
-            : w
-        ),
+      const res = await fetch(`/api/config/game/${gameId}`);
+      if (!res.ok) throw new Error("Failed to load game config");
+      const data = await res.json();
+      set((s) => ({
+        byGameId: { ...s.byGameId, [gameId]: data },
+        loading: false,
       }));
-    } catch (error) {
-      console.error(error);
-      set({ purchaseStatus: "error" });
+    } catch (e: any) {
+      set({
+        error: e?.message ?? "Failed to load game config",
+        loading: false,
+      });
     }
   },
-  reset: () => {
-    set({
-      inviteCode: "",
-      inviteCodeStatus: "idle",
-      codeError: null,
-      selectedWaffleType: null,
-      purchaseStatus: "idle",
-      purchasedTicket: null,
+
+  updateGlobal: async (input, adminToken) => {
+    set({ loading: true, error: null });
+    try {
+      const res = await fetch("/api/config/global", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-token": adminToken,
+        },
+        body: JSON.stringify(input),
+      });
+      if (!res.ok) throw new Error("Failed to update global config");
+      const data = await res.json();
+      set({ global: data, loading: false });
+    } catch (e: any) {
+      set({
+        error: e?.message ?? "Failed to update global config",
+        loading: false,
+      });
+    }
+  },
+
+  updateGame: async (gameId, input, adminToken) => {
+    set({ loading: true, error: null });
+    try {
+      const res = await fetch(`/api/config/game/${gameId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-token": adminToken,
+        },
+        body: JSON.stringify(input),
+      });
+      if (!res.ok) throw new Error("Failed to update game config");
+      const data = await res.json();
+      set((s) => ({
+        byGameId: { ...s.byGameId, [gameId]: data },
+        loading: false,
+      }));
+    } catch (e: any) {
+      set({
+        error: e?.message ?? "Failed to update game config",
+        loading: false,
+      });
+    }
+  },
+
+  getEffectiveForGame: (gameId) => {
+    const { global, byGameId } = get();
+    const game = byGameId[gameId];
+    if (!global && !game) return null;
+    return { ...(global ?? ({} as BaseConfig)), ...(game ?? {}) } as BaseConfig;
+  },
+}));
+
+--- File: ./src/stores/ticketStore.ts ---
+import { create } from "zustand";
+
+interface Ticket {
+  id?: number;
+  txHash?: string;
+  amountUSDC?: number;
+  status?: "idle" | "pending" | "confirmed" | "failed";
+}
+
+interface TicketState {
+  ticket: Ticket | null;
+  purchaseStatus: Ticket["status"];
+  buyTicket: (userId: number, gameId: number, amount: number) => Promise<void>;
+  confirmTicket: (ticketId: number) => Promise<void>;
+}
+
+export const useTicketStore = create<TicketState>((set) => ({
+  ticket: null,
+  purchaseStatus: "idle",
+  buyTicket: async (userId, gameId, amount) => {
+    set({ purchaseStatus: "pending" });
+    try {
+      const res = await fetch("/api/tickets/buy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, gameId, amount }),
+      });
+      const data = await res.json();
+      set({ ticket: data, purchaseStatus: "confirmed" });
+    } catch {
+      set({ purchaseStatus: "failed" });
+    }
+  },
+  confirmTicket: async (ticketId) => {
+    await fetch(`/api/tickets/confirm`, {
+      method: "POST",
+      body: JSON.stringify({ ticketId }),
     });
   },
 }));
 
-export default useLobbyStore;
-
---- File: ./src/stores/useGameStore.ts ---
-[File is empty]
-
---- File: ./src/stores/useUserStore.ts ---
-[File is empty]
-
---- File: ./src/stores/useProfileStore.ts ---
-[File is empty]
-
---- File: ./src/components/ui/dialog.tsx ---
-"use client"
-
-import * as React from "react"
-import * as DialogPrimitive from "@radix-ui/react-dialog"
-import { X } from "lucide-react"
-
-import { cn } from "@/lib/utils"
-
-const Dialog = DialogPrimitive.Root
-
-const DialogTrigger = DialogPrimitive.Trigger
-
-const DialogPortal = DialogPrimitive.Portal
-
-const DialogClose = DialogPrimitive.Close
-
-const DialogOverlay = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Overlay>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
->(({ className, ...props }, ref) => (
-  <DialogPrimitive.Overlay
-    ref={ref}
-    className={cn(
-      "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-      className
-    )}
-    {...props}
-  />
-))
-DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
-
-const DialogContent = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
-  <DialogPortal>
-    <DialogOverlay />
-    <DialogPrimitive.Content
-      ref={ref}
-      className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
-        className
-      )}
-      {...props}
-    >
-      {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
-      </DialogPrimitive.Close>
-    </DialogPrimitive.Content>
-  </DialogPortal>
-))
-DialogContent.displayName = DialogPrimitive.Content.displayName
-
-const DialogHeader = ({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn(
-      "flex flex-col space-y-1.5 text-center sm:text-left",
-      className
-    )}
-    {...props}
-  />
-)
-DialogHeader.displayName = "DialogHeader"
-
-const DialogFooter = ({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn(
-      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
-      className
-    )}
-    {...props}
-  />
-)
-DialogFooter.displayName = "DialogFooter"
-
-const DialogTitle = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Title>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
->(({ className, ...props }, ref) => (
-  <DialogPrimitive.Title
-    ref={ref}
-    className={cn(
-      "text-lg font-semibold leading-none tracking-tight",
-      className
-    )}
-    {...props}
-  />
-))
-DialogTitle.displayName = DialogPrimitive.Title.displayName
-
-const DialogDescription = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Description>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
->(({ className, ...props }, ref) => (
-  <DialogPrimitive.Description
-    ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
-    {...props}
-  />
-))
-DialogDescription.displayName = DialogPrimitive.Description.displayName
-
-export {
-  Dialog,
-  DialogPortal,
-  DialogOverlay,
-  DialogTrigger,
-  DialogClose,
-  DialogContent,
-  DialogHeader,
-  DialogFooter,
-  DialogTitle,
-  DialogDescription,
+--- File: ./src/styles/animations.css ---
+.fade-in {
+  animation: fadeIn 0.6s ease forwards;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
---- File: ./src/components/Leaderboard.tsx ---
-[File is empty]
+.slide-up {
+  animation: slideUp 0.5s ease forwards;
+}
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+--- File: ./src/components/ui/ChatBox.tsx ---
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+
+interface Message {
+  user: string;
+  text: string;
+  time: string;
+}
+
+export default function ChatBox() {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    ref.current?.scrollTo(0, ref.current.scrollHeight);
+  }, [messages]);
+
+  const sendMessage = async () => {
+    if (!input.trim()) return;
+    const msg: Message = {
+      user: "You",
+      text: input,
+      time: new Date().toLocaleTimeString(),
+    };
+    setMessages((prev) => [...prev, msg]);
+    setInput("");
+    await fetch("/api/chat/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: msg.text }),
+    });
+  };
+
+  return (
+    <div className="flex flex-col h-64 w-full max-w-md bg-zinc-900 rounded-xl overflow-hidden">
+      <div ref={ref} className="flex-1 overflow-y-auto p-3 space-y-2">
+        {messages.map((m, i) => (
+          <div key={i} className="text-sm text-gray-300">
+            <span className="font-semibold text-purple-400">{m.user}:</span>{" "}
+            {m.text}
+          </div>
+        ))}
+      </div>
+      <div className="flex p-2 border-t border-zinc-800">
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          className="flex-1 bg-transparent outline-none px-2"
+          placeholder="Type a message..."
+        />
+        <button onClick={sendMessage} className="text-purple-500 font-semibold">
+          Send
+        </button>
+      </div>
+    </div>
+  );
+}
+
+--- File: ./src/components/ui/Toaster.tsx ---
+"use client";
+import { Toaster, toast } from "sonner";
+
+export const notify = {
+  success: (msg: string) => toast.success(msg),
+  error: (msg: string) => toast.error(msg),
+  info: (msg: string) => toast(msg),
+};
+
+export default function GlobalToaster() {
+  return <Toaster position="bottom-center" theme="dark" />;
+}
+
+--- File: ./src/components/ui/sonner.tsx ---
+"use client"
+
+import { useTheme } from "next-themes"
+import { Toaster as Sonner } from "sonner"
+
+type ToasterProps = React.ComponentProps<typeof Sonner>
+
+const Toaster = ({ ...props }: ToasterProps) => {
+  const { theme = "system" } = useTheme()
+
+  return (
+    <Sonner
+      theme={theme as ToasterProps["theme"]}
+      className="toaster group"
+      toastOptions={{
+        classNames: {
+          toast:
+            "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
+          description: "group-[.toast]:text-muted-foreground",
+          actionButton:
+            "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
+          cancelButton:
+            "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+        },
+      }}
+      {...props}
+    />
+  )
+}
+
+export { Toaster }
 
 --- File: ./src/components/buttons/FancyBorderButton.tsx ---
 "use client";
@@ -5257,6 +6220,34 @@ export function BottomNav() {
   );
 }
 
+--- File: ./src/components/providers/FarcasterProvider.tsx ---
+"use client";
+import { ReactNode } from "react";
+import { useFarcaster } from "@/hooks/useFarcaster";
+
+export default function FarcasterProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  useFarcaster();
+  return <>{children}</>;
+}
+
+--- File: ./src/components/providers/WalletProvider.tsx ---
+// /src/components/providers/WalletProvider.tsx
+"use client";
+import { WagmiProvider } from "wagmi";
+import { wagmiConfig } from "@/lib/wagmiConfig";
+
+export default function WalletProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <WagmiProvider config={wagmiConfig}>{children}</WagmiProvider>;
+}
+
 --- File: ./src/components/modals/InviteShareModal.tsx ---
 "use client"
 
@@ -5446,12 +6437,6 @@ export default function LogoIcon(props: React.ComponentProps<"div">) {
     </div>
   );
 }
-
---- File: ./src/components/Avatar.tsx ---
-[File is empty]
-
---- File: ./src/components/Timer.tsx ---
-[File is empty]
 
 --- File: ./src/components/icons.tsx ---
 import { cn } from "@/lib/utils";
@@ -6318,23 +7303,7 @@ export function UsdcIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
---- File: ./src/components/Badge.tsx ---
-[File is empty]
-
---- File: ./src/components/Button.tsx ---
-[File is empty]
-
---- File: ./src/components/Modal.tsx ---
-[File is empty]
-
---- File: ./src/components/ChatMessage.tsx ---
-[File is empty]
-
---- File: ./src/components/Input.tsx ---
-[File is empty]
-
 --- File: ./src/components/inputs/PixelInput.tsx ---
-// components/ui/pixel-input.tsx
 import type { InputHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
@@ -6357,47 +7326,75 @@ export function PixelInput({ className, ...props }: PixelInputProps) {
   );
 }
 
---- File: ./src/hooks/useChat.ts ---
-[File is empty]
+--- File: ./src/hooks/useVibration.ts ---
+export function useVibration() {
+  const vibrate = (pattern: number | number[] = 80) => {
+    if (typeof window !== "undefined" && "vibrate" in navigator)
+      navigator.vibrate(pattern);
+  };
+  return { vibrate };
+}
 
---- File: ./src/hooks/useFeatureFlags.ts ---
-[File is empty]
+--- File: ./src/hooks/useFarcaster.ts ---
+"use client";
+import { useEffect, useState } from "react";
+import { useAuthStore } from "@/stores/authStore";
 
---- File: ./src/hooks/useCountdown.ts ---
-import { useEffect, useRef } from "react";
+// Import Farcaster Mini-App SDK
+import { MiniAppSDK } from "@farcaster/miniapp-sdk";
 
-export const useCountdown = (
-  onTick: () => void,
-  interval: number = 1000,
-  enabled: boolean = true
-) => {
-  const savedCallback = useRef(onTick);
+export const useFarcaster = () => {
+  const [sdk, setSdk] = useState<MiniAppSDK | null>(null);
+  const setUser = useAuthStore((s) => s.setUser);
+  const setSafeArea = useAuthStore((s) => s.setSafeArea);
 
-  // Remember the latest callback.
   useEffect(() => {
-    savedCallback.current = onTick;
-  });
+    async function init() {
+      const instance = new MiniAppSDK();
+      await instance.actions.ready();
 
-  // Set up the interval.
-  useEffect(() => {
-    if (!enabled) {
-      return;
+      const context = await instance.context.get();
+      setSdk(instance);
+
+      if (context?.user) {
+        setUser({
+          fid: context.user.fid,
+          username: context.user.username,
+          pfpUrl: context.user.pfp_url,
+        });
+
+        await fetch("/api/user/init", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fid: context.user.fid,
+            username: context.user.username,
+            pfpUrl: context.user.pfp_url,
+            walletAddress: useAuthStore.getState().walletAddress,
+          }),
+        });
+      }
+
+      if (context?.client?.safeAreaInsets) {
+        setSafeArea(context.client.safeAreaInsets);
+      }
     }
 
-    const tick = () => {
-      savedCallback.current();
-    };
+    init();
+  }, [setUser, setSafeArea]);
 
-    const id = setInterval(tick, interval);
-    return () => clearInterval(id);
-  }, [interval, enabled]);
+  return sdk;
 };
 
---- File: ./src/hooks/useWebSocket.ts ---
-[File is empty]
-
---- File: ./src/hooks/useTranslation.ts ---
-[File is empty]
+--- File: ./src/hooks/useSound.ts ---
+export function useSound() {
+  const play = (src: string, volume = 0.6) => {
+    const audio = new Audio(src);
+    audio.volume = volume;
+    audio.play().catch(() => {});
+  };
+  return { play };
+}
 
 --- File: ./src/hooks/useIsMobile.ts ---
 "use client";
@@ -6431,69 +7428,6 @@ export function useIsMobile() {
   }, [ua, vw]);
 }
 
---- File: ./src/lib/fonts.ts ---
-import { Inter, Press_Start_2P, VT323 } from "next/font/google";
-
-// @TODO: ADD NDOT 47 (inspired by NOTHING) font for input
-
-export const fontDisplay = Inter({
-  subsets: ["latin"],
-  weight: "400",
-  display: "swap",
-  variable: "--font-display",
-});
-
-export const fontBody = Press_Start_2P({
-  subsets: ["latin"],
-  weight: "400",
-  display: "swap",
-  variable: "--font-body",
-});
-
-export const fontInput = VT323({
-  subsets: ["latin"],
-  weight: "400",
-  display: "swap",
-  variable: "--font-input",
-});
-
---- File: ./src/lib/analytics.ts ---
-[File is empty]
-
---- File: ./src/lib/i18n.ts ---
-[File is empty]
-
---- File: ./src/lib/apiMocks.ts ---
-export async function validateInviteCode(
-  code: string
-): Promise<{ valid: boolean; message?: string }> {
-  // Simulate network delay
-  await new Promise((res) => setTimeout(res, 500));
-  const validCodes = ["WAFF"]; // sample valid codes
-  const normalized = code.trim().toUpperCase();
-  if (validCodes.includes(normalized)) {
-    return { valid: true };
-  } else {
-    return { valid: false, message: "Invite code not found" };
-  }
-}
-
-export async function purchaseWaffle(
-  typeId: string
-): Promise<{ ticketId: number; waffleType: string; message: string }> {
-  // Simulate network delay
-  await new Promise((res) => setTimeout(res, 800));
-  // Return a dummy ticket
-  return {
-    ticketId: Math.floor(Math.random() * 1000000),
-    waffleType: typeId,
-    message: "Purchase successful",
-  };
-}
-
---- File: ./src/lib/formatTime.ts ---
-[File is empty]
-
 --- File: ./src/lib/utils.ts ---
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
@@ -6502,12 +7436,240 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
---- File: ./src/lib/api.ts ---
-[File is empty]
-
 --- File: ./src/lib/constants.ts ---
-[File is empty]
+export const WAFFLES_RECEIVER = process.env.NEXT_PUBLIC_RECEIVER_ADDRESS!; // EOA receiving funds
+export const USDC_ADDRESS = process.env.NEXT_PUBLIC_USDC_ADDRESS!; // Base USDC token address
 
---- File: ./src/lib/theme.ts ---
-[File is empty]
+--- File: ./src/lib/scoring.ts ---
+export function calculateScore(timeTaken: number, maxTime: number): number {
+  const speedRatio = (maxTime - timeTaken) / maxTime;
+  const basePoints = 300 + speedRatio * 2700; // between 300–3000
+  return Math.round(basePoints);
+}
+
+export function isMatch(choiceId: number, targetId: number): boolean {
+  // In real version: compare identifiers for correct pair
+  return choiceId === targetId;
+}
+
+--- File: ./src/lib/SoundManager.ts ---
+// src/utils/SoundManager.ts
+class SoundManager {
+  private static instance: SoundManager;
+  private audioContext?: AudioContext;
+  private sounds: Map<string, HTMLAudioElement> = new Map();
+
+  private constructor() {
+    // Preload sound files
+    const soundFiles: Record<string, string> = {
+      click: "/sounds/click.mp3",
+      countdown: "/sounds/countdown.mp3",
+      correct: "/sounds/correct.mp3",
+      wrong: "/sounds/wrong.mp3",
+      gameOver: "/sounds/gameOver.mp3",
+      // Add more sounds as needed
+    };
+    for (const [key, url] of Object.entries(soundFiles)) {
+      const audio = new Audio(url);
+      audio.load();
+      this.sounds.set(key, audio);
+    }
+  }
+
+  public static getInstance(): SoundManager {
+    if (!SoundManager.instance) {
+      SoundManager.instance = new SoundManager();
+    }
+    return SoundManager.instance;
+  }
+
+  /** Call this on first user interaction (click/tap) to enable audio on browsers */
+  public async init(): Promise<void> {
+    if (!this.audioContext) {
+      this.audioContext = new (window.AudioContext ||
+        (window as unknown as { webkitAudioContext: AudioContext })
+          .webkitAudioContext)();
+      // Resume context (needed for mobile autoplay policy)
+      await this.audioContext.resume();
+    }
+  }
+
+  /** Play a loaded sound effect by name */
+  public play(soundName: string): void {
+    const audio = this.sounds.get(soundName);
+    if (!audio) {
+      console.warn(`Sound "${soundName}" not found`);
+      return;
+    }
+    try {
+      audio.currentTime = 0;
+      audio.play();
+    } catch (error) {
+      // Playback might fail if not initiated by user gesture yet; safe to ignore or log
+      console.warn(`Failed to play sound "${soundName}":`, error);
+    }
+  }
+}
+
+export default SoundManager.getInstance();
+
+--- File: ./src/lib/neynarClient.ts ---
+// /src/lib/neynarClient.ts
+import NeynarAPIClient from "@neynar/nodejs-sdk";
+
+export const neynar = new NeynarAPIClient({
+  apiKey: process.env.NEYNAR_API_KEY!,
+});
+
+--- File: ./src/lib/payments.ts ---
+import { writeContract } from "wagmi/actions";
+import { parseUnits } from "viem";
+import { base } from "wagmi/chains";
+import { USDC_ADDRESS, WAFFLES_RECEIVER } from "./constants";
+
+export async function sendUSDC(amount: string) {
+  const value = parseUnits(amount, 6);
+  const tx = await writeContract({
+    address: USDC_ADDRESS,
+    abi: ["function transfer(address to, uint256 value) public returns (bool)"],
+    functionName: "transfer",
+    args: [WAFFLES_RECEIVER, value],
+    chainId: base.id,
+  });
+  return tx.hash;
+}
+
+--- File: ./src/lib/fonts/ndot47_bd.woff2 ---
+[Content not included: Binary file]
+
+--- File: ./src/lib/fonts/index.ts ---
+import localFont from "next/font/local";
+
+export const fontDisplay = localFont({
+  src: [
+    {
+      path: "./fonts/brockmann_bd.otf",
+      weight: "400",
+      style: "normal",
+    },
+  ],
+  display: "swap",
+  variable: "--font-display",
+});
+
+export const fontBody = localFont({
+  src: [
+    {
+      path: "./fonts/editundo_bd.ttf",
+      weight: "400",
+      style: "normal",
+    },
+  ],
+  display: "swap",
+  variable: "--font-body",
+});
+
+export const fontInput = localFont({
+  src: [
+    {
+      path: "./fonts/ndot47_bd.woff2",
+      weight: "400",
+      style: "normal",
+    },
+  ],
+  display: "swap",
+  variable: "--font-input",
+});
+
+--- File: ./src/lib/fonts/brockmann_bd.otf ---
+[Content not included: Binary file]
+
+--- File: ./src/lib/fonts/editundo_bd.ttf ---
+[Content not included: Binary file]
+
+--- File: ./src/lib/db.ts ---
+// /src/server/db.ts
+import { PrismaClient } from "@prisma/client";
+
+declare global {
+  // Prevent multiple instances of PrismaClient in development
+  // (prevents exhausting database connections on hot-reload)
+  var prisma: PrismaClient | undefined;
+}
+
+export const prisma: PrismaClient =
+  global.prisma ||
+  new PrismaClient({
+    log: ["query"], // optional: log queries for debugging
+  });
+
+if (process.env.NODE_ENV !== "production") {
+  global.prisma = prisma;
+}
+
+--- File: ./src/lib/time.ts ---
+export function formatCountdown(target: Date): string {
+  const diff = target.getTime() - Date.now();
+  if (diff <= 0) return "00:00";
+
+  const minutes = Math.floor(diff / 60000);
+  const seconds = Math.floor((diff % 60000) / 1000);
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
+    2,
+    "0"
+  )}`;
+}
+
+export function startCountdown(
+  duration: number,
+  onTick: (remaining: number) => void,
+  onComplete: () => void
+) {
+  let remaining = duration;
+  const interval = setInterval(() => {
+    remaining -= 1;
+    if (remaining <= 0) {
+      clearInterval(interval);
+      onComplete();
+    } else {
+      onTick(remaining);
+    }
+  }, 1000);
+}
+
+--- File: ./src/lib/wagmiConfig.ts ---
+import { createConfig, http } from "wagmi";
+import { base } from "wagmi/chains";
+import { injected } from "wagmi/connectors";
+
+export const wagmiConfig = createConfig({
+  chains: [base],
+  transports: {
+    [base.id]: http(),
+  },
+  connectors: [injected()],
+  ssr: true,
+});
+
+--- File: ./src/lib/streaks.ts ---
+export function calculateStreak(gameDates: Date[]): number {
+  if (gameDates.length === 0) return 0;
+
+  const sorted = gameDates.sort((a, b) => b.getTime() - a.getTime());
+  let streak = 1;
+  for (let i = 1; i < sorted.length; i++) {
+    const diff =
+      (sorted[i - 1].getTime() - sorted[i].getTime()) / (1000 * 60 * 60 * 24);
+    if (diff <= 1.1) streak++;
+    else break;
+  }
+  return streak;
+}
+
+--- File: ./src/env.ts ---
+export const env = {
+  NEYNAR_API_KEY: process.env.NEYNAR_API_KEY!,
+  DATABASE_URL: process.env.DATABASE_URL!,
+  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL!,
+};
 

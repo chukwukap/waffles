@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { type Prisma } from "@prisma/client";
 
 const prizePoolTypeEnum = z.enum(["FIXED", "DYNAMIC"]);
 
@@ -82,10 +83,15 @@ export async function PUT(
     }
 
     const existing = await prisma.gameConfig.findUnique({ where: { gameId } });
-    const data = { ...parsed.data, gameId } as any;
+    const data = {
+      ...parsed.data,
+      gameId,
+    } as Prisma.GameConfigUncheckedUpdateInput;
     let updated;
     if (!existing) {
-      updated = await prisma.gameConfig.create({ data });
+      updated = await prisma.gameConfig.create({
+        data: data as Prisma.GameConfigCreateInput,
+      });
     } else {
       updated = await prisma.gameConfig.update({ where: { gameId }, data });
     }

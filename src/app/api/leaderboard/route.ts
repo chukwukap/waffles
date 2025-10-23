@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { LEADERBOARD_PAGE_SIZE } from "@/lib/constants";
 
 export type LeaderboardUser = {
   id: string;
@@ -9,89 +10,100 @@ export type LeaderboardUser = {
   points: number;
 };
 
-const PAGE_SIZE = 25;
-
-// GET /api/leaderboard?tab=current|allTime&page=0
+// GET /api/leaderboard?tab=current|allTime&page=0&gameId=&userId=
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const tabParam = (searchParams.get("tab") || "allTime") as
     | "current"
     | "allTime";
-  const pageParam = searchParams.get("page") ?? "0";
+  const page = Number(searchParams.get("page") ?? "0");
+  const gameIdParam = searchParams.get("gameId");
+  const userIdParam = searchParams.get("userId");
 
-  if (tabParam !== "current" && tabParam !== "allTime") {
-    return NextResponse.json(
-      { error: "Invalid `tab`. Use `current` or `allTime`." },
-      { status: 400 }
-    );
+  if (!["current", "allTime"].includes(tabParam)) {
+    return NextResponse.json({ error: "Invalid tab" }, { status: 400 });
   }
-  const page = Number(pageParam);
   if (!Number.isFinite(page) || page < 0) {
-    return NextResponse.json(
-      { error: "Invalid `page` (>= 0)." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Invalid page" }, { status: 400 });
   }
 
-  // Determine dataset
   let users: LeaderboardUser[] = [];
+
   if (tabParam === "current") {
-    // Find current active game (ongoing or latest)
-    const now = new Date();
-    let game = await prisma.game.findFirst({
-      where: { startTime: { lte: now }, endTime: { gte: now } },
-      orderBy: { startTime: "desc" },
-    });
-    if (!game) {
-      // fallback to latest finished game
-      game = await prisma.game.findFirst({
-        where: { endTime: { lte: now } },
-        orderBy: { endTime: "desc" },
+    // Determine which game is "current"
+    let game = null;
+    if (gameIdParam) {
+      game = await prisma.game.findUnique({
+        where: { id: Number(gameIdParam) },
       });
+    } else {
+      const now = new Date();
+      game =
+        (await prisma.game.findFirst({
+          where: { startTime: { lte: now }, endTime: { gte: now } },
+          orderBy: { startTime: "desc" },
+        })) ??
+        (await prisma.game.findFirst({
+          where: { endTime: { lte: now } },
+          orderBy: { endTime: "desc" },
+        }));
     }
+
     if (game) {
       const scores = await prisma.score.findMany({
         where: { gameId: game.id },
         include: { user: true },
         orderBy: { points: "desc" },
       });
-      users = scores.map((s, idx) => ({
+
+      users = scores.map((s, i) => ({
         id: s.userId.toString(),
-        rank: idx + 1,
+        rank: i + 1,
         name: s.user?.name || "",
         imageUrl: s.user?.imageUrl || "",
         points: s.points,
       }));
     }
   } else {
-    // All-time: sum scores for each user
-    const groups = await prisma.score.groupBy({
+    // All-time leaderboard (sum of points per user)
+    const grouped = await prisma.score.groupBy({
       by: ["userId"],
       _sum: { points: true },
       orderBy: { _sum: { points: "desc" } },
     });
-    const userIds = groups.map((g) => g.userId);
+
+    const userIds = grouped.map((g) => g.userId);
     const usersData = await prisma.user.findMany({
       where: { id: { in: userIds } },
     });
-    users = groups.map((g, idx) => {
+
+    users = grouped.map((g, i) => {
       const user = usersData.find((u) => u.id === g.userId);
       return {
         id: g.userId.toString(),
-        rank: idx + 1,
+        rank: i + 1,
         name: user?.name || "",
         imageUrl: user?.imageUrl || "",
-        points: g._sum?.points || 0,
+        points: g._sum.points || 0,
       };
     });
   }
 
-  // Paginate
-  const start = page * PAGE_SIZE;
-  const end = start + PAGE_SIZE;
+  // pagination
+  const start = page * LEADERBOARD_PAGE_SIZE;
+  const end = start + LEADERBOARD_PAGE_SIZE;
   const pageUsers = users.slice(start, end);
   const hasMore = end < users.length;
-  return NextResponse.json({ users: pageUsers, hasMore });
+
+  // optional "me"
+  let me = null;
+  if (userIdParam) {
+    const userId = Number(userIdParam);
+    const found = users.find((u) => Number(u.id) === userId);
+    if (found) me = found;
+  }
+
+  return NextResponse.json({ users: pageUsers, hasMore, me });
 }
 
 export const dynamic = "force-dynamic";

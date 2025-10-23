@@ -1,9 +1,9 @@
-import { LeaderboardUser } from "@/app/api/leaderboard/route";
+import { Entry } from "@/stores/leaderboardStore";
 import { TrophyIcon, UsdcIcon } from "@/components/icons";
 
 /** Top3: fixed single row (no wrap), fully responsive, no overflow */
-export function Top3({ users }: { users: LeaderboardUser[] }) {
-  if (!users?.length) return null;
+export function Top3({ entries }: { entries: Entry[] }) {
+  if (!entries?.length) return null;
 
   const cardStyles = [
     {
@@ -36,9 +36,9 @@ export function Top3({ users }: { users: LeaderboardUser[] }) {
         } as React.CSSProperties
       }
     >
-      {users.slice(0, 3).map((user, i) => (
+      {entries.slice(0, 3).map((entry, i) => (
         <article
-          key={user.id}
+          key={entry.rank}
           className={[
             "basis-1/3 min-w-0 flex-1",
             "rounded-[var(--radius)] border border-white/10",
@@ -63,8 +63,8 @@ export function Top3({ users }: { users: LeaderboardUser[] }) {
           <div className="flex min-w-0 items-center gap-[calc(var(--pad)*0.5)]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={user.avatarUrl || "/avatar.png"}
-              alt={user.name}
+              src={entry.pfpUrl || "/avatar.png"}
+              alt={entry.username}
               draggable={false}
               className="rounded-full bg-[#F0F3F4] object-cover flex-shrink-0"
               style={{
@@ -73,13 +73,13 @@ export function Top3({ users }: { users: LeaderboardUser[] }) {
               }}
             />
             <span
-              title={user.name}
+              title={entry.username}
               className="
                 min-w-0 truncate text-white font-body font-normal leading-tight
               "
               style={{ fontSize: "clamp(0.7rem, 2.3vw, 0.95rem)" }}
             >
-              {user.name}
+              {entry.username}
             </span>
           </div>
 
@@ -96,7 +96,7 @@ export function Top3({ users }: { users: LeaderboardUser[] }) {
               className="font-display font-medium tracking-tight leading-[1.1]"
               style={{ fontSize: "clamp(0.85rem, 2.6vw, 1rem)" }}
             >
-              {user.score.toLocaleString(undefined, {
+              {entry.points.toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}

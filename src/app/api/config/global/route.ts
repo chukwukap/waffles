@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-
+import { type Prisma } from "@prisma/client";
 const prizePoolTypeEnum = z.enum(["FIXED", "DYNAMIC"]);
 
 const baseConfigSchema = z.object({
@@ -78,11 +78,13 @@ export async function PUT(request: Request) {
     const existing = await prisma.globalConfig.findFirst();
     let updated;
     if (!existing) {
-      updated = await prisma.globalConfig.create({ data: parsed.data as any });
+      updated = await prisma.globalConfig.create({
+        data: parsed.data as Prisma.GlobalConfigCreateInput,
+      });
     } else {
       updated = await prisma.globalConfig.update({
         where: { id: existing.id },
-        data: parsed.data as any,
+        data: parsed.data as Prisma.GlobalConfigUncheckedUpdateInput,
       });
     }
     return NextResponse.json(updated);

@@ -1,189 +1,364 @@
-import { create } from "zustand";
-import { startCountdown } from "@/lib/time";
-import SoundManager from "@/lib/SoundManager";
-import { INITIAL_ROUND_TIMER } from "@/lib/constants";
-import { INITIAL_QUESTION_TIMER } from "@/lib/constants";
+// ───────────────────────── src/stores/gameStore.ts ─────────────────────────
+"use client";
 
-interface Question {
+import { create } from "zustand";
+import { RealtimeChannel } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabaseClient";
+import { useAuthStore } from "@/stores/authStore";
+import SoundManager from "@/lib/SoundManager";
+
+// ───────────────────────── TYPES ─────────────────────────
+export interface ChatMessage {
+  id: number;
+  username: string;
+  message: string;
+  avatarUrl: string;
+  time: string;
+}
+
+export interface ChatApiResponse {
+  messageId: number;
+  userId: number;
+  userName: string | null;
+  message: string;
+  createdAt: string;
+  avatarUrl?: string | null;
+}
+
+export interface AnswerOption {
+  id: string;
+  text: string;
+}
+
+export interface Question {
   id: number;
   questionText: string;
   imageUrl: string;
-  options: string[];
-  correctAnswerId: string;
+  options: AnswerOption[];
+  correctAnswerId?: string;
 }
 
-type GameStatus =
-  | "idle"
-  | "playing"
-  | "ended"
+export type GameState =
+  | "LOBBY"
+  | "ROUND_COUNTDOWN"
   | "QUESTION_ACTIVE"
   | "ANSWER_SUBMITTED"
   | "GAME_OVER";
 
-interface GameState {
+export interface GameStore {
+  gameId: number | null;
+  gameState: GameState;
   round: number;
   current: number;
   questions: Question[];
   timeLeft: number;
   score: number;
-  status: GameStatus;
   selectedAnswer: string | null;
-  // Actions
-  fetchQuestions: () => Promise<void>;
-  answerQuestion: (
-    questionId: number,
-    selected: string,
-    timeTaken: number
-  ) => Promise<void>;
-  nextQuestion: () => void;
-  resetGame: () => void;
-  // New SoundManager-based/GameActions API
-  startGame: () => void;
+  visualCue: "none" | "correct" | "wrong";
+
+  // Derived
+  currentQuestion: Question | null;
+  currentQuestionIndex: number;
+  totalQuestions: number;
+  questionTimer: number;
+  roundTimer: number;
+
+  // Chat
+  messages: ChatMessage[];
+  fetchMessages: (gameId: number) => Promise<void>;
+  sendMessage: (text: string) => Promise<void>;
+
+  // Realtime
+  subscribeToChat: (gameId: number) => void;
+  unsubscribeFromChat: () => void;
+
+  // Game flow
+  fetchQuestions: (gameId: number) => Promise<void>;
+  startRoundCountdown: () => void;
   tickRoundTimer: () => void;
-  selectAnswer: (answerId: string, isCorrect: boolean) => void;
-  gameOver: () => void;
+  selectAnswer: (answerId: string) => void;
   advanceToNextQuestion: () => void;
+  resetGame: () => void;
+  gameOver: () => void;
+
+  _chatChannel?: RealtimeChannel | null;
 }
 
-export const useGameStore = create<GameState>((set, get) => ({
+// ───────────────────────── CONSTANTS ─────────────────────────
+const QUESTION_DURATION = 15;
+
+// ───────────────────────── STORE ─────────────────────────
+export const useGameStore = create<GameStore>((set, get) => ({
+  gameId: null,
+  gameState: "LOBBY",
   round: 1,
   current: 0,
   questions: [],
-  timeLeft: INITIAL_QUESTION_TIMER,
+  timeLeft: QUESTION_DURATION,
   score: 0,
-  status: "idle",
   selectedAnswer: null,
+  visualCue: "none",
+  messages: [],
+  _chatChannel: null,
 
-  fetchQuestions: async () => {
-    const res = await fetch("/api/game/start");
-    const data = await res.json();
-    set({ questions: data.questions, status: "playing" });
-    startCountdown(
-      INITIAL_QUESTION_TIMER,
-      (t) => set({ timeLeft: t }),
-      () => get().nextQuestion()
-    );
+  // Derived fields
+  get currentQuestion() {
+    const { questions, current } = get();
+    return questions[current] ?? null;
+  },
+  get currentQuestionIndex() {
+    return get().current;
+  },
+  get totalQuestions() {
+    return get().questions.length;
+  },
+  get questionTimer() {
+    return get().timeLeft;
+  },
+  get roundTimer() {
+    return get().timeLeft;
   },
 
-  answerQuestion: async (questionId, selected, timeTaken) => {
-    const res = await fetch("/api/game/answer", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId: 1, // will be replaced with real fid from auth store
-        gameId: 1,
-        questionId,
-        selected,
-        timeTaken,
-      }),
-    });
-    const { correct, points } = await res.json();
-    if (correct) set((s) => ({ score: s.score + points }));
-  },
+  // ───────── Chat Logic ─────────
+  fetchMessages: async (gameId: number) => {
+    try {
+      const fid = useAuthStore.getState().fid;
+      if (!fid) return;
+      const res = await fetch(`/api/chat?gameId=${gameId}`, {
+        headers: { "x-farcaster-id": String(fid) },
+      });
+      if (!res.ok) throw new Error("Failed to fetch chat");
+      const data: ChatApiResponse[] = await res.json();
 
-  nextQuestion: () => {
-    const { current, questions } = get();
-    if (current < questions.length - 1) {
-      set({ current: current + 1, timeLeft: INITIAL_QUESTION_TIMER });
-      startCountdown(
-        INITIAL_QUESTION_TIMER,
-        (t) => set({ timeLeft: t }),
-        () => get().nextQuestion()
-      );
-    } else {
-      set({ status: "ended" });
+      const formatted: ChatMessage[] = data.map((m) => ({
+        id: m.messageId,
+        username: m.userName ?? "Anon",
+        message: m.message,
+        avatarUrl: m.avatarUrl ?? "/images/avatars/default.png",
+        time: new Date(m.createdAt).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      }));
+
+      set({ messages: formatted });
+    } catch (err) {
+      console.error("fetchMessages error:", err);
     }
   },
 
-  resetGame: () =>
+  sendMessage: async (text: string) => {
+    const { gameId, messages } = get();
+    const { fid, username, pfpUrl } = useAuthStore.getState();
+    if (!fid || !gameId) return;
+
+    try {
+      const temp: ChatMessage = {
+        id: Date.now(),
+        username: username || "You",
+        message: text,
+        avatarUrl: pfpUrl || "/images/avatars/a.png",
+        time: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      };
+      set({ messages: [...messages, temp] });
+
+      await fetch(`/api/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-farcaster-id": String(fid),
+        },
+        body: JSON.stringify({ gameId, message: text }),
+      });
+    } catch (err) {
+      console.error("sendMessage error:", err);
+    }
+  },
+
+  // ───────── Realtime Chat ─────────
+  subscribeToChat: (gameId: number) => {
+    const store = get();
+    if (store._chatChannel) {
+      store._chatChannel.unsubscribe();
+      set({ _chatChannel: null });
+    }
+
+    const channel = supabase
+      .channel(`chat_game_${gameId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "Chat",
+          filter: `gameId=eq.${gameId}`,
+        },
+        (payload) => {
+          const msg = payload.new as {
+            id: number;
+            message: string;
+            createdAt: string;
+          };
+          set((s) => ({
+            messages: [
+              ...s.messages,
+              {
+                id: msg.id,
+                username: "Player",
+                message: msg.message,
+                avatarUrl: "/images/avatars/default.png",
+                time: new Date(msg.createdAt).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }),
+              },
+            ],
+          }));
+        }
+      )
+      .subscribe();
+
+    // ✅ Cleanup automatically when tab closes
+    const cleanup = () => {
+      channel.unsubscribe();
+      set({ _chatChannel: null });
+      window.removeEventListener("beforeunload", cleanup);
+    };
+    window.addEventListener("beforeunload", cleanup);
+
+    set({ _chatChannel: channel });
+  },
+
+  unsubscribeFromChat: () => {
+    const { _chatChannel } = get();
+    if (_chatChannel) {
+      _chatChannel.unsubscribe();
+      set({ _chatChannel: null });
+    }
+  },
+
+  // ───────── Game Logic ─────────
+  fetchQuestions: async (gameId: number) => {
+    if (!gameId) {
+      console.warn("fetchQuestions called without a gameId");
+      return;
+    }
+    try {
+      const res = await fetch(`/api/games/${gameId}`);
+      const data = await res.json();
+      set({
+        questions: data.questions || [],
+        gameId,
+        current: 0,
+        gameState: "LOBBY",
+        messages: [],
+      });
+      await get().fetchMessages(gameId);
+      get().subscribeToChat(gameId);
+    } catch (e) {
+      console.error("Failed to fetch questions:", e);
+    }
+  },
+
+  startRoundCountdown: () => {
+    SoundManager.play("countdown");
+    set({ gameState: "ROUND_COUNTDOWN" });
+    setTimeout(() => {
+      set({
+        gameState: "QUESTION_ACTIVE",
+        timeLeft: QUESTION_DURATION,
+        selectedAnswer: null,
+        visualCue: "none",
+      });
+    }, 3000);
+  },
+
+  tickRoundTimer: () => {
+    const { gameState, timeLeft } = get();
+    if (gameState !== "QUESTION_ACTIVE") return;
+    if (timeLeft <= 1) get().selectAnswer("");
+    else set({ timeLeft: timeLeft - 1 });
+  },
+
+  selectAnswer: (answerId: string) => {
+    const { current, questions, timeLeft, score, gameState } = get();
+    if (gameState !== "QUESTION_ACTIVE") return;
+
+    const q = questions[current];
+    const isCorrect = q?.correctAnswerId
+      ? q.correctAnswerId === answerId
+      : Math.random() > 0.5;
+
+    set({
+      selectedAnswer: answerId,
+      gameState: "ANSWER_SUBMITTED",
+      visualCue: isCorrect ? "correct" : "wrong",
+    });
+
+    SoundManager.play("click");
+    SoundManager.play(isCorrect ? "correct" : "wrong");
+
+    if (q) {
+      fetch("/api/game/answer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: 1,
+          gameId: get().gameId,
+          questionId: q.id,
+          selected: answerId,
+          timeTaken: QUESTION_DURATION - timeLeft,
+        }),
+      })
+        .then((r) => r.json())
+        .then(({ correct, points }: { correct: boolean; points: number }) => {
+          if (correct) set({ score: score + (points || 0) });
+        })
+        .catch(console.error);
+    }
+
+    setTimeout(() => {
+      set({ visualCue: "none" });
+      get().advanceToNextQuestion();
+    }, 1800);
+  },
+
+  advanceToNextQuestion: () => {
+    const { current, questions } = get();
+    if (current < questions.length - 1) {
+      set({
+        current: current + 1,
+        timeLeft: QUESTION_DURATION,
+        selectedAnswer: null,
+      });
+      SoundManager.play("nextQuestion");
+      get().startRoundCountdown();
+    } else get().gameOver();
+  },
+
+  resetGame: () => {
+    get().unsubscribeFromChat();
     set({
       round: 1,
       current: 0,
       questions: [],
       score: 0,
-      status: "idle",
+      gameState: "LOBBY",
       selectedAnswer: null,
-    }),
-
-  // --- SoundManager-based/GameActions API ---
-  startGame: () => {
-    SoundManager.play("countdown");
-    set({
-      status: "QUESTION_ACTIVE",
-      timeLeft: INITIAL_ROUND_TIMER,
-      current: 0,
-      score: 0,
-      selectedAnswer: null,
-      round: 1,
+      visualCue: "none",
+      timeLeft: QUESTION_DURATION,
+      messages: [],
+      gameId: null,
+      _chatChannel: null,
     });
-    // Optionally (re)fetch questions, otherwise rely on previous fetchQuestions
-    fetch("/api/game/start")
-      .then((res) => res.json())
-      .then((data) => {
-        set({ questions: data.questions });
-      });
-  },
-
-  tickRoundTimer: () => {
-    const newTime = get().timeLeft - 1;
-    if (get().status !== "QUESTION_ACTIVE") return;
-    if (newTime <= 0) {
-      get().selectAnswer("", false); // treat as wrong if time runs out
-    } else {
-      set({ timeLeft: newTime });
-    }
-  },
-
-  selectAnswer: (answerId: string, isCorrect: boolean) => {
-    if (get().status !== "QUESTION_ACTIVE") return;
-    set({ selectedAnswer: answerId, status: "ANSWER_SUBMITTED" });
-    SoundManager.play("click");
-    SoundManager.play(isCorrect ? "correct" : "wrong");
-
-    // Optionally submit answer asynchronously
-    const currentQuestion = get().questions[get().current];
-    if (currentQuestion) {
-      fetch("/api/game/answer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: 1, // Replace with real fid from auth store
-          gameId: 1, // Replace with actual if needed
-          questionId: currentQuestion.id,
-          selected: answerId,
-          timeTaken: INITIAL_QUESTION_TIMER - get().timeLeft,
-        }),
-      })
-        .then((res) => res.json())
-        .then(({ correct, points }) => {
-          if (correct) set((s) => ({ score: s.score + points }));
-        })
-        .catch(() => {});
-    }
-
-    setTimeout(() => {
-      get().advanceToNextQuestion();
-    }, 2000);
-  },
-
-  advanceToNextQuestion: () => {
-    const idx = get().current;
-    const total = get().questions.length;
-    if (idx < total - 1) {
-      set({
-        current: idx + 1,
-        timeLeft: INITIAL_QUESTION_TIMER,
-        selectedAnswer: null,
-        status: "QUESTION_ACTIVE",
-        round: get().round + 1,
-      });
-    } else {
-      get().gameOver();
-    }
   },
 
   gameOver: () => {
-    set({ status: "GAME_OVER" });
+    get().unsubscribeFromChat();
+    set({ gameState: "GAME_OVER", messages: [] });
     SoundManager.play("gameOver");
   },
 }));

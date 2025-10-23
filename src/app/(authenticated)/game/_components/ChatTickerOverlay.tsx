@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
 import clsx from "clsx";
