@@ -42,6 +42,7 @@ export interface GameStore {
   // Game flow
   fetchActiveGame: () => Promise<void>;
   setGame: (game: GameWithConfigAndQuestions) => void;
+  setGameState: (gameState: GameState) => void;
   selectAnswer: (answerId: string) => void;
   advanceToNextQuestion: () => void;
   resetGame: () => void;
@@ -204,6 +205,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       gameState: "LOBBY",
       selectedAnswer: null,
     });
+  },
+
+  setGameState: (gameState: GameState) => {
+    set({ gameState });
   },
 
   selectAnswer: (answerId) => {
