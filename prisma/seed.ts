@@ -24,7 +24,7 @@ async function main() {
     create: {
       name: "Test Game",
       description: "A fun test game",
-      startTime: new Date(),
+      startTime: new Date(Date.now() + 24 * 60 * 60 * 1000),
       questions: {
         create: [
           {

@@ -1,5 +1,5 @@
 "use client";
-
+import { useEffect } from "react";
 import { Clock } from "@/components/icons";
 import { AvatarDiamond } from "./AvatarDiamond";
 import ChatDrawer from "./ChatDrawer";
@@ -11,10 +11,24 @@ import { useCountdown } from "@/hooks/useCountdown";
 export default function LobbyView() {
   const game = useGameStore((state) => state.game);
   const ticket = useLobbyStore((state) => state.ticket);
+  const setGameState = useGameStore((state) => state.setGameState);
 
   // Countdown to game start time if available
   const startTimeMs = game?.startTime ? new Date(game.startTime).getTime() : 0;
-  const { millisecondsLeft } = useCountdown({ target: startTimeMs, autoStart: true });
+
+  // If the start time is in the past, immediately move to QUESTION_ACTIVE
+  useEffect(() => {
+    if (game?.startTime && new Date(game.startTime).getTime() < Date.now()) {
+      setGameState("QUESTION_ACTIVE");
+    }
+  }, [game?.startTime, setGameState]);
+  const { millisecondsLeft } = useCountdown({
+    target: startTimeMs,
+    autoStart: true,
+    onComplete: () => {
+      setGameState("QUESTION_ACTIVE");
+    },
+  });
   const totalSec = Math.max(0, Math.ceil(millisecondsLeft / 1000));
   const minutes = Math.floor(totalSec / 60);
   const seconds = totalSec % 60;

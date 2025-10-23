@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import LogoIcon from "@/components/logo/LogoIcon";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,11 @@ import { SpotsLeft } from "./_components/SpotsLeft";
 import { useLobbyStore } from "@/stores/lobbyStore";
 import { useMiniUser } from "@/hooks/useMiniUser";
 import { useGameStore } from "@/stores/gameStore";
+import { useGetTokenBalance } from "@coinbase/onchainkit/wallet";
+import { env } from "@/lib/env";
+import { InviteFriendsDrawer } from "@/app/(authenticated)/profile/_components/InviteFriendsDrawer";
+
+import { base } from "wagmi/chains";
 
 // ───────────────────────── CONSTANTS ─────────────────────────
 
@@ -22,6 +27,17 @@ export default function BuyWafflePage() {
   const buyTicket = useLobbyStore((state) => state.buyTicket);
   const ticket = useLobbyStore((state) => state.ticket);
   const stats = useLobbyStore((state) => state.stats);
+  const referralCode = useLobbyStore((s) => s.referralData?.code ?? "");
+  const createReferral = useLobbyStore((s) => s.createReferral);
+  const [isInviteOpen, setInviteOpen] = useState(false);
+  const { roundedBalance } = useGetTokenBalance(user.wallet as `0x${string}`, {
+    address: env.nextPublicUsdcAddress as `0x${string}`,
+    chainId: base.id,
+    decimals: 6,
+    image: "/images/tokens/usdc.png",
+    name: "USDC",
+    symbol: "USDC",
+  });
 
   // If already have a ticket, redirect to confirmation
   useEffect(() => {
@@ -62,6 +78,18 @@ export default function BuyWafflePage() {
     await buyTicket(user.fid, game.id);
   };
 
+  const handleOpenInvite = async () => {
+    try {
+      if (!referralCode && user.fid) {
+        await createReferral(String(user.fid));
+      }
+    } catch (e) {
+      console.error("Failed to create referral:", e);
+    } finally {
+      setInviteOpen(true);
+    }
+  };
+
   return (
     <div className="h-screen flex flex-col bg-figmaYay noise relative font-body">
       {/* HEADER */}
@@ -73,7 +101,7 @@ export default function BuyWafflePage() {
         <LogoIcon />
         <div className="flex items-center gap-1.5 bg-figmaYay rounded-full px-3 py-1.5">
           <WalletIcon className="w-4 h-4 text-foreground" />
-          <span className="text-xs text-foreground">{`$983.23`}</span>
+          <span className="text-xs text-foreground">{`$${roundedBalance}`}</span>
         </div>
       </div>
 
@@ -110,6 +138,7 @@ export default function BuyWafflePage() {
         <button
           className="mt-5 flex items-center gap-1 text-xs font-bold text-[#00CFF2] hover:underline focus:outline-none"
           tabIndex={0}
+          onClick={handleOpenInvite}
         >
           <InviteIcon />
           INVITE FRIENDS{" "}
@@ -129,6 +158,11 @@ export default function BuyWafflePage() {
       </div>
 
       <BottomNav />
+      <InviteFriendsDrawer
+        open={isInviteOpen}
+        code={referralCode || "------"}
+        onClose={() => setInviteOpen(false)}
+      />
     </div>
   );
 }

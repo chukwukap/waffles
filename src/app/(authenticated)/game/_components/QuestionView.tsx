@@ -132,7 +132,8 @@ export default function QuestionView() {
         )}
       >
         <Image
-          src={game?.questions?.[currentQuestionIndex]?.imageUrl}
+          // src={game?.questions?.[currentQuestionIndex]?.imageUrl}
+          src="/images/avatars/a.png"
           alt="Question image"
           width={1120}
           height={1120}
