@@ -3,6 +3,7 @@
 import { useGameStore } from "@/stores/gameStore";
 import ChatTickerOverlay from "./ChatTickerOverlay";
 import ChatDrawer from "./ChatDrawer";
+import { useCountdown } from "@/hooks/useCountdown";
 
 /** blue used in mocks */
 const BLUE = "#1E8BFF";
@@ -10,6 +11,12 @@ const BLUE = "#1E8BFF";
 export default function RoundCountdownStage() {
   const gameState = useGameStore((s) => s.gameState);
   const game = useGameStore((s) => s.game);
+  const totalSeconds = game?.config?.roundTimeLimit ?? 0;
+  const { millisecondsLeft } = useCountdown({
+    durationSeconds: totalSeconds,
+    autoStart: gameState === "ROUND_COUNTDOWN",
+  });
+  const ratio = totalSeconds > 0 ? Math.max(0, Math.min(1, millisecondsLeft / (totalSeconds * 1000))) : 0;
 
   return (
     <div>
@@ -28,8 +35,8 @@ export default function RoundCountdownStage() {
 
         <div className="grid place-items-center">
           <CountdownCircle
-            ratio={game?.config?.roundTimeLimit ?? 0}
-            total={game?.config?.roundTimeLimit ?? 0}
+            ratio={ratio}
+            total={totalSeconds}
           />
         </div>
 
