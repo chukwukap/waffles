@@ -109,7 +109,7 @@ export default function QuestionView() {
     if (game?.id && (!game.questions || game.questions.length === 0)) {
       fetchQuestions();
     }
-  }, [game?.id, game?.questions?.length, fetchQuestions]);
+  }, [game?.id, game?.questions?.length, fetchQuestions, game?.questions]);
 
   // Render the correct time and progress
   const time =
