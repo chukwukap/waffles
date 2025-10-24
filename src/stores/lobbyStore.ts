@@ -33,6 +33,7 @@ interface LobbyState {
   referralData: ReferralData | null;
   createReferral: (farcasterId: string) => Promise<void>;
   validateReferral: (code: string, farcasterId: string) => Promise<void>;
+  setReferralData: (data: ReferralData | null) => void;
   // Stats
   stats: LobbyStats | null;
   fetchStats: () => Promise<void>;
@@ -49,6 +50,10 @@ export const useLobbyStore = create<LobbyState>()((set, get) => {
     // ───────────────────────── REFERRAL ─────────────────────────
     referralData: null,
 
+    setReferralData(data) {
+      set({ referralData: data });
+    },
+
     async createReferral(farcasterId: string) {
       try {
         const res = await fetch("/api/referral/create", {
@@ -59,7 +64,11 @@ export const useLobbyStore = create<LobbyState>()((set, get) => {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to create referral");
         set({
-          referralData: data,
+          referralData: {
+            code: data.code,
+            inviterFarcasterId: farcasterId,
+            inviteeId: data.inviteeId,
+          },
         });
       } catch (err) {
         console.error(err);
@@ -78,7 +87,11 @@ export const useLobbyStore = create<LobbyState>()((set, get) => {
         console.log("validateReferral data:", data);
         if (data.valid) {
           set({
-            referralData: data.referral,
+            referralData: {
+              code: data.referral.code,
+              inviterFarcasterId: farcasterId,
+              inviteeId: data.referral.inviteeId,
+            },
           });
         } else {
           set({ referralData: null });
