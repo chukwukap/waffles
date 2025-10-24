@@ -33,5 +33,6 @@ export const minikitConfig: MiniAppManifest = {
     ogTitle: "Waffles",
     ogDescription: "Pattern-matching tournaments built for Farcaster.",
     ogImageUrl: `${env.rootUrl}/og.png`,
+    noindex: true,
   },
 };
