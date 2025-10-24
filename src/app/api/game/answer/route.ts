@@ -29,10 +29,9 @@ export async function POST(req: Request) {
     const points = correct ? calculateScore(timeTaken, 10) : 0;
 
     // record per-question answer and update score
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const prismaAny = prisma as any;
+
     await prisma.$transaction([
-      prismaAny.answer.upsert({
+      prisma.answer.upsert({
         where: {
           userId_gameId_questionId: { userId: user.id, gameId, questionId },
         },

@@ -106,7 +106,7 @@ export default function BuyWafflePage() {
       </div>
 
       {/* MAIN CONTENT */}
-      <div className="flex-1 flex flex-col items-center gap-6 justify-center overflow-y-auto">
+      <div className="flex-1 flex flex-col items-center gap-3 justify-center overflow-y-auto">
         <div className="mb-6">
           <Image
             src="/images/illustration/waffle-ticket.png"
@@ -136,7 +136,7 @@ export default function BuyWafflePage() {
 
         {/* INVITE */}
         <button
-          className="mt-5 flex items-center gap-1 text-xs font-bold text-[#00CFF2] hover:underline focus:outline-none"
+          className="flex items-center gap-1 text-xs font-bold text-[#00CFF2] hover:underline focus:outline-none"
           tabIndex={0}
           onClick={handleOpenInvite}
         >
@@ -149,10 +149,16 @@ export default function BuyWafflePage() {
           <SpotsLeft
             current={stats?.totalTickets || 0}
             total={game.config!.maxPlayers}
-            avatars={(stats?.players ?? []).map(
-              (p) => p.pfpUrl || "/images/avatars/a.png"
-            )}
-            subtitle={`${stats?.totalTickets} / ${game.config!.maxPlayers}`}
+            // avatars={(stats?.players ?? []).map(
+            //   (p) => p.pfpUrl || "/images/avatars/a.png"
+            // )}
+
+            avatars={[
+              "/images/avatars/a.png",
+              "/images/avatars/b.png",
+              "/images/avatars/c.png",
+              "/images/avatars/d.png",
+            ]}
           />
         )}
       </div>

@@ -14,13 +14,13 @@ import { randomBytes } from "crypto";
  */
 export async function POST(req: Request) {
   try {
-    const { farcasterId, gameId, amount, txHash } = await req.json();
-    console.log("buyTicket request:", farcasterId, gameId, amount, txHash);
+    const { farcasterId, gameId, txHash } = await req.json();
+    console.log("buyTicket request:", farcasterId, gameId, txHash);
 
     // Input validation
-    if (!farcasterId || !gameId || !amount) {
+    if (!farcasterId || !gameId) {
       return Response.json(
-        { error: "Invalid or missing farcasterId, gameId, or amount" },
+        { error: "Invalid or missing farcasterId, gameId" },
         { status: 400 }
       );
     }
@@ -43,19 +43,8 @@ export async function POST(req: Request) {
       return Response.json({ error: "Game not found" }, { status: 404 });
     }
 
-    // If config exists, check amount matches game's ticket price
-    if (
-      game.config &&
-      typeof game.config.ticketPrice === "number" &&
-      Number(Number(amount).toFixed(2)) !==
-        Number(Number(game.config.ticketPrice).toFixed(2))
-    ) {
-      return Response.json(
-        {
-          error: `Amount (${amount}) does not match ticket price (${game.config.ticketPrice})`,
-        },
-        { status: 400 }
-      );
+    if (!game.config) {
+      return Response.json({ error: "Game config not found" }, { status: 404 });
     }
 
     // Only one ticket per user per game: if already exists, return success
@@ -98,7 +87,7 @@ export async function POST(req: Request) {
       data: {
         user: { connect: { id: userId } },
         game: { connect: { id: gameId } },
-        amountUSDC: amount,
+        amountUSDC: game.config.ticketPrice,
         code,
         txHash: txHash ?? null,
         status,
