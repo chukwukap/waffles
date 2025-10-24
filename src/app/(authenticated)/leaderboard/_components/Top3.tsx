@@ -1,4 +1,4 @@
-import { Entry } from "@/stores/leaderboardStore";
+import { LeaderboardEntry as Entry } from "@/state";
 import { TrophyIcon, UsdcIcon } from "@/components/icons";
 
 /** Top3: fixed single row (no wrap), fully responsive, no overflow */

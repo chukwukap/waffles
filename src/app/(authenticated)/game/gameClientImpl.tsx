@@ -1,20 +1,12 @@
 "use client";
 
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { useGameStore } from "@/stores/gameStore";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import CountdownView from "./_components/CountdownView";
 import QuestionView from "./_components/QuestionView";
 import WaitingView from "./_components/WaitingView";
 import GameOverView from "./_components/GameOverView";
 import { useMiniUser } from "@/hooks/useMiniUser";
 import { useRouter } from "next/navigation";
-import { useLobbyStore } from "@/stores/lobbyStore";
 import { cn } from "@/lib/utils";
 import LogoIcon from "@/components/logo/LogoIcon";
 import { LeaveGameIcon, WalletIcon } from "@/components/icons";
@@ -23,21 +15,20 @@ import { env } from "@/lib/env";
 import { baseSepolia } from "wagmi/chains";
 import LeaveGameDrawer from "./_components/LeaveGameDrawer";
 import SoundManager from "@/lib/SoundManager";
-import type { GameView } from "@/stores/gameStore";
-import { useSyncUser } from "@/hooks/useSyncUser";
+import { useGame, useLobby, type GameView } from "@/state";
 
 export function GameClientImpl() {
-  useSyncUser();
   const router = useRouter();
-  const gameView = useGameStore((s) => s.gameView);
-  const game = useGameStore((s) => s.game);
-  const resetGame = useGameStore((s) => s.resetGame);
-  const ticket = useLobbyStore((state) => state.ticket);
+  const {
+    game,
+    view: gameView,
+    resetGame,
+    fetchMessages,
+    setMessages,
+  } = useGame();
+  const { ticket, fetchTicket } = useLobby();
   const user = useMiniUser();
 
-  const fetchMessages = useGameStore((state) => state.fetchMessages);
-  const setMessages = useGameStore((state) => state.setMessages);
-  const fetchTicket = useLobbyStore((state) => state.fetchTicket);
   // Drawer starts closed; opened when user taps "leave"
   const [isLeaveGameDrawerOpen, setIsLeaveGameDrawerOpen] = useState(false);
   const soundEnabled = game?.config?.soundEnabled ?? true;
@@ -60,6 +51,8 @@ export function GameClientImpl() {
 
   // Unlock Web Audio API after the first user interaction
   useEffect(() => {
+    if (!soundEnabled) return;
+
     const handleFirstInteraction = () => {
       SoundManager.init().catch((error) => {
         console.debug("Sound manager init failed", error);
@@ -75,7 +68,7 @@ export function GameClientImpl() {
       window.removeEventListener("pointerdown", handleFirstInteraction);
       window.removeEventListener("keydown", handleFirstInteraction);
     };
-  }, []);
+  }, [soundEnabled]);
 
   // Fetch messages if we have a valid game and user
   useEffect(() => {
@@ -137,7 +130,6 @@ export function GameClientImpl() {
     previousViewRef.current = gameView;
   }, [gameView, soundEnabled]);
 
-  // Stop all sounds when sound is disabled or component unmounts
   useEffect(() => {
     if (!soundEnabled) {
       SoundManager.stopAll();
@@ -201,7 +193,14 @@ export function GameClientImpl() {
           ) : (
             <div className="flex items-center gap-1.5 bg-figma rounded-full px-3 py-1.5">
               <WalletIcon className="w-4 h-4 text-foreground" />
-              <span className="text-xs text-foreground">{`$${roundedBalance}`}</span>
+              <span className="text-xs text-foreground">
+                {new Intl.NumberFormat("en-US", {
+                  style: "currency",
+                  currency: "USD",
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                }).format(Number(roundedBalance || 0))}
+              </span>
             </div>
           )}
         </div>

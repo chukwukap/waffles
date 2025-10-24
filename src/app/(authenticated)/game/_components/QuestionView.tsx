@@ -4,7 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { PixelButton } from "@/components/buttons/PixelButton";
-import { useGameStore } from "@/stores/gameStore";
+import { useGame } from "@/state";
 import { useMiniUser } from "@/hooks/useMiniUser";
 
 /** Shared cap so the image and buttons are exactly the same width */
@@ -19,14 +19,16 @@ const PALETTES = [
 ] as const;
 
 export default function QuestionView() {
-  // ── Store selectors
-  const game = useGameStore((s) => s.game);
-  const currentQuestionIndex = useGameStore((s) => s.currentQuestionIndex);
-  const selectedAnswer = useGameStore((s) => s.selectedAnswer);
-  const selectAnswer = useGameStore((s) => s.selectAnswer);
-  const gameView = useGameStore((s) => s.gameView);
-  const submitAnswer = useGameStore((s) => s.submitAnswer);
-  const fetchQuestions = useGameStore((s) => s.fetchQuestions);
+  // ── Context selectors
+  const {
+    game,
+    questionIndex: currentQuestionIndex,
+    selectedAnswer,
+    selectAnswer,
+    view: gameView,
+    submitAnswer,
+    loadQuestions,
+  } = useGame();
   const user = useMiniUser();
 
   const locked = gameView !== "QUESTION_ACTIVE";
@@ -107,9 +109,9 @@ export default function QuestionView() {
   // Ensure questions are loaded if not present
   React.useEffect(() => {
     if (game?.id && (!game.questions || game.questions.length === 0)) {
-      fetchQuestions();
+      loadQuestions();
     }
-  }, [game?.id, game?.questions?.length, fetchQuestions, game?.questions]);
+  }, [game?.id, game?.questions, loadQuestions]);
 
   // Render the correct time and progress
   const time =

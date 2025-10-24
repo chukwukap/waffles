@@ -10,13 +10,12 @@ import { BottomNav } from "@/components/BottomNav";
 import Image from "next/image";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { SpotsLeft } from "./_components/SpotsLeft";
-import { useLobbyStore } from "@/stores/lobbyStore";
 import { useMiniUser } from "@/hooks/useMiniUser";
-import { useGameStore } from "@/stores/gameStore";
 import { useGetTokenBalance } from "@coinbase/onchainkit/wallet";
 import { env } from "@/lib/env";
 import { InviteFriendsDrawer } from "@/app/(authenticated)/profile/_components/InviteFriendsDrawer";
 import { Share } from "./_components/Share";
+import { useGame, useLobby } from "@/state";
 
 import { base } from "wagmi/chains";
 
@@ -39,17 +38,20 @@ type FriendSummary = {
 export default function BuyWafflePage() {
   const { sendTokenAsync } = useSendToken();
   const router = useRouter();
-  const game = useGameStore((state) => state.game);
+  const { game } = useGame();
   const user = useMiniUser();
-  const buyTicket = useLobbyStore((state) => state.buyTicket);
-  const ticket = useLobbyStore((state) => state.ticket);
-  const stats = useLobbyStore((state) => state.stats);
-  const fetchStats = useLobbyStore((state) => state.fetchStats);
-  const referralCode = useLobbyStore((s) => s.referralData?.code ?? "");
-  const createReferral = useLobbyStore((s) => s.createReferral);
-  const fetchTicket = useLobbyStore((s) => s.fetchTicket);
-  const fetchReferralStatus = useLobbyStore((s) => s.fetchReferralStatus);
-  const inviteStatusLoaded = useLobbyStore((s) => s.inviteStatusLoaded);
+  const {
+    ticket,
+    stats,
+    refreshStats,
+    fetchTicket,
+    purchaseTicket,
+    createReferral,
+    fetchReferralStatus,
+    hasValidInvite,
+    inviteStatusLoaded,
+    myReferral,
+  } = useLobby();
   const [isInviteOpen, setInviteOpen] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [friends, setFriends] = useState<FriendSummary[]>([]);
@@ -78,11 +80,11 @@ export default function BuyWafflePage() {
 
   useEffect(() => {
     if (!stats) {
-      fetchStats().catch((err) =>
+      refreshStats().catch((err) =>
         console.error("Failed to load lobby stats", err)
       );
     }
-  }, [stats, fetchStats]);
+  }, [stats, refreshStats]);
 
   // ───────────────────────── HANDLER ─────────────────────────
   const handlePurchase = async () => {
@@ -103,12 +105,11 @@ export default function BuyWafflePage() {
       setIsPurchasing(true);
       setPurchaseError(null);
 
-      if (!inviteStatusLoaded) {
-        await fetchReferralStatus(String(user.fid));
-      }
+      const inviteOk = inviteStatusLoaded
+        ? hasValidInvite
+        : await fetchReferralStatus(String(user.fid));
 
-      const { hasValidInvite: latestInvite } = useLobbyStore.getState();
-      if (!latestInvite) {
+      if (!inviteOk) {
         setPurchaseError("Redeem an invite code before buying a ticket.");
         router.push("/lobby/invite-code");
         return;
@@ -119,17 +120,17 @@ export default function BuyWafflePage() {
         recipientAddress: env.waffleMainAddress,
       });
 
-      await buyTicket(user.fid!, game.id);
-      await Promise.all([
-        fetchTicket(String(user.fid), game.id),
-        fetchStats(),
-      ]);
+      const createdTicket = await purchaseTicket(user.fid!, game.id);
+      if (createdTicket) {
+        await fetchTicket(String(user.fid), game.id);
+        await refreshStats();
+      }
 
       setShowShare(true);
     } catch (err) {
       console.error("Ticket purchase failed", err);
-      const { hasValidInvite: currentInvite } = useLobbyStore.getState();
-      if (!currentInvite) {
+      const inviteOk = inviteStatusLoaded ? hasValidInvite : false;
+      if (!inviteOk) {
         setPurchaseError("Redeem an invite code before buying a ticket.");
       } else if (
         err instanceof Error &&
@@ -146,7 +147,7 @@ export default function BuyWafflePage() {
 
   const handleOpenInvite = async () => {
     try {
-      if (!referralCode && user.fid) {
+      if (!myReferral?.code && user.fid) {
         await createReferral(String(user.fid));
       }
     } catch (e) {
@@ -341,7 +342,7 @@ export default function BuyWafflePage() {
       <BottomNav />
       <InviteFriendsDrawer
         open={isInviteOpen}
-        code={referralCode || "------"}
+        code={myReferral?.code || "------"}
         onClose={() => setInviteOpen(false)}
       />
     </div>

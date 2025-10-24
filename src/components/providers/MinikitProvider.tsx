@@ -3,7 +3,6 @@
 import { OnchainKitProvider } from "@coinbase/onchainkit";
 import { baseSepolia } from "wagmi/chains";
 import { env } from "@/lib/env";
-import { useSyncUser } from "@/hooks/useSyncUser";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
 import { useEffect } from "react";
@@ -45,7 +44,6 @@ function IsMiniAppReady({ children }: { children: React.ReactNode }) {
       setFrameReady();
     }
   }, [setFrameReady, isFrameReady]);
-  useSyncUser();
 
   return <>{children}</>;
 }

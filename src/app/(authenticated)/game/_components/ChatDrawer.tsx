@@ -4,14 +4,14 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { ForwardMessageIcon, MessageIcon } from "@/components/icons";
-import { useGameStore } from "@/stores/gameStore";
+import { useGame } from "@/state";
 import { useMiniUser } from "@/hooks/useMiniUser";
 
 export default function ChatDrawer() {
   const [open, setOpen] = useState(false);
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { messages, sendMessage } = useGameStore();
+  const { messages, sendMessage } = useGame();
   const user = useMiniUser();
 
   const scrollToBottom = () => {

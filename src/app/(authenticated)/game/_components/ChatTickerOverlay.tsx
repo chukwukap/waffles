@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
 import clsx from "clsx";
-import { useGameStore } from "@/stores/gameStore";
+import { useGame } from "@/state";
 
 export default function ChatTickerOverlay({
   className,
@@ -10,7 +10,7 @@ export default function ChatTickerOverlay({
   className?: string;
   maxItems?: number;
 }) {
-  const messages = useGameStore((s) => s.messages);
+  const { messages } = useGame();
   const containerRef = useRef<HTMLDivElement>(null);
 
   const items = useMemo(() => {

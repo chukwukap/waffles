@@ -10,9 +10,8 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 
-import { useGameStore } from "@/stores/gameStore";
+import { useGame, useLobby } from "@/state";
 import { useMiniUser } from "@/hooks/useMiniUser";
-import { useLobbyStore } from "@/stores/lobbyStore";
 import { ZapIcon, WinningsIcon, TrophyIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { useComposeCast } from "@coinbase/onchainkit/minikit";
@@ -39,7 +38,7 @@ const formatNumber = (value: number | null | undefined) =>
 
 export default function GameOverView() {
   const router = useRouter();
-  const game = useGameStore((s) => s.game);
+  const { game } = useGame();
 
   const {
     fid,
@@ -47,8 +46,7 @@ export default function GameOverView() {
     pfpUrl: fallbackAvatar,
   } = useMiniUser();
 
-  const lobbyStats = useLobbyStore((s) => s.stats);
-  const fetchLobbyStats = useLobbyStore((s) => s.fetchStats);
+  const { stats: lobbyStats, refreshStats: fetchLobbyStats } = useLobby();
 
   const [summary, setSummary] = useState<SummaryState>({ status: "idle" });
 

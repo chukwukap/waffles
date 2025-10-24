@@ -3,7 +3,7 @@ import LogoIcon from "@/components/logo/LogoIcon";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useLobbyStore } from "@/stores/lobbyStore";
+import { useLobby } from "@/state";
 import { PixelInput } from "@/components/inputs/PixelInput";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { PixelButton } from "@/components/buttons/PixelButton";
@@ -12,9 +12,7 @@ import { useMiniUser } from "@/hooks/useMiniUser";
 export default function InviteCodePage() {
   const router = useRouter();
 
-  const validateReferral = useLobbyStore((state) => state.validateReferral);
-  const referralData = useLobbyStore((state) => state.referralData);
-  const ticket = useLobbyStore((state) => state.ticket);
+  const { validateReferral, invitedBy, ticket } = useLobby();
   const user = useMiniUser();
 
   // If invite code is already valid, skip to Buy or directly into the game
@@ -25,13 +23,17 @@ export default function InviteCodePage() {
     }
   }, [ticket, router]);
 
-  const [inputCode, setInputCode] = useState(referralData?.code || "");
+  const [inputCode, setInputCode] = useState(invitedBy?.code || "");
   const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<
+    "idle" | "validating" | "success" | "failed"
+  >(invitedBy?.code ? "success" : "idle");
 
   // Debounced code validation as user types
   useEffect(() => {
     if (inputCode.trim().length < 6 || !user.fid) {
       setError(null);
+      setStatus("idle");
       return;
     }
     const timer = setTimeout(async () => {
@@ -40,10 +42,18 @@ export default function InviteCodePage() {
           console.error("User FID is null");
           return;
         }
-        await validateReferral(inputCode, user.fid.toString());
+        setStatus("validating");
+        const ok = await validateReferral(inputCode, user.fid.toString());
+        setStatus(ok ? "success" : "failed");
+        if (!ok) {
+          setError("Invalid code");
+        } else {
+          setError(null);
+        }
       } catch (err) {
         console.error(err);
         setError("Validation failed");
+        setStatus("failed");
       }
     }, 500);
     return () => clearTimeout(timer);
@@ -58,12 +68,9 @@ export default function InviteCodePage() {
       return;
     }
     if (!ticket) {
-      if (!user.fid) {
-        console.error("User FID is null");
-        return;
-      }
-      await validateReferral(inputCode, user.fid.toString());
-      if (!ticket) {
+      const ok = await validateReferral(inputCode, user.fid.toString());
+      setStatus(ok ? "success" : "failed");
+      if (!ok) {
         setError("Invalid code");
         return;
       }
@@ -154,7 +161,7 @@ export default function InviteCodePage() {
             </PixelButton>
           )}
 
-          {status === "success" && referralData && (
+          {status === "success" && (
             <PixelButton
               className="flex items-center gap-2 font-body"
               backgroundColor="#14B985"

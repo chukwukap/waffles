@@ -1,6 +1,6 @@
 "use client";
 
-import { useProfileStore } from "@/stores/profileStore";
+import { useProfile } from "@/state";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeftIcon, WalletIcon } from "@/components/icons";
@@ -141,8 +141,7 @@ const IconStat = ({
 
 /* ---------- Page ---------- */
 export default function AllTimeStatsPage() {
-  const allTimeStats = useProfileStore((s) => s.allTimeStats);
-  const fetchProfile = useProfileStore((s) => s.fetchProfile);
+  const { allTimeStats, fetchProfile } = useProfile();
   const { fid } = useMiniUser();
 
   useEffect(() => {

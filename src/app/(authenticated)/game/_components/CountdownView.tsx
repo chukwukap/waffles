@@ -1,6 +1,6 @@
 "use client";
 
-import { useGameStore } from "@/stores/gameStore";
+import { useGame } from "@/state";
 import ChatTickerOverlay from "./ChatTickerOverlay";
 import ChatDrawer from "./ChatDrawer";
 import { useCountdown } from "@/hooks/useCountdown";
@@ -9,16 +9,14 @@ import { useCountdown } from "@/hooks/useCountdown";
 const BLUE = "#1E8BFF";
 
 export default function RoundCountdownStage() {
-  const gameView = useGameStore((s) => s.gameView);
-  const game = useGameStore((s) => s.game);
-  const setGameView = useGameStore((s) => s.setGameView);
+  const { view: gameView, game, setView } = useGame();
   const totalSeconds = game?.config?.roundTimeLimit ?? 0;
   const { millisecondsLeft, secondsLeft } = useCountdown({
     durationSeconds: totalSeconds,
     autoStart: gameView === "ROUND_COUNTDOWN",
     onComplete: () => {
       // Move into the next question after the round countdown fully elapses
-      setGameView("QUESTION_ACTIVE");
+      setView("QUESTION_ACTIVE");
     },
   });
   const ratio =

@@ -1,16 +1,34 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useMiniUser } from "@/hooks/useMiniUser";
-import { useLobbyStore } from "@/stores/lobbyStore";
+import { useLobby } from "@/state";
 
 export function useSyncUser() {
   const { fid, username, pfpUrl, wallet } = useMiniUser();
-  const setReferralData = useLobbyStore((s) => s.setReferralData);
-  const fetchReferralStatus = useLobbyStore((s) => s.fetchReferralStatus);
+  const { registerReferralCode, fetchReferralStatus } = useLobby();
+  const lastSyncRef = useRef<{
+    fid: number;
+    username: string;
+    pfpUrl?: string | null;
+    wallet?: string | null;
+  } | null>(null);
 
   useEffect(() => {
     if (!fid || !username) return;
+
+    const last = lastSyncRef.current;
+    if (
+      last &&
+      last.fid === fid &&
+      last.username === username &&
+      last.pfpUrl === pfpUrl &&
+      last.wallet === wallet
+    ) {
+      return;
+    }
+
+    lastSyncRef.current = { fid, username, pfpUrl, wallet };
 
     const syncUser = async () => {
       console.log("syncing user", { fid, username, pfpUrl, wallet });
@@ -30,7 +48,7 @@ export function useSyncUser() {
         }
         const data = await res.json();
         if (data?.referralCode) {
-          setReferralData({
+          registerReferralCode({
             code: data.referralCode,
             inviterFarcasterId: String(fid),
             inviteeId: data.referral?.inviteeId,
@@ -44,5 +62,12 @@ export function useSyncUser() {
     };
 
     syncUser();
-  }, [fid, wallet, username, pfpUrl, setReferralData, fetchReferralStatus]);
+  }, [
+    fid,
+    wallet,
+    username,
+    pfpUrl,
+    registerReferralCode,
+    fetchReferralStatus,
+  ]);
 }
