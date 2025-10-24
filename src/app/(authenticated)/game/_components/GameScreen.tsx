@@ -3,7 +3,7 @@
 import { useGameStore } from "@/stores/gameStore";
 import CountdownView from "./CountdownView";
 import QuestionView from "./QuestionView";
-import LobbyView from "./LobbyView";
+import LobbyView from "./WaitingView";
 
 export default function GameScreen() {
   const gameState = useGameStore((s) => s.gameState);

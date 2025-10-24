@@ -42,7 +42,11 @@ export default function RoundCountdownStage() {
         </h1>
 
         <div className="grid place-items-center">
-          <CountdownCircle ratio={ratio} total={totalSeconds} secondsLeft={secondsLeft} />
+          <CountdownCircle
+            ratio={ratio}
+            total={totalSeconds}
+            secondsLeft={secondsLeft}
+          />
         </div>
 
         <p className="mt-10 text-center text-muted text-lg font-display">
@@ -59,7 +63,15 @@ export default function RoundCountdownStage() {
 }
 
 /* ——————————— visual countdown ring ——————————— */
-function CountdownCircle({ total, ratio, secondsLeft }: { total: number; ratio: number; secondsLeft: number }) {
+function CountdownCircle({
+  total,
+  ratio,
+  secondsLeft,
+}: {
+  total: number;
+  ratio: number;
+  secondsLeft: number;
+}) {
   // SVG geometry
   const size = 240; // px
   const stroke = 14;

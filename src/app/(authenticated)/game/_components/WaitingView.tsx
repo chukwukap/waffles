@@ -8,7 +8,7 @@ import { useGameStore } from "@/stores/gameStore";
 import { useLobbyStore } from "@/stores/lobbyStore";
 import { useCountdown } from "@/hooks/useCountdown";
 
-export default function LobbyView() {
+export default function WaitingView() {
   const game = useGameStore((state) => state.game);
   const ticket = useLobbyStore((state) => state.ticket);
   const setGameView = useGameStore((state) => state.setGameView);
