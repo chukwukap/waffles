@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import LogoIcon from "@/components/logo/LogoIcon";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,7 @@ import { useGameStore } from "@/stores/gameStore";
 import { useGetTokenBalance } from "@coinbase/onchainkit/wallet";
 import { env } from "@/lib/env";
 import { InviteFriendsDrawer } from "@/app/(authenticated)/profile/_components/InviteFriendsDrawer";
+import { BuyConfirmation } from "./_components/BuyConfirmation";
 
 import { base } from "wagmi/chains";
 
@@ -27,9 +28,12 @@ export default function BuyWafflePage() {
   const buyTicket = useLobbyStore((state) => state.buyTicket);
   const ticket = useLobbyStore((state) => state.ticket);
   const stats = useLobbyStore((state) => state.stats);
+  const fetchStats = useLobbyStore((state) => state.fetchStats);
   const referralCode = useLobbyStore((s) => s.referralData?.code ?? "");
   const createReferral = useLobbyStore((s) => s.createReferral);
+  const fetchTicket = useLobbyStore((s) => s.fetchTicket);
   const [isInviteOpen, setInviteOpen] = useState(false);
+  const [isPurchasing, setIsPurchasing] = useState(false);
   const { roundedBalance } = useGetTokenBalance(user.wallet as `0x${string}`, {
     address: env.nextPublicUsdcAddress as `0x${string}`,
     chainId: base.id,
@@ -39,12 +43,13 @@ export default function BuyWafflePage() {
     symbol: "USDC",
   });
 
-  // If already have a ticket, redirect to confirmation
   useEffect(() => {
-    if (ticket) {
-      router.replace("/game");
+    if (!stats) {
+      fetchStats().catch((err) =>
+        console.error("Failed to load lobby stats", err)
+      );
     }
-  }, [ticket, router]);
+  }, [stats, fetchStats]);
 
   // ───────────────────────── HANDLER ─────────────────────────
   const handlePurchase = async () => {
@@ -75,7 +80,18 @@ export default function BuyWafflePage() {
     //
     //   });
 
-    await buyTicket(user.fid, game.id);
+    try {
+      setIsPurchasing(true);
+      await buyTicket(user.fid, game.id);
+      await Promise.all([
+        fetchTicket(String(user.fid), game.id),
+        fetchStats(),
+      ]);
+    } catch (err) {
+      console.error("Ticket purchase failed", err);
+    } finally {
+      setIsPurchasing(false);
+    }
   };
 
   const handleOpenInvite = async () => {
@@ -89,6 +105,71 @@ export default function BuyWafflePage() {
       setInviteOpen(true);
     }
   };
+
+  const handleBackToHome = useCallback(() => {
+    router.replace("/game");
+  }, [router]);
+
+  const shareTicket = useCallback(async () => {
+    if (!ticket || !game) return;
+    const message = `Just secured my waffle ticket for ${game.name}!`;
+    const shareData = {
+      title: "Waffle Secured!",
+      text: message,
+      url: typeof window !== "undefined" ? window.location.href : undefined,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(
+          `${message} ${shareData.url ?? ""}`
+        );
+        alert("Link copied to clipboard!");
+      } else {
+        alert(message);
+      }
+    } catch (err) {
+      console.error("Share ticket failed", err);
+      alert("Unable to share your ticket right now.");
+    }
+  }, [ticket, game]);
+
+  useEffect(() => {
+    if (!stats) {
+      fetchStats().catch((err) =>
+        console.error("Failed to load lobby stats", err)
+      );
+    }
+  }, [stats, fetchStats]);
+
+  useEffect(() => {
+    if (farcasterId && gameId) {
+      fetchTicket(farcasterId, gameId).catch((error) =>
+        console.error("Failed to fetch ticket info", error)
+      );
+    }
+  }, [farcasterId, gameId, fetchTicket]);
+
+  const prizePool = useMemo(() => {
+    if (!stats) return null;
+    return stats.totalPrize;
+  }, [stats]);
+
+  if (ticket && game) {
+    return (
+      <BuyConfirmation
+        gameTitle={game.name}
+        theme={game.description || "See you Friday."}
+        username={user.username || "Player"}
+        avatarUrl={user.pfpUrl || "/images/avatars/a.png"}
+        prizePool={prizePool}
+        onShare={shareTicket}
+        onBackHome={handleBackToHome}
+      />
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col bg-figmaYay noise relative font-body">
@@ -128,9 +209,9 @@ export default function BuyWafflePage() {
         <div className="w-full max-w-[400px] px-4">
           <FancyBorderButton
             onClick={handlePurchase}
-            disabled={ticket !== null}
+            disabled={isPurchasing}
           >
-            {ticket !== null ? "PROCESSING..." : "BUY WAFFLE"}
+            {isPurchasing ? "PROCESSING..." : "BUY WAFFLE"}
           </FancyBorderButton>
         </div>
 
