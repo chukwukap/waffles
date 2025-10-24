@@ -306,7 +306,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     const currentRoundEnd = roundBoundaries[(round - 1) as number] ?? total - 1;
     set({ currentQuestionIndex: nextIndex, selectedAnswer: null });
-    SoundManager.play("nextQuestion");
+    if (game?.config?.soundEnabled) {
+      SoundManager.play("nextQuestion");
+    }
     if (nextIndex > currentRoundEnd) {
       // Enter a dedicated ROUND_COUNTDOWN view; the view itself will
       // transition to QUESTION_ACTIVE when its countdown completes.
@@ -318,6 +320,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   resetGame: () => {
     // get().unsubscribeFromChat();
+    SoundManager.stopAll();
     set({
       game: null,
       currentQuestionIndex: 0,
@@ -333,7 +336,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   gameOver: () => {
     // get().unsubscribeFromChat();
     set({ gameView: "GAME_OVER" });
-    SoundManager.play("gameOver");
+    const { game } = get();
+    if (game?.config?.soundEnabled) {
+      SoundManager.play("gameOver");
+    }
   },
 }));
 
