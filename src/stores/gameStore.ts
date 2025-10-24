@@ -112,10 +112,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     try {
       await fetch(`/api/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-farcaster-id": String(user.fid),
+        },
         body: JSON.stringify({
           gameId: game.id,
-          farcasterId: String(user.fid),
           message: text,
         }),
       });

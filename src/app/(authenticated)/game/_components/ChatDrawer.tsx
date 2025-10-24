@@ -63,7 +63,7 @@ export default function ChatDrawer() {
             onClick={() => setOpen(false)}
           >
             <motion.div
-              className="relative w-full mx-auto flex flex-col rounded-t-full bg-figmaYay noise h-[85vh] max-h-[90dvh] sm:max-h-[600px] min-h-[60dvh] overflow-hidden"
+              className="relative w-full mx-auto flex flex-col rounded-t-full bg-figma noise h-[85vh] max-h-[90dvh] sm:max-h-[600px] min-h-[60dvh] overflow-hidden"
               style={{
                 width: "100%",
                 borderTopLeftRadius: "1.25rem",

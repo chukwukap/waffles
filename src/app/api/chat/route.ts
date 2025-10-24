@@ -18,14 +18,20 @@ export async function GET(request: Request) {
     include: { user: true },
     orderBy: { createdAt: "asc" },
   });
-  const result = messages.map((msg) => ({
-    messageId: msg.id,
-    userId: msg.userId,
-    userName: msg.user.name,
-    message: msg.message,
-    createdAt: msg.createdAt,
-  }));
-  return NextResponse.json(result);
+  // Return shape compatible with Chat components (messages with nested user)
+  return NextResponse.json(
+    messages.map((msg) => ({
+      id: msg.id,
+      gameId: msg.gameId,
+      userId: msg.userId,
+      user: {
+        name: msg.user?.name ?? "anon",
+        imageUrl: msg.user?.imageUrl ?? null,
+      },
+      message: msg.message,
+      createdAt: msg.createdAt,
+    }))
+  );
 }
 
 // POST /api/chat
@@ -45,12 +51,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
   const { gameId, message } = parseResult.data;
-  const farcasterId = request.headers.get("x-farcaster-id");
+  // Allow either header or body to provide farcasterId
+  let farcasterId = request.headers.get("x-farcaster-id");
+  if (!farcasterId) {
+    try {
+      const bodyJson = await request.clone().json();
+      if (bodyJson?.farcasterId) farcasterId = String(bodyJson.farcasterId);
+    } catch {}
+  }
   if (!farcasterId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const user = await prisma.user.findUnique({
-    where: { farcasterId: farcasterId },
+    where: { farcasterId: String(farcasterId) },
   });
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
