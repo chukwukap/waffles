@@ -62,7 +62,7 @@ export function GameClientImpl() {
     try {
       resetGame();
     } finally {
-      router.replace("/lobby/buy");
+      router.replace("/game");
     }
   }, [resetGame, router]);
 
@@ -95,12 +95,16 @@ export function GameClientImpl() {
             <WalletIcon className="w-4 h-4 text-foreground" />
             <span className="text-xs text-foreground">{`$${roundedBalance}`}</span>
           </div>
-          <button
-            onClick={() => setIsLeaveGameDrawerOpen(true)}
-            className="text-xs text-[#00CFF2] underline underline-offset-2"
-          >
-            leave
-          </button>
+          {(gameView === "ROUND_COUNTDOWN" ||
+            gameView === "QUESTION_ACTIVE" ||
+            gameView === "ANSWER_SUBMITTED") && (
+            <button
+              onClick={() => setIsLeaveGameDrawerOpen(true)}
+              className="text-xs text-[#00CFF2] underline underline-offset-2"
+            >
+              leave
+            </button>
+          )}
         </div>
       </div>
 
