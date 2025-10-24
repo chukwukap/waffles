@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useGameStore } from "@/stores/gameStore";
 import CountdownView from "./_components/CountdownView";
 import QuestionView from "./_components/QuestionView";
@@ -26,6 +26,7 @@ export function GameClientImpl() {
   const user = useMiniUser();
 
   const fetchMessages = useGameStore((state) => state.fetchMessages);
+  const setMessages = useGameStore((state) => state.setMessages);
   const fetchTicket = useLobbyStore((state) => state.fetchTicket);
   // Drawer starts closed; opened when user taps "leave"
   const [isLeaveGameDrawerOpen, setIsLeaveGameDrawerOpen] = useState(false);
@@ -50,13 +51,26 @@ export function GameClientImpl() {
     fetchMessages();
   }, [fetchMessages]);
 
-  // Simple polling for chat updates (no websockets)
+  // Lightweight SWR-like polling using fetch + state setter
+  const chatKey = useMemo(() => (game?.id ? `/api/chat?gameId=${game.id}` : null), [game?.id]);
   useEffect(() => {
-    const id = setInterval(() => {
-      fetchMessages();
-    }, 3000);
-    return () => clearInterval(id);
-  }, [fetchMessages]);
+    if (!chatKey) return;
+    let disposed = false;
+    const fetcher = async () => {
+      try {
+        const res = await fetch(chatKey, { cache: "no-store" });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!disposed) setMessages(data);
+      } catch {}
+    };
+    fetcher();
+    const id = setInterval(fetcher, 3000);
+    return () => {
+      disposed = true;
+      clearInterval(id);
+    };
+  }, [chatKey, setMessages]);
 
   // Redirect if missing invite code or ticket
   useEffect(() => {
