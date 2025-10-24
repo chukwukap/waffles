@@ -72,15 +72,12 @@ function CountdownCircle({
   ratio: number;
   secondsLeft: number;
 }) {
-  // SVG geometry
   const size = 240; // px
   const stroke = 14;
-  const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
-
-  // stroke animation (start at top)
-  const dashOffset = c * (1 - ratio);
-  const angle = 360 * ratio - 90; // -90 to start from top
+  const clampedRatio = Math.max(0, Math.min(1, ratio));
+  const progressDeg = clampedRatio * 360;
+  const rotationDeg = -90 + progressDeg;
+  const dotDistance = size / 2 - stroke / 2;
 
   return (
     <div
@@ -90,43 +87,35 @@ function CountdownCircle({
       role="timer"
       aria-live="polite"
     >
-      <svg
-        width={size}
-        height={size}
-        viewBox={`0 0 ${size} ${size}`}
-        className="block"
-      >
-        {/* track */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          stroke="rgba(255,255,255,0.15)"
-          strokeWidth={stroke}
-        />
-        {/* progress */}
-        <g transform={`rotate(-90 ${size / 2} ${size / 2})`}>
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={r}
-            fill="none"
-            stroke={BLUE}
-            strokeWidth={stroke}
-            strokeLinecap="round"
-            strokeDasharray={c}
-            strokeDashoffset={dashOffset}
-            style={{ transition: "stroke-dashoffset 1s linear" }}
-          />
-        </g>
-      </svg>
+      {/* base track */}
+      <div
+        className="absolute inset-0 rounded-full"
+        style={{
+          background:
+            "conic-gradient(rgba(255,255,255,0.15) 0deg, rgba(255,255,255,0.15) 360deg)",
+        }}
+      />
+      {/* progress arc */}
+      <div
+        className="absolute inset-0 rounded-full transition-[background] duration-1000 ease-linear"
+        style={{
+          background: `conic-gradient(${BLUE} ${progressDeg}deg, rgba(255,255,255,0.05) ${progressDeg}deg)`,
+        }}
+      />
+      {/* inner cutout to create stroke thickness */}
+      <div
+        className="absolute rounded-full bg-black/40"
+        style={{
+          inset: stroke,
+          boxShadow: "inset 0 0 30px rgba(0,0,0,0.35)",
+        }}
+      />
 
       {/* orbiting dot */}
       <div
         className="absolute left-1/2 top-1/2"
         style={{
-          transform: `translate(-50%, -50%) rotate(${angle}deg)`,
+          transform: `translate(-50%, -50%) rotate(${rotationDeg}deg)`,
           transition: "transform 1s linear",
           width: size,
           height: size,
@@ -140,8 +129,8 @@ function CountdownCircle({
             height: stroke + 6,
             background: BLUE,
             left: "50%",
-            top: stroke / 2,
-            transform: "translate(-50%, -50%)",
+            top: "50%",
+            transform: `translate(-50%, -50%) translateX(${dotDistance}px)`,
             boxShadow: "0 0 0 2px rgba(30,139,255,0.35)",
           }}
         />
