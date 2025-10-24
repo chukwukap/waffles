@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { OnboardingSlide } from "./OnboardingSlide";
+import { OnboardingSlide } from "./onboarding-slide";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 
 interface Slide {

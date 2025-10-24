@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { OnboardingCarousel } from "./OnboardingCarousel";
+import { OnboardingCarousel } from "./onboarding-carousel";
 
 interface OnboardingOverlayProps {
   onComplete: () => void;
