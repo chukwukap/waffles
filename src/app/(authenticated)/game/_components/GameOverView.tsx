@@ -40,8 +40,6 @@ const formatNumber = (value: number | null | undefined) =>
 export default function GameOverView() {
   const router = useRouter();
   const game = useGameStore((s) => s.game);
-  const resetGame = useGameStore((s) => s.resetGame);
-  const fetchActiveGame = useGameStore((s) => s.fetchActiveGame);
 
   const {
     fid,
@@ -190,12 +188,8 @@ export default function GameOverView() {
   }, [summary, composeCastAsync]);
 
   const handleBackHome = useCallback(() => {
-    resetGame();
-    fetchActiveGame().catch((error) =>
-      console.error("Failed to fetch active game", error)
-    );
-    router.replace("/game");
-  }, [fetchActiveGame, resetGame, router]);
+    router.replace("/lobby");
+  }, [router]);
 
   const handleViewLeaderboard = useCallback(() => {
     router.push("/leaderboard");
