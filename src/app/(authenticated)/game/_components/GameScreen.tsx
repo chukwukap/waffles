@@ -6,10 +6,10 @@ import QuestionView from "./QuestionView";
 import LobbyView from "./WaitingView";
 
 export default function GameScreen() {
-  const gameState = useGameStore((s) => s.gameState);
+  const gameView = useGameStore((s) => s.gameView);
 
   const view = (() => {
-    switch (gameState) {
+    switch (gameView) {
       case "ROUND_COUNTDOWN":
         return <CountdownView />;
       case "QUESTION_ACTIVE":

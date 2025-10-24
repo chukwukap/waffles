@@ -89,9 +89,8 @@ export async function GET(request: Request) {
         } else {
           friends.set(user.fid, {
             username: user.username,
-            displayName:
-              user.display_name ?? user.profile?.display_name ?? null,
-            pfpUrl: user.pfp_url ?? user.profile?.pfp_url ?? null,
+            displayName: user.display_name ?? null,
+            pfpUrl: user.pfp_url ?? null,
             isFollower: key === "isFollower",
             isFollowing: key === "isFollowing",
           });

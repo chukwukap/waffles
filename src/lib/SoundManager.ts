@@ -1,7 +1,7 @@
 // src/lib/SoundManager.ts
 
 const SOUND_FILES = {
-  click: "/sounds/dice-shake-1.ogg",
+  click: "/sounds/click_001.ogg",
   countdown: "/sounds/dice-shake-1.ogg",
   correct: "/sounds/dice-shake-1.ogg",
   wrong: "/sounds/dice-shake-1.ogg",
@@ -83,9 +83,7 @@ class SoundManager {
 
     instance
       .play()
-      .catch((error) =>
-        console.warn(`Failed to play sound "${name}":`, error)
-      );
+      .catch((error) => console.warn(`Failed to play sound "${name}":`, error));
 
     if (!loop) {
       instance.addEventListener(
