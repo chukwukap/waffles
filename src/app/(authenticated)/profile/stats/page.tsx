@@ -6,6 +6,8 @@ import Image from "next/image";
 import { ArrowLeftIcon, WalletIcon } from "@/components/icons";
 import LogoIcon from "@/components/logo/LogoIcon";
 import { BottomNav } from "@/components/BottomNav";
+import { useMiniUser } from "@/hooks/useMiniUser";
+import { useEffect } from "react";
 
 /* ---------- Header (same style as other profile screens) ---------- */
 const TopBar = () => (
@@ -139,7 +141,17 @@ const IconStat = ({
 
 /* ---------- Page ---------- */
 export default function AllTimeStatsPage() {
-  const { allTimeStats } = useProfileStore();
+  const allTimeStats = useProfileStore((s) => s.allTimeStats);
+  const fetchProfile = useProfileStore((s) => s.fetchProfile);
+  const { fid } = useMiniUser();
+
+  useEffect(() => {
+    if (fid) {
+      fetchProfile(String(fid)).catch((err) =>
+        console.error("Failed to load profile stats", err)
+      );
+    }
+  }, [fid, fetchProfile]);
 
   return (
     <div

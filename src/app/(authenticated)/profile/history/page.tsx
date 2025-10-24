@@ -12,6 +12,8 @@ import {
   ZapIcon,
 } from "@/components/icons";
 import type { GameHistory } from "@/stores/profileStore";
+import { useMiniUser } from "@/hooks/useMiniUser";
+import { useEffect } from "react";
 /* ---------- Top bar (shared look) ---------- */
 const TopBar = () => (
   <header
@@ -129,7 +131,17 @@ const GameHistoryItem = ({ game }: { game: GameHistory }) => (
 
 /* ---------- Page ---------- */
 export default function GameHistoryPage() {
-  const { gameHistory } = useProfileStore();
+  const gameHistory = useProfileStore((s) => s.gameHistory);
+  const fetchProfile = useProfileStore((s) => s.fetchProfile);
+  const { fid } = useMiniUser();
+
+  useEffect(() => {
+    if (fid) {
+      fetchProfile(String(fid)).catch((err) =>
+        console.error("Failed to load profile history", err)
+      );
+    }
+  }, [fid, fetchProfile]);
 
   return (
     <div

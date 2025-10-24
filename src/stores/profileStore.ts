@@ -33,15 +33,21 @@ interface ProfileState {
 
   loading: boolean;
   error: string | null;
+  currentFarcasterId: string | null;
+  hasLoaded: boolean;
 
-  fetchProfile: () => Promise<void>;
+  fetchProfile: (
+    farcasterId: string,
+    opts?: { force?: boolean }
+  ) => Promise<void>;
   updateProfile: (
+    farcasterId: string,
     payload: Partial<{ name: string; wallet: string; imageUrl: string }>
   ) => Promise<void>;
 }
 
 // ───────────────────────── STORE ─────────────────────────
-export const useProfileStore = create<ProfileState>((set) => ({
+export const useProfileStore = create<ProfileState>((set, get) => ({
   id: null,
   username: "",
   wallet: "",
@@ -63,17 +69,37 @@ export const useProfileStore = create<ProfileState>((set) => ({
 
   loading: false,
   error: null,
+  currentFarcasterId: null,
+  hasLoaded: false,
 
   // Unified fetch (calls 3 API routes)
-  fetchProfile: async () => {
+  fetchProfile: async (farcasterId, opts) => {
+    if (!farcasterId) return;
+    const state = get();
+    if (
+      !opts?.force &&
+      state.currentFarcasterId === farcasterId &&
+      state.hasLoaded &&
+      !state.loading
+    ) {
+      return;
+    }
+
     set({ loading: true, error: null });
+    set({ currentFarcasterId: farcasterId });
 
     try {
       // 1️⃣ Fetch basic info
       const [profileRes, statsRes, historyRes] = await Promise.all([
-        fetch("/api/profile"),
-        fetch("/api/profile/stats"),
-        fetch("/api/profile/history"),
+        fetch("/api/profile", {
+          headers: { "x-farcaster-id": farcasterId },
+        }),
+        fetch("/api/profile/stats", {
+          headers: { "x-farcaster-id": farcasterId },
+        }),
+        fetch("/api/profile/history", {
+          headers: { "x-farcaster-id": farcasterId },
+        }),
       ]);
 
       if (!profileRes.ok) throw new Error("Profile fetch failed");
@@ -111,22 +137,28 @@ export const useProfileStore = create<ProfileState>((set) => ({
         },
         gameHistory: history,
         loading: false,
+        hasLoaded: true,
       });
     } catch (err: unknown) {
       console.error("Profile load failed:", err);
       set({
         error: err instanceof Error ? err.message : "Failed to load profile",
         loading: false,
+        hasLoaded: false,
       });
     }
   },
 
   // Update basic info
-  updateProfile: async (payload) => {
+  updateProfile: async (farcasterId, payload) => {
+    if (!farcasterId) return;
     try {
       const res = await fetch("/api/profile", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-farcaster-id": farcasterId,
+        },
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("Failed to update profile");
