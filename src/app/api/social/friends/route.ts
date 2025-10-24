@@ -17,7 +17,7 @@ type FriendSummary = {
   ticketGameId?: number;
 };
 
-const DEFAULT_LIMIT = 75;
+const DEFAULT_LIMIT = 20;
 
 export async function GET(request: Request) {
   try {
@@ -65,6 +65,9 @@ export async function GET(request: Request) {
         limit,
       }),
     ]);
+
+    console.log("followersRes", followersRes);
+    console.log("followingRes", followingRes);
 
     type FriendAccumulator = {
       username: string;
