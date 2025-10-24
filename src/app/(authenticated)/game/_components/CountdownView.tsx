@@ -9,12 +9,17 @@ import { useCountdown } from "@/hooks/useCountdown";
 const BLUE = "#1E8BFF";
 
 export default function RoundCountdownStage() {
-  const gameState = useGameStore((s) => s.gameState);
+  const gameView = useGameStore((s) => s.gameView);
   const game = useGameStore((s) => s.game);
+  const setGameView = useGameStore((s) => s.setGameView);
   const totalSeconds = game?.config?.roundTimeLimit ?? 0;
   const { millisecondsLeft } = useCountdown({
     durationSeconds: totalSeconds,
-    autoStart: gameState === "ROUND_COUNTDOWN",
+    autoStart: gameView === "ROUND_COUNTDOWN",
+    onComplete: () => {
+      // Move into the next question after the round countdown fully elapses
+      setGameView("QUESTION_ACTIVE");
+    },
   });
   const ratio =
     totalSeconds > 0

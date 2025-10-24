@@ -60,7 +60,10 @@ export function useCountdown(
   // Track the current clock time to drive re-renders each tick
   const [now, setNow] = useState<number>(Date.now());
 
-  const millisecondsLeft = useMemo(() => Math.max(0, endAt - now), [endAt, now]);
+  const millisecondsLeft = useMemo(
+    () => Math.max(0, endAt - now),
+    [endAt, now]
+  );
   const secondsLeft = Math.ceil(millisecondsLeft / 1000);
 
   const clearTimer = useCallback(() => {
