@@ -25,20 +25,43 @@ export async function POST(req: Request) {
         { status: 404 }
       );
 
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      include: { config: true },
+    });
+    if (!game)
+      return NextResponse.json({ error: "Game not found" }, { status: 404 });
+
+    const roundLimit = game.config?.roundTimeLimit ?? 15;
+    const maxTime =
+      Number.isFinite(roundLimit) && roundLimit > 0 ? roundLimit : 15;
+    const sanitizedTime = Math.min(
+      Math.max(0, Number(timeTaken) || 0),
+      maxTime
+    );
     const correct = selected === question.correctAnswer;
-    const points = correct ? calculateScore(timeTaken, 10) : 0;
+    const newPoints = correct ? calculateScore(sanitizedTime, maxTime) : 0;
 
-    // record per-question answer and update score
+    await prisma.$transaction(async (tx) => {
+      const previousAnswer = await tx.answer.findUnique({
+        where: {
+          userId_gameId_questionId: { userId: user.id, gameId, questionId },
+        },
+      });
 
-    await prisma.$transaction([
-      prisma.answer.upsert({
+      const previousPoints =
+        previousAnswer?.isCorrect && Number.isFinite(previousAnswer.timeTaken)
+          ? calculateScore(previousAnswer.timeTaken, maxTime)
+          : 0;
+
+      await tx.answer.upsert({
         where: {
           userId_gameId_questionId: { userId: user.id, gameId, questionId },
         },
         update: {
           selected,
           isCorrect: correct,
-          timeTaken: Math.max(0, Number(timeTaken) || 0),
+          timeTaken: sanitizedTime,
         },
         create: {
           userId: user.id,
@@ -46,17 +69,30 @@ export async function POST(req: Request) {
           questionId,
           selected,
           isCorrect: correct,
-          timeTaken: Math.max(0, Number(timeTaken) || 0),
+          timeTaken: sanitizedTime,
         },
-      }),
-      prisma.score.upsert({
-        where: { userId_gameId: { userId: user.id, gameId } },
-        update: { points: { increment: points } },
-        create: { userId: user.id, gameId, points },
-      }),
-    ]);
+      });
 
-    return NextResponse.json({ correct, points });
+      const existingScore = await tx.score.findUnique({
+        where: { userId_gameId: { userId: user.id, gameId } },
+      });
+
+      const delta = newPoints - previousPoints;
+
+      if (existingScore) {
+        const nextPoints = Math.max(0, existingScore.points + delta);
+        await tx.score.update({
+          where: { userId_gameId: { userId: user.id, gameId } },
+          data: { points: nextPoints },
+        });
+      } else {
+        await tx.score.create({
+          data: { userId: user.id, gameId, points: newPoints },
+        });
+      }
+    });
+
+    return NextResponse.json({ correct, points: newPoints });
   } catch (e) {
     console.error(e);
     return NextResponse.json(
