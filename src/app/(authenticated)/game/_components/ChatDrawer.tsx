@@ -25,12 +25,13 @@ export default function ChatDrawer() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = newMessage.trim();
-    if (!trimmed || !user?.fid || !user?.username) return;
+    if (!trimmed) return;
 
     sendMessage(trimmed, {
-      fid: user.fid,
-      username: user.username,
-      pfpUrl: user.pfpUrl,
+      // Coerce fid for typing; server persistence will be skipped if fid is falsy
+      fid: Number(user.fid ?? 0),
+      username: user.username || "You",
+      pfpUrl: user.pfpUrl || "",
     });
 
     setNewMessage("");

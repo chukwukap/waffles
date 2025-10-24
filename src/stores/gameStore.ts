@@ -93,15 +93,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   sendMessage: async (text, user) => {
     const { game, messages } = get();
-    if (!user?.fid || !game?.id) return;
+    if (!game?.id) return;
 
     const tempMsg: ChatWithUser = {
       id: Date.now(),
       gameId: game.id,
       userId: 0, // Note: Not used in backend, but required by Prisma,
       user: {
-        name: user.username,
-        imageUrl: user.pfpUrl,
+        name: user?.username || "You",
+        imageUrl: user?.pfpUrl || null,
       },
       message: text,
       createdAt: new Date(),
@@ -109,20 +109,23 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     set({ messages: [...messages, tempMsg as ChatWithUser] });
 
-    try {
-      await fetch(`/api/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-farcaster-id": String(user.fid),
-        },
-        body: JSON.stringify({
-          gameId: game.id,
-          message: text,
-        }),
-      });
-    } catch (err) {
-      console.error("sendMessage error:", err);
+    // If we have a valid Farcaster ID, try to persist to server.
+    if (user?.fid) {
+      try {
+        await fetch(`/api/chat`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-farcaster-id": String(user.fid),
+          },
+          body: JSON.stringify({
+            gameId: game.id,
+            message: text,
+          }),
+        });
+      } catch (err) {
+        console.error("sendMessage error:", err);
+      }
     }
   },
 
