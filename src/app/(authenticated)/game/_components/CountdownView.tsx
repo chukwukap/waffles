@@ -13,7 +13,7 @@ export default function RoundCountdownStage() {
   const game = useGameStore((s) => s.game);
   const setGameView = useGameStore((s) => s.setGameView);
   const totalSeconds = game?.config?.roundTimeLimit ?? 0;
-  const { millisecondsLeft } = useCountdown({
+  const { millisecondsLeft, secondsLeft } = useCountdown({
     durationSeconds: totalSeconds,
     autoStart: gameView === "ROUND_COUNTDOWN",
     onComplete: () => {
@@ -42,7 +42,7 @@ export default function RoundCountdownStage() {
         </h1>
 
         <div className="grid place-items-center">
-          <CountdownCircle ratio={ratio} total={totalSeconds} />
+          <CountdownCircle ratio={ratio} total={totalSeconds} secondsLeft={secondsLeft} />
         </div>
 
         <p className="mt-10 text-center text-muted text-lg font-display">
@@ -59,7 +59,7 @@ export default function RoundCountdownStage() {
 }
 
 /* ——————————— visual countdown ring ——————————— */
-function CountdownCircle({ total, ratio }: { total: number; ratio: number }) {
+function CountdownCircle({ total, ratio, secondsLeft }: { total: number; ratio: number; secondsLeft: number }) {
   // SVG geometry
   const size = 240; // px
   const stroke = 14;
@@ -135,7 +135,7 @@ function CountdownCircle({ total, ratio }: { total: number; ratio: number }) {
         />
       </div>
 
-      {/* numeric value */}
+      {/* numeric value - remaining whole seconds */}
       <div className="pointer-events-none absolute inset-0 grid place-items-center">
         <span
           className="text-[12vw] sm:text-7xl md:text-8xl lg:text-9xl font-bold leading-none text-white"
@@ -143,7 +143,7 @@ function CountdownCircle({ total, ratio }: { total: number; ratio: number }) {
             fontSize: "clamp(2.5rem, 10vw, 7rem)",
           }}
         >
-          {String(Math.ceil(total * ratio)).padStart(2, "0")}
+          {String(Math.max(0, Math.min(total, secondsLeft))).padStart(2, "0")}
         </span>
       </div>
     </div>
