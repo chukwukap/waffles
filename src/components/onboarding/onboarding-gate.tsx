@@ -1,7 +1,7 @@
 "use client";
 
 import { useOnboarding } from "@/hooks/useOnboarding";
-import { OnboardingOverlay } from "./OnboardingOverlay";
+import { OnboardingOverlay } from "./onboarding-overlay";
 
 interface Props {
   children: React.ReactNode;
