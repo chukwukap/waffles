@@ -13,14 +13,28 @@ import { BottomNav } from "@/components/BottomNav";
 import { ProfileCard } from "./_components/ProfileCard";
 import { Stats } from "./_components/Stats";
 import { InviteFriendsDrawer } from "./_components/InviteFriendsDrawer";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLobbyStore } from "@/stores/lobbyStore";
+import { useMiniUser } from "@/hooks/useMiniUser";
 
 export default function ProfilePage() {
-  const { username, streak, stats, gameHistory } = useProfileStore();
+  const username = useProfileStore((s) => s.username);
+  const streak = useProfileStore((s) => s.streak);
+  const stats = useProfileStore((s) => s.stats);
+  const gameHistory = useProfileStore((s) => s.gameHistory);
+  const fetchProfile = useProfileStore((s) => s.fetchProfile);
   const [inviteOpen, setInviteOpen] = useState(false);
   const inviteCode =
     useLobbyStore((state) => state.referralData?.code) ?? "------";
+  const { fid } = useMiniUser();
+
+  useEffect(() => {
+    if (fid) {
+      fetchProfile(String(fid)).catch((err) =>
+        console.error("Failed to load profile", err)
+      );
+    }
+  }, [fid, fetchProfile]);
 
   return (
     <div className="min-h-screen flex flex-col bg-figmaYay noise ">
