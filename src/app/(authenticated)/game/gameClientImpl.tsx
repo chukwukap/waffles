@@ -20,17 +20,18 @@ import LogoIcon from "@/components/logo/LogoIcon";
 import { LeaveGameIcon, WalletIcon } from "@/components/icons";
 import { useGetTokenBalance } from "@coinbase/onchainkit/wallet";
 import { env } from "@/lib/env";
-import { base } from "wagmi/chains";
+import { baseSepolia } from "wagmi/chains";
 import LeaveGameDrawer from "./_components/LeaveGameDrawer";
 import SoundManager from "@/lib/SoundManager";
 import type { GameView } from "@/stores/gameStore";
+import { useSyncUser } from "@/hooks/useSyncUser";
 
 export function GameClientImpl() {
+  useSyncUser();
   const router = useRouter();
   const gameView = useGameStore((s) => s.gameView);
   const game = useGameStore((s) => s.game);
   const resetGame = useGameStore((s) => s.resetGame);
-  const setGameView = useGameStore((s) => s.setGameView);
   const ticket = useLobbyStore((state) => state.ticket);
   const user = useMiniUser();
 
@@ -44,7 +45,7 @@ export function GameClientImpl() {
 
   const { roundedBalance } = useGetTokenBalance(user.wallet as `0x${string}`, {
     address: env.nextPublicUsdcAddress as `0x${string}`,
-    chainId: base.id,
+    chainId: baseSepolia.id,
     decimals: 6,
     image: "/images/tokens/usdc.png",
     name: "USDC",
@@ -56,12 +57,6 @@ export function GameClientImpl() {
       fetchTicket(user.fid.toString(), game.id);
     }
   }, [fetchTicket, user.fid, game?.id]);
-
-  useEffect(() => {
-    if (ticket?.usedAt && gameView !== "GAME_OVER") {
-      setGameView("GAME_OVER");
-    }
-  }, [ticket?.usedAt, gameView, setGameView]);
 
   // Unlock Web Audio API after the first user interaction
   useEffect(() => {

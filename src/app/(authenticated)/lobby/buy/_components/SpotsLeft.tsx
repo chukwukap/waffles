@@ -7,18 +7,9 @@ type SpotsLeftProps = {
   className?: string; // optional wrapper overrides
 };
 
-/**
- * Matches the Figma specs:
- * - Container: 228px wide, gap: 12px, centered
- * - Avatars: 42.11px, 3.0078px white border, 6.0156px radius, overlap -22.0571px
- * - Rotations: [-8.71, 5.85, -3.57, 7.56] deg
- * - Count: 32px size, letter-spacing -0.02em, line-height 115%, color #00CFF2
- * - Subtitle: 16px, weight 500, letter-spacing -0.03em, color #99A0AE
- *
- * Notes:
- * - I kept the exact decimals (rounded visually identical in browsers).
- * - If you use custom fonts (“Edit Undo BRK”, “Brockmann”), set them on body or replace the inline fontFamily below.
- */
+// Exact Figma avatar card rotations for up to 4 avatars
+const AVATAR_ROTATIONS = [-8.71, 5.85, -3.57, 7.56];
+
 export function SpotsLeft({
   current,
   total,
@@ -26,39 +17,58 @@ export function SpotsLeft({
   className = "",
 }: SpotsLeftProps) {
   return (
-    <div className={`flex flex-col items-center w-[228px] ${className}`}>
-      {/* Avatars row */}
-      <div className="flex items-center h-[48px] w-[119.94px]">
+    <div
+      className={`flex flex-col items-center p-0 gap-[12px] w-[228px] h-[118px] relative ${className}`}
+      style={
+        {
+          // These absolute position props should be set only if used in a specifically positioned container
+          //left: 82, top: 602,
+        }
+      }
+    >
+      {/* Avatars row, visually stacked and rotated */}
+      <div
+        className="flex flex-row items-center p-0 w-[119.94px] h-[48px] relative"
+        style={{
+          flex: "none",
+          order: 0,
+          flexGrow: 0,
+        }}
+      >
         {avatars.slice(0, 4).map((src, i) => (
           <div
             key={i}
-            className={[
-              "box-border w-[42.11px] h-[42.11px] rounded-[6.0156px] border-[3.0078px] border-white",
-              // Figma shows a light gray fallback under the image
-              "bg-[#F0F3F4] bg-cover bg-center",
-              // overlap spacing
-              i !== 0 ? "ml-[-22.0571px]" : "",
-              // lift above previous slightly so borders look right
-              "relative z-[1]",
-              // little shadow helps match the “stacked card” look (optional)
-              "shadow-[0_0_0_0_rgba(0,0,0,0)]",
-            ].join(" ")}
+            className="box-border bg-[#F0F3F4] border-white border-[3.00779px] rounded-[6.01558px] w-[42.11px] h-[42.11px] bg-cover bg-center"
             style={{
+              marginLeft: i === 0 ? 0 : -22.0571,
+              zIndex: i,
               backgroundImage: `url("${src}")`,
+              transform: `rotate(${AVATAR_ROTATIONS[i] ?? 0}deg)`,
+              flex: "none",
+              order: i,
+              flexGrow: 0,
+              // Optional: white "card" border on the outside, gray underlay in case avatar fails
+              // Box-shadow removed, as Figma shows no visible shadow
             }}
             aria-hidden="true"
           />
         ))}
       </div>
 
-      {/* Text block */}
+      {/* Text block: count and "spots left" */}
       <div
         className="flex flex-col items-center p-0 w-[228px] h-[58px]"
-        style={{ alignSelf: "stretch", flex: "none", order: 1, flexGrow: 0 }}
+        style={{
+          flex: "none",
+          order: 1,
+          alignSelf: "stretch",
+          flexGrow: 0,
+        }}
       >
         <div
-          className="flex items-end justify-center w-[228px] h-[37px] text-center font-body"
+          className="flex items-end justify-center w-[228px] h-[37px] text-center"
           style={{
+            fontFamily: "'Edit Undo BRK', var(--font-body, sans-serif)",
             fontStyle: "normal",
             fontWeight: 400,
             fontSize: "32px",
@@ -74,8 +84,9 @@ export function SpotsLeft({
           {current}/{total}
         </div>
         <div
-          className="w-[228px] h-[21px] text-center font-display"
+          className="w-[228px] h-[21px] text-center"
           style={{
+            fontFamily: "'Brockmann', var(--font-display, sans-serif)",
             fontStyle: "normal",
             fontWeight: 500,
             fontSize: "16px",
@@ -86,6 +97,7 @@ export function SpotsLeft({
             flex: "none",
             order: 1,
             flexGrow: 0,
+            marginTop: 0,
           }}
         >
           spots left

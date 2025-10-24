@@ -9,7 +9,7 @@ type SummaryItemProps = {
   value: string;
 };
 
-type ShareProps = {
+type ShareViewProps = {
   gameTitle: string;
   theme: string;
   username: string;
@@ -37,12 +37,12 @@ export function Share({
   prizePool,
   onShare,
   onBackHome,
-}: ShareProps) {
+}: ShareViewProps) {
   const formattedPrize =
     prizePool !== null ? `$${prizePool.toLocaleString("en-US")}` : "TBA";
 
   return (
-    <div className="min-h-[100dvh] w-full bg-figmaYay noise">
+    <div className="min-h-[100dvh] w-full bg-figma noise z-50">
       <div className="mx-auto flex min-h-[100dvh] w-full max-w-[420px] flex-col items-center px-5 pb-[calc(env(safe-area-inset-bottom)+48px)] pt-14">
         <Image
           src="/images/illustration/waffle-ticket.png"

@@ -96,29 +96,28 @@ export default function BuyWafflePage() {
       return;
     }
 
-    sendTokenAsync({
-      amount: (game.config.ticketPrice * 10 ** 6).toString(),
-      recipientAddress: env.waffleMainAddress,
-    })
-      .then(async () => {
-        console.log("Ticket purchased successfully");
-        await buyTicket(user.fid!, game.id);
-        setShowShare(true);
-      })
+    // sendTokenAsync({
+    //   amount: (game.config.ticketPrice * 10 ** 6).toString(),
+    //   recipientAddress: env.waffleMainAddress,
+    // }).then(async () => {
+    //   console.log("Ticket purchased successfully");
+    //   await buyTicket(user.fid!, game.id);
+    //   if (ticket) {
+    //     setShowShare(true);
+    //   } else {
+    //     console.error("Ticket purchase failed");
+    //   }
+    // });
 
-      .catch(async () => {
-        console.error("Ticket purchase failed");
-      });
-
-    // try {
-    //   setIsPurchasing(true);
-    //   await buyTicket(user.fid, game.id);
-    //   await Promise.all([fetchTicket(String(user.fid), game.id), fetchStats()]);
-    // } catch (err) {
-    //   console.error("Ticket purchase failed", err);
-    // } finally {
-    //   setIsPurchasing(false);
-    // }
+    try {
+      setIsPurchasing(true);
+      await buyTicket(user.fid, game.id);
+      await Promise.all([fetchTicket(String(user.fid), game.id), fetchStats()]);
+    } catch (err) {
+      console.error("Ticket purchase failed", err);
+    } finally {
+      setIsPurchasing(false);
+    }
   };
 
   const handleOpenInvite = async () => {
@@ -179,13 +178,14 @@ export default function BuyWafflePage() {
       try {
         setFriendsLoading(true);
         setFriendsError(null);
-        const res = await fetch(
-          `/api/social/friends?fid=${farcasterId}&gameId=${gameId}`,
-          { cache: "no-store", signal: controller.signal }
-        );
-        if (!res.ok) throw new Error(`Request failed with ${res.status}`);
-        const data = await res.json();
-        setFriends(data.friends ?? []);
+        // const res = await fetch(
+        //   `/api/social/friends?fid=${farcasterId}&gameId=${gameId}`,
+        //   { cache: "no-store", signal: controller.signal }
+        // );
+        // if (!res.ok) throw new Error(`Request failed with ${res.status}`);
+        // const data = await res.json();
+        // setFriends(data.friends ?? []);
+        setFriends([]);
       } catch (err) {
         if (controller.signal.aborted) return;
         console.error("Failed to load friends", err);

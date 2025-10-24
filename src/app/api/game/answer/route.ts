@@ -25,27 +25,6 @@ export async function POST(req: Request) {
         { status: 404 }
       );
 
-    const ticketRecord = await prisma.ticket.findUnique({
-      where: {
-        gameId_userId: {
-          gameId,
-          userId: user.id,
-        },
-      },
-    });
-    if (!ticketRecord) {
-      return NextResponse.json(
-        { error: "Ticket not found" },
-        { status: 404 }
-      );
-    }
-    if (ticketRecord.usedAt) {
-      return NextResponse.json(
-        { error: "Game already completed" },
-        { status: 400 }
-      );
-    }
-
     const game = await prisma.game.findUnique({
       where: { id: gameId },
       include: { config: true },
