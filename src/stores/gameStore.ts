@@ -298,10 +298,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ currentQuestionIndex: nextIndex, selectedAnswer: null });
     SoundManager.play("nextQuestion");
     if (nextIndex > currentRoundEnd) {
+      // Enter a dedicated ROUND_COUNTDOWN view; the view itself will
+      // transition to QUESTION_ACTIVE when its countdown completes.
       set({ round: round + 1, gameView: "ROUND_COUNTDOWN" });
-      setTimeout(() => {
-        set({ gameView: "QUESTION_ACTIVE" });
-      }, 3000);
     } else {
       set({ gameView: "QUESTION_ACTIVE" });
     }
