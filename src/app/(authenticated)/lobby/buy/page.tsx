@@ -59,8 +59,10 @@ export default function BuyWafflePage() {
   const farcasterId = user.fid ? String(user.fid) : null;
 
   useEffect(() => {
-    setShowShare(Boolean(ticket));
-  }, [ticket]);
+    if (ticket) {
+      router.replace("/game");
+    }
+  }, [ticket, router]);
 
   const { roundedBalance } = useGetTokenBalance(user.wallet as `0x${string}`, {
     address: env.nextPublicUsdcAddress as `0x${string}`,
