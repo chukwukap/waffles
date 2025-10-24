@@ -17,18 +17,18 @@ async function main() {
     },
   });
 
-  const chukwukaubaUser = await prisma.user.upsert({
-    where: { farcasterId: "755074" },
-    update: {},
-    create: {
-      name: "chukwukauba",
-      email: "chukwukauba@example.com",
-      farcasterId: "755074",
-      imageUrl:
-        "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/3d4b3ff7-3ed7-4522-125a-9419a85ada00/original",
-      wallet: "",
-    },
-  });
+  // const chukwukaubaUser = await prisma.user.upsert({
+  //   where: { farcasterId: "755074" },
+  //   update: {},
+  //   create: {
+  //     name: "chukwukauba",
+  //     email: "chukwukauba@example.com",
+  //     farcasterId: "755074",
+  //     imageUrl:
+  //       "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/3d4b3ff7-3ed7-4522-125a-9419a85ada00/original",
+  //     wallet: "",
+  //   },
+  // });
 
   // 3. GAMES
   const game1 = await prisma.game.upsert({

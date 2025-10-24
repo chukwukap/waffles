@@ -41,8 +41,11 @@ export default function GameOverView() {
   const resetGame = useGameStore((s) => s.resetGame);
   const fetchActiveGame = useGameStore((s) => s.fetchActiveGame);
 
-  const { fid, username: fallbackUsername, pfpUrl: fallbackAvatar } =
-    useMiniUser();
+  const {
+    fid,
+    username: fallbackUsername,
+    pfpUrl: fallbackAvatar,
+  } = useMiniUser();
 
   const lobbyStats = useLobbyStore((s) => s.stats);
   const fetchLobbyStats = useLobbyStore((s) => s.fetchStats);
