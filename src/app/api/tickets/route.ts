@@ -21,12 +21,15 @@ export async function GET(request: Request) {
       include: { game: true },
     });
     const result = tickets.map((ticket) => ({
-      ticketId: ticket.id,
+      id: ticket.id,
       gameId: ticket.gameId,
       gameTitle: ticket.game.name,
       code: ticket.code,
       amountUSDC: ticket.amountUSDC,
+      status: ticket.status,
+      txHash: ticket.txHash,
       purchasedAt: ticket.purchasedAt,
+      usedAt: ticket.usedAt,
     }));
     return NextResponse.json(result);
   } catch (error) {

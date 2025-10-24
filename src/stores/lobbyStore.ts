@@ -23,8 +23,13 @@ interface ReferralData {
 
 interface Ticket {
   id?: number;
-  txHash?: string;
   gameId?: number;
+  txHash?: string | null;
+  code?: string;
+  amountUSDC?: number;
+  status?: string;
+  purchasedAt?: string;
+  usedAt?: string | null;
 }
 
 // ───────────────────────── STATE INTERFACE ─────────────────────────
@@ -117,7 +122,7 @@ export const useLobbyStore = create<LobbyState>()((set, get) => {
 
     // ───────────────────────── TICKETS ─────────────────────────
     ticket: null,
-    async buyTicket(fid: number, gameId) {
+    async buyTicket(fid: number, gameId: number) {
       // 🧠 One-ticket-per-game rule
       const current = get().ticket;
       if (!gameId) {

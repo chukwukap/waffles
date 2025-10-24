@@ -1,7 +1,7 @@
 "use client";
 
 import { OnchainKitProvider } from "@coinbase/onchainkit";
-import { base } from "wagmi/chains";
+import { baseSepolia } from "wagmi/chains";
 import { env } from "@/lib/env";
 import { useSyncUser } from "@/hooks/useSyncUser";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
@@ -16,7 +16,7 @@ export function MinikitProvider({ children }: Props) {
   return (
     <OnchainKitProvider
       apiKey={env.nextPublicOnchainkitApiKey}
-      chain={base}
+      chain={baseSepolia}
       config={{
         appearance: {
           mode: "auto",
@@ -38,15 +38,15 @@ export function MinikitProvider({ children }: Props) {
 }
 
 function IsMiniAppReady({ children }: { children: React.ReactNode }) {
-  useSyncUser();
   const { isFrameReady, setFrameReady } = useMiniKit();
-
   // Initialize the  miniapp
   useEffect(() => {
     if (!isFrameReady) {
       setFrameReady();
     }
   }, [setFrameReady, isFrameReady]);
+
+  useSyncUser();
 
   return <>{children}</>;
 }

@@ -5,6 +5,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -51,6 +52,8 @@ export default function GameOverView() {
 
   const lobbyStats = useLobbyStore((s) => s.stats);
   const fetchLobbyStats = useLobbyStore((s) => s.fetchStats);
+  const ticket = useLobbyStore((s) => s.ticket);
+  const fetchTicket = useLobbyStore((s) => s.fetchTicket);
 
   const [summary, setSummary] = useState<SummaryState>({ status: "idle" });
 
@@ -160,6 +163,32 @@ export default function GameOverView() {
       Math.min(100, Math.round(((totalPlayers - rank) / totalPlayers) * 100))
     );
   }, [summary]);
+
+  const completionSyncedRef = useRef(false);
+
+  useEffect(() => {
+    if (completionSyncedRef.current) return;
+    if (!fid || !game?.id || !ticket?.id) return;
+
+    const farcasterId = String(fid);
+
+    const markComplete = async () => {
+      try {
+        const res = await fetch("/api/game/complete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ farcasterId, gameId: game.id }),
+        });
+        if (!res.ok) throw new Error(`Completion failed: ${res.status}`);
+        completionSyncedRef.current = true;
+        await fetchTicket(farcasterId, game.id);
+      } catch (error) {
+        console.error("Failed to mark game completion", error);
+      }
+    };
+
+    markComplete();
+  }, [fid, game?.id, ticket?.id, fetchTicket]);
 
   const { composeCastAsync } = useComposeCast();
 
