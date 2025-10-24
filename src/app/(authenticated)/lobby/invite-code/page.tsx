@@ -75,7 +75,7 @@ export default function InviteCodePage() {
     <div className="min-h-screen max-w-screen-sm mx-auto px-8 flex flex-col">
       <div
         className={
-          "p-4 flex items-center justify-center border-y border-border bg-figmaYay-gradient"
+          "p-4 flex items-center justify-center border-y border-border bg-figma-gradient"
         }
       >
         <LogoIcon />

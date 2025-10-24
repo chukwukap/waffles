@@ -37,7 +37,7 @@ export default function ProfilePage() {
   }, [fid, fetchProfile]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-figmaYay noise ">
+    <div className="min-h-screen flex flex-col bg-figma noise ">
       {/* Header */}
       <header className="sticky top-0 z-10 w-full border-b border-white/20 px-4 py-3">
         <div className="mx-auto max-w-screen-sm flex w-full items-center justify-between">

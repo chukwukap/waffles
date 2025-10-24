@@ -117,9 +117,14 @@ export const useLobbyStore = create<LobbyState>()((set, get) => {
 
     // ───────────────────────── TICKETS ─────────────────────────
     ticket: null,
-    async buyTicket(fid: number, gameId: number) {
+    async buyTicket(fid: number, gameId) {
       // 🧠 One-ticket-per-game rule
       const current = get().ticket;
+      if (!gameId) {
+        console.error("Game ID is not set");
+        return;
+      }
+
       if (current && current.gameId === gameId) {
         console.warn("User already owns a ticket for this game.");
         return;

@@ -24,8 +24,6 @@ export default function GameScreen() {
 
   return (
     // Full-bleed container; child views handle their own max-width & padding.
-    <div className="w-full min-h-[100dvh] overflow-hidden bg-figmaYay">
-      {view}
-    </div>
+    <div className="w-full min-h-[100dvh] overflow-hidden bg-figma">{view}</div>
   );
 }

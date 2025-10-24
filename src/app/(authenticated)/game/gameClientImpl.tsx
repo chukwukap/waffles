@@ -174,11 +174,11 @@ export function GameClientImpl() {
   })();
 
   return (
-    <div className="w-full min-h-[100dvh] overflow-hidden bg-figmaYay">
+    <div className="w-full min-h-[100dvh] overflow-hidden bg-figma">
       {/* HEADER */}
       <div
         className={cn(
-          "p-4 flex items-center justify-between border-b border-border bg-figmaYay"
+          "p-4 flex items-center justify-between border-b border-border bg-figma"
         )}
       >
         <LogoIcon />

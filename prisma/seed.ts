@@ -37,14 +37,14 @@ async function main() {
     create: {
       name: "Test Game",
       description: "A fun test game",
-      startTime: new Date(Date.now() + 60 * 1000), // 1 minute from now
+      startTime: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes from now
       questions: {
         create: [
           {
             text: "Which movie is this scene from?",
             options: ["The Matrix", "Inception", "Pulp Fiction", "Fight Club"],
             correctAnswer: "The Matrix",
-            imageUrl: "https://picsum.photos/200/300?matrix-pose",
+            imageUrl: "/logo.png",
             createdAt: new Date(),
           },
           {
@@ -56,14 +56,14 @@ async function main() {
               "Dogecoin Surge",
             ],
             correctAnswer: "Coinbase IPO",
-            imageUrl: "https://picsum.photos/200/300?coinbase-ipo",
+            imageUrl: "/logo.png",
             createdAt: new Date(),
           },
           {
             text: "Which film is this dream scene?",
             options: ["Inception", "Blade Runner", "Tenet", "The Prestige"],
             correctAnswer: "Inception",
-            imageUrl: "https://picsum.photos/200/300?inception-dream",
+            imageUrl: "/logo.png",
             createdAt: new Date(),
           },
           {
@@ -75,7 +75,7 @@ async function main() {
               "Cool Cats",
             ],
             correctAnswer: "Bored Ape Yacht Club",
-            imageUrl: "https://picsum.photos/200/300?bayc",
+            imageUrl: "/logo.png",
             createdAt: new Date(),
           },
           {
@@ -87,7 +87,7 @@ async function main() {
               "Avatar",
             ],
             correctAnswer: "Star Wars",
-            imageUrl: "https://picsum.photos/200/300?star-wars-force",
+            imageUrl: "/logo.png",
             createdAt: new Date(),
           },
           {
@@ -99,7 +99,7 @@ async function main() {
               "Bitfinex Hack",
             ],
             correctAnswer: "Mt. Gox Collapse",
-            imageUrl: "https://picsum.photos/200/300?mtgox-collapse",
+            imageUrl: "/logo.png",
             createdAt: new Date(),
           },
           {
@@ -111,21 +111,21 @@ async function main() {
               "Charles Hoskinson",
             ],
             correctAnswer: "Vitalik Buterin",
-            imageUrl: "https://picsum.photos/200/300?vitalik",
+            imageUrl: "/logo.png",
             createdAt: new Date(),
           },
           {
             text: "Which movie is known for the quote 'May the Force be with you'?",
             options: ["Star Wars", "Star Trek", "Harry Potter", "The Matrix"],
             correctAnswer: "Star Wars",
-            imageUrl: "https://picsum.photos/200/300?maytheforce",
+            imageUrl: "/logo.png",
             createdAt: new Date(),
           },
           {
             text: "Which platform is famous for Art Blocks NFT drops?",
             options: ["OpenSea", "Art Blocks", "Foundation", "Rarible"],
             correctAnswer: "Art Blocks",
-            imageUrl: "https://picsum.photos/200/300?artblocks",
+            imageUrl: "/logo.png",
             createdAt: new Date(),
           },
         ],
@@ -143,7 +143,6 @@ async function main() {
       },
     },
   });
-
   console.log(`Seeded users: ${testUser.name}\nSeeded games: ${game1.name}`);
 }
 
