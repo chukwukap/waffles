@@ -65,7 +65,7 @@ export function BuyConfirmation({
         </h1>
 
         <p className="mt-3 text-center text-base font-display text-[#99A0AE]">
-          You&apos;re in. See you Friday.
+          You&apos;re in for {gameTitle}. See you Friday.
         </p>
 
         <div className="mt-8 w-full rounded-[24px] border border-[#FFC931]/60 bg-black/30 p-4 backdrop-blur">
