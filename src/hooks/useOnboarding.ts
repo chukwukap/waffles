@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useMiniUser } from "./useMiniUser";
+import { useLobbyStore } from "@/stores/lobbyStore";
 
 const ONBOARDING_STORAGE_KEY = "waffles:onboarded:v1";
 
@@ -14,6 +15,7 @@ export function useOnboarding() {
   const [isOnboarded, setIsOnboarded] = useState<boolean>(true);
   const [isReady, setIsReady] = useState<boolean>(false);
   const { fid, username, pfpUrl, wallet } = useMiniUser();
+  const setReferralData = useLobbyStore((s) => s.setReferralData);
 
   useEffect(() => {
     try {
@@ -50,13 +52,20 @@ export function useOnboarding() {
         if (!data.success) {
           throw new Error("Failed to sync user");
         }
+        if (data.referralCode) {
+          setReferralData({
+            code: data.referralCode,
+            inviterFarcasterId: String(fid),
+            inviteeId: data.referral?.inviteeId,
+          });
+        }
       }
     } catch (_err) {
       console.error("Failed to sync user", _err);
       // Non-fatal: proceed even if storage fails
     }
     setIsOnboarded(true);
-  }, [fid, username, pfpUrl, wallet]);
+  }, [fid, username, pfpUrl, wallet, setReferralData]);
 
   return {
     isReady,

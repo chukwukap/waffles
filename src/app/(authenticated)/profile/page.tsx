@@ -14,11 +14,13 @@ import { ProfileCard } from "./_components/ProfileCard";
 import { Stats } from "./_components/Stats";
 import { InviteFriendsDrawer } from "./_components/InviteFriendsDrawer";
 import { useState } from "react";
+import { useLobbyStore } from "@/stores/lobbyStore";
 
 export default function ProfilePage() {
   const { username, streak, stats, gameHistory } = useProfileStore();
   const [inviteOpen, setInviteOpen] = useState(false);
-  const inviteCode = "EVWE";
+  const inviteCode =
+    useLobbyStore((state) => state.referralData?.code) ?? "------";
 
   return (
     <div className="min-h-screen flex flex-col bg-figmaYay noise ">
