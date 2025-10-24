@@ -70,7 +70,7 @@ export function useOnboarding() {
   return {
     isReady,
     isOnboarded,
-    shouldShowOnboarding: isReady && !isOnboarded,
+    // shouldShowOnboarding: isReady && !isOnboarded,
     // for testing
     // shouldShowOnboarding: true,
     completeOnboarding,

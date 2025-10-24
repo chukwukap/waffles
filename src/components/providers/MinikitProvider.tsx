@@ -45,7 +45,6 @@ function IsMiniAppReady({ children }: { children: React.ReactNode }) {
       setFrameReady();
     }
   }, [setFrameReady, isFrameReady]);
-
   useSyncUser();
 
   return <>{children}</>;

@@ -16,8 +16,10 @@ import { InviteFriendsDrawer } from "./_components/InviteFriendsDrawer";
 import { useEffect, useState } from "react";
 import { useLobbyStore } from "@/stores/lobbyStore";
 import { useMiniUser } from "@/hooks/useMiniUser";
+import { useSyncUser } from "@/hooks/useSyncUser";
 
 export default function ProfilePage() {
+  useSyncUser();
   const username = useProfileStore((s) => s.username);
   const streak = useProfileStore((s) => s.streak);
   const stats = useProfileStore((s) => s.stats);

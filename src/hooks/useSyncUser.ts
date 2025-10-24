@@ -5,13 +5,14 @@ import { useMiniUser } from "@/hooks/useMiniUser";
 import { useLobbyStore } from "@/stores/lobbyStore";
 
 export function useSyncUser() {
-  const { fid, username, pfpUrl, wallet, isMiniAppReady } = useMiniUser();
+  const { fid, username, pfpUrl, wallet } = useMiniUser();
   const setReferralData = useLobbyStore((s) => s.setReferralData);
 
   useEffect(() => {
-    if (!isMiniAppReady || !fid) return;
+    if (!fid || !username) return;
 
     const syncUser = async () => {
+      console.log("syncing user", { fid, username, pfpUrl, wallet });
       try {
         const res = await fetch("/api/user/sync", {
           method: "POST",
@@ -40,5 +41,5 @@ export function useSyncUser() {
     };
 
     syncUser();
-  }, [fid, wallet, username, pfpUrl, isMiniAppReady, setReferralData]);
+  }, [fid, wallet, username, pfpUrl, setReferralData]);
 }
