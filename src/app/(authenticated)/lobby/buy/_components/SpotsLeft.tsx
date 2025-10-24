@@ -3,7 +3,6 @@ import * as React from "react";
 type SpotsLeftProps = {
   current: number; // e.g. 23
   total: number; // e.g. 100
-  subtitle?: string; // default: "spots left"
   avatars: string[]; // 1–4 avatar URLs (shown left→right, overlapped)
   className?: string; // optional wrapper overrides
 };
@@ -23,21 +22,11 @@ type SpotsLeftProps = {
 export function SpotsLeft({
   current,
   total,
-  subtitle = "spots left",
   avatars,
   className = "",
 }: SpotsLeftProps) {
-  // Limit to 4 items (per your mock). Provide rotation per index.
-  const ROTATIONS = [-8.71, 5.85, -3.57, 7.56];
-
-  // Clamp/format
-  const clamped = Math.max(0, Math.min(current, total));
-
   return (
-    <div
-      className={`flex flex-col items-center gap-[12px] w-[228px] ${className}`}
-      aria-label={`${clamped}/${total} ${subtitle}`}
-    >
+    <div className={`flex flex-col items-center w-[228px] ${className}`}>
       {/* Avatars row */}
       <div className="flex items-center h-[48px] w-[119.94px]">
         {avatars.slice(0, 4).map((src, i) => (
@@ -55,7 +44,6 @@ export function SpotsLeft({
               "shadow-[0_0_0_0_rgba(0,0,0,0)]",
             ].join(" ")}
             style={{
-              transform: `rotate(${ROTATIONS[i] ?? 0}deg)`,
               backgroundImage: `url("${src}")`,
             }}
             aria-hidden="true"
@@ -64,12 +52,43 @@ export function SpotsLeft({
       </div>
 
       {/* Text block */}
-      <div className="flex flex-col items-center w-[228px] h-[58px]">
-        <div className="flex items-end justify-center text-sm text-foreground font-display">
-          {clamped}/{total}
+      <div
+        className="flex flex-col items-center p-0 w-[228px] h-[58px]"
+        style={{ alignSelf: "stretch", flex: "none", order: 1, flexGrow: 0 }}
+      >
+        <div
+          className="flex items-end justify-center w-[228px] h-[37px] text-center font-body"
+          style={{
+            fontStyle: "normal",
+            fontWeight: 400,
+            fontSize: "32px",
+            lineHeight: "115%",
+            letterSpacing: "-0.02em",
+            color: "#00CFF2",
+            alignSelf: "stretch",
+            flex: "none",
+            order: 0,
+            flexGrow: 0,
+          }}
+        >
+          {current}/{total}
         </div>
-        <div className="w-[228px] h-[21px] text-center tracking-[-0.03em] leading-[130%] text-[16px] font-medium font-display">
-          {subtitle}
+        <div
+          className="w-[228px] h-[21px] text-center font-display"
+          style={{
+            fontStyle: "normal",
+            fontWeight: 500,
+            fontSize: "16px",
+            lineHeight: "130%",
+            letterSpacing: "-0.03em",
+            color: "#99A0AE",
+            alignSelf: "stretch",
+            flex: "none",
+            order: 1,
+            flexGrow: 0,
+          }}
+        >
+          spots left
         </div>
       </div>
     </div>

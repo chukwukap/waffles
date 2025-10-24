@@ -57,11 +57,10 @@ export function useCountdown(
     Boolean(autoStart && (durationSeconds || target))
   );
   const intervalRef = useRef<number | null>(null);
+  // Track the current clock time to drive re-renders each tick
+  const [now, setNow] = useState<number>(Date.now());
 
-  const millisecondsLeft = useMemo(
-    () => Math.max(0, endAt - Date.now()),
-    [endAt]
-  );
+  const millisecondsLeft = useMemo(() => Math.max(0, endAt - now), [endAt, now]);
   const secondsLeft = Math.ceil(millisecondsLeft / 1000);
 
   const clearTimer = useCallback(() => {
@@ -73,6 +72,8 @@ export function useCountdown(
 
   const tick = useCallback(() => {
     const ms = Math.max(0, endAt - Date.now());
+    // Advance the clock to force consumers to re-render
+    setNow(Date.now());
     if (onTick) onTick(ms);
     if (ms <= 0) {
       clearTimer();
@@ -113,6 +114,8 @@ export function useCountdown(
         setEndAt(ts);
         setIsRunning(Boolean(autoStart));
         if (autoStart) {
+          // Sync once immediately, then start ticking
+          tick();
           intervalRef.current = window.setInterval(
             tick,
             Math.max(16, intervalMs)
@@ -125,6 +128,8 @@ export function useCountdown(
         setEndAt(ts);
         setIsRunning(Boolean(autoStart));
         if (autoStart) {
+          // Sync once immediately, then start ticking
+          tick();
           intervalRef.current = window.setInterval(
             tick,
             Math.max(16, intervalMs)
@@ -146,6 +151,8 @@ export function useCountdown(
       setEndAt(ts);
       setIsRunning(Boolean(autoStart));
       if (autoStart) {
+        // Sync once immediately, then start ticking
+        tick();
         intervalRef.current = window.setInterval(
           tick,
           Math.max(16, intervalMs)

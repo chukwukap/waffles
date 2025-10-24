@@ -209,7 +209,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const res = await fetch(`/api/game/${game.id}/questions`);
       if (!res.ok) throw new Error("Failed to fetch questions");
       const data = await res.json();
-      const updated = { ...game, questions: data.questions } as GameWithConfigAndQuestions;
+      const updated = {
+        ...game,
+        questions: data.questions,
+      } as GameWithConfigAndQuestions;
       set({
         game: updated,
         currentQuestionIndex: 0,
@@ -291,7 +294,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
 
-    const currentRoundEnd = roundBoundaries[(round - 1) as number] ?? (total - 1);
+    const currentRoundEnd = roundBoundaries[(round - 1) as number] ?? total - 1;
     set({ currentQuestionIndex: nextIndex, selectedAnswer: null });
     SoundManager.play("nextQuestion");
     if (nextIndex > currentRoundEnd) {
