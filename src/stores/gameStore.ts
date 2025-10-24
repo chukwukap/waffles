@@ -39,6 +39,7 @@ export interface GameStore {
   // Chat
   messages: ChatWithUser[];
   fetchMessages: () => Promise<void>;
+  setMessages: (messages: ChatWithUser[]) => void;
   sendMessage: (
     text: string,
     user: { fid: number; username: string; pfpUrl: string }
@@ -89,6 +90,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       console.error("fetchMessages error:", err);
       set({ messages: [] });
     }
+  },
+
+  setMessages: (messages: ChatWithUser[]) => {
+    set({ messages });
   },
 
   sendMessage: async (text, user) => {
