@@ -96,28 +96,29 @@ export default function BuyWafflePage() {
       return;
     }
 
-    // sendTokenAsync({
-    //   amount: (game.config.ticketPrice * 10 ** 6).toString(),
-    //   recipientAddress: env.waffleMainAddress,
-    // }).then(async () => {
-    //   console.log("Ticket purchased successfully");
-    //   await buyTicket(user.fid!, game.id);
-    //   if (ticket) {
-    //     setShowShare(true);
-    //   } else {
-    //     console.error("Ticket purchase failed");
-    //   }
-    // });
+    sendTokenAsync({
+      amount: (game.config.ticketPrice * 10 ** 6).toString(),
+      recipientAddress: env.waffleMainAddress,
+    })
+      .then(async () => {
+        console.log("Ticket purchased successfully");
+        await buyTicket(user.fid!, game.id);
+        setShowShare(true);
+      })
 
-    try {
-      setIsPurchasing(true);
-      await buyTicket(user.fid, game.id);
-      await Promise.all([fetchTicket(String(user.fid), game.id), fetchStats()]);
-    } catch (err) {
-      console.error("Ticket purchase failed", err);
-    } finally {
-      setIsPurchasing(false);
-    }
+      .catch(async () => {
+        console.error("Ticket purchase failed");
+      });
+
+    // try {
+    //   setIsPurchasing(true);
+    //   await buyTicket(user.fid, game.id);
+    //   await Promise.all([fetchTicket(String(user.fid), game.id), fetchStats()]);
+    // } catch (err) {
+    //   console.error("Ticket purchase failed", err);
+    // } finally {
+    //   setIsPurchasing(false);
+    // }
   };
 
   const handleOpenInvite = async () => {
@@ -178,14 +179,13 @@ export default function BuyWafflePage() {
       try {
         setFriendsLoading(true);
         setFriendsError(null);
-        // const res = await fetch(
-        //   `/api/social/friends?fid=${farcasterId}&gameId=${gameId}`,
-        //   { cache: "no-store", signal: controller.signal }
-        // );
-        // if (!res.ok) throw new Error(`Request failed with ${res.status}`);
-        // const data = await res.json();
-        // setFriends(data.friends ?? []);
-        setFriends([]);
+        const res = await fetch(
+          `/api/social/friends?fid=${farcasterId}&gameId=${gameId}`,
+          { cache: "no-store", signal: controller.signal }
+        );
+        if (!res.ok) throw new Error(`Request failed with ${res.status}`);
+        const data = await res.json();
+        setFriends(data.friends ?? []);
       } catch (err) {
         if (controller.signal.aborted) return;
         console.error("Failed to load friends", err);
@@ -227,22 +227,20 @@ export default function BuyWafflePage() {
   }, [friends, stats]);
 
   return (
-    <div className="h-screen flex flex-col bg-figma noise relative font-body">
-      {/* HEADER */}
-      <div
+    <div className="flex min-h-dvh flex-col font-body">
+      <header
         className={cn(
-          "p-4 flex items-center justify-between border-b border-border bg-figma"
+          "sticky top-0 z-30 flex items-center justify-between border-b border-border bg-figma px-4 py-4"
         )}
       >
         <LogoIcon />
-        <div className="flex items-center gap-1.5 bg-figma rounded-full px-3 py-1.5">
+        <div className="flex items-center gap-1.5 rounded-full bg-figma px-3 py-1.5">
           <WalletIcon className="w-4 h-4 text-foreground" />
           <span className="text-xs text-foreground">{`$${roundedBalance}`}</span>
         </div>
-      </div>
+      </header>
 
-      {/* MAIN CONTENT */}
-      <div className="flex-1 flex flex-col items-center gap-3 justify-center overflow-y-auto">
+      <main className="flex flex-1 flex-col items-center gap-3 overflow-y-auto px-4 pb-[96px]">
         {showShare && game ? (
           <Share
             gameTitle={game.name}
@@ -255,7 +253,7 @@ export default function BuyWafflePage() {
           />
         ) : (
           <>
-            <div className="mb-6">
+            <div className="mt-10 mb-6">
               <Image
                 src="/images/illustration/waffle-ticket.png"
                 alt="Waffle Ticket"
@@ -272,7 +270,6 @@ export default function BuyWafflePage() {
               <span className="block">WAFFLE</span>
             </h1>
 
-            {/* BUY BUTTON */}
             <div className="w-full max-w-[400px] px-4">
               <FancyBorderButton
                 onClick={handlePurchase}
@@ -281,34 +278,33 @@ export default function BuyWafflePage() {
                 {isPurchasing ? "PROCESSING..." : "BUY WAFFLE"}
               </FancyBorderButton>
             </div>
+
+            <button
+              className="flex items-center gap-1 text-xs font-bold text-[#00CFF2] hover:underline focus:outline-none"
+              tabIndex={0}
+              onClick={handleOpenInvite}
+            >
+              <InviteIcon />
+              INVITE FRIENDS{" "}
+              <span className="ml-1 text-xs font-bold">(20% BOOST!)</span>
+            </button>
+
+            {game && (
+              <SpotsLeft
+                current={stats?.totalTickets || 0}
+                total={game.config!.maxPlayers}
+                avatars={spotsAvatars}
+              />
+            )}
+
+            <FriendsList
+              friends={friends}
+              isLoading={friendsLoading}
+              error={friendsError}
+            />
           </>
         )}
-
-        {/* INVITE */}
-        <button
-          className="flex items-center gap-1 text-xs font-bold text-[#00CFF2] hover:underline focus:outline-none"
-          tabIndex={0}
-          onClick={handleOpenInvite}
-        >
-          <InviteIcon />
-          INVITE FRIENDS{" "}
-          <span className="text-xs font-bold ml-1">(20% BOOST!)</span>
-        </button>
-
-        {game && (
-          <SpotsLeft
-            current={stats?.totalTickets || 0}
-            total={game.config!.maxPlayers}
-            avatars={spotsAvatars}
-          />
-        )}
-
-        <FriendsList
-          friends={friends}
-          isLoading={friendsLoading}
-          error={friendsError}
-        />
-      </div>
+      </main>
 
       <BottomNav />
       <InviteFriendsDrawer
