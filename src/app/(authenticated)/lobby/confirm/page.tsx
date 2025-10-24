@@ -30,12 +30,12 @@ export default function ConfirmPage() {
 
   const handleShare = useCallback(async () => {
     if (!ticket) return;
-    const message = `I just grabbed my Waffle ticket for the next onchain game. See you Friday!`;
+    const message = `I just grabbed my Waffle ticket for the next onchain game. See you Monday!`;
 
     try {
       const result = await composeCastAsync({
         text: message,
-        embeds: [env.rootUrl ? env.rootUrl + "/lobby" : ""],
+        embeds: [env.rootUrl || ""],
       });
 
       if (result?.cast) {
