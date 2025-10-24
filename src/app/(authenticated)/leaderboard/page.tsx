@@ -80,7 +80,7 @@ export default function LeaderboardPage() {
   useEffect(() => {
     if (activeTab !== "current") return; // refresh only for current game
     const interval = setInterval(() => {
-      fetchLeaderboard("current").catch(console.error);
+      fetchLeaderboard("current", { replace: true }).catch(console.error);
     }, 15000); // every 15 seconds
     return () => clearInterval(interval);
   }, [activeTab, fetchLeaderboard]);
