@@ -6,8 +6,6 @@ export default function AuthenticatedLayout({
   children: ReactNode;
 }) {
   return (
-    <div className="min-h-dvh bg-figma noise text-foreground">
-      {children}
-    </div>
+    <div className="min-h-dvh bg-figma noise text-foreground">{children}</div>
   );
 }

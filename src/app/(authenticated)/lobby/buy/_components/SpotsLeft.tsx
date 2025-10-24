@@ -1,14 +1,18 @@
 import * as React from "react";
 
 type SpotsLeftProps = {
-  current: number; // e.g. 23
-  total: number; // e.g. 100
-  avatars: string[]; // 1–4 avatar URLs (shown left→right, overlapped)
-  className?: string; // optional wrapper overrides
+  current: number;
+  total: number;
+  avatars: string[];
+  className?: string;
 };
 
-// Exact Figma avatar card rotations for up to 4 avatars
-const AVATAR_ROTATIONS = [-8.71, 5.85, -3.57, 7.56];
+const FALLBACK_AVATARS = [
+  "/images/avatars/a.png",
+  "/images/avatars/b.png",
+  "/images/avatars/c.png",
+  "/images/avatars/d.png",
+] as const;
 
 export function SpotsLeft({
   current,
@@ -16,92 +20,50 @@ export function SpotsLeft({
   avatars,
   className = "",
 }: SpotsLeftProps) {
+  const clampedCurrent = Math.max(0, Math.min(current, total));
+  const displayedAvatars = React.useMemo(
+    () => {
+      const sanitized = avatars
+        .filter(Boolean)
+        .slice(0, 4)
+        .map((src, index) => src || FALLBACK_AVATARS[index] || FALLBACK_AVATARS[0]);
+      if (sanitized.length > 0) {
+        return sanitized;
+      }
+      return Array.from({ length: 4 }, (_, index) => FALLBACK_AVATARS[index]);
+    },
+    [avatars]
+  );
+
   return (
     <div
-      className={`flex flex-col items-center p-0 gap-[12px] w-[228px] h-[118px] relative ${className}`}
-      style={
-        {
-          // These absolute position props should be set only if used in a specifically positioned container
-          //left: 82, top: 602,
-        }
-      }
+      className={[
+        "flex w-full max-w-[260px] flex-col items-center gap-3 text-center",
+        className,
+      ].join(" ")}
     >
-      {/* Avatars row, visually stacked and rotated */}
-      <div
-        className="flex flex-row items-center p-0 w-[119.94px] h-[48px] relative"
-        style={{
-          flex: "none",
-          order: 0,
-          flexGrow: 0,
-        }}
-      >
-        {avatars.slice(0, 4).map((src, i) => (
-          <div
-            key={i}
-            className="box-border bg-[#F0F3F4] border-white border-[3.00779px] rounded-[6.01558px] w-[42.11px] h-[42.11px] bg-cover bg-center"
+      <div className="flex -space-x-4">
+        {displayedAvatars.map((src, index) => (
+          <span
+            key={`${src}-${index}`}
+            className="inline-flex size-12 items-center justify-center rounded-xl border border-white/10 bg-[#0E0E11] shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
             style={{
-              marginLeft: i === 0 ? 0 : -22.0571,
-              zIndex: i,
-              backgroundImage: `url("${src}")`,
-              transform: `rotate(${AVATAR_ROTATIONS[i] ?? 0}deg)`,
-              flex: "none",
-              order: i,
-              flexGrow: 0,
-              // Optional: white "card" border on the outside, gray underlay in case avatar fails
-              // Box-shadow removed, as Figma shows no visible shadow
+              backgroundImage: `url(${src})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
             }}
             aria-hidden="true"
           />
         ))}
       </div>
 
-      {/* Text block: count and "spots left" */}
-      <div
-        className="flex flex-col items-center p-0 w-[228px] h-[58px]"
-        style={{
-          flex: "none",
-          order: 1,
-          alignSelf: "stretch",
-          flexGrow: 0,
-        }}
-      >
-        <div
-          className="flex items-end justify-center w-[228px] h-[37px] text-center"
-          style={{
-            fontFamily: "'Edit Undo BRK', var(--font-body, sans-serif)",
-            fontStyle: "normal",
-            fontWeight: 400,
-            fontSize: "32px",
-            lineHeight: "115%",
-            letterSpacing: "-0.02em",
-            color: "#00CFF2",
-            alignSelf: "stretch",
-            flex: "none",
-            order: 0,
-            flexGrow: 0,
-          }}
-        >
-          {current}/{total}
-        </div>
-        <div
-          className="w-[228px] h-[21px] text-center"
-          style={{
-            fontFamily: "'Brockmann', var(--font-display, sans-serif)",
-            fontStyle: "normal",
-            fontWeight: 500,
-            fontSize: "16px",
-            lineHeight: "130%",
-            letterSpacing: "-0.03em",
-            color: "#99A0AE",
-            alignSelf: "stretch",
-            flex: "none",
-            order: 1,
-            flexGrow: 0,
-            marginTop: 0,
-          }}
-        >
+      <div>
+        <p className="font-edit-undo text-[clamp(1.5rem,5vw,2.25rem)] leading-none text-[#00CFF2]">
+          {clampedCurrent}/{total}
+        </p>
+        <p className="text-sm font-display uppercase tracking-[0.2em] text-[#99A0AE]">
           spots left
-        </div>
+        </p>
       </div>
     </div>
   );

@@ -21,19 +21,34 @@ interface ReferralData {
   inviteeId?: number;
 }
 
+interface InvitedBy {
+  code: string;
+  inviterFarcasterId: string | null;
+  acceptedAt?: string | null;
+}
+
 interface Ticket {
   id?: number;
-  txHash?: string;
   gameId?: number;
+  txHash?: string | null;
+  code?: string;
+  amountUSDC?: number;
+  status?: string;
+  purchasedAt?: string;
+  usedAt?: string | null;
 }
 
 // ───────────────────────── STATE INTERFACE ─────────────────────────
 interface LobbyState {
   // Referral
   referralData: ReferralData | null;
+  invitedBy: InvitedBy | null;
   createReferral: (farcasterId: string) => Promise<void>;
   validateReferral: (code: string, farcasterId: string) => Promise<void>;
   setReferralData: (data: ReferralData | null) => void;
+  hasValidInvite: boolean;
+  inviteStatusLoaded: boolean;
+  fetchReferralStatus: (farcasterId: string) => Promise<void>;
   // Stats
   stats: LobbyStats | null;
   fetchStats: () => Promise<void>;
@@ -49,9 +64,41 @@ export const useLobbyStore = create<LobbyState>()((set, get) => {
   return {
     // ───────────────────────── REFERRAL ─────────────────────────
     referralData: null,
+    invitedBy: null,
+    hasValidInvite: false,
+    inviteStatusLoaded: false,
 
     setReferralData(data) {
-      set({ referralData: data });
+      set({ referralData: data ?? null });
+    },
+
+    async fetchReferralStatus(farcasterId: string) {
+      try {
+        const res = await fetch(
+          `/api/referral/status?fid=${encodeURIComponent(farcasterId)}`,
+          { cache: "no-store" }
+        );
+        if (!res.ok) throw new Error("Failed to fetch referral status");
+        const data = await res.json();
+        set({
+          hasValidInvite: Boolean(data?.hasInvite),
+          inviteStatusLoaded: true,
+          invitedBy: data?.referral
+            ? {
+                code: data.referral.code,
+                inviterFarcasterId: data.referral.inviterFarcasterId ?? null,
+                acceptedAt: data.referral.acceptedAt ?? null,
+              }
+            : null,
+        });
+      } catch (err) {
+        console.error("fetchReferralStatus error", err);
+        set({
+          hasValidInvite: false,
+          inviteStatusLoaded: true,
+          invitedBy: null,
+        });
+      }
     },
 
     async createReferral(farcasterId: string) {
@@ -69,6 +116,8 @@ export const useLobbyStore = create<LobbyState>()((set, get) => {
             inviterFarcasterId: farcasterId,
             inviteeId: data.inviteeId,
           },
+          invitedBy: get().invitedBy,
+          inviteStatusLoaded: true,
         });
       } catch (err) {
         console.error(err);
@@ -87,18 +136,24 @@ export const useLobbyStore = create<LobbyState>()((set, get) => {
         console.log("validateReferral data:", data);
         if (data.valid) {
           set({
-            referralData: {
-              code: data.referral.code,
-              inviterFarcasterId: farcasterId,
-              inviteeId: data.referral.inviteeId,
-            },
+            hasValidInvite: true,
+            inviteStatusLoaded: true,
           });
+          await get().fetchReferralStatus(farcasterId);
         } else {
-          set({ referralData: null });
+          set({
+            hasValidInvite: false,
+            inviteStatusLoaded: true,
+            invitedBy: null,
+          });
         }
       } catch (err) {
         console.error(err);
-        set({ referralData: null });
+        set({
+          hasValidInvite: false,
+          inviteStatusLoaded: true,
+          invitedBy: null,
+        });
       }
     },
 
@@ -123,6 +178,10 @@ export const useLobbyStore = create<LobbyState>()((set, get) => {
       if (!gameId) {
         console.error("Game ID is not set");
         return;
+      }
+
+      if (!get().hasValidInvite) {
+        throw new Error("Invite required");
       }
 
       if (current && current.gameId === gameId) {
