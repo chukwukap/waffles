@@ -30,6 +30,7 @@ interface Ticket {
   status?: string;
   purchasedAt?: string;
   usedAt?: string | null;
+  inviterCode?: string | null;
 }
 
 // ───────────────────────── STATE INTERFACE ─────────────────────────
