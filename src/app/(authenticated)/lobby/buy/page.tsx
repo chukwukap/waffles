@@ -48,12 +48,15 @@ export default function BuyWafflePage() {
   const referralCode = useLobbyStore((s) => s.referralData?.code ?? "");
   const createReferral = useLobbyStore((s) => s.createReferral);
   const fetchTicket = useLobbyStore((s) => s.fetchTicket);
+  const fetchReferralStatus = useLobbyStore((s) => s.fetchReferralStatus);
+  const inviteStatusLoaded = useLobbyStore((s) => s.inviteStatusLoaded);
   const [isInviteOpen, setInviteOpen] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [friends, setFriends] = useState<FriendSummary[]>([]);
   const [friendsLoading, setFriendsLoading] = useState(false);
   const [friendsError, setFriendsError] = useState<string | null>(null);
   const [showShare, setShowShare] = useState(false);
+  const [purchaseError, setPurchaseError] = useState<string | null>(null);
   const { composeCastAsync } = useComposeCast();
   const gameId = game?.id ?? null;
   const farcasterId = user.fid ? String(user.fid) : null;
@@ -96,29 +99,49 @@ export default function BuyWafflePage() {
       return;
     }
 
-    sendTokenAsync({
-      amount: (game.config.ticketPrice * 10 ** 6).toString(),
-      recipientAddress: env.waffleMainAddress,
-    })
-      .then(async () => {
-        console.log("Ticket purchased successfully");
-        await buyTicket(user.fid!, game.id);
-        setShowShare(true);
-      })
+    try {
+      setIsPurchasing(true);
+      setPurchaseError(null);
 
-      .catch(async () => {
-        console.error("Ticket purchase failed");
+      if (!inviteStatusLoaded) {
+        await fetchReferralStatus(String(user.fid));
+      }
+
+      const { hasValidInvite: latestInvite } = useLobbyStore.getState();
+      if (!latestInvite) {
+        setPurchaseError("Redeem an invite code before buying a ticket.");
+        router.push("/lobby/invite-code");
+        return;
+      }
+
+      await sendTokenAsync({
+        amount: (game.config.ticketPrice * 10 ** 6).toString(),
+        recipientAddress: env.waffleMainAddress,
       });
 
-    // try {
-    //   setIsPurchasing(true);
-    //   await buyTicket(user.fid, game.id);
-    //   await Promise.all([fetchTicket(String(user.fid), game.id), fetchStats()]);
-    // } catch (err) {
-    //   console.error("Ticket purchase failed", err);
-    // } finally {
-    //   setIsPurchasing(false);
-    // }
+      await buyTicket(user.fid!, game.id);
+      await Promise.all([
+        fetchTicket(String(user.fid), game.id),
+        fetchStats(),
+      ]);
+
+      setShowShare(true);
+    } catch (err) {
+      console.error("Ticket purchase failed", err);
+      const { hasValidInvite: currentInvite } = useLobbyStore.getState();
+      if (!currentInvite) {
+        setPurchaseError("Redeem an invite code before buying a ticket.");
+      } else if (
+        err instanceof Error &&
+        err.message?.toLowerCase().includes("user rejected")
+      ) {
+        setPurchaseError("Transaction cancelled.");
+      } else {
+        setPurchaseError("Ticket purchase failed. Please try again.");
+      }
+    } finally {
+      setIsPurchasing(false);
+    }
   };
 
   const handleOpenInvite = async () => {
@@ -227,20 +250,22 @@ export default function BuyWafflePage() {
   }, [friends, stats]);
 
   return (
-    <div className="flex min-h-dvh flex-col font-body">
-      <header
+    <div className="h-screen flex flex-col bg-figma noise relative font-body">
+      {/* HEADER */}
+      <div
         className={cn(
-          "sticky top-0 z-30 flex items-center justify-between border-b border-border bg-figma px-4 py-4"
+          "p-4 flex items-center justify-between border-b border-border bg-figma"
         )}
       >
         <LogoIcon />
-        <div className="flex items-center gap-1.5 rounded-full bg-figma px-3 py-1.5">
+        <div className="flex items-center gap-1.5 bg-figma rounded-full px-3 py-1.5">
           <WalletIcon className="w-4 h-4 text-foreground" />
           <span className="text-xs text-foreground">{`$${roundedBalance}`}</span>
         </div>
-      </header>
+      </div>
 
-      <main className="flex flex-1 flex-col items-center gap-3 overflow-y-auto px-4 pb-[96px]">
+      {/* MAIN CONTENT */}
+      <div className="flex-1 flex flex-col items-center gap-3 justify-center overflow-y-auto">
         {showShare && game ? (
           <Share
             gameTitle={game.name}
@@ -253,7 +278,7 @@ export default function BuyWafflePage() {
           />
         ) : (
           <>
-            <div className="mt-10 mb-6">
+            <div className="mb-6">
               <Image
                 src="/images/illustration/waffle-ticket.png"
                 alt="Waffle Ticket"
@@ -270,6 +295,7 @@ export default function BuyWafflePage() {
               <span className="block">WAFFLE</span>
             </h1>
 
+            {/* BUY BUTTON */}
             <div className="w-full max-w-[400px] px-4">
               <FancyBorderButton
                 onClick={handlePurchase}
@@ -277,34 +303,40 @@ export default function BuyWafflePage() {
               >
                 {isPurchasing ? "PROCESSING..." : "BUY WAFFLE"}
               </FancyBorderButton>
+              {purchaseError && (
+                <p className="mt-3 text-center text-sm text-red-400">
+                  {purchaseError}
+                </p>
+              )}
             </div>
-
-            <button
-              className="flex items-center gap-1 text-xs font-bold text-[#00CFF2] hover:underline focus:outline-none"
-              tabIndex={0}
-              onClick={handleOpenInvite}
-            >
-              <InviteIcon />
-              INVITE FRIENDS{" "}
-              <span className="ml-1 text-xs font-bold">(20% BOOST!)</span>
-            </button>
-
-            {game && (
-              <SpotsLeft
-                current={stats?.totalTickets || 0}
-                total={game.config!.maxPlayers}
-                avatars={spotsAvatars}
-              />
-            )}
-
-            <FriendsList
-              friends={friends}
-              isLoading={friendsLoading}
-              error={friendsError}
-            />
           </>
         )}
-      </main>
+
+        {/* INVITE */}
+        <button
+          className="flex items-center gap-1 text-xs font-bold text-[#00CFF2] hover:underline focus:outline-none"
+          tabIndex={0}
+          onClick={handleOpenInvite}
+        >
+          <InviteIcon />
+          INVITE FRIENDS{" "}
+          <span className="text-xs font-bold ml-1">(20% BOOST!)</span>
+        </button>
+
+        {game && (
+          <SpotsLeft
+            current={stats?.totalTickets || 0}
+            total={game.config!.maxPlayers}
+            avatars={spotsAvatars}
+          />
+        )}
+
+        <FriendsList
+          friends={friends}
+          isLoading={friendsLoading}
+          error={friendsError}
+        />
+      </div>
 
       <BottomNav />
       <InviteFriendsDrawer

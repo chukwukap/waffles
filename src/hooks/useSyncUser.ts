@@ -7,6 +7,7 @@ import { useLobbyStore } from "@/stores/lobbyStore";
 export function useSyncUser() {
   const { fid, username, pfpUrl, wallet } = useMiniUser();
   const setReferralData = useLobbyStore((s) => s.setReferralData);
+  const fetchReferralStatus = useLobbyStore((s) => s.fetchReferralStatus);
 
   useEffect(() => {
     if (!fid || !username) return;
@@ -35,11 +36,13 @@ export function useSyncUser() {
             inviteeId: data.referral?.inviteeId,
           });
         }
+
+        await fetchReferralStatus(String(fid));
       } catch (err) {
         console.error("Failed to sync user:", err);
       }
     };
 
     syncUser();
-  }, [fid, wallet, username, pfpUrl, setReferralData]);
+  }, [fid, wallet, username, pfpUrl, setReferralData, fetchReferralStatus]);
 }
