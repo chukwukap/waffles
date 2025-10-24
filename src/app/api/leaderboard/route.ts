@@ -90,6 +90,8 @@ export async function GET(request: Request) {
   }
 
   // pagination
+  const totalPlayers = users.length;
+  const totalPoints = users.reduce((sum, u) => sum + (u.points ?? 0), 0);
   const pageSize = env.nextPublicLeaderboardPageSize;
   const start = page * pageSize;
   const end = start + pageSize;
@@ -104,7 +106,13 @@ export async function GET(request: Request) {
     if (found) me = found;
   }
 
-  return NextResponse.json({ users: pageUsers, hasMore, me });
+  return NextResponse.json({
+    users: pageUsers,
+    hasMore,
+    me,
+    totalPlayers,
+    totalPoints,
+  });
 }
 
 export const dynamic = "force-dynamic";
