@@ -1,15 +1,18 @@
 // ───────────────────────── src/app/lobby/confirm/_components/ConfirmScreen.tsx ─────────────────────────
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { useLobbyStore } from "@/stores/lobbyStore";
+import { useComposeCast } from "@coinbase/onchainkit/minikit";
+import { env } from "@/lib/env";
 
 export default function ConfirmPage() {
   const router = useRouter();
   const ticket = useLobbyStore((state) => state.ticket);
+  const { composeCastAsync } = useComposeCast();
 
   const shareButtonRef = useRef<HTMLButtonElement | null>(null);
 
@@ -25,28 +28,27 @@ export default function ConfirmPage() {
     shareButtonRef.current?.focus();
   }, []);
 
-  const handleShare = async () => {
+  const handleShare = useCallback(async () => {
     if (!ticket) return;
-    const shareData = {
-      title: "Waffle Secured!",
-      text: "I just grabbed my Waffle ticket for the next on-chain game. See you Friday!",
-      url:
-        typeof window !== "undefined" ? window.location.origin + "/lobby" : "",
-    };
+    const message = `I just grabbed my Waffle ticket for the next onchain game. See you Friday!`;
 
     try {
-      if (navigator.share) {
-        await navigator.share(shareData);
+      const result = await composeCastAsync({
+        text: message,
+        embeds: [env.rootUrl ? env.rootUrl + "/lobby" : ""],
+      });
+
+      if (result?.cast) {
+        console.log("Cast created successfully:", result.cast.hash);
       } else {
-        await navigator.clipboard.writeText(shareData.url);
-        alert("Link copied to clipboard!");
+        console.log("User cancelled the cast");
       }
-      router.replace("/game"); // ✅ Must share before returning
-    } catch (err) {
-      console.error("Share failed:", err);
+      router.replace("/game");
+    } catch (error) {
+      console.error("Error sharing to Farcaster:", error);
       alert("Please share to continue!");
     }
-  };
+  }, [ticket, composeCastAsync, router]);
 
   if (!ticket) return null;
 

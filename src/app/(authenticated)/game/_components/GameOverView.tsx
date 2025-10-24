@@ -15,6 +15,8 @@ import { useMiniUser } from "@/hooks/useMiniUser";
 import { useLobbyStore } from "@/stores/lobbyStore";
 import { ZapIcon, WinningsIcon, TrophyIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
+import { useComposeCast } from "@coinbase/onchainkit/minikit";
+import { env } from "@/lib/env";
 
 type SummaryState =
   | { status: "idle" | "loading" }
@@ -159,34 +161,33 @@ export default function GameOverView() {
     );
   }, [summary]);
 
+  const { composeCastAsync } = useComposeCast();
+
   const handleShare = useCallback(async () => {
     if (summary.status !== "ready") return;
     const { rank, score } = summary.data;
     const message = `I placed #${rank} with a score of ${formatNumber(
       score
     )} in Waffles!`;
-    const shareData = {
-      title: "Waffles",
-      text: message,
-      url: typeof window !== "undefined" ? window.location.href : undefined,
-    };
 
     try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else if (navigator.clipboard) {
-        await navigator.clipboard.writeText(
-          `${message} ${shareData.url ?? ""}`
-        );
-        alert("Link copied to clipboard!");
+      const result = await composeCastAsync({
+        text: message,
+        embeds: [env.rootUrl || ""],
+      });
+
+      // result.cast can be null if user cancels
+      if (result?.cast) {
+        console.log("Cast created successfully:", result.cast.hash);
       } else {
-        alert(message);
+        console.log("User cancelled the cast");
       }
-    } catch (err) {
-      console.error("Share failed", err);
-      alert("Unable to share right now.");
+
+      // result.cast can be null if user cancels; do nothing in either case
+    } catch (error) {
+      console.error("Error sharing to Farcaster:", error);
     }
-  }, [summary]);
+  }, [summary, composeCastAsync]);
 
   const handleBackHome = useCallback(() => {
     resetGame();
@@ -218,40 +219,47 @@ export default function GameOverView() {
       : fallbackAvatar ?? "/images/avatars/a.png";
 
   return (
-    <main className="relative min-h-[100dvh] w-full bg-figma noise">
-      <div className="relative mx-auto flex w-full max-w-[420px] flex-col items-center px-4 pb-[calc(env(safe-area-inset-bottom)+48px)] pt-16">
-        <Image
-          src="/images/illustration/waffle-ticket.png"
-          alt="Pixel waffle"
-          width={228}
-          height={132}
-          priority
-          className="mb-6 h-auto w-[228px]"
-        />
+    <main className="relative min-h w-full bg-figma noise">
+      <div className="relative mx-auto flex w-full max-w-lg flex-col items-center px-4 pb-[calc(env(safe-area-inset-bottom)+7vw)] pt-12 sm:pt-16">
+        <div className="w-full flex justify-center">
+          <Image
+            src="/images/illustration/waffle-ticket.png"
+            alt="Pixel waffle"
+            width={228}
+            height={132}
+            priority
+            className="mb-6 w-full max-w-xs h-auto"
+            style={{
+              aspectRatio: "228/132",
+              height: "auto",
+              width: "100%",
+              maxWidth: "228px",
+            }}
+          />
+        </div>
 
         <h1
-          className="font-edit-undo text-white"
+          className="font-edit-undo text-white leading-none"
           style={{
-            fontSize: "44px",
-            lineHeight: "0.92",
+            fontSize: "clamp(2rem, 9vw, 2.75rem)",
             letterSpacing: "-0.03em",
           }}
         >
           GAME OVER
         </h1>
 
-        <p className="mt-1 text-base font-display text-[#99A0AE]">
+        <p className="mt-1 text-base sm:text-lg font-display text-[#99A0AE] text-center">
           {headingTheme}
         </p>
 
-        <div className="mt-10 flex w-full max-w-[361px] flex-col items-center gap-6">
-          <div className="w-full rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.18),_rgba(0,0,0,0))] p-4 backdrop-blur-sm">
-            <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/20 px-3 py-2">
-              <span className="mx-auto text-sm font-display text-[#99A0AE]">
+        <div className="mt-10 flex w-full max-w-md flex-col items-center gap-3">
+          <div className="w-full rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.18),_rgba(0,0,0,0))] p-4 backdrop-blur-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/20 px-3 py-2">
+              <span className="mx-auto text-sm font-display text-[#99A0AE] whitespace-nowrap">
                 Your final rank
               </span>
-              <div className="flex items-center gap-2">
-                <div className="relative size-8 overflow-hidden rounded-full border border-white/20">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="relative aspect-square w-8 h-8 overflow-hidden rounded-full border border-white/20 shrink-0">
                   <Image
                     src={avatarUrl || "/images/avatars/a.png"}
                     alt={playerName}
@@ -259,22 +267,34 @@ export default function GameOverView() {
                     className="object-cover"
                   />
                 </div>
-                <span className="font-edit-undo text-white">{playerName}</span>
+                <span className="font-edit-undo text-white truncate max-w-[8rem]">
+                  {playerName}
+                </span>
               </div>
             </div>
 
-            <div className="mt-6 flex items-center justify-between gap-4">
+            <div className="mt-6 flex items-center justify-between gap-4 flex-wrap">
               <div>
                 <p
                   className="font-edit-undo text-white"
-                  style={{ fontSize: "78px", lineHeight: "0.9" }}
+                  style={{
+                    fontSize: "clamp(2.25rem, 13vw, 4.5rem)",
+                    lineHeight: "0.9",
+                  }}
                 >
                   {rankDisplay}
                 </p>
               </div>
-              <div className="flex h-[70px] w-[70px] items-center justify-center">
+              <div
+                className="flex items-center justify-center"
+                style={{
+                  height: "clamp(2.5rem, 10vw, 4.375rem)",
+                  width: "clamp(2.5rem, 10vw, 4.375rem)",
+                  minWidth: "2.5rem",
+                }}
+              >
                 <TrophyIcon
-                  className="h-14 w-14 text-[#FFC931]"
+                  className="w-full h-full text-[#FFC931]"
                   aria-label="Trophy"
                 />
               </div>
@@ -309,14 +329,20 @@ export default function GameOverView() {
           <button
             onClick={handleShare}
             className={cn(
-              "w-full rounded-[12px] bg-white px-6 py-4 text-center font-edit-undo text-2xl text-[#14B985] transition active:translate-x-[2px] active:translate-y-[2px]",
-              "border-r-[5px] border-b-[5px] border-[#14B985]"
+              "w-full rounded-xl bg-white px-6 py-4 text-center font-edit-undo text-2xl text-[#14B985] transition active:translate-x-[2px] active:translate-y-[2px]",
+              "border-r-[5px] border-b-[5px] border-[#14B985]",
+              "sm:text-2xl text-xl"
             )}
+            style={{
+              fontSize: "clamp(1.125rem, 4vw, 1.5rem)",
+              padding:
+                "clamp(0.875rem, 3vw, 1.25rem) clamp(1.25rem, 6vw, 1.5rem)",
+            }}
           >
             SHARE SCORE
           </button>
 
-          <div className="flex w-full max-w-[361px] flex-row items-center justify-between">
+          <div className="flex w-full flex-row items-center justify-between max-w-md flex-wrap gap-2">
             <TextButton onClick={handleBackHome}>BACK TO HOME</TextButton>
             <TextButton onClick={handleViewLeaderboard}>
               VIEW LEADERBOARD
@@ -326,7 +352,7 @@ export default function GameOverView() {
           {percentile !== null && (
             <div className="mt-4 flex items-center gap-2 text-sm font-display text-white">
               <ZapIcon className="h-4 w-4 text-[#FFC931]" />
-              <span>
+              <span className="truncate">
                 You finished faster than {percentile}% of your friends
               </span>
             </div>
