@@ -79,8 +79,11 @@ function CountdownCircle({
   const c = 2 * Math.PI * r;
 
   // stroke animation (start at top)
-  const dashOffset = c * (1 - ratio);
-  const angle = 360 * ratio - 90; // -90 to start from top
+  const clampedRatio = Math.max(0, Math.min(1, ratio));
+  const dashOffset = c * (1 - clampedRatio);
+  const elapsed = 1 - clampedRatio;
+  const angle = elapsed * 360;
+  const dotRadiusOffset = -(r + stroke / 2);
 
   return (
     <div
@@ -141,7 +144,7 @@ function CountdownCircle({
             background: BLUE,
             left: "50%",
             top: "50%",
-            transform: `translate(-50%, -50%) translateY(${-r}px)`,
+            transform: `translate(-50%, -50%) translateY(${dotRadiusOffset}px)`,
             boxShadow: "0 0 0 2px rgba(30,139,255,0.35)",
           }}
         />
