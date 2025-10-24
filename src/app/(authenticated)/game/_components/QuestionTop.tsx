@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useGameStore } from "@/stores/gameStore";
+import { useGame } from "@/state";
 
 function mmss(total: number) {
   const m = Math.max(0, Math.floor(total / 60));
@@ -16,8 +16,7 @@ function mmss(total: number) {
  *  - Row 2: Centered title (e.g., "WHO IS THIS?")
  */
 export default function QuestionTop() {
-  const currentQuestionIndex = useGameStore((s) => s.currentQuestionIndex);
-  const game = useGameStore((s) => s.game);
+  const { questionIndex: currentQuestionIndex, game } = useGame();
 
   const qCount = useMemo(() => {
     const now = Math.max(0, currentQuestionIndex + 1);

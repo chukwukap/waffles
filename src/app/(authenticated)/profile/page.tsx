@@ -6,7 +6,7 @@ import {
   UploadIcon,
   WalletIcon,
 } from "@/components/icons";
-import { useProfileStore } from "@/stores/profileStore";
+import { useProfile, useLobby } from "@/state";
 import { GameHistory } from "./_components/GameHistory";
 import LogoIcon from "@/components/logo/LogoIcon";
 import { BottomNav } from "@/components/BottomNav";
@@ -14,20 +14,13 @@ import { ProfileCard } from "./_components/ProfileCard";
 import { Stats } from "./_components/Stats";
 import { InviteFriendsDrawer } from "./_components/InviteFriendsDrawer";
 import { useEffect, useState } from "react";
-import { useLobbyStore } from "@/stores/lobbyStore";
 import { useMiniUser } from "@/hooks/useMiniUser";
-import { useSyncUser } from "@/hooks/useSyncUser";
 
 export default function ProfilePage() {
-  useSyncUser();
-  const username = useProfileStore((s) => s.username);
-  const streak = useProfileStore((s) => s.streak);
-  const stats = useProfileStore((s) => s.stats);
-  const gameHistory = useProfileStore((s) => s.gameHistory);
-  const fetchProfile = useProfileStore((s) => s.fetchProfile);
+  const { username, streak, stats, gameHistory, fetchProfile } = useProfile();
   const [inviteOpen, setInviteOpen] = useState(false);
-  const inviteCode =
-    useLobbyStore((state) => state.referralData?.code) ?? "------";
+  const { myReferral } = useLobby();
+  const inviteCode = myReferral?.code ?? "------";
   const { fid } = useMiniUser();
 
   useEffect(() => {

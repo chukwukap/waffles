@@ -21,12 +21,15 @@ export async function GET(request: Request) {
       include: { game: true },
     });
     const result = tickets.map((ticket) => ({
-      ticketId: ticket.id,
+      id: ticket.id,
       gameId: ticket.gameId,
       gameTitle: ticket.game.name,
       code: ticket.code,
       amountUSDC: ticket.amountUSDC,
+      status: ticket.status,
+      txHash: ticket.txHash,
       purchasedAt: ticket.purchasedAt,
+      usedAt: ticket.usedAt,
     }));
     return NextResponse.json(result);
   } catch (error) {
@@ -62,6 +65,16 @@ export async function POST(request: Request) {
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
+
+  const referral = await prisma.referral.findFirst({
+    where: { inviteeId: user.id },
+  });
+  if (!referral) {
+    return NextResponse.json(
+      { error: "Invite required" },
+      { status: 403 }
+    );
+  }
   // Find game by slug or typeId
   const game = await prisma.game.findUnique({
     where: { id: parseInt(typeId, 10) },
@@ -96,8 +109,14 @@ export async function POST(request: Request) {
     },
   });
   return NextResponse.json({
-    ticketId: ticket.id,
-    waffleType: game.name,
-    message: "Purchase successful",
+    id: ticket.id,
+    gameId: ticket.gameId,
+    gameTitle: game.name,
+    code: ticket.code,
+    amountUSDC: ticket.amountUSDC,
+    status: ticket.status,
+    txHash: ticket.txHash,
+    purchasedAt: ticket.purchasedAt,
+    usedAt: ticket.usedAt,
   });
 }

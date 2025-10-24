@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useMiniUser } from "./useMiniUser";
-import { useLobbyStore } from "@/stores/lobbyStore";
+import { useLobby } from "@/state";
 
-const ONBOARDING_STORAGE_KEY = "waffles:onboarded:v1.2";
+const ONBOARDING_STORAGE_KEY = "waffles:onboarded:v1.3";
 
 /**
  * Manages first-time user onboarding state with safe, persistent storage.
@@ -15,8 +15,7 @@ export function useOnboarding() {
   const [isOnboarded, setIsOnboarded] = useState<boolean>(true);
   const [isReady, setIsReady] = useState<boolean>(false);
   const { fid, username, pfpUrl, wallet } = useMiniUser();
-  const setReferralData = useLobbyStore((s) => s.setReferralData);
-  const fetchReferralStatus = useLobbyStore((s) => s.fetchReferralStatus);
+  const { registerReferralCode, fetchReferralStatus } = useLobby();
 
   useEffect(() => {
     try {
@@ -54,7 +53,7 @@ export function useOnboarding() {
           throw new Error("Failed to sync user");
         }
         if (data.referralCode) {
-          setReferralData({
+          registerReferralCode({
             code: data.referralCode,
             inviterFarcasterId: String(fid),
             inviteeId: data.referral?.inviteeId,
@@ -67,7 +66,14 @@ export function useOnboarding() {
       // Non-fatal: proceed even if storage fails
     }
     setIsOnboarded(true);
-  }, [fid, username, pfpUrl, wallet, setReferralData, fetchReferralStatus]);
+  }, [
+    fid,
+    username,
+    pfpUrl,
+    wallet,
+    registerReferralCode,
+    fetchReferralStatus,
+  ]);
 
   return {
     isReady,

@@ -4,29 +4,27 @@ import { Clock } from "@/components/icons";
 import { AvatarDiamond } from "./AvatarDiamond";
 import ChatDrawer from "./ChatDrawer";
 import ChatTickerOverlay from "./ChatTickerOverlay";
-import { useGameStore } from "@/stores/gameStore";
-import { useLobbyStore } from "@/stores/lobbyStore";
+import { useGame, useLobby } from "@/state";
 import { useCountdown } from "@/hooks/useCountdown";
 
 export default function WaitingView() {
-  const game = useGameStore((state) => state.game);
-  const ticket = useLobbyStore((state) => state.ticket);
-  const setGameView = useGameStore((state) => state.setGameView);
+  const { game, setView } = useGame();
+  const { ticket } = useLobby();
 
   // Countdown to game start time if available
   const startTimeMs = game?.startTime ? new Date(game.startTime).getTime() : 0;
 
-  // If the start time is in the past, immediately move to QUESTION_ACTIVE
+  // If the start time is in the past, immediately move to FINAL_COUNTDOWN
   useEffect(() => {
     if (game?.startTime && new Date(game.startTime).getTime() < Date.now()) {
-      setGameView("QUESTION_ACTIVE");
+      setView("FINAL_COUNTDOWN");
     }
-  }, [game?.startTime, setGameView]);
+  }, [game?.startTime, setView]);
   const { millisecondsLeft } = useCountdown({
     target: startTimeMs,
     autoStart: true,
     onComplete: () => {
-      setGameView("QUESTION_ACTIVE");
+      setView("FINAL_COUNTDOWN");
     },
   });
   const totalSec = Math.max(0, Math.ceil(millisecondsLeft / 1000));

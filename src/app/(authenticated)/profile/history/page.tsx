@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { useProfileStore } from "@/stores/profileStore";
+import { useProfile, type GameHistory } from "@/state";
 import { BottomNav } from "@/components/BottomNav";
 import LogoIcon from "@/components/logo/LogoIcon";
 import {
@@ -11,7 +11,6 @@ import {
   WaffleIcon,
   ZapIcon,
 } from "@/components/icons";
-import type { GameHistory } from "@/stores/profileStore";
 import { useMiniUser } from "@/hooks/useMiniUser";
 import { useEffect } from "react";
 /* ---------- Top bar (shared look) ---------- */
@@ -131,8 +130,7 @@ const GameHistoryItem = ({ game }: { game: GameHistory }) => (
 
 /* ---------- Page ---------- */
 export default function GameHistoryPage() {
-  const gameHistory = useProfileStore((s) => s.gameHistory);
-  const fetchProfile = useProfileStore((s) => s.fetchProfile);
+  const { gameHistory, fetchProfile } = useProfile();
   const { fid } = useMiniUser();
 
   useEffect(() => {

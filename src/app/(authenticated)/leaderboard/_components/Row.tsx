@@ -1,4 +1,4 @@
-import { Entry } from "@/stores/leaderboardStore";
+import { LeaderboardEntry as Entry } from "@/state";
 import { UsdcIcon } from "@/components/icons";
 import Image from "next/image";
 

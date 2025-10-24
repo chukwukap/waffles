@@ -5,13 +5,13 @@ import React, { useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
-import { useLobbyStore } from "@/stores/lobbyStore";
+import { useLobby } from "@/state";
 import { useComposeCast } from "@coinbase/onchainkit/minikit";
 import { env } from "@/lib/env";
 
 export default function ConfirmPage() {
   const router = useRouter();
-  const ticket = useLobbyStore((state) => state.ticket);
+  const { ticket } = useLobby();
   const { composeCastAsync } = useComposeCast();
 
   const shareButtonRef = useRef<HTMLButtonElement | null>(null);

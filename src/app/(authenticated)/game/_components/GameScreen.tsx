@@ -1,14 +1,18 @@
 "use client";
 
-import { useGameStore } from "@/stores/gameStore";
+import { useGame } from "@/state";
 import CountdownView from "./CountdownView";
 import QuestionView from "./QuestionView";
 import LobbyView from "./WaitingView";
+import { FinalCountdownView } from "./FinalCountdownView";
 
 export default function GameScreen() {
-  const gameView = useGameStore((s) => s.gameView);
+  const { view: gameView } = useGame();
 
   const view = (() => {
+    if (gameView === "FINAL_COUNTDOWN") {
+      return <FinalCountdownView />;
+    }
     switch (gameView) {
       case "ROUND_COUNTDOWN":
         return <CountdownView />;

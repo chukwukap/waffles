@@ -1,6 +1,6 @@
 // Past Games Section
 import { WaffleIcon, ZapIcon } from "@/components/icons";
-import type { GameHistory } from "@/stores/profileStore";
+import type { GameHistory } from "@/state";
 import Link from "next/link";
 import React from "react";
 

@@ -1,5 +1,5 @@
 "use client";
-import type { TabKey } from "@/stores/leaderboardStore";
+import type { LeaderboardTabKey as TabKey } from "@/state";
 import { PixelButton } from "@/components/buttons/PixelButton";
 
 export function Tabs({

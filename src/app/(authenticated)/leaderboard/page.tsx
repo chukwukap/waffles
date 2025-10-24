@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useMemo, useRef } from "react";
 import { Tabs } from "./_components/Tabs";
-import { useLeaderboardStore, Entry } from "@/stores/leaderboardStore";
+import { useLeaderboard, LeaderboardEntry as Entry } from "@/state";
 import { Top3 } from "./_components/Top3";
 import { Row } from "./_components/Row";
 import { WalletIcon } from "@/components/icons";
@@ -12,7 +12,7 @@ import { BottomNav } from "@/components/BottomNav";
 
 export default function LeaderboardPage() {
   const { activeTab, slices, setActiveTab, fetchLeaderboard, rememberScroll } =
-    useLeaderboardStore();
+    useLeaderboard();
 
   const slice = slices[activeTab];
 
