@@ -218,7 +218,7 @@ export default function GameOverView() {
       : fallbackAvatar ?? "/images/avatars/a.png";
 
   return (
-    <main className="relative min-h-[100dvh] w-full bg-figmaYay noise">
+    <main className="relative min-h-[100dvh] w-full bg-figma noise">
       <div className="relative mx-auto flex w-full max-w-[420px] flex-col items-center px-4 pb-[calc(env(safe-area-inset-bottom)+48px)] pt-16">
         <Image
           src="/images/illustration/waffle-ticket.png"

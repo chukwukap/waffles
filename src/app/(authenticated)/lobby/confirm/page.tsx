@@ -51,7 +51,7 @@ export default function ConfirmPage() {
   if (!ticket) return null;
 
   return (
-    <div className="bg-figmaYay noise min-h-[100svh] w-full px-5 py-8">
+    <div className="bg-figma noise min-h-[100svh] w-full px-5 py-8">
       {/* HERO */}
       <div className="mx-auto flex max-w-md flex-col items-center gap-3 animate-up">
         <Image

@@ -19,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
             name: "Waffles",
             url: env.rootUrl,
             splashImageUrl: `${env.rootUrl}/images/splash-icon.png`,
-            splashBackgroundColor: "#000000",
+            splashBackgroundColor: "#1E1E1E",
           },
         },
       }),

@@ -88,9 +88,9 @@ export default function LeaderboardPage() {
 
   // ───────────────────────── RENDER ─────────────────────────
   return (
-    <main className="min-h-[100dvh] bg-transparent">
+    <main className="min-h-[100dvh] bg-figma">
       {/* HEADER */}
-      <header className="sticky top-0 z-20 w-full border-b border-white/20 px-4 py-3 bg-figmaYay">
+      <header className="sticky top-0 z-20 w-full border-b border-white/20 px-4 py-3 bg-figma">
         <div className="mx-auto max-w-screen-sm flex w-full items-center justify-between ">
           <div className="flex min-w-0 flex-row items-center justify-center">
             <LogoIcon />

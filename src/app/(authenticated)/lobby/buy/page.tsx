@@ -233,15 +233,15 @@ export default function BuyWafflePage() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-figmaYay noise relative font-body">
+    <div className="h-screen flex flex-col bg-figma noise relative font-body">
       {/* HEADER */}
       <div
         className={cn(
-          "p-4 flex items-center justify-between border-b border-border bg-figmaYay"
+          "p-4 flex items-center justify-between border-b border-border bg-figma"
         )}
       >
         <LogoIcon />
-        <div className="flex items-center gap-1.5 bg-figmaYay rounded-full px-3 py-1.5">
+        <div className="flex items-center gap-1.5 bg-figma rounded-full px-3 py-1.5">
           <WalletIcon className="w-4 h-4 text-foreground" />
           <span className="text-xs text-foreground">{`$${roundedBalance}`}</span>
         </div>
@@ -319,15 +319,11 @@ function FriendsList({
   error: string | null;
 }) {
   if (error) {
-    return (
-      <div className="mt-6 text-sm text-red-400">{error}</div>
-    );
+    return <div className="mt-6 text-sm text-red-400">{error}</div>;
   }
 
   if (isLoading) {
-    return (
-      <div className="mt-6 text-sm text-muted">Loading your friends…</div>
-    );
+    return <div className="mt-6 text-sm text-muted">Loading your friends…</div>;
   }
 
   if (!friends.length) return null;

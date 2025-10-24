@@ -27,7 +27,7 @@ export function Tabs({
               // Responsive paddings and text size
               "px-4 py-2 text-xs sm:px-6 sm:py-2 sm:text-sm",
               selected ? "font-bold" : "opacity-80 hover:opacity-100",
-              selected ? "noise" : "bg-figmaYay noise",
+              selected ? "noise" : "bg-figma noise",
               "transition",
             ].join(" ")}
             tabIndex={selected ? 0 : -1}
