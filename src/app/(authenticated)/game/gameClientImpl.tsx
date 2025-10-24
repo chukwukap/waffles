@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useGameStore } from "@/stores/gameStore";
 import CountdownView from "./_components/CountdownView";
 import QuestionView from "./_components/QuestionView";
@@ -16,6 +22,8 @@ import { useGetTokenBalance } from "@coinbase/onchainkit/wallet";
 import { env } from "@/lib/env";
 import { base } from "wagmi/chains";
 import LeaveGameDrawer from "./_components/LeaveGameDrawer";
+import SoundManager from "@/lib/SoundManager";
+import type { GameView } from "@/stores/gameStore";
 
 export function GameClientImpl() {
   const router = useRouter();
@@ -30,6 +38,8 @@ export function GameClientImpl() {
   const fetchTicket = useLobbyStore((state) => state.fetchTicket);
   // Drawer starts closed; opened when user taps "leave"
   const [isLeaveGameDrawerOpen, setIsLeaveGameDrawerOpen] = useState(false);
+  const soundEnabled = game?.config?.soundEnabled ?? true;
+  const previousViewRef = useRef<GameView | null>(null);
 
   const { roundedBalance } = useGetTokenBalance(user.wallet as `0x${string}`, {
     address: env.nextPublicUsdcAddress as `0x${string}`,
@@ -46,13 +56,35 @@ export function GameClientImpl() {
     }
   }, [fetchTicket, user.fid, game?.id]);
 
+  // Unlock Web Audio API after the first user interaction
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      SoundManager.init().catch((error) => {
+        console.debug("Sound manager init failed", error);
+      });
+    };
+
+    window.addEventListener("pointerdown", handleFirstInteraction, {
+      once: true,
+    });
+    window.addEventListener("keydown", handleFirstInteraction, { once: true });
+
+    return () => {
+      window.removeEventListener("pointerdown", handleFirstInteraction);
+      window.removeEventListener("keydown", handleFirstInteraction);
+    };
+  }, []);
+
   // Fetch messages if we have a valid game and user
   useEffect(() => {
     fetchMessages();
   }, [fetchMessages]);
 
   // Lightweight SWR-like polling using fetch + state setter
-  const chatKey = useMemo(() => (game?.id ? `/api/chat?gameId=${game.id}` : null), [game?.id]);
+  const chatKey = useMemo(
+    () => (game?.id ? `/api/chat?gameId=${game.id}` : null),
+    [game?.id]
+  );
   useEffect(() => {
     if (!chatKey) return;
     let disposed = false;
@@ -78,6 +110,43 @@ export function GameClientImpl() {
       router.replace("/lobby/buy");
     }
   }, [ticket, router]);
+
+  // Handle ambience / countdown sounds as the view changes
+  useEffect(() => {
+    if (!soundEnabled) {
+      SoundManager.stop("countdown");
+      previousViewRef.current = gameView;
+      return;
+    }
+
+    if (gameView === "ROUND_COUNTDOWN") {
+      SoundManager.play("countdown", { loop: true });
+    } else {
+      SoundManager.stop("countdown");
+    }
+
+    if (
+      gameView === "QUESTION_ACTIVE" &&
+      previousViewRef.current !== "QUESTION_ACTIVE"
+    ) {
+      SoundManager.play("questionStart");
+    }
+
+    previousViewRef.current = gameView;
+  }, [gameView, soundEnabled]);
+
+  // Stop all sounds when sound is disabled or component unmounts
+  useEffect(() => {
+    if (!soundEnabled) {
+      SoundManager.stopAll();
+    }
+  }, [soundEnabled]);
+
+  useEffect(() => {
+    return () => {
+      SoundManager.stopAll();
+    };
+  }, []);
 
   // Confirm leave: reset local game state and route back to lobby buy page
   const leaveGame = useCallback(() => {
