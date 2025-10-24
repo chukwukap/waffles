@@ -19,6 +19,20 @@ import { BuyConfirmation } from "./_components/BuyConfirmation";
 
 import { base } from "wagmi/chains";
 
+type FriendSummary = {
+  fid: number;
+  username: string;
+  displayName?: string | null;
+  pfpUrl?: string | null;
+  relationship: {
+    isFollower: boolean;
+    isFollowing: boolean;
+  };
+  hasTicket: boolean;
+  ticketId?: number;
+  ticketGameId?: number;
+};
+
 // ───────────────────────── CONSTANTS ─────────────────────────
 
 export default function BuyWafflePage() {
@@ -34,6 +48,11 @@ export default function BuyWafflePage() {
   const fetchTicket = useLobbyStore((s) => s.fetchTicket);
   const [isInviteOpen, setInviteOpen] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
+  const [friends, setFriends] = useState<FriendSummary[]>([]);
+  const [friendsLoading, setFriendsLoading] = useState(false);
+  const [friendsError, setFriendsError] = useState<string | null>(null);
+  const gameId = game?.id ?? null;
+  const farcasterId = user.fid ? String(user.fid) : null;
   const { roundedBalance } = useGetTokenBalance(user.wallet as `0x${string}`, {
     address: env.nextPublicUsdcAddress as `0x${string}`,
     chainId: base.id,
@@ -83,10 +102,7 @@ export default function BuyWafflePage() {
     try {
       setIsPurchasing(true);
       await buyTicket(user.fid, game.id);
-      await Promise.all([
-        fetchTicket(String(user.fid), game.id),
-        fetchStats(),
-      ]);
+      await Promise.all([fetchTicket(String(user.fid), game.id), fetchStats()]);
     } catch (err) {
       console.error("Ticket purchase failed", err);
     } finally {
@@ -137,25 +153,70 @@ export default function BuyWafflePage() {
   }, [ticket, game]);
 
   useEffect(() => {
-    if (!stats) {
-      fetchStats().catch((err) =>
-        console.error("Failed to load lobby stats", err)
-      );
-    }
-  }, [stats, fetchStats]);
+    if (!farcasterId || !gameId) return;
+    fetchTicket(farcasterId, gameId).catch((error) =>
+      console.error("Failed to fetch ticket info", error)
+    );
+  }, [farcasterId, gameId, fetchTicket]);
 
   useEffect(() => {
-    if (farcasterId && gameId) {
-      fetchTicket(farcasterId, gameId).catch((error) =>
-        console.error("Failed to fetch ticket info", error)
-      );
+    if (!farcasterId || !gameId) {
+      setFriends([]);
+      setFriendsError(null);
+      setFriendsLoading(false);
+      return;
     }
-  }, [farcasterId, gameId, fetchTicket]);
+    const controller = new AbortController();
+    const loadFriends = async () => {
+      try {
+        setFriendsLoading(true);
+        setFriendsError(null);
+        const res = await fetch(
+          `/api/social/friends?fid=${farcasterId}&gameId=${gameId}`,
+          { cache: "no-store", signal: controller.signal }
+        );
+        if (!res.ok) throw new Error(`Request failed with ${res.status}`);
+        const data = await res.json();
+        setFriends(data.friends ?? []);
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        console.error("Failed to load friends", err);
+        setFriends([]);
+        setFriendsError("Could not load your friends right now.");
+      } finally {
+        if (!controller.signal.aborted) {
+          setFriendsLoading(false);
+        }
+      }
+    };
+
+    loadFriends();
+    return () => controller.abort();
+  }, [farcasterId, gameId, ticket?.id]);
 
   const prizePool = useMemo(() => {
     if (!stats) return null;
     return stats.totalPrize;
   }, [stats]);
+
+  const spotsAvatars = useMemo(() => {
+    const friendAvatars = friends
+      .filter((friend) => friend.hasTicket && friend.pfpUrl)
+      .map((friend) => friend.pfpUrl!)
+      .slice(0, 4);
+    if (friendAvatars.length > 0) return friendAvatars;
+    const statsAvatars =
+      stats?.players
+        ?.map((player) => player.pfpUrl)
+        .filter((url): url is string => Boolean(url)) ?? [];
+    if (statsAvatars.length > 0) return statsAvatars.slice(0, 4);
+    return [
+      "/images/avatars/a.png",
+      "/images/avatars/b.png",
+      "/images/avatars/c.png",
+      "/images/avatars/d.png",
+    ];
+  }, [friends, stats]);
 
   if (ticket && game) {
     return (
@@ -207,10 +268,7 @@ export default function BuyWafflePage() {
 
         {/* BUY BUTTON */}
         <div className="w-full max-w-[400px] px-4">
-          <FancyBorderButton
-            onClick={handlePurchase}
-            disabled={isPurchasing}
-          >
+          <FancyBorderButton onClick={handlePurchase} disabled={isPurchasing}>
             {isPurchasing ? "PROCESSING..." : "BUY WAFFLE"}
           </FancyBorderButton>
         </div>
@@ -230,18 +288,15 @@ export default function BuyWafflePage() {
           <SpotsLeft
             current={stats?.totalTickets || 0}
             total={game.config!.maxPlayers}
-            // avatars={(stats?.players ?? []).map(
-            //   (p) => p.pfpUrl || "/images/avatars/a.png"
-            // )}
-
-            avatars={[
-              "/images/avatars/a.png",
-              "/images/avatars/b.png",
-              "/images/avatars/c.png",
-              "/images/avatars/d.png",
-            ]}
+            avatars={spotsAvatars}
           />
         )}
+
+        <FriendsList
+          friends={friends}
+          isLoading={friendsLoading}
+          error={friendsError}
+        />
       </div>
 
       <BottomNav />
@@ -251,5 +306,72 @@ export default function BuyWafflePage() {
         onClose={() => setInviteOpen(false)}
       />
     </div>
+  );
+}
+
+function FriendsList({
+  friends,
+  isLoading,
+  error,
+}: {
+  friends: FriendSummary[];
+  isLoading: boolean;
+  error: string | null;
+}) {
+  if (error) {
+    return (
+      <div className="mt-6 text-sm text-red-400">{error}</div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="mt-6 text-sm text-muted">Loading your friends…</div>
+    );
+  }
+
+  if (!friends.length) return null;
+
+  return (
+    <section className="mt-8 w-full max-w-[420px] px-4">
+      <h2 className="text-sm font-display uppercase tracking-wide text-[#99A0AE]">
+        Your friends
+      </h2>
+      <ul className="mt-3 space-y-3">
+        {friends.slice(0, 8).map((friend) => (
+          <li
+            key={friend.fid}
+            className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/25 px-3 py-2 backdrop-blur"
+          >
+            <div className="flex items-center gap-3">
+              <div className="relative size-10 overflow-hidden rounded-full border border-white/10">
+                <Image
+                  src={friend.pfpUrl || "/images/avatars/a.png"}
+                  alt={friend.username}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-edit-undo text-white">
+                  {friend.displayName || friend.username}
+                </span>
+                <span className="text-xs font-display text-[#99A0AE]">
+                  @{friend.username}
+                </span>
+              </div>
+            </div>
+            <span
+              className={cn(
+                "text-xs font-edit-undo uppercase",
+                friend.hasTicket ? "text-[#14B985]" : "text-[#FB72FF]"
+              )}
+            >
+              {friend.hasTicket ? "Ticket secured" : "Needs ticket"}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

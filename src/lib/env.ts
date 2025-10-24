@@ -1,10 +1,20 @@
+const resolveRootUrl = (): string => {
+  const explicit =
+    process.env.NEXT_PUBLIC_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? null;
+
+  const vercelProject = process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : null;
+
+  const vercelUrl = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : null;
+
+  return explicit || vercelProject || vercelUrl || "http://localhost:3000";
+};
+
 export const env = {
-  rootUrl:
-    "https://ddfd716973f5.ngrok-free.app" ||
-    process.env.NEXT_PUBLIC_URL ||
-    (process.env.VERCEL_PROJECT_PRODUCTION_URL
-      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-      : "http://localhost:3000"),
+  rootUrl: resolveRootUrl(),
 
   // server keys
   neynarApiKey: process.env.NEYNAR_API_KEY!,
