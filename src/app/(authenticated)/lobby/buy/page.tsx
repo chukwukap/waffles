@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useComposeCast, useSendToken } from "@coinbase/onchainkit/minikit";
 import LogoIcon from "@/components/logo/LogoIcon";
 import { cn } from "@/lib/utils";
 import { InviteIcon, WalletIcon } from "@/components/icons";
@@ -15,7 +16,7 @@ import { useGameStore } from "@/stores/gameStore";
 import { useGetTokenBalance } from "@coinbase/onchainkit/wallet";
 import { env } from "@/lib/env";
 import { InviteFriendsDrawer } from "@/app/(authenticated)/profile/_components/InviteFriendsDrawer";
-import { BuyConfirmation } from "./_components/BuyConfirmation";
+import { Share } from "./_components/Share";
 
 import { base } from "wagmi/chains";
 
@@ -36,6 +37,7 @@ type FriendSummary = {
 // ───────────────────────── CONSTANTS ─────────────────────────
 
 export default function BuyWafflePage() {
+  const { sendTokenAsync } = useSendToken();
   const router = useRouter();
   const game = useGameStore((state) => state.game);
   const user = useMiniUser();
@@ -51,8 +53,17 @@ export default function BuyWafflePage() {
   const [friends, setFriends] = useState<FriendSummary[]>([]);
   const [friendsLoading, setFriendsLoading] = useState(false);
   const [friendsError, setFriendsError] = useState<string | null>(null);
+  const [showShare, setShowShare] = useState(false);
+  const { composeCastAsync } = useComposeCast();
   const gameId = game?.id ?? null;
   const farcasterId = user.fid ? String(user.fid) : null;
+
+  useEffect(() => {
+    if (ticket) {
+      router.replace("/game");
+    }
+  }, [ticket, router]);
+
   const { roundedBalance } = useGetTokenBalance(user.wallet as `0x${string}`, {
     address: env.nextPublicUsdcAddress as `0x${string}`,
     chainId: base.id,
@@ -85,29 +96,29 @@ export default function BuyWafflePage() {
       return;
     }
 
-    // sendTokenAsync({
-    //   amount: (game.config.ticketPrice * 10 ** 6).toString(),
-    //   recipientAddress: env.waffleMainAddress || "",
-    // })
-    //   .then(async () => {
-    //     // await buyTicket(user.fid!, game.id, game.config!.ticketPrice);
-    //     // if (purchaseStatus === "confirmed") {
-    //     //   router.replace("/lobby/confirm");
-    //     // }
-    //   })
-    //   .catch(async () => {
-    //
-    //   });
+    sendTokenAsync({
+      amount: (game.config.ticketPrice * 10 ** 6).toString(),
+      recipientAddress: env.waffleMainAddress,
+    })
+      .then(async () => {
+        console.log("Ticket purchased successfully");
+        await buyTicket(user.fid!, game.id);
+        setShowShare(true);
+      })
 
-    try {
-      setIsPurchasing(true);
-      await buyTicket(user.fid, game.id);
-      await Promise.all([fetchTicket(String(user.fid), game.id), fetchStats()]);
-    } catch (err) {
-      console.error("Ticket purchase failed", err);
-    } finally {
-      setIsPurchasing(false);
-    }
+      .catch(async () => {
+        console.error("Ticket purchase failed");
+      });
+
+    // try {
+    //   setIsPurchasing(true);
+    //   await buyTicket(user.fid, game.id);
+    //   await Promise.all([fetchTicket(String(user.fid), game.id), fetchStats()]);
+    // } catch (err) {
+    //   console.error("Ticket purchase failed", err);
+    // } finally {
+    //   setIsPurchasing(false);
+    // }
   };
 
   const handleOpenInvite = async () => {
@@ -128,29 +139,26 @@ export default function BuyWafflePage() {
 
   const shareTicket = useCallback(async () => {
     if (!ticket || !game) return;
-    const message = `Just secured my waffle ticket for ${game.name}!`;
-    const shareData = {
-      title: "Waffle Secured!",
-      text: message,
-      url: typeof window !== "undefined" ? window.location.href : undefined,
-    };
 
     try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else if (navigator.clipboard) {
-        await navigator.clipboard.writeText(
-          `${message} ${shareData.url ?? ""}`
-        );
-        alert("Link copied to clipboard!");
+      const message = `Just secured my waffle ticket for ${game.name}!`;
+
+      const result = await composeCastAsync({
+        text: message,
+        embeds: [env.rootUrl || ""],
+      });
+
+      // result.cast can be null if user cancels
+      if (result?.cast) {
+        console.log("Cast created successfully:", result.cast.hash);
       } else {
-        alert(message);
+        console.log("User cancelled the cast");
       }
-    } catch (err) {
-      console.error("Share ticket failed", err);
+    } catch (error) {
+      console.error("Error sharing cast:", error);
       alert("Unable to share your ticket right now.");
     }
-  }, [ticket, game]);
+  }, [ticket, game, composeCastAsync]);
 
   useEffect(() => {
     if (!farcasterId || !gameId) return;
@@ -218,20 +226,6 @@ export default function BuyWafflePage() {
     ];
   }, [friends, stats]);
 
-  if (ticket && game) {
-    return (
-      <BuyConfirmation
-        gameTitle={game.name}
-        theme={game.description || "See you Friday."}
-        username={user.username || "Player"}
-        avatarUrl={user.pfpUrl || "/images/avatars/a.png"}
-        prizePool={prizePool}
-        onShare={shareTicket}
-        onBackHome={handleBackToHome}
-      />
-    );
-  }
-
   return (
     <div className="h-screen flex flex-col bg-figma noise relative font-body">
       {/* HEADER */}
@@ -249,29 +243,46 @@ export default function BuyWafflePage() {
 
       {/* MAIN CONTENT */}
       <div className="flex-1 flex flex-col items-center gap-3 justify-center overflow-y-auto">
-        <div className="mb-6">
-          <Image
-            src="/images/illustration/waffle-ticket.png"
-            alt="Waffle Ticket"
-            width={152}
-            height={93}
-            className="mx-auto"
-            style={{ imageRendering: "pixelated" }}
-            priority
+        {showShare && game ? (
+          <Share
+            gameTitle={game.name}
+            theme={game.description || "See you Friday."}
+            username={user.username || "Player"}
+            avatarUrl={user.pfpUrl || "/images/avatars/a.png"}
+            prizePool={prizePool}
+            onShare={shareTicket}
+            onBackHome={handleBackToHome}
           />
-        </div>
+        ) : (
+          <>
+            <div className="mb-6">
+              <Image
+                src="/images/illustration/waffle-ticket.png"
+                alt="Waffle Ticket"
+                width={152}
+                height={93}
+                className="mx-auto"
+                style={{ imageRendering: "pixelated" }}
+                priority
+              />
+            </div>
 
-        <h1 className="text-foreground text-3xl text-center leading-tight">
-          <span className="block">GET YOUR</span>
-          <span className="block">WAFFLE</span>
-        </h1>
+            <h1 className="text-foreground text-3xl text-center leading-tight">
+              <span className="block">GET YOUR</span>
+              <span className="block">WAFFLE</span>
+            </h1>
 
-        {/* BUY BUTTON */}
-        <div className="w-full max-w-[400px] px-4">
-          <FancyBorderButton onClick={handlePurchase} disabled={isPurchasing}>
-            {isPurchasing ? "PROCESSING..." : "BUY WAFFLE"}
-          </FancyBorderButton>
-        </div>
+            {/* BUY BUTTON */}
+            <div className="w-full max-w-[400px] px-4">
+              <FancyBorderButton
+                onClick={handlePurchase}
+                disabled={isPurchasing}
+              >
+                {isPurchasing ? "PROCESSING..." : "BUY WAFFLE"}
+              </FancyBorderButton>
+            </div>
+          </>
+        )}
 
         {/* INVITE */}
         <button

@@ -30,6 +30,7 @@ export function GameClientImpl() {
   const gameView = useGameStore((s) => s.gameView);
   const game = useGameStore((s) => s.game);
   const resetGame = useGameStore((s) => s.resetGame);
+  const setGameView = useGameStore((s) => s.setGameView);
   const ticket = useLobbyStore((state) => state.ticket);
   const user = useMiniUser();
 
@@ -55,6 +56,12 @@ export function GameClientImpl() {
       fetchTicket(user.fid.toString(), game.id);
     }
   }, [fetchTicket, user.fid, game?.id]);
+
+  useEffect(() => {
+    if (ticket?.usedAt && gameView !== "GAME_OVER") {
+      setGameView("GAME_OVER");
+    }
+  }, [ticket?.usedAt, gameView, setGameView]);
 
   // Unlock Web Audio API after the first user interaction
   useEffect(() => {
