@@ -16,4 +16,11 @@ export const env = {
   nextPublicUsdcAddress: process.env.NEXT_PUBLIC_USDC_ADDRESS! as `0x${string}`, // Base USDC token address
   nextPublicSupabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
   nextPublicSupabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  nextPublicLeaderboardPageSize:
+    Number.parseInt(
+      process.env.NEXT_PUBLIC_LEADERBOARD_PAGE_SIZE ??
+        process.env.LEADERBOARD_PAGE_SIZE ??
+        "25",
+      10
+    ) || 25,
 };

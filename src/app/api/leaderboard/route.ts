@@ -16,7 +16,7 @@ export async function GET(request: Request) {
   const tabParam = (searchParams.get("tab") || "allTime") as
     | "current"
     | "allTime";
-  const page = Number(searchParams.get("page") ?? "0");
+  const page = Number.parseInt(searchParams.get("page") ?? "0", 10);
   const gameIdParam = searchParams.get("gameId");
   const userIdParam = searchParams.get("userId");
 
@@ -90,8 +90,9 @@ export async function GET(request: Request) {
   }
 
   // pagination
-  const start = page * env.nextPublicLeaderboardPageSize;
-  const end = start + env.nextPublicLeaderboardPageSize;
+  const pageSize = env.nextPublicLeaderboardPageSize;
+  const start = page * pageSize;
+  const end = start + pageSize;
   const pageUsers = users.slice(start, end);
   const hasMore = end < users.length;
 

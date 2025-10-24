@@ -27,7 +27,7 @@ interface LeaderboardState {
   // Actions
   setActiveTab: (tab: TabKey) => void;
   rememberScroll: (tab: TabKey, scrollY: number) => void;
-  fetchLeaderboard: (tab: TabKey) => Promise<void>;
+  fetchLeaderboard: (tab: TabKey, opts?: { replace?: boolean }) => Promise<void>;
   reset: () => void;
 }
 
@@ -61,21 +61,32 @@ export const useLeaderboardStore = create<LeaderboardState>((set, get) => ({
       },
     })),
 
-  fetchLeaderboard: async (tab) => {
+  fetchLeaderboard: async (tab, opts) => {
     const { slices } = get();
     const slice = slices[tab];
 
-    if (slice.isLoading || !slice.hasMore) return;
+    if (!opts?.replace && (slice.isLoading || !slice.hasMore)) return;
+
+    const targetPage = opts?.replace ? 0 : slice.page;
 
     set({
       slices: {
         ...slices,
-        [tab]: { ...slice, isLoading: true, error: null },
+        [tab]: {
+          ...slice,
+          isLoading: true,
+          error: null,
+          ...(opts?.replace
+            ? { entries: [], page: 0, hasMore: true }
+            : {}),
+        },
       },
     });
 
     try {
-      const res = await fetch(`/api/leaderboard?tab=${tab}&page=${slice.page}`);
+      const res = await fetch(
+        `/api/leaderboard?tab=${tab}&page=${targetPage}`
+      );
       if (!res.ok) throw new Error(`Failed to fetch ${tab} leaderboard`);
       const data = await res.json();
 
@@ -98,8 +109,12 @@ export const useLeaderboardStore = create<LeaderboardState>((set, get) => ({
           ...state.slices,
           [tab]: {
             ...state.slices[tab],
-            entries: [...state.slices[tab].entries, ...newEntries],
-            page: state.slices[tab].page + 1,
+            entries: opts?.replace
+              ? newEntries
+              : [...state.slices[tab].entries, ...newEntries],
+            page: opts?.replace
+              ? 1
+              : state.slices[tab].page + 1,
             hasMore: data.hasMore,
             isLoading: false,
           },
