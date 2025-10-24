@@ -141,7 +141,7 @@ function CountdownCircle({
             background: BLUE,
             left: "50%",
             top: "50%",
-            transform: `translate(-50%, -50%) translateY(${-r}px)`,
+            transform: `translate(-50%, -50%) translateY(${-r + stroke / 2}px)`,
             boxShadow: "0 0 0 2px rgba(30,139,255,0.35)",
           }}
         />
