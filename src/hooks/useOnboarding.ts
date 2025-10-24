@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useMiniUser } from "./useMiniUser";
 import { useLobbyStore } from "@/stores/lobbyStore";
 
-const ONBOARDING_STORAGE_KEY = "waffles:onboarded:v1";
+const ONBOARDING_STORAGE_KEY = "waffles:onboarded:v1.1";
 
 /**
  * Manages first-time user onboarding state with safe, persistent storage.
@@ -70,7 +70,7 @@ export function useOnboarding() {
   return {
     isReady,
     isOnboarded,
-    // shouldShowOnboarding: isReady && !isOnboarded,
+    shouldShowOnboarding: isReady && !isOnboarded,
     // for testing
     // shouldShowOnboarding: true,
     completeOnboarding,
