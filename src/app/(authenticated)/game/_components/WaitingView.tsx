@@ -38,7 +38,7 @@ export default function WaitingView() {
      * Root takes full height and acts as the positioning context for overlays.
      * Max width lives here, so the whole lobby sits within the game screen nicely.
      */
-    <div className="relative mx-auto w-full max-w-screen-sm px-4 pt-6 pb-24 min-h-[100dvh] text-foreground flex flex-col">
+    <div className="relative mx-auto w-full max-w-screen-sm px-4 pt-6 pb-24 min-h-96 text-foreground flex flex-col">
       {/* Main scrollable column */}
       <section className="flex-1 flex flex-col items-center gap-3 overflow-y-auto w-full pt-16 pb-4">
         {/* Top bar */}

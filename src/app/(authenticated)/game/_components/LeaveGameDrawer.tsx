@@ -82,7 +82,7 @@ export default function LeaveGameDrawer({
                   {/* Illustration */}
                   <div className="w-full flex items-center justify-center mb-3">
                     <Image
-                      src="/images/leave-door.png" // <- drop your pixel door here
+                      src="/images/illustration/leave-door.svg" // <- drop your pixel door here
                       alt="Leave"
                       width={84}
                       height={90}
@@ -92,7 +92,7 @@ export default function LeaveGameDrawer({
 
                   {/* Title */}
                   <h2
-                    className="text-center font-pixel text-white"
+                    className="text-center font-body text-white"
                     style={{
                       fontSize: "44px",
                       lineHeight: "0.92",
@@ -119,7 +119,7 @@ export default function LeaveGameDrawer({
                     }}
                   >
                     <span
-                      className="block font-pixel"
+                      className="block font-body"
                       style={{
                         color: "var(--brand-green, #14B985)",
                         fontSize: "26px",
@@ -143,7 +143,7 @@ export default function LeaveGameDrawer({
                       className="w-full rounded-xl px-4 py-[12px] text-center"
                     >
                       <span
-                        className="font-pixel"
+                        className="font-body"
                         style={{
                           color: "var(--brand-cyan, #00CFF2)",
                           fontSize: "18px",

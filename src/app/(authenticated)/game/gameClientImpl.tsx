@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { useLobbyStore } from "@/stores/lobbyStore";
 import { cn } from "@/lib/utils";
 import LogoIcon from "@/components/logo/LogoIcon";
-import { WalletIcon } from "@/components/icons";
+import { LeaveGameIcon, WalletIcon } from "@/components/icons";
 import { useGetTokenBalance } from "@coinbase/onchainkit/wallet";
 import { env } from "@/lib/env";
 import { base } from "wagmi/chains";
@@ -50,6 +50,14 @@ export function GameClientImpl() {
     fetchMessages();
   }, [fetchMessages]);
 
+  // Simple polling for chat updates (no websockets)
+  useEffect(() => {
+    const id = setInterval(() => {
+      fetchMessages();
+    }, 3000);
+    return () => clearInterval(id);
+  }, [fetchMessages]);
+
   // Redirect if missing invite code or ticket
   useEffect(() => {
     if (!ticket) {
@@ -62,6 +70,7 @@ export function GameClientImpl() {
     try {
       resetGame();
     } finally {
+      setIsLeaveGameDrawerOpen(false);
       router.replace("/game");
     }
   }, [resetGame, router]);
@@ -91,19 +100,24 @@ export function GameClientImpl() {
       >
         <LogoIcon />
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 bg-figmaYay rounded-full px-3 py-1.5">
-            <WalletIcon className="w-4 h-4 text-foreground" />
-            <span className="text-xs text-foreground">{`$${roundedBalance}`}</span>
-          </div>
-          {(gameView === "ROUND_COUNTDOWN" ||
-            gameView === "QUESTION_ACTIVE" ||
-            gameView === "ANSWER_SUBMITTED") && (
-            <button
-              onClick={() => setIsLeaveGameDrawerOpen(true)}
-              className="text-xs text-[#00CFF2] underline underline-offset-2"
-            >
-              leave
-            </button>
+          {gameView === "ROUND_COUNTDOWN" ||
+          gameView === "QUESTION_ACTIVE" ||
+          gameView === "ANSWER_SUBMITTED" ? (
+            <div className="flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1.5 ">
+              <LeaveGameIcon className="w-4 h-4 text-foreground" />
+
+              <button
+                onClick={() => setIsLeaveGameDrawerOpen(true)}
+                className="text-xs font-body"
+              >
+                <span className="text-xs text-foreground">leave game</span>
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 bg-figma rounded-full px-3 py-1.5">
+              <WalletIcon className="w-4 h-4 text-foreground" />
+              <span className="text-xs text-foreground">{`$${roundedBalance}`}</span>
+            </div>
           )}
         </div>
       </div>
