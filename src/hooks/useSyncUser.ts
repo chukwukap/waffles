@@ -9,7 +9,7 @@ export function useSyncUser() {
   const setReferralData = useLobbyStore((s) => s.setReferralData);
 
   useEffect(() => {
-    if (!isMiniAppReady || !fid || !wallet) return;
+    if (!isMiniAppReady || !fid) return;
 
     const syncUser = async () => {
       try {
