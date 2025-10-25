@@ -1,3 +1,5 @@
+"use client";
+
 import { GameStateProvider } from "./game/GameContext";
 import { LobbyProvider } from "./lobby/LobbyContext";
 import { LeaderboardProvider } from "./leaderboard/LeaderboardContext";
