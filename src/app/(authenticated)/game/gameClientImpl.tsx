@@ -5,6 +5,7 @@ import CountdownView from "./_components/CountdownView";
 import QuestionView from "./_components/QuestionView";
 import WaitingView from "./_components/WaitingView";
 import GameOverView from "./_components/GameOverView";
+import JoinGameScreen from "./_components/JoinGame";
 import { useMiniUser } from "@/hooks/useMiniUser";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ export function GameClientImpl() {
     resetGame,
     fetchMessages,
     setMessages,
+    hasJoinedSession,
   } = useGame();
   const { ticket, fetchTicket } = useLobby();
   const user = useMiniUser();
@@ -163,7 +165,7 @@ export function GameClientImpl() {
         return <GameOverView />;
       case "LOBBY":
       default:
-        return <WaitingView />;
+        return hasJoinedSession ? <WaitingView /> : <JoinGameScreen />;
     }
   })();
 
