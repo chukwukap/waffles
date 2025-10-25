@@ -2,68 +2,45 @@
 
 import Image from "next/image";
 
-const leftMemes = [
-  { src: "/images/splash/meme-left-1.png", className: "w-24 rotate-3" },
-  { src: "/images/splash/meme-left-2.png", className: "w-28 -rotate-6 left-12" },
-  { src: "/images/splash/meme-left-3.png", className: "w-20 rotate-12 left-6" },
-];
-
-const rightMemes = [
-  { src: "/images/splash/meme-right-1.png", className: "w-20 -rotate-3" },
-  { src: "/images/splash/meme-right-2.png", className: "w-24 rotate-8 right-10" },
-  { src: "/images/splash/meme-right-3.png", className: "w-28 -rotate-12 right-0" },
+const crewImages = [
+  "/images/splash/crew-1.png",
+  "/images/splash/crew-2.png",
+  "/images/splash/crew-3.png",
+  "/images/splash/crew-4.png",
+  "/images/splash/crew-5.png",
+  "/images/splash/crew-6.png",
+  "/images/splash/crew-7.png",
+  "/images/splash/crew-8.png",
 ];
 
 export function SplashScreen() {
   return (
-    <div className="fixed inset-0 z-[999] bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_rgba(0,0,0,0.9))] text-white">
+    <div className="fixed inset-0 z-999 flex items-center justify-center bg-linear-to-b from-[#1E1E1E] to-black text-white">
       <div className="absolute inset-0 bg-[url('/images/noise.png')] opacity-10" />
-      <header className="flex items-center justify-between px-6 pt-6 text-sm">
-        <span className="font-sans text-base tracking-[0.1em]">9:41</span>
-        <div className="flex items-center gap-2 text-white">
-          <span className="h-3 w-5 rounded bg-white/80" />
-          <span className="h-3 w-3 rounded-full bg-white/80" />
-          <span className="h-3 w-5 rounded bg-white/80" />
-        </div>
-      </header>
-
-      <main className="relative z-10 flex h-full flex-col items-center justify-center px-6">
-        <div className="flex flex-col items-center gap-5 text-center">
-          <div className="relative h-24 w-24">
-            <Image src="/logo-icon.png" alt="Waffles Logo" fill priority />
+      <div className="relative flex h-full w-full max-w-sm flex-col items-center justify-center px-6">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <div className="relative h-24 w-24 drop-shadow-[0_20px_40px_rgba(0,0,0,0.45)]">
+            <Image src="/logo.png" alt="Waffles Logo" fill priority />
           </div>
-          <p className="font-edit-undo text-4xl tracking-[0.2em]">WAFFLES</p>
+          <p className="font-body text-4xl tracking-tight">WAFFLES</p>
         </div>
 
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-between px-4 pb-6">
-          <div className="flex flex-col gap-3">
-            {leftMemes.map((image, index) => (
-              <Image
-                key={`left-${index}`}
-                src={image.src}
-                alt=""
-                width={120}
-                height={120}
-                className={`drop-shadow-2xl opacity-90 ${image.className}`}
-                priority
-              />
-            ))}
-          </div>
-          <div className="flex flex-col items-end gap-3">
-            {rightMemes.map((image, index) => (
-              <Image
-                key={`right-${index}`}
-                src={image.src}
-                alt=""
-                width={120}
-                height={120}
-                className={`drop-shadow-2xl opacity-90 ${image.className}`}
-                priority
-              />
-            ))}
-          </div>
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex h-32 items-end justify-center gap-2 px-3 pb-4">
+          {crewImages.map((src, index) => (
+            <Image
+              key={src}
+              src={src}
+              alt=""
+              width={90}
+              height={90}
+              className={`h-[clamp(70px,10vw,90px)] w-auto opacity-95 drop-shadow-[0_12px_25px_rgba(0,0,0,0.45)] ${
+                index % 2 === 0 ? "-rotate-2" : "rotate-2"
+              }`}
+              priority
+            />
+          ))}
         </div>
-      </main>
+      </div>
     </div>
   );
 }

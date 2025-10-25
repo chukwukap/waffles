@@ -145,10 +145,7 @@ export default function WaitingView() {
       </div>
 
       {/* overlays anchored to this view */}
-      <ChatTickerOverlay
-        className="bottom-[7.5rem] sm:bottom-36"
-        maxItems={4}
-      />
+      <ChatTickerOverlay className="bottom-30 sm:bottom-36" maxItems={4} />
       <ChatDrawer />
     </div>
   );

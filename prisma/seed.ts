@@ -38,6 +38,7 @@ async function main() {
       name: "Test Game",
       description: "A fun test game",
       startTime: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes from now
+      endTime: new Date(Date.now() + 65 * 60 * 1000), // 1 hour after start time (65 minutes from now)
       questions: {
         create: [
           {
@@ -138,7 +139,7 @@ async function main() {
           scoreMultiplier: 1.0,
           scorePenalty: 0,
           maxPlayers: 200,
-          soundEnabled: true,
+          soundEnabled: false,
         },
       },
     },

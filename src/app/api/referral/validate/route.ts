@@ -6,7 +6,9 @@ import { z } from "zod";
 // Accept referral code, and invitee's Farcaster ID (fid)
 const bodySchema = z.object({
   code: z.string().length(6),
-  fid: z.number().int().positive(), // invitee’s Farcaster ID
+  fid: z
+    .union([z.number().int().nonnegative(), z.string().regex(/^\d+$/)])
+    .transform((value) => Number(value)),
 });
 
 export async function POST(req: Request) {
@@ -28,6 +30,8 @@ export async function POST(req: Request) {
         { status: 404 }
       );
     }
+    console.log("Invitee found:", invitee.name);
+    console.log("Validating referral code:", code);
 
     // 2️⃣ Find the referral code (on "referral" table, column: code)
     const referral = await prisma.referral.findUnique({
@@ -40,6 +44,8 @@ export async function POST(req: Request) {
       );
     }
 
+    console.log("Referral record found:", referral);
+
     // 3️⃣ Prevent self-referral (can't use your own code)
     if (referral.inviterId === invitee.id) {
       return NextResponse.json(
@@ -47,6 +53,8 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+
+    console.log("Referral found for code:", code);
 
     // 4️⃣ Prevent duplicate referrals (same inviter & invitee can't refer more than once)
     const duplicate = await prisma.referral.findFirst({

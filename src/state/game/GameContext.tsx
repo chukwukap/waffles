@@ -29,9 +29,8 @@ export type GameView =
   | "FINAL_COUNTDOWN"
   | "ROUND_COUNTDOWN"
   | "QUESTION_ACTIVE"
-  | "ANSWER_SUBMITTED"
-  | "GAME_OVER"
-  | "PAUSED";
+  | "JOIN_GAME_VIEW"
+  | "GAME_OVER";
 
 interface GameState {
   status: "idle" | "loading" | "ready" | "error";
@@ -262,6 +261,7 @@ export function GameStateProvider({ children }: { children: React.ReactNode }) {
           }),
         });
         if (!res.ok) throw new Error("Failed to submit answer");
+
         return (await res.json()) as { correct: boolean; points: number };
       } catch (error) {
         console.error("submitAnswer error", error);
@@ -334,23 +334,17 @@ export function GameStateProvider({ children }: { children: React.ReactNode }) {
       const question =
         state.game?.questions?.[state.questionIndex]?.correctAnswer;
       dispatch({ type: "SET_SELECTED", answer });
-      dispatch({ type: "SET_VIEW", view: "ANSWER_SUBMITTED" });
+      clearAdvanceTimer();
 
       if (state.game?.config?.soundEnabled) {
         SoundManager.play("click");
         SoundManager.play(question === answer ? "correct" : "wrong");
       }
-
-      clearAdvanceTimer();
-      advanceTimerRef.current = setTimeout(() => {
-        advanceToNextQuestion();
-      }, 1500);
     },
     [
-      advanceToNextQuestion,
-      clearAdvanceTimer,
       state.game?.config?.soundEnabled,
       state.game?.questions,
+      clearAdvanceTimer,
       state.questionIndex,
     ]
   );

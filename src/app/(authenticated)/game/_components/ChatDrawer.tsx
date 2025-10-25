@@ -41,10 +41,10 @@ export default function ChatDrawer() {
     <>
       {/* Trigger Input */}
       <div
-        className="absolute left-0 bottom-0 w-full mx-auto flex flex-row items-start px-4 pb-5 pt-3 gap-3 bg-[#0E0E0E] z-30"
+        className="absolute left-0 bottom-0 w-full mx-auto flex flex-row items-start px-4 pb-5 pt-3 gap-3 bg-figma z-30"
         onClick={() => setOpen(true)}
       >
-        <div className="flex flex-col justify-center items-start flex-grow bg-white/5 rounded-full px-5 py-3 gap-1">
+        <div className="flex flex-col justify-center items-start grow bg-white/5 rounded-full px-5 py-3 gap-1">
           <input
             readOnly
             placeholder="Type..."

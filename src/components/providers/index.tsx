@@ -27,8 +27,8 @@ function AppBootstrap({ children }: { children: React.ReactNode }) {
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <AppStateProvider>
-      <MinikitProvider>
+    <MinikitProvider>
+      <AppStateProvider>
         <OnboardingGate>
           <FlowGuard>
             <AppBootstrap>
@@ -37,7 +37,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             </AppBootstrap>
           </FlowGuard>
         </OnboardingGate>
-      </MinikitProvider>
-    </AppStateProvider>
+      </AppStateProvider>
+    </MinikitProvider>
   );
 }
