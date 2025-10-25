@@ -43,6 +43,7 @@ interface GameState {
   selectedAnswer: string | null;
   messages: ChatWithUser[];
   roundBoundaries: number[];
+  hasJoinedSession: boolean;
 }
 
 type GameAction =
@@ -59,7 +60,8 @@ type GameAction =
   | { type: "SET_ROUND_ACTIVE" }
   | { type: "SET_ROUND"; round: number }
   | { type: "SET_QUESTION_INDEX"; index: number }
-  | { type: "SET_ROUND_BOUNDARIES"; boundaries: number[] };
+  | { type: "SET_ROUND_BOUNDARIES"; boundaries: number[] }
+  | { type: "SET_JOINED"; value: boolean };
 
 const initialState: GameState = {
   status: "idle",
@@ -71,6 +73,7 @@ const initialState: GameState = {
   selectedAnswer: null,
   messages: [],
   roundBoundaries: [],
+  hasJoinedSession: false,
 };
 
 function computeRoundBoundaries(total: number): number[] {
@@ -106,6 +109,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         view: "LOBBY",
         selectedAnswer: null,
         roundBoundaries: boundaries,
+        hasJoinedSession: false,
         error: null,
       };
     }
@@ -119,6 +123,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return { ...state, messages: [...state.messages, action.message] };
     case "SET_ROUND_BOUNDARIES":
       return { ...state, roundBoundaries: action.boundaries };
+    case "SET_JOINED":
+      return { ...state, hasJoinedSession: action.value };
     case "SET_ROUND":
       return { ...state, round: action.round };
     case "SET_QUESTION_INDEX":
@@ -161,6 +167,7 @@ interface GameContextValue extends GameState {
     user: { fid: number; username: string; pfpUrl: string }
   ) => Promise<void>;
   gameOver: () => void;
+  acknowledgeJoin: () => void;
 }
 
 const GameContext = createContext<GameContextValue | undefined>(undefined);
@@ -352,6 +359,10 @@ export function GameStateProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: "SET_VIEW", view });
   }, []);
 
+  const acknowledgeJoin = useCallback(() => {
+    dispatch({ type: "SET_JOINED", value: true });
+  }, []);
+
   const resetGame = useCallback(() => {
     clearAdvanceTimer();
     SoundManager.stopAll();
@@ -432,6 +443,7 @@ export function GameStateProvider({ children }: { children: React.ReactNode }) {
       setMessages,
       sendMessage,
       gameOver,
+      acknowledgeJoin,
     }),
     [
       state,
@@ -446,6 +458,7 @@ export function GameStateProvider({ children }: { children: React.ReactNode }) {
       setMessages,
       sendMessage,
       gameOver,
+      acknowledgeJoin,
     ]
   );
 
