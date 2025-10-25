@@ -5,7 +5,6 @@ import CountdownView from "./_components/CountdownView";
 import QuestionView from "./_components/QuestionView";
 import WaitingView from "./_components/WaitingView";
 import GameOverView from "./_components/GameOverView";
-import JoinGameScreen from "./_components/JoinGame";
 import { useMiniUser } from "@/hooks/useMiniUser";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -17,6 +16,7 @@ import { baseSepolia } from "wagmi/chains";
 import LeaveGameDrawer from "./_components/LeaveGameDrawer";
 import SoundManager from "@/lib/SoundManager";
 import { useGame, useLobby, type GameView } from "@/state";
+import JoinGameView from "./_components/JoinGameView";
 
 export function GameClientImpl() {
   const router = useRouter();
@@ -159,13 +159,14 @@ export function GameClientImpl() {
       case "ROUND_COUNTDOWN":
         return <CountdownView />;
       case "QUESTION_ACTIVE":
-      case "ANSWER_SUBMITTED":
         return <QuestionView />;
       case "GAME_OVER":
         return <GameOverView />;
+      case "JOIN_GAME_VIEW":
+        <JoinGameView />;
       case "LOBBY":
       default:
-        return hasJoinedSession ? <WaitingView /> : <JoinGameScreen />;
+        return <WaitingView />;
     }
   })();
 
@@ -179,9 +180,7 @@ export function GameClientImpl() {
       >
         <LogoIcon />
         <div className="flex items-center gap-2">
-          {gameView === "ROUND_COUNTDOWN" ||
-          gameView === "QUESTION_ACTIVE" ||
-          gameView === "ANSWER_SUBMITTED" ? (
+          {gameView === "ROUND_COUNTDOWN" || gameView === "QUESTION_ACTIVE" ? (
             <div className="flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1.5 ">
               <LeaveGameIcon className="w-4 h-4 text-foreground" />
 

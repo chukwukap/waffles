@@ -1,0 +1,1 @@
+export const NEXT_QUESTION_DELAY_SECONDS = 3;

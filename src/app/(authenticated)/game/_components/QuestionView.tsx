@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 import { PixelButton } from "@/components/buttons/PixelButton";
 import { useGame } from "@/state";
 import { useMiniUser } from "@/hooks/useMiniUser";
+import { Clock } from "@/components/icons";
+import { NEXT_QUESTION_DELAY_SECONDS } from "@/state/game/constants";
 
 /** Shared cap so the image and buttons are exactly the same width */
 const CONTENT_CAP = "max-w-[560px]";
@@ -28,21 +30,19 @@ export default function QuestionView() {
     view: gameView,
     submitAnswer,
     loadQuestions,
+    advanceToNextQuestion,
   } = useGame();
   const user = useMiniUser();
-
-  const locked = gameView !== "QUESTION_ACTIVE";
   // Define timers early so they are in scope for onPick deps
   const [questionTimer, setQuestionTimer] = React.useState(
     game?.config?.roundTimeLimit ?? 0
   );
   const [roundTimer, setRoundTimer] = React.useState(
-    game?.config?.roundTimeLimit ?? 0
+    NEXT_QUESTION_DELAY_SECONDS
   );
 
   const onPick = React.useCallback(
     async (val: string) => {
-      if (locked) return;
       selectAnswer(val);
       const elapsed = (game?.config?.roundTimeLimit ?? 0) - questionTimer;
       const timeTaken = Math.max(0, elapsed);
@@ -53,15 +53,18 @@ export default function QuestionView() {
             selected: val,
             timeTaken,
           });
+          setTimeout(() => {
+            advanceToNextQuestion();
+          }, NEXT_QUESTION_DELAY_SECONDS * 3000); // wait for the next question
         } catch (e) {
           console.error("submitAnswer failed", e);
         }
       }
     },
     [
-      locked,
       selectAnswer,
       submitAnswer,
+      advanceToNextQuestion,
       user.fid,
       game?.config?.roundTimeLimit,
       questionTimer,
@@ -77,15 +80,13 @@ export default function QuestionView() {
   // Two timers: one for question, one for "locked" state
   React.useEffect(() => {
     setQuestionTimer(maxTime);
-    setRoundTimer(maxTime);
+    setRoundTimer(NEXT_QUESTION_DELAY_SECONDS);
   }, [maxTime]);
 
   // When question/answer state changes, reset timers accordingly
   React.useEffect(() => {
     if (gameView === "QUESTION_ACTIVE") {
       setQuestionTimer(maxTime);
-    } else if (gameView === "ANSWER_SUBMITTED") {
-      setRoundTimer(maxTime);
     }
   }, [gameView, maxTime]);
 
@@ -95,10 +96,6 @@ export default function QuestionView() {
     if (gameView === "QUESTION_ACTIVE") {
       interval = setInterval(() => {
         setQuestionTimer((t) => Math.max(0, t - 1));
-      }, 1000);
-    } else if (gameView === "ANSWER_SUBMITTED") {
-      interval = setInterval(() => {
-        setRoundTimer((t) => Math.max(0, t - 1));
       }, 1000);
     }
     return () => {
@@ -134,13 +131,13 @@ export default function QuestionView() {
     >
       {/* ───────── HUD (question counter + timer) ───────── */}
       <div className="mb-3 flex items-center justify-between text-white">
-        <div className="font-[family-name:var(--font-display)] text-sm tracking-wide">
+        <div className="font-body text-sm tracking-wide">
           {String(currentQuestionIndex + 1).padStart(2, "0")}/
           {String(game?.questions?.length ?? 0).padStart(2, "0")}
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="font-[family-name:var(--font-display)] text-sm tabular-nums">
+          <div className="font-body text-sm tabular-nums">
             00:{String(time).padStart(2, "0")}
           </div>
           <div
@@ -164,57 +161,89 @@ export default function QuestionView() {
       </div>
 
       {/* Question text */}
-      <h1 className="mb-5 text-center font-[family-name:var(--font-display)] text-4xl md:text-5xl">
+      <h1 className="mb-5 text-center font-body text-4xl md:text-5xl">
         {game?.questions?.[currentQuestionIndex]?.text}
       </h1>
 
       {/* Question image (defines width for buttons as well) */}
       <figure
-        className={cn(
-          "mx-auto mb-6 w-full overflow-hidden rounded-[18px] border border-white/10 bg-black/30",
-          CONTENT_CAP
-        )}
+        className={cn("mx-auto mb-6 w-full flex justify-center", CONTENT_CAP)}
+        style={{
+          // Center and space for the responsive image box
+          borderRadius: 10,
+        }}
       >
-        <Image
-          src={
-            game?.questions?.[currentQuestionIndex]?.imageUrl ||
-            "/images/avatars/a.png"
-          }
-          alt="Question image"
-          width={1120}
-          height={1120}
-          className="h-auto w-full object-cover"
-          priority
-        />
+        <div
+          className="relative w-full"
+          style={{
+            aspectRatio: "299 / 158",
+            borderRadius: 10,
+            maxWidth: 480, // allow bigger size on larger screens
+            minWidth: 200,
+            background: "rgba(0,0,0,0.3)",
+            border: "1px solid rgba(255,255,255,0.10)",
+            flex: "none",
+            order: 0,
+            flexGrow: 0,
+            overflow: "hidden",
+          }}
+        >
+          <Image
+            src={
+              game?.questions?.[currentQuestionIndex]?.imageUrl ||
+              "/images/avatars/a.png"
+            }
+            alt="Question image"
+            fill
+            className="object-cover w-full h-full"
+            style={{
+              borderRadius: 10,
+            }}
+            priority
+            sizes="(max-width: 600px) 90vw, 299px"
+          />
+        </div>
       </figure>
 
       {/* Answers — EXACT same width as image via CONTENT_CAP */}
       <ul className={cn("mx-auto flex w-full flex-col gap-4", CONTENT_CAP)}>
         {game?.questions?.[currentQuestionIndex]?.options.map((opt, idx) => {
           const isChosen = selectedAnswer === opt;
-          const isCorrect =
-            locked &&
-            opt === game?.questions?.[currentQuestionIndex]?.correctAnswer;
 
           const palette = PALETTES[idx] ?? PALETTES[PALETTES.length - 1];
           const borderWidth = isChosen ? 6 : 4;
 
+          // Determine scale and width: normal for unselected, bigger & full for chosen, shrunken & narrower for others
+          let scale = 1,
+            width = "100%";
+          if (selectedAnswer != null) {
+            if (isChosen) {
+              scale = 1.08;
+              width = "100%";
+            } else {
+              scale = 0.96;
+              width = "50%";
+            }
+          }
+
           return (
-            <li key={idx} className="min-w-0">
+            <li key={idx} className="min-w-0 flex justify-center">
               <PixelButton
                 backgroundColor={palette.bg}
                 borderColor={palette.border}
                 textColor={palette.text}
                 borderWidth={borderWidth}
-                disabled={locked}
                 aria-pressed={isChosen}
                 onClick={() => onPick(opt)}
                 className={cn(
-                  "w-full rounded-xl px-4 py-3 text-base sm:px-6 sm:py-4 sm:text-lg",
-                  isChosen && "disabled:opacity-100",
-                  isCorrect && "ring-2 ring-[--color-success]",
-                  isChosen && !isCorrect && "ring-2 ring-[--color-waffle-gold]"
+                  "rounded-xl px-4 py-3 text-base sm:px-6 sm:py-4 sm:text-lg",
+                  "transition-transform transition-all duration-200"
                 )}
+                style={{
+                  width,
+                  transform: `scale(${scale})`,
+                  zIndex: isChosen ? 2 : 1,
+                }}
               >
                 <span className="truncate">{opt}</span>
               </PixelButton>
@@ -228,7 +257,7 @@ export default function QuestionView() {
         className={cn(
           "mx-auto mt-6 text-center text-sm text-muted transition-opacity md:text-base",
           CONTENT_CAP,
-          gameView === "ANSWER_SUBMITTED" ? "opacity-100" : "opacity-0"
+          gameView === "QUESTION_ACTIVE" ? "opacity-100" : "opacity-0"
         )}
         aria-live="polite"
       >

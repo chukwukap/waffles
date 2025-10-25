@@ -206,9 +206,7 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
         dispatch({
           type: "SET_ERROR",
           error:
-            error instanceof Error
-              ? error.message
-              : "Ticket purchase failed",
+            error instanceof Error ? error.message : "Ticket purchase failed",
         });
         dispatch({ type: "SET_TICKET_LOADING", value: false });
         return null;
@@ -282,9 +280,13 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
         const res = await fetch("/api/referral/validate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code, farcasterId }),
+          body: JSON.stringify({
+            code,
+            fid: Number(farcasterId),
+          }),
         });
         const data = await res.json();
+        console.log("validateReferral response data:", data);
         if (!data.valid) {
           dispatch({ type: "SET_HAS_INVITE", value: false });
           dispatch({
@@ -348,7 +350,9 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
     ]
   );
 
-  return <LobbyContext.Provider value={value}>{children}</LobbyContext.Provider>;
+  return (
+    <LobbyContext.Provider value={value}>{children}</LobbyContext.Provider>
+  );
 }
 
 export function useLobby() {
