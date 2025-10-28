@@ -26,7 +26,7 @@ export const fetchUpcomingGames = () =>
     {
       tags: ["lobby-upcoming-games"],
     }
-  )();
+  );
 
 /* ------------------------------------------------------ */
 /*                2. GAME DETAILS (BY ID)                 */
@@ -50,7 +50,7 @@ export const fetchGameById = (gameId: number) =>
     {
       tags: [`game-details-${gameId}`],
     }
-  )();
+  );
 
 /* ------------------------------------------------------ */
 /*         3. USER DATA FOR LOBBY (PARAMETERIZED)         */
@@ -95,4 +95,4 @@ export const fetchUserWithGameDetailsAndReferral = (
     {
       tags: [`user-game-details-${userFid}-${gameId}`],
     }
-  )();
+  );
