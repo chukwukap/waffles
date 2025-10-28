@@ -7,21 +7,28 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// NOTE: To accurately determine if a user *joined* a game (i.e., actually started playing),
+// we need a model that records this action explicitly.
+// The following 'GameParticipant' model records each time a user joins (starts) a game.
+// This is separate from ticket purchase.
+
 model User {
-  id          Int        @id @default(autoincrement())
-  farcasterId String?    @unique
-  name        String?
-  email       String?    @unique
-  imageUrl    String?
-  wallet      String?    @unique
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  invitations Referral[] @relation("UserInviter") // referrals sent by this user
-  referrals   Referral[] @relation("UserInvitee") // referrals used by this user
-  tickets     Ticket[]
-  scores      Score[]
-  chats       Chat[]
-  answers     Answer[]
+  id                Int               @id @default(autoincrement())
+  fid               Int               @unique
+  name              String?
+  imageUrl          String?
+  wallet            String?           @unique
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  invitations       Referral[]        @relation("UserInviter")
+  referrals         Referral[]        @relation("UserInvitee")
+  tickets           Ticket[]
+  scores            Score[]
+  chats             Chat[]
+  answers           Answer[]
+  gameParticipants  GameParticipant[] // <-- users who have really joined (played) games
+  waitlist          Waitlist?
+  waitlistReferrals Waitlist[]        @relation("WaitlistReferral")
 }
 
 model Referral {
@@ -38,32 +45,49 @@ model Referral {
 }
 
 model Game {
-  id          Int         @id @default(autoincrement())
-  name        String
-  description String?
-  startTime   DateTime?
-  endTime     DateTime?
-  createdAt   DateTime    @default(now())
-  questions   Question[]
-  tickets     Ticket[]
-  scores      Score[]
-  chats       Chat[]
-  config      GameConfig?
-  answers     Answer[]
+  id           Int               @id @default(autoincrement())
+  name         String
+  description  String?
+  startTime    DateTime
+  endTime      DateTime
+  createdAt    DateTime          @default(now())
+  questions    Question[]
+  tickets      Ticket[]
+  scores       Score[]
+  chats        Chat[]
+  config       GameConfig?
+  answers      Answer[]
+  participants GameParticipant[] // <-- users who have really joined (played) this game
+}
+
+model GameParticipant {
+  id       Int      @id @default(autoincrement())
+  game     Game     @relation(fields: [gameId], references: [id])
+  gameId   Int
+  user     User     @relation(fields: [userId], references: [id])
+  userId   Int
+  joinedAt DateTime @default(now())
+  // This table accurately records that a user "joined" (started playing) a game.
+
+  @@unique([gameId, userId])
+  @@index([userId])
+  @@index([gameId])
 }
 
 model GameConfig {
-  id               Int     @id @default(autoincrement())
-  gameId           Int     @unique
-  game             Game    @relation(fields: [gameId], references: [id])
-  // Configuration fields (per-game overrides)
-  ticketPrice      Int     @default(50)
-  roundTimeLimit   Int // in seconds
-  questionsPerGame Int
-  scoreMultiplier  Float   @default(1.0)
-  scorePenalty     Float?
-  maxPlayers       Int
-  soundEnabled     Boolean @default(true)
+  id                Int     @id @default(autoincrement())
+  gameId            Int     @unique
+  game              Game    @relation(fields: [gameId], references: [id])
+  ticketPrice       Int     @default(50)
+  additionPrizePool Int     @default(0)
+  roundTimeLimit    Int     @default(15) // round countdown time
+  questionTimeLimit Int     @default(10) // question countdown time
+  questionsPerGame  Int     @default(9)
+  theme             String // FOOTBALL | MOVIES | ANIME | POLITICS | CRYPTO enum
+  scoreMultiplier   Float   @default(1.0)
+  scorePenalty      Float?
+  maxPlayers        Int     @default(200)
+  soundEnabled      Boolean @default(true)
 }
 
 model Question {
@@ -72,7 +96,7 @@ model Question {
   gameId        Int
   text          String
   imageUrl      String
-  options       String[] // multiple-choice options
+  options       String[]
   correctAnswer String
   createdAt     DateTime @default(now())
   answers       Answer[]
@@ -89,7 +113,7 @@ model Ticket {
   userId      Int
   amountUSDC  Float
   txHash      String?
-  status      String    @default("pending") // pending | confirmed | failed
+  status      String    @default("pending")
   purchasedAt DateTime  @default(now())
   usedAt      DateTime?
 
@@ -105,7 +129,7 @@ model Score {
   points    Int      @default(0)
   createdAt DateTime @default(now())
 
-  @@unique([userId, gameId]) // one score record per user-game pair
+  @@unique([userId, gameId])
 }
 
 model Chat {
@@ -128,8 +152,22 @@ model Answer {
   questionId Int
   selected   String
   isCorrect  Boolean
-  timeTaken  Int // time in seconds or ms, as appropriate
+  timeTaken  Int
   createdAt  DateTime @default(now())
 
-  @@unique([userId, gameId, questionId]) // Only one answer per user per question per game
+  @@unique([userId, gameId, questionId])
+}
+
+model Waitlist {
+  id     Int  @id @default(autoincrement())
+  user   User @relation(fields: [userId], references: [id])
+  userId Int  @unique
+
+  referredBy     Int?
+  referredByUser User? @relation("WaitlistReferral", fields: [referredBy], references: [id])
+
+  createdAt DateTime @default(now())
+  invites   Int      @default(0)
+
+  @@index([createdAt])
 }

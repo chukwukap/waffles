@@ -1,4 +1,3 @@
-// /prisma/seed.ts
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 // $> pnpm prisma db seed
@@ -6,24 +5,23 @@ const prisma = new PrismaClient();
 async function main() {
   // 1. USERS
   const testUser = await prisma.user.upsert({
-    where: { email: "test@example.com" },
+    where: { fid: 123 },
     update: {},
     create: {
       name: "Test User",
-      email: "test@example.com",
-      farcasterId: "123",
+      fid: 123,
       imageUrl: "https://picsum.photos/100?test",
       wallet: "0xTest0000000000000000000000000000000001234567",
     },
   });
 
   // const chukwukaubaUser = await prisma.user.upsert({
-  //   where: { farcasterId: "755074" },
+  //   where: { fid: 755074 },
   //   update: {},
   //   create: {
   //     name: "chukwukauba",
   //     email: "chukwukauba@example.com",
-  //     farcasterId: "755074",
+  //     fid: 755074,
   //     imageUrl:
   //       "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/3d4b3ff7-3ed7-4522-125a-9419a85ada00/original",
   //     wallet: "",
@@ -45,7 +43,7 @@ async function main() {
             text: "Which movie is this scene from?",
             options: ["The Matrix", "Inception", "Pulp Fiction", "Fight Club"],
             correctAnswer: "The Matrix",
-            imageUrl: "/logo.png",
+            imageUrl: "/images/godfather.png",
             createdAt: new Date(),
           },
           {
@@ -57,14 +55,14 @@ async function main() {
               "Dogecoin Surge",
             ],
             correctAnswer: "Coinbase IPO",
-            imageUrl: "/logo.png",
+            imageUrl: "/images/godfather.png",
             createdAt: new Date(),
           },
           {
             text: "Which film is this dream scene?",
             options: ["Inception", "Blade Runner", "Tenet", "The Prestige"],
             correctAnswer: "Inception",
-            imageUrl: "/logo.png",
+            imageUrl: "/images/godfather.png",
             createdAt: new Date(),
           },
           {
@@ -76,7 +74,7 @@ async function main() {
               "Cool Cats",
             ],
             correctAnswer: "Bored Ape Yacht Club",
-            imageUrl: "/logo.png",
+            imageUrl: "/images/godfather.png",
             createdAt: new Date(),
           },
           {
@@ -88,7 +86,7 @@ async function main() {
               "Avatar",
             ],
             correctAnswer: "Star Wars",
-            imageUrl: "/logo.png",
+            imageUrl: "/images/godfather.png",
             createdAt: new Date(),
           },
           {
@@ -100,7 +98,7 @@ async function main() {
               "Bitfinex Hack",
             ],
             correctAnswer: "Mt. Gox Collapse",
-            imageUrl: "/logo.png",
+            imageUrl: "/images/godfather.png",
             createdAt: new Date(),
           },
           {
@@ -112,21 +110,21 @@ async function main() {
               "Charles Hoskinson",
             ],
             correctAnswer: "Vitalik Buterin",
-            imageUrl: "/logo.png",
+            imageUrl: "/images/godfather.png",
             createdAt: new Date(),
           },
           {
             text: "Which movie is known for the quote 'May the Force be with you'?",
             options: ["Star Wars", "Star Trek", "Harry Potter", "The Matrix"],
             correctAnswer: "Star Wars",
-            imageUrl: "/logo.png",
+            imageUrl: "/images/godfather.png",
             createdAt: new Date(),
           },
           {
             text: "Which platform is famous for Art Blocks NFT drops?",
             options: ["OpenSea", "Art Blocks", "Foundation", "Rarible"],
             correctAnswer: "Art Blocks",
-            imageUrl: "/logo.png",
+            imageUrl: "/images/godfather.png",
             createdAt: new Date(),
           },
         ],
@@ -140,11 +138,25 @@ async function main() {
           scorePenalty: 0,
           maxPlayers: 200,
           soundEnabled: false,
+          theme: "FOOTBALL",
         },
       },
     },
   });
   console.log(`Seeded users: ${testUser.name}\nSeeded games: ${game1.name}`);
+
+  // Create a referral code for the test user (as inviter)
+  const referral = await prisma.referral.create({
+    data: {
+      code: "123456",
+      inviterId: testUser.id,
+      // No invitee yet, so inviteeId is null
+    },
+  });
+
+  console.log(
+    `Seeded referral code: ${referral.code} for user: ${testUser.name}`
+  );
 }
 
 main()

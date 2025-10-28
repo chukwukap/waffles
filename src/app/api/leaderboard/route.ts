@@ -1,118 +1,175 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
+import { z } from "zod";
 
-export type LeaderboardUser = {
+export interface LeaderboardUserData {
   id: string;
   rank: number;
-  name: string;
-  imageUrl: string;
+  name: string | null;
+  imageUrl: string | null;
   points: number;
-};
-
-// GET /api/leaderboard?tab=current|allTime&page=0&gameId=&userId=
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const tabParam = (searchParams.get("tab") || "allTime") as
-    | "current"
-    | "allTime";
-  const page = Number.parseInt(searchParams.get("page") ?? "0", 10);
-  const gameIdParam = searchParams.get("gameId");
-  const userIdParam = searchParams.get("userId");
-
-  if (!["current", "allTime"].includes(tabParam)) {
-    return NextResponse.json({ error: "Invalid tab" }, { status: 400 });
-  }
-  if (!Number.isFinite(page) || page < 0) {
-    return NextResponse.json({ error: "Invalid page" }, { status: 400 });
-  }
-
-  let users: LeaderboardUser[] = [];
-
-  if (tabParam === "current") {
-    // Determine which game is "current"
-    let game = null;
-    if (gameIdParam) {
-      game = await prisma.game.findUnique({
-        where: { id: Number(gameIdParam) },
-      });
-    } else {
-      const now = new Date();
-      game =
-        (await prisma.game.findFirst({
-          where: { startTime: { lte: now }, endTime: { gte: now } },
-          orderBy: { startTime: "desc" },
-        })) ??
-        (await prisma.game.findFirst({
-          where: { endTime: { lte: now } },
-          orderBy: { endTime: "desc" },
-        }));
-    }
-
-    if (game) {
-      const scores = await prisma.score.findMany({
-        where: { gameId: game.id },
-        include: { user: true },
-        orderBy: { points: "desc" },
-      });
-
-      users = scores.map((s, i) => ({
-        id: s.userId.toString(),
-        rank: i + 1,
-        name: s.user?.name || "",
-        imageUrl: s.user?.imageUrl || "",
-        points: s.points,
-      }));
-    }
-  } else {
-    // All-time leaderboard (sum of points per user)
-    const grouped = await prisma.score.groupBy({
-      by: ["userId"],
-      _sum: { points: true },
-      orderBy: { _sum: { points: "desc" } },
-    });
-
-    const userIds = grouped.map((g) => g.userId);
-    const usersData = await prisma.user.findMany({
-      where: { id: { in: userIds } },
-    });
-
-    users = grouped.map((g, i) => {
-      const user = usersData.find((u) => u.id === g.userId);
-      return {
-        id: g.userId.toString(),
-        rank: i + 1,
-        name: user?.name || "",
-        imageUrl: user?.imageUrl || "",
-        points: g._sum.points || 0,
-      };
-    });
-  }
-
-  // pagination
-  const totalPlayers = users.length;
-  const totalPoints = users.reduce((sum, u) => sum + (u.points ?? 0), 0);
-  const pageSize = env.nextPublicLeaderboardPageSize;
-  const start = page * pageSize;
-  const end = start + pageSize;
-  const pageUsers = users.slice(start, end);
-  const hasMore = end < users.length;
-
-  // optional "me"
-  let me = null;
-  if (userIdParam) {
-    const userId = Number(userIdParam);
-    const found = users.find((u) => Number(u.id) === userId);
-    if (found) me = found;
-  }
-
-  return NextResponse.json({
-    users: pageUsers,
-    hasMore,
-    me,
-    totalPlayers,
-    totalPoints,
-  });
 }
 
+interface LeaderboardApiResponse {
+  users: LeaderboardUserData[];
+  hasMore: boolean;
+  me: LeaderboardUserData | null;
+  totalPlayers: number;
+  totalPoints: number;
+}
+
+const querySchema = z.object({
+  tab: z.enum(["current", "allTime"]).default("allTime"),
+  page: z
+    .string()
+    .regex(/^\d+$/, "Page must be a non-negative integer.")
+    .default("0")
+    .transform(Number),
+  gameId: z
+    .string()
+    .regex(/^\d+$/, "Game ID must be a numeric string.")
+    .optional()
+    .transform((val) => (val ? Number(val) : undefined)),
+  userId: z
+    .string()
+    .regex(/^\d+$/, "User ID must be a numeric string.")
+    .optional()
+    .transform((val) => (val ? Number(val) : undefined)),
+});
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+
+    const queryValidation = querySchema.safeParse({
+      tab: searchParams.get("tab"),
+      page: searchParams.get("page"),
+      gameId: searchParams.get("gameId"),
+      userId: searchParams.get("userId"),
+    });
+
+    if (!queryValidation.success) {
+      const firstError =
+        queryValidation.error.message || "Invalid query parameters";
+      return NextResponse.json({ error: firstError }, { status: 400 });
+    }
+    const {
+      tab,
+      page,
+      gameId: requestedGameId,
+      userId: requestedUserId,
+    } = queryValidation.data;
+
+    let allUsersSorted: LeaderboardUserData[] = [];
+    let totalPointsInScope = 0;
+
+    if (tab === "current") {
+      let gameIdToQuery: number | undefined = requestedGameId;
+
+      if (!gameIdToQuery) {
+        const now = new Date();
+        const activeGame = await prisma.game.findFirst({
+          where: { startTime: { lte: now }, endTime: { gt: now } },
+          orderBy: { startTime: "desc" },
+          select: { id: true },
+        });
+        if (activeGame) {
+          gameIdToQuery = activeGame.id;
+        } else {
+          const lastEndedGame = await prisma.game.findFirst({
+            where: { endTime: { lte: now } },
+            orderBy: { endTime: "desc" },
+            select: { id: true },
+          });
+          gameIdToQuery = lastEndedGame?.id;
+        }
+      }
+
+      if (gameIdToQuery) {
+        // Fetch scores for the determined game, including user details
+        const scores = await prisma.score.findMany({
+          where: { gameId: gameIdToQuery },
+          include: {
+            user: {
+              select: { id: true, name: true, imageUrl: true },
+            },
+          },
+          orderBy: { points: "desc" },
+        });
+
+        allUsersSorted = scores.map((s, i) => {
+          totalPointsInScope += s.points;
+          return {
+            id: s.userId.toString(),
+            rank: i + 1,
+            name: s.user?.name ?? null,
+            imageUrl: s.user?.imageUrl ?? null,
+            points: s.points,
+          };
+        });
+      }
+    } else {
+      const groupedScores = await prisma.score.groupBy({
+        by: ["userId"],
+        _sum: { points: true },
+        orderBy: { _sum: { points: "desc" } },
+      });
+
+      const userIds = groupedScores.map((g) => g.userId);
+      if (userIds.length > 0) {
+        const usersData = await prisma.user.findMany({
+          where: { id: { in: userIds } },
+          select: { id: true, name: true, imageUrl: true },
+        });
+        const usersDataMap = new Map(usersData.map((u) => [u.id, u]));
+
+        allUsersSorted = groupedScores.map((g, i) => {
+          const user = usersDataMap.get(g.userId);
+          const points = g._sum.points ?? 0;
+          totalPointsInScope += points;
+          return {
+            id: g.userId.toString(),
+            rank: i + 1,
+            name: user?.name ?? null,
+            imageUrl: user?.imageUrl ?? null,
+            points: points,
+          };
+        });
+      }
+    }
+
+    const totalPlayers = allUsersSorted.length;
+    const pageSize = env.nextPublicLeaderboardPageSize;
+    const start = page * pageSize;
+    const end = start + pageSize;
+    const pageUsers = allUsersSorted.slice(start, end);
+    const hasMore = end < totalPlayers;
+
+    let me: LeaderboardUserData | null = null;
+    if (requestedUserId) {
+      const found = allUsersSorted.find(
+        (u) => Number(u.id) === requestedUserId
+      );
+      if (found) me = found;
+    }
+
+    const responseData: LeaderboardApiResponse = {
+      users: pageUsers,
+      hasMore,
+      me,
+      totalPlayers,
+      totalPoints: totalPointsInScope,
+    };
+    return NextResponse.json(responseData);
+  } catch (error) {
+    console.error("GET /api/leaderboard Error:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
+
+// Ensure dynamic execution for fresh leaderboard data
 export const dynamic = "force-dynamic";

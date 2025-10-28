@@ -1,13 +1,26 @@
 import React from "react";
-
-// Use next/image for optimal .png rendering in Next.js apps.
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 
-// You must provide the image file at the given path in your project.
-export default function LogoIcon(props: React.ComponentProps<"div">) {
+/**
+ * Renders the Waffles icon logo (text version).
+ * Acts as a simple wrapper around the next/image component.
+ * Accepts standard div props like className for flexible styling.
+ */
+export default function LogoIcon({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div {...props}>
-      <Image src="/logo-icon.png" alt="Logo" width={100} height={40} priority />
+    <div className={cn("relative w-[100px] h-[40px]", className)} {...props}>
+      <Image
+        src="/logo-icon.png"
+        alt="Waffles logo icon"
+        fill
+        sizes="(max-width: 640px) 100px, 100px"
+        priority
+        className="object-contain"
+      />
     </div>
   );
 }

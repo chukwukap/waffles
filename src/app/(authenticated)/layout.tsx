@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
 export default function AuthenticatedLayout({
@@ -6,6 +7,8 @@ export default function AuthenticatedLayout({
   children: ReactNode;
 }) {
   return (
-    <div className="min-h-dvh bg-figma noise text-foreground">{children}</div>
+    <div className={cn("min-h-dvh", "bg-figma noise", "text-foreground")}>
+      {children}
+    </div>
   );
 }

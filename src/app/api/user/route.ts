@@ -1,21 +1,42 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
+import { z } from "zod";
 
-// GET /api/user?farcasterId=123
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const farcasterId = searchParams.get("farcasterId");
+// Schema to validate the 'farcasterId' query parameter
+const querySchema = z.object({
+  fid: z.number().int().positive("Invalid FID format."),
+});
 
-  if (!farcasterId) {
-    return NextResponse.json(
-      { success: false, error: "Missing farcasterId parameter" },
-      { status: 400 }
-    );
-  }
-
+/**
+ * GET handler to fetch basic user profile information based on Farcaster ID.
+ */
+export async function GET(req: NextRequest) {
   try {
+    const { searchParams } = new URL(req.url);
+    const fidParam = searchParams.get("fid");
+
+    const validationResult = querySchema.safeParse({
+      fid: Number(fidParam),
+    });
+    if (!validationResult.success) {
+      const firstError =
+        validationResult.error.message || "Invalid FID format.";
+      return NextResponse.json(
+        { success: false, error: firstError },
+        { status: 400 }
+      );
+    }
+    const { fid } = validationResult.data;
+
     const user = await prisma.user.findUnique({
-      where: { farcasterId: farcasterId },
+      where: { fid: Number(fid) },
+      select: {
+        id: true,
+        fid: true,
+        name: true,
+        wallet: true,
+        imageUrl: true,
+      },
     });
 
     if (!user) {
@@ -27,10 +48,13 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ success: true, user });
   } catch (err) {
-    console.error("User get failed", err);
+    console.error("GET /api/user Error:", err);
     return NextResponse.json(
-      { success: false, error: "User get failed" },
+      { success: false, error: "Internal Server Error" },
       { status: 500 }
     );
   }
 }
+
+// Ensure dynamic execution for potentially updated user profiles
+export const dynamic = "force-dynamic";

@@ -4,7 +4,7 @@ export const fontDisplay = localFont({
   src: [
     {
       path: "./brockmann_bd.otf",
-      weight: "400",
+      weight: "700",
       style: "normal",
     },
   ],
@@ -16,7 +16,7 @@ export const fontBody = localFont({
   src: [
     {
       path: "./editundo_bd.ttf",
-      weight: "400",
+      weight: "700",
       style: "normal",
     },
   ],
@@ -28,7 +28,7 @@ export const fontInput = localFont({
   src: [
     {
       path: "./ndot47_bd.woff2",
-      weight: "400",
+      weight: "700",
       style: "normal",
     },
   ],

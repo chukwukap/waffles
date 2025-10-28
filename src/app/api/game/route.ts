@@ -2,51 +2,54 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 
-// GET /api/games
-export async function GET() {
-  const games = await prisma.game.findMany({
-    orderBy: { startTime: "asc" },
-  });
-  return NextResponse.json(games);
-}
+const getQuerySchema = z.object({
+  limit: z
+    .string()
+    .regex(/^\d+$/, "Limit must be integer")
+    .default("50")
+    .transform(Number)
+    .optional(),
+});
 
-// POST /api/games
-export async function POST(request: NextRequest) {
-  const schema = z.object({
-    name: z.string().min(1),
-    description: z.string().optional(),
-    startTime: z.string(),
-    endTime: z.string(),
-  });
-  let body;
+// ====================================================================
+// GET /api/game - Fetch a list of games (e.g., for admin or overview)
+// ====================================================================
+export async function GET(request: NextRequest) {
   try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
-  const parseResult = schema.safeParse(body);
-  if (!parseResult.success) {
-    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
-  }
-  const { name, description, startTime, endTime } = parseResult.data;
-  const start = new Date(startTime);
-  const end = new Date(endTime);
-  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-    return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
-  }
-  if (start >= end) {
+    const { searchParams } = new URL(request.url);
+
+    const queryValidation = getQuerySchema.safeParse({
+      limit: searchParams.get("limit"),
+    });
+
+    if (!queryValidation.success) {
+      const firstError =
+        queryValidation.error.message || "Invalid query parameters";
+      return NextResponse.json({ error: firstError }, { status: 400 });
+    }
+    const { limit } = queryValidation.data;
+
+    const games = await prisma.game.findMany({
+      orderBy: { startTime: "asc" },
+      take: limit,
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        startTime: true,
+        endTime: true,
+        createdAt: true,
+      },
+    });
+
+    return NextResponse.json(games);
+  } catch (error) {
+    console.error("GET /api/game Error:", error);
     return NextResponse.json(
-      { error: "startTime must be before endTime" },
-      { status: 400 }
+      { error: "Internal Server Error" },
+      { status: 500 }
     );
   }
-  const game = await prisma.game.create({
-    data: {
-      name,
-      description,
-      startTime: start,
-      endTime: end,
-    },
-  });
-  return NextResponse.json(game);
 }
+
+export const dynamic = "force-dynamic";

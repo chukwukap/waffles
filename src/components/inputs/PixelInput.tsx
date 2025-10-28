@@ -1,21 +1,40 @@
-import type { InputHTMLAttributes } from "react";
+"use client";
+
+import * as React from "react";
 import { cn } from "@/lib/utils";
 
-interface PixelInputProps extends InputHTMLAttributes<HTMLInputElement> {
-  className?: string;
-}
+export type PixelInputProps = React.InputHTMLAttributes<HTMLInputElement>;
 
-export function PixelInput({ className, ...props }: PixelInputProps) {
-  return (
-    <input
-      type="text"
-      className={cn(
-        "w-full h-14 bg-[#2a2a2a] border-none text-[#a0a0a0] placeholder:text-[#5a5a5a]",
-        "text-center font-input text-xl tracking-wider rounded-lg",
-        "focus-visible:ring-[#00cff2] focus-visible:ring-2",
-        className
-      )}
-      {...props}
-    />
-  );
-}
+/**
+ * A styled input component with a "pixelated" or retro aesthetic,
+ * using theme colors and fonts.
+ */
+const PixelInput = React.forwardRef<HTMLInputElement, PixelInputProps>(
+  ({ className, type = "text", ...props }, ref) => {
+    return (
+      <input
+        type={type}
+        className={cn(
+          "h-14 w-full rounded-lg border-none px-4 py-2",
+          "text-center text-xl tracking-wider",
+          "bg-[color:var(--surface-tint)]",
+          "text-[color:var(--text-primary)] caret-primary",
+          "placeholder:text-[color:var(--text-muted)]",
+          "font-input",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+          "focus-visible:ring-[color:var(--accent-secondary)]",
+          "focus-visible:ring-offset-[color:var(--background)]",
+          "disabled:cursor-not-allowed disabled:opacity-50",
+          className
+        )}
+        ref={ref}
+        {...props}
+      />
+    );
+  }
+);
+
+// Assign display name for DevTools
+PixelInput.displayName = "PixelInput";
+
+export { PixelInput };

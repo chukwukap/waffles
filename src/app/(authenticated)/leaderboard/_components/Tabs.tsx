@@ -1,38 +1,56 @@
 "use client";
-import type { LeaderboardTabKey as TabKey } from "@/state";
-import { PixelButton } from "@/components/buttons/PixelButton";
 
-export function Tabs({
-  active,
-  onChange,
-}: {
-  active: TabKey;
-  onChange: (t: TabKey) => void;
-}) {
+import { useCallback } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { PixelButton } from "@/components/buttons/PixelButton";
+import { cn } from "@/lib/utils";
+
+export type LeaderboardTabKey = "current" | "allTime";
+const TABS: { key: LeaderboardTabKey; label: string }[] = [
+  { key: "current", label: "Current game" },
+  { key: "allTime", label: "All time" },
+];
+
+export function Tabs() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const activeTab = (searchParams.get("tab") || "current") as LeaderboardTabKey;
+
+  const handleTabChange = useCallback(
+    (newTab: LeaderboardTabKey) => {
+      const params = new URLSearchParams(searchParams);
+      params.set("tab", newTab);
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [router, pathname, searchParams]
+  );
+
   return (
     <div className="inline-flex items-center gap-2" role="tablist">
-      {(["current", "allTime"] as const).map((k) => {
-        const selected = active === k;
+      {TABS.map(({ key, label }) => {
+        const selected = activeTab === key;
         return (
           <PixelButton
-            key={k}
+            key={key}
             role="tab"
             aria-selected={selected}
             backgroundColor={selected ? "white" : ""}
             textColor={selected ? "black" : "var(--color-waffle-gold)"}
             borderColor={"var(--color-waffle-gold)"}
-            onClick={() => onChange(k)}
+            onClick={() => handleTabChange(key)}
             borderWidth={4}
-            className={[
-              // Responsive paddings and text size
+            className={cn(
               "px-4 py-2 text-xs sm:px-6 sm:py-2 sm:text-sm",
               selected ? "font-bold" : "opacity-80 hover:opacity-100",
               selected ? "noise" : "bg-figma noise",
-              "transition",
-            ].join(" ")}
+              "transition"
+            )}
             tabIndex={selected ? 0 : -1}
+            disabled={selected}
           >
-            {k === "current" ? "Current game" : "All time"}
+            {label}
           </PixelButton>
         );
       })}
