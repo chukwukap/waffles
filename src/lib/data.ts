@@ -24,7 +24,7 @@ export const fetchUpcomingGames = () =>
     },
     ["lobby-upcoming-games"],
     {
-      revalidate: 15,
+      revalidate: 1,
       tags: ["lobby-upcoming-games"],
     }
   )();
@@ -49,7 +49,7 @@ export const fetchGameById = (gameId: number) =>
     },
     ["game-details", gameId.toString()],
     {
-      revalidate: 10,
+      revalidate: 1,
       tags: [`game-details-${gameId}`],
     }
   )();
@@ -95,7 +95,7 @@ export const fetchUserWithGameDetailsAndReferral = (
     },
     ["user-game-details", userFid.toString(), gameId.toString()],
     {
-      revalidate: 10,
+      revalidate: 1,
       tags: [`user-game-details-${userFid}-${gameId}`],
     }
   )();
