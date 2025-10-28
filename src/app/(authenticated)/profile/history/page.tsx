@@ -1,176 +1,194 @@
-// app/profile/history/page.tsx
-"use client";
+"use client"; // Required for hooks (useEffect, useSWR), Link, etc.
 
 import Link from "next/link";
-import { useProfile, type GameHistory } from "@/state";
+import useSWR from "swr"; // Import useSWR
+import { GameHistoryEntry } from "@/state/types"; // Use type import
 import { BottomNav } from "@/components/BottomNav";
 import LogoIcon from "@/components/logo/LogoIcon";
-import {
-  ArrowLeftIcon,
-  WalletIcon,
-  WaffleIcon,
-  ZapIcon,
-} from "@/components/icons";
+import { ArrowLeftIcon, WalletIcon } from "@/components/icons";
+import { GameHistoryItem } from "@/app/(authenticated)/profile/_components/GameHistory"; // Import the item component
 import { useMiniUser } from "@/hooks/useMiniUser";
-import { useEffect } from "react";
-/* ---------- Top bar (shared look) ---------- */
-const TopBar = () => (
-  <header
-    className={`
-      sticky top-0 z-10 w-full
-      border-b border-[color:var(--surface-stroke)]
-      bg-[color:var(--brand-ink-900)]
-    `}
-  >
-    <div className="mx-auto flex w-full max-w-lg items-center justify-between px-4 py-3">
-      <LogoIcon />
-      <div className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5">
-        <WalletIcon className="h-4 w-4 text-[color:var(--text-primary)]" />
-        <span
-          className="text-center text-[color:var(--text-primary)] font-display"
-          style={{
-            fontSize: "clamp(.95rem,1.9vw,1rem)",
-            lineHeight: "1.1",
-          }}
-        >
-          $983.23
-        </span>
-      </div>
-    </div>
-  </header>
-);
+import { cn } from "@/lib/utils"; // Import cn
+import { useGetTokenBalance } from "@coinbase/onchainkit/wallet"; // For balance
+import { env } from "@/lib/env"; // For env vars
+import { base } from "wagmi/chains"; // For chain ID
 
-/* ---------- Sub-page header ---------- */
-const SubPageHeader = ({ title }: { title: string }) => (
-  <div className="mx-auto flex w-full max-w-lg items-center justify-between px-4 pt-4">
-    <Link
-      href="/profile"
-      className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-white/15 transition-opacity hover:opacity-80"
-      aria-label="Back"
-    >
-      <ArrowLeftIcon />
-    </Link>
-
-    <h1
-      className="flex-grow text-center text-white font-body"
-      style={{
-        fontWeight: 400,
-        fontSize: "clamp(1.25rem,4.5vw,1.375rem)", // ~22px target
-        lineHeight: ".92",
-        letterSpacing: "-0.03em",
-      }}
-    >
-      {title}
-    </h1>
-
-    {/* spacer to balance back button */}
-    <div className="h-[34px] w-[34px]" />
-  </div>
-);
-
-/* ---------- List item ---------- */
-
-const GameHistoryItem = ({ game }: { game: GameHistory }) => (
-  <div
-    className={`
-      flex items-center justify-between
-      rounded-2xl border border-white/20 bg-transparent
-      p-3 sm:p-4
-    `}
-  >
-    <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-      <div className="grid size-10 shrink-0 place-items-center rounded-full bg-white/10">
-        <WaffleIcon aria-hidden />
-      </div>
-
-      <div className="min-w-0">
-        <p
-          className="truncate text-white font-body"
-          style={{
-            fontSize: "clamp(1.125rem, 2.2vw, 1.25rem)", // ~18–20
-            lineHeight: "1",
-            letterSpacing: "-0.03em",
-          }}
-        >
-          {game.name}
-        </p>
-
-        <div className="mt-1 flex items-center gap-1">
-          <span className="text-waffle-yellow" aria-hidden>
-            <ZapIcon />
-          </span>
-          <span
-            className="tracking-[-0.03em] text-white/90 font-display"
-            style={{
-              fontWeight: 500,
-              fontSize: "clamp(.75rem,1.2vw,.875rem)", // ~12–14
-              lineHeight: "1rem",
-            }}
-          >
-            {game.score}
-          </span>
-        </div>
-      </div>
-    </div>
-
-    <p
-      className={`ml-3 whitespace-nowrap tracking-[-0.03em] font-display ${
-        game.winningsColor === "green" ? "text-success" : "text-muted"
-      }`}
-      style={{
-        fontWeight: 500,
-        fontSize: "clamp(1rem,1.8vw,1rem)", // ~16
-        lineHeight: "1.2rem",
-      }}
-    >
-      ${game.winnings.toFixed(2)}
-    </p>
-  </div>
-);
-
-/* ---------- Page ---------- */
-export default function GameHistoryPage() {
-  const { gameHistory, fetchProfile } = useProfile();
-  const { fid } = useMiniUser();
-
-  useEffect(() => {
-    if (fid) {
-      fetchProfile(String(fid)).catch((err) =>
-        console.error("Failed to load profile history", err)
-      );
+// Basic fetcher for SWR
+const fetcher = (url: string, fid: string | null) => {
+  if (!fid) throw new Error("User FID not available for fetching history."); // Prevent fetch without FID
+  return fetch(url, {
+    headers: { "x-farcaster-id": fid }, // Pass FID in header
+    cache: "no-store", // Ensure fresh data
+  }).then((res) => {
+    if (!res.ok) {
+      throw new Error("Failed to fetch game history");
     }
-  }, [fid, fetchProfile]);
+    return res.json();
+  });
+};
+
+/* ---------- Top bar (shared look) ---------- */
+const TopBar = () => {
+  const user = useMiniUser();
+  // Fetch balance within the TopBar component
+  const { status, roundedBalance } = useGetTokenBalance(
+    user.wallet as `0x${string}`,
+    {
+      address: env.nextPublicUsdcAddress as `0x${string}`,
+      chainId: base.id,
+      decimals: 6,
+      image: "/images/tokens/usdc.png",
+      name: "USDC",
+      symbol: "USDC",
+    }
+  );
 
   return (
-    <div
-      className={`
-        min-h-screen flex flex-col
-        bg-[linear-gradient(180deg,#1E1E1E_0%,#000_100%)]
-        text-[color:var(--text-primary)]
-      `}
+    <header
+      className={cn(
+        // Use cn
+        "sticky top-0 z-10 w-full", // Sticky positioning
+        "border-b border-[color:var(--surface-stroke)]", // Border
+        "bg-[color:var(--brand-ink-900)]/80 backdrop-blur-sm" // Semi-transparent background with blur
+      )}
     >
-      <TopBar />
-      <SubPageHeader title="GAME HISTORY" />
+      <div className="mx-auto flex w-full max-w-lg items-center justify-between px-4 py-3">
+        {" "}
+        {/* Layout */}
+        <LogoIcon /> {/* */}
+        <div className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5">
+          {" "}
+          {/* Wallet display */}
+          <WalletIcon className="h-4 w-4 text-[color:var(--text-primary)]" />{" "}
+          {/* */}
+          <span
+            className="text-center text-[color:var(--text-primary)] font-display tabular-nums" // Added tabular-nums
+            style={{
+              fontSize: "clamp(.9rem, 1.8vw, .95rem)", // Adjusted size slightly
+              lineHeight: "1.1", //
+            }}
+          >
+            {status === "pending" ? "Loading..." : `$${roundedBalance}`}{" "}
+            {/* Show balance or loading */}
+          </span>{" "}
+          {/* */}
+        </div>
+      </div>
+    </header>
+  );
+};
 
+/* ---------- Sub-page header ---------- */
+const SubPageHeader = (
+  { title }: { title: string } //
+) => (
+  <div className="mx-auto flex w-full max-w-lg items-center justify-between px-4 pt-4">
+    {" "}
+    {/* */}
+    {/* Back Link */}
+    <Link
+      href="/profile" // Link back to main profile page
+      className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-white/15 transition-opacity hover:opacity-80" // Styling
+      aria-label="Back to profile" // Improved label
+    >
+      <ArrowLeftIcon /> {/* */}
+    </Link>
+    {/* Title */}
+    <h1
+      className="flex-grow text-center text-white font-body" // Styling
+      style={{
+        fontWeight: 400, //
+        fontSize: "clamp(1.25rem, 4.5vw, 1.375rem)", // Responsive font size
+        lineHeight: ".92", //
+        letterSpacing: "-0.03em", //
+      }}
+    >
+      {title} {/* Display title prop */}
+    </h1>
+    {/* Spacer to balance back button */}
+    <div className="h-[34px] w-[34px]" aria-hidden="true" /> {/* */}
+  </div>
+);
+
+/* ---------- Page Component ---------- */
+export default function GameHistoryPage() {
+  const { fid } = useMiniUser(); // Get current user's FID
+
+  // Use SWR to fetch game history
+  const {
+    data: gameHistory, // Fetched data will be here (or undefined)
+    error, // Error object if fetch fails
+    isLoading, // Loading state
+  } = useSWR<GameHistoryEntry[]>(
+    fid ? "/api/profile/history" : null, // SWR key - URL, or null if no FID
+    (url) => fetcher(url, fid ? String(fid) : null), // Pass fetcher function and FID
+    {
+      revalidateOnFocus: false, // History data likely doesn't change often on focus
+      // Add other SWR options if needed (e.g., error retries)
+    }
+  );
+
+  return (
+    //
+    <div
+      className={cn(
+        // Base styles
+        "min-h-screen flex flex-col", // Full height, flex column
+        "bg-figma noise", // Background gradient/noise
+        "text-[color:var(--text-primary)]" // Default text color
+      )}
+    >
+      <TopBar /> {/* Render shared top bar */}
+      <SubPageHeader title="GAME HISTORY" /> {/* Render sub-page header */}
       <main
-        className={`
-          mx-auto w-full max-w-lg
-          px-4
-          pb-[calc(env(safe-area-inset-bottom)+84px)]
-          mt-4
-        `}
+        className={cn(
+          // Main content area styles
+          "mx-auto w-full max-w-lg", // Centered, max width
+          "px-4", // Horizontal padding
+          "pb-[calc(env(safe-area-inset-bottom)+84px)]", // Bottom padding with safe area + nav height
+          "mt-4 flex-1" // Top margin, allow grow
+        )}
       >
-        {/* List */}
-        <ul className="flex flex-col gap-3.5 sm:gap-4">
-          {gameHistory.map((g) => (
-            <li key={g.id}>
-              <GameHistoryItem game={g} />
-            </li>
-          ))}
-        </ul>
-      </main>
+        {/* Conditional Rendering based on SWR state */}
+        {isLoading && (
+          <div className="flex justify-center items-center pt-10 text-muted">
+            Loading history...
+          </div>
+        )}
 
-      <BottomNav />
+        {error && (
+          <div className="panel rounded-2xl p-4 text-center text-sm text-danger">
+            Error loading game history: {error.message}
+          </div>
+        )}
+
+        {!isLoading && !error && gameHistory && gameHistory.length > 0 && (
+          // List of Game History Items
+          <ul className="flex flex-col gap-3.5 sm:gap-4">
+            {" "}
+            {/* Use ul, define gap */}
+            {gameHistory.map(
+              (
+                g // Map through fetched history
+              ) => (
+                <li key={g.id}>
+                  {" "}
+                  {/* Use game id as key */}
+                  <GameHistoryItem game={g} /> {/* Render item component */}
+                </li>
+              )
+            )}
+          </ul>
+        )}
+
+        {!isLoading && !error && (!gameHistory || gameHistory.length === 0) && (
+          // Empty State
+          <div className="panel rounded-2xl p-6 text-center text-sm text-muted mt-6">
+            You haven&apos;t played any games yet.
+          </div>
+        )}
+      </main>
+      <BottomNav /> {/* Render bottom navigation */}
     </div>
   );
-}
+} //

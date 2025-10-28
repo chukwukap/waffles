@@ -3,15 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 interface UseCountdownOptions {
-  // Total duration in seconds (mutually exclusive with target)
   durationSeconds?: number;
-  // Absolute wall-clock target for countdown end
-  target?: Date | number; // epoch ms
-  // Autostart countdown on mount (default: true)
+  target?: Date | number;
   autoStart?: boolean;
-  // Tick interval (default: 1000ms)
   intervalMs?: number;
-  // Optional callbacks
   onTick?: (millisecondsLeft: number) => void;
   onComplete?: () => void;
 }
@@ -27,12 +22,11 @@ interface UseCountdownResult {
 }
 
 /**
- * High-accuracy countdown hook.
- * - Uses a fixed end timestamp to avoid drift across ticks.
- * - Supports either relative duration or absolute target time.
+ * A high-accuracy countdown hook that avoids drift by calculating remaining time
+ * based on a fixed end timestamp (`endAt`). Supports relative durations or absolute targets.
  */
 export function useCountdown(
-  options: UseCountdownOptions = {}
+  options: UseCountdownOptions = {} //
 ): UseCountdownResult {
   const {
     durationSeconds,
@@ -50,35 +44,41 @@ export function useCountdown(
     if (typeof durationSeconds === "number") {
       return Date.now() + Math.max(0, durationSeconds) * 1000;
     }
-    return 0; // inactive until started
+    return 0;
   });
 
   const [isRunning, setIsRunning] = useState<boolean>(
-    Boolean(autoStart && (durationSeconds || target))
+    Boolean(autoStart && (durationSeconds != null || target != null))
   );
-  const intervalRef = useRef<number | null>(null);
-  // Track the current clock time to drive re-renders each tick
-  const [now, setNow] = useState<number>(Date.now());
+
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const [now, setNow] = useState<number>(() => Date.now());
 
   const millisecondsLeft = useMemo(
     () => Math.max(0, endAt - now),
     [endAt, now]
   );
-  const secondsLeft = Math.ceil(millisecondsLeft / 1000);
+  const secondsLeft = useMemo(
+    () => Math.ceil(millisecondsLeft / 1000),
+    [millisecondsLeft]
+  );
 
   const clearTimer = useCallback(() => {
     if (intervalRef.current !== null) {
-      window.clearInterval(intervalRef.current);
+      clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
   }, []);
 
   const tick = useCallback(() => {
-    const ms = Math.max(0, endAt - Date.now());
-    // Advance the clock to force consumers to re-render
-    setNow(Date.now());
-    if (onTick) onTick(ms);
-    if (ms <= 0) {
+    const currentTime = Date.now();
+    const msRemaining = Math.max(0, endAt - currentTime);
+
+    setNow(currentTime);
+    onTick?.(msRemaining);
+
+    if (msRemaining <= 0) {
       clearTimer();
       setIsRunning(false);
       onComplete?.();
@@ -86,94 +86,79 @@ export function useCountdown(
   }, [endAt, onTick, onComplete, clearTimer]);
 
   const start = useCallback(() => {
-    if (!endAt || endAt <= Date.now()) return; // nothing to start
-    if (intervalRef.current !== null) return;
+    if (isRunning || !endAt || endAt <= Date.now()) return;
+
     setIsRunning(true);
-    // Immediate tick to sync consumers before first interval fires
     tick();
-    intervalRef.current = window.setInterval(tick, Math.max(16, intervalMs));
-  }, [endAt, intervalMs, tick]);
+    intervalRef.current = setInterval(tick, Math.max(16, intervalMs));
+  }, [isRunning, endAt, intervalMs, tick]);
 
   const pause = useCallback(() => {
+    if (!isRunning) return;
+
     clearTimer();
     setIsRunning(false);
-    // Convert remaining time into a new endAt relative to pause moment
-    const remaining = Math.max(0, endAt - Date.now());
-    setEndAt(Date.now() + remaining);
-  }, [clearTimer, endAt]);
+    const remainingMs = Math.max(0, endAt - Date.now());
+    setEndAt(Date.now() + remainingMs);
+  }, [isRunning, clearTimer, endAt]);
 
   const reset = useCallback(
     (opts?: { durationSeconds?: number; target?: Date | number }) => {
       clearTimer();
-      const nextTarget = opts?.target ?? target;
-      const nextDuration =
-        typeof opts?.durationSeconds === "number"
-          ? opts.durationSeconds
-          : durationSeconds;
 
-      if (typeof nextTarget !== "undefined") {
-        const ts =
-          nextTarget instanceof Date ? nextTarget.getTime() : nextTarget;
-        setEndAt(ts);
-        setIsRunning(Boolean(autoStart));
-        if (autoStart) {
-          // Sync once immediately, then start ticking
-          tick();
-          intervalRef.current = window.setInterval(
-            tick,
-            Math.max(16, intervalMs)
-          );
-        }
-        return;
+      const nextTargetOpt = opts?.target ?? target;
+      const nextDurationOpt = opts?.durationSeconds ?? durationSeconds;
+
+      let nextEndAt = 0;
+      if (typeof nextTargetOpt !== "undefined") {
+        nextEndAt =
+          nextTargetOpt instanceof Date
+            ? nextTargetOpt.getTime()
+            : nextTargetOpt;
+      } else if (typeof nextDurationOpt === "number") {
+        nextEndAt = Date.now() + Math.max(0, nextDurationOpt) * 1000;
       }
-      if (typeof nextDuration === "number") {
-        const ts = Date.now() + Math.max(0, nextDuration) * 1000;
-        setEndAt(ts);
-        setIsRunning(Boolean(autoStart));
-        if (autoStart) {
-          // Sync once immediately, then start ticking
-          tick();
-          intervalRef.current = window.setInterval(
-            tick,
-            Math.max(16, intervalMs)
-          );
-        }
-        return;
+
+      setEndAt(nextEndAt);
+      const shouldAutoStart = Boolean(autoStart && nextEndAt > 0);
+      setIsRunning(shouldAutoStart);
+      setNow(Date.now());
+
+      if (shouldAutoStart) {
+        tick();
+        intervalRef.current = setInterval(tick, Math.max(16, intervalMs));
       }
-      // No inputs -> stop and clear
-      setEndAt(0);
-      setIsRunning(false);
     },
     [autoStart, clearTimer, durationSeconds, intervalMs, target, tick]
   );
 
   const setTarget = useCallback(
-    (t: Date | number) => {
+    (newTarget: Date | number) => {
+      //
       clearTimer();
-      const ts = t instanceof Date ? t.getTime() : t;
-      setEndAt(ts);
-      setIsRunning(Boolean(autoStart));
-      if (autoStart) {
-        // Sync once immediately, then start ticking
+      const nextEndAt =
+        newTarget instanceof Date ? newTarget.getTime() : newTarget;
+      setEndAt(nextEndAt);
+      const shouldAutoStart = Boolean(autoStart && nextEndAt > 0);
+      setIsRunning(shouldAutoStart);
+      setNow(Date.now());
+
+      if (shouldAutoStart) {
         tick();
-        intervalRef.current = window.setInterval(
-          tick,
-          Math.max(16, intervalMs)
-        );
+        intervalRef.current = setInterval(tick, Math.max(16, intervalMs));
       }
     },
     [autoStart, clearTimer, intervalMs, tick]
   );
 
-  // Manage lifecycle
   useEffect(() => {
-    if (autoStart && (durationSeconds || target)) {
+    if (autoStart && (durationSeconds != null || target != null)) {
       start();
     }
     return clearTimer;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [autoStart, durationSeconds, target, start, clearTimer]);
 
+  // --- Return Hook API ---
   return {
     millisecondsLeft,
     secondsLeft,

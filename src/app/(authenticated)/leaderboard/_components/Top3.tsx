@@ -1,109 +1,139 @@
-import { LeaderboardEntry as Entry } from "@/state";
+"use client";
+
 import { TrophyIcon, UsdcIcon } from "@/components/icons";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
+import { LeaderboardEntry } from "@/state/types";
 
-/** Top3: fixed single row (no wrap), fully responsive, no overflow */
-export function Top3({ entries }: { entries: Entry[] }) {
-  if (!entries?.length) return null;
+interface Top3Props {
+  entries: LeaderboardEntry[];
+  currentUserId?: number | null;
+}
 
-  const cardStyles = [
-    {
-      bg: "bg-gradient-to-r from-transparent to-[rgba(52,199,89,0.12)]",
-      trophy: "#34C759",
-    },
-    {
-      bg: "bg-gradient-to-r from-transparent to-[rgba(25,171,211,0.12)]",
-      trophy: "#19ABD3",
-    },
-    {
-      bg: "bg-gradient-to-r from-transparent to-[rgba(211,77,25,0.12)]",
-      trophy: "#D34D19",
-    },
-  ];
+const cardStyles = [
+  {
+    bg: "bg-gradient-to-r from-transparent via-yellow-500/5 to-yellow-500/15",
+    border: "border-yellow-400/30",
+    trophy: "#FFC931",
+  },
+  {
+    bg: "bg-gradient-to-r from-transparent via-cyan-500/5 to-cyan-500/15",
+    border: "border-cyan-400/30",
+    trophy: "#19ABD3",
+  },
+  {
+    bg: "bg-gradient-to-r from-transparent via-orange-500/5 to-orange-500/15",
+    border: "border-orange-400/30",
+    trophy: "#D34D19",
+  },
+];
+
+export function Top3({ entries, currentUserId }: Top3Props) {
+  const topEntries = entries?.slice(0, 3) ?? [];
+
+  if (topEntries.length === 0) return null;
 
   return (
     <div
       className="
         flex w-full flex-nowrap items-stretch
-        /* gap collapses on tiny screens, grows on wide */
         gap-[var(--gap)]
       "
       style={
         {
-          // tune spacing & padding with CSS vars (works with Tailwind arbitrary values)
-          ["--gap"]: "clamp(0.25rem, 2.2vw, 1rem)",
-          ["--pad"]: "clamp(0.5rem, 2.2vw, 1rem)",
-          ["--radius"]: "clamp(0.75rem, 2vw, 1rem)",
+          "--gap": "clamp(0.25rem, 2.2vw, 1rem)",
+          "--pad": "clamp(0.5rem, 2.2vw, 1rem)",
+          "--radius": "clamp(0.75rem, 2vw, 1rem)",
         } as React.CSSProperties
       }
     >
-      {entries.slice(0, 3).map((entry, i) => (
-        <article
-          key={entry.rank}
-          className={[
-            "basis-1/3 min-w-0 flex-1",
-            "rounded-[var(--radius)] border border-white/10",
-            "p-[var(--pad)] bg-clip-padding",
-            "flex flex-col gap-[calc(var(--pad)*1)]",
-            "transition-shadow hover:shadow-lg",
-            cardStyles[i]?.bg ?? "",
-          ].join(" ")}
-        >
-          {/* trophy */}
-          <TrophyIcon
-            color={cardStyles[i]?.trophy}
-            className="flex-shrink-0"
-            style={{
-              width: "clamp(14px, 2.8vw, 20px)",
-              height: "clamp(14px, 2.8vw, 20px)",
-            }}
-            aria-label={`Place ${i + 1}`}
-          />
+      {topEntries.map((entry, i) => {
+        const isCurrentUser =
+          currentUserId != null && String(entry.id) === String(currentUserId);
+        const styles = cardStyles[i] ?? cardStyles[cardStyles.length - 1];
 
-          {/* avatar + name */}
-          <div className="flex min-w-0 items-center gap-[calc(var(--pad)*0.5)]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={entry.pfpUrl || "/avatar.png"}
-              alt={entry.username}
-              draggable={false}
-              className="rounded-full bg-[#F0F3F4] object-cover flex-shrink-0"
-              style={{
-                width: "clamp(18px, 3vw, 24px)",
-                height: "clamp(18px, 3vw, 24px)",
-              }}
-            />
-            <span
-              title={entry.username}
-              className="
-                min-w-0 truncate text-white font-body font-normal leading-tight
-              "
-              style={{ fontSize: "clamp(0.7rem, 2.3vw, 0.95rem)" }}
-            >
-              {entry.username}
-            </span>
-          </div>
+        const formattedPoints = entry.points.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
 
-          {/* score */}
-          <div className="mt-auto flex items-center gap-[calc(var(--pad)*0.5)]">
-            <UsdcIcon
+        return (
+          <article
+            key={entry.rank ?? i}
+            className={cn(
+              "basis-1/3 min-w-0 flex-1",
+              "rounded-[var(--radius)] border",
+              "p-[var(--pad)] bg-clip-padding",
+              "flex flex-col gap-[calc(var(--pad)*0.8)]",
+              "transition-shadow hover:shadow-lg",
+              styles.bg,
+              styles.border,
+              isCurrentUser &&
+                "ring-2 ring-offset-2 ring-offset-black ring-blue-400"
+            )}
+          >
+            <TrophyIcon
+              color={styles.trophy}
               className="flex-shrink-0"
               style={{
                 width: "clamp(14px, 2.8vw, 20px)",
                 height: "clamp(14px, 2.8vw, 20px)",
               }}
+              aria-label={`Place ${i + 1}`}
             />
-            <span
-              className="font-display font-medium tracking-tight leading-[1.1]"
-              style={{ fontSize: "clamp(0.85rem, 2.6vw, 1rem)" }}
-            >
-              {entry.points.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </span>
-          </div>
-        </article>
-      ))}
+
+            <div className="flex min-w-0 items-center gap-[calc(var(--pad)*0.5)]">
+              <div
+                className="relative rounded-full bg-white/10 overflow-hidden shrink-0"
+                style={{
+                  width: "clamp(18px, 3vw, 24px)",
+                  height: "clamp(18px, 3vw, 24px)",
+                }}
+              >
+                {entry.pfpUrl ? (
+                  <Image
+                    src={entry.pfpUrl}
+                    alt={entry.username || "Unknown User"}
+                    fill
+                    sizes="24px"
+                    className="object-cover"
+                    draggable={false}
+                  />
+                ) : (
+                  <span className="absolute inset-0 flex items-center justify-center text-[calc(var(--pad)*0.6)] font-bold text-white/70">
+                    {entry.username?.charAt(0)?.toUpperCase() || "U"}
+                  </span>
+                )}
+              </div>
+              <span
+                title={entry.username || "Unknown User"}
+                className="
+                  min-w-0 truncate text-white font-body font-normal leading-tight
+                "
+                style={{ fontSize: "clamp(0.7rem, 2.3vw, 0.95rem)" }}
+              >
+                {entry.username}
+              </span>
+            </div>
+
+            <div className="mt-auto flex items-center gap-[calc(var(--pad)*0.5)]">
+              <UsdcIcon
+                className="flex-shrink-0"
+                style={{
+                  width: "clamp(14px, 2.8vw, 20px)",
+                  height: "clamp(14px, 2.8vw, 20px)",
+                }}
+              />
+              <span
+                className="font-display font-medium tracking-tight leading-[1.1]"
+                style={{ fontSize: "clamp(0.85rem, 2.6vw, 1rem)" }}
+              >
+                {formattedPoints}
+              </span>
+            </div>
+          </article>
+        );
+      })}
     </div>
   );
 }

@@ -15,11 +15,16 @@ export function BottomNav() {
   const router = useRouter();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-figma noise border-t-2 border-border z-50">
-      <div className="flex items-center justify-around max-w-2xl mx-auto">
+    <nav
+      className={cn(
+        "fixed bottom-0 left-0 right-0 z-50",
+        "border-t-2 border-border",
+        "bg-figma noise"
+      )}
+    >
+      <div className="mx-auto flex max-w-2xl items-stretch justify-around">
         {navItems.map((item) => {
           const Icon = item.icon;
-          // Active if path starts with href as a segment (e.g. '/lobby' matches '/lobby/buy')
           const isActive =
             pathname === item.href || pathname.startsWith(item.href + "/");
 
@@ -28,17 +33,19 @@ export function BottomNav() {
               key={item.href}
               onClick={() => router.push(item.href)}
               className={cn(
-                "flex flex-col items-center gap-1 py-3 px-6 transition-colors flex-1 ",
+                "flex flex-1 flex-col items-center justify-center gap-1 px-4 py-3",
+                "transition-colors duration-150 ease-in-out",
                 isActive
-                  ? "text-secondary-foreground"
+                  ? "text-primary"
                   : "text-muted-foreground hover:text-foreground"
               )}
+              role="tab"
+              aria-selected={isActive}
+              aria-label={item.label}
             >
               <Icon
-                className={cn(
-                  "h-5 w-5 text-muted-foreground",
-                  isActive && "animate-pulse-glow text-primary"
-                )}
+                className={cn("h-5 w-5", isActive && "animate-glow")}
+                aria-hidden="true"
               />
               <span className="text-xs font-medium font-display">
                 {item.label}
@@ -47,6 +54,7 @@ export function BottomNav() {
           );
         })}
       </div>
+      <div className="pb-[env(safe-area-inset-bottom)]"></div>
     </nav>
   );
 }

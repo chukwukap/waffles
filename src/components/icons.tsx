@@ -861,3 +861,78 @@ export function UsdcIcon(props: React.SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+export function SoundOnIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 18 18"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      {...props}
+    >
+      <path
+        d="M8.25 1.5H6.75V3H5.25V4.5H3.75V6H0.75V12H3.75V13.5H5.25V15H6.75V16.5H8.25V1.5ZM5.25 13.5V12H3.75V10.5H2.25V7.5H3.75V6H5.25V4.5H6.75V13.5H5.25ZM9.75 7.5H11.25V10.5H9.75V7.5ZM15.75 3H14.25V1.5H9.75V3H14.25V4.5H15.75V13.5H14.25V15H9.75V16.5H14.25V15H15.75V13.5H17.25V4.5H15.75V3ZM14.25 6H12.75V4.5H9.75V6H12.75V12H9.75V13.5H12.75V12H14.25V6Z"
+        fill="white"
+      />
+    </svg>
+  );
+}
+
+export function SoundOffIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 18 18"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      {...props}
+    >
+      <path
+        d="M9.75 1.5H8.25V3H6.75V4.5H5.25V6H2.25V12H5.25V13.5H6.75V15H8.25V16.5H9.75V1.5ZM6.75 13.5V12H5.25V10.5H3.75V7.5H5.25V6H6.75V4.5H8.25V13.5H6.75ZM14.25 8.41725H12.75V6.91725H11.25V8.41725H12.75V9.91725H11.25V11.4172H12.75V9.91725H14.25V11.4172H15.75V9.91725H14.25V8.41725ZM14.25 8.41725H15.75V6.91725H14.25V8.41725Z"
+        fill="white"
+      />
+    </svg>
+  );
+}
+
+export function TrendIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      {...props}
+    >
+      <path
+        d="M4 2H2V4H4V6H2V8H4V6H6V8H8V6H6V4H8V2H6V4H4V2ZM16 4V20H22V4H16ZM18 6H20V18H18V6ZM9 10V20H15V10H9ZM11 18V12H13V18H11ZM8 14V20H2V14H8ZM6 18V16H4V18H6Z"
+        fill="#14B985"
+      />
+    </svg>
+  );
+}
+
+export function FlashIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      width={24}
+      height={24}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path
+        d="M12 1H14V9H22V13H20V11H12V5H10V3H12V1ZM8 7V5H10V7H8ZM6 9V7H8V9H6ZM4 11V9H6V11H4ZM14 19V21H12V23H10V15H2V11H4V13H12V19H14ZM16 17V19H14V17H16ZM18 15V17H16V15H18ZM18 15H20V13H18V15Z"
+        fill="#FFC931"
+      />
+    </svg>
+  );
+}

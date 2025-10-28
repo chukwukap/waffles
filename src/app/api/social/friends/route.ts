@@ -1,13 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { neynar } from "@/lib/neynarClient";
-import { fetchActiveGame } from "@/lib/server/game";
+import { z } from "zod";
 
 type FriendSummary = {
   fid: number;
   username: string;
-  displayName?: string | null;
-  pfpUrl?: string | null;
+  displayName: string | null;
+  pfpUrl: string | null;
   relationship: {
     isFollower: boolean;
     isFollowing: boolean;
@@ -17,123 +17,140 @@ type FriendSummary = {
   ticketGameId?: number;
 };
 
-const DEFAULT_LIMIT = 20;
+interface FriendsApiResponse {
+  friends: FriendSummary[];
+  gameId: number | null;
+}
 
-export async function GET(request: Request) {
+const DEFAULT_NEYNAR_LIMIT = 50;
+const MAX_NEYNAR_LIMIT = 150;
+
+const querySchema = z.object({
+  fid: z
+    .string()
+    .regex(/^\d+$/, "FID must be a numeric string.")
+    .transform(Number),
+  limit: z
+    .string()
+    .regex(/^\d+$/, "Limit must be an integer.")
+    .default(String(DEFAULT_NEYNAR_LIMIT))
+    .transform(Number)
+    .refine(
+      (val) => val > 0 && val <= MAX_NEYNAR_LIMIT,
+      `Limit must be between 1 and ${MAX_NEYNAR_LIMIT}.`
+    ),
+  gameId: z
+    .string()
+    .regex(/^\d+$/, "Game ID must be a numeric string.")
+    .optional()
+    .transform((val) => (val ? Number(val) : undefined)),
+});
+
+export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const fidParam = searchParams.get("fid");
-    if (!fidParam) {
+
+    const queryValidation = querySchema.safeParse({
+      fid: searchParams.get("fid"),
+      limit: searchParams.get("limit"),
+      gameId: searchParams.get("gameId"),
+    });
+
+    if (!queryValidation.success) {
+      const firstError =
+        queryValidation.error.message || "Invalid query parameters";
+      return NextResponse.json({ error: firstError }, { status: 400 });
+    }
+    const { fid, limit, gameId: requestedGameId } = queryValidation.data;
+
+    let targetGameId: number | null = requestedGameId ?? null;
+    if (!targetGameId) {
+      const activeGame = await fetchActiveGame();
+      targetGameId = activeGame?.id ?? null;
+    }
+
+    let followersRes, followingRes;
+    try {
+      [followersRes, followingRes] = await Promise.all([
+        neynar.fetchUserFollowers({ fid, limit }),
+        neynar.fetchUserFollowing({ fid, limit }),
+      ]);
+    } catch (neynarError) {
+      console.error(
+        "Neynar API Error fetching followers/following:",
+        neynarError
+      );
       return NextResponse.json(
-        { error: "Missing fid parameter" },
-        { status: 400 }
+        { error: "Failed to fetch social graph from Farcaster." },
+        { status: 503 }
       );
     }
-    const fid = Number(fidParam);
-    if (!Number.isFinite(fid) || fid <= 0) {
-      return NextResponse.json({ error: "Invalid fid" }, { status: 400 });
-    }
-
-    const limitParam = Number.parseInt(
-      searchParams.get("limit") ?? String(DEFAULT_LIMIT),
-      10
-    );
-    const limit = Number.isFinite(limitParam)
-      ? Math.max(1, Math.min(limitParam, 150))
-      : DEFAULT_LIMIT;
-
-    const gameIdParam = searchParams.get("gameId");
-    let targetGameId: number | null = null;
-    if (gameIdParam) {
-      const parsed = Number(gameIdParam);
-      if (Number.isFinite(parsed)) {
-        targetGameId = parsed;
-      }
-    }
-    if (!targetGameId) {
-      const active = await fetchActiveGame();
-      targetGameId = active?.id ?? null;
-    }
-
-    const [followersRes, followingRes] = await Promise.all([
-      neynar.fetchUserFollowers({
-        fid,
-        limit,
-      }),
-      neynar.fetchUserFollowing({
-        fid,
-        limit,
-      }),
-    ]);
-
-    console.log("followersRes", followersRes);
-    console.log("followingRes", followingRes);
 
     type FriendAccumulator = {
       username: string;
-      displayName?: string | null;
-      pfpUrl?: string | null;
+      displayName: string | null;
+      pfpUrl: string | null;
       isFollower: boolean;
       isFollowing: boolean;
     };
+    const friendsMap = new Map<number, FriendAccumulator>();
 
-    const friends = new Map<number, FriendAccumulator>();
-
-    const ingest = (
+    const ingestNeynarUsers = (
       list: typeof followersRes.users,
-      key: "isFollower" | "isFollowing"
+      relationshipType: "isFollower" | "isFollowing"
     ) => {
+      if (!Array.isArray(list)) return;
       for (const entry of list) {
         const user = entry?.user;
         if (!user?.fid) continue;
-        const existing = friends.get(user.fid);
+
+        const existing = friendsMap.get(user.fid);
         if (existing) {
-          existing[key] = true;
+          existing[relationshipType] = true;
         } else {
-          friends.set(user.fid, {
+          friendsMap.set(user.fid, {
             username: user.username,
             displayName: user.display_name ?? null,
             pfpUrl: user.pfp_url ?? null,
-            isFollower: key === "isFollower",
-            isFollowing: key === "isFollowing",
+            isFollower: relationshipType === "isFollower",
+            isFollowing: relationshipType === "isFollowing",
           });
         }
       }
     };
 
-    ingest(followersRes.users ?? [], "isFollower");
-    ingest(followingRes.users ?? [], "isFollowing");
+    ingestNeynarUsers(followersRes?.users ?? [], "isFollower");
+    ingestNeynarUsers(followingRes?.users ?? [], "isFollowing");
 
-    if (friends.size === 0) {
+    if (friendsMap.size === 0) {
       return NextResponse.json({ friends: [], gameId: targetGameId });
     }
 
-    const friendFids = Array.from(friends.keys());
-    const friendFidStrings = friendFids.map(String);
+    const friendFids = Array.from(friendsMap.keys());
 
-    const friendUsers = await prisma.user.findMany({
-      where: { farcasterId: { in: friendFidStrings } },
-      include: {
+    const friendUsersWithTickets = await prisma.user.findMany({
+      where: { fid: { in: friendFids } },
+      select: {
+        fid: true,
         tickets: targetGameId
           ? {
-              where: { gameId: targetGameId },
-              orderBy: { purchasedAt: "desc" },
-            }
-          : {
+              where: { gameId: targetGameId, status: "confirmed" },
+              select: { id: true, gameId: true },
               orderBy: { purchasedAt: "desc" },
               take: 1,
-            },
+            }
+          : false,
       },
     });
 
     const ticketLookup = new Map<
-      string,
+      number,
       { ticketId: number; gameId: number }
     >();
-    for (const user of friendUsers) {
+    for (const user of friendUsersWithTickets) {
       const firstTicket = user.tickets?.[0];
       if (firstTicket) {
-        ticketLookup.set(String(user.farcasterId), {
+        ticketLookup.set(user.fid, {
           ticketId: firstTicket.id,
           gameId: firstTicket.gameId,
         });
@@ -141,16 +158,17 @@ export async function GET(request: Request) {
     }
 
     const result: FriendSummary[] = friendFids.map((friendFid) => {
-      const base = friends.get(friendFid)!;
-      const ticketInfo = ticketLookup.get(String(friendFid));
+      const baseInfo = friendsMap.get(friendFid)!;
+      const ticketInfo = ticketLookup.get(friendFid);
+
       return {
         fid: friendFid,
-        username: base.username,
-        displayName: base.displayName,
-        pfpUrl: base.pfpUrl,
+        username: baseInfo.username,
+        displayName: baseInfo.displayName,
+        pfpUrl: baseInfo.pfpUrl,
         relationship: {
-          isFollower: base.isFollower,
-          isFollowing: base.isFollowing,
+          isFollower: baseInfo.isFollower,
+          isFollowing: baseInfo.isFollowing,
         },
         hasTicket: Boolean(
           ticketInfo && (!targetGameId || ticketInfo.gameId === targetGameId)
@@ -160,7 +178,6 @@ export async function GET(request: Request) {
       };
     });
 
-    // Sort: friends with tickets first, then alphabetically
     result.sort((a, b) => {
       if (a.hasTicket !== b.hasTicket) {
         return a.hasTicket ? -1 : 1;
@@ -168,17 +185,40 @@ export async function GET(request: Request) {
       return a.username.localeCompare(b.username);
     });
 
-    return NextResponse.json({
+    const responseData: FriendsApiResponse = {
       friends: result,
       gameId: targetGameId,
-    });
+    };
+    return NextResponse.json(responseData);
   } catch (error) {
-    console.error("Failed to fetch Farcaster friends", error);
-    return NextResponse.json(
-      { error: "Failed to fetch friends" },
-      { status: 500 }
-    );
+    console.error("GET /api/social/friends Error:", error);
+    const errorMessage =
+      error instanceof Error && error.message.includes("Neynar")
+        ? "Failed to fetch social graph data."
+        : "Internal Server Error";
+    const status =
+      error instanceof Error && error.message.includes("Neynar") ? 503 : 500;
+
+    return NextResponse.json({ error: errorMessage }, { status });
   }
 }
 
 export const dynamic = "force-dynamic";
+
+async function fetchActiveGame(): Promise<{ id: number } | null> {
+  try {
+    const now = new Date();
+    const game = await prisma.game.findFirst({
+      where: {
+        startTime: { lte: now },
+        endTime: { gt: now },
+      },
+      select: { id: true },
+      orderBy: { startTime: "asc" },
+    });
+    return game ? { id: game.id } : null;
+  } catch (err) {
+    console.error("Error fetching active game:", err);
+    return null;
+  }
+}

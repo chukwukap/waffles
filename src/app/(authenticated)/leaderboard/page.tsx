@@ -1,36 +1,145 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef } from "react";
-import { Tabs } from "./_components/Tabs";
-import { useLeaderboard, LeaderboardEntry as Entry } from "@/state";
+import { useEffect, useMemo, useRef, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
+import useSWRInfinite from "swr/infinite";
+import { Tabs, type LeaderboardTabKey } from "./_components/Tabs";
 import { Top3 } from "./_components/Top3";
 import { Row } from "./_components/Row";
 import { WalletIcon } from "@/components/icons";
 import LogoIcon from "@/components/logo/LogoIcon";
 import { BottomNav } from "@/components/BottomNav";
+import { useInfiniteLoader } from "./_components/useInfiniteLoader";
+import { useMiniUser } from "@/hooks/useMiniUser";
+import { LeaderboardEntry } from "@/state/types";
+
+export type TabKey = "current" | "allTime";
+
+interface LeaderboardUser {
+  id: number;
+  rank: number;
+  fid: number;
+  name: string;
+  points: number;
+  imageUrl: string | null;
+}
+
+// Fetcher function for SWR
+// Note: Adapts to useSWRInfinite key format
+const fetcher = (url: string) =>
+  fetch(url, { cache: "no-store" }).then((res) => {
+    if (!res.ok) {
+      throw new Error("Failed to fetch leaderboard data");
+    }
+    return res.json();
+  });
+
+// Define the expected API response structure
+interface LeaderboardApiResponse {
+  users: LeaderboardUser[];
+  hasMore: boolean;
+  me: LeaderboardUser | null;
+  totalPlayers?: number;
+  totalPoints?: number;
+}
 
 export default function LeaderboardPage() {
-  const { activeTab, slices, setActiveTab, fetchLeaderboard, rememberScroll } =
-    useLeaderboard();
+  const searchParams = useSearchParams();
+  const user = useMiniUser();
 
-  const slice = slices[activeTab];
+  const activeTab = (searchParams.get("tab") || "current") as LeaderboardTabKey;
 
-  // ───────────────────────── DATA PREP ─────────────────────────
-  const top3 = useMemo<Entry[]>(
-    () => slice.entries.slice(0, 3),
-    [slice.entries]
+  const getKey = useCallback(
+    (
+      pageIndex: number,
+      previousPageData: LeaderboardApiResponse | null
+    ): string | null => {
+      if (previousPageData && !previousPageData.hasMore) return null;
+
+      if (pageIndex === 0)
+        return `/api/leaderboard?tab=${activeTab}&page=0${
+          user.fid ? `&userId=${user.fid}` : ""
+        }`;
+
+      return `/api/leaderboard?tab=${activeTab}&page=${pageIndex}${
+        user.fid ? `&userId=${user.fid}` : ""
+      }`;
+    },
+    [activeTab, user.fid]
   );
-  const rest = useMemo<Entry[]>(() => slice.entries.slice(3), [slice.entries]);
 
-  // ───────────────────────── HERO ANIMATION ─────────────────────────
+  const {
+    data,
+    error,
+    isLoading: isLoadingInitial,
+    isValidating,
+    setSize,
+    size,
+  } = useSWRInfinite<LeaderboardApiResponse>(getKey, fetcher, {
+    revalidateFirstPage: true,
+    // Tweak revalidation options as needed
+    // revalidateOnFocus: true,
+    // refreshInterval: activeTab === 'current' ? 15000 : 0, // Auto-refresh current tab
+  });
+
+  // --- Data Processing ---
+  const entries: LeaderboardEntry[] = useMemo(() => {
+    if (!data) return [];
+    return data.flatMap((page) =>
+      page.users.map((u) => ({
+        id: u.id,
+        fid: u.fid,
+        rank: u.rank,
+        username: u.name,
+        points: u.points,
+        pfpUrl: u.imageUrl,
+      }))
+    );
+  }, [data]);
+
+  const hasMore = data ? data[data.length - 1]?.hasMore ?? false : true;
+  const isLoadingMore =
+    isLoadingInitial ||
+    (size > 0 && data && typeof data[size - 1] === "undefined" && isValidating);
+  const isEmpty = !isLoadingInitial && entries.length === 0;
+  const currentError = error ? error.message || "Failed to load data" : null;
+
+  // Extract 'me' data from the *first* page's response if available
+  const me = useMemo(() => {
+    const meData = data?.[0]?.me;
+    return meData
+      ? {
+          id: meData.id,
+          rank: meData.rank,
+          username: meData.name,
+          points: meData.points,
+          pfpUrl: meData.imageUrl,
+        }
+      : null;
+  }, [data]);
+  const currentUserId = user.fid;
+
+  // --- Infinite Loading Trigger ---
+  const [loaderRef] = useInfiniteLoader(
+    () => {
+      if (!isLoadingMore && hasMore) {
+        setSize(size + 1);
+      }
+    },
+    "0px 0px 600px 0px",
+    0,
+    [isLoadingMore, hasMore]
+  );
+
+  // --- Hero Animation ---
   const crownRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = crownRef.current;
     if (!el) return;
-    const io = new IntersectionObserver(
-      ([e]) => {
-        const ratio = 1 - e.intersectionRatio;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const ratio = 1 - entry.intersectionRatio;
         document.documentElement.style.setProperty(
           "--lb-progress",
           `${Math.min(Math.max(ratio, 0), 1)}`
@@ -38,58 +147,22 @@ export default function LeaderboardPage() {
       },
       { threshold: Array.from({ length: 21 }, (_, i) => i / 20) }
     );
-    io.observe(el);
-    return () => io.disconnect();
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
-  // ───────────────────────── SCROLL PERSISTENCE ─────────────────────────
-  useEffect(() => setActiveTab(activeTab), [activeTab, setActiveTab]);
-
-  useEffect(() => {
-    const onScroll = () => rememberScroll(activeTab, window.scrollY);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [activeTab, rememberScroll]);
-
-  useEffect(() => {
-    requestAnimationFrame(() =>
-      window.scrollTo({
-        top: slices[activeTab].scrollTop ?? 0,
-        behavior: "instant" as const,
-      })
-    );
-  }, [activeTab, slices]);
-
-  // ───────────────────────── FETCHING ─────────────────────────
-  useEffect(() => {
-    const s = slices[activeTab];
-    if (!s.entries.length && !s.isLoading) {
-      fetchLeaderboard(activeTab).catch(console.error);
-    }
-  }, [activeTab, slices, fetchLeaderboard]);
-
-  const loadMore = () => {
-    const s = slices[activeTab];
-    if (!s.isLoading && s.hasMore) {
-      fetchLeaderboard(activeTab).catch(console.error);
-    }
-  };
-
-  // ───────────────────────── OPTIONAL AUTO-REFRESH ─────────────────────────
-  // 💡 Toggle ON/OFF easily by commenting this block ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-  useEffect(() => {
-    if (activeTab !== "current") return; // refresh only for current game
-    const interval = setInterval(() => {
-      fetchLeaderboard("current", { replace: true }).catch(console.error);
-    }, 15000); // every 15 seconds
-    return () => clearInterval(interval);
-  }, [activeTab, fetchLeaderboard]);
-  // 💡 End of auto-refresh block ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+  // --- Auto-refresh for 'current' tab --- (moved into useSWRInfinite options)
+  // useEffect(() => {
+  //   if (activeTab !== "current") return;
+  //   const interval = setInterval(() => {
+  //     mutate(getKey(0, null)); // Revalidate the first page
+  //   }, 15000);
+  //   return () => clearInterval(interval);
+  // }, [activeTab, getKey, mutate]);
 
   // ───────────────────────── RENDER ─────────────────────────
   return (
-    <main className="min-h-[100dvh] bg-figma">
-      {/* HEADER */}
+    <main className="min-h-[100dvh] bg-figma noise">
       <header className="sticky top-0 z-20 w-full border-b border-white/20 px-4 py-3 bg-figma">
         <div className="mx-auto max-w-screen-sm flex w-full items-center justify-between ">
           <div className="flex min-w-0 flex-row items-center justify-center">
@@ -102,13 +175,12 @@ export default function LeaderboardPage() {
                 className="font-edit-undo leading-[1.1] text-[color:var(--text-primary)] text-center"
                 style={{ fontSize: "clamp(0.95rem, 1.9vw, 1rem)" }}
               >
-                $983.23
+                $...
               </span>
             </div>
           </div>
         </div>
       </header>
-
       {/* HERO + TABS */}
       <section className="mx-auto max-w-screen-sm px-4 pt-6 md:pt-10 relative">
         <div ref={crownRef} className="relative grid place-items-center">
@@ -125,16 +197,14 @@ export default function LeaderboardPage() {
             }}
           />
         </div>
-
-        <div className="sticky top-14 z-10 -mx-4 px-4 pb-2 pt-1 bg-transparent">
+        {/* Sticky Header with Title, Tabs, Description */}
+        <div className="sticky top-[61px] z-10 -mx-4 px-4 pb-2 pt-1 backdrop-blur-sm bg-figma/80">
           <h1 className="text-center font-body text-2xl md:text-3xl tracking-wide">
             LEADERBOARD
           </h1>
-
           <div className="mt-5 flex items-center justify-center gap-6">
-            <Tabs active={activeTab} onChange={setActiveTab} />
+            <Tabs />
           </div>
-
           <p className="mt-4 text-center text-muted font-display">
             {activeTab === "current"
               ? "Real-time standings from the current game"
@@ -142,46 +212,50 @@ export default function LeaderboardPage() {
           </p>
         </div>
       </section>
-
       {/* LIST */}
       <section className="mx-auto max-w-screen-sm px-4 pb-24 pt-4 space-y-4">
-        <Top3 entries={top3} />
-
+        {!isLoadingInitial && entries.length > 0 && (
+          <Top3 entries={entries.slice(0, 3)} currentUserId={currentUserId} />
+        )}
+        {/* Render rest of the list */}
         <div className="space-y-3">
-          {rest.map((e) => (
-            <Row key={e.rank} entry={e} />
+          {entries.slice(3).map((e) => (
+            <Row
+              key={`${activeTab}-${e.rank}-${e.id}`}
+              entry={e}
+              isCurrentUser={
+                currentUserId != null && String(e.id) === String(currentUserId)
+              }
+            />
           ))}
-
-          {slice.isLoading && (
-            <div className="h-11 rounded-2xl panel animate-pulse" />
+          {/* Loading Indicator */}
+          {isLoadingMore && (
+            <div className="h-12 rounded-xl panel animate-pulse" />
           )}
-          {slice.error && (
+          {/* Error Message */}
+          {currentError && !isValidating && (
             <div className="panel px-4 py-3 text-sm text-danger">
-              {slice.error}
+              {currentError}
             </div>
           )}
-          {!slice.isLoading && !slice.entries.length && !slice.error && (
+          {/* Empty State */}
+          {isEmpty && !currentError && (
             <div className="panel px-4 py-6 text-center text-sm text-muted">
               Nothing here yet.
             </div>
           )}
-
-          <button
-            onFocus={loadMore}
-            onMouseEnter={loadMore}
-            onClick={loadMore}
-            disabled={slice.isLoading}
-            className="mx-auto block h-10 w-full max-w-[220px] rounded-xl border border-white/10 bg-white/5 text-sm transition disabled:opacity-50"
-          >
-            {slice.hasMore
-              ? slice.isLoading
-                ? "Loading…"
-                : "Load more"
-              : "End"}
-          </button>
+          {/* Infinite Scroll Trigger Element */}
+          {hasMore && !isLoadingMore && !currentError && (
+            <div ref={loaderRef} className="h-10 w-full" />
+          )}
+          {/* End of List Indicator */}
+          {!hasMore && !isLoadingInitial && !isEmpty && !currentError && (
+            <div className="panel px-4 py-3 text-center text-sm text-muted">
+              End of list.
+            </div>
+          )}
         </div>
       </section>
-
       <BottomNav />
     </main>
   );
