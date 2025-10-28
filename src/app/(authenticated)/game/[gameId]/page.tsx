@@ -18,7 +18,7 @@ export default async function GamePage(props: {
     userFid = Number(fidCookie);
   }
 
-  const game = await fetchGameById(Number(gameId));
+  const game = await fetchGameById(Number(gameId))();
 
   // Only fetch user if we have a fid from cookies, and pass to GameClientImpl
   let userInfo: HydratedUser | null = null;
@@ -26,7 +26,7 @@ export default async function GamePage(props: {
     userInfo = await fetchUserWithGameDetailsAndReferral(
       userFid,
       Number(gameId)
-    );
+    )();
   }
   // Handle case where no game is active after hydration
   if (!game) {
