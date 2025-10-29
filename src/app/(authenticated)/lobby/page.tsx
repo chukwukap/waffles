@@ -7,7 +7,7 @@ import LobbyPageClientImpl from "./lobbyClient";
 import { cookies } from "next/headers";
 
 export default async function LobbyPage() {
-  const games = await fetchUpcomingGames()();
+  const games = await fetchUpcomingGames();
   console.log("games", games);
 
   let userInfo = null;
@@ -21,10 +21,7 @@ export default async function LobbyPage() {
   console.log("games", games);
 
   if (userFid !== undefined && games.length > 0) {
-    userInfo = await fetchUserWithGameDetailsAndReferral(
-      userFid,
-      games[0].id
-    )();
+    userInfo = await fetchUserWithGameDetailsAndReferral(userFid, games[0].id);
   }
 
   if (!userInfo) {
