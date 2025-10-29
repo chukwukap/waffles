@@ -129,26 +129,18 @@ export async function syncUserAction(
     // Optionally: user dashboard/profile (if you have a path, e.g., `/user/${user.fid}`)
     // If there's a page like `/user/[fid]`, you could: revalidatePath(`/user/${user.fid}`);
 
-    // Set the user's fid and userId in cookies
+    // Set the user's fid in a cookie
     try {
       const cookieStore = await cookies();
-      // Set Farcaster FID
       cookieStore.set("fid", String(user.fid), {
         path: "/",
         sameSite: "lax",
         maxAge: 60 * 60 * 24 * 30, // 30 days in seconds
         secure: process.env.NODE_ENV === "production",
       });
-      // Set internal userId (db id)
-      cookieStore.set("userId", String(user.id), {
-        path: "/",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 30, // 30 days in seconds
-        secure: process.env.NODE_ENV === "production",
-      });
     } catch (cookieErr) {
-      console.warn(`Failed to set fid/userId cookie:`, cookieErr);
-      // Don't fail the whole action just for cookie issues
+      console.warn(`Failed to set fid cookie:`, cookieErr);
+      throw new Error(`Failed to set fid cookie: ${cookieErr}`);
     }
 
     const referral = await ensureReferral(user.id);
