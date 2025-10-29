@@ -237,7 +237,7 @@ export default function LobbyPageClientImpl({
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-[#1E1E1E] to-black text-white">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-[#1E1E1E] to-black text-white ">
       {/* ─────────────── Header ─────────────── */}
       <header
         className={cn(
@@ -255,7 +255,7 @@ export default function LobbyPageClientImpl({
       {/* ─────────────── Main Content ─────────────── */}
 
       {/* MAIN CONTENT */}
-      <div className="flex-1 flex flex-col items-center gap-3 justify-center overflow-y-auto pt-4 pb-20 mt-6">
+      <div className="flex-1 flex flex-col items-center gap-3 justify-center overflow-y-auto pb-20 pt-14">
         {showShare ? (
           <Share
             gameTitle={activeGame.name}
@@ -269,7 +269,7 @@ export default function LobbyPageClientImpl({
           />
         ) : (
           <>
-            <main className="flex flex-col items-center justify-center flex-1 w-full px-4 py-10 sm:py-14 text-center">
+            <main className="flex flex-col items-center justify-center flex-1 w-full px-4 py-4 sm:py-14 text-center">
               <div className="flex flex-row items-center justify-between w-[350px] h-[50px] mx-auto">
                 <div className="flex flex-col justify-center items-start h-full">
                   <p className="font-brockmann text-[#99A0AE] text-sm leading-[130%] tracking-[-0.03em]">
