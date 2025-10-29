@@ -1,31 +1,31 @@
 import "./globals.css";
 import { fontBody, fontDisplay, fontInput } from "@/lib/fonts";
 import { Metadata } from "next";
-import { env } from "@/lib/env";
+
 import { cn } from "@/lib/utils";
 
 import { Providers } from "@/components/providers/";
+import { minikitConfig } from "../../minikit.config";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const fcMiniappMeta = {
-    version: "next",
-    imageUrl: `${env.rootUrl}/logo.png`,
-    button: {
-      title: "Waffles",
-      action: {
-        type: "launch_miniapp",
-        name: "Waffles",
-        url: env.rootUrl,
-        splashImageUrl: `${env.rootUrl}/images/splash-icon.png`,
-        // splashBackgroundColor: "#1E1E1E",
-      },
-    },
-  };
   return {
-    title: "Waffles Game",
-    description: "Join the Waffles game!",
+    title: minikitConfig.miniapp.name,
+    description: minikitConfig.miniapp.description,
     other: {
-      "fc:miniapp": JSON.stringify(fcMiniappMeta),
+      "fc:frame": JSON.stringify({
+        version: minikitConfig.miniapp.version,
+        imageUrl: minikitConfig.miniapp.heroImageUrl,
+        button: {
+          title: `Launch ${minikitConfig.miniapp.name}`,
+          action: {
+            name: `Launch ${minikitConfig.miniapp.name}`,
+            type: "launch_frame",
+            url: minikitConfig.miniapp.homeUrl,
+            splashImageUrl: minikitConfig.miniapp.splashImageUrl,
+            splashBackgroundColor: minikitConfig.miniapp.splashBackgroundColor,
+          },
+        },
+      }),
     },
   };
 }
