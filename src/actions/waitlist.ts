@@ -9,15 +9,18 @@ import { revalidatePath } from "next/cache";
 export async function joinWaitlistAction(
   formData: FormData
 ): Promise<{ ok: boolean; already?: boolean; error?: string }> {
-  const fid = formData.get("fid") as unknown as number;
-  const referrerFid = formData.get("referrerFid") as number | null;
+  const fid = formData.get("fid");
+  const referrerFid = formData.get("referrerFid");
+
+  console.log("fid", fid);
+  console.log("referrerFid", referrerFid);
 
   if (!fid) {
     return { ok: false, error: "FID is required." };
   }
 
   try {
-    const user = await prisma.user.findUnique({ where: { fid } });
+    const user = await prisma.user.findUnique({ where: { fid: Number(fid) } });
     if (!user) {
       // Potentially create user if not found, depending on app logic.
       // For now, assume user exists from onboarding/sync.
@@ -33,9 +36,9 @@ export async function joinWaitlistAction(
     }
 
     let referredByUser = null;
-    if (referrerFid && referrerFid !== fid) {
+    if (referrerFid !== null && referrerFid !== fid) {
       referredByUser = await prisma.user.findUnique({
-        where: { fid: referrerFid },
+        where: { fid: Number(referrerFid) },
       });
       if (referredByUser) {
         await prisma.waitlist.updateMany({
