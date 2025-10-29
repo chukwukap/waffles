@@ -6,6 +6,32 @@ import { prisma } from "@/lib/db";
 
 import { WaitlistClient } from "./_components/waitlistClient";
 import { getCurrentUserFid } from "@/lib/auth";
+
+import { minikitConfig } from "../../../minikit.config";
+import { Metadata } from "next";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: minikitConfig.miniapp.name,
+    description: minikitConfig.miniapp.description,
+    other: {
+      "fc:frame": JSON.stringify({
+        version: minikitConfig.miniapp.version,
+        imageUrl: minikitConfig.miniapp.heroImageUrl,
+        button: {
+          title: `Launch ${minikitConfig.miniapp.name}`,
+          action: {
+            name: `Launch ${minikitConfig.miniapp.name}`,
+            type: "launch_frame",
+            url: minikitConfig.miniapp.homeUrl,
+            splashImageUrl: minikitConfig.miniapp.splashImageUrl,
+            splashBackgroundColor: minikitConfig.miniapp.splashBackgroundColor,
+          },
+        },
+      }),
+    },
+  };
+}
 // Get the current user's model by fid
 async function getCurrentUserByFid(fid: number) {
   return prisma.user.findUnique({ where: { fid } });
