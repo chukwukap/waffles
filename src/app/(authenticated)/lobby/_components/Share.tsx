@@ -84,7 +84,7 @@ export function Share({
             "border-r-[5px] border-b-[5px] border-[#FB72FF] transition active:translate-x-[2px] active:translate-y-[2px]"
           )}
         >
-          SHARE TICKET {/* [cite: 74] */}
+          SHARE TICKET
         </button>{" "}
         {/* Back to Home Button */}
         <button
@@ -96,4 +96,4 @@ export function Share({
       </div>
     </div>
   );
-} // [cite: 76]
+}

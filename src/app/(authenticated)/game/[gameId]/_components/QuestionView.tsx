@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { QuestionHeader } from "./QuestionCardHeader";
 import { isSnapshot } from "@/lib/utils";
 import RoundCountdownView from "./RoundCountdownView";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 
 const NEXT_QUESTION_DELAY_SECONDS = 3;
 
@@ -21,7 +22,7 @@ export default function QuestionView({
   game: HydratedGame;
   userInfo: HydratedUser;
 }) {
-  const soundEnabled = game?.config?.soundEnabled ?? false;
+  const { prefs } = useUserPreferences();
   const router = useRouter();
 
   const questionTimeLimitMs = (game?.config?.questionTimeLimit ?? 10) * 1000;
@@ -75,7 +76,7 @@ export default function QuestionView({
     async (option: string, questionId: number) => {
       if (!game || !questionId) return;
 
-      if (soundEnabled) SoundManager.play("click");
+      if (prefs.soundEnabled) SoundManager.play("click");
 
       console.log("Submitting answer:", questionId, option);
 
@@ -108,7 +109,7 @@ export default function QuestionView({
         notify.error("Submission failed:");
       }
     },
-    [userInfo.fid, game, soundEnabled, router]
+    [userInfo.fid, game, prefs.soundEnabled, router]
   );
 
   return (
@@ -117,7 +118,11 @@ export default function QuestionView({
         game.questions.length - unansweredQuestions.length,
         game.questions.length
       ) ? (
-        <RoundCountdownView gameId={game.id} roundTimer={roundTimer} />
+        <RoundCountdownView
+          gameId={game.id}
+          roundTimer={roundTimer}
+          fid={userInfo.fid}
+        />
       ) : (
         <>
           <QuestionHeader

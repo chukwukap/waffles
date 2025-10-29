@@ -5,12 +5,14 @@ import { UseTimerResult } from "@/hooks/useTimer";
 
 const BLUE = "#1E8BFF";
 
-export default function RoundCountdownStage({
+export default function RoundCountdownView({
   roundTimer,
   gameId,
+  fid,
 }: {
   roundTimer: UseTimerResult;
   gameId: number;
+  fid: number;
 }) {
   const ratio = roundTimer.percent; // 0 → 1 progress
   const secondsLeft = Math.ceil(roundTimer.remaining / 1000);
@@ -46,14 +48,13 @@ export default function RoundCountdownStage({
       {/* Overlay things */}
       <section>
         {/* <ChatTickerOverlay /> */}
-        <ChatDrawer gameId={gameId} />
+        <ChatDrawer gameId={gameId} fid={fid} />
       </section>
     </div>
   );
 }
 
 function CountdownCircle({
-  total,
   ratio,
   secondsLeft,
 }: {

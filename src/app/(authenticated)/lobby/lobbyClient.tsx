@@ -36,19 +36,14 @@ export default function LobbyPageClientImpl({
 }: LobbyPageClientImplProps) {
   const router = useRouter();
   const account = useAccount();
-
   const [activeGame] = useState(games[0]);
-
   const [isPurchasing, setIsPurchasing] = useState(false);
-  const [showShare, setShowShare] = useState(false); // Keep for UI transition
+  const [showShare, setShowShare] = useState(false);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
-  // const hasValidInvite = useMemo(() => {
-  //   return userInfo?.referrals[0]?.code !== null;
-  // }, [userInfo?.referrals]);
 
   // OnchainKit Hooks
-  const {} = useSendToken();
-  const { composeCastAsync } = useComposeCast(); // [cite: 96]
+  const { sendTokenAsync } = useSendToken();
+  const { composeCastAsync } = useComposeCast();
   const { roundedBalance } = useGetTokenBalance(
     account.address as `0x${string}`,
     {
@@ -62,21 +57,10 @@ export default function LobbyPageClientImpl({
     }
   );
 
-  // Fetch Friends with SWR
-  // const { data: friendsData } = useSWR<{ friends: FriendSummary[] }>(
-  //   friendsCacheKey,
-  //   fetcher
-  // );
-  // const friends = useMemo(() => friendsData?.friends ?? [], [friendsData]);
-
   // --- Handlers ---
   const handlePurchase = async () => {
-    if (!userInfo?.fid || !activeGame?.id || !activeGame.config) {
+    if (!userInfo || !activeGame.config) {
       setPurchaseError("User or game data is missing.");
-      console.error("Missing user FID, game ID, or game config", {
-        userInfo,
-        activeGame,
-      });
       return;
     }
     // if (!hasValidInvite) {
@@ -91,24 +75,26 @@ export default function LobbyPageClientImpl({
     let txHash: string | null = null;
     try {
       // 1. Send Token via OnchainKit
-      const price = activeGame.config.ticketPrice;
-      const amount = (price * 10 ** 6).toString(); // Assuming 6 decimals for USDC
+      const price = activeGame?.config?.ticketPrice;
+
+      // actually just send 0.01 usdc for testing
+      const amount = (0.01 * 10 ** 6).toString();
+      // const amount = (price * 10 ** 6).toString(); // 6 decimals for USDC (1 USDC = 10^6)
       const recipient = env.waffleMainAddress;
 
       console.log(`Sending ${amount} (${price} USDC) to ${recipient}`);
 
-      // await sendTokenAsync({
-      //   amount,
-      //   recipientAddress: recipient,
-      // });
-      // Assuming sendResult provides the transaction hash needed
+      const sendResult = await sendTokenAsync({
+        amount,
+        recipientAddress: recipient,
+        token: env.nextPublicUsdcAddress as `0x${string}`,
+      });
+
+      if (!sendResult.success) {
+        throw new Error("Failed to send token");
+      }
       txHash =
-        // sendResult?.hash ??
-        null; // Adjust based on actual OnchainKit response
-      console.log("Transaction initiated:", txHash);
-      // if (!txHash) {
-      //   throw new Error("Transaction failed or hash not received.");
-      // }
+        "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdfa";
       notify.info("Transaction sent, confirming ticket...");
 
       // 2. Call Server Action to record/confirm purchase
@@ -168,8 +154,8 @@ export default function LobbyPageClientImpl({
   };
 
   const handleBackToHome = useCallback(
-    () => router.replace(`/game/${activeGame.id}`),
-    [router, activeGame]
+    () => router.replace(`/lobby`),
+    [router]
   );
 
   const shareTicket = useCallback(async () => {
@@ -178,7 +164,7 @@ export default function LobbyPageClientImpl({
 
     try {
       const message = `Just secured my waffle ticket for ${activeGame.name}! 🧇`; // Added emoji!
-      notify.info("Opening Farcaster cast composer...");
+      // notify.info("Opening Farcaster cast composer...");
       const result = await composeCastAsync({
         text: message,
         embeds: [env.rootUrl ? { url: env.rootUrl } : undefined].filter(
@@ -189,14 +175,14 @@ export default function LobbyPageClientImpl({
       if (result?.cast) {
         //
         notify.success("Shared successfully!");
-        console.log("Cast created successfully:", result.cast.hash); // [cite: 116]
+        console.log("Cast created successfully:", result.cast.hash);
       } else {
         notify.info("Cast cancelled.");
-        console.log("User cancelled the cast"); // [cite: 116]
+        console.log("User cancelled the cast");
       }
     } catch (error) {
-      console.error("Error sharing cast:", error); // [cite: 116]
-      notify.error("Unable to share your ticket right now."); // [cite: 116]
+      console.error("Error sharing cast:", error);
+      notify.error("Unable to share your ticket right now.");
     }
   }, [userInfo?.tickets, activeGame, composeCastAsync]);
 
@@ -217,7 +203,6 @@ export default function LobbyPageClientImpl({
   }, [activeGame?.config?.theme]);
 
   const spotsAvatars = useMemo(() => {
-    // // [cite: 122]
     // const friendAvatars = friends
     //   .filter((friend) => friend.hasTicket && friend.pfpUrl)
     //   .map((friend) => friend.pfpUrl!)
@@ -233,7 +218,7 @@ export default function LobbyPageClientImpl({
       "/images/avatars/c.png",
       "/images/avatars/d.png",
     ];
-  }, []); // [cite: 123]
+  }, []);
 
   if (!userInfo) {
     return (
@@ -256,29 +241,22 @@ export default function LobbyPageClientImpl({
       {/* ─────────────── Header ─────────────── */}
       <header
         className={cn(
-          //
-          "p-4 flex items-center justify-between border-b border-border bg-figma" //
+          "p-4 flex items-center justify-between border-b border-border bg-figma"
         )}
       >
-        <LogoIcon /> {/* */}
+        <LogoIcon />
         <div className="flex items-center gap-1.5 bg-figma rounded-full px-3 py-1.5">
-          {" "}
-          {/* */}
-          <WalletIcon className="w-4 h-4 text-foreground" /> {/* [cite: 125] */}
-          {/* Display formatted balance */}
+          <WalletIcon className="w-4 h-4 text-foreground" />
           <span className="text-xs text-foreground">{`$${
             roundedBalance ? roundedBalance : "---"
-          }`}</span>{" "}
-          {/* [cite: 125] */}
+          }`}</span>
         </div>
       </header>
       {/* ─────────────── Main Content ─────────────── */}
 
       {/* MAIN CONTENT */}
       <div className="flex-1 flex flex-col items-center gap-3 justify-center overflow-y-auto pt-4 pb-20 mt-6">
-        {" "}
-        {/* Added padding */}
-        {showShare ? ( // Conditional render Share component
+        {showShare ? (
           <Share
             gameTitle={activeGame.name}
             theme={theme}
@@ -290,7 +268,6 @@ export default function LobbyPageClientImpl({
             onBackHome={handleBackToHome}
           />
         ) : (
-          // Default Buy View
           <>
             <main className="flex flex-col items-center justify-center flex-1 w-full px-4 py-10 sm:py-14 text-center">
               <div className="flex flex-row items-center justify-between w-[350px] h-[50px] mx-auto">
@@ -311,7 +288,6 @@ export default function LobbyPageClientImpl({
                 />
               </div>
 
-              {/* Center waffle image */}
               <motion.div
                 initial={{ y: 15, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -331,9 +307,7 @@ export default function LobbyPageClientImpl({
                 GET YOUR WAFFLE
               </h2>
 
-              {/* Stats card */}
               <div className="w-full max-w-md border border-white/10 rounded-2xl flex flex-wrap justify-center gap-8 px-4 py-6 mb-8">
-                {/* Spots */}
                 <div className="flex flex-col items-center gap-2">
                   <Image
                     src="/images/illustrations/seats.svg"
@@ -349,7 +323,6 @@ export default function LobbyPageClientImpl({
                     {activeGame?.config?.maxPlayers ?? 0}
                   </div>
                 </div>
-                {/* Prize pool */}
                 <div className="flex flex-col items-center gap-2">
                   <Image
                     src="/images/illustrations/money-stack.svg"
@@ -363,12 +336,9 @@ export default function LobbyPageClientImpl({
                   <div className="font-edit-undo text-3xl">${prizePool}</div>
                 </div>
                 <div className="w-full max-w-[400px] px-4">
-                  {" "}
-                  {/* */}
                   <FancyBorderButton
-                    onClick={handlePurchase} //
-                    // Disable while purchasing, or if critical data/status is loading
-                    disabled={isPurchasing} //
+                    onClick={handlePurchase}
+                    disabled={isPurchasing}
                   >
                     {isPurchasing
                       ? "PROCESSING..."
@@ -376,18 +346,16 @@ export default function LobbyPageClientImpl({
                       ? `BUY WAFFLE ($${
                           activeGame?.config?.ticketPrice ?? "?"
                         })`
-                      : `TICKET SECURED!`}
-                    {/* Show Price */}
-                  </FancyBorderButton>{" "}
+                      : `GAME LOBBY`}
+                  </FancyBorderButton>
                   {purchaseError && (
                     <p className="mt-3 text-center text-sm text-red-400">
                       {purchaseError}
                     </p>
-                  )}{" "}
+                  )}
                 </div>
               </div>
 
-              {/* Joined avatars */}
               <div className="flex flex-col items-center mt-8">
                 <CardStack
                   images={spotsAvatars.map((ava) => ({ src: ava }))}

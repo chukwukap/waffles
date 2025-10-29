@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { notFound, useRouter } from "next/navigation";
 
 import QuestionView from "./_components/QuestionView";
 import WaitingView from "./_components/WaitingView";
@@ -18,7 +18,9 @@ import { base } from "wagmi/chains";
 import { cn } from "@/lib/utils";
 import SoundManager from "@/lib/SoundManager";
 import type { HydratedGame, HydratedUser } from "@/state/types";
-import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { leaveGameAction } from "@/actions/game";
+import { notify } from "@/components/ui/Toaster";
 
 interface GameClientImplProps {
   game: HydratedGame;
@@ -33,7 +35,7 @@ interface GameClientImplProps {
 export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
   const router = useRouter();
   const user = useMiniUser();
-  const [showJoinView, setShowJoinView] = useState<boolean>(false);
+  const { prefs } = useUserPreferences();
 
   const [friends] = useState<
     { fid: number; username: string; pfpUrl: string }[]
@@ -76,10 +78,8 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
     }
   );
 
-  const soundEnabled = game?.config?.soundEnabled ?? false;
-
   useEffect(() => {
-    if (!soundEnabled) return;
+    if (!prefs.soundEnabled) return;
 
     const handleFirstInteraction = () => {
       SoundManager.init().catch((error) => {
@@ -99,10 +99,10 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
       window.removeEventListener("pointerdown", handleFirstInteraction);
       window.removeEventListener("keydown", handleFirstInteraction);
     };
-  }, [soundEnabled]);
+  }, [prefs.soundEnabled]);
 
   useEffect(() => {
-    if (!soundEnabled) {
+    if (!prefs.soundEnabled) {
       SoundManager.stop("countdown");
       SoundManager.stopAll();
       return;
@@ -113,7 +113,7 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
     // } else {
     //   SoundManager.stop("countdown");
     // }
-  }, [soundEnabled]);
+  }, [prefs.soundEnabled]);
 
   useEffect(() => {
     return () => {
@@ -122,41 +122,23 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
     };
   }, []);
 
-  const leaveGame = useCallback(() => {
-    console.log("Leaving game");
-  }, []);
+  const leaveGame = useCallback(async () => {
+    try {
+      await leaveGameAction({ fid: userInfo.fid, gameId: game.id });
+      console.log("Left game via leaveGameAction");
+      router.refresh();
+    } catch (error) {
+      console.error("Error leaving game:", error);
+      notify.error("Failed to leave game:");
+    }
+  }, [userInfo.fid, game.id, router]);
 
-  // Handle case where no game is active after hydration
-  if (!game) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[80dvh] text-center px-4">
-        <LogoIcon className="w-12 h-12 mb-4" />
-        <h1 className="text-2xl font-bold text-foreground mb-2">
-          No Active Game
-        </h1>
-        <p className="text-md text-muted-foreground mb-8">
-          There isn&apos;t a game running right now. Check back soon!
-          <FancyBorderButton
-            onClick={() => router.push("/waitlist")}
-            className="mt-4"
-          >
-            Join the waitlist
-          </FancyBorderButton>
-        </p>
-        <div className="flex items-center gap-1.5 bg-figma rounded-full px-3 py-1.5 border border-white/10">
-          <WalletIcon className="w-4 h-4 text-foreground" />
-          <span className="text-xs text-foreground">
-            {status === "pending" ? "Loading..." : `$${roundedBalance}`}
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  // Select the view component based on backend state, not Zustand gameState
+  // Select the view component based on backend state
   const view = (() => {
     // Basic safety check
-    if (!game || !userInfo) return null;
+    if (!game || !userInfo) {
+      return notFound();
+    }
 
     const now = new Date();
     const start = new Date(game.startTime);
@@ -182,7 +164,15 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
 
     // If before the scheduled start, show waiting view
     if (isWaiting) {
-      return <WaitingView game={game} onComplete={() => {}} />;
+      return (
+        <WaitingView
+          game={game}
+          fid={userInfo.fid}
+          onComplete={() => {
+            router.refresh();
+          }}
+        />
+      );
     }
 
     // If user hasn't bought a ticket, show join
@@ -192,7 +182,7 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
     }
 
     // If user hasn't started/participated in the game after ticket purchase
-    if (!userGameParticipant || showJoinView) {
+    if (!userGameParticipant) {
       // Could show a "ready" screen (could use JoinGameView or a different ReadyView)
       return <JoinGameView game={game} userInfo={userInfo} friends={friends} />;
     }
@@ -206,8 +196,9 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
     return (
       <WaitingView
         game={game}
+        fid={userInfo.fid}
         onComplete={() => {
-          setShowJoinView(true);
+          router.refresh();
         }}
       />
     );
@@ -236,9 +227,7 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
             <div className="flex items-center gap-1.5 bg-figma rounded-full px-3 py-1.5 border border-white/10">
               <WalletIcon className="w-4 h-4 text-foreground" />
               <span className="text-xs text-foreground">
-                {userInfo.tickets?.length > 0
-                  ? "Loading..."
-                  : `$${roundedBalance}`}
+                {status === "pending" ? "Loading..." : `$${roundedBalance}`}
               </span>
             </div>
           )}

@@ -1,6 +1,5 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
 import { SoundOffIcon, SoundOnIcon } from "@/components/icons";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import Image from "next/image";
@@ -22,7 +21,6 @@ export function QuestionHeader({
   questionTimeLimit,
 }: QuestionHeaderProps) {
   const { prefs, toggleSound } = useUserPreferences();
-  const { soundEnabled } = prefs;
 
   return (
     <div className="w-full flex items-center justify-between px-3 py-2 ">
@@ -36,10 +34,10 @@ export function QuestionHeader({
       <button
         onClick={toggleSound}
         className=" bg-white/15 rounded-full p-2 backdrop-blur-sm active:scale-95 transition-transform mr-auto ml-3"
-        aria-label={soundEnabled ? "Mute sound" : "Unmute sound"}
+        aria-label={prefs.soundEnabled ? "Mute sound" : "Unmute sound"}
         type="button"
       >
-        {soundEnabled ? (
+        {prefs.soundEnabled ? (
           <SoundOnIcon className="w-4 h-4 text-white" />
         ) : (
           <SoundOffIcon className="w-4 h-4 text-white" />
@@ -82,27 +80,53 @@ export function QuestionHeader({
 
 export function CapsuleProgress({ progress }: { progress: number }) {
   return (
-    <div className="relative h-[12px] w-[78px]">
-      {/* capsule background */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/images/icons/capsule.svg"
-        alt="capsule"
-        className="absolute inset-0 w-full h-full"
-      />
-
-      {/* clipping mask for remaining time */}
-      <div
-        className="absolute inset-0 overflow-hidden"
-        style={{ clipPath: `inset(0 ${(1 - progress) * 100}% 0 0)` }}
+    <div className="relative w-[78px] h-[12px]">
+      <svg
+        width="78"
+        height="12"
+        viewBox="0 0 78 12"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="absolute inset-0"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/images/icons/capsule.svg"
-          alt="capsule"
-          className="w-full h-full"
-        />
-      </div>
+        {/* BACKGROUND (static) */}
+        <path d="M4.65347 0.0181034C4.67876 0.0181034..." fill="#4A0B0B" />
+        <path d="M5.07078 0.271509C5.09185 0.271509..." fill="#BE3C2B" />
+        <path d="M5.91797 1.0453C5.93905 1.0453..." fill="#B55E2C" />
+        <path d="M5.91797 1.0453C5.93905 1.0453..." fill="#E9DCCB" />
+      </svg>
+
+      {/* FOREGROUND (masked) */}
+      <svg
+        width="78"
+        height="12"
+        viewBox="0 0 78 12"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="absolute inset-0"
+        style={{
+          clipPath: `inset(0 ${(1 - progress) * 100}% 0 0)`,
+          transition: "clip-path 0.15s linear",
+        }}
+      >
+        <path d="M4.65347 0.0181034C4.67876 0.0181034..." fill="#4A0B0B" />
+        <path d="M5.07078 0.271509C5.09185 0.271509..." fill="#BE3C2B" />
+        <path d="M5.91797 1.0453C5.93905 1.0453..." fill="#B55E2C" />
+        <path d="M5.91797 1.0453C5.93905 1.0453..." fill="#E9DCCB" />
+        <path d="M51.4162 0.990967..." fill="#F96F49" />
+        <path d="M38.914 0.996029..." fill="#F96F49" />
+        <path d="M52.9714 0.990967..." fill="#F96F49" />
+        <path d="M18.0834 1.00079..." fill="#F96F49" />
+        <path d="M34.7498 0.990967..." fill="#F96F49" />
+        <path d="M5.89307 1.00079..." fill="#F96F49" />
+        <path d="M24.861 0.996029..." fill="#F96F49" />
+        <g style={{ mixBlendMode: "color-dodge", opacity: 0.8 }}>
+          <path d="M7.36799 2.04066..." fill="#F73812" />
+        </g>
+        <g style={{ mixBlendMode: "color-dodge", opacity: 0.5 }}>
+          <path d="M9.7453 2.82349..." fill="#FCC9A4" />
+        </g>
+      </svg>
     </div>
   );
 }

@@ -51,12 +51,17 @@ async function handleFormSubmit(formData: FormData) {
  *   - gameId (from parent page params)
  *   - user (from parent layout, if available and can be passed as prop/context)
  */
-export default async function ChatDrawer({ gameId }: { gameId: number }) {
+export default async function ChatDrawer({
+  gameId,
+  fid,
+}: {
+  gameId: number;
+  fid: number;
+}) {
   // Fetch messages server-side
   const messages = await getGameChats(gameId);
-  const fid = 1;
   const user = await prisma.user.findUnique({
-    where: { id: Number(fid) },
+    where: { fid },
     select: {
       fid: true,
       name: true,

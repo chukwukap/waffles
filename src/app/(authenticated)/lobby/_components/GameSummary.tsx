@@ -41,7 +41,7 @@ export function GameSummaryCard({
         </div>
 
         <div className="flex flex-col justify-center items-start w-[159px] h-[48px]">
-          <span className="font-edit-undo text-white text-[23px] leading-[130%]">
+          <span className="font-body text-white text-[23px] leading-[130%]">
             {username}
           </span>
           <span className="font-display text-[#99A0AE] text-[14px] leading-[130%] tracking-[-0.03em]">
@@ -62,10 +62,10 @@ export function GameSummaryCard({
             className="object-contain"
           />
           <div className="flex flex-col justify-center items-start w-[52px] h-[32px]">
-            <span className="font-brockmann text-[#99A0AE] text-[11.38px] leading-[130%] tracking-[-0.03em]">
+            <span className="font-display text-[#99A0AE] text-[11.38px] leading-[130%] tracking-[-0.03em]">
               Prize pool
             </span>
-            <span className="font-edit-undo text-white text-[17.07px] leading-[100%]">
+            <span className="font-body text-white text-[17.07px] leading-[100%]">
               {formattedPrize}
             </span>
           </div>
@@ -81,10 +81,10 @@ export function GameSummaryCard({
             className="object-contain"
           />
           <div className="flex flex-col justify-center items-start w-[69px] h-[32px]">
-            <span className="font-brockmann text-[#99A0AE] text-[11.38px] leading-[130%] tracking-[-0.03em]">
+            <span className="font-display text-[#99A0AE] text-[11.38px] leading-[130%] tracking-[-0.03em]">
               Theme
             </span>
-            <span className="font-edit-undo text-white text-[17.07px] leading-[100%]">
+            <span className="font-body text-white text-[17.07px] leading-[100%]">
               {theme.toUpperCase()}
             </span>
           </div>

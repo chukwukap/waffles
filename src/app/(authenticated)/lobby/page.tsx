@@ -4,23 +4,17 @@ import {
 } from "@/lib/data";
 import LobbyPageClientImpl from "./lobbyClient";
 
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { notify } from "@/components/ui/Toaster";
+import { getCurrentUserFid } from "@/lib/auth";
 
 export default async function LobbyPage() {
   const games = await fetchUpcomingGames();
-  console.log("games", games);
 
-  let userInfo = null;
-  let userFid: number | undefined = undefined;
-  const cookieStore = await cookies();
-  const fidCookie = cookieStore.get("fid")?.value;
-  if (fidCookie && !isNaN(Number(fidCookie))) {
-    userFid = Number(fidCookie);
+  const userFid = await getCurrentUserFid();
+  if (!userFid) {
+    return <div>User not logged in</div>;
   }
-  console.log("userFid", userFid);
-  console.log("games", games);
 
   // if there is no active game, redirect to waitlist
   if (games.length === 0) {
@@ -28,9 +22,10 @@ export default async function LobbyPage() {
     return redirect("/waitlist");
   }
 
-  if (userFid !== undefined && games.length > 0) {
-    userInfo = await fetchUserWithGameDetailsAndReferral(userFid, games[0].id);
-  }
+  const userInfo = await fetchUserWithGameDetailsAndReferral(
+    userFid,
+    games[0].id
+  );
 
   if (!userInfo) {
     return (
@@ -42,3 +37,5 @@ export default async function LobbyPage() {
 
   return <LobbyPageClientImpl games={games} userInfo={userInfo} />;
 }
+
+export const dynamic = "force-dynamic";
