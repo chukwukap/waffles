@@ -1,6 +1,6 @@
+// ───────────────────────── RoundCountdownView.tsx ─────────────────────────
 "use client";
 
-import ChatDrawer from "./ChatDrawer";
 import { UseTimerResult } from "@/hooks/useTimer";
 
 const BLUE = "#1E8BFF";
@@ -14,7 +14,8 @@ export default function RoundCountdownView({
   gameId: number;
   fid: number;
 }) {
-  const ratio = roundTimer.percent; // 0 → 1 progress
+  // ratio is 0 → 1 (progress). We convert to remaining seconds for display.
+  const ratio = roundTimer.percent;
   const secondsLeft = Math.ceil(roundTimer.remaining / 1000);
   const totalSeconds = Math.ceil(roundTimer.duration / 1000);
 
@@ -45,37 +46,39 @@ export default function RoundCountdownView({
         </p>
       </section>
 
-      {/* Overlay things */}
-      <section>
-        {/* <ChatTickerOverlay /> */}
-        {/* <ChatDrawer gameId={gameId} fid={fid} /> */}
-      </section>
+      {/* Overlays/extensions can live here; keep them inert wrt timers */}
+      {/* <ChatDrawer gameId={gameId} fid={fid} /> */}
     </div>
   );
 }
 
 function CountdownCircle({
   ratio,
+  total,
   secondsLeft,
 }: {
-  total: number;
-  ratio: number; // 0 → 1
+  total: number; // total seconds in this round break
+  ratio: number; // 0 → 1 progress
   secondsLeft: number; // integer seconds left
 }) {
   const size = 240;
   const stroke = 14;
   const r = (size - stroke) / 2;
   const circumference = 2 * Math.PI * r;
+
+  // ring progress: full circumference down to 0
   const dashOffset = circumference * (1 - ratio);
-  const angle = ratio * 360 - 90;
+  const angle = ratio * 360 - 90; // rotate progress dot
 
   return (
     <div
       className="relative"
       style={{ width: size, height: size }}
       aria-label="Next round countdown"
-      role="timer"
       aria-live="polite"
+      aria-valuemin={0}
+      aria-valuemax={total}
+      aria-valuenow={secondsLeft}
     >
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <circle
@@ -103,9 +106,8 @@ function CountdownCircle({
           />
         </g>
       </svg>
-
       {/* Moving progress dot */}
-      <div
+      {/* <div
         className="absolute left-1/2 top-1/2"
         style={{
           transform: `translate(-50%, -50%) rotate(${angle}deg)`,
@@ -127,8 +129,7 @@ function CountdownCircle({
             boxShadow: "0 0 0 2px rgba(30,139,255,0.35)",
           }}
         />
-      </div>
-
+      </div> */}
       {/* Timer Text */}
       <div className="pointer-events-none absolute inset-0 grid place-items-center">
         <span
