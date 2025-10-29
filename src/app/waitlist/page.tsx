@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 
 import { WaitlistClient } from "./_components/waitlistClient";
-import { cookies } from "next/headers";
+import { getCurrentUserFid } from "@/lib/auth";
 // Get the current user's model by fid
 async function getCurrentUserByFid(fid: number) {
   return prisma.user.findUnique({ where: { fid } });
@@ -53,12 +53,4 @@ export default async function WaitlistPage({
       referrerFid={referrerFid ? parseInt(referrerFid) : null}
     />
   );
-}
-
-// Get the current user's fid from cookies
-export async function getCurrentUserFid(): Promise<number | null> {
-  const cookieStore = await cookies();
-  const fidCookie = cookieStore.get("fid")?.value;
-  if (!fidCookie || isNaN(Number(fidCookie))) return null;
-  return Number(fidCookie);
 }

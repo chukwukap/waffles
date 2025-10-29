@@ -47,7 +47,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body
-        className={cn("text-foreground bg-figma noise h-full overflow-hidden")}
+        className={cn("text-foreground bg-waffles  h-full overflow-hidden")}
       >
         <Providers>
           <div className="h-[100dvh] flex flex-col overflow-hidden">

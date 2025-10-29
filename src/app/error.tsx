@@ -14,25 +14,79 @@ export default function GameErrorPage({ error, reset }: ErrorPageProps) {
   }, [error]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80dvh] text-center px-6  text-foreground">
-      <h1 className="text-2xl font-body font-bold text-red-500 mb-3">
+    <div
+      className="
+        flex flex-col items-center justify-center
+        min-h-[80dvh]
+        w-full px-4 sm:px-8 py-8
+        text-center
+        text-foreground
+        bg-background
+      "
+      style={{
+        minHeight: "80dvh",
+      }}
+    >
+      <h1
+        className="
+          text-[clamp(1.5rem,5vw,2.25rem)]
+          font-body font-bold text-red-500 mb-2 sm:mb-3
+          leading-tight
+        "
+      >
         Oops! Waffle Down!
       </h1>
-      <p className="mb-6 text-muted-foreground font-display max-w-md">
+      <p
+        className="
+          mb-5 sm:mb-6 text-[clamp(1rem,3vw,1.15rem)]
+          text-muted-foreground font-display
+          max-w-[92vw] sm:max-w-md 
+          mx-auto
+          leading-snug
+        "
+      >
         Sorry, there was a problem loading or running the game. Please try
         again.
       </p>
       {process.env.NODE_ENV === "development" && error?.message && (
-        <pre className="mb-6 text-xs text-red-300 bg-red-900/20 p-3 rounded max-w-full overflow-x-auto">
+        <pre
+          className="
+            mb-5 sm:mb-6
+            text-xs sm:text-sm
+            text-red-300
+            bg-red-900/20
+            p-2 sm:p-3
+            rounded
+            max-w-full
+            w-full sm:w-auto
+            overflow-x-auto
+            font-mono
+            text-left
+            break-words
+          "
+          style={{
+            whiteSpace: "pre-wrap",
+            wordBreak: "break-all",
+          }}
+        >
           {error.message}
           {error.digest && `\nDigest: ${error.digest}`}
           {error.stack &&
             `\n\nStack Trace:\n${error.stack.substring(0, 500)}...`}
         </pre>
       )}
-      <FancyBorderButton onClick={() => reset()} className="max-w-xs">
-        Try Again
-      </FancyBorderButton>
+      <div className="w-full flex justify-center">
+        <FancyBorderButton
+          onClick={reset}
+          className="
+            w-full max-w-xs sm:max-w-sm
+            py-3 px-3 sm:px-5
+            text-base sm:text-lg
+          "
+        >
+          Try Again
+        </FancyBorderButton>
+      </div>
     </div>
   );
 }

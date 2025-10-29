@@ -27,7 +27,7 @@ export function WaitlistClient({
     try {
       const formData = new FormData();
       formData.set("fid", String(fid));
-      formData.set("referrerFid", String(referrerFid));
+      formData.set("referrerFid", referrerFid ? String(referrerFid) : "");
       await joinWaitlistAction(formData);
       router.push("/waitlist");
     } catch (error) {
@@ -35,7 +35,7 @@ export function WaitlistClient({
     }
   }
   return (
-    <div className="relative min-h-screen w-full bg-gradient-to-b from-[#1E1E1E] to-black overflow-hidden">
+    <div className="relative min-h-screen w-full  overflow-hidden">
       <main className="relative w-full max-w-[420px] mx-auto text-white pt-[env(safe-area-inset-top)] px-4">
         <motion.div
           initial={{ opacity: 0, y: -12 }}
