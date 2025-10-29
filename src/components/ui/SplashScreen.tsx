@@ -12,6 +12,8 @@ const crewImages = [
   "/images/splash/crew-6.png",
   "/images/splash/crew-7.png",
   "/images/splash/crew-8.png",
+  "/images/splash/crew-9.png",
+  "/images/splash/crew-10.png",
 ];
 
 export function SplashScreen() {
