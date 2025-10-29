@@ -2,6 +2,18 @@
 
 import { prisma } from "@/lib/db";
 import { z } from "zod";
+import { revalidateTag } from "next/cache";
+
+// Utility function: Remove or redact URLs from a string.
+function sanitizeMessage(input: string): string {
+  // This will remove any http(s):// or www. links and any URL-looking words
+  // Replace URLs with "[link removed]"
+  return input.replace(
+    // Basic regex that covers most normal URL forms
+    /((https?:\/\/|www\.)[^\s]+)/gi,
+    "[link removed]"
+  );
+}
 
 const sendMessageSchema = z.object({
   gameId: z.number().int().positive("Invalid Game ID."),
@@ -49,14 +61,20 @@ export async function sendMessageAction(
       return { success: false, error: "Game not found." };
     }
 
+    // Sanitize message to remove links
+    const sanitizedMessage = sanitizeMessage(message);
+
     const chat = await prisma.chat.create({
       data: {
         userId: user.id,
         gameId,
-        message,
+        message: sanitizedMessage,
       },
       select: { id: true },
     });
+
+    // Add revalidation for chat updates related to this game
+    revalidateTag(`game-chat-${gameId}`);
 
     return { success: true, messageId: chat.id };
   } catch (error) {

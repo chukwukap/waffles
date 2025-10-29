@@ -1,6 +1,5 @@
 "use client";
 
-import ChatTickerOverlay from "./ChatTickerOverlay";
 import ChatDrawer from "./ChatDrawer";
 import { UseTimerResult } from "@/hooks/useTimer";
 
@@ -8,8 +7,10 @@ const BLUE = "#1E8BFF";
 
 export default function RoundCountdownStage({
   roundTimer,
+  gameId,
 }: {
   roundTimer: UseTimerResult;
+  gameId: number;
 }) {
   const ratio = roundTimer.percent; // 0 → 1 progress
   const secondsLeft = Math.ceil(roundTimer.remaining / 1000);
@@ -44,8 +45,8 @@ export default function RoundCountdownStage({
 
       {/* Overlay things */}
       <section>
-        <ChatTickerOverlay />
-        <ChatDrawer />
+        {/* <ChatTickerOverlay /> */}
+        <ChatDrawer gameId={gameId} />
       </section>
     </div>
   );

@@ -76,3 +76,33 @@ export const fetchUserWithGameDetailsAndReferral = async (
     },
   }) as Promise<HydratedUser | null>;
 };
+/* ------------------------------------------------------ */
+/*            4. FETCH GAME CHAT MESSAGES                 */
+/* ------------------------------------------------------ */
+
+/**
+ * Fetches the latest chat messages for a game, ordered by creation.
+ * Can specify a limit (default 24).
+ *
+ * Each message includes user (fid, id, name, imageUrl).
+ */
+export const fetchChatMessages = async (
+  gameId: number,
+  limit: number = 24
+) => {
+  return prisma.chat.findMany({
+    where: { gameId },
+    orderBy: { createdAt: "asc" },
+    take: limit,
+    include: {
+      user: {
+        select: {
+          id: true,
+          fid: true,
+          name: true,
+          imageUrl: true,
+        },
+      },
+    },
+  });
+};

@@ -117,7 +117,7 @@ export default function QuestionView({
         game.questions.length - unansweredQuestions.length,
         game.questions.length
       ) ? (
-        <RoundCountdownView roundTimer={roundTimer} />
+        <RoundCountdownView gameId={game.id} roundTimer={roundTimer} />
       ) : (
         <>
           <QuestionHeader
