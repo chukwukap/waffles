@@ -50,7 +50,7 @@ export default function RootLayout({
         className={cn("text-foreground bg-figma noise h-full overflow-hidden")}
       >
         <Providers>
-          <div className="h-[100dvh] flex flex-col overflow-hidden p-4">
+          <div className="h-[100dvh] flex flex-col overflow-hidden">
             {children}
           </div>
         </Providers>
