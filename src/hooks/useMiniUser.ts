@@ -41,9 +41,11 @@ export function useMiniUser(): MiniUser {
   };
 
   if (process.env.NODE_ENV === "production" && !realUser.fid) {
-    throw new Error(
-      "User FID is required in production but was not found. MiniApp context: " +
-        JSON.stringify(miniKitContext)
+    // Clear, visible warning in production if no FID
+
+    console.warn(
+      "[useMiniUser] WARNING: User FID is required in production but was not found. MiniApp context:",
+      miniKitContext
     );
   }
 
