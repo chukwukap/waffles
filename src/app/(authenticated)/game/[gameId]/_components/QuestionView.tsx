@@ -9,11 +9,8 @@ import { submitAnswerAction } from "@/actions/game";
 import QuestionCard from "./QuestionCard";
 import { useRouter } from "next/navigation";
 import { QuestionHeader } from "./QuestionCardHeader";
-
-// function getRound(currentIndex: number, totalQuestions: number): 1 | 2 | 3 {
-//   const roundSize = totalQuestions / 3;
-//   return (Math.floor(currentIndex / roundSize) + 1) as 1 | 2 | 3;
-// }
+import { isSnapshot } from "@/lib/utils";
+import RoundCountdownView from "./RoundCountdownView";
 
 const NEXT_QUESTION_DELAY_SECONDS = 3;
 
@@ -39,17 +36,6 @@ export default function QuestionView({
       !userInfo?.answers?.some((answer) => answer.questionId === question.id)
   );
 
-  // const [round, setRound] = React.useState<number>(1);
-  // React.useEffect(() => {
-  //   setRound(
-  //     getRound(
-  //       game.questions.length - unansweredQuestions.length,
-  //       game.questions.length
-  //     )
-  //   );
-  // }, [game.questions.length, unansweredQuestions.length]);
-
-  // there are no unanswered questions, redirect to score page
   if (unansweredQuestions?.length === 0) {
     router.push(`/game/${game?.id}/score`);
   }
@@ -127,17 +113,26 @@ export default function QuestionView({
 
   return (
     <div className="w-full max-w-md sm:max-w-lg mx-auto mt-4">
-      <QuestionHeader
-        currentQuestion={game.questions.length - unansweredQuestions.length}
-        totalQuestions={game.questions.length}
-        questionTimer={questionTimer}
-        questionGapTimer={questionGapTimer}
-        questionTimeLimit={game?.config?.questionTimeLimit ?? 10}
-      />
-      <QuestionCard
-        question={unansweredQuestions?.[0]}
-        handleAnswerClick={handleAnswerClick}
-      />
+      {isSnapshot(
+        game.questions.length - unansweredQuestions.length,
+        game.questions.length
+      ) ? (
+        <RoundCountdownView roundTimer={roundTimer} />
+      ) : (
+        <>
+          <QuestionHeader
+            currentQuestion={game.questions.length - unansweredQuestions.length}
+            totalQuestions={game.questions.length}
+            questionTimer={questionTimer}
+            questionGapTimer={questionGapTimer}
+            questionTimeLimit={game?.config?.questionTimeLimit ?? 10}
+          />
+          <QuestionCard
+            question={unansweredQuestions?.[0]}
+            handleAnswerClick={handleAnswerClick}
+          />
+        </>
+      )}
     </div>
   );
 }

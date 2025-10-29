@@ -11,7 +11,7 @@ import { base } from "viem/chains";
 import { cn } from "@/lib/utils";
 import LogoIcon from "@/components/logo/LogoIcon";
 import { WalletIcon } from "@/components/icons";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 interface LeaderboardEntry {
   username: string;

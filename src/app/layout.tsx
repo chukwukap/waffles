@@ -4,8 +4,6 @@ import { Metadata } from "next";
 import { env } from "@/lib/env";
 import { cn } from "@/lib/utils";
 
-import { headers } from "next/headers";
-
 import { Providers } from "@/components/providers/";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -40,24 +38,21 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      // Apply font variables to the html tag for global access
       className={cn(
-        fontBody.variable, // [cite: 674]
-        fontDisplay.variable, // [cite: 674]
-        fontInput.variable, // [cite: 674]
-        "suppress-hydration-warning" // Recommended when using next-themes or client-side theme logic
+        fontBody.variable,
+        fontDisplay.variable,
+        fontInput.variable,
+        "suppress-hydration-warning"
       )}
-      suppressHydrationWarning // Suppress warning related to client/server mismatch (often due to themes or extensions)
+      suppressHydrationWarning
     >
       <body
-        className={cn(
-          "text-foreground bg-figma noise", // Base body styles [cite: 674]
-          "antialiased" // Improve font rendering
-        )}
+        className={cn("text-foreground bg-figma noise h-full overflow-hidden")}
       >
-        {/* Use the Providers component to wrap client-side context providers */}
         <Providers>
-          {children} {/* Render the active page/route segment */}
+          <div className="h-[100dvh] flex flex-col overflow-hidden">
+            {children}
+          </div>
         </Providers>
       </body>
     </html>

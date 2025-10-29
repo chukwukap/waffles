@@ -60,3 +60,13 @@ export function calculatePrizePool(game: HydratedGame) {
     (game.config?.additionPrizePool ?? 0)
   );
 }
+/**
+ * Check if a question number is a snapshot of the total number of questions for a round.
+ * @param x - The current question number.
+ * @param totalQuestions - The total number of questions.
+ * @returns True if x is a snapshot of totalQuestions, false otherwise.
+ */
+export function isSnapshot(x: number, totalQuestions: number): boolean {
+  const step = Math.floor(totalQuestions / 3);
+  return x === step || x === step * 2 || x === totalQuestions;
+}
