@@ -5,7 +5,6 @@ import {
 import LobbyPageClientImpl from "./lobbyClient";
 
 import { redirect } from "next/navigation";
-import { notify } from "@/components/ui/Toaster";
 import { getCurrentUserFid } from "@/lib/auth";
 
 export default async function LobbyPage() {
@@ -18,7 +17,7 @@ export default async function LobbyPage() {
 
   // if there is no active game, redirect to waitlist
   if (games.length === 0) {
-    notify.info("No active game found, redirecting to waitlist");
+    console.info("No active game found, redirecting to waitlist");
     return redirect("/waitlist");
   }
 
