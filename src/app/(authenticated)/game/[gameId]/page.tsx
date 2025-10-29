@@ -42,3 +42,5 @@ export default async function GamePage(props: {
 
   return <GameClientImpl game={game} userInfo={userInfo} />;
 }
+
+export const dynamic = "force-dynamic";

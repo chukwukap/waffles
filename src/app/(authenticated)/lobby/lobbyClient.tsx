@@ -47,7 +47,7 @@ export default function LobbyPageClientImpl({
   // }, [userInfo?.referrals]);
 
   // OnchainKit Hooks
-  const { sendTokenAsync } = useSendToken();
+  const {} = useSendToken();
   const { composeCastAsync } = useComposeCast(); // [cite: 96]
   const { roundedBalance } = useGetTokenBalance(
     account.address as `0x${string}`,
