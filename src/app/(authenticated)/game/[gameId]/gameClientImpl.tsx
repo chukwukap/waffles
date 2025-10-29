@@ -19,7 +19,6 @@ import { cn } from "@/lib/utils";
 import SoundManager from "@/lib/SoundManager";
 import type { HydratedGame, HydratedUser } from "@/state/types";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
-import { useTimer } from "@/hooks/useTimer";
 
 interface GameClientImplProps {
   game: HydratedGame;
@@ -34,6 +33,7 @@ interface GameClientImplProps {
 export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
   const router = useRouter();
   const user = useMiniUser();
+  const [showJoinView, setShowJoinView] = useState<boolean>(false);
 
   const [friends] = useState<
     { fid: number; username: string; pfpUrl: string }[]
@@ -192,7 +192,7 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
     }
 
     // If user hasn't started/participated in the game after ticket purchase
-    if (!userGameParticipant) {
+    if (!userGameParticipant || showJoinView) {
       // Could show a "ready" screen (could use JoinGameView or a different ReadyView)
       return <JoinGameView game={game} userInfo={userInfo} friends={friends} />;
     }
@@ -203,7 +203,14 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
     }
 
     // Fallback
-    return <WaitingView game={game} onComplete={() => {}} />;
+    return (
+      <WaitingView
+        game={game}
+        onComplete={() => {
+          setShowJoinView(true);
+        }}
+      />
+    );
   })();
 
   return (

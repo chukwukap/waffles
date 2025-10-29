@@ -19,7 +19,8 @@ export function BottomNav() {
       className={cn(
         "fixed bottom-0 left-0 right-0 z-50",
         "border-t-2 border-border",
-        "bg-figma noise"
+        "bg-figma noise",
+        "shrink-0"
       )}
     >
       <div className="mx-auto flex max-w-2xl items-stretch justify-around">
@@ -54,7 +55,6 @@ export function BottomNav() {
           );
         })}
       </div>
-      <div className="pb-[env(safe-area-inset-bottom)]"></div>
     </nav>
   );
 }
