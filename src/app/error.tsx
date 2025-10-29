@@ -14,7 +14,7 @@ export default function GameErrorPage({ error, reset }: ErrorPageProps) {
   }, [error]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80dvh] text-center px-6 bg-figma text-foreground">
+    <div className="flex flex-col items-center justify-center min-h-[80dvh] text-center px-6  text-foreground">
       <h1 className="text-2xl font-body font-bold text-red-500 mb-3">
         Oops! Waffle Down!
       </h1>
