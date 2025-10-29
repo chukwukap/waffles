@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { Clock } from "@/components/icons";
 import { AvatarDiamond } from "./AvatarDiamond";
-import ChatDrawer from "./ChatDrawer";
+// import ChatDrawer from "./ChatDrawer";
 
 import { useTimer } from "@/hooks/useTimer";
 import { calculatePrizePool, cn } from "@/lib/utils";
@@ -11,7 +11,7 @@ import { HydratedGame } from "@/state/types";
 
 const FALLBACK_AVATARS_FOR_DIAMOND = Array.from({ length: 17 }).map((_, i) => ({
   id: `fb-${i}`,
-  src: `/images/avatars/${String.fromCharCode(97 + (i % 4))}.png`,
+  src: `/images/lobby/${String.fromCharCode(97 + (i % 4))}.jpg`,
   alt: `Waiting Player ${i + 1}`,
   opacity: i > 2 && i % 4 === 3 ? 0.2 : 1,
 }));
@@ -227,7 +227,7 @@ export default function WaitingView({
         className="!absolute left-0 right-0 bottom-[70px] sm:bottom-[90px] z-10"
         maxItems={4}
       /> */}
-      {/* <ChatDrawer gameId={game.id} fid={fid} /> */}
+      {/* <ChatDrawer gameId={game.id} fid={userInfofid} /> */}
     </div>
   );
 }
