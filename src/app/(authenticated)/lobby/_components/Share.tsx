@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { cn, getWeekdayString } from "@/lib/utils";
 import { GameSummaryCard } from "./GameSummary";
+import Link from "next/link";
 
 // Props for the main Share component
 type ShareViewProps = {
@@ -13,7 +14,7 @@ type ShareViewProps = {
   startTime: Date;
   prizePool: number | null;
   onShare: () => void;
-  onBackHome: () => void;
+  gameId: number;
 };
 
 /**
@@ -27,8 +28,8 @@ export function Share({
   avatarUrl,
   prizePool,
   startTime,
+  gameId,
   onShare,
-  onBackHome,
 }: ShareViewProps) {
   console.log("avatarUrl", startTime);
   console.log("theme", theme);
@@ -36,7 +37,6 @@ export function Share({
   console.log("avatarUrl", avatarUrl);
   console.log("prizePool", prizePool);
   console.log("onShare", onShare);
-  console.log("onBackHome", onBackHome);
   return (
     // Outer container ensures full viewport height and applies noise background
     <div className="min-h-[100dvh] w-full z-50">
@@ -87,11 +87,8 @@ export function Share({
           SHARE TICKET
         </button>{" "}
         {/* Back to Home Button */}
-        <button
-          onClick={onBackHome}
-          className="mt-6 text-sm font-edit-undo uppercase text-[#00CFF2] transition hover:text-[#33defa]"
-        >
-          BACK TO HOME
+        <button className="mt-6 text-sm font-edit-undo uppercase text-[#00CFF2] transition hover:text-[#33defa]">
+          <Link href={`/game/${gameId}`}>BACK TO HOME</Link>
         </button>
       </div>
     </div>
