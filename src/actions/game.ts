@@ -3,18 +3,18 @@
 import { prisma } from "@/lib/db";
 import { calculateScore } from "@/lib/scoring";
 import { z } from "zod";
-import { revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 import { fetchGameById } from "@/lib/data";
 import { Prisma } from "@prisma/client";
 
-// Tag utilities—see frontend/src/lib/data.ts for exact cache tags.
-const USER_GAME_DETAILS_TAG = (fid: number, gameId: number) =>
-  `user-game-details-${fid}-${gameId}`;
-const LOBBY_UPCOMING_GAMES_TAG = "lobby-upcoming-games";
-const GAME_DETAILS_TAG = (gameId: number) => `game-details-${gameId}`;
-const GAME_PARTICIPANTS_TAG = (gameId: number) => `game_participants_${gameId}`;
-const USER_DETAILS_GAME_TAG = (fid: number, gameId: number) =>
-  `user-details-game-${fid}-${gameId}`;
+// Paths used for revalidation
+const gamePath = (gameId: number) => `/game/${gameId}`;
+const lobbyPath = "/lobby";
+const leaderboardCurrentPath = (gameId: number) =>
+  `/leaderboard/current/${gameId}`;
+const leaderboardAllTimePath = "/leaderboard/allTime";
+const userProfileGamePath = (fid: number, gameId: number) =>
+  `/profile/${fid}/game/${gameId}`;
 
 const submitAnswerSchema = z.object({
   fid: z.number().int().positive("Invalid FID format."),
@@ -132,19 +132,16 @@ export async function submitAnswerAction(
       }
     });
 
-    // Revalidate all tags required after an answer is submitted:
-    // - Current and all-time leaderboard pages
-    revalidateTag(`leaderboard_current_${gameId}`);
-    revalidateTag("leaderboard_allTime");
-    // - The lobby page (shows user's points/tickets/answers in some UI areas)
-    revalidateTag(LOBBY_UPCOMING_GAMES_TAG);
-    // - Per-game details cache, e.g. see fetchGameById in @data.ts
-    revalidateTag(GAME_DETAILS_TAG(gameId));
-    // - User's up-to-date profile/score/tickets in this game: used in the lobby
-    revalidateTag(USER_GAME_DETAILS_TAG(fid, gameId));
-    // - Any additional user/game mapping tags if present
-    revalidateTag(USER_DETAILS_GAME_TAG(fid, gameId));
-    revalidateTag(GAME_PARTICIPANTS_TAG(gameId));
+    // Revalidate all relevant paths after an answer is submitted
+    // Leaderboards
+    revalidatePath(leaderboardCurrentPath(gameId));
+    revalidatePath(leaderboardAllTimePath);
+    // Lobby page
+    revalidatePath(lobbyPath);
+    // Game details page
+    revalidatePath(gamePath(gameId));
+    // User's profile/game interaction (if any)
+    revalidatePath(userProfileGamePath(fid, gameId));
 
     return { success: true, correct, points: newPoints };
   } catch (err) {
@@ -216,12 +213,12 @@ export async function joinGameAction(
       },
     });
 
-    // Revalidate tags to ensure all relevant lobby/user/game caches are up-to-date:
-    revalidateTag(GAME_PARTICIPANTS_TAG(gameId)); // participants list
-    revalidateTag(GAME_DETAILS_TAG(gameId)); // game details (may show participation count)
-    revalidateTag(LOBBY_UPCOMING_GAMES_TAG); // may affect lobby game participant count
-    revalidateTag(USER_GAME_DETAILS_TAG(fid, gameId)); // user/game details (profile + lobby)
-    revalidateTag(USER_DETAILS_GAME_TAG(fid, gameId)); // any additional user/game mappings
+    // Revalidate relevant pages
+    revalidatePath(gamePath(gameId));
+    revalidatePath(lobbyPath);
+    revalidatePath(userProfileGamePath(fid, gameId));
+    revalidatePath(leaderboardCurrentPath(gameId));
+    revalidatePath(leaderboardAllTimePath);
 
     return { success: true };
   } catch (err: unknown) {
@@ -229,12 +226,12 @@ export async function joinGameAction(
       err instanceof Prisma.PrismaClientKnownRequestError &&
       err.code === "P2002"
     ) {
-      // Still revalidate relevant tags in upsert duplicate case
-      revalidateTag(GAME_PARTICIPANTS_TAG(gameId));
-      revalidateTag(GAME_DETAILS_TAG(gameId));
-      revalidateTag(LOBBY_UPCOMING_GAMES_TAG);
-      revalidateTag(USER_GAME_DETAILS_TAG(fid, gameId));
-      revalidateTag(USER_DETAILS_GAME_TAG(fid, gameId));
+      // Still revalidate relevant pages in upsert duplicate case
+      revalidatePath(gamePath(gameId));
+      revalidatePath(lobbyPath);
+      revalidatePath(userProfileGamePath(fid, gameId));
+      revalidatePath(leaderboardCurrentPath(gameId));
+      revalidatePath(leaderboardAllTimePath);
       return { success: true };
     }
     console.error("joinGameAction Error:", err);
