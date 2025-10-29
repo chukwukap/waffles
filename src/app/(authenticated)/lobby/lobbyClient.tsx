@@ -231,15 +231,15 @@ export default function LobbyPageClientImpl({
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-[#1E1E1E] to-black text-white ">
+    <div className="min-h-screen flex flex-col text-white ">
       {/* ─────────────── Header ─────────────── */}
       <header
         className={cn(
-          "p-2 flex items-center justify-between border-b border-border bg-figma"
+          "p-2 flex items-center justify-between border-b border-border bg-[#191919]"
         )}
       >
         <LogoIcon />
-        <div className="flex items-center gap-1.5 bg-figma rounded-full px-3 py-1.5">
+        <div className="flex items-center gap-1.5  rounded-full px-3 py-1.5">
           <WalletIcon className="w-4 h-4 text-foreground" />
           <span className="text-xs text-foreground">{`$${
             roundedBalance ? roundedBalance : "---"
@@ -266,7 +266,7 @@ export default function LobbyPageClientImpl({
             <main className="flex flex-col items-center justify-center flex-1 w-full px-4 py-4 sm:py-14 text-center">
               <div className="flex flex-row items-center justify-between w-[350px] h-[50px] mx-auto">
                 <div className="flex flex-col justify-center items-start h-full">
-                  <p className="font-brockmann text-[#99A0AE] text-sm leading-[130%] tracking-[-0.03em]">
+                  <p className="font-body text-[#99A0AE] text-sm leading-[130%] tracking-[-0.03em]">
                     Next game theme
                   </p>
                   <h1 className="font-edit-undo text-white text-[32px] leading-none">
@@ -356,7 +356,7 @@ export default function LobbyPageClientImpl({
                   size="clamp(32px,7vw,48px)"
                   borderColor="#fff"
                 />
-                <p className="font-brockmann text-[#99A0AE] text-sm mt-2">
+                <p className="font-display text-[#99A0AE] text-sm mt-2">
                   and 2 others have joined the game
                 </p>
               </div>

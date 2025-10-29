@@ -96,6 +96,7 @@ model Question {
   gameId        Int
   text          String
   imageUrl      String
+  soundUrl      String?
   options       String[]
   correctAnswer String
   createdAt     DateTime @default(now())

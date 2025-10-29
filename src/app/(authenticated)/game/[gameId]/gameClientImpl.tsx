@@ -127,10 +127,10 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
 
   // ───────────────────────── RENDER ─────────────────────────
   return (
-    <div className="w-full min-h-[100dvh] overflow-hidden bg-figma">
+    <div className="w-full min-h-dvh overflow-hidden ">
       <header
         className={cn(
-          "sticky top-0 z-40 p-4 flex items-center justify-between border-b border-border bg-figma/80 backdrop-blur-sm"
+          "sticky top-0 z-40 p-4 flex items-center justify-between border-b border-border bg-figma/80 backdrop-blur-sm bg-[#191919]"
         )}
       >
         <LogoIcon />
@@ -144,7 +144,7 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
               <span>leave game</span>
             </button>
           ) : (
-            <div className="flex items-center gap-1.5 bg-figma rounded-full px-3 py-1.5 border border-white/10">
+            <div className="flex items-center gap-1.5  rounded-full px-3 py-1.5 border border-white/10">
               <WalletIcon className="w-4 h-4 text-foreground" />
               <span className="text-xs text-foreground">
                 {status === "pending" ? "Loading..." : `$${roundedBalance}`}

@@ -19,7 +19,7 @@ export function BottomNav() {
       className={cn(
         "fixed bottom-0 left-0 right-0 z-50",
         "border-t-2 border-border",
-        "bg-figma noise",
+        "bg-[#191919]",
         "shrink-0"
       )}
     >

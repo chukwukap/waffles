@@ -48,7 +48,7 @@ export default function RootLayout({
     >
       <body
         className={cn(
-          "text-foreground bg-waffles relative h-full overflow-hidden"
+          "text-foreground app-background relative h-full overflow-hidden"
         )}
       >
         <Providers>
