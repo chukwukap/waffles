@@ -22,9 +22,11 @@ const FALLBACK_AVATARS_FOR_DIAMOND = Array.from({ length: 17 }).map((_, i) => ({
  */
 export default function WaitingView({
   game,
+  fid,
   onComplete,
 }: {
   game: HydratedGame;
+  fid: number;
   onComplete: () => void;
 }) {
   const waitingTimer = useTimer({
@@ -225,7 +227,7 @@ export default function WaitingView({
         className="!absolute left-0 right-0 bottom-[70px] sm:bottom-[90px] z-10"
         maxItems={4}
       /> */}
-      <ChatDrawer gameId={game.id} />
+      <ChatDrawer gameId={game.id} fid={fid} />
     </div>
   );
 }

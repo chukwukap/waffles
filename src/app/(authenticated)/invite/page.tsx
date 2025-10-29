@@ -1,19 +1,15 @@
-import InviteCodePage from "./_components/InvitePageClient";
+import InvitePageClient from "./_components/InvitePageClient";
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { Prisma } from "@prisma/client";
-import { cookies } from "next/headers";
-
-// Get the current user's fid from cookies
-export async function getCurrentUserFid(): Promise<number | null> {
-  const cookieStore = await cookies();
-  const fidCookie = cookieStore.get("fid")?.value;
-  if (!fidCookie || isNaN(Number(fidCookie))) return null;
-  return Number(fidCookie);
-}
+import { getCurrentUserFid } from "@/lib/auth";
 
 export async function fetchUserWithInviteData(): Promise<UserWithInviteData | null> {
   const userFid = await getCurrentUserFid();
+
+  if (!userFid) {
+    return notFound();
+  }
 
   const userWithInviteData = await prisma.user.findUnique({
     where: { fid: Number(userFid) },
@@ -43,7 +39,7 @@ export default async function InvitePage() {
     notFound();
   }
 
-  return <InviteCodePage userWithInviteData={userWithInviteData} />;
+  return <InvitePageClient userWithInviteData={userWithInviteData} />;
 }
 
 export type UserWithInviteData = Prisma.UserGetPayload<{

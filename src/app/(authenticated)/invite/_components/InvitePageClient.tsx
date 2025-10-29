@@ -10,7 +10,7 @@ import { validateReferralAction } from "@/actions/invite";
 import { UserWithInviteData } from "../page";
 import { useRouter } from "next/navigation";
 
-export default function InviteCodePageClient({
+export default function InvitePageClient({
   userWithInviteData,
 }: {
   userWithInviteData: UserWithInviteData;

@@ -2,15 +2,7 @@ import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import React from "react";
 import ScorePageClient from "./_components/scoreClient";
-import { cookies } from "next/headers";
-
-// Get the current user's fid from cookies
-export async function getCurrentUserFid(): Promise<number | null> {
-  const cookieStore = await cookies();
-  const fidCookie = cookieStore.get("fid")?.value;
-  if (!fidCookie || isNaN(Number(fidCookie))) return null;
-  return Number(fidCookie);
-}
+import { getCurrentUserFid } from "@/lib/auth";
 
 export default async function ScorePage({
   params,
@@ -21,8 +13,7 @@ export default async function ScorePage({
   const fid = await getCurrentUserFid();
 
   if (!fid) {
-    // User not logged in or missing cookie
-    return null;
+    return <div>User not logged in</div>;
   }
 
   // Look up the user's score for the game by joining Score -> User (using fid)

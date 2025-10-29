@@ -3,15 +3,7 @@ import { prisma } from "@/lib/db";
 import ProfilePageClient from "./_components/profilePageClient";
 import { SplashScreen } from "@/components/ui/SplashScreen";
 import { GameHistoryEntry } from "@/state/types";
-import { cookies } from "next/headers";
-
-// Get the current user's fid from cookies
-export async function getCurrentUserFid(): Promise<number | null> {
-  const cookieStore = await cookies();
-  const fidCookie = cookieStore.get("fid")?.value;
-  if (!fidCookie || isNaN(Number(fidCookie))) return null;
-  return Number(fidCookie);
-}
+import { getCurrentUserFid } from "@/lib/auth";
 
 // ProfileData maps to client
 async function getProfileData(fid: number | null) {
@@ -273,16 +265,14 @@ export default async function ProfilePage() {
   }
 
   return (
-    <Suspense fallback={<SplashScreen />}>
-      <ProfilePageClient
-        profileData={profileData}
-        stats={stats}
-        gameHistory={gameHistory}
-        streak={streak}
-        username={username}
-        inviteCode={inviteCode}
-        referralStatusData={referralStatusData}
-      />
-    </Suspense>
+    <ProfilePageClient
+      profileData={profileData}
+      stats={stats}
+      gameHistory={gameHistory}
+      streak={streak}
+      username={username}
+      inviteCode={inviteCode}
+      referralStatusData={referralStatusData}
+    />
   );
 }

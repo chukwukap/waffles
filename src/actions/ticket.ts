@@ -114,7 +114,7 @@ export async function purchaseTicketAction(
         amountUSDC: game.config.ticketPrice, // Use price from game config
         code: code!, // Code is guaranteed to be assigned here
         txHash: txHash ?? null,
-        status: "confirmed", // for testing
+        status: status,
       },
     });
 
@@ -124,6 +124,7 @@ export async function purchaseTicketAction(
 
     return { success: true, ticket: newTicket };
   } catch (e) {
+    console.error("Purchase Ticket Action Error:", e);
     // Handle potential Prisma unique constraint violation if race condition occurs
     if (
       typeof e === "object" &&
@@ -147,7 +148,6 @@ export async function purchaseTicketAction(
         error: "Ticket already exists (race condition).",
       };
     }
-    console.error("Purchase Ticket Action Error:", e);
     return { success: false, error: "Internal Server Error during purchase." };
   }
 }
