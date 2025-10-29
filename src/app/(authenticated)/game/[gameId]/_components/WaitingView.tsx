@@ -4,9 +4,8 @@ import { useMemo } from "react";
 import { Clock } from "@/components/icons";
 import { AvatarDiamond } from "./AvatarDiamond";
 import ChatDrawer from "./ChatDrawer";
-import ChatTickerOverlay from "./ChatTickerOverlay";
 
-import { useTimer, UseTimerResult } from "@/hooks/useTimer";
+import { useTimer } from "@/hooks/useTimer";
 import { calculatePrizePool, cn } from "@/lib/utils";
 import { HydratedGame } from "@/state/types";
 
@@ -222,11 +221,11 @@ export default function WaitingView({
           joined
         </p>
       </section>
-      <ChatTickerOverlay
+      {/* <ChatTickerOverlay
         className="!absolute left-0 right-0 bottom-[70px] sm:bottom-[90px] z-10"
         maxItems={4}
-      />
-      <ChatDrawer />
+      /> */}
+      <ChatDrawer gameId={game.id} />
     </div>
   );
 }
