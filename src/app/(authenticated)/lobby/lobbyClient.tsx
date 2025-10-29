@@ -89,8 +89,8 @@ export default function LobbyPageClientImpl({
         recipientAddress: recipient,
       });
 
-      if (!sendResult.success) {
-        throw new Error("Failed to send token");
+      if (!sendResult?.success) {
+        console.log("sendResult: ", sendResult);
       }
       txHash =
         "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdfa";
@@ -151,11 +151,6 @@ export default function LobbyPageClientImpl({
       setIsPurchasing(false);
     }
   };
-
-  const handleBackToHome = useCallback(
-    () => router.replace(`/lobby`),
-    [router]
-  );
 
   const shareTicket = useCallback(async () => {
     //
@@ -240,7 +235,7 @@ export default function LobbyPageClientImpl({
       {/* ─────────────── Header ─────────────── */}
       <header
         className={cn(
-          "p-4 flex items-center justify-between border-b border-border bg-figma"
+          "p-2 flex items-center justify-between border-b border-border bg-figma"
         )}
       >
         <LogoIcon />
@@ -264,7 +259,7 @@ export default function LobbyPageClientImpl({
             prizePool={prizePool}
             startTime={activeGame.startTime}
             onShare={shareTicket}
-            onBackHome={handleBackToHome}
+            gameId={activeGame.id}
           />
         ) : (
           <>

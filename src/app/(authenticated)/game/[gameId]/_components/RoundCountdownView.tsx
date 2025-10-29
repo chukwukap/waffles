@@ -48,7 +48,7 @@ export default function RoundCountdownView({
       {/* Overlay things */}
       <section>
         {/* <ChatTickerOverlay /> */}
-        <ChatDrawer gameId={gameId} fid={fid} />
+        {/* <ChatDrawer gameId={gameId} fid={fid} /> */}
       </section>
     </div>
   );
