@@ -275,7 +275,7 @@ export default function LobbyPageClientImpl({
       {/* ─────────────── Main Content ─────────────── */}
 
       {/* MAIN CONTENT */}
-      <div className="flex-1 flex flex-col items-center gap-3 justify-center overflow-y-auto pt-4 pb-20">
+      <div className="flex-1 flex flex-col items-center gap-3 justify-center overflow-y-auto pt-4 pb-20 mt-6">
         {" "}
         {/* Added padding */}
         {showShare ? ( // Conditional render Share component
