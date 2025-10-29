@@ -40,6 +40,13 @@ export function useMiniUser(): MiniUser {
     isMiniAppReady,
   };
 
+  if (process.env.NODE_ENV === "production" && !realUser.fid) {
+    throw new Error(
+      "User FID is required in production but was not found. MiniApp context: " +
+        JSON.stringify(miniKitContext)
+    );
+  }
+
   const useMock = process.env.NODE_ENV !== "production" && !realUser.fid;
 
   return useMock ? mockUser : realUser;
