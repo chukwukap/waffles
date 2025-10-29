@@ -5,6 +5,8 @@ import {
 import LobbyPageClientImpl from "./lobbyClient";
 
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { notify } from "@/components/ui/Toaster";
 
 export default async function LobbyPage() {
   const games = await fetchUpcomingGames();
@@ -19,6 +21,12 @@ export default async function LobbyPage() {
   }
   console.log("userFid", userFid);
   console.log("games", games);
+
+  // if there is no active game, redirect to waitlist
+  if (games.length === 0) {
+    notify.info("No active game found, redirecting to waitlist");
+    return redirect("/waitlist");
+  }
 
   if (userFid !== undefined && games.length > 0) {
     userInfo = await fetchUserWithGameDetailsAndReferral(userFid, games[0].id);
