@@ -69,7 +69,7 @@ export default async function ScorePage({
       : 0;
 
   // If we had real winnings, we'd calculate by pool logic. Here, 0 for now.
-  const winnings = 0;
+  const winnings = 50;
 
   return (
     <ScorePageClient

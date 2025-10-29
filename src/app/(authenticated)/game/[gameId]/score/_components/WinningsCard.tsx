@@ -26,64 +26,100 @@ export default function WinningsCard({
   const trophy = getTrophy(rank);
 
   return (
-    <div className="w-full max-w-[380px] rounded-3xl p-5 mt-6 bg-gradient-to-b from-black/80 to-[#1BF5B020] border border-[#34FF8B10] shadow-[0_0_0_2px_#00F97B10_inset] relative">
-      {/* Header Section */}
-      <div className="flex items-center justify-between w-full mb-1">
-        <div className="flex flex-row gap-2 items-center">
-          <p className="text-[#99A0AE] text-sm font-sans">Winnings</p>
+    <div
+      className="
+        w-full max-w-sm
+        rounded-3xl
+        p-4 sm:p-5
+        bg-gradient-to-b from-transparent to-[#1BF5B0]/12
+        border border-white/5
+        flex flex-col gap-4
+        my-5
+        noise
+      "
+    >
+      {/* Top Row */}
+      <div className="flex items-center justify-between w-full">
+        <p className="text-[#99A0AE] font-display text-sm sm:text-[15px]">
+          Winnings
+        </p>
 
-          <div className="flex items-center gap-2 ml-2">
-            {avatarUrl && (
-              <Image
-                src={avatarUrl}
-                alt={username ?? ""}
-                width={26}
-                height={26}
-                className="rounded-full border border-[#222] shadow-lg"
-              />
-            )}
-            {username && (
-              <span className="font-pixel text-base tracking-widest text-white drop-shadow-[0_1px_0_#000] uppercase">
-                {username}
-              </span>
-            )}
-          </div>
+        <div className="flex items-center gap-2">
+          {avatarUrl && (
+            <Image
+              src={avatarUrl}
+              alt={username}
+              width={22}
+              height={22}
+              className="rounded-full w-5 h-5 sm:w-6 sm:h-6"
+            />
+          )}
+          <span className="font-body text-base sm:text-lg text-white leading-none">
+            {username}
+          </span>
         </div>
-        <Image src={trophy} width={40} height={40} alt="trophy" />
       </div>
-      {/* Main Winnings */}
-      <p className="font-pixel text-[44px] mt-1 text-[#34FF8B] drop-shadow-[0_2px_0_#0a5637] tracking-wide">
-        ${winnings.toLocaleString()}
-      </p>
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-3 mt-4">
+
+      {/* Winnings + Trophy */}
+      <div className="flex items-center justify-between w-full">
+        <p
+          className="
+            font-body
+            text-[clamp(2.2rem,6vw,3rem)]
+            leading-none
+            text-[#14B985]
+          "
+        >
+          ${winnings.toLocaleString()}
+        </p>
+
+        <Image
+          src={trophy}
+          alt="trophy"
+          width={40}
+          height={40}
+          className="w-8 h-8 sm:w-10 sm:h-10"
+        />
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-3 w-full">
         {/* Score */}
-        <div className="bg-[#1F2327] border border-[#232b34] rounded-2xl px-4 py-3 flex flex-col">
-          <div className="flex items-center gap-1">
-            <span className="text-[#99A0AE] text-sm flex items-center gap-1 font-sans">
-              <FlashIcon className="w-5 h-5 text-[#F2CB68]" />
-              <span>Score</span>
+        <div
+          className="
+            flex flex-col gap-1
+            bg-white/5 border border-white/10
+            rounded-2xl p-3 sm:p-4
+          "
+        >
+          <span className="text-[#99A0AE] text-sm font-body">Score</span>
+
+          <div className="flex items-center gap-2">
+            <FlashIcon className="w-5 h-5 text-[#FFC931]" />
+            <span className="font-body text-[clamp(1rem,2vw,1.25rem)] text-white leading-none">
+              {score.toLocaleString()}
             </span>
           </div>
-          <span className="font-pixel text-[20px] mt-1 tracking-wider text-white">
-            {score.toLocaleString()}
-          </span>
         </div>
+
         {/* Rank */}
-        <div className="bg-[#1F2327] border border-[#232b34] rounded-2xl px-4 py-3 flex flex-col">
-          <div className="flex items-center gap-1">
-            <span className="text-[#99A0AE] text-sm flex items-center gap-1 font-sans">
-              <TrendIcon className="w-5 h-5 text-[#00CFF2]" />
-              <span>Rank</span>
+        <div
+          className="
+            flex flex-col gap-1
+            bg-white/5 border border-white/10
+            rounded-2xl p-3 sm:p-4
+          "
+        >
+          <span className="text-[#99A0AE] text-sm font-body">Rank</span>
+
+          <div className="flex items-center gap-2">
+            <TrendIcon className="w-5 h-5 text-[#14B985]" />
+            <span className="font-body text-[clamp(1rem,2vw,1.25rem)] text-white leading-none">
+              {rank}
             </span>
           </div>
-          <span className="font-pixel text-[20px] mt-1 tracking-wider text-white">
-            {rank}
-          </span>
         </div>
       </div>
-      {/* Card Border Effect */}
-      <div className="pointer-events-none absolute inset-0 rounded-3xl border border-[#25ffad27]"></div>
     </div>
   );
 }

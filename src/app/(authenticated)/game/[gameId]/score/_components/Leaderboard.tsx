@@ -1,5 +1,6 @@
 import Image from "next/image";
 import clsx from "clsx";
+import Link from "next/link";
 
 interface Entry {
   username: string;
@@ -19,9 +20,12 @@ export default function Leaderboard({ entries, className }: Props) {
     >
       <div className="flex justify-between items-center">
         <h2 className="font-pixel text-[22px]">TOP 3 FINISHERS</h2>
-        <button className="text-[#00CFF2] font-pixel text-[18px]">
+        <Link
+          href="/leaderboard"
+          className="text-[#00CFF2] font-pixel text-[18px]"
+        >
           VIEW LEADERBOARD
-        </button>
+        </Link>
       </div>
 
       {entries.map((e, i) => (

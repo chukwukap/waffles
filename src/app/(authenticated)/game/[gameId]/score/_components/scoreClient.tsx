@@ -32,7 +32,7 @@ interface Props {
   };
 }
 
-export default function GameOverContainer({
+export default function ScorePageClient({
   category,
   winnings,
   score,
@@ -61,22 +61,18 @@ export default function GameOverContainer({
       <header
         className={cn(
           //
-          "p-4 flex items-center justify-between border-b border-border bg-figma" //
+          "p-4 flex items-center justify-between border-b border-border " //
         )}
       >
         <LogoIcon /> {/* */}
-        <div className="flex items-center gap-1.5 bg-figma rounded-full px-3 py-1.5">
-          {" "}
-          {/* */}
-          <WalletIcon className="w-4 h-4 text-foreground" /> {/* [cite: 125] */}
-          {/* Display formatted balance */}
+        <div className="flex items-center gap-1.5  rounded-full px-3 py-1.5">
+          <WalletIcon className="w-4 h-4 text-foreground" />
           <span className="text-xs text-foreground">{`$${
             roundedBalance ? roundedBalance : "---"
-          }`}</span>{" "}
-          {/* [cite: 125] */}
+          }`}</span>
         </div>
       </header>
-      <div className="min-h-screen w-full bg-gradient-to-b from-[#1E1E1E] to-black text-white flex flex-col items-center pt-20 pb-10">
+      <div className="min-h-screen w-full  text-white flex flex-col items-center  flex-1 overflow-y-auto">
         <Image
           src="/images/illustrations/waffles.svg"
           alt="waffle"

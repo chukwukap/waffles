@@ -11,7 +11,7 @@ interface OnboardingOverlayProps {
 export function OnboardingOverlay({ onComplete }: OnboardingOverlayProps) {
   return (
     <div
-      className={cn("fixed inset-0 z-[500] flex flex-col", "bg-figma noise")}
+      className={cn("fixed inset-0 z-81 flex flex-col", "bg-[#191919]")}
       role="dialog"
       aria-modal="true"
       aria-labelledby="onboarding-title"

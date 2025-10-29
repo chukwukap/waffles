@@ -20,8 +20,7 @@ export function SplashScreen() {
   return (
     <div
       className={cn(
-        "fixed inset-0 z-[999] flex items-center justify-center text-white",
-        "bg-gradient-to-b from-[#1E1E1E] to-black"
+        "fixed inset-0 z-80 flex items-center justify-center text-white"
       )}
     >
       <div className="relative flex h-full w-full max-w-sm flex-col items-center justify-center px-6">

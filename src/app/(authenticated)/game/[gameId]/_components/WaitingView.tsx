@@ -8,6 +8,7 @@ import { AvatarDiamond } from "./AvatarDiamond";
 import { useTimer } from "@/hooks/useTimer";
 import { calculatePrizePool, cn } from "@/lib/utils";
 import { HydratedGame } from "@/state/types";
+import { useRouter } from "next/navigation";
 
 const FALLBACK_AVATARS_FOR_DIAMOND = Array.from({ length: 17 }).map((_, i) => ({
   id: `fb-${i}`,
@@ -29,132 +30,124 @@ export default function WaitingView({
   fid: number;
   onComplete: () => void;
 }) {
+  const router = useRouter();
   const waitingTimer = useTimer({
     duration: game?.startTime
       ? new Date(game.startTime).getTime() - Date.now()
       : 0,
     autoStart: true,
-    onComplete,
+    onComplete: () => {
+      router.replace(`/game/${game.id}`);
+    },
   });
   const diamondAvatars = useMemo(() => {
     const players = [
       {
         username: "Player 1",
-        pfpUrl: "/images/avatars/a.png",
+        pfpUrl: "/images/lobby/1.jpg",
       },
       {
         username: "Player 2",
-        pfpUrl: "/images/avatars/b.png",
+        pfpUrl: "/images/lobby/2.jpg",
       },
       {
         username: "Player 3",
-        pfpUrl: "/images/avatars/c.png",
+        pfpUrl: "/images/lobby/3.jpg",
       },
       {
         username: "Player 4",
-        pfpUrl: "/images/avatars/d.png",
+        pfpUrl: "/images/lobby/4.jpg",
       },
       {
         username: "Player 5",
-        pfpUrl: "/images/avatars/a.png",
+        pfpUrl: "/images/lobby/5.jpg",
       },
       {
         username: "Player 6",
-        pfpUrl: "/images/avatars/b.png",
+        pfpUrl: "/images/lobby/6.jpg",
       },
       {
         username: "Player 7",
-        pfpUrl: "/images/avatars/c.png",
+        pfpUrl: "/images/lobby/7.jpg",
       },
       {
         username: "Player 8",
-        pfpUrl: "/images/avatars/d.png",
+        pfpUrl: "/images/lobby/8.jpg",
       },
       {
         username: "Player 9",
-        pfpUrl: "/images/avatars/a.png",
+        pfpUrl: "/images/lobby/9.jpg",
       },
       {
         username: "Player 10",
-        pfpUrl: "/images/avatars/b.png",
+        pfpUrl: "/images/lobby/10.jpg",
       },
       {
         username: "Player 11",
-        pfpUrl: "/images/avatars/c.png",
+        pfpUrl: "/images/lobby/11.jpg",
       },
       {
         username: "Player 12",
-        pfpUrl: "/images/avatars/d.png",
+        pfpUrl: "/images/lobby/12.jpg",
       },
       {
         username: "Player 13",
-        pfpUrl: "/images/avatars/a.png",
+        pfpUrl: "/images/lobby/13.jpg",
       },
       {
         username: "Player 14",
-        pfpUrl: "/images/avatars/b.png",
+        pfpUrl: "/images/lobby/14.jpg",
       },
       {
         username: "Player 15",
-        pfpUrl: "/images/avatars/c.png",
+        pfpUrl: "/images/lobby/15.jpg",
       },
       {
         username: "Player 16",
-        pfpUrl: "/images/avatars/d.png",
+        pfpUrl: "/images/lobby/16.jpg",
       },
       {
         username: "Player 17",
-        pfpUrl: "/images/avatars/a.png",
+        pfpUrl: "/images/lobby/17.jpg",
       },
       {
         username: "Player 18",
-        pfpUrl: "/images/avatars/b.png",
+        pfpUrl: "/images/lobby/18.jpg",
       },
       {
         username: "Player 19",
-        pfpUrl: "/images/avatars/c.png",
+        pfpUrl: "/images/lobby/19.jpg",
       },
       {
         username: "Player 20",
-        pfpUrl: "/images/avatars/d.png",
+        pfpUrl: "/images/lobby/20.jpg",
       },
       {
         username: "Player 21",
-        pfpUrl: "/images/avatars/a.png",
+        pfpUrl: "/images/lobby/21.jpg",
       },
       {
         username: "Player 22",
-        pfpUrl: "/images/avatars/b.png",
+        pfpUrl: "/images/lobby/22.jpg",
       },
       {
         username: "Player 23",
-        pfpUrl: "/images/avatars/c.png",
+        pfpUrl: "/images/lobby/23.jpg",
       },
       {
         username: "Player 24",
-        pfpUrl: "/images/avatars/d.png",
+        pfpUrl: "/images/lobby/24.jpg",
       },
       {
         username: "Player 25",
-        pfpUrl: "/images/avatars/a.png",
+        pfpUrl: "/images/lobby/25.jpg",
       },
     ];
-    if (players.length > 0) {
-      // Map player data to the structure AvatarDiamond expects
-      return players
-        .slice(0, 17)
-        .map((p: { username: string; pfpUrl: string }, i: number) => ({
-          id: p.username || `player-${i}`, // Use username or index as ID
-          src:
-            p.pfpUrl ||
-            `/images/avatars/${String.fromCharCode(97 + (i % 4))}.png`, // Use pfp or fallback
-          alt: p.username || `Player ${i + 1}`,
-          // Apply opacity pattern if desired, or keep all opaque
-          opacity: i > 2 && i % 4 === 3 ? 0.2 : 1,
-        }));
-    }
-    // Use predefined fallbacks if no players in stats
-    return FALLBACK_AVATARS_FOR_DIAMOND;
+    return players.map((player) => ({
+      id: player.username,
+      src: player.pfpUrl,
+      alt: player.username,
+    }));
   }, []);
 
   // Format prize pool, default to "$0.00"
