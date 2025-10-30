@@ -12,7 +12,7 @@ export default async function LobbyPage() {
 
   const userFid = await getCurrentUserFid();
   if (!userFid) {
-    return <div>User not logged in</div>;
+    return null;
   }
 
   // if there is no active game, redirect to waitlist
