@@ -1,3 +1,4 @@
+// ───────────────────────── QuestionCard.tsx ─────────────────────────
 "use client";
 
 import * as React from "react";
@@ -12,12 +13,14 @@ type QuestionCardProps = {
   question: HydratedGame["questions"][0];
   onSelectAnswer: (option: string) => void;
   selectedOption: string | null;
+  isSubmitting: boolean; // <-- ADDED PROP
 };
 
 export default function QuestionCard({
   question,
   onSelectAnswer,
   selectedOption,
+  isSubmitting, // <-- ADDED PROP
 }: QuestionCardProps) {
   const chosenIdx = selectedOption
     ? question.options.indexOf(selectedOption)
@@ -93,15 +96,21 @@ export default function QuestionCard({
           const isChosen = idx === chosenIdx;
           const palette = PALETTES[idx % PALETTES.length];
 
+          // UPDATED: Dim if an answer is selected and it's not this one,
+          // OR if we are submitting and it's not the chosen one.
+          const isDimmed =
+            (selectedOption !== null && !isChosen) ||
+            (isSubmitting && !isChosen);
+          // UPDATED: Disable if submitting and it's not the chosen one.
+          const isDisabled = isSubmitting && !isChosen;
+
           return (
             <li
               key={idx}
               className={cn(
-                "min-w-0 flex justify-center",
-                isChosen && "",
-                chosenIdx !== null &&
-                  chosenIdx !== idx &&
-                  "opacity-5000 w-10/12 mx-auto"
+                "min-w-0 flex justify-center transition-all", // Added transition
+                // UPDATED: Apply dimmed styles
+                isDimmed && "opacity-50 w-10/12 mx-auto"
               )}
             >
               <PixelButton
@@ -113,6 +122,7 @@ export default function QuestionCard({
                 onClick={() => {
                   onSelectAnswer(opt);
                 }}
+                disabled={isDisabled} // <-- UPDATED: Apply disabled state
               >
                 <span className="block w-full mx-auto truncate select-none">
                   {opt}
@@ -132,7 +142,10 @@ export default function QuestionCard({
           )}
           aria-live="polite"
         >
-          Answer submitted! Wait for the next question…
+          {/* UPDATED: Show different text when submitting */}
+          {isSubmitting
+            ? "Submitting..."
+            : "Answer submitted! Wait for the next question…"}
         </div>
       )}
     </section>
