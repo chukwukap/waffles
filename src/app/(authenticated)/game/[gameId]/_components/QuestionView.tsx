@@ -34,6 +34,9 @@ export default function QuestionView({
   const [selectedOption, setSelectedOption] = React.useState<string | null>(
     null
   );
+  // NEW: State to track network request
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
   // Refs to hold the latest state for use in intervals
   const selectedOptionRef = React.useRef(selectedOption);
   React.useEffect(() => {
@@ -80,6 +83,8 @@ export default function QuestionView({
         return;
       }
 
+      setIsSubmitting(true); // <-- SET LOADING STATE
+
       const timeTakenMs =
         questionStartTimeRef.current != null
           ? Date.now() - questionStartTimeRef.current
@@ -102,10 +107,11 @@ export default function QuestionView({
       }
 
       // Refresh to get the next question data
-      router.refresh();
-
       if (!result.success) {
         notify.error("Submission failed:");
+        setIsSubmitting(false); // <-- UNSET ON ERROR
+      } else {
+        router.refresh(); // <-- Success will trigger unmount
       }
     },
     [
@@ -234,8 +240,8 @@ export default function QuestionView({
         // Pass timer values to the round countdown view
         <RoundCountdownView
           percent={percent}
-          secondsLeft={remainingTimeMs}
-          totalSeconds={roundTimeLimitMs}
+          secondsLeft={Math.ceil(remainingTimeMs / 1000)} // <-- FIX: Pass seconds
+          totalSeconds={Math.ceil(roundTimeLimitMs / 1000)} // <-- FIX: Pass seconds
         />
       ) : (
         <>
@@ -249,8 +255,12 @@ export default function QuestionView({
           />
           <QuestionCard
             question={currentQuestion}
-            onSelectAnswer={(option) => setSelectedOption(option)}
+            onSelectAnswer={(option) => {
+              if (isSubmitting) return; // <-- Don't allow clicks while submitting
+              setSelectedOption(option);
+            }}
             selectedOption={selectedOption}
+            isSubmitting={isSubmitting} // <-- Pass state down
           />
         </>
       )}
