@@ -1,9 +1,9 @@
 import Image from "next/image";
 import { ForwardMessageIcon, MessageIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
-import { ChatWithUser } from "@/state/types";
+import { ChatWithUser, HydratedUser } from "@/state/types";
 import { sendMessageAction } from "@/actions/chat";
-import { prisma } from "@/lib/db";
+
 // import { cookies } from "next/headers";
 
 // Get the current user's fid from cookies
@@ -14,25 +14,25 @@ import { prisma } from "@/lib/db";
 //   return Number(fidCookie);
 // }
 
-// Server data loader for chats
-async function getGameChats(gameId: number): Promise<ChatWithUser[]> {
-  return await prisma.chat.findMany({
-    where: { gameId },
-    orderBy: { createdAt: "asc" },
-    include: {
-      user: {
-        select: {
-          id: true,
-          fid: true,
-          name: true,
-          imageUrl: true,
-        },
-      },
-    },
-  });
-}
+// // Server data loader for chats
+// async function getGameChats(gameId: number): Promise<ChatWithUser[]> {
+//   return await prisma.chat.findMany({
+//     where: { gameId },
+//     orderBy: { createdAt: "asc" },
+//     include: {
+//       user: {
+//         select: {
+//           id: true,
+//           fid: true,
+//           name: true,
+//           imageUrl: true,
+//         },
+//       },
+//     },
+//   });
+// }
 
-// Form action form handler
+// // Form action form handler
 async function handleFormSubmit(formData: FormData) {
   const gameId = Number(formData.get("gameId"));
   const message = String(formData.get("message") || "");
@@ -51,26 +51,28 @@ async function handleFormSubmit(formData: FormData) {
  *   - gameId (from parent page params)
  *   - user (from parent layout, if available and can be passed as prop/context)
  */
-export default async function ChatDrawer({
+export default function ChatDrawer({
   gameId,
-  fid,
+  userInfo,
 }: {
   gameId: number;
-  fid: number;
+  userInfo: HydratedUser;
 }) {
   // Fetch messages server-side
-  const messages = await getGameChats(gameId);
-  const user = await prisma.user.findUnique({
-    where: { fid },
-    select: {
-      fid: true,
-      name: true,
-      imageUrl: true,
-    },
-  });
-  if (!user) {
-    return null;
-  }
+  // const messages = await getGameChats(gameId);
+  // const user = await prisma.user.findUnique({
+  //   where: { fid },
+  //   select: {
+  //     fid: true,
+  //     name: true,
+  //     imageUrl: true,
+  //   },
+  // });
+  // if (!user) {
+  //   return null;
+  // }
+
+  const messages: ChatWithUser[] = [];
 
   return (
     <div className="fixed bottom-0 left-0 right-0 w-full max-w-screen-sm mx-auto z-30 pointer-events-none">
@@ -102,7 +104,8 @@ export default async function ChatDrawer({
                 minute: "2-digit",
               });
               const isCurrentUser =
-                user && (msg.user?.fid === user.fid || msg.userId === user.fid);
+                userInfo &&
+                (msg.user?.fid === userInfo.fid || msg.userId === userInfo.fid);
 
               return (
                 <div
@@ -168,14 +171,18 @@ export default async function ChatDrawer({
             }}
           >
             <input type="hidden" name="gameId" value={gameId} />
-            {user && (
+            {userInfo && (
               <>
-                <input type="hidden" name="fid" value={user.fid} />
-                <input type="hidden" name="username" value={user.name ?? ""} />
+                <input type="hidden" name="fid" value={userInfo.fid} />
+                <input
+                  type="hidden"
+                  name="username"
+                  value={userInfo.name ?? ""}
+                />
                 <input
                   type="hidden"
                   name="pfpUrl"
-                  value={user.imageUrl ?? ""}
+                  value={userInfo.imageUrl ?? ""}
                 />
               </>
             )}
@@ -183,12 +190,12 @@ export default async function ChatDrawer({
               <input
                 name="message"
                 placeholder={
-                  user
+                  userInfo
                     ? "Type a comment..."
                     : "You must be logged in to send messages"
                 }
                 className="flex-1 bg-transparent outline-none text-white placeholder-white/40 text-base font-display"
-                disabled={!user}
+                disabled={!userInfo}
                 required
                 maxLength={500}
                 autoComplete="off"
@@ -198,7 +205,7 @@ export default async function ChatDrawer({
               type="submit"
               className="ml-3 bg-[#1B8FF5] rounded-full w-10 h-10 flex items-center justify-center active:scale-95 transition-transform shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 shrink-0"
               aria-label="Send message"
-              disabled={!user}
+              disabled={!userInfo}
             >
               <ForwardMessageIcon />
             </button>

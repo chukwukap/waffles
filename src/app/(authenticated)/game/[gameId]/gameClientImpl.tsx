@@ -1,4 +1,3 @@
-// ───────────────────────── GameClientImpl.tsx ─────────────────────────
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
@@ -21,7 +20,6 @@ import { HydratedGame, HydratedUser } from "@/state/types";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { leaveGameAction } from "@/actions/game";
 import { notify } from "@/components/ui/Toaster";
-// REMOVED: import { useTimer } from "@/hooks/useTimer";
 
 interface GameClientImplProps {
   game: HydratedGame;
@@ -47,6 +45,36 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
     }
   );
 
+  // ───────────────────────── NAVIGATION LOGIC ─────────────────────────
+  // This hook handles redirects safely *after* rendering.
+  useEffect(() => {
+    // Wait for data to be available before making decisions
+    if (!game || !userInfo) {
+      return;
+    }
+
+    const now = new Date();
+    const end = new Date(game.endTime);
+
+    // Check for game over
+    const isGameOver =
+      now > end ||
+      (userInfo.answers?.length ?? 0) === (game.questions?.length ?? 0);
+
+    if (isGameOver) {
+      router.push(`/game/${game.id}/score`);
+      return; // Navigate and stop further logic
+    }
+
+    // Check for user ticket
+    const userTicket = userInfo.tickets?.find((t) => t.gameId === game.id);
+    if (!userTicket) {
+      router.push("/lobby");
+      return; // Navigate and stop further logic
+    }
+  }, [game, userInfo, router]); // Dependencies: re-run if these change
+
+  // ───────────────────────── EFFECTS ─────────────────────────
   // Init sound on first interaction
   useEffect(() => {
     if (!prefs.soundEnabled) return;
@@ -84,8 +112,6 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
     }
   }, [userInfo.fid, game.id, router]);
 
-  // REMOVED: const waitingTimer = useTimer(...)
-
   // ───────────────────────── VIEW LOGIC ─────────────────────────
   const view = (() => {
     if (!game || !userInfo) return notFound();
@@ -103,23 +129,29 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
       now > end ||
       (userInfo.answers?.length ?? 0) === (game.questions?.length ?? 0);
 
-    const isWaiting = now.getTime() < start.getTime();
+    const isWaiting = now.getTime() < start.getTime(); // TODO: remove this
     const isActive = now >= start && now <= end;
 
+    // MODIFIED: Return null here. The useEffect above handles the redirect.
     if (isGameOver) {
-      router.push(`/game/${game.id}/score`);
+      return null;
+    }
+
+    // MODIFIED: Return null here. The useEffect above handles the redirect.
+    if (!userTicket) {
       return null;
     }
 
     if (isWaiting) {
       // Pass startTime to WaitingView. It will handle its own countdown.
       // The onComplete logic (router.refresh()) will be inside WaitingView.
-      return <WaitingView game={game} startTime={game.startTime} />;
-    }
-
-    if (!userTicket) {
-      router.push("/lobby");
-      return null;
+      return (
+        <WaitingView
+          game={game}
+          startTime={game.startTime}
+          userInfo={userInfo}
+        />
+      );
     }
 
     if (!isParticipant) {
@@ -133,7 +165,9 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
 
     // Fallback if game is not active (e.g., time calculations are off)
     // Pass startTime to WaitingView
-    return <WaitingView game={game} startTime={game.startTime} />;
+    return (
+      <WaitingView game={game} startTime={game.startTime} userInfo={userInfo} />
+    );
   })();
 
   // ───────────────────────── RENDER ─────────────────────────
@@ -141,7 +175,7 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
     <div className="w-full min-h-[100dvh] flex-1 overflow-y-auto">
       <header
         className={cn(
-          "sticky top-0 z-40 p-4 flex items-center justify-between border-b border-border backdrop-blur-sm"
+          "sticky top-0 z-40 px-4 flex items-center justify-between border-b border-border backdrop-blur-sm"
         )}
       >
         <LogoIcon />
@@ -158,13 +192,16 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
             <div className="flex items-center gap-1.5  rounded-full px-3 py-1.5 border border-white/10">
               <WalletIcon className="w-4 h-4 text-foreground" />
               <span className="text-xs text-foreground">
-                {status === "pending" ? "Loading..." : `$${roundedBalance}`}
+                {status === "pending"
+                  ? "Loading..."
+                  : `$${roundedBalance ?? "---"}`}
               </span>
             </div>
           )}
         </div>
       </header>
 
+      {/* The 'view' variable will be null while the redirect effect is firing */}
       {view}
 
       <LeaveGameDrawer
