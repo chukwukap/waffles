@@ -1,5 +1,4 @@
 "use client";
-
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
@@ -13,6 +12,50 @@ import { BottomNav } from "@/components/BottomNav";
 import { useInfiniteLoader } from "./_components/useInfiniteLoader";
 import { useMiniUser } from "@/hooks/useMiniUser";
 import { LeaderboardEntry } from "@/state/types";
+import { useGetTokenBalance } from "@coinbase/onchainkit/wallet";
+import { useAccount } from "wagmi";
+import { env } from "@/lib/env";
+import { base } from "wagmi/chains";
+
+// --- MOCK DATA ---
+// Easy on/off switch for development
+const USE_MOCK_DATA = true; // <-- SET TO false TO DISABLE
+
+// Define your mock users here. They will be combined with real data.
+// Omit 'rank' as it will be auto-calculated.
+const MOCK_LEADERBOARD_ENTRIES: Omit<LeaderboardEntry, "rank">[] = [
+  {
+    id: "mock-1",
+    fid: 999001,
+    username: "dev_user_one",
+    points: 1500.5,
+    pfpUrl: "/images/avatars/a.png",
+  },
+  {
+    id: "mock-2",
+    fid: 999002,
+    username: "dev_user_two",
+    points: 950.22,
+    pfpUrl: "/images/avatars/b.png",
+  },
+  {
+    id: "mock-3",
+    fid: 999003,
+    username: "dev_user_three",
+    points: 50.1,
+    pfpUrl: "/images/avatars/c.png",
+  },
+  // This entry will overwrite the real user 755074 if they exist
+  // To test the "isCurrentUser" highlighting
+  {
+    id: "mock-755074",
+    fid: 755074,
+    username: "chukwukauba (MOCK)",
+    points: 1234.56,
+    pfpUrl: "/images/avatars/d.png",
+  },
+];
+// --- END MOCK DATA ---
 
 export type TabKey = "current" | "allTime";
 
@@ -26,7 +69,6 @@ interface LeaderboardUser {
 }
 
 // Fetcher function for SWR
-// Note: Adapts to useSWRInfinite key format
 const fetcher = (url: string) =>
   fetch(url, { cache: "no-store" }).then((res) => {
     if (!res.ok) {
@@ -39,7 +81,6 @@ const fetcher = (url: string) =>
 interface LeaderboardApiResponse {
   users: LeaderboardUser[];
   hasMore: boolean;
-  me: LeaderboardUser | null;
   totalPlayers?: number;
   totalPoints?: number;
 }
@@ -47,6 +88,19 @@ interface LeaderboardApiResponse {
 export default function LeaderboardPage() {
   const searchParams = useSearchParams();
   const user = useMiniUser();
+  const account = useAccount();
+
+  const { roundedBalance } = useGetTokenBalance(
+    account.address as `0x${string}`,
+    {
+      address: env.nextPublicUsdcAddress as `0x${string}`,
+      chainId: base.id,
+      decimals: 6,
+      image: "/images/tokens/usdc.png",
+      name: "USDC",
+      symbol: "USDC",
+    }
+  );
 
   const activeTab = (searchParams.get("tab") || "current") as LeaderboardTabKey;
 
@@ -55,6 +109,9 @@ export default function LeaderboardPage() {
       pageIndex: number,
       previousPageData: LeaderboardApiResponse | null
     ): string | null => {
+      // If we're using mock data, just load the first page
+      if (USE_MOCK_DATA && pageIndex > 0) return null;
+
       if (previousPageData && !previousPageData.hasMore) return null;
 
       if (pageIndex === 0)
@@ -78,52 +135,75 @@ export default function LeaderboardPage() {
     size,
   } = useSWRInfinite<LeaderboardApiResponse>(getKey, fetcher, {
     revalidateFirstPage: true,
-    // Tweak revalidation options as needed
-    // revalidateOnFocus: true,
-    // refreshInterval: activeTab === 'current' ? 15000 : 0, // Auto-refresh current tab
   });
 
   // --- Data Processing ---
   const entries: LeaderboardEntry[] = useMemo(() => {
-    if (!data) return [];
-    return data.flatMap((page) =>
-      page.users.map((u) => ({
-        id: u.id,
-        fid: u.fid,
-        rank: u.rank,
-        username: u.name,
-        points: u.points,
-        pfpUrl: u.imageUrl,
-      }))
-    );
+    // 1. Get real entries from SWR
+    const realEntries =
+      data?.flatMap((page) =>
+        page.users.map((u) => ({
+          id: u.id,
+          fid: u.fid,
+          rank: u.rank,
+          username: u.name,
+          points: u.points,
+          pfpUrl: u.imageUrl,
+        }))
+      ) ?? [];
+
+    // 2. Check if we should add mock data
+    if (USE_MOCK_DATA) {
+      // Combine real and mock data using a Map to de-duplicate by FID
+      // Mock data will overwrite real data if FIDs match
+      const allUsersMap = new Map<number, Omit<LeaderboardEntry, "rank">>();
+
+      // Add real users first
+      for (const entry of realEntries) {
+        allUsersMap.set(entry.fid, entry);
+      }
+
+      // Add/overwrite with mock users
+      for (const mockEntry of MOCK_LEADERBOARD_ENTRIES) {
+        allUsersMap.set(mockEntry.fid, mockEntry);
+      }
+
+      // 3. Sort by points (descending)
+      const combinedSorted = Array.from(allUsersMap.values()).sort(
+        (a, b) => b.points - a.points
+      );
+
+      // 4. Re-assign ranks
+      return combinedSorted.map((user, index) => ({
+        ...user,
+        rank: index + 1, // Re-calculate rank
+      }));
+    }
+
+    // 5. If not using mock data, return real entries as-is
+    return realEntries;
   }, [data]);
 
-  const hasMore = data ? data[data.length - 1]?.hasMore ?? false : true;
+  // Disable infinite scroll if we're using mock data
+  const hasMore = USE_MOCK_DATA
+    ? false
+    : data
+    ? data[data.length - 1]?.hasMore ?? false
+    : true;
+
   const isLoadingMore =
     isLoadingInitial ||
     (size > 0 && data && typeof data[size - 1] === "undefined" && isValidating);
   const isEmpty = !isLoadingInitial && entries.length === 0;
   const currentError = error ? error.message || "Failed to load data" : null;
 
-  // Extract 'me' data from the *first* page's response if available
-  const me = useMemo(() => {
-    const meData = data?.[0]?.me;
-    return meData
-      ? {
-          id: meData.id,
-          rank: meData.rank,
-          username: meData.name,
-          points: meData.points,
-          pfpUrl: meData.imageUrl,
-        }
-      : null;
-  }, [data]);
-  const currentUserId = user.fid;
+  const currentUserId = user.fid; // This is the FID
 
   // --- Infinite Loading Trigger ---
   const [loaderRef] = useInfiniteLoader(
     () => {
-      if (!isLoadingMore && hasMore) {
+      // Don't load more if using mock data
+      if (!isLoadingMore && hasMore && !USE_MOCK_DATA) {
         setSize(size + 1);
       }
     },
@@ -151,15 +231,6 @@ export default function LeaderboardPage() {
     return () => observer.disconnect();
   }, []);
 
-  // --- Auto-refresh for 'current' tab --- (moved into useSWRInfinite options)
-  // useEffect(() => {
-  //   if (activeTab !== "current") return;
-  //   const interval = setInterval(() => {
-  //     mutate(getKey(0, null)); // Revalidate the first page
-  //   }, 15000);
-  //   return () => clearInterval(interval);
-  // }, [activeTab, getKey, mutate]);
-
   // ───────────────────────── RENDER ─────────────────────────
   return (
     <main className="flex-1 overflow-y-auto ">
@@ -175,7 +246,7 @@ export default function LeaderboardPage() {
                 className="font-edit-undo leading-[1.1] text-[color:var(--text-primary)] text-center"
                 style={{ fontSize: "clamp(0.95rem, 1.9vw, 1rem)" }}
               >
-                $...
+                {`$${roundedBalance ?? "..."}`}
               </span>
             </div>
           </div>
@@ -223,9 +294,7 @@ export default function LeaderboardPage() {
             <Row
               key={`${activeTab}-${e.rank}-${e.id}`}
               entry={e}
-              isCurrentUser={
-                currentUserId != null && String(e.id) === String(currentUserId)
-              }
+              isCurrentUser={currentUserId != null && e.fid === currentUserId}
             />
           ))}
           {/* Loading Indicator */}
