@@ -44,7 +44,7 @@ export function Tabs() {
             className={cn(
               "px-4 py-2 text-xs sm:px-6 sm:py-2 sm:text-sm",
               selected ? "font-bold" : "opacity-80 hover:opacity-100",
-              selected ? "noise" : "bg-figma noise",
+              selected ? "" : "bg-[#191919] ",
               "transition"
             )}
             tabIndex={selected ? 0 : -1}

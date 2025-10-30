@@ -7,28 +7,49 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { PixelButton } from "@/components/buttons/PixelButton";
 import { PALETTES } from "@/lib/constants";
-import { useState } from "react";
 
 type QuestionCardProps = {
   question: HydratedGame["questions"][0];
-  handleAnswerClick: (option: string, questionId: number) => void;
+  onSelectAnswer: (option: string) => void;
+  selectedOption: string | null;
 };
 
 export default function QuestionCard({
   question,
-  handleAnswerClick,
+  onSelectAnswer,
+  selectedOption,
 }: QuestionCardProps) {
-  const [chosenIdx, setChosenIdx] = useState<number | null>(null);
+  const chosenIdx = selectedOption
+    ? question.options.indexOf(selectedOption)
+    : null;
   return (
     <section
       className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-8 animate-up"
       aria-live="polite"
     >
       {/* Game Title */}
-      <div className="flex flex-col items-center mb-6 select-none">
-        <span className="font-body text-white text-3xl md:text-4xl font-bold uppercase tracking-wider leading-tight text-center">
-          {question.text}
-        </span>
+      <div
+        className="
+          mx-auto 
+          mb-4
+          flex 
+          items-center 
+          justify-center 
+          select-none
+          w-[206px] 
+          font-normal 
+          text-[36px] 
+          leading-[0.92] 
+          text-center 
+          tracking-[-0.03em]
+          text-white
+          font-body
+          flex-none
+          order-0
+          grow-0
+        "
+      >
+        Guess the Movie
       </div>
 
       {/* Image Section */}
@@ -90,8 +111,7 @@ export default function QuestionCard({
                 textColor={palette.text}
                 borderColor={palette.border}
                 onClick={() => {
-                  setChosenIdx(idx);
-                  handleAnswerClick(opt, question.id);
+                  onSelectAnswer(opt);
                 }}
               >
                 <span className="block w-full mx-auto truncate select-none">

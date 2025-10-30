@@ -357,7 +357,7 @@ export default function InviteCodePage() {
     <div className="min-h-screen max-w-screen-sm mx-auto px-8 flex flex-col">
       <div
         className={
-          "p-4 flex items-center justify-center border-y border-border bg-figma-gradient"
+          "p-4 flex items-center justify-center border-y border-border app-background-gradient"
         }
       >
         <LogoIcon />
@@ -512,7 +512,7 @@ export function Share({
     prizePool !== null ? `$${prizePool.toLocaleString("en-US")}` : "TBA";
 
   return (
-    <div className="min-h-[100dvh] w-full bg-figma noise z-50">
+    <div className="min-h-[100dvh] w-full app-background noise z-50">
       <div className="mx-auto flex min-h-[100dvh] w-full max-w-[420px] flex-col items-center px-5 pb-[calc(env(safe-area-inset-bottom)+48px)] pt-14">
         <Image
           src="/images/illustrations/waffle-ticket.png"
@@ -915,15 +915,15 @@ export default function BuyWafflePage() {
   }, [friends, stats]);
 
   return (
-    <div className="h-screen flex flex-col bg-figma noise relative font-body">
+    <div className="h-screen flex flex-col app-background noise relative font-body">
       {/* HEADER */}
       <div
         className={cn(
-          "p-4 flex items-center justify-between border-b border-border bg-figma"
+          "p-4 flex items-center justify-between border-b border-border app-background"
         )}
       >
         <LogoIcon />
-        <div className="flex items-center gap-1.5 bg-figma rounded-full px-3 py-1.5">
+        <div className="flex items-center gap-1.5 app-background rounded-full px-3 py-1.5">
           <WalletIcon className="w-4 h-4 text-foreground" />
           <span className="text-xs text-foreground">{`$${roundedBalance}`}</span>
         </div>
@@ -1136,7 +1136,7 @@ export function Tabs({
               // Responsive paddings and text size
               "px-4 py-2 text-xs sm:px-6 sm:py-2 sm:text-sm",
               selected ? "font-bold" : "opacity-80 hover:opacity-100",
-              selected ? "noise" : "bg-figma noise",
+              selected ? "noise" : "app-background noise",
               "transition",
             ].join(" ")}
             tabIndex={selected ? 0 : -1}
@@ -1395,9 +1395,9 @@ export default function LeaderboardPage() {
 
   // ───────────────────────── RENDER ─────────────────────────
   return (
-    <main className="min-h-[100dvh] bg-figma">
+    <main className="min-h-[100dvh] app-background">
       {/* HEADER */}
-      <header className="sticky top-0 z-20 w-full border-b border-white/20 px-4 py-3 bg-figma">
+      <header className="sticky top-0 z-20 w-full border-b border-white/20 px-4 py-3 app-background">
         <div className="mx-auto max-w-screen-sm flex w-full items-center justify-between ">
           <div className="flex min-w-0 flex-row items-center justify-center">
             <LogoIcon />
@@ -2022,7 +2022,7 @@ export default function GameOverView() {
       : fallbackAvatar ?? "/images/avatars/a.png";
 
   return (
-    <main className="relative min-h w-full bg-figma noise">
+    <main className="relative min-h w-full app-background noise">
       <div className="relative mx-auto flex w-full max-w-lg flex-col items-center px-4 pb-[calc(env(safe-area-inset-bottom)+7vw)] pt-12 sm:pt-16">
         <div className="w-full flex justify-center">
           <Image
@@ -2635,7 +2635,7 @@ export default function WaitingView() {
      * Root takes full height and acts as the positioning context for overlays.
      * Max width lives here, so the whole lobby sits within the game screen nicely.
      */
-    <div className="w-full min-h-[92dvh] flex flex-col flex-1 bg-figma text-foreground overflow-hidden items-center relative max-w-screen-sm mx-auto px-4">
+    <div className="w-full min-h-[92dvh] flex flex-col flex-1 app-background text-foreground overflow-hidden items-center relative max-w-screen-sm mx-auto px-4">
       <section className="flex-1 flex flex-col items-center gap-3 w-full pt-6 pb-4 overflow-visible">
         {/* Top bar */}
         <div className="flex w-full h-10 min-h-[38px] items-center justify-center gap-0.5 p-2 sm:p-3">
@@ -3179,7 +3179,7 @@ export default function ChatDrawer() {
     <>
       {/* Trigger Input */}
       <div
-        className="absolute left-0 bottom-0 w-full mx-auto flex flex-row items-start px-4 pb-5 pt-3 gap-3 bg-figma z-30"
+        className="absolute left-0 bottom-0 w-full mx-auto flex flex-row items-start px-4 pb-5 pt-3 gap-3 app-background z-30"
         onClick={() => setOpen(true)}
       >
         <div className="flex flex-col justify-center items-start grow bg-white/5 rounded-full px-5 py-3 gap-1">
@@ -3202,7 +3202,7 @@ export default function ChatDrawer() {
             onClick={() => setOpen(false)}
           >
             <motion.div
-              className="relative w-full mx-auto flex flex-col rounded-t-full bg-figma noise h-[85vh] max-h-[90dvh] sm:max-h-[600px] min-h-[60dvh] overflow-hidden"
+              className="relative w-full mx-auto flex flex-col rounded-t-full app-background noise h-[85vh] max-h-[90dvh] sm:max-h-[600px] min-h-[60dvh] overflow-hidden"
               style={{
                 width: "100%",
                 borderTopLeftRadius: "1.25rem",
@@ -3482,7 +3482,7 @@ export function GameClientImpl({ game }: GameClientImplProps) {
         <p className="text-md text-muted-foreground mb-8">
           There isn&apos;t a game running right now. Check back soon!
         </p>
-        <div className="flex items-center gap-1.5 bg-figma rounded-full px-3 py-1.5">
+        <div className="flex items-center gap-1.5 app-background rounded-full px-3 py-1.5">
           <WalletIcon className="w-4 h-4 text-foreground" />
           <span className="text-xs text-foreground">
             {new Intl.NumberFormat("en-US", {
@@ -3519,11 +3519,11 @@ export function GameClientImpl({ game }: GameClientImplProps) {
   })();
 
   return (
-    <div className="w-full min-h-[100dvh] overflow-hidden bg-figma">
+    <div className="w-full min-h-[100dvh] overflow-hidden app-background">
       {/* HEADER */}
       <div
         className={cn(
-          "p-4 flex items-center justify-between border-b border-border bg-figma"
+          "p-4 flex items-center justify-between border-b border-border app-background"
         )}
       >
         <LogoIcon />
@@ -3540,7 +3540,7 @@ export function GameClientImpl({ game }: GameClientImplProps) {
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 bg-figma rounded-full px-3 py-1.5">
+            <div className="flex items-center gap-1.5 app-background rounded-full px-3 py-1.5">
               <WalletIcon className="w-4 h-4 text-foreground" />
               <span className="text-xs text-foreground">
                 {new Intl.NumberFormat("en-US", {
@@ -4466,7 +4466,7 @@ export default function ProfilePage() {
   }, [fid, fetchProfile]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-figma noise ">
+    <div className="min-h-screen flex flex-col app-background noise ">
       {/* Header */}
       <header className="sticky top-0 z-10 w-full border-b border-white/20 px-4 py-3">
         <div className="mx-auto max-w-screen-sm flex w-full items-center justify-between">
@@ -4738,7 +4738,7 @@ export default function AllTimeStatsPage() {
     <div
       className={`
         min-h-screen flex flex-col
-        bg-figma
+        app-background
         noise
       `}
     >
@@ -4829,7 +4829,7 @@ export default function AuthenticatedLayout({
   children: ReactNode;
 }) {
   return (
-    <div className="min-h-dvh bg-figma noise text-foreground">
+    <div className="min-h-dvh app-background noise text-foreground">
       <AppStateProvider>{children}</AppStateProvider>
     </div>
   );
@@ -4878,7 +4878,7 @@ export default function RootLayout({
       lang="en"
       className={`${fontBody.variable} ${fontDisplay.variable} ${fontInput.variable}`}
     >
-      <body className="text-foreground bg-figma noise">
+      <body className="text-foreground app-background noise">
         <MinikitProvider>
           <OnboardingGate>{children}</OnboardingGate>
           <GlobalToaster />
@@ -6923,7 +6923,7 @@ export default function Home() {
    ------------------------------------------------------------ */
 
 /* Page gradient background */
-@utility bg-figma {
+@utility app-background {
   background-color: var(--brand-black);
   background-attachment: fixed;
   background-repeat: no-repeat;
@@ -8674,7 +8674,7 @@ export default function DeviceGate({
   if (isMobile) return <>{children}</>;
 
   return (
-    <div className="relative min-h-dvh w-full bg-figma text-foreground noise">
+    <div className="relative min-h-dvh w-full app-background text-foreground noise">
       {/* subtle radial glow */}
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.06),transparent_60%)]" />
 
@@ -8787,7 +8787,7 @@ export function BottomNav() {
   const router = useRouter();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-figma noise border-t-2 border-border z-50">
+    <nav className="fixed bottom-0 left-0 right-0 app-background noise border-t-2 border-border z-50">
       <div className="flex items-center justify-around max-w-2xl mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -10100,7 +10100,7 @@ interface OnboardingOverlayProps {
  */
 export function OnboardingOverlay({ onComplete }: OnboardingOverlayProps) {
   return (
-    <div className="fixed inset-0 z-50 bg-figma noise flex flex-col">
+    <div className="fixed inset-0 z-50 app-background noise flex flex-col">
       <div className="p-8 flex items-center justify-center">
         <Image
           src="/logo-icon.png"

@@ -70,3 +70,18 @@ export function isSnapshot(x: number, totalQuestions: number): boolean {
   const step = Math.floor(totalQuestions / 3);
   return x === step || x === step * 2 || x === totalQuestions;
 }
+
+/**
+ * Formats milliseconds into a MM:SS string.
+ * @param ms - The number of milliseconds.
+ * @returns A string in "MM:SS" format.
+ */
+export const formatMsToMMSS = (ms: number): string => {
+  const totalSeconds = Math.ceil(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
+    2,
+    "0"
+  )}`;
+};

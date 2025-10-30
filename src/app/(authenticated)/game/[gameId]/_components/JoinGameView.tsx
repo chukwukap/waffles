@@ -90,7 +90,7 @@ export default function JoinGameView({
               isDisabledByLoadingOrError && "opacity-60 cursor-not-allowed"
             )}
           >
-            <span className="block font-[Edit_Undo_BRK] text-2xl leading-none text-[#F5BB1B]">
+            <span className="block font-body text-2xl leading-none text-[#F5BB1B]">
               {buttonText}
             </span>
           </FancyBorderButton>
@@ -109,7 +109,7 @@ export default function JoinGameView({
             rotations={[-8.7, 5.85, -3.57, 7.56]}
             ariaLabel={`${joinedCount} players have joined`}
           />
-          <span className="text-sm font-display text-[#DBE0F0]">
+          <span className="text-sm font-body text-[#DBE0F0]">
             {joinedCount} {joinedLabel} joined the game
           </span>
         </div>

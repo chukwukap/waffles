@@ -213,7 +213,7 @@ export default function AllTimeStatsPage() {
   }, [allTimeStats]);
 
   return (
-    <div className={cn("min-h-screen flex flex-col", "bg-figma noise")}>
+    <div className={cn("min-h-screen flex flex-col", "app-background noise")}>
       <TopBar />
       <SubPageHeader title="ALL-TIME STATS" />
       <main
