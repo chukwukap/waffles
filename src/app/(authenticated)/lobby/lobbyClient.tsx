@@ -53,7 +53,6 @@ export default function LobbyPageClientImpl({
       image: "/images/tokens/usdc.png",
       name: "USDC",
       symbol: "USDC",
-      // Removed unnecessary token details if configured globally or relying on defaults
     }
   );
 
@@ -63,38 +62,17 @@ export default function LobbyPageClientImpl({
       setPurchaseError("User or game data is missing.");
       return;
     }
-    // if (!hasValidInvite) {
-    //   setPurchaseError("Redeem an invite code before buying a ticket.");
-    //   return;
-    // }
 
     setIsPurchasing(true);
     setPurchaseError(null);
-    notify.info("Processing purchase...");
+    notify.info("Processing purchase (test mode, no transaction sent)...");
 
     let txHash: string | null = null;
     try {
-      // 1. Send Token via OnchainKit
-      const price = activeGame?.config?.ticketPrice;
-
-      // actually just send 0.01 usdc for testing
-      const amount = (0.01 * 10 ** 6).toString();
-      // const amount = (price * 10 ** 6).toString(); // 6 decimals for USDC (1 USDC = 10^6)
-      const recipient = env.waffleMainAddress;
-
-      console.log(`Sending ${amount} (${price} USDC) to ${recipient}`);
-
-      const sendResult = await sendTokenAsync({
-        amount,
-        recipientAddress: "0x0b3d62DF33521cdcE79E87586d7C1534b00EcAd7",
-      });
-
-      if (!sendResult?.success) {
-        console.log("sendResult: ", sendResult);
-      }
+      // SKIP sending token transaction for now, just call server action directly.
+      // Simulate a txHash for test purposes.
       txHash =
         "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdfa";
-      notify.info("Transaction sent, confirming ticket...");
 
       // 2. Call Server Action to record/confirm purchase
       const formData = new FormData();
@@ -114,11 +92,10 @@ export default function LobbyPageClientImpl({
             : "Ticket secured!"
         );
 
-        // Manually trigger revalidation for SWR caches
         router.refresh();
         setShowShare(true); // Show the share screen
       } else {
-        throw new Error(result.error); // Throw error to be caught below
+        throw new Error(result.error);
       }
     } catch (err) {
       console.error("Ticket purchase failed:", err);
@@ -131,7 +108,6 @@ export default function LobbyPageClientImpl({
         displayError = "Transaction cancelled.";
       } else if (message.includes("Invite required")) {
         displayError = "Redeem an invite code before buying a ticket.";
-        // Consider redirecting here too if desired
       } else if (message.includes("insufficient funds")) {
         displayError = "Insufficient funds for transaction.";
       } else if (
@@ -139,10 +115,9 @@ export default function LobbyPageClientImpl({
         message.includes("already exists")
       ) {
         displayError = "You already have a ticket for this game.";
-        // Manually trigger revalidation just in case state is stale
         router.refresh();
       } else if (message) {
-        displayError = message; // Show specific error from action/transaction
+        displayError = message;
       }
 
       setPurchaseError(displayError);
@@ -157,17 +132,15 @@ export default function LobbyPageClientImpl({
     if (!userInfo?.tickets[0] || !activeGame) return; // Use combined ticket state
 
     try {
-      const message = `Just secured my waffle ticket for ${activeGame.name}! 🧇`; // Added emoji!
-      // notify.info("Opening Farcaster cast composer...");
+      const message = `Just secured my waffle ticket for ${activeGame.name}! 🧇`;
       const result = await composeCastAsync({
         text: message,
         embeds: [env.rootUrl ? { url: env.rootUrl } : undefined].filter(
           Boolean
-        ) as [], // Correct embed format
+        ) as [],
       });
 
       if (result?.cast) {
-        //
         notify.success("Shared successfully!");
         console.log("Cast created successfully:", result.cast.hash);
       } else {
@@ -182,7 +155,6 @@ export default function LobbyPageClientImpl({
 
   // --- Derived State ---
   const prizePool = useMemo(() => {
-    // Use defaults from schema if config or fields are missing
     const ticketPrice = activeGame?.config?.ticketPrice ?? 50;
     const additionPrizePool = activeGame?.config?.additionPrizePool ?? 0;
 
@@ -197,15 +169,6 @@ export default function LobbyPageClientImpl({
   }, [activeGame?.config?.theme]);
 
   const spotsAvatars = useMemo(() => {
-    // const friendAvatars = friends
-    //   .filter((friend) => friend.hasTicket && friend.pfpUrl)
-    //   .map((friend) => friend.pfpUrl!)
-    //   .slice(0, 4);
-    // if (friendAvatars.length >= 4) return friendAvatars; // Prioritize friends fully if possible
-
-    // if (friendAvatars.length >= 4) return friendAvatars.slice(0, 4);
-
-    // Absolute fallback
     return [
       "/images/avatars/a.png",
       "/images/avatars/b.png",
