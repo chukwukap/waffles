@@ -111,6 +111,7 @@ export interface ProfileStatsData {
 
 export interface LeaderboardEntry {
   id: string | number;
+  fid: number; // <-- ADDED THIS
   rank: number;
   username: string | null;
   points: number;

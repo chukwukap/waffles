@@ -36,7 +36,7 @@ export function Top3({ entries, currentUserId }: Top3Props) {
   return (
     <div
       className="
-        flex w-full flex-nowrap items-stretch
+        flex w-full
         gap-[var(--gap)]
       "
       style={

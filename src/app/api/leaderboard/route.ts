@@ -5,6 +5,7 @@ import { z } from "zod";
 
 export interface LeaderboardUserData {
   id: string;
+  fid: number; // <-- ADDED
   rank: number;
   name: string | null;
   imageUrl: string | null;
@@ -14,26 +15,30 @@ export interface LeaderboardUserData {
 interface LeaderboardApiResponse {
   users: LeaderboardUserData[];
   hasMore: boolean;
-  me: LeaderboardUserData | null;
+  // me: LeaderboardUserData | null; // <-- REMOVED
   totalPlayers: number;
   totalPoints: number;
 }
-
+// FIX: Added .nullable() to all fields to correctly handle
+// the output of searchParams.get() which returns string | null.
 const querySchema = z.object({
-  tab: z.enum(["current", "allTime"]).default("allTime"),
+  tab: z.enum(["current", "allTime"]).nullable().default("allTime"),
   page: z
     .string()
     .regex(/^\d+$/, "Page must be a non-negative integer.")
+    .nullable()
     .default("0")
     .transform(Number),
   gameId: z
     .string()
     .regex(/^\d+$/, "Game ID must be a numeric string.")
+    .nullable()
     .optional()
     .transform((val) => (val ? Number(val) : undefined)),
-  userId: z
+  userId: z // This is the user's FID
     .string()
     .regex(/^\d+$/, "User ID must be a numeric string.")
+    .nullable()
     .optional()
     .transform((val) => (val ? Number(val) : undefined)),
 });
@@ -46,7 +51,7 @@ export async function GET(request: NextRequest) {
       tab: searchParams.get("tab"),
       page: searchParams.get("page"),
       gameId: searchParams.get("gameId"),
-      userId: searchParams.get("userId"),
+      userId: searchParams.get("userId"), // This will be the FID
     });
 
     if (!queryValidation.success) {
@@ -58,7 +63,7 @@ export async function GET(request: NextRequest) {
       tab,
       page,
       gameId: requestedGameId,
-      userId: requestedUserId,
+      userId: requestedUserFid, // <-- Renamed for clarity
     } = queryValidation.data;
 
     let allUsersSorted: LeaderboardUserData[] = [];
@@ -92,7 +97,7 @@ export async function GET(request: NextRequest) {
           where: { gameId: gameIdToQuery },
           include: {
             user: {
-              select: { id: true, name: true, imageUrl: true },
+              select: { id: true, name: true, imageUrl: true, fid: true }, // <-- ADDED FID
             },
           },
           orderBy: { points: "desc" },
@@ -102,6 +107,7 @@ export async function GET(request: NextRequest) {
           totalPointsInScope += s.points;
           return {
             id: s.userId.toString(),
+            fid: s.user?.fid ?? 0, // <-- ADDED FID
             rank: i + 1,
             name: s.user?.name ?? null,
             imageUrl: s.user?.imageUrl ?? null,
@@ -120,7 +126,7 @@ export async function GET(request: NextRequest) {
       if (userIds.length > 0) {
         const usersData = await prisma.user.findMany({
           where: { id: { in: userIds } },
-          select: { id: true, name: true, imageUrl: true },
+          select: { id: true, name: true, imageUrl: true, fid: true }, // <-- ADDED FID
         });
         const usersDataMap = new Map(usersData.map((u) => [u.id, u]));
 
@@ -130,6 +136,7 @@ export async function GET(request: NextRequest) {
           totalPointsInScope += points;
           return {
             id: g.userId.toString(),
+            fid: user?.fid ?? 0, // <-- ADDED FID
             rank: i + 1,
             name: user?.name ?? null,
             imageUrl: user?.imageUrl ?? null,
@@ -146,18 +153,19 @@ export async function GET(request: NextRequest) {
     const pageUsers = allUsersSorted.slice(start, end);
     const hasMore = end < totalPlayers;
 
-    let me: LeaderboardUserData | null = null;
-    if (requestedUserId) {
-      const found = allUsersSorted.find(
-        (u) => Number(u.id) === requestedUserId
-      );
-      if (found) me = found;
-    }
+    // We no longer need to find 'me' for the response
+    // let me: LeaderboardUserData | null = null;
+    // if (requestedUserFid) {
+    //   const found = allUsersSorted.find(
+    //     (u) => u.fid === requestedUserFid // <-- Check against FID
+    //   );
+    //   if (found) me = found;
+    // }
 
     const responseData: LeaderboardApiResponse = {
       users: pageUsers,
       hasMore,
-      me,
+      // me, // <-- REMOVED
       totalPlayers,
       totalPoints: totalPointsInScope,
     };

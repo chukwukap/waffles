@@ -6,6 +6,8 @@ import { PixelButton } from "@/components/buttons/PixelButton";
 import { cn } from "@/lib/utils";
 
 export type LeaderboardTabKey = "current" | "allTime";
+
+// The labels in your original code are already correct for the target design
 const TABS: { key: LeaderboardTabKey; label: string }[] = [
   { key: "current", label: "Current game" },
   { key: "allTime", label: "All time" },
@@ -28,7 +30,8 @@ export function Tabs() {
   );
 
   return (
-    <div className="inline-flex items-center gap-2" role="tablist">
+    // Revert to inline-flex to allow buttons to size to their content (like the design)
+    <div className="flex justify-center gap-1" role="tablist">
       {TABS.map(({ key, label }) => {
         const selected = activeTab === key;
         return (
@@ -36,16 +39,19 @@ export function Tabs() {
             key={key}
             role="tab"
             aria-selected={selected}
+            // Your original color logic was correct for the target design
             backgroundColor={selected ? "white" : ""}
             textColor={selected ? "black" : "var(--color-waffle-gold)"}
             borderColor={"var(--color-waffle-gold)"}
             onClick={() => handleTabChange(key)}
             borderWidth={4}
             className={cn(
-              "px-4 py-2 text-xs sm:px-6 sm:py-2 sm:text-sm",
+              "sm:text-sm",
               selected ? "font-bold" : "opacity-80 hover:opacity-100",
               selected ? "" : "bg-[#191919] ",
-              "transition"
+              "transition",
+              // ADDED: Overrides for font and text transform
+              "font-body"
             )}
             tabIndex={selected ? 0 : -1}
             disabled={selected}

@@ -2,7 +2,7 @@
 
 import React, { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useComposeCast, useSendToken } from "@coinbase/onchainkit/minikit";
+import { useComposeCast } from "@coinbase/onchainkit/minikit";
 import LogoIcon from "@/components/logo/LogoIcon";
 import { cn } from "@/lib/utils";
 import { WalletIcon } from "@/components/icons";
@@ -42,7 +42,7 @@ export default function LobbyPageClientImpl({
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
 
   // OnchainKit Hooks
-  const { sendTokenAsync } = useSendToken();
+  // const { sendTokenAsync } = useSendToken();
   const { composeCastAsync } = useComposeCast();
   const { roundedBalance } = useGetTokenBalance(
     account.address as `0x${string}`,

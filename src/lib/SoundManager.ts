@@ -5,13 +5,13 @@
 // Define available sound names and their corresponding file paths
 const PREDEFINED_SOUNDS = {
   click: "/sounds/click_001.ogg",
-  countdown: "/sounds/dice-shake-1.ogg",
-  correct: "/sounds/dice-shake-1.ogg",
-  wrong: "/sounds/dice-shake-1.ogg",
-  nextQuestion: "/sounds/dice-shake-1.ogg",
-  questionStart: "/sounds/dice-shake-1.ogg",
-  gameOver: "/sounds/dice-shake-1.ogg",
-  roundBreak: "/sounds/dice-shake-1.ogg", // Added this
+  countdown: "/sounds/click_001.ogg",
+  correct: "/sounds/click_001.ogg",
+  wrong: "/sounds/click_001.ogg",
+  nextQuestion: "/sounds/click_001.ogg",
+  questionStart: "/sounds/click_001.ogg",
+  gameOver: "/sounds/click_001.ogg",
+  roundBreak: "/sounds/click_001.ogg", // Added this
 } as const;
 
 // Type representing the valid *predefined* sound names
