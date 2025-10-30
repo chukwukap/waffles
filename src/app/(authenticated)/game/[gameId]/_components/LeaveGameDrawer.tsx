@@ -43,7 +43,7 @@ export default function LeaveGameDrawer({
           role="dialog"
           aria-modal="true"
           aria-labelledby="leave-game-title"
-          className="fixed inset-0 z-[100] font-display"
+          className="fixed inset-0 z-100 font-display"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

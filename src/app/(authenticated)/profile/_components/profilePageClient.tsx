@@ -129,7 +129,7 @@ export default function ProfilePageClient({
           <button
             onClick={() => setInviteOpen(true)}
             aria-label="Invite Friends"
-            className="box-border flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-white/15 p-2 transition-opacity hover:opacity-80"
+            className="box-border flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 p-2 transition-opacity hover:opacity-80"
             disabled={!showReferralButton}
           >
             <InviteFriendsIcon className="h-[18px] w-[18px]" />
