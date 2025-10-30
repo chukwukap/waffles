@@ -25,7 +25,7 @@ export default async function GamePage(props: {
     return notFound();
   }
   if (!userInfo) {
-    return <div>User not found</div>;
+    return null;
   }
 
   return <GameClientImpl game={game} userInfo={userInfo} />;
