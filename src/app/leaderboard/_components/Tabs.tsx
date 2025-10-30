@@ -30,31 +30,45 @@ export function Tabs() {
   );
 
   return (
-    // Revert to inline-flex to allow buttons to size to their content (like the design)
-    <div className="flex justify-center gap-1" role="tablist">
+    <div
+      className="inline-flex justify-center gap-3 sm:gap-4 items-center"
+      role="tablist"
+      style={{ minHeight: 42 }}
+    >
       {TABS.map(({ key, label }) => {
         const selected = activeTab === key;
+        const styleOverrides: React.CSSProperties = {
+          background: selected ? "#FFF8E1" : "#191919",
+          color: selected ? "#191919" : "var(--color-waffle-gold)",
+          whiteSpace: "nowrap",
+          minWidth: 120,
+          height: 42,
+          fontWeight: selected ? 500 : 400,
+          fontFamily: "var(--font-satoshi, inherit)",
+          letterSpacing: 0,
+          borderColor: "var(--color-waffle-gold)",
+          borderWidth: 4,
+        };
+
         return (
           <PixelButton
             key={key}
             role="tab"
             aria-selected={selected}
-            // Your original color logic was correct for the target design
-            backgroundColor={selected ? "white" : ""}
-            textColor={selected ? "black" : "var(--color-waffle-gold)"}
-            borderColor={"var(--color-waffle-gold)"}
             onClick={() => handleTabChange(key)}
-            borderWidth={4}
-            className={cn(
-              "sm:text-sm",
-              selected ? "font-bold" : "opacity-80 hover:opacity-100",
-              selected ? "" : "bg-[#191919] ",
-              "transition",
-              // ADDED: Overrides for font and text transform
-              "font-body"
-            )}
             tabIndex={selected ? 0 : -1}
             disabled={selected}
+            className={cn(
+              "font-body",
+              "sm:text-[20px] text-base leading-[1.2]",
+              "px-6 sm:px-6 py-1.5 sm:py-1.5",
+              "transition whitespace-nowrap",
+              "h-[42px] min-w-[120px] max-w-full justify-center items-center flex",
+              selected
+                ? "font-medium"
+                : "font-normal opacity-80 hover:opacity-100"
+            )}
+            style={styleOverrides}
           >
             {label}
           </PixelButton>
