@@ -936,3 +936,39 @@ export function FlashIcon(props: React.SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+export function SendIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path
+        d="M14 5H12V9H6V11H4V17H6V15H12V19H14V17H16V15H18V13H20V11H18V9H16V7H14V5Z"
+        fill="white"
+      />
+    </svg>
+  );
+}
+
+export function ChatIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path
+        d="M22 2H2V16H4V4H20V16H12V18H10V20H8V16H2V18H6V22H10V20H12V18H22V2Z"
+        fill="#1B8FF5"
+      />
+    </svg>
+  );
+}

@@ -1,15 +1,16 @@
 "use client";
 
-// Added imports for state, effects, and routing
 import { useMemo, useState, useEffect } from "react";
-import { useRouter } from "next/navigation"; // Added
+import { useRouter } from "next/navigation";
 import { Clock } from "@/components/icons";
 import { AvatarDiamond } from "./AvatarDiamond";
-// import ChatDrawer from "./ChatDrawer";
 
-// REMOVED: import { useTimer } from "@/hooks/useTimer";
 import { calculatePrizePool, cn } from "@/lib/utils";
-import { HydratedGame } from "@/state/types";
+import { HydratedGame, HydratedUser } from "@/state/types";
+
+import { BottomNav } from "@/components/BottomNav";
+import ChatTickerOverlay from "./ChatTickerOverlay";
+import { Chat } from "./Chat";
 
 /**
  * Formats milliseconds into a MM:SS string.
@@ -30,14 +31,16 @@ const formatMsToMMSS = (ms: number): string => {
  */
 export default function WaitingView({
   game,
-  startTime, // CHANGED: Prop is now startTime
+  startTime,
+  userInfo,
 }: {
   game: HydratedGame;
-  startTime: string | Date; // CHANGED: Prop is now startTime
+  startTime: string | Date;
+  userInfo: HydratedUser;
 }) {
-  const router = useRouter(); // Added router
-
-  // --- START: Added Timer Logic ---
+  const router = useRouter();
+  const [chatOpen, setChatOpen] = useState(false);
+  // Timer logic for countdown
   const [now, setNow] = useState(Date.now());
   const startTimeMs = useMemo(() => new Date(startTime).getTime(), [startTime]);
 
@@ -47,32 +50,46 @@ export default function WaitingView({
       setNow(newNow);
 
       if (newNow >= startTimeMs) {
-        // Time's up!
         clearInterval(interval);
-        router.refresh(); // Refresh the page to transition to the game
+        router.refresh(); // Transition to the game
       }
-    }, 1000); // Update every second
+    }, 1000);
 
     return () => clearInterval(interval);
   }, [startTimeMs, router]);
 
-  // Calculate remaining time and format it internally
+  // Calculate remaining time, never negative
   const remainingMs = Math.max(0, startTimeMs - now);
-  const formattedTime = formatMsToMMSS(remainingMs); // This variable is now local
-  // --- END: Added Timer Logic ---
+  const formattedTime = formatMsToMMSS(remainingMs);
 
+  // Full player avatars list
   const diamondAvatars = useMemo(() => {
-    // ... (This logic is unchanged, as requested)
     const players = [
-      {
-        username: "Player 1",
-        pfpUrl: "/images/lobby/1.jpg",
-      },
-      // ... (rest of players array) ...
-      {
-        username: "Player 25",
-        pfpUrl: "/images/lobby/25.jpg",
-      },
+      { username: "Player 1", pfpUrl: "/images/lobby/1.jpg" },
+      { username: "Player 2", pfpUrl: "/images/lobby/2.jpg" },
+      { username: "Player 3", pfpUrl: "/images/lobby/3.jpg" },
+      { username: "Player 4", pfpUrl: "/images/lobby/4.jpg" },
+      { username: "Player 5", pfpUrl: "/images/lobby/5.jpg" },
+      { username: "Player 6", pfpUrl: "/images/lobby/6.jpg" },
+      { username: "Player 7", pfpUrl: "/images/lobby/7.jpg" },
+      { username: "Player 8", pfpUrl: "/images/lobby/8.jpg" },
+      { username: "Player 9", pfpUrl: "/images/lobby/9.jpg" },
+      { username: "Player 10", pfpUrl: "/images/lobby/10.jpg" },
+      { username: "Player 11", pfpUrl: "/images/lobby/11.jpg" },
+      { username: "Player 12", pfpUrl: "/images/lobby/12.jpg" },
+      { username: "Player 13", pfpUrl: "/images/lobby/13.jpg" },
+      { username: "Player 14", pfpUrl: "/images/lobby/14.jpg" },
+      { username: "Player 15", pfpUrl: "/images/lobby/15.jpg" },
+      { username: "Player 16", pfpUrl: "/images/lobby/16.jpg" },
+      { username: "Player 17", pfpUrl: "/images/lobby/17.jpg" },
+      { username: "Player 18", pfpUrl: "/images/lobby/18.jpg" },
+      { username: "Player 19", pfpUrl: "/images/lobby/19.jpg" },
+      { username: "Player 20", pfpUrl: "/images/lobby/20.jpg" },
+      { username: "Player 21", pfpUrl: "/images/lobby/21.jpg" },
+      { username: "Player 22", pfpUrl: "/images/lobby/22.jpg" },
+      { username: "Player 23", pfpUrl: "/images/lobby/23.jpg" },
+      { username: "Player 24", pfpUrl: "/images/lobby/24.jpg" },
+      { username: "Player 25", pfpUrl: "/images/lobby/25.jpg" },
     ];
     return players.map((player) => ({
       id: player.username,
@@ -88,9 +105,6 @@ export default function WaitingView({
   )}`;
   const playerCount = game?._count.tickets ?? 0;
 
-  // --- START: UI (Unchanged) ---
-  // This entire return block is identical to your provided code.
-  // It now uses the 'formattedTime' variable calculated above.
   return (
     <div
       className={cn(
@@ -149,12 +163,52 @@ export default function WaitingView({
           joined
         </p>
       </section>
-      {/* <ChatTickerOverlay
-        className="!absolute left-0 right-0 bottom-[70px] sm:bottom-[90px] z-10"
-        maxItems={4}
-      /> */}
-      {/* <ChatDrawer gameId={game.id} fid={userInfofid} /> */}
+      <ChatTickerOverlay bottomOffset={150} />
+      <ChatInput
+        onOpenChat={() => {
+          setChatOpen(true);
+        }}
+        bottomOffset={60}
+      />
+      <BottomNav />
+      <Chat
+        isOpen={chatOpen}
+        onClose={() => {
+          setChatOpen(false);
+        }}
+      />
     </div>
   );
-  // --- END: UI (Unchanged) ---
 }
+
+// --- Chat Input Component ---
+const ChatInput = ({
+  onOpenChat,
+  bottomOffset,
+}: {
+  onOpenChat: () => void;
+  bottomOffset: number;
+}) => {
+  return (
+    <div
+      className="absolute left-0 right-0 h-[78px] w-full px-4 pt-3 pb-5"
+      style={{ bottom: `${bottomOffset}px` }} // Use dynamic bottom offset
+    >
+      <button
+        onClick={onOpenChat}
+        className="flex h-full w-full items-center rounded-full bg-white/5 px-4 py-[14px] text-white/40 transition-all duration-200 ease-in-out
+                   hover:bg-white/10
+                   active:bg-white/15
+                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+        style={{
+          fontSize: "14px",
+          fontWeight: 500,
+          letterSpacing: "-0.03em",
+          lineHeight: "130%",
+        }}
+      >
+        Type...
+      </button>
+    </div>
+  );
+};
