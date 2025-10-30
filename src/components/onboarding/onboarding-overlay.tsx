@@ -11,16 +11,16 @@ interface OnboardingOverlayProps {
 export function OnboardingOverlay({ onComplete }: OnboardingOverlayProps) {
   return (
     <div
-      className={cn("fixed inset-0 z-81 flex flex-col", "bg-[#191919]")}
+      className={cn("fixed inset-0 z-81 flex flex-col pt-2", "bg-[#191919]")}
       role="dialog"
       aria-modal="true"
       aria-labelledby="onboarding-title"
     >
-      <div className="flex shrink-0 items-center justify-center p-6 sm:p-8">
+      <div className="flex shrink-0 items-center justify-center p-2">
         <h1 id="onboarding-title" className="sr-only">
           Onboarding
         </h1>
-        <div className="relative w-56 h-56 sm:w-72 sm:h-72 md:w-96 md:h-96">
+        <div className="relative w-56 h-20 ">
           <Image
             src="/logo-onboarding.png"
             alt="Waffles Logo"
