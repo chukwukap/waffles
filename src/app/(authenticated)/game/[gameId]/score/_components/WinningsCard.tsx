@@ -35,12 +35,11 @@ export default function WinningsCard({
         border border-white/5
         flex flex-col gap-4
         my-5
-        noise
       "
     >
       {/* Top Row */}
       <div className="flex items-center justify-between w-full">
-        <p className="text-[#99A0AE] font-display text-sm sm:text-[15px]">
+        <p className="text-[#99A0AE] font-display text-base sm:text-[15px]">
           Winnings
         </p>
 
@@ -92,7 +91,7 @@ export default function WinningsCard({
             rounded-2xl p-3 sm:p-4
           "
         >
-          <span className="text-[#99A0AE] text-sm font-body">Score</span>
+          <span className="text-[#99A0AE] text-sm font-display">Score</span>
 
           <div className="flex items-center gap-2">
             <FlashIcon className="w-5 h-5 text-[#FFC931]" />
@@ -110,7 +109,7 @@ export default function WinningsCard({
             rounded-2xl p-3 sm:p-4
           "
         >
-          <span className="text-[#99A0AE] text-sm font-body">Rank</span>
+          <span className="text-[#99A0AE] text-sm font-display">Rank</span>
 
           <div className="flex items-center gap-2">
             <TrendIcon className="w-5 h-5 text-[#14B985]" />

@@ -10,11 +10,10 @@ export const minikitConfig: MiniAppManifest = {
   accountAssociation: {
     header:
       "eyJmaWQiOjc1NTA3NCwidHlwZSI6ImF1dGgiLCJrZXkiOiIweERBYjk0NWQwODFFMDVlOEM0NzFlNTRGNTE0QURCOUM4NmYzYTJlYTQifQ",
-    payload: "eyJkb21haW4iOiJkZGZkNzE2OTczZjUubmdyb2stZnJlZS5hcHAifQ",
+    payload: "eyJkb21haW4iOiJ0cm95LW1pdGVyZWQtcGVhcmwubmdyb2stZnJlZS5kZXYifQ",
     signature:
-      "TrxowPCC+bB9M4Hx/0X8F6DSzULWvTU2WhX9U54gz61BRdiNtqVTO2lf4xntItR+IYEfvn+tFcZylhsm7tCsORs=",
+      "0UbE3jjMUoyf3380WZkF/XbssRr0P9yIMJmxjEMkk/twHXBWFMZxKb60si6nd3zVyh3pJR6O12aMSO8Ybk+Qnxs=",
   },
-
   miniapp: {
     version: "1",
     name: "Waffles",

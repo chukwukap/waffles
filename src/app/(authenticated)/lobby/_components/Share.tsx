@@ -46,7 +46,7 @@ export function Share({
         {" "}
         {/* Waffle ticket illustration */}
         <Image
-          src="/images/illustrations/waffle-ticket.png"
+          src="/images/illustrations/waffles.svg"
           alt="Pixel waffle"
           width={228}
           height={132}
@@ -67,8 +67,8 @@ export function Share({
         {/* Sub-heading */}
         <p className="mt-3 text-center text-base font-display text-[#99A0AE]">
           {" "}
-          You&apos;re in for {gameTitle}. See you{" "}
-          {getWeekdayString(new Date(startTime).getDay())}
+          You&apos;re in. See you Friday.
+          {/* {getWeekdayString(new Date(startTime).getDay())} */}
         </p>
         <GameSummaryCard
           avatarUrl={avatarUrl}

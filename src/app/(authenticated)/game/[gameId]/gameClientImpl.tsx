@@ -76,9 +76,11 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
   const leaveGame = useCallback(async () => {
     try {
       await leaveGameAction({ fid: userInfo.fid, gameId: game.id });
+      setIsLeaveGameDrawerOpen(false);
       router.refresh();
     } catch {
       notify.error("Failed to leave game:");
+      setIsLeaveGameDrawerOpen(false);
     }
   }, [userInfo.fid, game.id, router]);
 
