@@ -110,8 +110,10 @@ export default function QuestionView({
       if (!result.success) {
         notify.error("Submission failed:");
         setIsSubmitting(false); // <-- UNSET ON ERROR
+        setSelectedOption(null);
       } else {
         setIsSubmitting(false);
+        setSelectedOption(null);
         router.refresh(); // <-- Success will trigger unmount
       }
     },
