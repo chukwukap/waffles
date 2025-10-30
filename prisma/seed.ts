@@ -12,20 +12,8 @@ const prisma = new PrismaClient();
  */
 
 async function main() {
-  // 1. USERS
-  const testUser = await prisma.user.upsert({
-    where: { fid: 123 },
-    update: {},
-    create: {
-      name: "Test User",
-      fid: 123,
-      imageUrl: "https://picsum.photos/100?test",
-      wallet: "0xTest0000000000000000000000000000000001234567",
-    },
-  });
-
   // 2. GAMES & QUESTIONS
-  const game1 = await prisma.game.upsert({
+  await prisma.game.upsert({
     where: { id: 1 },
     update: {},
     create: {
@@ -171,19 +159,6 @@ async function main() {
       },
     },
   });
-
-  // Create a referral code for the test user (as inviter)
-  const referral = await prisma.referral.create({
-    data: {
-      code: "123456",
-      inviterId: testUser.id,
-      // No invitee yet, so inviteeId is null
-    },
-  });
-
-  console.log(
-    `Seeded referral code: ${referral.code} for user: ${testUser.name}`
-  );
 }
 
 main()
