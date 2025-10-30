@@ -162,8 +162,8 @@ export default function LeaderboardPage() {
 
   // ───────────────────────── RENDER ─────────────────────────
   return (
-    <main className="min-h-[100dvh] bg-figma noise">
-      <header className="sticky top-0 z-20 w-full border-b border-white/20 px-4 py-3 bg-figma">
+    <main className="flex-1 overflow-y-auto ">
+      <header className="sticky top-0 z-20 w-full border-b border-white/20 px-4 py-3 bg-[#191919]">
         <div className="mx-auto max-w-screen-sm flex w-full items-center justify-between ">
           <div className="flex min-w-0 flex-row items-center justify-center">
             <LogoIcon />
@@ -198,7 +198,7 @@ export default function LeaderboardPage() {
           />
         </div>
         {/* Sticky Header with Title, Tabs, Description */}
-        <div className="sticky top-[61px] z-10 -mx-4 px-4 pb-2 pt-1 backdrop-blur-sm bg-figma/80">
+        <div className="sticky top-[61px] z-10 -mx-4 px-4 pb-2 pt-1 backdrop-blur-sm">
           <h1 className="text-center font-body text-2xl md:text-3xl tracking-wide">
             LEADERBOARD
           </h1>

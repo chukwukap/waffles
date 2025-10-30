@@ -104,7 +104,7 @@ export default function InvitePageClient({
     <div className="relative min-h-screen flex flex-col w-full">
       {/* BG layer (fills parent) */}
       <div
-        className="absolute inset-0 w-full h-full bg-figma-gradient pointer-events-none z-0"
+        className="absolute inset-0 w-full h-full app-background-gradient pointer-events-none z-0"
         aria-hidden="true"
       />
 

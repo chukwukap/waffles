@@ -134,7 +134,7 @@ export default function GameHistoryPage() {
       className={cn(
         // Base styles
         "min-h-screen flex flex-col", // Full height, flex column
-        "bg-figma noise", // Background gradient/noise
+        "app-background noise", // Background gradient/noise
         "text-[color:var(--text-primary)]" // Default text color
       )}
     >

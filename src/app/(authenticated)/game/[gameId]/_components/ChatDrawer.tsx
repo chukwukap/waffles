@@ -78,7 +78,7 @@ export default async function ChatDrawer({
         className="absolute inset-0 flex flex-col justify-end font-display pointer-events-auto"
         style={{ minHeight: "60dvh" }}
       >
-        <div className="relative w-full mx-auto flex flex-col rounded-t-2xl bg-figma noise h-[85vh] max-h-[90dvh] sm:max-h-[600px] min-h-[60dvh] overflow-hidden pointer-events-auto">
+        <div className="relative w-full mx-auto flex flex-col rounded-t-2xl app-background noise h-[85vh] max-h-[90dvh] sm:max-h-[600px] min-h-[60dvh] overflow-hidden pointer-events-auto">
           {/* Header */}
           <div className="flex flex-row items-center justify-between px-4 pt-8 pb-3 border-b border-white/5 bg-[#191919] rounded-t-2xl font-body shrink-0">
             <div className="flex flex-row items-center gap-2">

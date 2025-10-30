@@ -15,12 +15,13 @@ import { useMiniUser } from "@/hooks/useMiniUser";
 import { useGetTokenBalance } from "@coinbase/onchainkit/wallet";
 import { env } from "@/lib/env";
 import { base } from "wagmi/chains";
-import { cn, isSnapshot } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import SoundManager from "@/lib/SoundManager";
 import { HydratedGame, HydratedUser } from "@/state/types";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { leaveGameAction } from "@/actions/game";
 import { notify } from "@/components/ui/Toaster";
+// REMOVED: import { useTimer } from "@/hooks/useTimer";
 
 interface GameClientImplProps {
   game: HydratedGame;
@@ -51,7 +52,9 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
     if (!prefs.soundEnabled) return;
 
     const handleInteraction = () => {
-      SoundManager.init().catch(() => {});
+      SoundManager.init().catch(() => {
+        console.error("Failed to initialize sound");
+      });
     };
 
     window.addEventListener("pointerdown", handleInteraction, { once: true });
@@ -79,6 +82,8 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
     }
   }, [userInfo.fid, game.id, router]);
 
+  // REMOVED: const waitingTimer = useTimer(...)
+
   // ───────────────────────── VIEW LOGIC ─────────────────────────
   const view = (() => {
     if (!game || !userInfo) return notFound();
@@ -91,22 +96,23 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
     const isParticipant =
       userInfo.gameParticipants?.some((p) => p.gameId === game.id) ?? false;
 
-    const isGameOver = now > end;
-    const isWaiting = now < start;
+    // check whether the game is over by checking if the user has answered all the questions
+    const isGameOver =
+      now > end ||
+      (userInfo.answers?.length ?? 0) === (game.questions?.length ?? 0);
+
+    const isWaiting = now.getTime() < start.getTime();
     const isActive = now >= start && now <= end;
 
-    if (
-      isGameOver ||
-      isSnapshot(userInfo.answers?.length ?? 0, game.questions?.length ?? 0)
-    ) {
+    if (isGameOver) {
       router.push(`/game/${game.id}/score`);
       return null;
     }
 
     if (isWaiting) {
-      return (
-        <WaitingView game={game} fid={userInfo.fid} onComplete={() => {}} />
-      );
+      // Pass startTime to WaitingView. It will handle its own countdown.
+      // The onComplete logic (router.refresh()) will be inside WaitingView.
+      return <WaitingView game={game} startTime={game.startTime} />;
     }
 
     if (!userTicket) {
@@ -119,18 +125,21 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
     }
 
     if (isActive) {
+      // Pass the fully loaded data to QuestionView
       return <QuestionView game={game} userInfo={userInfo} />;
     }
 
-    return <WaitingView game={game} fid={userInfo.fid} onComplete={() => {}} />;
+    // Fallback if game is not active (e.g., time calculations are off)
+    // Pass startTime to WaitingView
+    return <WaitingView game={game} startTime={game.startTime} />;
   })();
 
   // ───────────────────────── RENDER ─────────────────────────
   return (
-    <div className="w-full min-h-dvh overflow-hidden ">
+    <div className="w-full min-h-[100dvh] flex-1 overflow-y-auto">
       <header
         className={cn(
-          "sticky top-0 z-40 p-4 flex items-center justify-between border-b border-border bg-figma/80 backdrop-blur-sm bg-[#191919]"
+          "sticky top-0 z-40 p-4 flex items-center justify-between border-b border-border backdrop-blur-sm"
         )}
       >
         <LogoIcon />

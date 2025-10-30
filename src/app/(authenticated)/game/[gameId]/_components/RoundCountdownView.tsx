@@ -1,23 +1,27 @@
 // ───────────────────────── RoundCountdownView.tsx ─────────────────────────
 "use client";
 
-import { UseTimerResult } from "@/hooks/useTimer";
+// REMOVED: import { UseTimerResult } from "@/hooks/useTimer";
 
 const BLUE = "#1E8BFF";
 
+/**
+ * New props interface for the component.
+ * These values are now passed down from the parent (QuestionView).
+ */
+interface RoundCountdownViewProps {
+  percent: number; // Percent remaining (1.0 -> 0.0)
+  secondsLeft: number; // Seconds remaining (e.g., 15, 14, ...)
+  totalSeconds: number; // Total duration in seconds (e.g., 15)
+}
+
 export default function RoundCountdownView({
-  roundTimer,
-  gameId,
-  fid,
-}: {
-  roundTimer: UseTimerResult;
-  gameId: number;
-  fid: number;
-}) {
-  // ratio is 0 → 1 (progress). We convert to remaining seconds for display.
-  const ratio = roundTimer.percent;
-  const secondsLeft = Math.ceil(roundTimer.remaining / 1000);
-  const totalSeconds = Math.ceil(roundTimer.duration / 1000);
+  percent,
+  secondsLeft,
+  totalSeconds,
+}: RoundCountdownViewProps) {
+  // The 'percent' prop (1.0 -> 0.0) is the same as the old 'ratio'
+  const ratio = percent;
 
   return (
     <div className="animate-up">
@@ -58,7 +62,7 @@ function CountdownCircle({
   secondsLeft,
 }: {
   total: number; // total seconds in this round break
-  ratio: number; // 0 → 1 progress
+  ratio: number; // 1.0 → 0.0 progress (percent remaining)
   secondsLeft: number; // integer seconds left
 }) {
   const size = 240;
@@ -66,15 +70,18 @@ function CountdownCircle({
   const r = (size - stroke) / 2;
   const circumference = 2 * Math.PI * r;
 
-  // ring progress: full circumference down to 0
+  // 'ratio' is percent remaining (1.0 -> 0).
+  // This formula makes the dashOffset go from 0 (full circle)
+  // to 'circumference' (empty circle) as ratio goes from 1 to 0.
   const dashOffset = circumference * (1 - ratio);
-  const angle = ratio * 360 - 90; // rotate progress dot
+  // const angle = ratio * 360 - 90; // For the commented-out dot
 
   return (
     <div
       className="relative"
       style={{ width: size, height: size }}
       aria-label="Next round countdown"
+      role="timer"
       aria-live="polite"
       aria-valuemin={0}
       aria-valuemax={total}
@@ -106,7 +113,8 @@ function CountdownCircle({
           />
         </g>
       </svg>
-      {/* Moving progress dot */}
+
+      {/* Moving progress dot (commented out in original) */}
       {/* <div
         className="absolute left-1/2 top-1/2"
         style={{
@@ -130,6 +138,7 @@ function CountdownCircle({
           }}
         />
       </div> */}
+
       {/* Timer Text */}
       <div className="pointer-events-none absolute inset-0 grid place-items-center">
         <span

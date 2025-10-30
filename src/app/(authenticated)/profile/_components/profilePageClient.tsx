@@ -87,8 +87,8 @@ export default function ProfilePageClient({
   const safeUsername = username || profileData.name || "Player";
 
   return (
-    <div className="min-h-screen flex flex-col bg-figma noise ">
-      <header className="sticky top-0 z-10 w-full border-b border-white/20 px-4 py-3 bg-figma/80 backdrop-blur-sm">
+    <div className="flex-1 overflow-y-auto ">
+      <header className="sticky top-0 z-10 w-full border-b border-white/20 px-4 py-3 app-background/80 backdrop-blur-sm">
         <div className="mx-auto max-w-screen-sm flex w-full items-center justify-between">
           <div className="flex min-w-0 flex-row items-center justify-center">
             <LogoIcon />

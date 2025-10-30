@@ -1,36 +1,47 @@
+// ───────────────────────── QuestionCardHeader.tsx ─────────────────────────
 "use client";
-
 import { SoundOffIcon, SoundOnIcon } from "@/components/icons";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import Image from "next/image";
-import { UseTimerResult } from "@/hooks/useTimer";
+import { formatMsToMMSS } from "@/lib/utils"; // Import helper
+
+// Define the states from QuestionView
+type QuestionState = "SHOWING_ROUND_BREAK" | "SHOWING_QUESTION" | "SHOWING_GAP";
 
 interface QuestionHeaderProps {
   currentQuestion: number;
   totalQuestions: number;
-  questionTimer: UseTimerResult;
-  questionGapTimer: UseTimerResult;
-  questionTimeLimit: number;
+  questionTimeLimit: number; // In seconds
+  state: QuestionState;
+  formattedTime: string;
+  percent: number; // A value from 0 to 1
 }
 
 export function QuestionHeader({
   currentQuestion,
   totalQuestions,
-  questionTimer,
-  questionGapTimer,
-  questionTimeLimit,
+  questionTimeLimit, // in seconds
+  state,
+  formattedTime,
+  percent,
 }: QuestionHeaderProps) {
   const { prefs, toggleSound } = useUserPreferences();
+
+  // Format the default time limit (e.g., "00:10")
+  const defaultFormattedTime = formatMsToMMSS(questionTimeLimit * 1000);
+
+  // Note: currentQuestion is the count of *answered* questions.
+  // For display, we want to show the *current* question number (which is answered + 1)
+  const displayQuestionNum = currentQuestion + 1;
 
   return (
     <div className="w-full flex items-center justify-between px-3 py-2 ">
       {/* Left: Question Index */}
       <span className="font-editundo text-white text-[18px] leading-none tracking-tight">
-        {String(currentQuestion).padStart(2, "0")}/
+        {String(displayQuestionNum).padStart(2, "0")}/
         {String(totalQuestions).padStart(2, "0")}
       </span>
-
-      {/* Center: Sound Button (floating above content) */}
+      {/* Center: Sound Button */}
       <button
         onClick={toggleSound}
         className=" bg-white/15 rounded-full p-2 backdrop-blur-sm active:scale-95 transition-transform mr-auto ml-3"
@@ -45,16 +56,13 @@ export function QuestionHeader({
       </button>
 
       {/* TIMER MODES */}
-      {questionTimer.isRunning && (
+      {state === "SHOWING_QUESTION" && (
         <div className="flex items-center gap-2">
-          <span className="font-pixel text-white text-lg">
-            {questionTimer.formatted}
-          </span>
-          <CapsuleProgress progress={questionTimer.percent} />
+          <span className="font-pixel text-white text-lg">{formattedTime}</span>
+          <CapsuleProgress progress={percent} />
         </div>
       )}
-
-      {questionGapTimer.isRunning && (
+      {state === "SHOWING_GAP" && (
         <div className="flex items-center gap-1">
           <Image
             src="/images/icons/clock.svg"
@@ -64,14 +72,15 @@ export function QuestionHeader({
             className="w-full h-full"
           />
           <span className="font-pixel text-[#B93814] text-2xl">
-            {questionGapTimer.formatted}
+            {formattedTime}
           </span>
         </div>
       )}
 
-      {!questionTimer.isRunning && !questionGapTimer.isRunning && (
+      {/* Fallback: Show the default time limit if not running */}
+      {state !== "SHOWING_QUESTION" && state !== "SHOWING_GAP" && (
         <span className="font-pixel text-white text-lg">
-          00:{questionTimeLimit}
+          {defaultFormattedTime}
         </span>
       )}
     </div>
