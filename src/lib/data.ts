@@ -31,7 +31,9 @@ export const fetchGameById = async (
     where: { id: gameId },
     include: {
       config: true,
-      questions: { orderBy: { id: "asc" } },
+      questions: {
+        orderBy: { id: "asc" },
+      },
       _count: { select: { tickets: true } },
     },
   });
@@ -86,10 +88,7 @@ export const fetchUserWithGameDetailsAndReferral = async (
  *
  * Each message includes user (fid, id, name, imageUrl).
  */
-export const fetchChatMessages = async (
-  gameId: number,
-  limit: number = 24
-) => {
+export const fetchChatMessages = async (gameId: number, limit: number = 24) => {
   return prisma.chat.findMany({
     where: { gameId },
     orderBy: { createdAt: "asc" },

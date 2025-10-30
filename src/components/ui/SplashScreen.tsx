@@ -25,8 +25,15 @@ export function SplashScreen() {
     >
       <div className="relative flex h-full w-full max-w-sm flex-col items-center justify-center px-6">
         <div className="flex flex-col items-center gap-3 text-center mb-20">
-          <div className="relative h-24 w-24 drop-shadow-[0_20px_40px_rgba(0,0,0,0.45)]">
-            <Image src="/logo.png" alt="Waffles Logo" fill priority />
+          <div className="relative h-24 w-40 drop-shadow-[0_20px_40px_rgba(0,0,0,0.45)] flex items-center justify-center">
+            <Image
+              src="/logo.png"
+              alt="Waffles Logo"
+              width={160}
+              height={96}
+              className="object-contain w-40 h-24"
+              priority
+            />
           </div>
           <p className="font-body text-4xl tracking-tight">WAFFLES</p>
         </div>

@@ -1,13 +1,19 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
 
 type SetValue<T> = (value: T | ((val: T) => T)) => void;
 
-// Generic localStorage hook with SSR safety and great APIs!
+// Custom event to broadcast storage changes within the same tab
+const IN_APP_STORAGE_EVENT = "onLocalStorageChange";
+
 export function useLocalStorage<T>(
   key: string,
   initialValue: T
 ): [T, SetValue<T>, () => void] {
+  // A function to read the value from localStorage
   const readValue = useCallback((): T => {
+    // Prevent SSR errors
     if (typeof window === "undefined") {
       return initialValue;
     }
@@ -20,54 +26,82 @@ export function useLocalStorage<T>(
     }
   }, [key, initialValue]);
 
-  // Store current value in a ref to avoid unnecessary renders
-  const valueRef = useRef<T>(readValue());
-  const updateValueRef = useRef<() => void>(() => {});
+  // Use useState, initializing with the value from localStorage
+  const [storedValue, setStoredValue] = useState<T>(readValue);
 
-  // Setup a forceUpdate function to re-render hook consumers
-  const [, setState] = useState(0);
-  const forceUpdate = useCallback(() => setState((v) => v + 1), []);
-
-  // Wrap setter function
+  // This is the setter function that components will use
   const setValue: SetValue<T> = useCallback(
     (value) => {
-      try {
-        const newValue =
-          value instanceof Function ? value(valueRef.current) : value;
+      // Prevent SSR errors
+      if (typeof window === "undefined") {
+        console.warn("Tried to set localStorage on the server");
+        return;
+      }
 
+      try {
+        // Allow value to be a function, just like a useState setter
+        const newValue = value instanceof Function ? value(storedValue) : value;
+
+        // Save to localStorage
         window.localStorage.setItem(key, JSON.stringify(newValue));
-        valueRef.current = newValue;
-        forceUpdate();
+        // Save to state
+        setStoredValue(newValue);
+
+        // Dispatch a custom event to notify other hooks *in the same tab*
+        window.dispatchEvent(
+          new CustomEvent(IN_APP_STORAGE_EVENT, { detail: { key, newValue } })
+        );
       } catch (error) {
         console.warn(`Error setting localStorage key "${key}":`, error);
       }
     },
-    [key, forceUpdate]
+    [key, storedValue]
   );
 
-  // Remove the value entirely
+  // This is the remove function
   const remove = useCallback(() => {
+    if (typeof window === "undefined") return;
+
     try {
       window.localStorage.removeItem(key);
-      valueRef.current = initialValue;
-      forceUpdate();
+      setStoredValue(initialValue);
+      window.dispatchEvent(
+        new CustomEvent(IN_APP_STORAGE_EVENT, {
+          detail: { key, newValue: initialValue },
+        })
+      );
     } catch (error) {
       console.warn(`Error removing localStorage key "${key}":`, error);
     }
-  }, [key, initialValue, forceUpdate]);
+  }, [key, initialValue]);
 
-  // Listen to storage events (cross-tab)
+  // Effect to listen for changes
   useEffect(() => {
-    function handleStorage(event: StorageEvent) {
+    // Handler for the 'storage' event (other tabs)
+    const handleStorageChange = (event: StorageEvent) => {
       if (event.key === key) {
-        valueRef.current = readValue();
-        forceUpdate();
+        setStoredValue(readValue());
       }
-    }
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
+    };
+
+    // Handler for the custom event (same tab)
+    const handleInAppChange = (event: Event) => {
+      const { key: changedKey } = (event as CustomEvent).detail;
+      if (changedKey === key) {
+        setStoredValue(readValue());
+      }
+    };
+
+    // Add listeners
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener(IN_APP_STORAGE_EVENT, handleInAppChange);
+
+    // Remove listeners on cleanup
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener(IN_APP_STORAGE_EVENT, handleInAppChange);
+    };
   }, [key, readValue]);
 
-  // Expose APIs: value, setValue, remove
-  return [valueRef.current, setValue, remove];
+  return [storedValue, setValue, remove];
 }

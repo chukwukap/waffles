@@ -74,7 +74,7 @@ export function GameSummaryCard({
         {/* Theme */}
         <div className="flex flex-row items-center justify-center gap-[8.5px] w-[106.65px] h-[32px]">
           <Image
-            src={`/images/illustrations/theme-${theme}.svg`}
+            src={`/images/themes/${theme}.svg`}
             alt="Football icon"
             width={29.11}
             height={28.43}

@@ -1,7 +1,8 @@
+// ====== Updated gameClientImpl.tsx ======
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { notFound, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import QuestionView from "./_components/QuestionView";
 import WaitingView from "./_components/WaitingView";
@@ -17,9 +18,10 @@ import { base } from "wagmi/chains";
 import { cn } from "@/lib/utils";
 import SoundManager from "@/lib/SoundManager";
 import { HydratedGame, HydratedUser } from "@/state/types";
-import { useUserPreferences } from "@/hooks/useUserPreferences";
+
 import { leaveGameAction } from "@/actions/game";
 import { notify } from "@/components/ui/Toaster";
+import { useUserPreferences } from "@/components/providers/userPreference";
 
 interface GameClientImplProps {
   game: HydratedGame;
@@ -44,35 +46,6 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
       chainId: base.id,
     }
   );
-
-  // ───────────────────────── NAVIGATION LOGIC ─────────────────────────
-  // This hook handles redirects safely *after* rendering.
-  useEffect(() => {
-    // Wait for data to be available before making decisions
-    if (!game || !userInfo) {
-      return;
-    }
-
-    const now = new Date();
-    const end = new Date(game.endTime);
-
-    // Check for game over
-    const isGameOver =
-      now > end ||
-      (userInfo.answers?.length ?? 0) === (game.questions?.length ?? 0);
-
-    if (isGameOver) {
-      router.push(`/game/${game.id}/score`);
-      return; // Navigate and stop further logic
-    }
-
-    // Check for user ticket
-    const userTicket = userInfo.tickets?.find((t) => t.gameId === game.id);
-    if (!userTicket) {
-      router.push("/lobby");
-      return; // Navigate and stop further logic
-    }
-  }, [game, userInfo, router]); // Dependencies: re-run if these change
 
   // ───────────────────────── EFFECTS ─────────────────────────
   // Init sound on first interaction
@@ -114,33 +87,18 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
 
   // ───────────────────────── VIEW LOGIC ─────────────────────────
   const view = (() => {
-    if (!game || !userInfo) return notFound();
+    // Only minimum local checks here. Main access checks are now server-side.
+    if (!game || !userInfo) return null;
 
     const now = new Date();
     const start = new Date(game.startTime);
     const end = new Date(game.endTime);
 
-    const userTicket = userInfo.tickets?.find((t) => t.gameId === game.id);
     const isParticipant =
       userInfo.gameParticipants?.some((p) => p.gameId === game.id) ?? false;
 
-    // check whether the game is over by checking if the user has answered all the questions
-    const isGameOver =
-      now > end ||
-      (userInfo.answers?.length ?? 0) === (game.questions?.length ?? 0);
-
-    const isWaiting = now.getTime() < start.getTime(); // TODO: remove this
+    const isWaiting = now.getTime() < start.getTime();
     const isActive = now >= start && now <= end;
-
-    // MODIFIED: Return null here. The useEffect above handles the redirect.
-    if (isGameOver) {
-      return null;
-    }
-
-    // MODIFIED: Return null here. The useEffect above handles the redirect.
-    if (!userTicket) {
-      return null;
-    }
 
     if (isWaiting) {
       // Pass startTime to WaitingView. It will handle its own countdown.

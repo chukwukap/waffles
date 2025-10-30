@@ -5,6 +5,7 @@ import GlobalToaster from "../ui/Toaster";
 import { OnboardingGate } from "../onboarding/onboarding-gate";
 
 import { SWRConfig } from "swr";
+import { UserPreferencesProvider } from "./userPreference";
 
 const fetcher = (url: string) =>
   fetch(url, { cache: "no-store" }).then((res) => {
@@ -24,7 +25,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <SWRConfig value={{ fetcher }}>
         <OnboardingGate>
           <CoreAppLogic>
-            {children}
+            <UserPreferencesProvider>{children}</UserPreferencesProvider>
             <GlobalToaster />
           </CoreAppLogic>
         </OnboardingGate>

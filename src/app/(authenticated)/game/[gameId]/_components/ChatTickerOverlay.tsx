@@ -73,7 +73,7 @@ export default function ChatTickerOverlay({
               className="rounded-full"
             />
             <span className="text-sm font-medium text-white">{chat.name}</span>
-            <span className="text-sm font-medium text-white/70">
+            <span className="text-sm font-medium text-white/70 font-display">
               {chat.message}
             </span>
           </div>

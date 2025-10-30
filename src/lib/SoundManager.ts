@@ -1,18 +1,21 @@
 // src/lib/SoundManager.ts
+// A unified, browser-only sound manager singleton.
+// Handles both predefined static sounds and dynamic URLs.
 
 // Define available sound names and their corresponding file paths
-const SOUND_FILES = {
-  click: "/sounds/click_001.ogg", // Example UI click sound
-  countdown: "/sounds/dice-shake-1.ogg", // Sound for countdown timers
-  correct: "/sounds/dice-shake-1.ogg", // Sound for correct answer (placeholder)
-  wrong: "/sounds/dice-shake-1.ogg", // Sound for incorrect answer (placeholder)
-  nextQuestion: "/sounds/dice-shake-1.ogg", // Sound for transitioning to next question (placeholder)
-  questionStart: "/sounds/dice-shake-1.ogg", // Sound when a new question appears (placeholder)
-  gameOver: "/sounds/dice-shake-1.ogg", // Sound for game over screen (placeholder)
-} as const; // Use 'as const' for stricter typing of keys
+const PREDEFINED_SOUNDS = {
+  click: "/sounds/click_001.ogg",
+  countdown: "/sounds/dice-shake-1.ogg",
+  correct: "/sounds/dice-shake-1.ogg",
+  wrong: "/sounds/dice-shake-1.ogg",
+  nextQuestion: "/sounds/dice-shake-1.ogg",
+  questionStart: "/sounds/dice-shake-1.ogg",
+  gameOver: "/sounds/dice-shake-1.ogg",
+  roundBreak: "/sounds/dice-shake-1.ogg", // Added this
+} as const;
 
-// Type representing the valid sound names based on the SOUND_FILES keys
-export type SoundName = keyof typeof SOUND_FILES; //
+// Type representing the valid *predefined* sound names
+type PredefinedSoundName = keyof typeof PREDEFINED_SOUNDS;
 
 // Options for playing a sound
 type PlayOptions = {
@@ -20,254 +23,204 @@ type PlayOptions = {
   volume?: number; // Volume level (0.0 to 1.0)
 };
 
-// Interface defining the public API of the SoundManager
+// Interface defining the public API
 type SoundManagerAPI = {
-  /** Initializes the audio context (required for playback in some browsers after user interaction). */
-  init(): Promise<void>; //
-  /** Plays the specified sound. */
-  play(name: SoundName, options?: PlayOptions): void; //
-  /** Stops a specific looping sound. */
-  stop(name: SoundName): void; //
-  /** Stops all currently looping sounds. */
-  stopAll(): void; //
+  init(): Promise<void>;
+  /**
+   * Plays a sound.
+   * @param nameOrUrl Can be a predefined sound name (e.g., 'click') or a full URL.
+   * @param options Playback options like loop and volume.
+   */
+  play(nameOrUrl: string, options?: PlayOptions): void;
+  /**
+   * Stops a sound.
+   * @param nameOrUrl The predefined name or full URL of the sound to stop.
+   */
+  stop(nameOrUrl: string): void;
+  stopAll(): void;
 };
 
-// Check if running in a browser environment with Audio API support
-const isBrowser = //
-  typeof window !== "undefined" && typeof window.Audio !== "undefined"; //
+const isBrowser =
+  typeof window !== "undefined" && typeof window.Audio !== "undefined";
 
 /**
- * Manages audio playback using the HTMLAudioElement API.
- * Implemented as a Singleton to ensure single instance and context management.
+ * Manages all audio playback.
+ * Implemented as a Singleton.
  */
-class BrowserSoundManager implements SoundManagerAPI {
-  // Singleton instance holder
-  private static instance: BrowserSoundManager; //
-  // Optional AudioContext for unlocking playback
-  private audioContext?: AudioContext; //
-  // Map to store base Audio elements (primarily for src lookup)
-  private sounds: Map<SoundName, HTMLAudioElement> = new Map(); //
-  // Map to store currently active looping Audio elements
-  private looping: Map<SoundName, HTMLAudioElement> = new Map(); //
+class UnifiedSoundManager implements SoundManagerAPI {
+  private static instance: UnifiedSoundManager;
+  private audioContext?: AudioContext;
 
-  // Private constructor for Singleton pattern
+  /**
+   * Stores all active audio elements, keyed by their nameOrUrl.
+   * This is crucial for stopping them, especially loops.
+   */
+  private activeSounds: Map<string, HTMLAudioElement> = new Map();
+
   private constructor() {
-    //
-    if (!isBrowser) return; // Do nothing if not in a browser
+    // Pre-load predefined sounds for faster playback
+    if (!isBrowser) return;
 
-    // Pre-create Audio elements for each sound file (improves initial play latency slightly)
-    (Object.entries(SOUND_FILES) as [SoundName, string][]).forEach(
-      //
-      ([name, url]) => {
-        //
-        try {
-          const base = new window.Audio(url); // Create Audio element
-          base.preload = "auto"; // Hint browser to preload metadata/data
-          // Attempt to load metadata - useful for duration but might fail initially
-          base.load();
-          this.sounds.set(name, base); // Store the base element
-        } catch (error) {
-          console.error(
-            `Failed to create Audio element for sound "${name}" at ${url}:`,
-            error
-          );
-        }
+    (
+      Object.entries(PREDEFINED_SOUNDS) as [PredefinedSoundName, string][]
+    ).forEach(([name, url]) => {
+      try {
+        const base = new window.Audio(url);
+        base.preload = "auto";
+        base.load();
+        // We store the *preloaded* element itself.
+        // We will *clone* this for one-shot sounds.
+        this.activeSounds.set(name, base);
+      } catch (error) {
+        console.error(`Failed to create Audio for "${name}" at ${url}:`, error);
       }
-    );
+    });
   }
 
-  /** Gets the singleton instance of the SoundManager. */
-  public static getInstance(): BrowserSoundManager {
-    //
-    if (!BrowserSoundManager.instance) {
-      //
-      BrowserSoundManager.instance = new BrowserSoundManager(); // Create instance if needed
-    } //
-    return BrowserSoundManager.instance; //
+  public static getInstance(): UnifiedSoundManager {
+    if (!UnifiedSoundManager.instance) {
+      UnifiedSoundManager.instance = new UnifiedSoundManager();
+    }
+    return UnifiedSoundManager.instance;
   }
 
-  /** Initializes (or resumes) the AudioContext. Should be called after user interaction. */
   public async init(): Promise<void> {
-    //
-    // Don't initialize if already done or not in browser
-    if (this.audioContext || !isBrowser) return; //
+    if (this.audioContext || !isBrowser) return;
 
-    // Get the appropriate AudioContext constructor
-    const AudioContextCtor = //
-      window.AudioContext || // Standard
+    const AudioContextCtor =
+      window.AudioContext ||
       (window as unknown as { webkitAudioContext: AudioContext })
-        .webkitAudioContext; // Safari/legacy webkit prefix
+        .webkitAudioContext;
     if (!AudioContextCtor) {
-      // Check if AudioContext is supported
-      console.warn("AudioContext is not supported in this browser.");
+      console.warn("AudioContext is not supported.");
       return;
     }
 
     try {
-      this.audioContext = new AudioContextCtor(); // Create the context
-      // Attempt to resume the context (required after user interaction)
+      this.audioContext = new AudioContextCtor();
       if (this.audioContext.state === "suspended") {
-        await this.audioContext.resume(); //
-        // console.log("AudioContext resumed successfully.");
+        await this.audioContext.resume();
       }
     } catch (error) {
-      // Catch errors during context creation/resumption
-      console.warn("Failed to initialize or resume AudioContext:", error); //
-      this.audioContext = undefined; // Reset context on failure
+      console.warn("Failed to initialize AudioContext:", error);
+      this.audioContext = undefined;
     }
   }
 
-  /** Plays a sound by name, with optional looping and volume control. */
-  public play(name: SoundName, options: PlayOptions = {}): void {
-    //
-    // Get the base Audio element (used primarily for src)
-    const base = this.sounds.get(name); //
-    if (!base) {
-      // Check if sound exists
-      console.warn(`Sound "${name}" not found or failed to load.`);
-      return; //
+  public play(nameOrUrl: string, options: PlayOptions = {}): void {
+    if (!isBrowser) return;
+
+    const { loop = false, volume = 0.6 } = options;
+    const clampedVolume = Math.min(1, Math.max(0, volume));
+
+    // Check if it's a predefined sound
+    const isPredefined = nameOrUrl in PREDEFINED_SOUNDS;
+    let audio: HTMLAudioElement;
+
+    // --- Get or Create Audio Element ---
+    if (this.activeSounds.has(nameOrUrl) && (loop || isPredefined)) {
+      // 1. Reuse existing element (for loops or predefined sounds)
+      audio = this.activeSounds.get(nameOrUrl)!;
+    } else {
+      // 2. Create new element (for one-shot URLs or if not found)
+      try {
+        const src = isPredefined
+          ? PREDEFINED_SOUNDS[nameOrUrl as PredefinedSoundName]
+          : nameOrUrl;
+        audio = new window.Audio(src);
+        audio.preload = "auto";
+      } catch (error) {
+        console.error(
+          `[SoundManager] Error loading sound from ${nameOrUrl}:`,
+          error
+        );
+        return;
+      }
     }
 
-    const { loop = false, volume = 0.6 } = options; // Default volume to 0.6
+    // --- Configure and Play ---
+    audio.loop = loop;
+    audio.volume = clampedVolume;
+    audio.currentTime = 0; // Always play from the start
 
-    // Get or create the actual Audio instance to play
-    const instance = loop
-      ? this.getOrCreateLoopInstance(name, base.src) // Use/create specific instance for looping
-      : this.createOneShotInstance(base.src); // Create new instance for one-shot
-
-    instance.loop = loop; // Set loop property
-    // Set volume, clamped between 0 and 1
-    instance.volume = Math.min(1, Math.max(0, volume)); //
-
-    // Reset playback position for non-looping sounds or initially starting loops
-    if (!loop || (loop && instance.paused)) {
-      //
-      instance.currentTime = 0; //
-    }
-
-    // Attempt to play the sound
-    const playPromise = instance.play(); // Returns a promise
+    const playPromise = audio.play();
     if (playPromise !== undefined) {
       playPromise.catch((error) => {
-        // Catch playback errors (e.g., user hasn't interacted)
-        // Log specific errors for debugging, avoid flooding console for common interaction errors
         if (error.name === "NotAllowedError") {
-          console.debug(
-            `Playback prevented for "${name}": User interaction likely required.`
-          );
+          console.debug(`[SoundManager] Playback requires user interaction.`);
         } else {
-          console.error(`Failed to play sound "${name}":`, error); //
+          console.error(`[SoundManager] Error playing ${nameOrUrl}:`, error);
         }
-        // If it was a one-shot instance that failed, clean it up
-        if (!loop) {
-          instance.remove(); // Assuming createOneShotInstance doesn't attach to DOM
+        // If it failed, remove it from active sounds if it's not predefined
+        if (!isPredefined) {
+          this.activeSounds.delete(nameOrUrl);
         }
       });
     }
 
-    // For one-shot sounds, clean up the instance after playback finishes
-    if (!loop) {
-      //
-      instance.addEventListener(
-        //
-        "ended", //
+    // --- Manage Active Sounds Map ---
+    if (loop) {
+      // If looping, *always* store it so we can stop it
+      this.activeSounds.set(nameOrUrl, audio);
+    } else if (!isPredefined) {
+      // If one-shot URL, store it and remove on 'ended'
+      this.activeSounds.set(nameOrUrl, audio);
+      audio.addEventListener(
+        "ended",
         () => {
-          //
-          // Optional: Explicitly remove if needed, though garbage collection should handle it
-          // instance.remove();
-        }, //
-        { once: true } // Ensure listener is removed after firing once
+          this.activeSounds.delete(nameOrUrl);
+        },
+        { once: true }
       );
     }
+    // (If one-shot predefined, we just play it but don't re-store it)
   }
 
-  /** Stops a specific looping sound and resets its position. */
-  public stop(name: SoundName): void {
-    //
-    const loopingInstance = this.looping.get(name); // Get the active looping instance
-    if (!loopingInstance) return; // Exit if not currently looping
+  public stop(nameOrUrl: string): void {
+    if (!isBrowser) return;
 
-    loopingInstance.pause(); // Pause playback
-    loopingInstance.currentTime = 0; // Reset position to start
-    // Note: We keep the instance in the `looping` map but paused,
-    // so `play` can potentially reuse it without creating a new one.
-    // If true cleanup is needed:
-    // loopingInstance.remove(); // If attached to DOM (unlikely here)
-    // this.looping.delete(name);
+    const audio = this.activeSounds.get(nameOrUrl);
+    if (!audio) return;
+
+    try {
+      audio.pause();
+      audio.currentTime = 0;
+    } catch (error) {
+      console.error(`[SoundManager] Error stopping ${nameOrUrl}:`, error);
+    }
+
+    // If it wasn't a predefined sound, remove it from the map
+    if (!(nameOrUrl in PREDEFINED_SOUNDS)) {
+      this.activeSounds.delete(nameOrUrl);
+    }
   }
 
-  /** Stops all currently active looping sounds. */
   public stopAll(): void {
-    //
-    this.looping.forEach((instance, name) => {
-      // Iterate through looping sounds
+    if (!isBrowser) return;
+
+    this.activeSounds.forEach((audio, key) => {
       try {
-        instance.pause(); // Pause
-        instance.currentTime = 0; // Reset
+        audio.pause();
+        audio.currentTime = 0;
+        // Don't remove predefined sounds, just stop them
+        if (!(key in PREDEFINED_SOUNDS)) {
+          this.activeSounds.delete(key);
+        }
       } catch (error) {
-        console.warn(`Error stopping looping sound "${name}":`, error);
+        console.warn(`[SoundManager] Error stopping sound "${key}":`, error);
       }
     });
-    // Keep instances in the map but paused. To fully clear:
-    // this.looping.clear();
-  }
-
-  // --- Private Helper Methods ---
-
-  /** Gets an existing looping instance or creates a new one. */
-  private getOrCreateLoopInstance(
-    name: SoundName,
-    src: string
-  ): HTMLAudioElement {
-    //
-    const existing = this.looping.get(name); // Check if already looping
-    if (existing) {
-      //
-      // Optionally reset time if needed, depends on desired behavior when play is called again
-      // existing.currentTime = 0;
-      return existing; // Return existing instance
-    }
-    // Create, store, and return a new instance for looping
-    const instance = this.createAndConfigureInstance(src); //
-    instance.loop = true; // Ensure loop is set
-    this.looping.set(name, instance); // Store it
-    return instance; //
-  }
-
-  /** Creates a new Audio instance for one-shot playback. */
-  private createOneShotInstance(src: string): HTMLAudioElement {
-    //
-    return this.createAndConfigureInstance(src); // Just create a new configured instance
-  }
-
-  /** Creates a new Audio instance and sets basic configuration. */
-  private createAndConfigureInstance(src: string): HTMLAudioElement {
-    const instance = new window.Audio(src);
-    instance.preload = "auto"; // Hint preload
-    // instance.load(); // Might not be needed if src is set in constructor
-    return instance;
   }
 }
 
-// --- Export Singleton Instance or No-op Object ---
-// Export the singleton instance for browser environments,
-// or a no-op object for server-side environments.
-const SoundManager: SoundManagerAPI = isBrowser //
-  ? BrowserSoundManager.getInstance() // Use Singleton in browser
+// --- Export Singleton Instance ---
+const SoundManager: SoundManagerAPI = isBrowser
+  ? UnifiedSoundManager.getInstance()
   : {
-      // No-op implementations for server-side
-      async init() {
-        /* noop */
-      }, //
-      play() {
-        /* noop */
-      }, //
-      stop() {
-        /* noop */
-      }, //
-      stopAll() {
-        /* noop */
-      }, //
-    }; //
+      async init() {},
+      play() {},
+      stop() {},
+      stopAll() {},
+    };
 
-export default SoundManager; // Export the instance/object
+export default SoundManager;
