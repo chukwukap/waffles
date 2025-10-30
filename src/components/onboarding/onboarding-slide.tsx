@@ -17,7 +17,7 @@ export function OnboardingSlide({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center text-center px-8 py-12",
+        "flex flex-col items-center justify-between text-center px-8 py-8",
         className
       )}
     >

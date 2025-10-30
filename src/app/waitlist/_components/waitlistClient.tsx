@@ -34,6 +34,17 @@ export function WaitlistClient({
       console.error("Error joining waitlist:", error);
     }
   }
+
+  // Define the array of splash images based on the design
+  const splashImages = [
+    "/images/splash/crew-1.png",
+    "/images/splash/crew-2.png",
+    "/images/splash/crew-3.png",
+    "/images/splash/crew-4.png",
+    "/images/splash/crew-5.png",
+    "/images/splash/crew-6.png",
+  ];
+
   return (
     <div className="relative min-h-screen w-full  overflow-hidden">
       <main className="relative w-full max-w-[420px] mx-auto text-white pt-[env(safe-area-inset-top)] px-4">
@@ -43,21 +54,15 @@ export function WaitlistClient({
           transition={{ duration: 0.6 }}
           className="mt-6 flex justify-center"
         >
-          <div
-            style={{ width: "224.06px", height: "42.58px" }}
-            className="flex flex-row items-center justify-center gap-[12px]"
-          >
+          <div className="flex flex-row items-center justify-center mt-10">
             <Image
-              src="/logo.png"
+              src="/logo-onboarding.png"
               alt="WAFFLES logo"
-              width={55}
-              height={43}
+              width={200}
+              height={150}
               priority
               className="object-contain"
             />
-            <span className="font-extrabold uppercase text-[32px] leading-[28px] tracking-wide font-body">
-              WAFFLES
-            </span>
           </div>
         </motion.div>
         <motion.div
@@ -83,7 +88,7 @@ export function WaitlistClient({
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.55, delay: 0.2 }}
-          className="mt-[7vh] flex flex-col items-center text-center"
+          className="mt-[2vh] flex flex-col items-center text-center"
         >
           {waitlist.onList ? (
             <>
@@ -95,7 +100,7 @@ export function WaitlistClient({
                   ? `You're #${waitlist.rank} on the waitlist.`
                   : "You're on the waitlist!"}
                 <br />
-                You’ve invited {waitlist.invites} friend
+                You&apos;ve invited {waitlist.invites} friend
                 {waitlist.invites === 1 ? "" : "s"}. Share to move up faster.
               </p>
               <Suspense fallback={null}>
@@ -140,6 +145,24 @@ export function WaitlistClient({
           </p>
         </motion.div>
       </main>
+
+      {/* --- ADDED THIS SECTION --- */}
+      {/* This div positions the splash characters at the bottom of the screen */}
+      <div className="absolute bottom-0 w-full flex justify-center items-end pointer-events-none">
+        <div className="flex flex-row items-end -space-x-4">
+          {splashImages.map((src, index) => (
+            <Image
+              key={src}
+              src={src}
+              alt={`Splash character ${index + 1}`}
+              width={68}
+              height={88}
+              className="h-20 w-auto object-contain"
+            />
+          ))}
+        </div>
+      </div>
+      {/* --- END OF ADDED SECTION --- */}
     </div>
   );
 }

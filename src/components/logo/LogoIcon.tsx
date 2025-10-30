@@ -12,12 +12,12 @@ export default function LogoIcon({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("relative w-[100px] h-[40px]", className)} {...props}>
+    <div className={cn("relative w-[148px] h-[60px]", className)} {...props}>
       <Image
-        src="/logo-icon.png"
+        src="/logo-onboarding.png"
         alt="Waffles logo icon"
         fill
-        sizes="(max-width: 640px) 100px, 100px"
+        sizes="(max-width: 640px) 148px, 148px"
         priority
         className="object-contain"
       />

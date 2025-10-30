@@ -202,17 +202,50 @@ export default function LobbyPageClientImpl({
         )}
       >
         <LogoIcon />
-        <div className="flex items-center gap-1.5  rounded-full px-3 py-1.5">
-          <WalletIcon className="w-4 h-4 text-foreground" />
-          <span className="text-xs text-foreground">{`$${
-            roundedBalance ? roundedBalance : "---"
-          }`}</span>
+        <div
+          className="flex flex-row justify-center items-center px-3 py-1.5 gap-1 rounded-full"
+          style={{
+            width: 96,
+            height: 28,
+            background: "rgba(249,249,249,0.1)",
+            borderRadius: 900,
+          }}
+        >
+          <span
+            className="flex items-center justify-center"
+            style={{
+              width: 16,
+              height: 16,
+              flex: "none",
+              order: 0,
+              flexGrow: 0,
+              position: "relative",
+            }}
+          >
+            <WalletIcon className="w-4 h-4 text-white" />
+          </span>
+          <span
+            className="font-edit-undo text-white"
+            style={{
+              fontStyle: "normal",
+              fontWeight: 400,
+              fontSize: 16,
+              lineHeight: "14px",
+              width: 52,
+              height: 14,
+              textAlign: "center" as const,
+              flex: "none",
+              order: 1,
+              flexGrow: 0,
+              display: "inline-block",
+            }}
+          >{`$${roundedBalance ? roundedBalance : "---"}`}</span>
         </div>
       </header>
       {/* ─────────────── Main Content ─────────────── */}
 
       {/* MAIN CONTENT */}
-      <div className="flex-1 flex flex-col items-center gap-3 justify-center overflow-y-auto pb-20 pt-14">
+      <div className="flex-1 flex flex-col items-center gap-3 justify-center overflow-y-auto pt-20">
         {showShare ? (
           <Share
             gameTitle={activeGame.name}
