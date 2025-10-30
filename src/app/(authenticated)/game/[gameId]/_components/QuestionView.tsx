@@ -10,7 +10,7 @@ import QuestionCard from "./QuestionCard";
 import { QuestionHeader } from "./QuestionCardHeader";
 import { isSnapshot, formatMsToMMSS } from "@/lib/utils"; // Import new helper
 import RoundCountdownView from "./RoundCountdownView";
-import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { useUserPreferences } from "@/components/providers/userPreference";
 
 // ───────────────────────── CONSTANTS ─────────────────────────
 const NEXT_QUESTION_DELAY_SECONDS = 3;
@@ -71,6 +71,50 @@ export default function QuestionView({
   const [deadline, setDeadline] = React.useState<number>(0);
   const [now, setNow] = React.useState<number>(Date.now());
   const questionStartTimeRef = React.useRef<number | null>(null);
+
+  // React.useEffect(() => {
+  //   if (!currentQuestion) return;
+  //   const soundUrl = currentQuestion.soundUrl;
+  //   if (!prefs.soundEnabled) return;
+
+  //   // PLAY SOUND WHEN QUESTION SHOWS
+  //   SoundManager.play("questionStart", { volume: 0.9 });
+
+  //   return () => {
+  //     // STOP SOUND WHEN QUESTION ENDS OR COMPONENT UNMOUNTS
+  //     SoundManager.stop("questionStart");
+  //   };
+  // }, [prefs.soundEnabled, currentQuestion]);
+
+  // ───────────────────────── QUESTION SOUND ─────────────────────────
+  React.useEffect(() => {
+    if (!currentQuestion) return;
+    if (!prefs.soundEnabled) return;
+
+    // Stop any leftover sounds before playing new one
+    SoundManager.stopAll();
+
+    // PLAY THE QUESTION'S SOUND FILE
+    console.log("playing question sound", currentQuestion.soundUrl);
+    SoundManager.play(currentQuestion.soundUrl!, { volume: 1 });
+
+    return () => {
+      // STOP WHEN QUESTION ENDS OR COMPONENT UNMOUNTS
+      console.log("stopping question sound", currentQuestion.soundUrl);
+      SoundManager.stop(currentQuestion.soundUrl!);
+    };
+  }, [currentQuestion, prefs.soundEnabled]);
+
+  React.useEffect(() => {
+    if (state === "SHOWING_ROUND_BREAK" && prefs.soundEnabled) {
+      console.log("playing round break sound");
+      SoundManager.play("roundBreak", { loop: true, volume: 0.4 });
+      return () => {
+        console.log("stopping round break sound");
+        SoundManager.stop("roundBreak");
+      };
+    }
+  }, [state, prefs.soundEnabled]);
 
   // ───────────────────────── ANSWER SUBMISSION ─────────────────────────
   // Memoize the submission handler

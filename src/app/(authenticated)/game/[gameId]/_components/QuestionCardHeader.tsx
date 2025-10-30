@@ -1,9 +1,10 @@
 // ───────────────────────── QuestionCardHeader.tsx ─────────────────────────
 "use client";
 import { SoundOffIcon, SoundOnIcon } from "@/components/icons";
-import { useUserPreferences } from "@/hooks/useUserPreferences";
+
 import Image from "next/image";
 import { formatMsToMMSS } from "@/lib/utils"; // Import helper
+import { useUserPreferences } from "@/components/providers/userPreference";
 
 // Define the states from QuestionView
 type QuestionState = "SHOWING_ROUND_BREAK" | "SHOWING_QUESTION" | "SHOWING_GAP";

@@ -163,9 +163,7 @@ export default function LobbyPageClientImpl({
     return calculatedPool;
   }, [activeGame]);
   const theme = useMemo(() => {
-    return activeGame?.config?.theme
-      ? activeGame.config.theme.toLowerCase()
-      : "theme-default";
+    return activeGame?.config?.theme ? activeGame.config.theme : "FOOTBALL";
   }, [activeGame?.config?.theme]);
 
   const spotsAvatars = useMemo(() => {
@@ -239,7 +237,7 @@ export default function LobbyPageClientImpl({
               flexGrow: 0,
               display: "inline-block",
             }}
-          >{`$${roundedBalance ? roundedBalance : "---"}`}</span>
+          >{`$${roundedBalance}`}</span>
         </div>
       </header>
       {/* ─────────────── Main Content ─────────────── */}
@@ -259,7 +257,7 @@ export default function LobbyPageClientImpl({
           />
         ) : (
           <>
-            <main className="flex flex-col items-center justify-center flex-1 w-full px-4 py-4 sm:py-14 text-center">
+            <main className="flex flex-col items-center justify-center flex-1 w-full px-4 pb-40 pt-14 text-center">
               <div className="flex flex-row items-center justify-between w-[350px] h-[50px] mx-auto">
                 <div className="flex flex-col justify-center items-start h-full">
                   <p className="font-body text-[#99A0AE] text-sm leading-[130%] tracking-[-0.03em]">
@@ -270,7 +268,7 @@ export default function LobbyPageClientImpl({
                   </h1>
                 </div>
                 <Image
-                  src={`/images/illustrations/theme-${theme}.svg`}
+                  src={`/images/themes/${theme}.svg`}
                   alt={theme.toUpperCase()}
                   width={40}
                   height={40}
