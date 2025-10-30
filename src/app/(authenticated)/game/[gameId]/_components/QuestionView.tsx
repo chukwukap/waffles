@@ -111,6 +111,7 @@ export default function QuestionView({
         notify.error("Submission failed:");
         setIsSubmitting(false); // <-- UNSET ON ERROR
       } else {
+        setIsSubmitting(false);
         router.refresh(); // <-- Success will trigger unmount
       }
     },
