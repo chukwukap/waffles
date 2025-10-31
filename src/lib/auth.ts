@@ -4,7 +4,6 @@ import { cookies } from "next/headers";
 export async function getCurrentUserFid(): Promise<number | null> {
   const cookieStore = await cookies();
   const fidCookie = cookieStore.get("fid")?.value;
-  console.log("fidCookie", fidCookie);
-  if (!fidCookie) return null;
+  if (!fidCookie || isNaN(Number(fidCookie))) return null;
   return Number(fidCookie);
 }
