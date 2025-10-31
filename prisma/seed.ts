@@ -146,7 +146,7 @@ async function main() {
           scorePenalty: 0,
           maxPlayers: 200,
           soundEnabled: false,
-          theme: "MOVIES_ANIME",
+          theme: "MOVIES",
         },
       },
     },

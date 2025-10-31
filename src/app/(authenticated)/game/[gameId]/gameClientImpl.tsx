@@ -150,9 +150,7 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
             <div className="flex items-center gap-1.5  rounded-full px-3 py-1.5 border border-white/10">
               <WalletIcon className="w-4 h-4 text-foreground" />
               <span className="text-xs text-foreground">
-                {status === "pending"
-                  ? "Loading..."
-                  : `$${roundedBalance ?? "---"}`}
+                {`$${roundedBalance}`}
               </span>
             </div>
           )}

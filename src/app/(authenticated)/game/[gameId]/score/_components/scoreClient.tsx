@@ -56,11 +56,11 @@ export default function ScorePageClient({
     }
   );
   return (
-    <div className="h-[100dvh] flex flex-col text-white overflow-hidden">
+    <div className="flex flex-col text-white overflow-hidden">
       {/* ─────────────── Header ─────────────── */}
       <header
         className={cn(
-          "p-2 flex items-center justify-between border-b border-border bg-[#191919]"
+          "p-1 px-3 flex items-center justify-between border-b border-border bg-[#191919]"
         )}
       >
         <LogoIcon />
@@ -101,10 +101,10 @@ export default function ScorePageClient({
               flexGrow: 0,
               display: "inline-block",
             }}
-          >{`$${roundedBalance ? roundedBalance : "---"}`}</span>
+          >{`$${roundedBalance ?? "0"}`}</span>
         </div>
       </header>
-      <div className="w-full mt-10  text-white flex flex-col items-center  flex-1 overflow-y-auto">
+      <div className="w-full px-4  text-white flex flex-col items-center  flex-1 overflow-y-auto">
         <Image
           src="/images/illustrations/waffles.svg"
           alt="waffle"
