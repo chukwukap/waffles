@@ -12,7 +12,7 @@ export default async function LobbyPage() {
 
   const userFid = await getCurrentUserFid();
   if (!userFid) {
-    return null;
+    throw new Error("User not found in LobbyPage");
   }
 
   // if there is no active game, redirect to waitlist
@@ -34,6 +34,15 @@ export default async function LobbyPage() {
   //   );
   // }
 
+  console.log("userInfo", userInfo);
+  console.log("games", games);
+  console.log("userFid", userFid);
+  console.log("games[0]", games[0]);
+  console.log("games[0].id", games[0].id);
+  console.log("games[0].name", games[0].name);
+  console.log("games[0].description", games[0].description);
+  console.log("games[0].startTime", games[0].startTime);
+  console.log("games[0].endTime", games[0].endTime);
   return <LobbyPageClientImpl games={games} userInfo={userInfo} />;
 }
 

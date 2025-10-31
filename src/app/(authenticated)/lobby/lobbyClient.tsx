@@ -34,6 +34,7 @@ export default function LobbyPageClientImpl({
   games,
   userInfo,
 }: LobbyPageClientImplProps) {
+  console.log("games in lobbyClient", games);
   const router = useRouter();
   const account = useAccount();
   const [activeGame] = useState(games[0]);
@@ -175,6 +176,32 @@ export default function LobbyPageClientImpl({
     ];
   }, []);
 
+  if (!userInfo) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[80dvh] text-center px-4">
+        User not found
+      </div>
+    );
+  }
+
+  if (!activeGame) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[80dvh] text-center px-4">
+        Game not found
+      </div>
+    );
+  }
+
+  console.log("userInfo", userInfo);
+  console.log("activeGame", activeGame);
+  console.log("isPurchasing", isPurchasing);
+  console.log("showShare", showShare);
+  console.log("purchaseError", purchaseError);
+  console.log("roundedBalance", roundedBalance);
+  console.log("status", status);
+  console.log("spotsAvatars", spotsAvatars);
+  console.log("theme", theme);
+
   return (
     <div className="min-h-screen flex flex-col text-white ">
       {/* ─────────────── Header ─────────────── */}
@@ -231,17 +258,18 @@ export default function LobbyPageClientImpl({
       {/* MAIN CONTENT */}
       <div className="flex-1 flex flex-col items-center gap-3 justify-center overflow-y-auto pt-5">
         {showShare ? (
-          <Share
-            gameTitle={activeGame.name}
-            theme={theme}
-            username={userInfo?.name || "Player"}
-            avatarUrl={userInfo?.imageUrl || "/images/avatars/a.png"}
-            prizePool={prizePool}
-            startTime={activeGame.startTime}
-            onShare={shareTicket}
-            gameId={activeGame.id}
-          />
+          <div>hedllo ljalsdjaljsdlfjasdkf</div>
         ) : (
+          // <Share
+          //   gameTitle={activeGame.name}
+          //   theme={theme}
+          //   username={userInfo?.name || "Player"}
+          //   avatarUrl={userInfo?.imageUrl || "/images/avatars/a.png"}
+          //   prizePool={prizePool}
+          //   startTime={activeGame.startTime}
+          //   onShare={shareTicket}
+          //   gameId={activeGame.id}
+          // />
           <>
             <main className="flex flex-col items-center justify-center flex-1 w-full px-4 pb-20  text-center">
               <div className="flex flex-row items-center justify-between w-[350px] h-[50px] mx-auto">
@@ -319,8 +347,8 @@ export default function LobbyPageClientImpl({
                   <FancyBorderButton
                     onClick={handlePurchase}
                     disabled={
-                      isPurchasing ||
-                      userInfo?.tickets[0]?.status === "confirmed"
+                      isPurchasing
+                      // userInfo?.tickets[0]?.status === "confirmed"
                     }
                   >
                     {isPurchasing

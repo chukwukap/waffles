@@ -14,12 +14,12 @@ const prisma = new PrismaClient();
 async function main() {
   // 2. GAMES & QUESTIONS
   await prisma.game.upsert({
-    where: { id: 2 },
+    where: { id: 1 },
     update: {},
     create: {
       name: "Movie & TV Scene Quiz",
       description: "Guess the movie or TV show a famous scene is from.",
-      startTime: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes from now
+      startTime: new Date(Date.now() + 2 * 60 * 1000), // 2 minutes from now
       endTime: new Date(Date.now() + 65 * 60 * 1000), // 1 hour after start
       questions: {
         create: [
