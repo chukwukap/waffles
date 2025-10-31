@@ -1,6 +1,5 @@
 import { MiniAppManifest } from "@coinbase/onchainkit/minikit";
 import { env } from "@/lib/env";
-console.log("env", env);
 
 /**
  * MiniApp configuration object. Must follow the Farcaster MiniApp specification.
@@ -39,5 +38,3 @@ export const minikitConfig: MiniAppManifest = {
     noindex: true,
   },
 };
-
-console.log("minikitConfig", minikitConfig);
