@@ -5,6 +5,7 @@ import { SoundOffIcon, SoundOnIcon } from "@/components/icons";
 import Image from "next/image";
 import { formatMsToMMSS } from "@/lib/utils"; // Import helper
 import { useUserPreferences } from "@/components/providers/userPreference";
+import { Progress } from "@/components/ui/progress";
 
 // Define the states from QuestionView
 type QuestionState = "SHOWING_ROUND_BREAK" | "SHOWING_QUESTION" | "SHOWING_GAP";
@@ -59,8 +60,8 @@ export function QuestionHeader({
       {/* TIMER MODES */}
       {state === "SHOWING_QUESTION" && (
         <div className="flex items-center gap-2">
-          <span className="font-pixel text-white text-lg">{formattedTime}</span>
-          <CapsuleProgress progress={percent} />
+          <span className=" text-white text-lg">{formattedTime}</span>
+          {/* <Progress value={percent} /> */}
         </div>
       )}
       {state === "SHOWING_GAP" && (
@@ -84,59 +85,6 @@ export function QuestionHeader({
           {defaultFormattedTime}
         </span>
       )}
-    </div>
-  );
-}
-
-export function CapsuleProgress({ progress }: { progress: number }) {
-  return (
-    <div className="relative w-[78px] h-[12px]">
-      <svg
-        width="78"
-        height="12"
-        viewBox="0 0 78 12"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="absolute inset-0"
-      >
-        {/* BACKGROUND (static) */}
-        <path d="M4.65347 0.0181034C4.67876 0.0181034..." fill="#4A0B0B" />
-        <path d="M5.07078 0.271509C5.09185 0.271509..." fill="#BE3C2B" />
-        <path d="M5.91797 1.0453C5.93905 1.0453..." fill="#B55E2C" />
-        <path d="M5.91797 1.0453C5.93905 1.0453..." fill="#E9DCCB" />
-      </svg>
-
-      {/* FOREGROUND (masked) */}
-      <svg
-        width="78"
-        height="12"
-        viewBox="0 0 78 12"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="absolute inset-0"
-        style={{
-          clipPath: `inset(0 ${(1 - progress) * 100}% 0 0)`,
-          transition: "clip-path 0.15s linear",
-        }}
-      >
-        <path d="M4.65347 0.0181034C4.67876 0.0181034..." fill="#4A0B0B" />
-        <path d="M5.07078 0.271509C5.09185 0.271509..." fill="#BE3C2B" />
-        <path d="M5.91797 1.0453C5.93905 1.0453..." fill="#B55E2C" />
-        <path d="M5.91797 1.0453C5.93905 1.0453..." fill="#E9DCCB" />
-        <path d="M51.4162 0.990967..." fill="#F96F49" />
-        <path d="M38.914 0.996029..." fill="#F96F49" />
-        <path d="M52.9714 0.990967..." fill="#F96F49" />
-        <path d="M18.0834 1.00079..." fill="#F96F49" />
-        <path d="M34.7498 0.990967..." fill="#F96F49" />
-        <path d="M5.89307 1.00079..." fill="#F96F49" />
-        <path d="M24.861 0.996029..." fill="#F96F49" />
-        <g style={{ mixBlendMode: "color-dodge", opacity: 0.8 }}>
-          <path d="M7.36799 2.04066..." fill="#F73812" />
-        </g>
-        <g style={{ mixBlendMode: "color-dodge", opacity: 0.5 }}>
-          <path d="M9.7453 2.82349..." fill="#FCC9A4" />
-        </g>
-      </svg>
     </div>
   );
 }
