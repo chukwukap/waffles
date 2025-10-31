@@ -14,7 +14,7 @@ const prisma = new PrismaClient();
 async function main() {
   // 2. GAMES & QUESTIONS
   await prisma.game.upsert({
-    where: { id: 1 },
+    where: { id: 2 },
     update: {},
     create: {
       name: "Movie & TV Scene Quiz",
