@@ -44,7 +44,7 @@ export default function LobbyPageClientImpl({
   // OnchainKit Hooks
   // const { sendTokenAsync } = useSendToken();
   const { composeCastAsync } = useComposeCast();
-  const { roundedBalance } = useGetTokenBalance(
+  const { roundedBalance, status } = useGetTokenBalance(
     account.address as `0x${string}`,
     {
       address: env.nextPublicUsdcAddress as `0x${string}`,
@@ -175,22 +175,6 @@ export default function LobbyPageClientImpl({
     ];
   }, []);
 
-  if (!userInfo) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[80dvh] text-center px-4">
-        User not found
-      </div>
-    );
-  }
-
-  if (!activeGame) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[80dvh] text-center px-4">
-        Game not found
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen flex flex-col text-white ">
       {/* ─────────────── Header ─────────────── */}
@@ -237,7 +221,9 @@ export default function LobbyPageClientImpl({
               flexGrow: 0,
               display: "inline-block",
             }}
-          >{`$${roundedBalance}`}</span>
+          >
+            {status === "pending" ? "---" : `$${roundedBalance}`}{" "}
+          </span>
         </div>
       </header>
       {/* ─────────────── Main Content ─────────────── */}
