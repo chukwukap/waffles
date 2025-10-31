@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useMiniUser } from "@/hooks/useMiniUser";
 import { syncUserAction } from "@/actions/onboarding";
 
-const ONBOARDING_STORAGE_KEY = "waffles:onboarded:v6.8";
+const ONBOARDING_STORAGE_KEY = "waffles:onboarded:v6.9";
 
 export function useOnboarding() {
   const [isOnboarded, setIsOnboarded] = useState<boolean>(true);

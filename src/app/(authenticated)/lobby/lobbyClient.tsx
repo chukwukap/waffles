@@ -332,7 +332,10 @@ export default function LobbyPageClientImpl({
                 <div className="w-full max-w-[400px] px-4">
                   <FancyBorderButton
                     onClick={handlePurchase}
-                    disabled={isPurchasing}
+                    disabled={
+                      isPurchasing ||
+                      userInfo?.tickets[0]?.status === "confirmed"
+                    }
                   >
                     {isPurchasing
                       ? "PROCESSING..."
@@ -340,7 +343,7 @@ export default function LobbyPageClientImpl({
                       ? `BUY WAFFLE ($${
                           activeGame?.config?.ticketPrice ?? "?"
                         })`
-                      : `GAME LOBBY`}
+                      : `TICKET SECURED!`}
                   </FancyBorderButton>
                   {purchaseError && (
                     <p className="mt-3 text-center text-sm text-red-400">
