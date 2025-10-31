@@ -14,7 +14,7 @@ const prisma = new PrismaClient();
 async function main() {
   // 2. GAMES & QUESTIONS
   await prisma.game.upsert({
-    where: { id: 1 },
+    where: { id: 3 },
     update: {},
     create: {
       name: "Movie & TV Scene Quiz",
@@ -144,7 +144,7 @@ async function main() {
             options: [
               "Dark (2017-2020)",
               "It (2017/2019)",
-              "Twin Peaks (1990-1991, 2017)",
+              // "Twin Peaks (1990-1991, 2017)",
               "The Umbrella Academy (2019-Present)",
               "Stranger Things (2016-Present)",
             ],
