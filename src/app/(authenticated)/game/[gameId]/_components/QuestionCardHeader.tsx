@@ -36,7 +36,7 @@ export function QuestionHeader({
   const displayQuestionNum = currentQuestion + 1;
 
   return (
-    <div className="w-full flex items-center justify-between px-3 py-2 ">
+    <div className="w-full flex items-center justify-between px-3 py-1 ">
       {/* Left: Question Index */}
       <span className="font-editundo text-white text-[18px] leading-none tracking-tight">
         {String(displayQuestionNum).padStart(2, "0")}/

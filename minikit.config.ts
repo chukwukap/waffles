@@ -1,9 +1,9 @@
 import { MiniAppManifest } from "@coinbase/onchainkit/minikit";
 import { env } from "@/lib/env";
+console.log("env", env);
 
 /**
  * MiniApp configuration object. Must follow the Farcaster MiniApp specification.
- *
  * @see {@link https://miniapps.farcaster.xyz/docs/guides/publishing}
  */
 export const minikitConfig: MiniAppManifest = {
@@ -31,7 +31,7 @@ export const minikitConfig: MiniAppManifest = {
     webhookUrl: `${env.rootUrl}/api/webhook`,
     primaryCategory: "games",
     tags: ["waffles", "games", "social", "fun"],
-    heroImageUrl: `${env.rootUrl}/images/splash-icon.png`,
+    heroImageUrl: `${env.rootUrl}/images/hero-image.png`,
     tagline: "Play daily social games",
     ogTitle: "Waffles",
     ogDescription: "Play daily social games",
@@ -39,3 +39,5 @@ export const minikitConfig: MiniAppManifest = {
     noindex: true,
   },
 };
+
+console.log("minikitConfig", minikitConfig);

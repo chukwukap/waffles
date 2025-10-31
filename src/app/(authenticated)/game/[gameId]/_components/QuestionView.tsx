@@ -282,7 +282,7 @@ export default function QuestionView({
 
   // ───────────────────────── RENDER ─────────────────────────
   return (
-    <div className="w-full max-w-md sm:max-w-lg mx-auto mt-4">
+    <div className="w-full max-w-md sm:max-w-lg mx-auto mt-">
       {state === "SHOWING_ROUND_BREAK" ? (
         // Pass timer values to the round countdown view
         <RoundCountdownView

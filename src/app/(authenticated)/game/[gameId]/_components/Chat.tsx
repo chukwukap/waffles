@@ -41,7 +41,7 @@ const Comment = ({
       </span>
     </div>
     {/* Comment Body */}
-    <div className="flex w-full flex-col justify-center rounded-r-lg rounded-bl-lg border border-white/5 bg-white/10 p-3">
+    <div className="flex font-display w-full flex-col justify-center rounded-r-lg rounded-bl-lg border border-white/5 bg-white/10 p-3">
       <p
         className="text-sm font-medium text-white"
         style={{ letterSpacing: "-0.03em" }}
@@ -217,7 +217,7 @@ export const Chat = ({
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Type a comment"
-              className="flex-1 bg-transparent text-sm font-medium text-white placeholder:text-white/40
+              className="flex-1 font-display bg-transparent text-sm font-medium text-white placeholder:text-white/40
                          focus:outline-none"
               style={{ letterSpacing: "-0.03em" }}
             />

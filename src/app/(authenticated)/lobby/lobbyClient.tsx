@@ -196,7 +196,7 @@ export default function LobbyPageClientImpl({
       {/* ─────────────── Header ─────────────── */}
       <header
         className={cn(
-          "p-2 flex items-center justify-between border-b border-border bg-[#191919]"
+          "p-1 px-3 flex items-center justify-between border-b border-border bg-[#191919]"
         )}
       >
         <LogoIcon />
@@ -243,7 +243,7 @@ export default function LobbyPageClientImpl({
       {/* ─────────────── Main Content ─────────────── */}
 
       {/* MAIN CONTENT */}
-      <div className="flex-1 flex flex-col items-center gap-3 justify-center overflow-y-auto pt-20">
+      <div className="flex-1 flex flex-col items-center gap-3 justify-center overflow-y-auto pt-5">
         {showShare ? (
           <Share
             gameTitle={activeGame.name}
@@ -257,7 +257,7 @@ export default function LobbyPageClientImpl({
           />
         ) : (
           <>
-            <main className="flex flex-col items-center justify-center flex-1 w-full px-4 pb-40 pt-14 text-center">
+            <main className="flex flex-col items-center justify-center flex-1 w-full px-4 pb-20  text-center">
               <div className="flex flex-row items-center justify-between w-[350px] h-[50px] mx-auto">
                 <div className="flex flex-col justify-center items-start h-full">
                   <p className="font-body text-[#99A0AE] text-sm leading-[130%] tracking-[-0.03em]">
@@ -285,9 +285,9 @@ export default function LobbyPageClientImpl({
                   src="/images/illustrations/waffles.svg"
                   alt="Waffle"
                   width={230}
-                  height={130}
+                  height={100}
                   priority
-                  className="mx-auto mb-8"
+                  className="mx-auto mb-2"
                 />
               </motion.div>
 
@@ -295,33 +295,39 @@ export default function LobbyPageClientImpl({
                 GET YOUR WAFFLE
               </h2>
 
-              <div className="w-full max-w-md border border-white/10 rounded-2xl flex flex-wrap justify-center gap-8 px-4 py-6 mb-8">
-                <div className="flex flex-col items-center gap-2">
-                  <Image
-                    src="/images/illustrations/seats.svg"
-                    alt="Spots"
-                    width={48}
-                    height={40}
-                  />
-                  <div className="text-[#99A0AE] font-display text-base">
-                    Spots
-                  </div>
-                  <div className="font-edit-undo text-3xl">
-                    {activeGame?._count?.tickets ?? 0}/
-                    {activeGame?.config?.maxPlayers ?? 0}
+              <div className="w-full max-w-md border border-white/10 rounded-2xl flex flex-wrap justify-center gap-2 px-4 py-6 mb-3">
+                <div className="flex-[1_1_0] basis-0 min-w-0 flex flex-col items-center gap-2 justify-start max-w-[170px] w-full">
+                  <div className="flex flex-col items-center w-full h-full justify-between">
+                    <Image
+                      src="/images/illustrations/seats.svg"
+                      alt="Spots"
+                      width={48}
+                      height={40}
+                    />
+                    <div className="text-[#99A0AE] font-display text-base text-center mt-2">
+                      Spots
+                    </div>
+                    <div className="font-edit-undo text-3xl text-center mt-1">
+                      {activeGame?._count?.tickets ?? 0}/
+                      {activeGame?.config?.maxPlayers ?? 0}
+                    </div>
                   </div>
                 </div>
-                <div className="flex flex-col items-center gap-2">
-                  <Image
-                    src="/images/illustrations/money-stack.svg"
-                    alt="Prize"
-                    width={48}
-                    height={40}
-                  />
-                  <div className="text-[#99A0AE] font-display text-base">
-                    Prize pool
+                <div className="flex-[1_1_0] basis-0 min-w-0 flex flex-col items-center gap-2 justify-start max-w-[170px] w-full">
+                  <div className="flex flex-col items-center w-full h-full justify-between">
+                    <Image
+                      src="/images/illustrations/money-stack.svg"
+                      alt="Prize"
+                      width={48}
+                      height={40}
+                    />
+                    <div className="text-[#99A0AE] font-display text-base text-center mt-2">
+                      Prize pool
+                    </div>
+                    <div className="font-edit-undo text-3xl text-center mt-1">
+                      ${prizePool}
+                    </div>
                   </div>
-                  <div className="font-edit-undo text-3xl">${prizePool}</div>
                 </div>
                 <div className="w-full max-w-[400px] px-4">
                   <FancyBorderButton
@@ -344,7 +350,7 @@ export default function LobbyPageClientImpl({
                 </div>
               </div>
 
-              <div className="flex flex-col items-center mt-8">
+              <div className="flex flex-col items-center mt-2">
                 <CardStack
                   images={spotsAvatars.map((ava) => ({ src: ava }))}
                   size="clamp(32px,7vw,48px)"

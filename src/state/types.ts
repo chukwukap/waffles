@@ -46,7 +46,7 @@ export type HydratedUser = Prisma.UserGetPayload<{
   };
 }>;
 
-export type GameThemes = "FOOTBALL" | "MOVIES_ANIME" | "POLITICS" | "CRYPTO";
+export type GameThemes = "FOOTBALL" | "MOVIES" | "POLITICS" | "CRYPTO";
 
 export interface PlayerInfo {
   username: string | null;

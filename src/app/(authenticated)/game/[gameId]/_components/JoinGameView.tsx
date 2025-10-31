@@ -67,7 +67,7 @@ export default function JoinGameView({
   const buttonText = canJoin ? "JOIN GAME" : "GET TICKET";
 
   return (
-    <div className="relative flex h-[100dvh] w-full overflow-hidden bg-black text-white">
+    <div className="relative flex h-[90dvh] w-full overflow-hidden bg-black text-white">
       <Image
         src="/images/game-hero.gif"
         alt="Game background animation"
@@ -104,7 +104,20 @@ export default function JoinGameView({
 
         <div className="flex items-center justify-center gap-3 pointer-events-auto">
           <CardStack
-            images={avatars}
+            images={[
+              {
+                src: "/images/avatars/a.png",
+              },
+              {
+                src: "/images/avatars/b.png",
+              },
+              {
+                src: "/images/avatars/c.png",
+              },
+              {
+                src: "/images/avatars/d.png",
+              },
+            ]}
             size="clamp(32px, 7vw, 52px)"
             rotations={[-8.7, 5.85, -3.57, 7.56]}
             ariaLabel={`${joinedCount} players have joined`}
