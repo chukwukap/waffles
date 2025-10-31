@@ -90,7 +90,7 @@ export default function LeaderboardPage() {
   const user = useMiniUser();
   const account = useAccount();
 
-  const { roundedBalance } = useGetTokenBalance(
+  const { roundedBalance, status } = useGetTokenBalance(
     account.address as `0x${string}`,
     {
       address: env.nextPublicUsdcAddress as `0x${string}`,
@@ -246,7 +246,7 @@ export default function LeaderboardPage() {
                 className="font-edit-undo leading-[1.1] text-[color:var(--text-primary)] text-center"
                 style={{ fontSize: "clamp(0.95rem, 1.9vw, 1rem)" }}
               >
-                {`$${roundedBalance ?? "..."}`}
+                {status === "pending" ? "---" : `$${roundedBalance}`}{" "}
               </span>
             </div>
           </div>

@@ -88,7 +88,7 @@ export default function ProfilePageClient({
 
   return (
     <div className="flex-1 overflow-y-auto ">
-      <header className="sticky top-0 z-10 w-full border-b border-white/20 px-4 py-3 app-background/80 backdrop-blur-sm">
+      <header className="sticky top-0 z-10 w-full border-b border-white/20 px-4 app-background/80 backdrop-blur-sm">
         <div className="mx-auto max-w-screen-sm flex w-full items-center justify-between">
           <div className="flex min-w-0 flex-row items-center justify-center">
             <LogoIcon />
@@ -100,7 +100,7 @@ export default function ProfilePageClient({
                 className="font-edit-undo leading-[1.1] text-[color:var(--text-primary)] text-center tabular-nums"
                 style={{ fontSize: "clamp(0.9rem, 1.8vw, .95rem)" }}
               >
-                {status === "pending" ? "Loading..." : `$${roundedBalance}`}{" "}
+                {status === "pending" ? "---" : `$${roundedBalance}`}{" "}
               </span>
             </div>
           </div>
