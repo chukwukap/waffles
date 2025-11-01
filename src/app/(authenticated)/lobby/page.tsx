@@ -57,13 +57,14 @@ export default async function LobbyPage({
     },
   });
 
-  if (!userInfo) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[80dvh] text-center px-4">
-        User not found. likely not onboarded yet
-      </div>
-    );
-  }
+  // if (!userInfo) {
+  //   return null;
+  //   return (
+  //     <div className="flex flex-col items-center justify-center min-h-[80dvh] text-center px-4">
+  //       User not found. likely not onboarded yet
+  //     </div>
+  //   );
+  // }
 
   return <LobbyPageClientImpl activeGame={game} userInfo={userInfo} />;
 }
