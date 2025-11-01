@@ -1,8 +1,9 @@
 import Image from "next/image";
 import { ForwardMessageIcon, MessageIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
-import { ChatWithUser, HydratedUser } from "@/state/types";
+import { ChatWithUser } from "@/state/types";
 import { sendMessageAction } from "@/actions/chat";
+import { NeccessaryUserInfo } from "../page";
 
 // import { cookies } from "next/headers";
 
@@ -56,7 +57,7 @@ export default function ChatDrawer({
   userInfo,
 }: {
   gameId: number;
-  userInfo: HydratedUser;
+  userInfo: NeccessaryUserInfo;
 }) {
   // Fetch messages server-side
   // const messages = await getGameChats(gameId);
@@ -145,13 +146,13 @@ export default function ChatDrawer({
 
                   <div
                     className={cn(
-                      "max-w-[80%] sm:max-w-[70%] border rounded-[0.75rem] px-4 py-3 flex flex-col justify-center",
+                      "max-w-[80%] sm:max-w-[70%] border rounded-xl px-4 py-3 flex flex-col justify-center",
                       isCurrentUser
                         ? "bg-blue-600/30 border-blue-500/20 rounded-br-none"
-                        : "bg-white/[0.08] border-white/[0.05] rounded-bl-none"
+                        : "bg-white/8 border-white/5 rounded-bl-none"
                     )}
                   >
-                    <p className="font-display font-medium text-base leading-[130%] tracking-[-0.03em] text-white break-words">
+                    <p className="font-display font-medium text-base leading-[130%] tracking-[-0.03em] text-white wrap-break-word">
                       {msg.message}
                     </p>
                   </div>

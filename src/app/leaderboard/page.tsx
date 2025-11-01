@@ -10,12 +10,12 @@ import { WalletIcon } from "@/components/icons";
 import LogoIcon from "@/components/logo/LogoIcon";
 import { BottomNav } from "@/components/BottomNav";
 import { useInfiniteLoader } from "./_components/useInfiniteLoader";
-import { useMiniUser } from "@/hooks/useMiniUser";
 import { LeaderboardEntry } from "@/state/types";
 import { useGetTokenBalance } from "@coinbase/onchainkit/wallet";
 import { useAccount } from "wagmi";
 import { env } from "@/lib/env";
 import { base } from "wagmi/chains";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
 // --- MOCK DATA ---
 // Easy on/off switch for development
@@ -87,7 +87,8 @@ interface LeaderboardApiResponse {
 
 export default function LeaderboardPage() {
   const searchParams = useSearchParams();
-  const user = useMiniUser();
+  const { context: miniKitContext } = useMiniKit();
+  const fid = miniKitContext?.user?.fid;
   const account = useAccount();
 
   const { roundedBalance, status } = useGetTokenBalance(
@@ -116,14 +117,14 @@ export default function LeaderboardPage() {
 
       if (pageIndex === 0)
         return `/api/leaderboard?tab=${activeTab}&page=0${
-          user.fid ? `&userId=${user.fid}` : ""
+          fid ? `&userId=${fid}` : ""
         }`;
 
       return `/api/leaderboard?tab=${activeTab}&page=${pageIndex}${
-        user.fid ? `&userId=${user.fid}` : ""
+        fid ? `&userId=${fid}` : ""
       }`;
     },
-    [activeTab, user.fid]
+    [activeTab, fid]
   );
 
   const {
@@ -197,7 +198,7 @@ export default function LeaderboardPage() {
   const isEmpty = !isLoadingInitial && entries.length === 0;
   const currentError = error ? error.message || "Failed to load data" : null;
 
-  const currentUserId = user.fid; // This is the FID
+  const currentUserId = fid; // This is the FID
 
   // --- Infinite Loading Trigger ---
   const [loaderRef] = useInfiniteLoader(
@@ -241,9 +242,9 @@ export default function LeaderboardPage() {
           </div>
           <div className="flex items-center">
             <div className="flex h-7 min-w-[64px] flex-row items-center gap-2 rounded-full bg-white/10 px-3 py-1.5">
-              <WalletIcon className="h-4 w-4 text-[color:var(--text-primary)]" />
+              <WalletIcon className="h-4 w-4 text-foreground" />
               <span
-                className="font-edit-undo leading-[1.1] text-[color:var(--text-primary)] text-center"
+                className="font-edit-undo leading-[1.1] text-foreground text-center"
                 style={{ fontSize: "clamp(0.95rem, 1.9vw, 1rem)" }}
               >
                 {status === "pending" ? "---" : `$${roundedBalance}`}{" "}

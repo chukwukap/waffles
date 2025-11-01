@@ -25,27 +25,6 @@ export type ChatWithUser = Prisma.ChatGetPayload<{
   };
 }>;
 
-export type HydratedGame = Prisma.GameGetPayload<{
-  include: {
-    config: true;
-    questions: true;
-    _count: {
-      select: {
-        tickets: true;
-      };
-    };
-  };
-}>;
-
-export type HydratedUser = Prisma.UserGetPayload<{
-  include: {
-    tickets: true;
-    scores: true;
-    answers: true;
-    gameParticipants: true;
-  };
-}>;
-
 export type GameThemes = "FOOTBALL" | "MOVIES" | "POLITICS" | "CRYPTO";
 
 export interface PlayerInfo {

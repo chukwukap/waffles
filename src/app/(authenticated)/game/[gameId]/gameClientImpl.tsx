@@ -1,4 +1,3 @@
-// ====== Updated gameClientImpl.tsx ======
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
@@ -11,41 +10,39 @@ import LeaveGameDrawer from "./_components/LeaveGameDrawer";
 import LogoIcon from "@/components/logo/LogoIcon";
 import { LeaveGameIcon, WalletIcon } from "@/components/icons";
 
-import { useMiniUser } from "@/hooks/useMiniUser";
 import { useGetTokenBalance } from "@coinbase/onchainkit/wallet";
 import { env } from "@/lib/env";
 import { base } from "wagmi/chains";
 import { cn } from "@/lib/utils";
 import SoundManager from "@/lib/SoundManager";
-import { HydratedGame, HydratedUser } from "@/state/types";
 
 import { leaveGameAction } from "@/actions/game";
 import { notify } from "@/components/ui/Toaster";
 import { useUserPreferences } from "@/components/providers/userPreference";
+import { NeccessaryGameInfo, NeccessaryUserInfo } from "./page";
+
+import { useAccount } from "wagmi";
 
 interface GameClientImplProps {
-  game: HydratedGame;
-  userInfo: HydratedUser;
+  game: NeccessaryGameInfo;
+  userInfo: NeccessaryUserInfo;
 }
 
 export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
   const router = useRouter();
-  const user = useMiniUser();
+  const { address } = useAccount();
   const { prefs } = useUserPreferences();
 
   const [isLeaveGameDrawerOpen, setIsLeaveGameDrawerOpen] = useState(false);
 
-  const { status, roundedBalance } = useGetTokenBalance(
-    user.wallet as `0x${string}`,
-    {
-      address: env.nextPublicUsdcAddress as `0x${string}`,
-      decimals: 6,
-      name: "USDC",
-      symbol: "USDC",
-      image: "/images/tokens/usdc.png",
-      chainId: base.id,
-    }
-  );
+  const { roundedBalance } = useGetTokenBalance(address as `0x${string}`, {
+    address: env.nextPublicUsdcAddress as `0x${string}`,
+    decimals: 6,
+    name: "USDC",
+    symbol: "USDC",
+    image: "/images/tokens/usdc.png",
+    chainId: base.id,
+  });
 
   // ───────────────────────── EFFECTS ─────────────────────────
   // Init sound on first interaction
@@ -94,8 +91,7 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
     const start = new Date(game.startTime);
     const end = new Date(game.endTime);
 
-    const isParticipant =
-      userInfo.gameParticipants?.some((p) => p.gameId === game.id) ?? false;
+    const isParticipant = userInfo._count.gameParticipants > 0;
 
     const isWaiting = now.getTime() < start.getTime();
     const isActive = now >= start && now <= end;
@@ -130,7 +126,7 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
 
   // ───────────────────────── RENDER ─────────────────────────
   return (
-    <div className="w-full min-h-[100dvh] flex-1 overflow-y-auto">
+    <div className="w-full min-h-dvh flex-1 overflow-y-auto">
       <header
         className={cn(
           "sticky top-0 z-40 px-4 flex items-center justify-between border-b border-border backdrop-blur-sm"
@@ -138,7 +134,7 @@ export function GameClientImpl({ game, userInfo }: GameClientImplProps) {
       >
         <LogoIcon />
         <div className="flex items-center gap-2">
-          {userInfo.gameParticipants.length > 0 ? (
+          {userInfo._count.gameParticipants > 0 ? (
             <button
               onClick={() => setIsLeaveGameDrawerOpen(true)}
               className="flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1.5 text-xs text-foreground hover:bg-white/20 transition-colors"

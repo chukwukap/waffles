@@ -31,7 +31,7 @@ export default function WinningsCard({
         w-full max-w-sm
         rounded-3xl
         p-4 sm:p-5
-        bg-gradient-to-b from-transparent to-[#1BF5B0]/12
+        bg-linear-to-b from-transparent to-[#1BF5B0]/12
         border border-white/5
         flex flex-col gap-4
         my-5

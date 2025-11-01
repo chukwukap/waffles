@@ -19,25 +19,24 @@ import { purchaseTicketAction } from "@/actions/ticket";
 
 import { notify } from "@/components/ui/Toaster";
 
-import { HydratedGame, HydratedUser } from "@/state/types";
 import { CardStack } from "@/components/CardStack";
 import { motion } from "framer-motion";
 
 import { useAccount } from "wagmi";
+import { LobbyPageGameInfo, LobbyPageUserInfo } from "./page";
 
 type LobbyPageClientImplProps = {
-  games: HydratedGame[];
-  userInfo: HydratedUser | null;
+  activeGame: LobbyPageGameInfo;
+  userInfo: LobbyPageUserInfo | null;
 };
 
 export default function LobbyPageClientImpl({
-  games,
+  activeGame,
   userInfo,
 }: LobbyPageClientImplProps) {
-  console.log("games in lobbyClient", games);
   const router = useRouter();
   const account = useAccount();
-  const [activeGame] = useState(games[0]);
+
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
@@ -59,7 +58,7 @@ export default function LobbyPageClientImpl({
 
   // --- Handlers ---
   const handlePurchase = async () => {
-    if (!userInfo || !activeGame.config) {
+    if (!userInfo || !activeGame) {
       setPurchaseError("User or game data is missing.");
       return;
     }
@@ -130,7 +129,7 @@ export default function LobbyPageClientImpl({
 
   const shareTicket = useCallback(async () => {
     //
-    if (!userInfo?.tickets[0] || !activeGame) return; // Use combined ticket state
+    if (!userInfo?._count.tickets || !activeGame) return; // Use combined ticket state
 
     try {
       const message = `Just secured my waffle ticket for ${activeGame.name}! 🧇`;
@@ -152,7 +151,7 @@ export default function LobbyPageClientImpl({
       console.error("Error sharing cast:", error);
       notify.error("Unable to share your ticket right now.");
     }
-  }, [userInfo?.tickets, activeGame, composeCastAsync]);
+  }, [userInfo?._count.tickets, activeGame, composeCastAsync]);
 
   // --- Derived State ---
   const prizePool = useMemo(() => {
@@ -255,6 +254,7 @@ export default function LobbyPageClientImpl({
             avatarUrl={userInfo?.imageUrl || "/images/avatars/a.png"}
             prizePool={prizePool}
             startTime={activeGame.startTime}
+            fid={userInfo?.fid ?? 0}
             onShare={shareTicket}
             gameId={activeGame.id}
           />
@@ -342,7 +342,7 @@ export default function LobbyPageClientImpl({
                   >
                     {isPurchasing
                       ? "PROCESSING..."
-                      : userInfo?.tickets[0]?.status !== "confirmed"
+                      : userInfo?._count.tickets !== 0
                       ? `BUY WAFFLE ($${
                           activeGame?.config?.ticketPrice ?? "?"
                         })`

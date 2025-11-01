@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { PixelButton } from "@/components/buttons/PixelButton";
 import { cn } from "@/lib/utils";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
 export type LeaderboardTabKey = "current" | "allTime";
 
@@ -17,6 +18,8 @@ export function Tabs() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { context: miniKitContext } = useMiniKit();
+  const fid = miniKitContext?.user?.fid;
 
   const activeTab = (searchParams.get("tab") || "current") as LeaderboardTabKey;
 
@@ -24,9 +27,12 @@ export function Tabs() {
     (newTab: LeaderboardTabKey) => {
       const params = new URLSearchParams(searchParams);
       params.set("tab", newTab);
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+      router.push(
+        `${pathname}?${params.toString()}${fid ? `&fid=${fid}` : ""}`,
+        { scroll: false }
+      );
     },
-    [router, pathname, searchParams]
+    [router, pathname, searchParams, fid]
   );
 
   return (

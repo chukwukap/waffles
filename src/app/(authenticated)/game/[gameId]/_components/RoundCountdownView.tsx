@@ -81,7 +81,6 @@ function CountdownCircle({
       className="relative"
       style={{ width: size, height: size }}
       aria-label="Next round countdown"
-      role="timer"
       aria-live="polite"
       aria-valuemin={0}
       aria-valuemax={total}

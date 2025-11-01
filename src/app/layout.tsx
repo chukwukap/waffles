@@ -52,13 +52,9 @@ export default function RootLayout({
         )}
       >
         <Providers>
-          <div className="h-[100dvh] flex flex-col overflow-hidden">
-            {children}
-          </div>
+          <div className="h-dvh flex flex-col overflow-hidden">{children}</div>
         </Providers>
       </body>
     </html>
   );
 }
-
-export const dynamic = "force-dynamic";

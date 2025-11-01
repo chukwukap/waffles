@@ -59,12 +59,7 @@ export async function GET(request: NextRequest) {
         queryValidation.error.message || "Invalid query parameters";
       return NextResponse.json({ error: firstError }, { status: 400 });
     }
-    const {
-      tab,
-      page,
-      gameId: requestedGameId,
-      userId: requestedUserFid, // <-- Renamed for clarity
-    } = queryValidation.data;
+    const { tab, page, gameId: requestedGameId } = queryValidation.data;
 
     let allUsersSorted: LeaderboardUserData[] = [];
     let totalPointsInScope = 0;
@@ -178,6 +173,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
-// Ensure dynamic execution for fresh leaderboard data
-export const dynamic = "force-dynamic";

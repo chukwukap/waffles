@@ -44,8 +44,7 @@ export async function createGameAction(
       },
     });
 
-    revalidatePath("/admin/games");
-    revalidatePath("/api/game");
+    revalidatePath("/game");
 
     return { success: true, game: newGame };
   } catch (error) {

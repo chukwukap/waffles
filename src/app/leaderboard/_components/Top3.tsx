@@ -37,7 +37,7 @@ export function Top3({ entries, currentUserId }: Top3Props) {
     <div
       className="
         flex w-full
-        gap-[var(--gap)]
+        gap-(--gap)
       "
       style={
         {
@@ -62,8 +62,8 @@ export function Top3({ entries, currentUserId }: Top3Props) {
             key={entry.rank ?? i}
             className={cn(
               "basis-1/3 min-w-0 flex-1",
-              "rounded-[var(--radius)] border",
-              "p-[var(--pad)] bg-clip-padding",
+              "rounded-(--radius) border",
+              "p-(--pad) bg-clip-padding",
               "flex flex-col gap-[calc(var(--pad)*0.8)]",
               "transition-shadow hover:shadow-lg",
               styles.bg,
@@ -74,7 +74,7 @@ export function Top3({ entries, currentUserId }: Top3Props) {
           >
             <TrophyIcon
               color={styles.trophy}
-              className="flex-shrink-0"
+              className="shrink-0"
               style={{
                 width: "clamp(14px, 2.8vw, 20px)",
                 height: "clamp(14px, 2.8vw, 20px)",
@@ -118,7 +118,7 @@ export function Top3({ entries, currentUserId }: Top3Props) {
 
             <div className="mt-auto flex items-center gap-[calc(var(--pad)*0.5)]">
               <UsdcIcon
-                className="flex-shrink-0"
+                className="shrink-0"
                 style={{
                   width: "clamp(14px, 2.8vw, 20px)",
                   height: "clamp(14px, 2.8vw, 20px)",

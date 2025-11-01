@@ -95,9 +95,9 @@ export default function ProfilePageClient({
           </div>
           <div className="flex items-center">
             <div className="flex h-7 min-w-[64px] flex-row items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 border border-white/10">
-              <WalletIcon className="h-4 w-4 text-[color:var(--text-primary)]" />
+              <WalletIcon className="h-4 w-4 text-foreground" />
               <span
-                className="font-edit-undo leading-[1.1] text-[color:var(--text-primary)] text-center tabular-nums"
+                className="font-edit-undo leading-[1.1] text-foreground text-center tabular-nums"
                 style={{ fontSize: "clamp(0.9rem, 1.8vw, .95rem)" }}
               >
                 {status === "pending" ? "---" : `$${roundedBalance}`}{" "}
@@ -151,7 +151,7 @@ export default function ProfilePageClient({
           className={cn(
             "flex flex-row items-center justify-between w-full max-w-screen-sm min-h-[64px] h-[74px] mx-auto px-3 sm:px-4 box-border gap-3 rounded-[16px] border border-white/40 transition-transform hover:scale-[1.02]",
             "bg-[#FFC931] bg-blend-overlay",
-            "[background:linear-gradient(189.66deg,rgba(0,0,0,0)_-6.71%,rgba(0,0,0,0.8)_92.73%),_#FFC931]",
+            "[background:linear-gradient(189.66deg,rgba(0,0,0,0)_-6.71%,rgba(0,0,0,0.8)_92.73%),#FFC931]",
             "disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
           )}
           aria-haspopup="dialog"
@@ -163,7 +163,7 @@ export default function ProfilePageClient({
           >
             INVITE FRIENDS
           </span>
-          <div className="flex items-center justify-center w-[34px] h-[34px] rounded-full bg-white/15 flex-shrink-0 p-0.5 ml-2">
+          <div className="flex items-center justify-center w-[34px] h-[34px] rounded-full bg-white/15 shrink-0 p-0.5 ml-2">
             <ArrowRightIcon className="w-[18px] h-[18px]" />
           </div>
         </button>

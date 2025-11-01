@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { HydratedGame } from "@/state/types";
+import { NeccessaryGameInfo } from "../page";
 
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -10,7 +10,7 @@ import { PixelButton } from "@/components/buttons/PixelButton";
 import { PALETTES } from "@/lib/constants";
 
 type QuestionCardProps = {
-  question: HydratedGame["questions"][0];
+  question: NeccessaryGameInfo["questions"][number];
   onSelectAnswer: (option: string) => void;
   selectedOption: string | null;
   isSubmitting: boolean; // <-- ADDED PROP
@@ -22,9 +22,11 @@ export default function QuestionCard({
   selectedOption,
   isSubmitting, // <-- ADDED PROP
 }: QuestionCardProps) {
+  console.log("question", question);
   const chosenIdx = selectedOption
     ? question.options.indexOf(selectedOption)
     : null;
+  console.log("chosenIdx", chosenIdx);
   return (
     <section
       className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-8 animate-up"

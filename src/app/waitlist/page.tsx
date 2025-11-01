@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 
 import { WaitlistClient } from "./_components/waitlistClient";
-import { getCurrentUserFid } from "@/lib/auth";
 
 import { minikitConfig } from "../../../minikit.config";
 import { Metadata } from "next";
@@ -59,14 +58,16 @@ async function getWaitlistStatus(userId: number) {
 export default async function WaitlistPage({
   searchParams,
 }: {
-  searchParams: Promise<{ ref?: string }>;
+  searchParams: Promise<{ ref?: string; fid: number }>;
 }) {
-  const referrerFid = (await searchParams).ref;
-  const fid = await getCurrentUserFid();
-  if (!fid) return redirect("/profile");
+  const sParams = await searchParams;
+  const referrerFid = sParams.ref;
+  const fid = sParams.fid;
+
+  if (!fid) return redirect(`/profile?fid=${fid}`);
 
   const user = await getCurrentUserByFid(fid);
-  if (!user) return redirect("/profile");
+  if (!user) return redirect(`/profile?fid=${fid}`);
 
   const waitlist = await getWaitlistStatus(user.id);
 

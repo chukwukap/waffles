@@ -2,7 +2,6 @@
 
 import { prisma } from "@/lib/db";
 import { randomBytes } from "crypto";
-import { revalidateTag } from "next/cache"; // Import for revalidation
 import { z } from "zod";
 import type { Ticket } from "@prisma/client"; // Import Prisma type
 
