@@ -73,9 +73,6 @@ export async function sendMessageAction(
       select: { id: true },
     });
 
-    // Add revalidation for chat updates related to this game
-    revalidateTag(`game-chat-${gameId}`);
-
     return { success: true, messageId: chat.id };
   } catch (error) {
     console.error("sendMessageAction Error:", error);
