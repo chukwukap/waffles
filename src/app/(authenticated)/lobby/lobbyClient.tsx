@@ -342,11 +342,11 @@ export default function LobbyPageClientImpl({
                   >
                     {isPurchasing
                       ? "PROCESSING..."
-                      : userInfo?._count.tickets !== 0
-                      ? `BUY WAFFLE ($${
+                      : userInfo?._count?.tickets && userInfo._count.tickets > 0
+                      ? `TICKET SECURED!`
+                      : `BUY WAFFLE ($${
                           activeGame?.config?.ticketPrice ?? "?"
-                        })`
-                      : `TICKET SECURED!`}
+                        })`}
                   </FancyBorderButton>
                   {purchaseError && (
                     <p className="mt-3 text-center text-sm text-red-400">
