@@ -143,13 +143,13 @@ export const Chat = ({
       {/* Drawer */}
       <div
         className={`fixed bottom-0 left-0 right-0 z-50 flex h-[644px] w-full flex-col
-                    rounded-t-[20px] bg-gradient-to-b from-[#1E1E0E] to-black
+                    rounded-t-[20px] bg-linear-to-b from-[#1E1E0E] to-black
                     transition-transform duration-500 ease-in-out
                     ${isOpen ? "translate-y-0" : "translate-y-full"}`}
       >
         {/* Header */}
         <header
-          className="relative flex h-[56px] w-full flex-shrink-0 items-center border-b border-white/10 bg-[#191919] px-6 py-3 rounded-t-[20px]"
+          className="relative flex h-[56px] w-full shrink-0 items-center border-b border-white/10 bg-[#191919] px-6 py-3 rounded-t-[20px]"
           style={{
             minHeight: "56px",
           }}
@@ -205,7 +205,7 @@ export const Chat = ({
         </div>
 
         {/* Footer Input */}
-        <footer className="h-[98px] w-full flex-shrink-0 bg-[#0E0E0E] p-4 pt-5">
+        <footer className="h-[98px] w-full shrink-0 bg-[#0E0E0E] p-4 pt-5">
           <form
             onSubmit={handleSubmit}
             onClick={() => inputRef.current?.focus?.()} // Click wrapper to focus input

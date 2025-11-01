@@ -40,7 +40,7 @@ export default function GradientMask({
             className={cn(
               "object-cover",
 
-              "[mask-image:linear-gradient(to_bottom,rgba(0,0,0,0)_0%,rgba(0,0,0,0)_6%,rgba(0,0,0,1)_100%)]", // Standard mask
+              "mask-[linear-gradient(to_bottom,rgba(0,0,0,0)_0%,rgba(0,0,0,0)_6%,rgba(0,0,0,1)_100%)]", // Standard mask
               "[-webkit-mask-image:linear-gradient(to_bottom,rgba(0,0,0,0)_0%,rgba(0,0,0,0)_6%,rgba(0,0,0,1)_100%)]" // Webkit prefix for compatibility
             )}
             priority
@@ -51,7 +51,7 @@ export default function GradientMask({
           className={cn(
             "h-full w-full",
 
-            "[mask-image:linear-gradient(to_bottom,rgba(0,0,0,0)_0%,rgba(0,0,0,0)_6%,rgba(0,0,0,1)_100%)]",
+            "mask-[linear-gradient(to_bottom,rgba(0,0,0,0)_0%,rgba(0,0,0,0)_6%,rgba(0,0,0,1)_100%)]",
             "[-webkit-mask-image:linear-gradient(to_bottom,rgba(0,0,0,0)_0%,rgba(0,0,0,0)_6%,rgba(0,0,0,1)_100%)]",
             "bg-background"
           )}

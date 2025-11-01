@@ -2,17 +2,12 @@ import InvitePageClient from "./_components/InvitePageClient";
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { Prisma } from "@prisma/client";
-import { getCurrentUserFid } from "@/lib/auth";
 
-export async function fetchUserWithInviteData(): Promise<UserWithInviteData | null> {
-  const userFid = await getCurrentUserFid();
-
-  if (!userFid) {
-    return notFound();
-  }
-
+export async function fetchUserWithInviteData(
+  fid: string
+): Promise<UserWithInviteData | null> {
   const userWithInviteData = await prisma.user.findUnique({
-    where: { fid: Number(userFid) },
+    where: { fid: Number(fid) },
     select: {
       fid: true,
       name: true,
@@ -33,8 +28,13 @@ export async function fetchUserWithInviteData(): Promise<UserWithInviteData | nu
   return userWithInviteData;
 }
 
-export default async function InvitePage() {
-  const userWithInviteData = await fetchUserWithInviteData();
+export default async function InvitePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ fid: string }>;
+}) {
+  const { fid } = await searchParams;
+  const userWithInviteData = await fetchUserWithInviteData(fid);
   if (!userWithInviteData) {
     notFound();
   }

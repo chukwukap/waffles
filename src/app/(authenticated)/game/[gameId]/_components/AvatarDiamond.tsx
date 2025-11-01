@@ -67,9 +67,9 @@ export function AvatarDiamond({
   return (
     <div
       className={cn(
-        "relative grid gap-[var(--gap)]",
-        "[grid-template-columns:repeat(7,var(--cell))]",
-        "[grid-auto-rows:var(--cell)]",
+        "relative grid gap-(--gap)",
+        "grid-cols-[repeat(7,var(--cell))]",
+        "auto-rows-(--cell)",
         className
       )}
       style={styleVariables}
@@ -100,16 +100,16 @@ export function AvatarDiamond({
  */
 function Tile({ avatar }: { avatar?: Avatar }) {
   // If no avatar data, render an empty div to maintain grid structure
-  if (!avatar) return <div className="size-[var(--cell)]" aria-hidden="true" />;
+  if (!avatar) return <div className="size-(--cell)" aria-hidden="true" />;
 
   return (
-    <div className="relative size-[var(--cell)]">
+    <div className="relative size-(--cell)">
       <Image
         src={avatar.src}
         alt={avatar.alt ?? `Avatar ${avatar.id}`}
         fill
         sizes="var(--tile)"
-        className="absolute left-[2px] top-[2px] size-[var(--tile)] rounded-sm border border-[#464646] object-cover bg-[#F0F3F4]"
+        className="absolute left-[2px] top-[2px] size-(--tile) rounded-sm border border-[#464646] object-cover bg-[#F0F3F4]"
         draggable={false}
       />
       <span

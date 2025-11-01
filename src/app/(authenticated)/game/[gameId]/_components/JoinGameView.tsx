@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import Image from "next/image";
 import { motion, useMotionValue } from "framer-motion";
 import { CardStack } from "@/components/CardStack";
@@ -8,27 +8,21 @@ import { CardStack } from "@/components/CardStack";
 import { useRouter } from "next/navigation";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { cn } from "@/lib/utils";
-import { HydratedGame, HydratedUser } from "@/state/types";
 import { joinGameAction } from "@/actions/game";
+import { NeccessaryGameInfo, NeccessaryUserInfo } from "../page";
 
 export default function JoinGameView({
   game,
   userInfo,
-  friends,
-}: {
-  game: HydratedGame;
-  userInfo: HydratedUser;
+}: // friends,
+{
+  game: NeccessaryGameInfo;
+  userInfo: NeccessaryUserInfo;
   friends: { fid: number; username: string; pfpUrl: string }[];
 }) {
   const router = useRouter();
 
-  const joinedCount = game?._count.tickets ?? 0;
-  const avatars = useMemo(() => {
-    return friends.slice(0, 4).map((friend) => ({
-      src: friend.pfpUrl,
-      alt: friend.username,
-    }));
-  }, [friends]);
+  const joinedCount = game._count.tickets ?? 0;
 
   const bx = useMotionValue(0);
   const by = useMotionValue(0);
@@ -43,11 +37,11 @@ export default function JoinGameView({
   };
 
   const canJoin = Boolean(
-    userInfo?.tickets.length && userInfo.tickets.length > 0
+    userInfo?._count.tickets && userInfo._count.tickets > 0
   );
   const handleJoin = useCallback(async () => {
     if (!canJoin) {
-      router.replace("/lobby");
+      router.replace(`/lobby?fid=${userInfo.fid}`);
       return;
     }
     if (typeof window !== "undefined" && "vibrate" in navigator) {
@@ -75,7 +69,7 @@ export default function JoinGameView({
         priority
         className="object-cover"
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/60 to-black/95 pointer-events-none" />
+      <div className="absolute inset-0 bg-linear-to-b from-black/20 via-black/60 to-black/95 pointer-events-none" />
 
       <div className="absolute inset-x-0 bottom-0 flex flex-col items-center justify-end px-6 pb-10 gap-6 pointer-events-none">
         <motion.div className="pointer-events-auto w-full max-w-sm">

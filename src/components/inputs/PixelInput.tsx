@@ -17,13 +17,13 @@ const PixelInput = React.forwardRef<HTMLInputElement, PixelInputProps>(
         className={cn(
           "h-14 w-full rounded-lg border-none px-4 py-2",
           "text-center text-xl tracking-wider",
-          "bg-[color:var(--surface-tint)]",
-          "text-[color:var(--text-primary)] caret-primary",
-          "placeholder:text-[color:var(--text-muted)]",
+          "bg-input",
+          "text-foreground caret-primary",
+          "placeholder:text-muted",
           "font-input",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
-          "focus-visible:ring-[color:var(--accent-secondary)]",
-          "focus-visible:ring-offset-[color:var(--background)]",
+          "focus-visible:ring-(--accent-secondary)",
+          "focus-visible:ring-offset-(--background)",
           "disabled:cursor-not-allowed disabled:opacity-50",
           className
         )}

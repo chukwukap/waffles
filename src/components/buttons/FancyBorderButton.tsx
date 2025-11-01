@@ -33,7 +33,7 @@ export const FancyBorderButton = React.forwardRef<
           "font-body uppercase tracking-wider text-sm",
           "max-w-sm mx-auto",
           "rounded-[12px]",
-          "border-[5px] border-t-0 border-l-0 border-[color:var(--brand-cyan)]",
+          "border-[5px] border-t-0 border-l-0 border-(--brand-cyan)",
           fullWidth && "w-full",
           "transition-transform active:translate-y-[2px] active:border-b-[3px] active:border-r-[3px]",
           "disabled:cursor-not-allowed disabled:opacity-60 disabled:active:translate-y-0 disabled:active:border-b-[5px] disabled:active:border-r-[5px]",

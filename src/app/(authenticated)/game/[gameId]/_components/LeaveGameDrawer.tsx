@@ -63,7 +63,7 @@ export default function LeaveGameDrawer({
           >
             {/* Full width background container */}
             <div
-              className="w-full rounded-t-2xl overflow-hidden noise bg-gradient-to-b from-[#1E1E1E] to-black"
+              className="w-full rounded-t-2xl overflow-hidden noise bg-linear-to-b from-[#1E1E1E] to-black"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Full width header background */}

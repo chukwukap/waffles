@@ -6,7 +6,7 @@ import { Clock } from "@/components/icons";
 import { AvatarDiamond } from "./AvatarDiamond";
 
 import { calculatePrizePool, cn } from "@/lib/utils";
-import { HydratedGame, HydratedUser } from "@/state/types";
+import { NeccessaryGameInfo, NeccessaryUserInfo } from "../page";
 
 import { BottomNav } from "@/components/BottomNav";
 import ChatTickerOverlay from "./ChatTickerOverlay";
@@ -32,11 +32,10 @@ const formatMsToMMSS = (ms: number): string => {
 export default function WaitingView({
   game,
   startTime,
-  userInfo,
 }: {
-  game: HydratedGame;
+  game: NeccessaryGameInfo;
   startTime: string | Date;
-  userInfo: HydratedUser;
+  userInfo: NeccessaryUserInfo;
 }) {
   const router = useRouter();
   const [chatOpen, setChatOpen] = useState(false);
@@ -99,10 +98,14 @@ export default function WaitingView({
   }, []);
 
   // Format prize pool, default to "$0.00"
-  const formattedPrizePool = `$${calculatePrizePool(game).toLocaleString(
-    "en-US",
-    { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-  )}`;
+  const formattedPrizePool = `$${calculatePrizePool({
+    ticketsNum: game?._count.tickets ?? 0,
+    ticketPrice: game?.config?.ticketPrice ?? 0,
+    additionPrizePool: game?.config?.additionPrizePool ?? 0,
+  }).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
   const playerCount = game?._count.tickets ?? 0;
 
   return (
@@ -132,8 +135,8 @@ export default function WaitingView({
               </span>
             </div>
           </div>
-          <div className="order-1 box-border z-0 flex h-10 min-w-[64px] w-[clamp(72px,20vw,110px)] max-w-[140px] flex-none flex-row items-center justify-center rounded-full border-2 border-[var(--color-neon-pink)] px-4 py-1 sm:px-5 sm:py-2 tabular-nums">
-            <span className="px-0 flex items-end justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%] text-[var(--color-neon-pink)]">
+          <div className="order-1 box-border z-0 flex h-10 min-w-[64px] w-[clamp(72px,20vw,110px)] max-w-[140px] flex-none flex-row items-center justify-center rounded-full border-2 border-(--color-neon-pink) px-4 py-1 sm:px-5 sm:py-2 tabular-nums">
+            <span className="px-0 flex items-end justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%] text-(--color-neon-pink)">
               {formattedTime}
             </span>
           </div>

@@ -1,67 +1,62 @@
-// ───────────────────────── QuestionView.tsx ─────────────────────────
 "use client";
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import SoundManager from "@/lib/SoundManager";
 import { notify } from "@/components/ui/Toaster";
-import { HydratedGame, HydratedUser } from "@/state/types";
+import { NeccessaryGameInfo, NeccessaryUserInfo } from "../page";
 import { submitAnswerAction } from "@/actions/game";
 import QuestionCard from "./QuestionCard";
 import { QuestionHeader } from "./QuestionCardHeader";
-import { isSnapshot, formatMsToMMSS } from "@/lib/utils"; // Import new helper
+import { isSnapshot, formatMsToMMSS } from "@/lib/utils";
 import RoundCountdownView from "./RoundCountdownView";
 import { useUserPreferences } from "@/components/providers/userPreference";
 
 // ───────────────────────── CONSTANTS ─────────────────────────
 const NEXT_QUESTION_DELAY_SECONDS = 3;
-const TIMER_PRECISION_MS = 100; // Update timer every 100ms
+const TIMER_PRECISION_MS = 100;
 
-// Define the states the question view can be in
 type QuestionState = "SHOWING_ROUND_BREAK" | "SHOWING_QUESTION" | "SHOWING_GAP";
 
-// ───────────────────────── COMPONENT ─────────────────────────
 export default function QuestionView({
   game,
   userInfo,
 }: {
-  game: HydratedGame;
-  userInfo: HydratedUser;
+  game: NeccessaryGameInfo;
+  userInfo: NeccessaryUserInfo;
 }) {
   const { prefs } = useUserPreferences();
   const router = useRouter();
 
-  // State for the currently selected option
   const [selectedOption, setSelectedOption] = React.useState<string | null>(
     null
   );
-  // NEW: State to track network request
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  // Refs to hold the latest state for use in intervals
   const selectedOptionRef = React.useRef(selectedOption);
   React.useEffect(() => {
     selectedOptionRef.current = selectedOption;
   }, [selectedOption]);
 
-  // Game configuration
   const questionTimeLimitMs = (game?.config?.questionTimeLimit ?? 10) * 1000;
   const roundTimeLimitMs = (game?.config?.roundTimeLimit ?? 15) * 1000;
   const gapTimeLimitMs = NEXT_QUESTION_DELAY_SECONDS * 1000;
 
-  // Question progress
-  const answeredIds = new Set(
-    userInfo?.answers?.map((a) => a.questionId) ?? []
-  );
-  const unansweredQuestions =
-    game?.questions?.filter((q) => !answeredIds.has(q.id)) ?? [];
-  const totalQuestions = game?.questions?.length ?? 0;
-  const answeredCount = totalQuestions - unansweredQuestions.length;
-  const currentQuestion = unansweredQuestions[0];
+  const totalQuestions = game?._count.questions ?? 0;
+  const answeredCount = userInfo?._count.answers ?? 0;
+  const currentQuestion = game?.questions[answeredCount];
   const currentQuestionId = currentQuestion?.id;
 
-  // Timer and State Machine State
+  console.log("currentQuestion", currentQuestion);
+  console.log("currentQuestionId", currentQuestionId);
+  console.log("answeredCount", answeredCount);
+  console.log("totalQuestions", totalQuestions);
+  console.log("roundTimeLimitMs", roundTimeLimitMs);
+  console.log("questionTimeLimitMs", questionTimeLimitMs);
+  console.log("gapTimeLimitMs", gapTimeLimitMs);
+  console.log("prefs.soundEnabled", prefs.soundEnabled);
+  console.log("prefs.soundEnabled", prefs.soundEnabled);
+
   const [state, setState] = React.useState<QuestionState>(() => {
-    // Determine initial state when component loads
     const isBreak =
       isSnapshot(answeredCount, totalQuestions) &&
       answeredCount > 0 &&
@@ -72,34 +67,16 @@ export default function QuestionView({
   const [now, setNow] = React.useState<number>(Date.now());
   const questionStartTimeRef = React.useRef<number | null>(null);
 
-  // React.useEffect(() => {
-  //   if (!currentQuestion) return;
-  //   const soundUrl = currentQuestion.soundUrl;
-  //   if (!prefs.soundEnabled) return;
-
-  //   // PLAY SOUND WHEN QUESTION SHOWS
-  //   SoundManager.play("questionStart", { volume: 0.9 });
-
-  //   return () => {
-  //     // STOP SOUND WHEN QUESTION ENDS OR COMPONENT UNMOUNTS
-  //     SoundManager.stop("questionStart");
-  //   };
-  // }, [prefs.soundEnabled, currentQuestion]);
-
-  // ───────────────────────── QUESTION SOUND ─────────────────────────
   React.useEffect(() => {
     if (!currentQuestion) return;
     if (!prefs.soundEnabled) return;
 
-    // Stop any leftover sounds before playing new one
     SoundManager.stopAll();
 
-    // PLAY THE QUESTION'S SOUND FILE
     console.log("playing question sound", currentQuestion.soundUrl);
     SoundManager.play(currentQuestion.soundUrl!, { volume: 1 });
 
     return () => {
-      // STOP WHEN QUESTION ENDS OR COMPONENT UNMOUNTS
       console.log("stopping question sound", currentQuestion.soundUrl);
       SoundManager.stop(currentQuestion.soundUrl!);
     };
@@ -146,7 +123,7 @@ export default function QuestionView({
       // Check if this was the last question
       // Note: answeredCount is from props, so it's 1 behind the *new* count
       if (answeredCount + 1 === totalQuestions) {
-        router.push(`/game/${game.id}/score`);
+        router.push(`/game/${game.id}/score?fid=${userInfo.fid}`);
         return;
       }
 
@@ -295,7 +272,6 @@ export default function QuestionView({
           <QuestionHeader
             state={state}
             formattedTime={formattedTime}
-            percent={percent}
             currentQuestion={answeredCount} // Note: This is 0-indexed for the *next* question
             totalQuestions={totalQuestions}
             questionTimeLimit={questionTimeLimitMs / 1000} // Pass in seconds

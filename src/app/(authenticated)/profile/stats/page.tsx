@@ -1,4 +1,4 @@
-"use client"; // Required for hooks (SWR, useEffect), Link, etc.
+"use client";
 
 import Link from "next/link";
 import Image from "next/image";
@@ -6,15 +6,17 @@ import useSWR from "swr";
 import { ArrowLeftIcon, WalletIcon } from "@/components/icons";
 import LogoIcon from "@/components/logo/LogoIcon";
 import { BottomNav } from "@/components/BottomNav";
-import { useMiniUser } from "@/hooks/useMiniUser";
+
 import { cn } from "@/lib/utils";
 import { useGetTokenBalance } from "@coinbase/onchainkit/wallet";
 import { env } from "@/lib/env";
 import { base } from "wagmi/chains";
 import React from "react";
+import { useAccount } from "wagmi";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
 const fetcherWithFid = (url: string, fid: string | null) => {
-  if (!fid) return Promise.reject(new Error("FID required for fetch"));
+  if (!fid) throw new Error("User FID not available for fetching stats.");
   return fetch(url, {
     headers: { "x-farcaster-id": fid },
     cache: "no-store",
@@ -43,9 +45,9 @@ interface ProfileStatsData {
 }
 
 const TopBar = () => {
-  const user = useMiniUser();
+  const { address } = useAccount();
   const { status, roundedBalance } = useGetTokenBalance(
-    user.wallet as `0x${string}`,
+    address as `0x${string}`,
     {
       address: env.nextPublicUsdcAddress as `0x${string}`,
       chainId: base.id,
@@ -60,16 +62,16 @@ const TopBar = () => {
     <header
       className={cn(
         "sticky top-0 z-10 w-full",
-        "border-b border-[color:var(--surface-stroke)]",
-        "bg-[color:var(--brand-ink-900)]/80 backdrop-blur-sm"
+        "border-b border-border",
+        "bg-(--brand-ink-900)/80 backdrop-blur-sm"
       )}
     >
       <div className="mx-auto flex w-full max-w-lg items-center justify-between px-4 py-3">
         <LogoIcon />
         <div className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5">
-          <WalletIcon className="h-4 w-4 text-[color:var(--text-primary)]" />
+          <WalletIcon className="h-4 w-4 text-foreground" />
           <span
-            className="text-center text-[color:var(--text-primary)] font-display tabular-nums"
+            className="text-center text-foreground font-display tabular-nums"
             style={{
               fontSize: "clamp(.9rem, 1.8vw, .95rem)",
               lineHeight: "1.1",
@@ -93,7 +95,7 @@ const SubPageHeader = ({ title }: { title: string }) => (
       <ArrowLeftIcon />
     </Link>
     <h1
-      className="flex-grow text-center text-white font-body"
+      className="grow text-center text-white font-body"
       style={{
         fontWeight: 400,
         fontSize: "clamp(1.25rem, 4.5vw, 1.375rem)",
@@ -180,7 +182,8 @@ const IconStat = ({
 );
 
 export default function AllTimeStatsPage() {
-  const { fid } = useMiniUser();
+  const { context: miniKitContext } = useMiniKit();
+  const fid = miniKitContext?.user?.fid;
   const fidString = fid ? String(fid) : null;
 
   const {

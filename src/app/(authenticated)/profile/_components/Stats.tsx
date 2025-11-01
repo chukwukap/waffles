@@ -23,7 +23,7 @@ export const StatCard = ({ icon, label, value }: StatCardProps) => (
       "flex flex-1 flex-col justify-between", // Flex layout, takes available space
       "noise rounded-2xl border border-white/20", // Background, border, radius
       "p-3 sm:p-4 gap-4 sm:gap-5", // Responsive padding and gap - adjusted gap
-      "min-h-[3.75rem] sm:min-h-[4.25rem]" // Minimum height for consistency
+      "min-h-15 sm:min-h-17" // Minimum height for consistency
     )}
   >
     {/* Label */}

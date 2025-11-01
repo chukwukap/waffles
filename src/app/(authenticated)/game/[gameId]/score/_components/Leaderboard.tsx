@@ -52,7 +52,7 @@ export default function Leaderboard({ entries, className }: Props) {
           )}
         >
           {/* Trophy icon */}
-          <span className="mr-4 flex-shrink-0 flex items-center w-[38px] h-[49px]">
+          <span className="mr-4 shrink-0 flex items-center w-[38px] h-[49px]">
             <Image
               src={TROPHY_PATHS[i] || TROPHY_PATHS[2]}
               width={38}

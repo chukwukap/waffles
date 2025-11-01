@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { HomeIcon, LeaderboardIcon, ProfileIcon } from "./icons";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
 const navItems = [
   { icon: HomeIcon, label: "Lobby", href: "/lobby" },
@@ -13,6 +14,8 @@ const navItems = [
 export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const { context: miniKitContext } = useMiniKit();
+  const fid = miniKitContext?.user?.fid;
 
   return (
     <nav
@@ -32,7 +35,7 @@ export function BottomNav() {
           return (
             <button
               key={item.href}
-              onClick={() => router.push(item.href)}
+              onClick={() => router.push(`${item.href}?fid=${fid}`)}
               className={cn(
                 "flex flex-1 flex-col items-center justify-center gap-1 px-4 py-3",
                 "transition-colors duration-150 ease-in-out",

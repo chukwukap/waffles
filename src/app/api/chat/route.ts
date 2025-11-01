@@ -64,6 +64,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
-// Ensure dynamic execution for fresh chat messages
-export const dynamic = "force-dynamic";

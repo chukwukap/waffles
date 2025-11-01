@@ -1,16 +1,20 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useMiniUser } from "@/hooks/useMiniUser";
 import { syncUserAction } from "@/actions/onboarding";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
+import { useAccount } from "wagmi";
 
-const ONBOARDING_STORAGE_KEY = "waffles:onboarded:v9.3";
+const ONBOARDING_STORAGE_KEY = "waffles:onboarded:v9.9";
 
 export function useOnboarding() {
+  const { address } = useAccount();
   const [isOnboarded, setIsOnboarded] = useState<boolean>(true);
   const [isReady, setIsReady] = useState<boolean>(false);
-  const { fid, username, pfpUrl, wallet } = useMiniUser();
-
+  const { context: miniKitContext } = useMiniKit();
+  const fid = miniKitContext?.user?.fid;
+  const pfpUrl = miniKitContext?.user?.pfpUrl;
+  const username = miniKitContext?.user?.username;
   useEffect(() => {
     let status = true;
     try {
@@ -41,14 +45,14 @@ export function useOnboarding() {
         fid,
         username,
         pfpUrl,
-        wallet,
+        wallet: address,
       });
       try {
         const result = await syncUserAction({
           fid: fid,
           username: username,
           pfpUrl: pfpUrl,
-          wallet: wallet,
+          wallet: address,
         });
 
         if (!result.success) {
@@ -70,7 +74,7 @@ export function useOnboarding() {
     }
 
     setIsOnboarded(true);
-  }, [fid, username, pfpUrl, wallet]);
+  }, [fid, username, pfpUrl, address]);
 
   return {
     isReady,

@@ -1,9 +1,6 @@
-import { Suspense } from "react";
 import { prisma } from "@/lib/db";
 import ProfilePageClient from "./_components/profilePageClient";
-import { SplashScreen } from "@/components/ui/SplashScreen";
 import { GameHistoryEntry } from "@/state/types";
-import { getCurrentUserFid } from "@/lib/auth";
 
 // ProfileData maps to client
 async function getProfileData(fid: number | null) {
@@ -212,10 +209,14 @@ async function getInviteData(userId: number | null) {
   };
 }
 
-export default async function ProfilePage() {
-  const fid = await getCurrentUserFid();
+export default async function ProfilePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ fid: string }>;
+}) {
+  const { fid } = await searchParams;
 
-  let profileData = await getProfileData(fid);
+  let profileData = await getProfileData(Number(fid));
   let stats = null;
   let gameHistory: GameHistoryEntry[] = [];
   let inviteCode: string | null = null;

@@ -1,26 +1,29 @@
 import { prisma } from "@/lib/db";
-import { notFound } from "next/navigation";
-import React from "react";
 import ScorePageClient from "./_components/scoreClient";
-import { getCurrentUserFid } from "@/lib/auth";
 
 export default async function ScorePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ gameId: string }>;
+  searchParams: Promise<{ fid: string }>;
 }) {
   const { gameId } = await params;
-  const fid = await getCurrentUserFid();
+  const { fid } = await searchParams;
+
+  console.log("score page", { gameId, fid });
+  console.log("search params", await searchParams);
+  console.log("params", await params);
 
   if (!fid) {
-    return <div>User not logged in</div>;
+    throw new Error("FID is required");
   }
 
   // Look up the user's score for the game by joining Score -> User (using fid)
   const userScore = await prisma.score.findFirst({
     where: {
       gameId: Number(gameId),
-      user: { fid: fid },
+      user: { fid: Number(fid) },
     },
     include: {
       game: {
@@ -35,8 +38,6 @@ export default async function ScorePage({
       },
     },
   });
-
-  if (!userScore || !userScore.user) return notFound();
 
   // Get leaderboard top 3 for this game
   const leaderboard = await prisma.score.findMany({
@@ -62,7 +63,7 @@ export default async function ScorePage({
 
   // Find user's rank using their internal userId
   const sortedUserIds = allScores.map((s) => s.userId);
-  const userRank = sortedUserIds.indexOf(userScore.user.id) + 1;
+  const userRank = sortedUserIds.indexOf(userScore?.user.id ?? 0) + 1;
   const percentile =
     allScores.length > 0
       ? Math.round(((allScores.length - userRank) / allScores.length) * 100)
@@ -74,12 +75,12 @@ export default async function ScorePage({
   return (
     <ScorePageClient
       userInfo={{
-        username: userScore.user.name ?? "",
-        avatarUrl: userScore.user.imageUrl ?? "",
+        username: userScore?.user.name ?? "",
+        avatarUrl: userScore?.user.imageUrl ?? "",
       }}
-      category={userScore.game?.config?.theme ?? "UNKNOWN"}
+      category={userScore?.game?.config?.theme ?? "UNKNOWN"}
       winnings={winnings}
-      score={userScore.points}
+      score={userScore?.points ?? 0}
       rank={userRank}
       percentile={percentile}
       leaderboard={leaderboard.map((r) => ({

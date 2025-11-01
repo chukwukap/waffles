@@ -62,7 +62,7 @@ export default function GameErrorPage({ error, reset }: ErrorPageProps) {
             overflow-x-auto
             font-mono
             text-left
-            break-words
+            wrap-break-word
           "
           style={{
             whiteSpace: "pre-wrap",

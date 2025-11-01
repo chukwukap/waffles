@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import LogoIcon from "@/components/logo/LogoIcon";
 import { FlashIcon, WalletIcon } from "@/components/icons";
 import { useRouter } from "next/navigation";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
 interface LeaderboardEntry {
   username: string;
@@ -43,6 +44,8 @@ export default function ScorePageClient({
 }: Props) {
   const account = useAccount();
   const router = useRouter();
+  const { context: miniKitContext } = useMiniKit();
+  const fid = miniKitContext?.user?.fid;
   const { roundedBalance } = useGetTokenBalance(
     account.address as `0x${string}`,
     {
@@ -143,7 +146,7 @@ export default function ScorePageClient({
             bg-transparent
             border-none
             mt-1"
-            onClick={() => router.push("/lobby")}
+            onClick={() => router.push(`/lobby?fid=${fid}`)}
           >
             <span
               className="

@@ -3,18 +3,8 @@
 import { prisma } from "@/lib/db";
 import { calculateScore } from "@/lib/scoring";
 import { z } from "zod";
-import { revalidatePath } from "next/cache";
-import { fetchGameById } from "@/lib/data";
-import { Prisma } from "@prisma/client";
 
-// Paths used for revalidation
-const gamePath = (gameId: number) => `/game/${gameId}`;
-const lobbyPath = "/lobby";
-const leaderboardCurrentPath = (gameId: number) =>
-  `/leaderboard/current/${gameId}`;
-const leaderboardAllTimePath = "/leaderboard/allTime";
-const userProfileGamePath = (fid: number, gameId: number) =>
-  `/profile/${fid}/game/${gameId}`;
+import { Prisma } from "@prisma/client";
 
 const submitAnswerSchema = z.object({
   fid: z.number().int().positive("Invalid FID format."),
@@ -132,17 +122,6 @@ export async function submitAnswerAction(
       }
     });
 
-    // Revalidate all relevant paths after an answer is submitted
-    // Leaderboards
-    revalidatePath(leaderboardCurrentPath(gameId));
-    revalidatePath(leaderboardAllTimePath);
-    // Lobby page
-    revalidatePath(lobbyPath);
-    // Game details page
-    revalidatePath(gamePath(gameId));
-    // User's profile/game interaction (if any)
-    revalidatePath(userProfileGamePath(fid, gameId));
-
     return { success: true, correct, points: newPoints };
   } catch (err) {
     console.error("submitAnswerAction Error:", err);
@@ -193,7 +172,10 @@ export async function joinGameAction(
     }
 
     // Use cache-backed fetchGameById from @data.ts
-    const game = await fetchGameById(gameId);
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      include: { config: true },
+    });
     if (!game) {
       return { success: false, error: "Game not found." };
     }
@@ -213,25 +195,12 @@ export async function joinGameAction(
       },
     });
 
-    // Revalidate relevant pages
-    revalidatePath(gamePath(gameId));
-    revalidatePath(lobbyPath);
-    revalidatePath(userProfileGamePath(fid, gameId));
-    revalidatePath(leaderboardCurrentPath(gameId));
-    revalidatePath(leaderboardAllTimePath);
-
     return { success: true };
   } catch (err: unknown) {
     if (
       err instanceof Prisma.PrismaClientKnownRequestError &&
       err.code === "P2002"
     ) {
-      // Still revalidate relevant pages in upsert duplicate case
-      revalidatePath(gamePath(gameId));
-      revalidatePath(lobbyPath);
-      revalidatePath(userProfileGamePath(fid, gameId));
-      revalidatePath(leaderboardCurrentPath(gameId));
-      revalidatePath(leaderboardAllTimePath);
       return { success: true };
     }
     console.error("joinGameAction Error:", err);
@@ -280,7 +249,10 @@ export async function leaveGameAction(
     }
 
     // Ensure game exists (for correct path revalidation and safety)
-    const game = await fetchGameById(gameId);
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      include: { config: true },
+    });
     if (!game) {
       return { success: false, error: "Game not found." };
     }
@@ -290,13 +262,6 @@ export async function leaveGameAction(
       where: { userId: user.id, gameId },
     });
 
-    // Revalidate all relevant paths
-    revalidatePath(gamePath(gameId));
-    revalidatePath(lobbyPath);
-    revalidatePath(userProfileGamePath(fid, gameId));
-    revalidatePath(leaderboardCurrentPath(gameId));
-    revalidatePath(leaderboardAllTimePath);
-
     return { success: true };
   } catch (err: unknown) {
     if (
@@ -304,11 +269,6 @@ export async function leaveGameAction(
       (err.code === "P2025" || err.code === "P2001")
     ) {
       // No record exists, treat as successful (idempotency)
-      revalidatePath(gamePath(gameId));
-      revalidatePath(lobbyPath);
-      revalidatePath(userProfileGamePath(fid, gameId));
-      revalidatePath(leaderboardCurrentPath(gameId));
-      revalidatePath(leaderboardAllTimePath);
       return { success: true };
     }
     console.error("leaveGameAction Error:", err);
