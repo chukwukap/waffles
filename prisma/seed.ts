@@ -19,8 +19,8 @@ async function main() {
     create: {
       name: "Movie & TV Scene Quiz",
       description: "Guess the movie or TV show a famous scene is from.",
-      startTime: new Date(Date.now() + 2 * 60 * 1000), // 2 minutes from now
-      endTime: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      startTime: new Date(Date.now() + 5 * 60 * 1000), // 5 minute from now
+      endTime: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours after start time
       questions: {
         create: [
           {

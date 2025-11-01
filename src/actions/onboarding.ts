@@ -19,19 +19,35 @@ function generateReferralCode(): string {
   return code;
 }
 
+/**
+ * Ensure a referral code exists for the given inviterId.
+ */
 async function ensureReferral(
   inviterId: number
 ): Promise<{ code: string; existed: boolean; id: number }> {
+  console.info(
+    `[ONBOARDING/REFERRAL] [ensureReferral] Checking for existing referral for inviterId=${inviterId}`
+  );
   const existing = await prisma.referral.findFirst({
     where: { inviterId },
     orderBy: { createdAt: "asc" },
     select: { code: true, id: true },
   });
-  if (existing) return { ...existing, existed: true };
+  if (existing) {
+    console.info(
+      `[ONBOARDING/REFERRAL] [ensureReferral] Found existing referral: code=${existing.code}, id=${existing.id}`
+    );
+    return { ...existing, existed: true };
+  }
 
   for (let attempt = 0; attempt < MAX_CODE_GENERATION_RETRIES; attempt++) {
     const code = generateReferralCode();
     try {
+      console.info(
+        `[ONBOARDING/REFERRAL] [ensureReferral] Attempt ${
+          attempt + 1
+        }: Trying to create referral code: ${code}`
+      );
       const newReferral = await prisma.referral.create({
         data: {
           code,
@@ -41,6 +57,9 @@ async function ensureReferral(
       });
       // After creating a new referral, revalidate the lobby/upcoming games path
       revalidatePath("/"); // Invalidate the home/lobby page
+      console.info(
+        `[ONBOARDING/REFERRAL] [ensureReferral] Successfully created new referral: code=${newReferral.code}, id=${newReferral.id}`
+      );
       return { ...newReferral, existed: false };
     } catch (err) {
       if (
@@ -50,16 +69,22 @@ async function ensureReferral(
         err.code === "P2002"
       ) {
         console.warn(
-          `Referral code collision on attempt ${attempt + 1}, retrying...`
+          `[ONBOARDING/REFERRAL] [ensureReferral] Referral code collision on attempt ${
+            attempt + 1
+          }, retrying...`
         );
         continue;
       }
+      console.error(
+        `[ONBOARDING/REFERRAL] [ensureReferral] Failed to create referral:`,
+        err
+      );
       throw err;
     }
   }
-  throw new Error(
-    `Failed to generate unique referral code for inviterId ${inviterId} after ${MAX_CODE_GENERATION_RETRIES} attempts.`
-  );
+  const errorMsg = `[ONBOARDING/REFERRAL] [ensureReferral] Failed to generate unique referral code for inviterId ${inviterId} after ${MAX_CODE_GENERATION_RETRIES} attempts.`;
+  console.error(errorMsg);
+  throw new Error(errorMsg);
 }
 
 const syncUserSchema = z.object({
@@ -75,7 +100,6 @@ const syncUserSchema = z.object({
 });
 
 type SyncedUser = {
-  id: number;
   fid: number;
   name: string | null;
   imageUrl: string | null;
@@ -90,18 +114,29 @@ export type SyncUserResult =
   | { success: true; user: SyncedUser; referral: SyncedReferral }
   | { success: false; error: string };
 
+/**
+ * Server Action: Synchronize user (Farcaster profile, wallet, etc.) and set referral/cookie
+ */
 export async function syncUserAction(
   input: z.input<typeof syncUserSchema>
 ): Promise<SyncUserResult> {
+  console.info(
+    `[ONBOARDING] [syncUserAction] Called with input: ${JSON.stringify(input)}`
+  );
   const validation = syncUserSchema.safeParse(input);
   if (!validation.success) {
     const firstError = validation.error.message || "Invalid input.";
-    console.warn("syncUserAction validation failed:", validation.error.message);
+    console.warn(
+      `[ONBOARDING] [syncUserAction] Validation failed: ${firstError}`
+    );
     return { success: false, error: firstError };
   }
   const data = validation.data;
 
   try {
+    console.info(
+      `[ONBOARDING] [syncUserAction] Upserting user with fid=${data.fid}`
+    );
     const user = await prisma.user.upsert({
       where: { fid: data.fid },
       update: {
@@ -123,32 +158,48 @@ export async function syncUserAction(
         wallet: true,
       },
     });
+    console.info(
+      `[ONBOARDING] [syncUserAction] Upserted user: ${JSON.stringify(user)}`
+    );
 
-    // Revalidate main lobby and user profile/game details on onboarding/sync
-    revalidatePath("/"); // Home/lobby path
-    // Optionally: user dashboard/profile (if you have a path, e.g., `/user/${user.fid}`)
-    // If there's a page like `/user/[fid]`, you could: revalidatePath(`/user/${user.fid}`);
-
-    // Set the user's fid in a cookie
     try {
       const cookieStore = await cookies();
-      cookieStore.set("fid", String(user.fid), {
-        path: "/",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 30, // 30 days in seconds
-        secure: process.env.NODE_ENV === "production",
-      });
+      cookieStore.set(
+        "fid",
+        String(user.fid)
+        // {
+        //   // path: "/",
+        //   sameSite: "none",
+        //   priority: "high",
+        //   // domain: process.env.NODE_ENV === "production" ? ".waffles.gg" : undefined,
+        //   maxAge: 60 * 60 * 24 * 30, // 30 days in seconds
+        //   secure: process.env.NODE_ENV === "production",
+        // }
+      );
+      console.info(
+        `[ONBOARDING] [syncUserAction] Set cookie for fid ${user.fid}`
+      );
+      revalidatePath("/lobby");
+      console.info(
+        `[ONBOARDING] [syncUserAction] Revalidated lobby page for fid ${user.fid}`
+      );
     } catch (cookieErr) {
-      console.warn(`Failed to set fid cookie:`, cookieErr);
+      console.warn(
+        `[ONBOARDING] [syncUserAction] Failed to set fid cookie:`,
+        cookieErr
+      );
+      revalidatePath("/lobby");
       throw new Error(`Failed to set fid cookie: ${cookieErr}`);
     }
 
     const referral = await ensureReferral(user.id);
 
+    console.info(
+      `[ONBOARDING] [syncUserAction] Returning success for user fid=${user.fid} with referral code=${referral.code}, referralId=${referral.id}`
+    );
     return {
       success: true,
       user: {
-        id: user.id,
         fid: user.fid,
         name: user.name,
         imageUrl: user.imageUrl,
@@ -157,7 +208,7 @@ export async function syncUserAction(
       referral: { id: referral.id, code: referral.code },
     };
   } catch (err) {
-    console.error("syncUserAction Error:", err);
+    console.error("[ONBOARDING] [syncUserAction] Error during user sync:", err);
     return {
       success: false,
       error:

@@ -80,8 +80,6 @@ export async function purchaseTicketAction(
           where: { id: existingTicket.id },
           data: { txHash: txHash, status: "confirmed" }, // Update status too
         });
-        revalidateTag(`ticket_${fid}_${gameId}`); // Revalidate SWR cache
-        revalidateTag("lobby_stats");
         return { success: true, ticket: updatedTicket };
       }
       return { success: true, ticket: existingTicket, alreadyExists: true };
@@ -119,8 +117,6 @@ export async function purchaseTicketAction(
     });
 
     // 7. Revalidate relevant data caches
-    revalidateTag(`ticket_${fid}_${gameId}`); // Invalidate specific ticket cache for SWR
-    revalidateTag("lobby_stats"); // Invalidate general lobby stats
 
     return { success: true, ticket: newTicket };
   } catch (e) {

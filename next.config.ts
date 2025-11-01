@@ -19,10 +19,10 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // Allow development requests from specific origin(s) due to Next.js CORS requirements
+  // Allow development requests from these origins due to Next.js CORS requirements
   // See: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
   allowedDevOrigins: [
-    "https://halifax-shortcuts-utils-colorado.trycloudflare.com",
+    "https://brochure-decent-personalized-drug.trycloudflare.com",
   ],
 };
 

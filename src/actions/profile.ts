@@ -89,7 +89,6 @@ export async function updateProfileAction(
       },
     });
 
-    revalidateTag(`profile_${fid}`);
     revalidatePath("/profile");
 
     return { success: true, user: updatedUser };
