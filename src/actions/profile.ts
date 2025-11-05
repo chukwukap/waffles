@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/db";
 import { z } from "zod";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 import type { User } from "@prisma/client";
 
 const updateProfileSchema = z

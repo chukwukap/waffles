@@ -3,32 +3,40 @@ import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { CardStack } from "@/components/CardStack";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { Suspense } from "react";
-import { ShareButton } from "./ShareButton";
+import { Suspense, use } from "react"; // Import 'use'
+import { ShareButton } from "./ShareButton"; // Adjusted path
 import { joinWaitlistAction } from "@/actions/waitlist";
 import { useRouter } from "next/navigation";
+import { WaitlistData } from "../page"; // Import the data type
 
 export function WaitlistClient({
-  waitlist,
-  fid,
+  waitlistDataPromise,
   referrerFid,
 }: {
-  waitlist: {
-    onList: boolean;
-    rank: number | null;
-    invites: number;
-  };
-  fid: number;
+  waitlistDataPromise: Promise<WaitlistData>;
   referrerFid: number | null;
 }) {
+  // 1. Use the 'use' hook to read the data from the promise
+  const { waitlist, userFid } = use(waitlistDataPromise);
+  const fid = userFid; // Assign to fid for minimal code changes
+
   const router = useRouter();
+
+  // 2. The 'join' action is now much simpler
   async function join() {
     if (!fid) return;
     try {
       const formData = new FormData();
       formData.set("fid", String(fid));
-      formData.set("referrerFid", referrerFid ? String(referrerFid) : "");
+      if (referrerFid) {
+        formData.set("referrerFid", String(referrerFid));
+      }
+      // We assume joinWaitlistAction will trigger a revalidation/redirect
       await joinWaitlistAction(formData);
+
+      // Optimistic update: manually push to the same page to show new state.
+      // The server action 'joinWaitlistAction' should ideally handle
+      // revalidation so the page re-renders with the new data.
       router.push("/waitlist");
     } catch (error) {
       console.error("Error joining waitlist:", error);
@@ -116,6 +124,7 @@ export function WaitlistClient({
               <p className="text-[#99A0AE] font-display text-[clamp(14px,3.4vw,18px)] leading-[130%] mt-3">
                 Join now to be first to play when Waffles launches
               </p>
+              {/* This form action now calls the local 'join' function */}
               <form action={join} className="mt-6">
                 <FancyBorderButton type="submit">
                   GET ME ON THE LIST
@@ -141,13 +150,16 @@ export function WaitlistClient({
             rotations={[-8, 5, -5, 7]}
           />
           <p className="text-[#99A0AE] font-display text-[clamp(14px,3.4vw,18px)] leading-[130%] mt-3">
-            You and {waitlist.invites} friends are on the list
+            {/* This message is now dynamic based on whether the user is on the list.
+              If they are, it shows their invites. If not, it shows '0'.
+            */}
+            You and {waitlist.invites} friend
+            {waitlist.invites === 1 ? "" : "s"} are on the list
           </p>
         </motion.div>
       </main>
 
-      {/* --- ADDED THIS SECTION --- */}
-      {/* This div positions the splash characters at the bottom of the screen */}
+      {/* --- Splash Images (Unchanged) --- */}
       <div className="absolute bottom-0 w-full flex justify-center items-end pointer-events-none">
         <div className="flex flex-row items-end -space-x-4">
           {splashImages.map((src, index) => (
@@ -162,7 +174,6 @@ export function WaitlistClient({
           ))}
         </div>
       </div>
-      {/* --- END OF ADDED SECTION --- */}
     </div>
   );
 }

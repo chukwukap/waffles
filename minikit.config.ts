@@ -24,7 +24,7 @@ export const minikitConfig: MiniAppManifest = {
       `${env.rootUrl}/images/screenshots/3.png`,
     ],
     iconUrl: `${env.rootUrl}/icon.png`,
-    splashImageUrl: `${env.rootUrl}/images/splash-icon.png`,
+    splashImageUrl: `${env.rootUrl}/icon.png`,
     splashBackgroundColor: "#1E1E1E",
     homeUrl: env.rootUrl,
     webhookUrl: `${env.rootUrl}/api/webhook`,

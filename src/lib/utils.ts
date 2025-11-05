@@ -28,16 +28,14 @@ export function isSnapshot(x: number, totalQuestions: number): boolean {
 }
 
 /**
- * Formats milliseconds into a MM:SS string.
- * @param ms - The number of milliseconds.
- * @returns A string in "MM:SS" format.
+ * Formats milliseconds into a MM:SS string (0-padded).
  */
-export const formatMsToMMSS = (ms: number): string => {
+export function formatMsToMMSS(ms: number): string {
+  if (!isFinite(ms) || ms < 0) ms = 0;
   const totalSeconds = Math.ceil(ms / 1000);
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
-    2,
-    "0"
-  )}`;
-};
+  return (
+    String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0")
+  );
+}

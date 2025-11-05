@@ -2,7 +2,6 @@
 
 import { prisma } from "@/lib/db";
 import { z } from "zod";
-import { revalidateTag } from "next/cache";
 
 // Utility function: Remove or redact URLs from a string.
 function sanitizeMessage(input: string): string {

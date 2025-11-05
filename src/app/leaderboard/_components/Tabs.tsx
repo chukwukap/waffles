@@ -1,38 +1,38 @@
 "use client";
 
 import { useCallback } from "react";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { PixelButton } from "@/components/buttons/PixelButton";
 import { cn } from "@/lib/utils";
-import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
 export type LeaderboardTabKey = "current" | "allTime";
 
-// The labels in your original code are already correct for the target design
 const TABS: { key: LeaderboardTabKey; label: string }[] = [
   { key: "current", label: "Current game" },
   { key: "allTime", label: "All time" },
 ];
 
-export function Tabs() {
+interface TabsProps {
+  activeTab: LeaderboardTabKey;
+  fid: number | null;
+}
+
+export function Tabs({ activeTab, fid }: TabsProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const { context: miniKitContext } = useMiniKit();
-  const fid = miniKitContext?.user?.fid;
-
-  const activeTab = (searchParams.get("tab") || "current") as LeaderboardTabKey;
 
   const handleTabChange = useCallback(
     (newTab: LeaderboardTabKey) => {
-      const params = new URLSearchParams(searchParams);
+      // We no longer need useSearchParams. We build the query from scratch.
+      const params = new URLSearchParams();
       params.set("tab", newTab);
-      router.push(
-        `${pathname}?${params.toString()}${fid ? `&fid=${fid}` : ""}`,
-        { scroll: false }
-      );
+      if (fid) {
+        params.set("fid", fid.toString());
+      }
+
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
     },
-    [router, pathname, searchParams, fid]
+    [router, pathname, fid]
   );
 
   return (

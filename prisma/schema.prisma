@@ -52,12 +52,24 @@ model Game {
   endTime      DateTime
   createdAt    DateTime          @default(now())
   questions    Question[]
+  rounds       Round[]
   tickets      Ticket[]
   scores       Score[]
   chats        Chat[]
   config       GameConfig?
   answers      Answer[]
   participants GameParticipant[] // <-- users who have really joined (played) this game
+}
+
+model Round {
+  id        Int        @id @default(autoincrement())
+  game      Game       @relation(fields: [gameId], references: [id])
+  gameId    Int
+  roundNum  Int // 1-based index for round (e.g., 1, 2, 3, ...)
+  questions Question[]
+
+  @@unique([gameId, roundNum])
+  @@index([gameId])
 }
 
 model GameParticipant {
@@ -94,6 +106,8 @@ model Question {
   id            Int      @id @default(autoincrement())
   game          Game     @relation(fields: [gameId], references: [id])
   gameId        Int
+  round         Round    @relation(fields: [roundId], references: [id])
+  roundId       Int
   text          String
   imageUrl      String
   soundUrl      String?
@@ -103,6 +117,7 @@ model Question {
   answers       Answer[]
 
   @@index([gameId])
+  @@index([roundId])
 }
 
 model Ticket {

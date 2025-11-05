@@ -1,171 +1,40 @@
-"use client";
-
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-
-interface UseCountdownOptions {
-  durationSeconds?: number;
-  target?: Date | number;
-  autoStart?: boolean;
-  intervalMs?: number;
-  onTick?: (millisecondsLeft: number) => void;
-  onComplete?: () => void;
-}
-
-interface UseCountdownResult {
-  millisecondsLeft: number;
-  secondsLeft: number;
-  isRunning: boolean;
-  start: () => void;
-  pause: () => void;
-  reset: (opts?: { durationSeconds?: number; target?: Date | number }) => void;
-  setTarget: (target: Date | number) => void;
-}
+import { useEffect, useRef, useState } from "react";
 
 /**
- * A high-accuracy countdown hook that avoids drift by calculating remaining time
- * based on a fixed end timestamp (`endAt`). Supports relative durations or absolute targets.
+ * Efficient countdown hook based on end timestamp.
+ * Updates just frequently enough for the UI, using setTimeout.
  */
-export function useCountdown(
-  options: UseCountdownOptions = {} //
-): UseCountdownResult {
-  const {
-    durationSeconds,
-    target,
-    autoStart = true,
-    intervalMs = 1000,
-    onTick,
-    onComplete,
-  } = options;
-
-  const [endAt, setEndAt] = useState<number>(() => {
-    if (typeof target !== "undefined") {
-      return target instanceof Date ? target.getTime() : target;
-    }
-    if (typeof durationSeconds === "number") {
-      return Date.now() + Math.max(0, durationSeconds) * 1000;
-    }
-    return 0;
-  });
-
-  const [isRunning, setIsRunning] = useState<boolean>(
-    Boolean(autoStart && (durationSeconds != null || target != null))
+export function useCountdown(targetTimeMs: number, onExpire?: () => void) {
+  const [msLeft, setMsLeft] = useState(() =>
+    Math.max(0, targetTimeMs - Date.now())
   );
-
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const [now, setNow] = useState<number>(() => Date.now());
-
-  const millisecondsLeft = useMemo(
-    () => Math.max(0, endAt - now),
-    [endAt, now]
-  );
-  const secondsLeft = useMemo(
-    () => Math.ceil(millisecondsLeft / 1000),
-    [millisecondsLeft]
-  );
-
-  const clearTimer = useCallback(() => {
-    if (intervalRef.current !== null) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-  }, []);
-
-  const tick = useCallback(() => {
-    const currentTime = Date.now();
-    const msRemaining = Math.max(0, endAt - currentTime);
-
-    setNow(currentTime);
-    onTick?.(msRemaining);
-
-    if (msRemaining <= 0) {
-      clearTimer();
-      setIsRunning(false);
-      onComplete?.();
-    }
-  }, [endAt, onTick, onComplete, clearTimer]);
-
-  const start = useCallback(() => {
-    if (isRunning || !endAt || endAt <= Date.now()) return;
-
-    setIsRunning(true);
-    tick();
-    intervalRef.current = setInterval(tick, Math.max(16, intervalMs));
-  }, [isRunning, endAt, intervalMs, tick]);
-
-  const pause = useCallback(() => {
-    if (!isRunning) return;
-
-    clearTimer();
-    setIsRunning(false);
-    const remainingMs = Math.max(0, endAt - Date.now());
-    setEndAt(Date.now() + remainingMs);
-  }, [isRunning, clearTimer, endAt]);
-
-  const reset = useCallback(
-    (opts?: { durationSeconds?: number; target?: Date | number }) => {
-      clearTimer();
-
-      const nextTargetOpt = opts?.target ?? target;
-      const nextDurationOpt = opts?.durationSeconds ?? durationSeconds;
-
-      let nextEndAt = 0;
-      if (typeof nextTargetOpt !== "undefined") {
-        nextEndAt =
-          nextTargetOpt instanceof Date
-            ? nextTargetOpt.getTime()
-            : nextTargetOpt;
-      } else if (typeof nextDurationOpt === "number") {
-        nextEndAt = Date.now() + Math.max(0, nextDurationOpt) * 1000;
-      }
-
-      setEndAt(nextEndAt);
-      const shouldAutoStart = Boolean(autoStart && nextEndAt > 0);
-      setIsRunning(shouldAutoStart);
-      setNow(Date.now());
-
-      if (shouldAutoStart) {
-        tick();
-        intervalRef.current = setInterval(tick, Math.max(16, intervalMs));
-      }
-    },
-    [autoStart, clearTimer, durationSeconds, intervalMs, target, tick]
-  );
-
-  const setTarget = useCallback(
-    (newTarget: Date | number) => {
-      //
-      clearTimer();
-      const nextEndAt =
-        newTarget instanceof Date ? newTarget.getTime() : newTarget;
-      setEndAt(nextEndAt);
-      const shouldAutoStart = Boolean(autoStart && nextEndAt > 0);
-      setIsRunning(shouldAutoStart);
-      setNow(Date.now());
-
-      if (shouldAutoStart) {
-        tick();
-        intervalRef.current = setInterval(tick, Math.max(16, intervalMs));
-      }
-    },
-    [autoStart, clearTimer, intervalMs, tick]
-  );
+  const timeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (autoStart && (durationSeconds != null || target != null)) {
-      start();
+    let cancelled = false;
+    function tick() {
+      if (cancelled) return;
+      const now = Date.now();
+      const diff = targetTimeMs - now;
+      if (diff <= 0) {
+        setMsLeft(0);
+        if (onExpire) onExpire();
+        return;
+      } else {
+        setMsLeft(diff);
+        // Next tick right as clock may change visually, i.e., on the next second boundary
+        // Or at most every 250ms if very close.
+        const toNextSecond = diff % 1000 === 0 ? 1000 : diff % 1000; // until next whole second boundary
+        const next = Math.min(toNextSecond <= 0 ? 1000 : toNextSecond, 250);
+        timeoutRef.current = window.setTimeout(tick, next);
+      }
     }
-    return clearTimer;
-  }, [autoStart, durationSeconds, target, start, clearTimer]);
-
-  // --- Return Hook API ---
-  return {
-    millisecondsLeft,
-    secondsLeft,
-    isRunning,
-    start,
-    pause,
-    reset,
-    setTarget,
-  };
+    tick();
+    return () => {
+      cancelled = true;
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    };
+  }, [targetTimeMs, onExpire]);
+  return msLeft;
 }

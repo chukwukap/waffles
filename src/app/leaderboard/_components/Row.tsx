@@ -1,3 +1,5 @@
+"use client";
+
 import { LeaderboardEntry } from "@/state/types";
 import { UsdcIcon } from "@/components/icons";
 import Image from "next/image";

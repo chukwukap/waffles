@@ -131,7 +131,6 @@ export async function syncUserAction(
         maxAge: 60 * 60 * 24 * 30, // 30 days in seconds
         secure: process.env.NODE_ENV === "production",
       });
-      console.log("cookies:", cookieStore.getAll());
     } catch (cookieErr) {
       console.warn(`Failed to set fid cookie:`, cookieErr);
       throw new Error(`Failed to set fid cookie: ${cookieErr}`);

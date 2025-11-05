@@ -5,6 +5,7 @@ import { calculateScore } from "@/lib/scoring";
 import { z } from "zod";
 
 import { Prisma } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 
 const submitAnswerSchema = z.object({
   fid: z.number().int().positive("Invalid FID format."),
@@ -33,6 +34,7 @@ export async function submitAnswerAction(
   const { fid, gameId, questionId, selected, timeTaken } = validation.data;
 
   try {
+    // 1. Get User
     const user = await prisma.user.findUnique({
       where: { fid },
       select: { id: true },
@@ -41,6 +43,7 @@ export async function submitAnswerAction(
       return { success: false, error: "User not found." };
     }
 
+    // 2. Get Game and Question info
     const [question, game] = await Promise.all([
       prisma.question.findUnique({
         where: { id: questionId },
@@ -62,14 +65,21 @@ export async function submitAnswerAction(
       return { success: false, error: "Game configuration missing." };
     }
 
-    const roundLimit = game.config.roundTimeLimit ?? 15;
+    // 3. Calculate score based on new submission
+    const questionTimeLimit = game.config.questionTimeLimit ?? 10;
     const maxTime =
-      Number.isFinite(roundLimit) && roundLimit > 0 ? roundLimit : 15;
+      Number.isFinite(questionTimeLimit) && questionTimeLimit > 0
+        ? questionTimeLimit
+        : 10;
+
+    // Sanitize time and determine correctness
     const sanitizedTime = Math.min(Math.max(0, timeTaken), maxTime);
     const correct = selected !== null && selected === question.correctAnswer;
     const newPoints = correct ? calculateScore(sanitizedTime, maxTime) : 0;
 
+    // 4. Use a transaction for atomic update
     await prisma.$transaction(async (tx) => {
+      // Find the *previous* answer for this question, if any
       const previousAnswer = await tx.answer.findUnique({
         where: {
           userId_gameId_questionId: { userId: user.id, gameId, questionId },
@@ -77,11 +87,13 @@ export async function submitAnswerAction(
         select: { isCorrect: true, timeTaken: true },
       });
 
+      // Calculate the points from the *previous* answer
       const previousPoints =
         previousAnswer?.isCorrect && Number.isFinite(previousAnswer.timeTaken)
           ? calculateScore(previousAnswer.timeTaken!, maxTime)
           : 0;
 
+      // Upsert the new answer
       await tx.answer.upsert({
         where: {
           userId_gameId_questionId: { userId: user.id, gameId, questionId },
@@ -95,7 +107,7 @@ export async function submitAnswerAction(
           userId: user.id,
           gameId,
           questionId,
-          selected: selected ?? "",
+          selected: selected ?? "", // Use empty string if null, as selected is not nullable
           isCorrect: correct,
           timeTaken: sanitizedTime,
         },
@@ -107,24 +119,40 @@ export async function submitAnswerAction(
         select: { points: true },
       });
 
+      // Calculate the *change* in points
       const pointsDelta = newPoints - previousPoints;
 
       if (existingScore) {
+        // If score exists, update it with the delta
         const nextTotalPoints = Math.max(0, existingScore.points + pointsDelta);
         await tx.score.update({
           where: { userId_gameId: { userId: user.id, gameId } },
           data: { points: nextTotalPoints },
         });
       } else {
+        // If no score record exists, create one with the new points
         await tx.score.create({
           data: { userId: user.id, gameId, points: newPoints },
         });
       }
     });
 
+    // Revalidate the game path to ensure data is fresh for the next load
+    revalidatePath(`/game/${gameId}`);
+
     return { success: true, correct, points: newPoints };
   } catch (err) {
     console.error("submitAnswerAction Error:", err);
+    // Handle potential Prisma unique constraint violation (though upsert should prevent this)
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === "P2002"
+    ) {
+      return {
+        success: false,
+        error: "A database conflict occurred. Please try again.",
+      };
+    }
     return {
       success: false,
       error: "Failed to submit answer due to a server error.",
@@ -195,6 +223,9 @@ export async function joinGameAction(
       },
     });
 
+    // Revalidate the game path
+    revalidatePath(`/game/${gameId}`);
+
     return { success: true };
   } catch (err: unknown) {
     if (
@@ -261,6 +292,9 @@ export async function leaveGameAction(
     await prisma.gameParticipant.deleteMany({
       where: { userId: user.id, gameId },
     });
+
+    // Revalidate the game path
+    revalidatePath(`/game/${gameId}`);
 
     return { success: true };
   } catch (err: unknown) {
