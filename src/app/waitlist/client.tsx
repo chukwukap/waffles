@@ -3,14 +3,13 @@ import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { CardStack } from "@/components/CardStack";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { use } from "react";
+import { use, useCallback } from "react";
 import { ShareButton } from "./_components/ShareButton";
 import { joinWaitlistAction } from "@/actions/waitlist";
 import { useRouter } from "next/navigation";
 import { WaitlistData } from "./page";
 import { useAddFrame, useMiniKit } from "@coinbase/onchainkit/minikit";
 import { saveNotificationTokenAction } from "@/actions/notification";
-import { useEffect, useCallback, useState } from "react";
 
 export function WaitlistClient({
   waitlistDataPromise,
@@ -26,7 +25,6 @@ export function WaitlistClient({
   const router = useRouter();
   const addFrame = useAddFrame();
   const { context } = useMiniKit();
-  const [hasPromptedAddFrame, setHasPromptedAddFrame] = useState(false);
 
   const handleAddFrame = useCallback(async () => {
     if (!fid) return;
@@ -42,35 +40,11 @@ export function WaitlistClient({
         formData.set("url", result.url);
 
         await saveNotificationTokenAction(formData);
-        setHasPromptedAddFrame(true);
       }
     } catch (error) {
       console.error("Error adding frame:", error);
     }
   }, [addFrame, fid]);
-
-  // Prompt user to add mini app after they join the waitlist
-  useEffect(() => {
-    // Only prompt if:
-    // 1. User is on the waitlist
-    // 2. We haven't prompted yet
-    // 3. Mini app context is available and shows it's not already added
-    // 4. User FID is available
-    if (
-      waitlist.onList &&
-      !hasPromptedAddFrame &&
-      context?.client.added === false &&
-      fid
-    ) {
-      // Small delay to let the UI settle after joining
-      const timer = setTimeout(() => {
-        handleAddFrame();
-      }, 1000);
-
-      return () => clearTimeout(timer);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [waitlist.onList, hasPromptedAddFrame, context?.client.added, fid]);
 
   async function join() {
     if (!fid) return;
@@ -80,7 +54,18 @@ export function WaitlistClient({
       if (referrerFid) {
         formData.set("referrerFid", String(referrerFid));
       }
-      await joinWaitlistAction(formData);
+      const result = await joinWaitlistAction(formData);
+      
+      // Only prompt to add mini app if:
+      // 1. Join was successful (not already on list)
+      // 2. Mini app hasn't been added yet
+      if (result.ok && !result.already && context?.client.added === false) {
+        // Small delay to let the UI settle after joining
+        setTimeout(() => {
+          handleAddFrame();
+        }, 1000);
+      }
+      
       router.refresh();
     } catch (error) {
       console.error("Error joining waitlist:", error);
