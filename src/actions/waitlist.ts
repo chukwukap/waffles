@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
  * Adds a user to the waitlist.
  */
 export async function joinWaitlistAction(
+  prevState: { ok: boolean; already?: boolean; error?: string } | null,
   formData: FormData
 ): Promise<{ ok: boolean; already?: boolean; error?: string }> {
   const fid = formData.get("fid");
