@@ -3,35 +3,69 @@
 import { prisma } from "@/lib/db";
 import { calculateScore } from "@/lib/scoring";
 import { z } from "zod";
+import { verifyAuthenticatedUser } from "@/lib/auth";
 
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 const submitAnswerSchema = z.object({
-  fid: z.number().int().positive("Invalid FID format."),
-  gameId: z.number().int().positive("Invalid Game ID."),
-  questionId: z.number().int().positive("Invalid Question ID."),
+  fid: z.coerce.number().int().positive("Invalid FID format."),
+  gameId: z.coerce.number().int().positive("Invalid Game ID."),
+  questionId: z.coerce.number().int().positive("Invalid Question ID."),
   selected: z.string().nullable(),
-  timeTaken: z.number().nonnegative("Time taken cannot be negative."),
+  timeTaken: z.coerce.number().nonnegative("Time taken cannot be negative."),
+  authToken: z.string().optional().nullable(), // Authentication token
 });
 
-export type SubmitAnswerResult =
-  | { success: true; correct: boolean; points: number }
-  | { success: false; error: string };
+export type SubmitAnswerResult = { success: boolean; error: string };
 
+/**
+ * Accepts FormData for answer submission, following the referral validation pattern.
+ */
 export async function submitAnswerAction(
-  input: z.input<typeof submitAnswerSchema>
+  previousState: SubmitAnswerResult,
+  formData: FormData
 ): Promise<SubmitAnswerResult> {
-  const validation = submitAnswerSchema.safeParse(input);
+  const rawFid = formData.get("fid");
+  const rawGameId = formData.get("gameId");
+  const rawQuestionId = formData.get("questionId");
+  const rawSelected = formData.has("selected")
+    ? formData.get("selected")
+    : null;
+  // Permitting blank or omitted to still mean null
+  const rawTimeTaken = formData.get("timeTaken");
+  const rawAuthToken = formData.get("authToken");
+
+  const validation = submitAnswerSchema.safeParse({
+    fid: rawFid,
+    gameId: rawGameId,
+    questionId: rawQuestionId,
+    selected: rawSelected === "" ? "noanswer" : rawSelected,
+    timeTaken: rawTimeTaken,
+    authToken: rawAuthToken,
+  });
+
   if (!validation.success) {
-    const firstError = validation.error.message || "Invalid input.";
+    const firstError =
+      validation.error.issues?.[0]?.message || "Invalid input.";
     console.warn(
       "submitAnswerAction validation failed:",
-      validation.error.message
+      validation.error.issues
     );
     return { success: false, error: firstError };
   }
-  const { fid, gameId, questionId, selected, timeTaken } = validation.data;
+
+  const { fid, gameId, questionId, selected, timeTaken, authToken } =
+    validation.data;
+
+  // Verify authentication - REQUIRED for answer submissions
+  const authResult = await verifyAuthenticatedUser(authToken ?? null, fid);
+  if (!authResult.authenticated) {
+    return {
+      success: false,
+      error: authResult.error || "Authentication required to submit answers",
+    };
+  }
 
   try {
     // 1. Get User
@@ -71,7 +105,6 @@ export async function submitAnswerAction(
       Number.isFinite(questionTimeLimit) && questionTimeLimit > 0
         ? questionTimeLimit
         : 10;
-
     // Sanitize time and determine correctness
     const sanitizedTime = Math.min(Math.max(0, timeTaken), maxTime);
     const correct = selected !== null && selected === question.correctAnswer;
@@ -140,7 +173,7 @@ export async function submitAnswerAction(
     // Revalidate the game path to ensure data is fresh for the next load
     revalidatePath(`/game/${gameId}`);
 
-    return { success: true, correct, points: newPoints };
+    return { success: true, error: "" };
   } catch (err) {
     console.error("submitAnswerAction Error:", err);
     // Handle potential Prisma unique constraint violation (though upsert should prevent this)
@@ -241,11 +274,10 @@ export async function joinGameAction(
     };
   }
 }
-// LeaveGame schema and handler for removing user participation from a game (deleting GameParticipant)
+// LeaveGame schema and handler for removing user participation from the current active game (deleting GameParticipant)
 
 const leaveGameSchema = z.object({
   fid: z.number().int().positive("Invalid FID."),
-  gameId: z.number().int().positive("Invalid gameId."),
 });
 
 export type LeaveGameResult =
@@ -253,10 +285,13 @@ export type LeaveGameResult =
   | { success: false; error: string };
 
 /**
- * Removes the GameParticipant record (user's participation) for a game.
+ * Removes the GameParticipant record (user's participation) for the current active game.
+ * - Only removes participation for the *currently* active Game.
  * - Does NOT revoke ticket or answers; only removes participation.
  * - Safe to call multiple times (idempotent).
- * - Triggers revalidation of all views where participation matters.
+ * - Triggers revalidation of the game view if any.
+ *
+ * Expects only fid.
  */
 export async function leaveGameAction(
   input: z.input<typeof leaveGameSchema>
@@ -267,7 +302,7 @@ export async function leaveGameAction(
     console.warn("leaveGameAction validation failed:", validated.error.message);
     return { success: false, error: firstError };
   }
-  const { fid, gameId } = validated.data;
+  const { fid } = validated.data;
 
   try {
     // Find user by FID
@@ -279,22 +314,31 @@ export async function leaveGameAction(
       return { success: false, error: "User not found." };
     }
 
-    // Ensure game exists (for correct path revalidation and safety)
-    const game = await prisma.game.findUnique({
-      where: { id: gameId },
-      include: { config: true },
+    // Find active GameParticipant record for this user.
+    // Active game is one where game.startTime <= now <= game.endTime
+    const now = new Date();
+    const activeParticipant = await prisma.gameParticipant.findFirst({
+      where: {
+        userId: user.id,
+        game: {
+          startTime: { lte: now },
+          endTime: { gte: now },
+        },
+      },
+      include: { game: true },
     });
-    if (!game) {
-      return { success: false, error: "Game not found." };
+
+    if (!activeParticipant || !activeParticipant.game) {
+      return { success: false, error: "No active game participation found." };
     }
 
-    // Remove participation (may delete 0 or 1 record: idempotent)
+    // Remove participation (delete the record)
     await prisma.gameParticipant.deleteMany({
-      where: { userId: user.id, gameId },
+      where: { userId: user.id, gameId: activeParticipant.gameId },
     });
 
-    // Revalidate the game path
-    revalidatePath(`/game/${gameId}`);
+    // Revalidate the game path for the game left
+    revalidatePath(`/game/${activeParticipant.gameId}`);
 
     return { success: true };
   } catch (err: unknown) {

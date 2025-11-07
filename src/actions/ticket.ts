@@ -4,12 +4,14 @@ import { prisma } from "@/lib/db";
 import { randomBytes } from "crypto";
 import { z } from "zod";
 import type { Ticket } from "@prisma/client"; // Import Prisma type
+import { verifyAuthenticatedUser } from "@/lib/auth";
 
 // Schema for input validation
 const purchaseSchema = z.object({
   fid: z.number().int().positive("Invalid FID format."),
   gameId: z.number().int().positive("Invalid Game ID."),
   txHash: z.string().optional().nullable(), // Optional transaction hash
+  authToken: z.string().optional().nullable(), // Authentication token
 });
 
 export type PurchaseResult =
@@ -32,6 +34,7 @@ export async function purchaseTicketAction(
     fid: Number(formData.get("fid")),
     gameId: Number(formData.get("gameId")), // Ensure conversion
     txHash: formData.get("txHash"),
+    authToken: formData.get("authToken"),
   };
 
   const validation = purchaseSchema.safeParse(rawData);
@@ -41,7 +44,16 @@ export async function purchaseTicketAction(
     return { success: false, error: firstError };
   }
 
-  const { fid, gameId, txHash } = validation.data;
+  const { fid, gameId, txHash, authToken } = validation.data;
+
+  // Verify authentication - REQUIRED for ticket purchases
+  const authResult = await verifyAuthenticatedUser(authToken ?? null, fid);
+  if (!authResult.authenticated) {
+    return {
+      success: false,
+      error: authResult.error || "Authentication required for purchases",
+    };
+  }
 
   try {
     // 1. Find User
