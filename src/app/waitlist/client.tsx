@@ -3,13 +3,12 @@ import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { CardStack } from "@/components/CardStack";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { use, useCallback, useActionState, startTransition, useEffect } from "react";
+import { use, useCallback } from "react";
 import { ShareButton } from "./_components/ShareButton";
 import { joinWaitlistAction } from "@/actions/waitlist";
 import { useRouter } from "next/navigation";
 import { WaitlistData } from "./page";
 import { useAddFrame, useMiniKit } from "@coinbase/onchainkit/minikit";
-import { saveNotificationTokenAction } from "@/actions/notification";
 
 export function WaitlistClient({
   waitlistDataPromise,
@@ -26,57 +25,42 @@ export function WaitlistClient({
   const addFrame = useAddFrame();
   const { context } = useMiniKit();
 
-  const [state, formAction, isPending] = useActionState(joinWaitlistAction, null);
-
   const handleAddFrame = useCallback(async () => {
     if (!fid) return;
 
     try {
-      const result = await addFrame();
-
-      if (result) {
-        // Save notification token to backend
-        const formData = new FormData();
-        formData.set("fid", String(fid));
-        formData.set("token", result.token);
-        formData.set("url", result.url);
-
-        await saveNotificationTokenAction(formData);
-      }
+      // The webhook will handle saving the notification token
+      // We just need to trigger the add frame flow
+      await addFrame();
     } catch (error) {
       console.error("Error adding frame:", error);
     }
   }, [addFrame, fid]);
 
-  // Handle successful join and prompt to add mini app
-  useEffect(() => {
-    if (state?.ok && !state.already && context?.client.added === false && fid) {
-      // Refresh the page data
-      startTransition(() => {
-        router.refresh();
-      });
-
-      // Small delay to let the UI settle after joining, then prompt to add mini app
-      const timer = setTimeout(() => {
-        handleAddFrame();
-      }, 1000);
-
-      return () => clearTimeout(timer);
-    } else if (state?.ok) {
-      // Just refresh if already on list or mini app already added
-      startTransition(() => {
-        router.refresh();
-      });
-    }
-  }, [state, context?.client.added, fid, handleAddFrame, router]);
-
-  async function join(formData: FormData) {
+  async function join() {
     if (!fid) return;
-    formData.set("fid", String(fid));
-    if (referrerFid) {
-      formData.set("referrerFid", String(referrerFid));
+    try {
+      const formData = new FormData();
+      formData.set("fid", String(fid));
+      if (referrerFid) {
+        formData.set("referrerFid", String(referrerFid));
+      }
+      const result = await joinWaitlistAction(formData);
+
+      // Only prompt to add mini app if:
+      // 1. Join was successful (not already on list)
+      // 2. Mini app hasn't been added yet
+      if (result.ok && !result.already && context?.client.added === false) {
+        // Small delay to let the UI settle after joining
+        // setTimeout(() => {
+        handleAddFrame();
+        // }, 1000);
+      }
+
+      // router.refresh();
+    } catch (error) {
+      console.error("Error joining waitlist:", error);
     }
-    formAction(formData);
   }
 
   const splashImages = [
@@ -158,13 +142,10 @@ export function WaitlistClient({
                 Join now to be first to play when Waffles launches
               </p>
               <form action={join} className="mt-6">
-                <FancyBorderButton type="submit" disabled={isPending}>
-                  {isPending ? "JOINING..." : "GET ME ON THE LIST"}
+                <FancyBorderButton type="submit">
+                  GET ME ON THE LIST
                 </FancyBorderButton>
               </form>
-              {state?.error && (
-                <p className="text-red-500 text-sm mt-2">{state.error}</p>
-              )}
             </>
           )}
         </motion.div>

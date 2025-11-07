@@ -29,7 +29,7 @@ model User {
   gameParticipants  GameParticipant[] // <-- users who have really joined (played) games
   waitlist          Waitlist?
   waitlistReferrals Waitlist[]         @relation("WaitlistReferral")
-  notificationToken NotificationToken?
+  notificationTokens NotificationToken[]
 }
 
 model Referral {
@@ -192,12 +192,16 @@ model Waitlist {
 model NotificationToken {
   id        Int      @id @default(autoincrement())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    Int      @unique
-  token     String   @unique
+  userId    Int
+  appFid    Int      // The FID of the client app (e.g., Base app is 309857)
+  token     String
   url       String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Tokens are unique per user-client combination
+  @@unique([userId, appFid])
   @@index([userId])
+  @@index([appFid])
   @@index([token])
 }
