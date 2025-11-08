@@ -33,7 +33,11 @@ export function ShareButton({
     }
   }, [composeCastAsync, userFid]);
   return (
-    <FancyBorderButton onClick={share} className={className} disabled={disabled}>
+    <FancyBorderButton
+      onClick={share}
+      className={className}
+      disabled={disabled}
+    >
       SHARE
     </FancyBorderButton>
   );

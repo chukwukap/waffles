@@ -3,8 +3,13 @@ import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { CardStack } from "@/components/CardStack";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { use, useCallback, startTransition, useEffect } from "react";
-import { useActionState } from "react";
+import {
+  use,
+  useCallback,
+  startTransition,
+  useEffect,
+  useActionState,
+} from "react";
 import { useRouter } from "next/navigation";
 import { ShareButton } from "./_components/ShareButton";
 import { joinWaitlistAction, type JoinWaitlistState } from "@/actions/waitlist";
@@ -55,14 +60,21 @@ export function WaitlistClient({
   useEffect(() => {
     if (state.ok && !state.already && !pending) {
       // Refresh the page to show updated waitlist status
-      router.refresh();
-      
+      // router.refresh();
+
       // Prompt to add mini app if not already added
       if (context?.client.added === false) {
         handleAddFrame();
       }
     }
-  }, [state.ok, state.already, pending, context?.client.added, handleAddFrame, router]);
+  }, [
+    state.ok,
+    state.already,
+    pending,
+    context?.client.added,
+    handleAddFrame,
+    router,
+  ]);
 
   const splashImages = [
     "/images/splash/crew-1.png",
