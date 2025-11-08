@@ -1,6 +1,5 @@
 "use client";
 
-import LogoIcon from "@/components/logo/LogoIcon";
 import React, { useEffect, useState, useRef, useCallback, use } from "react";
 import Image from "next/image";
 import { PixelInput } from "@/components/inputs/PixelInput";
@@ -116,7 +115,7 @@ export default function InvitePageClient({
             "p-4 flex items-center justify-center border-y border-border bg-transparent"
           }
         >
-          <LogoIcon />
+          <Image src="/images/logo.svg" alt="Logo" width={32} height={32} />
         </div>
 
         <div className="flex flex-col items-center justify-center flex-1 py-16 px-4">

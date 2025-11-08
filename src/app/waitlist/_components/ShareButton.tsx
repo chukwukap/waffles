@@ -1,27 +1,27 @@
 "use client";
 import { useCallback } from "react";
-import { useComposeCast } from "@coinbase/onchainkit/minikit";
+import { useComposeCast, useMiniKit } from "@coinbase/onchainkit/minikit";
 import { notify } from "@/components/ui/Toaster";
 import { env } from "@/lib/env";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 
 export function ShareButton({
-  userFid,
   className,
+  disabled,
 }: {
-  userFid: number;
   className?: string;
+  disabled?: boolean;
 }) {
+  const { context: miniKitContext } = useMiniKit();
+  const userFid = miniKitContext?.user?.fid;
   const { composeCastAsync } = useComposeCast();
   const share = useCallback(async () => {
-    const message = `I'm on the Waffles waitlist! Join me at ${window.location.origin}/waitlist?ref=${userFid}`;
+    const message = `I'm on the Waffles waitlist! Join me!`;
     notify.info("Opening Farcaster composer...");
     try {
       const result = await composeCastAsync({
         text: message,
-        embeds: [env.rootUrl ? { url: env.rootUrl } : undefined].filter(
-          Boolean
-        ) as unknown as [string],
+        embeds: [`${env.rootUrl ?? ""}/waitlist?ref=${userFid}`],
       });
       if (result?.cast) {
         notify.success("Shared successfully!");
@@ -31,9 +31,9 @@ export function ShareButton({
     } catch {
       notify.error("Failed to share waitlist.");
     }
-  }, [userFid, composeCastAsync]);
+  }, [composeCastAsync, userFid]);
   return (
-    <FancyBorderButton onClick={share} className={className}>
+    <FancyBorderButton onClick={share} className={className} disabled={disabled}>
       SHARE
     </FancyBorderButton>
   );

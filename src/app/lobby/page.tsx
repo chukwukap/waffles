@@ -1,8 +1,8 @@
 "use server";
-import LobbyPageClientImpl from "./lobbyClient";
+import LobbyPageClientImpl from "./client";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
-import { cache, Suspense } from "react";
+import { Suspense } from "react";
 
 import { BottomNav } from "@/components/BottomNav";
 import { Spinner } from "@/components/ui/spinner";
@@ -28,6 +28,7 @@ export type LobbyPageGameInfo = Prisma.GameGetPayload<{
     _count: { select: { tickets: true } };
   };
 }>;
+
 export default async function LobbyPage({
   searchParams,
 }: {
@@ -40,7 +41,7 @@ export default async function LobbyPage({
     return null;
   }
 
-  const getGameInfo = cache(async () => {
+  const getGameInfo = async () => {
     const now = new Date();
     return prisma.game
       .findFirst({
@@ -58,9 +59,9 @@ export default async function LobbyPage({
         }
         return game;
       });
-  });
+  };
 
-  const getUserInfo = cache(async (fid: number | null) => {
+  const getUserInfo = async (fid: number | null) => {
     if (fid === null || isNaN(Number(fid))) {
       return null;
     }
@@ -73,7 +74,7 @@ export default async function LobbyPage({
         _count: { select: { tickets: true } },
       },
     });
-  });
+  };
 
   const gameInfoPromise = getGameInfo();
   const userInfoPromise = getUserInfo(Number(fid));

@@ -2,38 +2,37 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Clock } from "@/components/icons";
-import { AvatarDiamond } from "./AvatarDiamond";
 import { calculatePrizePool, cn, formatMsToMMSS } from "@/lib/utils";
-import { NeccessaryGameInfo } from "../page";
 import { BottomNav } from "@/components/BottomNav";
-import ChatTickerOverlay from "./ChatTickerOverlay";
-import { Chat } from "./Chat";
+
 import { useCountdown } from "@/hooks/useCountdown";
+import { AvatarDiamond } from "./_components/AvatarDiamond";
+import ChatTickerOverlay from "./_components/ChatTickerOverlay";
+import { Chat } from "./_components/Chat";
+import { Prisma } from "@prisma/client";
 
 /**
  * View displayed while waiting for the next gameInfo to start.
  * Shows a countdown, prize pool, player avatars, and chat.
  */
-export default function WaitingView({
+export default function GameLobby({
   gameInfo,
 }: {
-  gameInfo: NeccessaryGameInfo;
+  gameInfo: Prisma.GameGetPayload<{
+    include: {
+      config: true;
+      _count: { select: { tickets: true } };
+    };
+  }>;
 }) {
   const router = useRouter();
   const [chatOpen, setChatOpen] = useState(false);
 
-  // Efficient/robust timer
-  const startTimeMs = useMemo(() => {
-    // Defensive against string/Date/invalid date
-    const ts =
-      typeof gameInfo.startTime === "string"
-        ? new Date(gameInfo.startTime).getTime()
-        : gameInfo.startTime instanceof Date
-        ? gameInfo.startTime.getTime()
-        : Number(gameInfo.startTime);
-    return isNaN(ts) ? Date.now() : ts;
-  }, [gameInfo.startTime]);
+  // startTime and endTime are always Date (from Prisma)
+  const startTimeMs = gameInfo.startTime.getTime();
+  const endTimeMs = gameInfo.endTime.getTime();
 
   // When timer hits zero, refresh once (transition to gameInfo)
   const hasFiredRef = useRef(false);
@@ -91,6 +90,14 @@ export default function WaitingView({
   })}`;
   const playerCount = gameInfo?._count.tickets ?? 0;
 
+  // Determine if game has started or ended
+  const now = Date.now();
+  const hasStarted = now >= startTimeMs && now < endTimeMs;
+  const hasEnded = now >= endTimeMs;
+
+  // We'll use the same neon pink as .text-(--color-neon-pink)
+  const neonPinkColor = "var(--color-neon-pink)";
+
   return (
     <div
       className={cn(
@@ -114,15 +121,57 @@ export default function WaitingView({
                   letterSpacing: "-0.03em",
                 }}
               >
-                GAME STARTS IN
+                {hasEnded
+                  ? "Game has ended"
+                  : hasStarted
+                  ? "Game is LIVE"
+                  : "GAME STARTS IN"}
               </span>
             </div>
           </div>
-          <div className="order-1 box-border z-0 flex h-10 min-w-[64px] w-[clamp(72px,20vw,110px)] max-w-[140px] flex-none flex-row items-center justify-center rounded-full border-2 border-(--color-neon-pink) px-4 py-1 sm:px-5 sm:py-2 tabular-nums">
-            <span className="px-0 flex items-end justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%] text-(--color-neon-pink)">
-              {formattedTime}
-            </span>
-          </div>
+          {/* Button logic: */}
+          {hasEnded ? (
+            <div
+              className="order-1 box-border z-0 flex h-10 min-w-[64px] w-[clamp(72px,20vw,110px)] max-w-[140px] flex-none flex-row items-center justify-center rounded-full border-2 border-(--color-neon-pink) px-4 py-1 sm:px-5 sm:py-2 tabular-nums bg-gray-800/60 cursor-not-allowed opacity-60"
+              aria-disabled="true"
+              tabIndex={-1}
+            >
+              <span
+                className="px-0 flex items-end justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%] text-(--color-neon-pink) font-bold"
+                style={{ letterSpacing: "-0.02em" }}
+              >
+                ENDED
+              </span>
+            </div>
+          ) : hasStarted ? (
+            <Link
+              href={`/game/${gameInfo.id}/join?gameId=${gameInfo.id}`}
+              prefetch={false}
+              className="order-1 box-border z-0 flex h-10 min-w-[64px] w-[clamp(72px,20vw,110px)] max-w-[140px] flex-none flex-row items-center justify-center rounded-full border-2 border-(--color-neon-pink) px-4 py-1 sm:px-5 sm:py-2 tabular-nums"
+              style={{
+                background: neonPinkColor,
+                textDecoration: "none",
+                transition: "background 0.2s",
+              }}
+            >
+              <span
+                className="px-0 flex items-end justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%]"
+                style={{
+                  color: "#171523",
+                  fontWeight: 700,
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                START
+              </span>
+            </Link>
+          ) : (
+            <div className="order-1 box-border z-0 flex h-10 min-w-[64px] w-[clamp(72px,20vw,110px)] max-w-[140px] flex-none flex-row items-center justify-center rounded-full border-2 border-(--color-neon-pink) px-4 py-1 sm:px-5 sm:py-2 tabular-nums">
+              <span className="px-0 flex items-end justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%] text-(--color-neon-pink)">
+                {formattedTime}
+              </span>
+            </div>
+          )}
         </div>
         {/* Prize Pool Display */}
         <div className="flex w-full min-h-24 flex-col items-center justify-end gap-1 pb-2.5">

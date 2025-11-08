@@ -3,10 +3,11 @@ import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { CardStack } from "@/components/CardStack";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { use, useCallback } from "react";
-import { ShareButton } from "./_components/ShareButton";
-import { joinWaitlistAction } from "@/actions/waitlist";
+import { use, useCallback, startTransition, useEffect } from "react";
+import { useActionState } from "react";
 import { useRouter } from "next/navigation";
+import { ShareButton } from "./_components/ShareButton";
+import { joinWaitlistAction, type JoinWaitlistState } from "@/actions/waitlist";
 import { WaitlistData } from "./page";
 import { useAddFrame, useMiniKit } from "@coinbase/onchainkit/minikit";
 
@@ -15,18 +16,20 @@ export function WaitlistClient({
   referrerFid,
 }: {
   waitlistDataPromise: Promise<WaitlistData>;
-  referrerFid: number | null;
+  referrerFid?: number | null;
 }) {
-  const { waitlist, userFid } = use(waitlistDataPromise);
-
-  const fid = userFid;
-
-  const router = useRouter();
+  const { onList, rank, invites } = use(waitlistDataPromise);
   const addFrame = useAddFrame();
   const { context } = useMiniKit();
+  const router = useRouter();
+
+  const [state, action, pending] = useActionState<JoinWaitlistState, FormData>(
+    joinWaitlistAction,
+    { ok: false }
+  );
 
   const handleAddFrame = useCallback(async () => {
-    if (!fid) return;
+    if (!context?.user?.fid) return;
 
     try {
       // The webhook will handle saving the notification token
@@ -35,33 +38,31 @@ export function WaitlistClient({
     } catch (error) {
       console.error("Error adding frame:", error);
     }
-  }, [addFrame, fid]);
+  }, [addFrame, context?.user?.fid]);
 
-  async function join() {
-    if (!fid) return;
-    try {
-      const formData = new FormData();
-      formData.set("fid", String(fid));
-      if (referrerFid) {
-        formData.set("referrerFid", String(referrerFid));
-      }
-      const result = await joinWaitlistAction(formData);
+  const handleSubmit = useCallback(
+    (formData: FormData) => {
+      if (!context?.user?.fid) return;
 
-      // Only prompt to add mini app if:
-      // 1. Join was successful (not already on list)
-      // 2. Mini app hasn't been added yet
-      if (result.ok && !result.already && context?.client.added === false) {
-        // Small delay to let the UI settle after joining
-        // setTimeout(() => {
+      startTransition(() => {
+        action(formData);
+      });
+    },
+    [action, context?.user?.fid]
+  );
+
+  // Handle successful join - refresh page and prompt to add mini app if needed
+  useEffect(() => {
+    if (state.ok && !state.already && !pending) {
+      // Refresh the page to show updated waitlist status
+      router.refresh();
+      
+      // Prompt to add mini app if not already added
+      if (context?.client.added === false) {
         handleAddFrame();
-        // }, 1000);
       }
-
-      // router.refresh();
-    } catch (error) {
-      console.error("Error joining waitlist:", error);
     }
-  }
+  }, [state.ok, state.already, pending, context?.client.added, handleAddFrame, router]);
 
   const splashImages = [
     "/images/splash/crew-1.png",
@@ -117,21 +118,21 @@ export function WaitlistClient({
           transition={{ duration: 0.55, delay: 0.2 }}
           className="mt-[2vh] flex flex-col items-center text-center"
         >
-          {waitlist.onList ? (
+          {onList ? (
             <>
               <h1 className="font-body text-white text-[clamp(32px,8vw,44px)] leading-[92%]">
                 YOU&apos;RE ON <br /> THE LIST
               </h1>
               <p className="text-[#99A0AE] font-display text-[clamp(14px,3.4vw,18px)] leading-[130%] mt-3">
-                {waitlist.rank
-                  ? `You're #${waitlist.rank} on the waitlist.`
+                {rank
+                  ? `You're #${rank} on the waitlist.`
                   : "You're on the waitlist!"}
                 <br />
-                You&apos;ve invited {waitlist.invites} friend
-                {waitlist.invites === 1 ? "" : "s"}. Share to move up faster.
+                You&apos;ve invited {invites} friend
+                {invites === 1 ? "" : "s"}. Share to move up faster.
               </p>
 
-              <ShareButton className="mt-2" />
+              <ShareButton className="mt-2" disabled={pending} />
             </>
           ) : (
             <>
@@ -141,9 +142,18 @@ export function WaitlistClient({
               <p className="text-[#99A0AE] font-display text-[clamp(14px,3.4vw,18px)] leading-[130%] mt-3">
                 Join now to be first to play when Waffles launches
               </p>
-              <form action={join} className="mt-6">
-                <FancyBorderButton type="submit">
-                  GET ME ON THE LIST
+              {state.error && (
+                <p className="text-red-400 text-sm mt-2">{state.error}</p>
+              )}
+              <form action={handleSubmit} className="mt-6">
+                {context?.user?.fid && (
+                  <input type="hidden" name="fid" value={context.user.fid} />
+                )}
+                {referrerFid && (
+                  <input type="hidden" name="referrerFid" value={referrerFid} />
+                )}
+                <FancyBorderButton type="submit" disabled={pending}>
+                  {pending ? "JOINING..." : "GET ME ON THE LIST"}
                 </FancyBorderButton>
               </form>
             </>
@@ -166,8 +176,8 @@ export function WaitlistClient({
             rotations={[-8, 5, -5, 7]}
           />
           <p className="text-[#99A0AE] font-display text-[clamp(14px,3.4vw,18px)] leading-[130%] mt-3">
-            You and {waitlist.invites} friend
-            {waitlist.invites === 1 ? "" : "s"} are on the list
+            You and {invites} friend
+            {invites === 1 ? "" : "s"} are on the list
           </p>
         </motion.div>
       </main>

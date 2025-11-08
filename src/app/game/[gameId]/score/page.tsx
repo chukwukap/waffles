@@ -1,6 +1,6 @@
 import { cache, Suspense } from "react";
 import { prisma } from "@/lib/db";
-import ScorePageClient from "./_components/scoreClient";
+import ScorePageClient from "./client";
 import { Spinner } from "@/components/ui/spinner";
 import Header from "@/components/Header";
 

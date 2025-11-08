@@ -1,28 +1,68 @@
-"use server";
-
-import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { WaitlistClient } from "./_components/waitlistClient";
+import { WaitlistClient } from "./client";
 import { minikitConfig } from "../../../minikit.config";
 import { Metadata } from "next";
-import { cache, Suspense } from "react";
-import { Spinner } from "@/components/ui/spinner"; // Assuming you have a spinner
+import { cache } from "react";
+import { env } from "@/lib/env";
 
-// --- METADATA (Unchanged) ---
-export async function generateMetadata(): Promise<Metadata> {
+export const getWaitlistRank = cache(
+  async (fid: number): Promise<number | null> => {
+    const user = await getUser(fid);
+    if (!user) {
+      return null;
+    }
+    const waitlistCreatedAt = user.waitlist?.createdAt;
+    // Step 3: Count all waitlist entries with earlier createdAt date
+    const earlierCount = await prisma.waitlist.count({
+      where: { createdAt: { lt: waitlistCreatedAt } },
+    });
+
+    // Rank is earlierCount + 1 (1-based)
+    return earlierCount + 1;
+  }
+);
+
+export const getUser = cache(async (fid: number) => {
+  const user = await prisma.user.findUnique({
+    where: { fid },
+    select: { id: true, fid: true, waitlist: true },
+  });
+
+  if (!user) {
+    console.error(`User not found for fid: ${fid}`);
+    return null;
+  }
+
+  return user;
+});
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ ref?: string; fid: string }>;
+}): Promise<Metadata> {
+  const sParams = await searchParams;
+  const fid = parseInt(sParams.fid);
+  const rank = await getWaitlistRank(fid);
+
+  const IMAGE_URL = `${
+    env.rootUrl
+  }/api/og/waitlist?fid=${fid}&rank=${rank}&ref=${sParams.ref ?? ""}`;
+  console.log("IMAGE_URL", IMAGE_URL);
+
   return {
     title: minikitConfig.miniapp.name,
-    description: minikitConfig.miniapp.description,
+    description: `You're #${rank} on the waitlist.`,
     other: {
       "fc:frame": JSON.stringify({
         version: minikitConfig.miniapp.version,
-        imageUrl: minikitConfig.miniapp.heroImageUrl,
+        imageUrl: `${env.rootUrl}/images/waitlist-bg.png`,
         button: {
-          title: `Launch ${minikitConfig.miniapp.name}`,
+          title: `Join the waitlist ➡️📋`,
           action: {
-            name: `Launch ${minikitConfig.miniapp.name}`,
+            name: `Join the waitlist`,
             type: "launch_frame",
-            url: minikitConfig.miniapp.homeUrl,
+            url: `${env.rootUrl}/waitlist?fid=${fid}&ref=${sParams.ref}`,
             splashImageUrl: minikitConfig.miniapp.splashImageUrl,
             splashBackgroundColor: minikitConfig.miniapp.splashBackgroundColor,
           },
@@ -32,93 +72,50 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-// --- NEW DATA PAYLOAD TYPE ---
-export interface WaitlistData {
-  waitlist: {
-    onList: boolean;
-    rank: number | null;
-    invites: number;
-  };
-  userFid: number;
-}
-
-// --- NEW CACHED DATA FETCHER ---
-/**
- * Fetches the user and their waitlist status in a single, cached function.
- * Throws a redirect if the user is not found.
- */
-export const getWaitlistData = cache(
-  async (fid: number): Promise<WaitlistData> => {
-    // 1. Get the user
-    const user = await prisma.user.findUnique({ where: { fid } });
-
-    // 2. Handle redirect if user not found
-    if (!user) {
-      // This redirect will be caught by Next.js
-      redirect(`/profile?fid=${fid}`);
-    }
-
-    // 3. Get waitlist status
-    const waitlistEntry = await prisma.waitlist.findUnique({
-      where: { userId: user.id },
-    });
-
-    if (!waitlistEntry) {
-      return {
-        waitlist: { onList: false, rank: null, invites: 0 },
-        userFid: user.fid,
-      };
-    }
-
-    // 4. Determine rank
-    const earlierCount = await prisma.waitlist.count({
-      where: { createdAt: { lt: waitlistEntry.createdAt } },
-    });
-
-    return {
-      waitlist: {
-        onList: true,
-        rank: earlierCount + 1,
-        invites: waitlistEntry.invites ?? 0,
-      },
-      userFid: user.fid,
-    };
-  }
-);
-
-// --- UPDATED PAGE COMPONENT ---
 export default async function WaitlistPage({
   searchParams,
 }: {
-  // The FID should be provided by minikit middleware
-  searchParams: Promise<{ ref?: string; fid: number }>;
+  searchParams: Promise<{ ref?: string; fid: string }>;
 }) {
   const sParams = await searchParams;
   const referrerFid = sParams.ref ? parseInt(sParams.ref) : null;
-  const fid = sParams.fid;
+  const fid = parseInt(sParams.fid);
 
-  // This check is still valid
   if (!fid) {
-    // Redirect to a default page if FID is missing entirely
-    redirect(`/profile?fid=${fid}`);
+    console.error(`FID is missing for waitlist page`);
+    throw new Error("FID is missing for waitlist page");
   }
 
-  // 1. Get the promise for the data (don't await it here)
-  const waitlistDataPromise = getWaitlistData(fid);
-
-  // 2. Render the client, passing the promise, wrapped in Suspense
-  return (
-    <Suspense
-      fallback={
-        <div className="w-full h-screen flex items-center justify-center">
-          <Spinner />
-        </div>
+  // Ensure that we always resolve to a WaitlistData object, never null
+  const waitlistDataPromise: Promise<WaitlistData> = getUser(fid).then(
+    async (user) => {
+      if (!user) {
+        // Return a default "not on list" WaitlistData if the user is not found
+        return {
+          onList: false,
+          rank: null,
+          invites: 0,
+        };
       }
-    >
-      <WaitlistClient
-        waitlistDataPromise={waitlistDataPromise}
-        referrerFid={referrerFid}
-      />
-    </Suspense>
+      const rank = await getWaitlistRank(user.fid);
+      return {
+        onList: rank !== null,
+        rank,
+        invites: user.waitlist?.invites ?? 0,
+      };
+    }
   );
+
+  return (
+    <WaitlistClient
+      waitlistDataPromise={waitlistDataPromise}
+      referrerFid={referrerFid}
+    />
+  );
+}
+
+export interface WaitlistData {
+  onList: boolean;
+  rank: number | null;
+  invites: number;
 }

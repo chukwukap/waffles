@@ -1,68 +1,40 @@
 "use client";
 
-import { useCallback } from "react";
 import Image from "next/image";
-import { motion, useMotionValue } from "framer-motion";
+import { motion } from "framer-motion";
 import { CardStack } from "@/components/CardStack";
 
 import { useRouter } from "next/navigation";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { cn } from "@/lib/utils";
 import { joinGameAction } from "@/actions/game";
-import { NeccessaryGameInfo, NeccessaryUserInfo } from "../page";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
-export default function JoinGameView({
-  gameInfo,
-  userInfo,
-}: // friends,
-{
-  gameInfo: NeccessaryGameInfo;
-  userInfo: NeccessaryUserInfo;
-  friends: { fid: number; username: string; pfpUrl: string }[];
+export default function JoinGameClient({
+  gameId,
+  joinedCount,
+}: {
+  gameId: string;
+  joinedCount: number;
 }) {
   const router = useRouter();
-
-  const joinedCount = gameInfo._count.tickets ?? 0;
-
-  const bx = useMotionValue(0);
-  const by = useMotionValue(0);
-  const onBtnMove: React.PointerEventHandler<HTMLButtonElement> = (e) => {
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    bx.set(e.clientX - (rect.left + rect.width / 2));
-    by.set(e.clientY - (rect.top + rect.height / 2));
-  };
-  const onBtnLeave = () => {
-    bx.set(0);
-    by.set(0);
-  };
-
-  const canJoin = Boolean(
-    userInfo?._count.tickets && userInfo._count.tickets > 0
-  );
-  const handleJoin = useCallback(async () => {
-    if (!canJoin) {
-      // router.replace(`/lobby?fid=${userInfo.fid}`);
-      router.refresh();
-      return;
-    }
-    if (typeof window !== "undefined" && "vibrate" in navigator) {
-      navigator.vibrate?.(10);
-    }
+  const { context: miniKitContext } = useMiniKit();
+  const fid = miniKitContext?.user?.fid;
+  const handleJoin = async () => {
     const result = await joinGameAction({
-      fid: userInfo.fid,
-      gameId: gameInfo.id,
+      fid: Number(fid),
+      gameId: Number(gameId),
     });
     if (result.success) {
-      router.refresh();
+      router.push(`/game/${gameId}/live?gameId=${gameId}&fid=${fid}`);
     } else {
       console.error("Failed to join game:", result.error);
     }
-  }, [canJoin, router, userInfo.fid, gameInfo.id]);
+  };
 
   const joinedLabel = joinedCount === 1 ? "person has" : "people have";
 
   const isDisabledByLoadingOrError = false;
-  const buttonText = canJoin ? "JOIN GAME" : "GET TICKET";
 
   return (
     <div className="relative flex h-[90dvh] w-full overflow-hidden bg-black text-white">
@@ -78,9 +50,7 @@ export default function JoinGameView({
       <div className="absolute inset-x-0 bottom-0 flex flex-col items-center justify-end px-6 pb-10 gap-6 pointer-events-none">
         <motion.div className="pointer-events-auto w-full max-w-sm">
           <FancyBorderButton
-            aria-label={buttonText}
-            onPointerMove={onBtnMove}
-            onPointerLeave={onBtnLeave}
+            aria-label="JOIN GAME"
             disabled={isDisabledByLoadingOrError}
             onClick={handleJoin}
             className={cn(
@@ -89,7 +59,7 @@ export default function JoinGameView({
             )}
           >
             <span className="block font-body text-2xl leading-none text-[#F5BB1B]">
-              {buttonText}
+              JOIN GAME
             </span>
           </FancyBorderButton>
           {/* {statsError && !isLoadingStats && ( */}

@@ -3,13 +3,19 @@
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
+export type JoinWaitlistState = {
+  ok: boolean;
+  already?: boolean;
+  error?: string;
+};
+
 /**
  * Adds a user to the waitlist.
  */
 export async function joinWaitlistAction(
-  prevState: { ok: boolean; already?: boolean; error?: string } | null,
+  prevState: JoinWaitlistState | null,
   formData: FormData
-): Promise<{ ok: boolean; already?: boolean; error?: string }> {
+): Promise<JoinWaitlistState> {
   const fid = formData.get("fid");
   const referrerFid = formData.get("referrerFid");
 

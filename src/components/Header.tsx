@@ -1,5 +1,5 @@
 "use client";
-import LogoIcon from "@/components/logo/LogoIcon";
+import Image from "next/image";
 import { WalletIcon } from "@/components/icons";
 import { useGetTokenBalance } from "@coinbase/onchainkit/wallet";
 import { useAccount } from "wagmi";
@@ -24,7 +24,7 @@ export default function Header() {
     <header className="sticky top-0 z-10 w-full border-b border-white/20 px-4 app-background/80 backdrop-blur-sm">
       <div className="mx-auto max-w-screen-sm flex w-full items-center justify-between">
         <div className="flex min-w-0 flex-row items-center justify-center">
-          <LogoIcon />
+          <Image src="/images/logo.svg" alt="Logo" width={32} height={32} />
         </div>
         <div className="flex items-center">
           <div className="flex h-7 min-w-[64px] flex-row items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 border border-white/10">

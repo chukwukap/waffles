@@ -13,22 +13,22 @@ datasource db {
 // This is separate from ticket purchase.
 
 model User {
-  id                Int                @id @default(autoincrement())
-  fid               Int                @unique
-  name              String?
-  imageUrl          String?
-  wallet            String?            @unique
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  invitations       Referral[]         @relation("UserInviter")
-  referrals         Referral[]         @relation("UserInvitee")
-  tickets           Ticket[]
-  scores            Score[]
-  chats             Chat[]
-  answers           Answer[]
-  gameParticipants  GameParticipant[] // <-- users who have really joined (played) games
-  waitlist          Waitlist?
-  waitlistReferrals Waitlist[]         @relation("WaitlistReferral")
+  id                 Int                 @id @default(autoincrement())
+  fid                Int                 @unique
+  name               String?
+  imageUrl           String?
+  wallet             String?             @unique
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  invitations        Referral[]          @relation("UserInviter")
+  referrals          Referral[]          @relation("UserInvitee")
+  tickets            Ticket[]
+  scores             Score[]
+  chats              Chat[]
+  answers            Answer[]
+  gameParticipants   GameParticipant[] // <-- users who have really joined (played) games
+  waitlist           Waitlist?
+  waitlistReferrals  Waitlist[]          @relation("WaitlistReferral")
   notificationTokens NotificationToken[]
 }
 
@@ -193,7 +193,7 @@ model NotificationToken {
   id        Int      @id @default(autoincrement())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    Int
-  appFid    Int      // The FID of the client app (e.g., Base app is 309857)
+  appFid    Int // The FID of the client app (e.g., Base app is 309857)
   token     String
   url       String
   createdAt DateTime @default(now())

@@ -3,7 +3,7 @@ import { ForwardMessageIcon, MessageIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { ChatWithUser } from "@/state/types";
 import { sendMessageAction } from "@/actions/chat";
-import { NeccessaryUserInfo } from "../page";
+import { Prisma } from "@prisma/client";
 
 // import { cookies } from "next/headers";
 
@@ -57,7 +57,13 @@ export default function ChatDrawer({
   userInfo,
 }: {
   gameId: number;
-  userInfo: NeccessaryUserInfo;
+  userInfo: Prisma.UserGetPayload<{
+    select: {
+      fid: true;
+      name: true;
+      imageUrl: true;
+    };
+  }>;
 }) {
   // Fetch messages server-side
   // const messages = await getGameChats(gameId);

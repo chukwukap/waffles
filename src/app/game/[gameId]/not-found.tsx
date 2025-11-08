@@ -1,11 +1,16 @@
 import Link from "next/link";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
-import LogoIcon from "@/components/logo/LogoIcon";
+import Image from "next/image";
 
 export default function NotFound() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[80dvh] text-center px-4">
-      <LogoIcon className="w-12 h-12 mb-4" />
+      <Image
+        src="/images/illustrations/waffles.svg"
+        alt="Logo"
+        width={48}
+        height={48}
+      />
       <h1 className="text-2xl font-bold text-foreground mb-2">
         Game Not Found
       </h1>

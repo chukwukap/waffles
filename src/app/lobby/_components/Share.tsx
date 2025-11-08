@@ -1,9 +1,7 @@
-"use client";
-
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { GameSummaryCard } from "./GameSummary";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 type ShareViewProps = {
   gameTitle: string;
@@ -26,7 +24,6 @@ export function Share({
   gameId,
   onShare,
 }: ShareViewProps) {
-  const router = useRouter();
   return (
     <div className="mx-auto flex w-full max-w-[420px] flex-col items-center px-5 pb-10">
       <Image
@@ -66,12 +63,12 @@ export function Share({
       >
         SHARE TICKET
       </button>{" "}
-      <button
+      <Link
+        href={`/game/${gameId}?fid=${fid}`}
         className="mt-6 text-sm font-body uppercase text-[#00CFF2] transition hover:text-[#33defa]"
-        onClick={() => router.push(`/game/${gameId}?fid=${fid}`)}
       >
         BACK TO HOME
-      </button>
+      </Link>
     </div>
   );
 }

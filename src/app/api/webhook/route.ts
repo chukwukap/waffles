@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
           break;
 
         default:
-          console.warn(`Unknown webhook event type: ${event.event}`);
+          console.warn(`Unknown webhook event type: ${event}`);
       }
     } catch (error) {
       console.error("Error processing webhook:", error);
@@ -101,4 +101,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

@@ -1,14 +1,14 @@
 "use client";
 
 import { use } from "react";
-import WinningsCard from "./WinningsCard";
-import Leaderboard from "./Leaderboard";
+import WinningsCard from "./_components/WinningsCard";
+import Leaderboard from "./_components/Leaderboard";
 import Image from "next/image";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { FlashIcon } from "@/components/icons";
 import { useRouter } from "next/navigation";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
-import { ScorePagePayload } from "../page";
+import { ScorePagePayload } from "./page";
 
 export default function ScorePageClient({
   scorePayloadPromise,

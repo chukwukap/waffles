@@ -9,6 +9,12 @@ export function useCountdown(targetTimeMs: number, onExpire?: () => void) {
     Math.max(0, targetTimeMs - Date.now())
   );
   const timeoutRef = useRef<number | null>(null);
+  const onExpireRef = useRef(onExpire);
+
+  // Keep the ref up to date with the latest callback
+  useEffect(() => {
+    onExpireRef.current = onExpire;
+  }, [onExpire]);
 
   useEffect(() => {
     let cancelled = false;
@@ -18,7 +24,7 @@ export function useCountdown(targetTimeMs: number, onExpire?: () => void) {
       const diff = targetTimeMs - now;
       if (diff <= 0) {
         setMsLeft(0);
-        if (onExpire) onExpire();
+        if (onExpireRef.current) onExpireRef.current();
         return;
       } else {
         setMsLeft(diff);
@@ -35,6 +41,6 @@ export function useCountdown(targetTimeMs: number, onExpire?: () => void) {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     };
-  }, [targetTimeMs, onExpire]);
+  }, [targetTimeMs]);
   return msLeft;
 }

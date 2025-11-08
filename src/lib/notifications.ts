@@ -3,6 +3,7 @@ import { env } from "@/lib/env";
 import { z } from "zod";
 
 // Schema for notification request/response
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const sendNotificationRequestSchema = z.object({
   notificationId: z.string().max(128),
   title: z.string().max(32),
@@ -18,6 +19,7 @@ const sendNotificationResponseSchema = z.object({
 });
 
 type SendNotificationRequest = z.infer<typeof sendNotificationRequestSchema>;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 type SendNotificationResponse = z.infer<typeof sendNotificationResponseSchema>;
 
 export type NotificationDetails = {
@@ -162,9 +164,8 @@ export async function sendMiniAppNotification({
     const responseJson = await response.json();
 
     if (response.status === 200) {
-      const responseBody = sendNotificationResponseSchema.safeParse(
-        responseJson
-      );
+      const responseBody =
+        sendNotificationResponseSchema.safeParse(responseJson);
 
       if (responseBody.success === false) {
         // Malformed response
@@ -191,4 +192,3 @@ export async function sendMiniAppNotification({
     return { state: "error", error };
   }
 }
-

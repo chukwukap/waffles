@@ -22,7 +22,13 @@ export function OnboardingSlide({
       )}
     >
       <div className="mb-8 animate-in-right relative w-48 h-48">
-        <Image src={icon} alt={title} fill className="object-contain" />
+        <Image
+          src={icon}
+          alt={title}
+          fill
+          className="object-contain"
+          priority
+        />
       </div>
       <h2 className="text-3xl font-bold mb-4 text-balance animate-in-right uppercase tracking-wider">
         {title}

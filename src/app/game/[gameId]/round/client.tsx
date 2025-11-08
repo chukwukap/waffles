@@ -2,10 +2,12 @@
 "use client";
 
 import { useCountdown } from "@/hooks/useCountdown";
-import { NeccessaryGameInfo } from "../page";
 import React from "react";
 import SoundManager from "@/lib/SoundManager";
 import { useUserPreferences } from "@/components/providers/userPreference";
+import { Prisma } from "@prisma/client";
+import { useRouter } from "next/navigation";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
 const BLUE = "#1E8BFF";
 
@@ -14,17 +16,27 @@ const BLUE = "#1E8BFF";
  * These values are now passed down from the parent (QuestionView).
  */
 interface RoundCountdownViewProps {
-  gameInfo: NeccessaryGameInfo;
-  onCountDownEnd: () => void;
+  gameInfo: Prisma.GameGetPayload<{
+    include: {
+      config: {
+        select: {
+          roundTimeLimit: true;
+        };
+      };
+    };
+  }>;
 }
 
 export default function RoundCountdownView({
   gameInfo,
-  onCountDownEnd,
 }: RoundCountdownViewProps) {
+  const router = useRouter();
+  const { context } = useMiniKit();
   const { prefs } = useUserPreferences();
   const roundTimeLimitMs = (gameInfo?.config?.roundTimeLimit ?? 15) * 1000;
-  const msLeft = useCountdown(roundTimeLimitMs, onCountDownEnd);
+  const msLeft = useCountdown(roundTimeLimitMs, () => {
+    router.push(`/game/${gameInfo.id}/active?fid=${context?.user.fid}`);
+  });
   // The 'percent' prop (1.0 -> 0.0) is the same as the old 'ratio'
   const secondsLeft = Math.ceil(msLeft / 1000);
   const ratio = secondsLeft / (gameInfo?.config?.roundTimeLimit ?? 15);
