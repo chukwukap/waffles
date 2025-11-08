@@ -1,37 +1,105 @@
 "use client";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { CardStack } from "@/components/CardStack";
+import { useComposeCast } from "@coinbase/onchainkit/minikit";
+import { notify } from "@/components/ui/Toaster";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import {
-  use,
   useCallback,
   startTransition,
   useEffect,
   useActionState,
+  useState,
 } from "react";
-import { useRouter } from "next/navigation";
-import { ShareButton } from "./_components/ShareButton";
+import { useRouter, useSearchParams } from "next/navigation";
+
 import { joinWaitlistAction, type JoinWaitlistState } from "@/actions/waitlist";
-import { WaitlistData } from "./page";
 import { useAddFrame, useMiniKit } from "@coinbase/onchainkit/minikit";
+import { env } from "@/lib/env";
+
+export interface WaitlistData {
+  onList: boolean;
+  rank: number | null;
+  invites: number;
+}
 
 export function WaitlistClient({
-  waitlistDataPromise,
   referrerFid,
 }: {
-  waitlistDataPromise: Promise<WaitlistData>;
   referrerFid?: number | null;
 }) {
-  const { onList, rank, invites } = use(waitlistDataPromise);
-  const addFrame = useAddFrame();
   const { context } = useMiniKit();
+  const searchParams = useSearchParams();
+  const fid = context?.user?.fid || parseInt(searchParams.get("fid") || "0");
+  const addFrame = useAddFrame();
   const router = useRouter();
 
   const [state, action, pending] = useActionState<JoinWaitlistState, FormData>(
     joinWaitlistAction,
     { ok: false }
   );
+
+  const [waitlistData, setWaitlistData] = useState<WaitlistData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch waitlist data from API
+  useEffect(() => {
+    if (!fid) {
+      setIsLoading(false);
+      return;
+    }
+
+    const fetchWaitlistData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const response = await fetch(`/api/waitlist?fid=${fid}`);
+        
+        if (!response.ok) {
+          throw new Error("Failed to fetch waitlist data");
+        }
+        
+        const data: WaitlistData = await response.json();
+        setWaitlistData(data);
+      } catch (err) {
+        console.error("Error fetching waitlist data:", err);
+        setError("Failed to load waitlist data");
+        // Set default data on error
+        setWaitlistData({
+          onList: false,
+          rank: null,
+          invites: 0,
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchWaitlistData();
+  }, [fid]);
+
+  // Refresh waitlist data after successful join
+  useEffect(() => {
+    if (state.ok && !state.already && !pending && fid) {
+      // Refetch waitlist data to get updated rank and invites
+      fetch(`/api/waitlist?fid=${fid}`)
+        .then((res) => res.json())
+        .then((data: WaitlistData) => {
+          setWaitlistData(data);
+        })
+        .catch((err) => {
+          console.error("Error refreshing waitlist data:", err);
+        });
+    }
+  }, [state.ok, state.already, pending, fid]);
+
+  const { onList, rank, invites } = waitlistData || {
+    onList: false,
+    rank: null,
+    invites: 0,
+  };
 
   const handleAddFrame = useCallback(async () => {
     if (!context?.user?.fid) return;
@@ -44,6 +112,25 @@ export function WaitlistClient({
       console.error("Error adding frame:", error);
     }
   }, [addFrame, context?.user?.fid]);
+
+  const { composeCastAsync } = useComposeCast();
+  const share = useCallback(async () => {
+    const message = `I'm on the Waffles waitlist! Join me!`;
+    // notify.info("Opening Farcaster composer...");
+    try {
+      const result = await composeCastAsync({
+        text: message,
+        embeds: [`${env.rootUrl}/waitlist?ref=${context?.user?.fid}`],
+      });
+      if (result?.cast) {
+        notify.success("Shared successfully!");
+      } else {
+        notify.info("Share cancelled.");
+      }
+    } catch {
+      notify.error("Failed to share waitlist.");
+    }
+  }, [composeCastAsync, context?.user?.fid]);
 
   const handleSubmit = useCallback(
     (formData: FormData) => {
@@ -119,6 +206,7 @@ export function WaitlistClient({
               src="/images/illustrations/waitlist-scroll.svg"
               width={170}
               height={189}
+              priority
               alt="scroll"
               className="w-[38vw] max-w-[170px]"
             />
@@ -130,7 +218,20 @@ export function WaitlistClient({
           transition={{ duration: 0.55, delay: 0.2 }}
           className="mt-[2vh] flex flex-col items-center text-center"
         >
-          {onList ? (
+          {isLoading ? (
+            <>
+              <h1 className="font-body text-white text-[clamp(32px,8vw,44px)] leading-[92%]">
+                LOADING...
+              </h1>
+            </>
+          ) : error ? (
+            <>
+              <h1 className="font-body text-white text-[clamp(32px,8vw,44px)] leading-[92%]">
+                ERROR
+              </h1>
+              <p className="text-red-400 text-sm mt-2">{error}</p>
+            </>
+          ) : onList ? (
             <>
               <h1 className="font-body text-white text-[clamp(32px,8vw,44px)] leading-[92%]">
                 YOU&apos;RE ON <br /> THE LIST
@@ -144,7 +245,13 @@ export function WaitlistClient({
                 {invites === 1 ? "" : "s"}. Share to move up faster.
               </p>
 
-              <ShareButton className="mt-2" disabled={pending} />
+              <FancyBorderButton
+                onClick={share}
+                className="mt-2"
+                disabled={pending}
+              >
+                SHARE
+              </FancyBorderButton>
             </>
           ) : (
             <>
@@ -198,6 +305,7 @@ export function WaitlistClient({
         <div className="flex flex-row items-end -space-x-4">
           {splashImages.map((src, index) => (
             <Image
+              priority
               key={src}
               src={src}
               alt={`Splash character ${index + 1}`}

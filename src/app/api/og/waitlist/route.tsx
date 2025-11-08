@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
     //!!! IMPORTANT!!!
     // UPDATE these paths to match your filenames in /public
     const bgImageUrl = `${env.rootUrl}/images/share/waitlist-bg.png`;
-    const logoImageUrl = `${env.rootUrl}/logo.png`;
+    const logoImageUrl = `${env.rootUrl}/logo-onboarding.png`;
     const scrollImageUrl = `${env.rootUrl}/images/share/scroll.png`;
 
     // 3. DEFINE THE IMAGE JSX/HTML
@@ -85,6 +85,7 @@ export async function GET(request: NextRequest) {
         }}
       >
         {/* === TOP LOGO === */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={logoImageUrl} width="212" height="42" alt="WAFFLES Logo" />
 
         {/* === MIDDLE CONTENT === */}
@@ -113,6 +114,7 @@ export async function GET(request: NextRequest) {
           <div style={{ fontSize: 50 }}>WAITLIST</div>
 
           {/* Scroll Image */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={scrollImageUrl}
             width="250"
@@ -162,11 +164,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (e: unknown) {
     // Handle any errors during image generation
-    console.log(
-      `Failed to generate the image: ${
-        e instanceof Error ? e.message : "Unknown error"
-      }`
-    );
+    console.error(e);
     return new Response(`Failed to generate the image`, {
       status: 500,
     });
