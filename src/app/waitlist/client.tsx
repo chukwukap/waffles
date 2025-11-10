@@ -24,14 +24,11 @@ export interface WaitlistData {
   invites: number;
 }
 
-export function WaitlistClient({
-  referrerFid,
-}: {
-  referrerFid?: number | null;
-}) {
+export function WaitlistClient() {
   const { context } = useMiniKit();
   const searchParams = useSearchParams();
-  const fid = context?.user?.fid || parseInt(searchParams.get("fid") || "0");
+  const fid = context?.user?.fid;
+  const ref = searchParams.get("ref") || null;
   const addFrame = useAddFrame();
   const router = useRouter();
 
@@ -56,11 +53,11 @@ export function WaitlistClient({
         setIsLoading(true);
         setError(null);
         const response = await fetch(`/api/waitlist?fid=${fid}`);
-        
+
         if (!response.ok) {
           throw new Error("Failed to fetch waitlist data");
         }
-        
+
         const data: WaitlistData = await response.json();
         setWaitlistData(data);
       } catch (err) {
@@ -83,7 +80,6 @@ export function WaitlistClient({
   // Refresh waitlist data after successful join
   useEffect(() => {
     if (state.ok && !state.already && !pending && fid) {
-      // Refetch waitlist data to get updated rank and invites
       fetch(`/api/waitlist?fid=${fid}`)
         .then((res) => res.json())
         .then((data: WaitlistData) => {
@@ -103,10 +99,7 @@ export function WaitlistClient({
 
   const handleAddFrame = useCallback(async () => {
     if (!context?.user?.fid) return;
-
     try {
-      // The webhook will handle saving the notification token
-      // We just need to trigger the add frame flow
       await addFrame();
     } catch (error) {
       console.error("Error adding frame:", error);
@@ -116,26 +109,23 @@ export function WaitlistClient({
   const { composeCastAsync } = useComposeCast();
   const share = useCallback(async () => {
     const message = `I'm on the Waffles waitlist! Join me!`;
-    // notify.info("Opening Farcaster composer...");
     try {
       const result = await composeCastAsync({
         text: message,
-        embeds: [`${env.rootUrl}/waitlist?ref=${context?.user?.fid}`],
+        embeds: [
+          `${env.rootUrl}/waitlist?ref=${context?.user?.fid}&rank=${rank}`,
+        ],
       });
-      if (result?.cast) {
-        notify.success("Shared successfully!");
-      } else {
-        notify.info("Share cancelled.");
-      }
+      if (result?.cast) notify.success("Shared successfully!");
+      else notify.info("Share cancelled.");
     } catch {
       notify.error("Failed to share waitlist.");
     }
-  }, [composeCastAsync, context?.user?.fid]);
+  }, [composeCastAsync, context?.user?.fid, rank]);
 
   const handleSubmit = useCallback(
     (formData: FormData) => {
       if (!context?.user?.fid) return;
-
       startTransition(() => {
         action(formData);
       });
@@ -143,16 +133,9 @@ export function WaitlistClient({
     [action, context?.user?.fid]
   );
 
-  // Handle successful join - refresh page and prompt to add mini app if needed
   useEffect(() => {
     if (state.ok && !state.already && !pending) {
-      // Refresh the page to show updated waitlist status
-      // router.refresh();
-
-      // Prompt to add mini app if not already added
-      if (context?.client.added === false) {
-        handleAddFrame();
-      }
+      if (context?.client.added === false) handleAddFrame();
     }
   }, [
     state.ok,
@@ -171,6 +154,20 @@ export function WaitlistClient({
     "/images/splash/crew-5.png",
     "/images/splash/crew-6.png",
   ];
+
+  // Helper for good English messages
+  const friendText = (n: number) =>
+    n === 0
+      ? "No friends invited yet. Share to climb the list!"
+      : n === 1
+      ? "You’ve invited 1 friend. Share to move up!"
+      : `You’ve invited ${n} friends. Share to move up!`;
+
+  const rankMsg = (n: number | null) => {
+    if (n === 1) return "You're #1 on the waitlist.";
+    if (n && n > 1) return `You're #${n} on the waitlist.`;
+    return "You're on the waitlist!";
+  };
 
   return (
     <div className="relative min-h-screen w-full  overflow-hidden">
@@ -237,14 +234,10 @@ export function WaitlistClient({
                 YOU&apos;RE ON <br /> THE LIST
               </h1>
               <p className="text-[#99A0AE] font-display text-[clamp(14px,3.4vw,18px)] leading-[130%] mt-3">
-                {rank
-                  ? `You're #${rank} on the waitlist.`
-                  : "You're on the waitlist!"}
+                {rankMsg(rank)}
                 <br />
-                You&apos;ve invited {invites} friend
-                {invites === 1 ? "" : "s"}. Share to move up faster.
+                {friendText(invites)}
               </p>
-
               <FancyBorderButton
                 onClick={share}
                 className="mt-2"
@@ -268,9 +261,7 @@ export function WaitlistClient({
                 {context?.user?.fid && (
                   <input type="hidden" name="fid" value={context.user.fid} />
                 )}
-                {referrerFid && (
-                  <input type="hidden" name="referrerFid" value={referrerFid} />
-                )}
+                {ref && <input type="hidden" name="ref" value={ref} />}
                 <FancyBorderButton type="submit" disabled={pending}>
                   {pending ? "JOINING..." : "GET ME ON THE LIST"}
                 </FancyBorderButton>
@@ -285,18 +276,29 @@ export function WaitlistClient({
         >
           <CardStack
             images={[
-              { src: "/images/avatars/a.png" },
-              { src: "/images/avatars/b.png" },
-              { src: "/images/avatars/c.png" },
-              { src: "/images/avatars/d.png" },
+              {
+                src: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/bc698287-5adc-4cc5-a503-de16963ed900/original",
+              },
+              {
+                src: "https://wrpcd.net/cdn-cgi/imagedelivery/BXluQx4ige9GuW0Ia56BHw/6aa18817-6238-4b25-086f-1edd0c438f00/anim=false,fit=contain,f=auto,w=576",
+              },
+              {
+                src: "https://wrpcd.net/cdn-cgi/image/anim=false,fit=contain,f=auto,w=576/https%3A%2F%2Ftba-mobile.mypinata.cloud%2Fipfs%2FQmdD5hZrJz1CDVLs2Tg5JLnNR8hjWFVZmMqVWRAWoWYFJd%3FpinataGatewayToken%3D3nq0UVhtd3rYmgYDdb1I9qv7rHsw-_DzwdWkZPRQ-QW1avFI9dCS8knaSfq_R5_q",
+              },
+              {
+                src: "https://wrpcd.net/cdn-cgi/image/anim=false,fit=contain,f=auto,w=576/https%3A%2F%2Fi.imgur.com%2FNqeHHhK.png",
+              },
             ]}
             size="clamp(30px, 9vw, 42px)"
             borderColor="#FFFFFF"
             rotations={[-8, 5, -5, 7]}
           />
           <p className="text-[#99A0AE] font-display text-[clamp(14px,3.4vw,18px)] leading-[130%] mt-3">
-            You and {invites} friend
-            {invites === 1 ? "" : "s"} are on the list
+            {invites === 0
+              ? "You and others are on the list"
+              : `You and ${invites} friend${
+                  invites === 1 ? "" : "s"
+                } are on the list`}
           </p>
         </motion.div>
       </main>

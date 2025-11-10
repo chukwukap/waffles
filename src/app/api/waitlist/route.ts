@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
     const validationResult = querySchema.safeParse({ fid: fidParam });
     if (!validationResult.success) {
       const firstError =
-        validationResult.error.errors[0]?.message || "Invalid or missing fid";
+        validationResult.error.message || "Invalid or missing fid";
       return NextResponse.json({ error: firstError }, { status: 400 });
     }
 
@@ -113,4 +113,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

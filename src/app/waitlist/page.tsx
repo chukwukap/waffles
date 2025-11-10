@@ -62,7 +62,6 @@ export const getUser = cache(async (fid: number) => {
 });
 
 type Props = {
-  params: Promise<{ fid: string; ref: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
@@ -70,11 +69,11 @@ export async function generateMetadata({
   searchParams,
 }: Props): Promise<Metadata> {
   const sParams = await searchParams;
-  console.log("sParams", sParams);
-  const fid = parseInt(sParams.fid as string);
-  const rank = await getWaitlistRank(fid);
+  const rank = sParams.rank ? parseInt(sParams.rank as string) : null;
 
-  const IMAGE_URL = `${env.rootUrl}/api/og/waitlist?rank=${rank}`;
+  const IMAGE_URL = sParams.ref
+    ? `${env.rootUrl}/api/og/waitlist?rank=${rank}&ref=${sParams.ref}`
+    : `${env.rootUrl}/images/share/waitlist-bg.png`;
 
   return {
     title: minikitConfig.miniapp.name,
@@ -88,7 +87,7 @@ export async function generateMetadata({
           action: {
             name: `Join the waitlist`,
             type: "launch_frame",
-            url: `${env.rootUrl}/waitlist?fid=${fid}&ref=${sParams.ref}`,
+            url: `${env.rootUrl}/waitlist`,
             splashImageUrl: minikitConfig.miniapp.splashImageUrl,
             splashBackgroundColor: minikitConfig.miniapp.splashBackgroundColor,
           },
@@ -98,13 +97,6 @@ export async function generateMetadata({
   };
 }
 
-export default async function WaitlistPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ ref?: string; fid: string }>;
-}) {
-  const sParams = await searchParams;
-  const referrerFid = sParams.ref ? parseInt(sParams.ref) : null;
-
-  return <WaitlistClient referrerFid={referrerFid} />;
+export default async function WaitlistPage() {
+  return <WaitlistClient />;
 }

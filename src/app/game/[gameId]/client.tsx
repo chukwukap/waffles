@@ -61,7 +61,7 @@ export default function GameLobby({
       { username: "Player 12", pfpUrl: "/images/lobby/12.jpg" },
       { username: "Player 13", pfpUrl: "/images/lobby/13.jpg" },
       { username: "Player 14", pfpUrl: "/images/lobby/14.jpg" },
-      { username: "Player 15", pfpUrl: "/images/lobby/15.jpg" },
+      { username: "Player 15", pfpUrl: "/images/lobby/14.jpg" },
       { username: "Player 16", pfpUrl: "/images/lobby/16.jpg" },
       { username: "Player 17", pfpUrl: "/images/lobby/17.jpg" },
       { username: "Player 18", pfpUrl: "/images/lobby/18.jpg" },
