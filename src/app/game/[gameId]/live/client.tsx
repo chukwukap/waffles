@@ -86,7 +86,15 @@ export default function LiveGameClient({
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentQuestion?.id, currentQuestion?.soundUrl, playUrl, play, stopAll, stopUrl, stop]);
+  }, [
+    currentQuestion?.id,
+    currentQuestion?.soundUrl,
+    playUrl,
+    play,
+    stopAll,
+    stopUrl,
+    stop,
+  ]);
 
   // Redirect to score page when all questions are answered
   React.useEffect(() => {

@@ -8,11 +8,11 @@ import type { SoundName } from "@/lib/sounds/config";
 
 /**
  * Hook for playing sounds with automatic preference handling
- * 
+ *
  * @example
  * const { play, stop } = useSound();
  * play('click');
- * 
+ *
  * @example
  * const { playUrl } = useSound();
  * playUrl('/sounds/scenes/matrix.mp3', { loop: true });
@@ -55,10 +55,7 @@ export function useSound() {
   );
 
   const playUrl = useCallback(
-    (
-      url: string,
-      options?: { volume?: number; loop?: boolean }
-    ): string => {
+    (url: string, options?: { volume?: number; loop?: boolean }): string => {
       if (!prefs.soundEnabled) return "";
       const soundId = SoundManager.playUrl(url, options);
       activeUrlRef.current = soundId;
@@ -96,10 +93,10 @@ export function useSound() {
 /**
  * Hook for playing a sound when a value changes (e.g., question changes)
  * Automatically stops previous sound and plays new one
- * 
+ *
  * @example
  * useSoundEffect(questionId, 'questionStart');
- * 
+ *
  * @example
  * useSoundEffect(question?.soundUrl, undefined, { loop: true });
  */
@@ -138,7 +135,7 @@ export function useSoundEffect(
 
 /**
  * Hook for playing a URL sound when a value changes
- * 
+ *
  * @example
  * useSoundUrlEffect(question?.soundUrl, { loop: true, volume: 1 });
  */
@@ -181,4 +178,3 @@ export function useSoundUrlEffect(
     };
   }, [url, playUrl, stopUrl, options?.volume, options?.loop]);
 }
-

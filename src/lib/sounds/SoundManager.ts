@@ -194,10 +194,8 @@ class SoundManagerClass {
     const instance = this.sounds.get(url);
     if (instance) {
       try {
-        // Pause and reset - AbortError from play() promise is expected
-        instance.audio.pause().catch(() => {
-          // Ignore pause errors (e.g., if already paused)
-        });
+        // Pause and reset - pause() is synchronous, no promise
+        instance.audio.pause();
         instance.audio.currentTime = 0;
         this.sounds.delete(url);
       } catch (error) {
@@ -214,10 +212,8 @@ class SoundManagerClass {
 
     this.sounds.forEach((instance, key) => {
       try {
-        // Pause and reset - AbortError from play() promise is expected
-        instance.audio.pause().catch(() => {
-          // Ignore pause errors (e.g., if already paused)
-        });
+        // Pause and reset - pause() is synchronous, no promise
+        instance.audio.pause();
         instance.audio.currentTime = 0;
         // Only delete URL sounds, keep predefined sounds for reuse
         if (!(key in SOUNDS)) {

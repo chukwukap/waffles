@@ -46,4 +46,3 @@ export const SOUNDS = {
 } as const;
 
 export type SoundName = keyof typeof SOUNDS;
-

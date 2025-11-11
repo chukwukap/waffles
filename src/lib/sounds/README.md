@@ -35,11 +35,11 @@ import { useSound } from "@/hooks/useSound";
 
 function MyComponent() {
   const { play, stop } = useSound();
-  
+
   const handleClick = () => {
     play("myNewSound");
   };
-  
+
   return <button onClick={handleClick}>Click me</button>;
 }
 ```
@@ -55,6 +55,7 @@ const { play, playUrl, stop, stopUrl, stopAll, soundEnabled } = useSound();
 ```
 
 **Methods:**
+
 - `play(name, options?)` - Play a predefined sound
 - `playUrl(url, options?)` - Play a sound from URL
 - `stop(name)` - Stop a predefined sound
@@ -62,6 +63,7 @@ const { play, playUrl, stop, stopUrl, stopAll, soundEnabled } = useSound();
 - `stopAll()` - Stop all sounds
 
 **Example:**
+
 ```typescript
 const { play } = useSound();
 play("click", { volume: 0.8 });
@@ -92,12 +94,8 @@ import { useSound } from "@/hooks/useSound";
 
 function Button() {
   const { play } = useSound();
-  
-  return (
-    <button onClick={() => play("click")}>
-      Click me
-    </button>
-  );
+
+  return <button onClick={() => play("click")}>Click me</button>;
 }
 ```
 
@@ -109,7 +107,7 @@ import { useSoundEffect } from "@/hooks/useSound";
 function QuestionView({ questionId }) {
   // Automatically plays "questionStart" when questionId changes
   useSoundEffect(questionId, "questionStart");
-  
+
   return <div>Question {questionId}</div>;
 }
 ```
@@ -121,12 +119,12 @@ import { useSound } from "@/hooks/useSound";
 
 function GameScreen() {
   const { play, stop } = useSound();
-  
+
   useEffect(() => {
     play("roundBreak", { loop: true, volume: 0.4 });
     return () => stop("roundBreak");
   }, [play, stop]);
-  
+
   return <div>Game Screen</div>;
 }
 ```
@@ -142,7 +140,7 @@ function QuestionView({ question }) {
     loop: true,
     volume: 1,
   });
-  
+
   return <div>{question.text}</div>;
 }
 ```
@@ -159,4 +157,3 @@ function QuestionView({ question }) {
 2. **Use `useSoundEffect` for reactive sounds** - Automatically handles cleanup
 3. **Always cleanup looping sounds** - Use `useEffect` cleanup or `useSoundEffect`
 4. **Add sounds to config.ts** - Keeps all sound definitions in one place
-
