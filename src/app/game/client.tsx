@@ -1,7 +1,6 @@
 "use client";
 
 import { use, useRef, useState, useEffect } from "react";
-import Link from "next/link";
 import { Clock } from "@/components/icons";
 import { calculatePrizePool, cn, formatMsToMMSS } from "@/lib/utils";
 import { BottomNav } from "@/components/BottomNav";
@@ -10,6 +9,7 @@ import { useCountdown } from "@/hooks/useCountdown";
 import { AvatarDiamond } from "./_components/AvatarDiamond";
 import ChatTickerOverlay from "./_components/ChatTickerOverlay";
 import { Chat } from "./_components/Chat";
+import { GameActionButton } from "./_components/GameActionButton";
 import { Prisma } from "@prisma/client";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
@@ -131,99 +131,42 @@ export default function GameHomePageClient({
   const renderActionButton = () => {
     if (!gameExists) {
       return (
-        <div
-          className="order-1 box-border z-0 flex h-10 min-w-[64px] w-[clamp(72px,20vw,110px)] max-w-[140px] flex-none flex-row items-center justify-center rounded-full border-2 border-(--color-neon-pink) px-4 py-1 sm:px-5 sm:py-2 tabular-nums bg-gray-800/60 cursor-not-allowed opacity-60"
-          aria-disabled="true"
-          tabIndex={-1}
-        >
-          <span
-            className="px-0 flex items-end justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%] text-(--color-neon-pink) font-bold whitespace-nowrap"
-            style={{ letterSpacing: "-0.02em" }}
-          >
-            NONE
-          </span>
-        </div>
+        <GameActionButton disabled>NONE</GameActionButton>
       );
     }
 
     if (hasEnded) {
-      return (
-        <div
-          className="order-1 box-border z-0 flex h-10 min-w-[64px] w-[clamp(72px,20vw,110px)] max-w-[140px] flex-none flex-row items-center justify-center rounded-full border-2 border-(--color-neon-pink) px-4 py-1 sm:px-5 sm:py-2 tabular-nums bg-gray-800/60 cursor-not-allowed opacity-60"
-          aria-disabled="true"
-          tabIndex={-1}
-        >
-          <span
-            className="px-0 flex items-center justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%] text-(--color-neon-pink) font-bold whitespace-nowrap"
-            style={{ letterSpacing: "-0.02em" }}
-          >
-            ENDED
-          </span>
-        </div>
-      );
+      return <GameActionButton disabled>ENDED</GameActionButton>;
     }
 
     if (hasStarted) {
       if (gottenTicket) {
         return (
-          <Link
+          <GameActionButton
             href={`/game/${upcomingOrActiveGame.id}/join?gameId=${upcomingOrActiveGame.id}`}
-            prefetch={false}
-            className="order-1 box-border z-0 flex h-10 min-w-[64px] w-[clamp(72px,20vw,110px)] max-w-[140px] flex-none flex-row items-center justify-center rounded-full border-2 border-(--color-neon-pink) px-4 py-1 sm:px-5 sm:py-2 tabular-nums"
-            style={{
-              background: neonPinkColor,
-              textDecoration: "none",
-              transition: "background 0.2s",
-            }}
+            backgroundColor={neonPinkColor}
+            textColor="dark"
           >
-            <span
-              className="px-0 flex items-center justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%] whitespace-nowrap"
-              style={{
-                color: "#171523",
-                fontWeight: 700,
-                letterSpacing: "-0.02em",
-              }}
-            >
-              START
-            </span>
-          </Link>
+            START
+          </GameActionButton>
         );
       }
 
       // User doesn't have a ticket - show link to purchase page
       return (
-        <Link
+        <GameActionButton
           href={fid ? `/lobby?fid=${fid}` : "/lobby"}
-          prefetch={false}
-          className="order-1 box-border z-0 flex h-10 min-w-[80px] w-[clamp(90px,22vw,130px)] max-w-[150px] flex-none flex-row items-center justify-center rounded-full border-2 border-(--color-neon-pink) px-3 py-1 sm:px-4 sm:py-2 tabular-nums"
-          style={{
-            background: neonPinkColor,
-            textDecoration: "none",
-            transition: "background 0.2s",
-          }}
+          variant="wide"
+          backgroundColor={neonPinkColor}
+          textColor="dark"
         >
-          <span
-            className="px-0 flex items-center justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%] whitespace-nowrap"
-            style={{
-              color: "#171523",
-              fontWeight: 700,
-              letterSpacing: "-0.02em",
-            }}
-          >
-            GET TICKET
-          </span>
-        </Link>
+          GET TICKET
+        </GameActionButton>
       );
     }
 
     // Game hasn't started yet - show countdown
-    return (
-      <div className="order-1 box-border z-0 flex h-10 min-w-[64px] w-[clamp(72px,20vw,110px)] max-w-[140px] flex-none flex-row items-center justify-center rounded-full border-2 border-(--color-neon-pink) px-4 py-1 sm:px-5 sm:py-2 tabular-nums">
-        <span className="px-0 flex items-end justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%] text-(--color-neon-pink)">
-          {formattedTime}
-        </span>
-      </div>
-    );
+    return <GameActionButton>{formattedTime}</GameActionButton>;
   };
 
   return (

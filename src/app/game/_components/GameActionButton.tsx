@@ -1,0 +1,132 @@
+import Link from "next/link";
+import { cn } from "@/lib/utils";
+
+interface GameActionButtonProps {
+  /**
+   * The text to display in the button
+   */
+  children: React.ReactNode;
+  /**
+   * Optional href for link buttons
+   */
+  href?: string;
+  /**
+   * Whether the button is disabled
+   */
+  disabled?: boolean;
+  /**
+   * Button variant - affects width and styling
+   */
+  variant?: "default" | "wide";
+  /**
+   * Text color variant
+   */
+  textColor?: "dark" | "neon-pink";
+  /**
+   * Background color - if provided, button will have filled background
+   */
+  backgroundColor?: string;
+}
+
+/**
+ * Reusable game action button component
+ * Handles all button states: disabled, active links, countdown, etc.
+ */
+export function GameActionButton({
+  children,
+  href,
+  disabled = false,
+  variant = "default",
+  textColor = "neon-pink",
+  backgroundColor,
+}: GameActionButtonProps) {
+  // Base button classes
+  const baseClasses =
+    "order-1 box-border z-0 flex h-10 flex-none flex-row items-center justify-center rounded-full border-2 border-(--color-neon-pink) tabular-nums";
+
+  // Width classes based on variant
+  const widthClasses =
+    variant === "wide"
+      ? "min-w-[80px] w-[clamp(90px,22vw,130px)] max-w-[150px] px-3 sm:px-4"
+      : "min-w-[64px] w-[clamp(72px,20vw,110px)] max-w-[140px] px-4 sm:px-5";
+
+  // Padding classes
+  const paddingClasses = "py-1 sm:py-2";
+
+  // Disabled state classes
+  const disabledClasses = disabled
+    ? "bg-gray-800/60 cursor-not-allowed opacity-60"
+    : "";
+
+  // Text color classes
+  const textColorClasses =
+    textColor === "dark"
+      ? "text-[#171523]"
+      : "text-(--color-neon-pink) font-bold";
+
+  // Combined button classes
+  const buttonClasses = cn(
+    baseClasses,
+    widthClasses,
+    paddingClasses,
+    disabledClasses
+  );
+
+  // Text span classes
+  const textClasses = cn(
+    "px-0 flex items-center justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%] whitespace-nowrap",
+    textColorClasses
+  );
+
+  // Inline styles for background color
+  const buttonStyle = backgroundColor
+    ? {
+        background: backgroundColor,
+        textDecoration: "none",
+        transition: "background 0.2s",
+      }
+    : {};
+
+  // Text inline styles
+  const textStyle = {
+    fontWeight: textColor === "dark" ? 700 : undefined,
+    letterSpacing: "-0.02em",
+  };
+
+  // If disabled, render as div
+  if (disabled) {
+    return (
+      <div className={buttonClasses} aria-disabled="true" tabIndex={-1}>
+        <span className={textClasses} style={textStyle}>
+          {children}
+        </span>
+      </div>
+    );
+  }
+
+  // If href provided, render as Link
+  if (href) {
+    return (
+      <Link
+        href={href}
+        prefetch={false}
+        className={buttonClasses}
+        style={buttonStyle}
+      >
+        <span className={textClasses} style={textStyle}>
+          {children}
+        </span>
+      </Link>
+    );
+  }
+
+  // Otherwise render as div (for countdown)
+  return (
+    <div className={buttonClasses}>
+      <span className={textClasses} style={textStyle}>
+        {children}
+      </span>
+    </div>
+  );
+}
+
