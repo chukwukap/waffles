@@ -3,8 +3,7 @@
 
 import { useCountdown } from "@/hooks/useCountdown";
 import React from "react";
-import SoundManager from "@/lib/SoundManager";
-import { useUserPreferences } from "@/components/providers/userPreference";
+import { useSound } from "@/hooks/useSound";
 import { Prisma } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
@@ -32,7 +31,7 @@ export default function RoundCountdownView({
 }: RoundCountdownViewProps) {
   const router = useRouter();
   const { context } = useMiniKit();
-  const { prefs } = useUserPreferences();
+  const { play, stop } = useSound();
   const roundTimeLimitMs = (gameInfo?.config?.roundTimeLimit ?? 15) * 1000;
   const msLeft = useCountdown(roundTimeLimitMs, () => {
     router.push(`/game/${gameInfo.id}/active?fid=${context?.user.fid}`);
@@ -42,14 +41,13 @@ export default function RoundCountdownView({
   const ratio = secondsLeft / (gameInfo?.config?.roundTimeLimit ?? 15);
   const totalSeconds = gameInfo?.config?.roundTimeLimit ?? 15;
 
+  // Play round break sound on mount, stop on unmount
   React.useEffect(() => {
-    if (prefs.soundEnabled) {
-      SoundManager.play("roundBreak", { loop: true, volume: 0.4 });
-    }
+    play("roundBreak", { loop: true, volume: 0.4 });
     return () => {
-      SoundManager.stop("roundBreak");
+      stop("roundBreak");
     };
-  }, [prefs.soundEnabled]);
+  }, [play, stop]);
 
   return (
     <div className="animate-up">

@@ -1,6 +1,5 @@
 "use client";
 import * as React from "react";
-import SoundManager from "@/lib/SoundManager";
 
 import { submitAnswerAction } from "@/actions/game";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,6 +12,7 @@ import { PALETTES } from "@/lib/constants";
 import { PixelButton } from "@/components/buttons/PixelButton";
 import { useRouter } from "next/navigation";
 import { Prisma } from "@prisma/client";
+import { useSound } from "@/hooks/useSound";
 
 export type TimerState = "QUESTION_DURATION" | "EXTRA_TIME" | "FINISHED";
 
@@ -36,6 +36,7 @@ export default function LiveGameClient({
   const router = useRouter();
   const { prefs, toggleSound } = useUserPreferences();
   const { signIn, getToken } = useAuth();
+  const { playUrl, play, stopAll } = useSound();
   const [, action, pending] = React.useActionState(submitAnswerAction, {
     error: "",
     success: false,
@@ -55,6 +56,29 @@ export default function LiveGameClient({
     (gameInfo?.config?.questionTimeLimit ?? 10) * 1000;
   const extraTimeTimeMs = 3000;
 
+  // Play question sound when question changes
+  React.useEffect(() => {
+    if (!currentQuestion) return;
+
+    // Stop all sounds first to prevent overlap
+    stopAll();
+
+    // Small delay to ensure previous sounds are stopped
+    const timeoutId = setTimeout(() => {
+      if (currentQuestion.soundUrl) {
+        playUrl(currentQuestion.soundUrl, { loop: true, volume: 1 });
+      } else {
+        play("questionStart", { volume: 0.5 });
+      }
+    }, 50);
+
+    return () => {
+      clearTimeout(timeoutId);
+      stopAll();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentQuestion?.id, currentQuestion?.soundUrl, playUrl, play, stopAll]);
+
   // Redirect to score page when all questions are answered
   React.useEffect(() => {
     if (
@@ -63,8 +87,6 @@ export default function LiveGameClient({
       totalQuestions > 0 &&
       answeredCount >= totalQuestions
     ) {
-      // Stop all sounds before redirecting
-      SoundManager.stopAll();
       router.push(`/game/${gameInfo.id}/score?fid=${userInfo.fid}`);
     }
   }, [gameInfo, userInfo, totalQuestions, answeredCount, router]);
@@ -123,51 +145,12 @@ export default function LiveGameClient({
       setSelectedOption(null);
       setTimerState("QUESTION_DURATION");
     }
-  }, [currentQuestion?.id]);
-
-  // Handle sound playback for current question
-  React.useEffect(() => {
-    if (!currentQuestion) return;
-
-    // Stop all sounds first to prevent overlap
-    SoundManager.stopAll();
-
-    // Small delay to ensure previous sounds are stopped before playing new one
-    const timeoutId = setTimeout(() => {
-      if (!prefs.soundEnabled) return;
-
-      if (currentQuestion.soundUrl) {
-        SoundManager.play(currentQuestion.soundUrl, { volume: 1, loop: true });
-      } else {
-        SoundManager.play("questionStart", { volume: 0.5 });
-      }
-    }, 50);
-
-    return () => {
-      clearTimeout(timeoutId);
-      // Stop all sounds when question changes or component unmounts
-      SoundManager.stopAll();
-    };
-  }, [currentQuestion?.id, currentQuestion?.soundUrl, prefs.soundEnabled]);
-
-  // Stop all sounds when sound is disabled via toggle
-  React.useEffect(() => {
-    if (!prefs.soundEnabled) {
-      SoundManager.stopAll();
-    }
-  }, [prefs.soundEnabled]);
-
-  // Cleanup sounds on component unmount
-  React.useEffect(() => {
-    return () => {
-      SoundManager.stopAll();
-    };
-  }, []);
+  }, [currentQuestion?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const chosenIdx = React.useMemo(() => {
     if (!currentQuestion || !selectedOption) return null;
     return currentQuestion.options.indexOf(selectedOption);
-  }, [selectedOption, currentQuestion?.options]);
+  }, [selectedOption, currentQuestion?.options]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // const handleSelectOption = (option: string) => {
   //   if (!gameInfo || !currentQuestion || timerState === "FINISHED") return;
