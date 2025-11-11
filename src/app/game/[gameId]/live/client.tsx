@@ -56,7 +56,7 @@ export default function LiveGameClient({
     error: "",
     success: false,
   });
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const hasSubmittedRef = React.useRef(false);
 
   // Track when question phase starts to calculate time taken
   React.useEffect(() => {
@@ -77,16 +77,13 @@ export default function LiveGameClient({
   // Submit answer when extra phase ends
   const submitAnswer = React.useCallback(async () => {
     if (!gameInfo || !userInfo || !gameInfo.questions[questionIndex]) {
-      return false;
+      return;
     }
-
-    setIsSubmitting(true);
 
     const question = gameInfo.questions[questionIndex];
     const questionTimeLimit = gameInfo.config?.questionTimeLimit ?? 10;
 
     // Calculate time taken (in seconds) from question start to question end
-    // Use questionEndTime if available, otherwise fall back to current time
     const endTime = questionEndTime ?? Date.now();
     const timeTaken =
       questionStartTime && endTime
@@ -105,8 +102,7 @@ export default function LiveGameClient({
       authToken = await signIn();
       if (!authToken) {
         console.error("Authentication required to submit answer");
-        setIsSubmitting(false);
-        return false;
+        return;
       }
     }
 
@@ -122,8 +118,8 @@ export default function LiveGameClient({
     }
 
     // Submit the answer
-    await action(formData);
-    return true;
+    hasSubmittedRef.current = true;
+    action(formData);
   }, [
     gameInfo,
     userInfo,
@@ -138,9 +134,8 @@ export default function LiveGameClient({
 
   // Navigate to next question/round after submission completes
   React.useEffect(() => {
-    if (phase === "extra" && isSubmitting && !pending) {
-      // Submission completed, now navigate to next phase
-      setIsSubmitting(false);
+    if (phase === "extra" && hasSubmittedRef.current && !pending) {
+      hasSubmittedRef.current = false;
 
       const next = questionIndex + 1;
       if (next >= (gameInfo?.questions.length ?? 0)) {
@@ -161,7 +156,7 @@ export default function LiveGameClient({
         setPhase("question");
       }
     }
-  }, [phase, isSubmitting, pending, questionIndex, gameInfo?.questions]);
+  }, [phase, pending, questionIndex, gameInfo?.questions]);
 
   // Whenever a phase finishes, call this to move forward
   const nextPhase = async () => {
@@ -171,12 +166,12 @@ export default function LiveGameClient({
         break;
       case "extra": {
         // Don't navigate if submission is still pending
-        if (pending || isSubmitting) {
+        if (pending) {
           return;
         }
 
         // Submit answer - navigation will happen in useEffect when submission completes
-        await submitAnswer();
+        submitAnswer();
         break;
       }
       case "round": {
