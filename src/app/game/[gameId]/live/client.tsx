@@ -50,13 +50,24 @@ export default function LiveGameClient({
   const totalQuestions = gameInfo?.questions.length ?? 0;
   const answeredCount = userInfo?._count.answers ?? 0;
   const currentQuestion = gameInfo?.questions[answeredCount];
-  console.log("currentQuestion", currentQuestion);
-  console.log("answeredCount", answeredCount);
-  console.log("totalQuestions", totalQuestions);
 
   const questionTimeLimitMs =
     (gameInfo?.config?.questionTimeLimit ?? 10) * 1000;
   const extraTimeTimeMs = 3000;
+
+  // Redirect to score page when all questions are answered
+  React.useEffect(() => {
+    if (
+      gameInfo &&
+      userInfo &&
+      totalQuestions > 0 &&
+      answeredCount >= totalQuestions
+    ) {
+      // Stop all sounds before redirecting
+      SoundManager.stopAll();
+      router.push(`/game/${gameInfo.id}/score?fid=${userInfo.fid}`);
+    }
+  }, [gameInfo, userInfo, totalQuestions, answeredCount, router]);
 
   const questionTimer = useTimer({
     duration: questionTimeLimitMs,
@@ -70,12 +81,19 @@ export default function LiveGameClient({
     duration: extraTimeTimeMs,
     autoStart: timerState === "EXTRA_TIME",
     onComplete: () => {
+      // Guard against accessing undefined currentQuestion
+      if (!currentQuestion) {
+        setTimerState("FINISHED");
+        return;
+      }
+
       React.startTransition(() => {
         const formData = new FormData();
         formData.append("fid", String(userInfo.fid));
         formData.append("gameId", String(gameInfo.id));
         formData.append("questionId", String(currentQuestion.id));
-        formData.append("selected", "noanswer");
+        // Use selectedOption if available, otherwise "noanswer"
+        formData.append("selected", selectedOption || "noanswer");
         formData.append("timeTaken", String(questionTimer.elapsed / 1000));
         // Include auth token if available
         const token = getToken();
@@ -99,30 +117,57 @@ export default function LiveGameClient({
     });
   }, [signIn]);
 
+  // Reset selected option and timer state when question changes
   React.useEffect(() => {
-    if (!currentQuestion || !prefs.soundEnabled) return;
-
-    SoundManager.stopAll();
-    if (currentQuestion.soundUrl) {
-      SoundManager.play(currentQuestion.soundUrl, { volume: 1, loop: true });
-    } else {
-      SoundManager.play("questionStart", { volume: 0.5 });
+    if (currentQuestion) {
+      setSelectedOption(null);
+      setTimerState("QUESTION_DURATION");
     }
+  }, [currentQuestion?.id]);
+
+  // Handle sound playback for current question
+  React.useEffect(() => {
+    if (!currentQuestion) return;
+
+    // Stop all sounds first to prevent overlap
+    SoundManager.stopAll();
+
+    // Small delay to ensure previous sounds are stopped before playing new one
+    const timeoutId = setTimeout(() => {
+      if (!prefs.soundEnabled) return;
+
+      if (currentQuestion.soundUrl) {
+        SoundManager.play(currentQuestion.soundUrl, { volume: 1, loop: true });
+      } else {
+        SoundManager.play("questionStart", { volume: 0.5 });
+      }
+    }, 50);
 
     return () => {
-      if (currentQuestion.soundUrl) {
-        SoundManager.stop(currentQuestion.soundUrl);
-      } else {
-        SoundManager.stop("questionStart");
-      }
+      clearTimeout(timeoutId);
+      // Stop all sounds when question changes or component unmounts
+      SoundManager.stopAll();
     };
-  }, [currentQuestion, prefs.soundEnabled]);
+  }, [currentQuestion?.id, currentQuestion?.soundUrl, prefs.soundEnabled]);
+
+  // Stop all sounds when sound is disabled via toggle
+  React.useEffect(() => {
+    if (!prefs.soundEnabled) {
+      SoundManager.stopAll();
+    }
+  }, [prefs.soundEnabled]);
+
+  // Cleanup sounds on component unmount
+  React.useEffect(() => {
+    return () => {
+      SoundManager.stopAll();
+    };
+  }, []);
 
   const chosenIdx = React.useMemo(() => {
-    return selectedOption
-      ? currentQuestion.options.indexOf(selectedOption)
-      : null;
-  }, [selectedOption, currentQuestion.options]);
+    if (!currentQuestion || !selectedOption) return null;
+    return currentQuestion.options.indexOf(selectedOption);
+  }, [selectedOption, currentQuestion?.options]);
 
   // const handleSelectOption = (option: string) => {
   //   if (!gameInfo || !currentQuestion || timerState === "FINISHED") return;
@@ -159,7 +204,9 @@ export default function LiveGameClient({
   if (!currentQuestion) {
     return (
       <div className="w-full max-w-md sm:max-w-lg mx-auto mt-4 text-center">
-        Loading question...
+        {answeredCount >= totalQuestions
+          ? "Game complete! Redirecting..."
+          : "Loading question..."}
       </div>
     );
   }

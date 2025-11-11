@@ -1,8 +1,8 @@
 import TicketPageClientImpl from "./client";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
-import { Suspense } from "react";
-import { Spinner } from "@/components/ui/spinner";
+
+import { BottomNav } from "@/components/BottomNav";
 
 export type TicketPageUserInfo = Prisma.UserGetPayload<{
   select: {
@@ -76,17 +76,13 @@ export default async function TicketPage({
   const userInfoPromise = getUserInfo(Number(fid));
 
   return (
-    <Suspense
-      fallback={
-        <div className="flex-1 flex items-center justify-center">
-          <Spinner />
-        </div>
-      }
-    >
+    <>
       <TicketPageClientImpl
         gameInfoPromise={gameInfoPromise}
         userInfoPromise={userInfoPromise}
       />
-    </Suspense>
+
+      <BottomNav />
+    </>
   );
 }

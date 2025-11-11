@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { BottomNav } from "@/components/BottomNav";
+// import { BottomNav } from "@/components/BottomNav";
 import { Spinner } from "@/components/ui/spinner";
 import Header from "@/components/Header";
 
@@ -20,8 +20,7 @@ export default function TicketLayout({
       >
         {children}
       </Suspense>
-      <BottomNav />
+      {/* <BottomNav /> */}
     </div>
   );
 }
-

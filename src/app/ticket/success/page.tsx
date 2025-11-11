@@ -39,7 +39,7 @@ export default async function TicketSuccessPage({
 
   const getGameInfo = async () => {
     const now = new Date();
-    
+
     // If gameId is provided, fetch that specific game
     if (gameId) {
       const game = await prisma.game.findUnique({
@@ -51,7 +51,7 @@ export default async function TicketSuccessPage({
       });
       if (game) return game;
     }
-    
+
     // Otherwise, fetch the next upcoming game
     return prisma.game
       .findFirst({
@@ -89,18 +89,9 @@ export default async function TicketSuccessPage({
   const userInfoPromise = getUserInfo(Number(fid));
 
   return (
-    <Suspense
-      fallback={
-        <div className="flex-1 flex items-center justify-center">
-          <Spinner />
-        </div>
-      }
-    >
-      <TicketSuccessClient
-        gameInfoPromise={gameInfoPromise}
-        userInfoPromise={userInfoPromise}
-      />
-    </Suspense>
+    <TicketSuccessClient
+      gameInfoPromise={gameInfoPromise}
+      userInfoPromise={userInfoPromise}
+    />
   );
 }
-
