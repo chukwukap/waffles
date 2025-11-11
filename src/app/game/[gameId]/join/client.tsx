@@ -9,14 +9,10 @@ import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { cn } from "@/lib/utils";
 import { joinGameAction } from "@/actions/game";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
+import { useState } from "react";
 
-export default function JoinGameClient({
-  gameId,
-  joinedCount,
-}: {
-  gameId: string;
-  joinedCount: number;
-}) {
+export default function JoinGameClient({ gameId }: { gameId: string }) {
+  const [joinedCount] = useState(1000);
   const router = useRouter();
   const { context: miniKitContext } = useMiniKit();
   const fid = miniKitContext?.user?.fid;

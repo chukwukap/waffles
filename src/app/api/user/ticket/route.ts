@@ -1,0 +1,102 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { z } from "zod";
+
+// Query parameter validation schema
+const querySchema = z.object({
+  fid: z
+    .string()
+    .regex(/^\d+$/, "FID must be a numeric string")
+    .transform(Number),
+  gameId: z
+    .string()
+    .regex(/^\d+$/, "Game ID must be a numeric string")
+    .transform(Number),
+});
+
+/**
+ * User ticket information for a specific game
+ */
+export interface UserTicketInfo {
+  hasTicket: boolean;
+  ticketStatus: "pending" | "confirmed" | null;
+  ticketId: number | null;
+}
+
+/**
+ * GET /api/user/ticket?fid=<fid>&gameId=<gameId>
+ * Fetches ticket information for a user and specific game
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const fidParam = searchParams.get("fid");
+    const gameIdParam = searchParams.get("gameId");
+
+    // Validate query parameters
+    const validationResult = querySchema.safeParse({
+      fid: fidParam,
+      gameId: gameIdParam,
+    });
+
+    if (!validationResult.success) {
+      const firstError =
+        validationResult.error.issues[0]?.message ||
+        "Invalid or missing parameters";
+      return NextResponse.json({ error: firstError }, { status: 400 });
+    }
+
+    const { fid, gameId } = validationResult.data;
+
+    // Find user by FID
+    const user = await prisma.user.findUnique({
+      where: { fid },
+      select: { id: true },
+    });
+
+    if (!user) {
+      // Return default "no ticket" data if user not found
+      return NextResponse.json<UserTicketInfo>({
+        hasTicket: false,
+        ticketStatus: null,
+        ticketId: null,
+      });
+    }
+
+    // Check if user has a ticket for this game
+    const ticket = await prisma.ticket.findUnique({
+      where: {
+        gameId_userId: {
+          gameId,
+          userId: user.id,
+        },
+      },
+      select: {
+        id: true,
+        status: true,
+      },
+    });
+
+    if (!ticket) {
+      return NextResponse.json<UserTicketInfo>({
+        hasTicket: false,
+        ticketStatus: null,
+        ticketId: null,
+      });
+    }
+
+    // Return ticket information
+    return NextResponse.json<UserTicketInfo>({
+      hasTicket: true,
+      ticketStatus: ticket.status as "pending" | "confirmed",
+      ticketId: ticket.id,
+    });
+  } catch (error) {
+    console.error("GET /api/user/ticket Error:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
+

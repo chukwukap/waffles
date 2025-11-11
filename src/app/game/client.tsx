@@ -1,7 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { use, useRef, useState, useEffect } from "react";
 import Link from "next/link";
 import { Clock } from "@/components/icons";
 import { calculatePrizePool, cn, formatMsToMMSS } from "@/lib/utils";
@@ -12,88 +11,104 @@ import { AvatarDiamond } from "./_components/AvatarDiamond";
 import ChatTickerOverlay from "./_components/ChatTickerOverlay";
 import { Chat } from "./_components/Chat";
 import { Prisma } from "@prisma/client";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
+
+// User ticket information type matching API response
+interface UserTicketInfo {
+  hasTicket: boolean;
+  ticketStatus: "pending" | "confirmed" | null;
+  ticketId: number | null;
+}
 
 /**
  * View displayed while waiting for the next gameInfo to start.
  * Shows a countdown, prize pool, player avatars, and chat.
  */
-export default function GameLobby({
-  gameInfo,
+export default function GameHomePageClient({
+  upcomingOrActiveGamePromise,
 }: {
-  gameInfo: Prisma.GameGetPayload<{
+  upcomingOrActiveGamePromise: Promise<Prisma.GameGetPayload<{
     include: {
       config: true;
-      _count: { select: { tickets: true } };
+      _count: { select: { tickets: true; participants: true } };
     };
-  }>;
+  }> | null>;
 }) {
-  const router = useRouter();
+  const { context: miniKitContext } = useMiniKit();
+  const fid = miniKitContext?.user?.fid;
+  const upcomingOrActiveGame = use(upcomingOrActiveGamePromise);
   const [chatOpen, setChatOpen] = useState(false);
+  const [userTicketInfo, setUserTicketInfo] = useState<UserTicketInfo | null>(
+    null
+  );
 
   // startTime and endTime are always Date (from Prisma)
-  const startTimeMs = gameInfo.startTime.getTime();
-  const endTimeMs = gameInfo.endTime.getTime();
+  const startTimeMs = upcomingOrActiveGame?.startTime?.getTime() ?? 0;
+  const endTimeMs = upcomingOrActiveGame?.endTime?.getTime() ?? 0;
 
   // When timer hits zero, refresh once (transition to gameInfo)
   const hasFiredRef = useRef(false);
   const msLeft = useCountdown(startTimeMs, () => {
     if (!hasFiredRef.current) {
       hasFiredRef.current = true;
-      router.refresh();
+      // router.refresh();
     }
   });
   const formattedTime = formatMsToMMSS(msLeft);
 
-  // Full player avatars list
-  const diamondAvatars = useMemo(() => {
-    const players = [
-      { username: "Player 1", pfpUrl: "/images/lobby/1.jpg" },
-      { username: "Player 2", pfpUrl: "/images/lobby/2.jpg" },
-      { username: "Player 3", pfpUrl: "/images/lobby/3.jpg" },
-      { username: "Player 4", pfpUrl: "/images/lobby/4.jpg" },
-      { username: "Player 5", pfpUrl: "/images/lobby/5.jpg" },
-      { username: "Player 6", pfpUrl: "/images/lobby/6.jpg" },
-      { username: "Player 7", pfpUrl: "/images/lobby/7.jpg" },
-      { username: "Player 8", pfpUrl: "/images/lobby/8.jpg" },
-      { username: "Player 9", pfpUrl: "/images/lobby/9.jpg" },
-      { username: "Player 10", pfpUrl: "/images/lobby/10.jpg" },
-      { username: "Player 11", pfpUrl: "/images/lobby/11.jpg" },
-      { username: "Player 12", pfpUrl: "/images/lobby/12.jpg" },
-      { username: "Player 13", pfpUrl: "/images/lobby/13.jpg" },
-      { username: "Player 14", pfpUrl: "/images/lobby/14.jpg" },
-      { username: "Player 15", pfpUrl: "/images/lobby/14.jpg" },
-      { username: "Player 16", pfpUrl: "/images/lobby/16.jpg" },
-      { username: "Player 17", pfpUrl: "/images/lobby/17.jpg" },
-      { username: "Player 18", pfpUrl: "/images/lobby/18.jpg" },
-      { username: "Player 19", pfpUrl: "/images/lobby/19.jpg" },
-      { username: "Player 20", pfpUrl: "/images/lobby/20.jpg" },
-      { username: "Player 21", pfpUrl: "/images/lobby/21.jpg" },
-      { username: "Player 22", pfpUrl: "/images/lobby/22.jpg" },
-      { username: "Player 23", pfpUrl: "/images/lobby/23.jpg" },
-      { username: "Player 24", pfpUrl: "/images/lobby/24.jpg" },
-      { username: "Player 25", pfpUrl: "/images/lobby/25.jpg" },
-    ];
-    return players.map((player) => ({
-      id: player.username,
-      src: player.pfpUrl,
-      alt: player.username,
-    }));
-  }, []);
-
   const formattedPrizePool = `$${calculatePrizePool({
-    ticketsNum: gameInfo?._count.tickets ?? 0,
-    ticketPrice: gameInfo?.config?.ticketPrice ?? 0,
-    additionPrizePool: gameInfo?.config?.additionPrizePool ?? 0,
+    ticketsNum: upcomingOrActiveGame?._count.tickets ?? 0,
+    ticketPrice: upcomingOrActiveGame?.config?.ticketPrice ?? 0,
+    additionPrizePool: upcomingOrActiveGame?.config?.additionPrizePool ?? 0,
   }).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
-  const playerCount = gameInfo?._count.tickets ?? 0;
+  const playerCount = upcomingOrActiveGame?._count.participants ?? 0;
+
+  // Fetch user ticket information when fid and gameId are available
+  useEffect(() => {
+    if (!fid || !upcomingOrActiveGame?.id) {
+      setUserTicketInfo(null);
+      return;
+    }
+
+    const fetchTicketInfo = async () => {
+      try {
+        const response = await fetch(
+          `/api/user/ticket?fid=${fid}&gameId=${upcomingOrActiveGame.id}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch ticket information");
+        }
+
+        const data: UserTicketInfo = await response.json();
+        setUserTicketInfo(data);
+      } catch (error) {
+        console.error("Error fetching ticket information:", error);
+        // Set default "no ticket" state on error
+        setUserTicketInfo({
+          hasTicket: false,
+          ticketStatus: null,
+          ticketId: null,
+        });
+      }
+    };
+
+    fetchTicketInfo();
+  }, [fid, upcomingOrActiveGame?.id]);
 
   // Determine if game has started or ended
   const now = Date.now();
-  const hasStarted = now >= startTimeMs && now < endTimeMs;
-  const hasEnded = now >= endTimeMs;
+  const gameExists = upcomingOrActiveGame !== null;
+  const hasStarted = gameExists && now >= startTimeMs && now < endTimeMs;
+  const hasEnded = gameExists && now >= endTimeMs;
+  
+  // Check if user has a confirmed ticket for this game
+  const gottenTicket =
+    userTicketInfo?.hasTicket === true &&
+    userTicketInfo?.ticketStatus === "confirmed";
 
   // We'll use the same neon pink as .text-(--color-neon-pink)
   const neonPinkColor = "var(--color-neon-pink)";
@@ -105,6 +120,7 @@ export default function GameLobby({
       )}
     >
       <section className="flex-1 flex flex-col items-center gap-3 w-full pt-6 pb-4 overflow-visible">
+        {/* Header */}
         <div className="flex w-full h-10 min-h-[38px] items-center justify-center gap-0.5 p-2 sm:p-3">
           <div className="order-0 flex h-7 sm:h-[28px] min-w-0 flex-1 flex-col justify-center gap-3.5 font-body">
             <div className="order-0 flex h-7 sm:h-[28px] min-w-0 w-full flex-row items-center gap-2">
@@ -121,7 +137,9 @@ export default function GameLobby({
                   letterSpacing: "-0.03em",
                 }}
               >
-                {hasEnded
+                {!gameExists
+                  ? "No upcoming games. Please check back soon!"
+                  : hasEnded
                   ? "Game has ended"
                   : hasStarted
                   ? "Game is LIVE"
@@ -130,7 +148,20 @@ export default function GameLobby({
             </div>
           </div>
           {/* Button logic: */}
-          {hasEnded ? (
+          {!gameExists ? (
+            <div
+              className="order-1 box-border z-0 flex h-10 min-w-[64px] w-[clamp(72px,20vw,110px)] max-w-[140px] flex-none flex-row items-center justify-center rounded-full border-2 border-(--color-neon-pink) px-4 py-1 sm:px-5 sm:py-2 tabular-nums bg-gray-800/60 cursor-not-allowed opacity-60"
+              aria-disabled="true"
+              tabIndex={-1}
+            >
+              <span
+                className="px-0 flex items-end justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%] text-(--color-neon-pink) font-bold"
+                style={{ letterSpacing: "-0.02em" }}
+              >
+                NONE
+              </span>
+            </div>
+          ) : hasEnded ? (
             <div
               className="order-1 box-border z-0 flex h-10 min-w-[64px] w-[clamp(72px,20vw,110px)] max-w-[140px] flex-none flex-row items-center justify-center rounded-full border-2 border-(--color-neon-pink) px-4 py-1 sm:px-5 sm:py-2 tabular-nums bg-gray-800/60 cursor-not-allowed opacity-60"
               aria-disabled="true"
@@ -144,27 +175,42 @@ export default function GameLobby({
               </span>
             </div>
           ) : hasStarted ? (
-            <Link
-              href={`/game/${gameInfo.id}/join?gameId=${gameInfo.id}`}
-              prefetch={false}
-              className="order-1 box-border z-0 flex h-10 min-w-[64px] w-[clamp(72px,20vw,110px)] max-w-[140px] flex-none flex-row items-center justify-center rounded-full border-2 border-(--color-neon-pink) px-4 py-1 sm:px-5 sm:py-2 tabular-nums"
-              style={{
-                background: neonPinkColor,
-                textDecoration: "none",
-                transition: "background 0.2s",
-              }}
-            >
-              <span
-                className="px-0 flex items-end justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%]"
+            gottenTicket ? (
+              <Link
+                href={`/game/${upcomingOrActiveGame.id}/join?gameId=${upcomingOrActiveGame.id}`}
+                prefetch={false}
+                className="order-1 box-border z-0 flex h-10 min-w-[64px] w-[clamp(72px,20vw,110px)] max-w-[140px] flex-none flex-row items-center justify-center rounded-full border-2 border-(--color-neon-pink) px-4 py-1 sm:px-5 sm:py-2 tabular-nums"
                 style={{
-                  color: "#171523",
-                  fontWeight: 700,
-                  letterSpacing: "-0.02em",
+                  background: neonPinkColor,
+                  textDecoration: "none",
+                  transition: "background 0.2s",
                 }}
               >
-                START
-              </span>
-            </Link>
+                <span
+                  className="px-0 flex items-end justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%]"
+                  style={{
+                    color: "#171523",
+                    fontWeight: 700,
+                    letterSpacing: "-0.02em",
+                  }}
+                >
+                  START
+                </span>
+              </Link>
+            ) : (
+              <div
+                className="order-1 box-border z-0 flex h-10 min-w-[64px] w-[clamp(72px,20vw,110px)] max-w-[140px] flex-none flex-row items-center justify-center rounded-full border-2 border-(--color-neon-pink) px-4 py-1 sm:px-5 sm:py-2 tabular-nums bg-gray-800/60 cursor-not-allowed opacity-60"
+                aria-disabled="true"
+                tabIndex={-1}
+              >
+                <span
+                  className="px-0 flex items-end justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%] text-(--color-neon-pink) font-bold"
+                  style={{ letterSpacing: "-0.02em" }}
+                >
+                  NO TICKET
+                </span>
+              </div>
+            )
           ) : (
             <div className="order-1 box-border z-0 flex h-10 min-w-[64px] w-[clamp(72px,20vw,110px)] max-w-[140px] flex-none flex-row items-center justify-center rounded-full border-2 border-(--color-neon-pink) px-4 py-1 sm:px-5 sm:py-2 tabular-nums">
               <span className="px-0 flex items-end justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%] text-(--color-neon-pink)">
@@ -186,7 +232,6 @@ export default function GameLobby({
         </div>
         <div className="w-full flex justify-center">
           <AvatarDiamond
-            avatars={diamondAvatars}
             cellMin={32}
             cellMax={54}
             gap={2}

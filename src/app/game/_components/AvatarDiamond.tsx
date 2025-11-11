@@ -3,6 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { useMemo } from "react";
 
 type Avatar = {
   id: string | number;
@@ -12,7 +13,6 @@ type Avatar = {
 };
 
 type Props = {
-  avatars: Avatar[];
   cellMin?: number;
   cellMax?: number;
   gap?: number;
@@ -25,12 +25,46 @@ type Props = {
  * Purely presentational component.
  */
 export function AvatarDiamond({
-  avatars,
   cellMin = 32,
   cellMax = 54,
   gap = 2,
   className = "",
 }: Props) {
+  // Full player avatars list
+  const diamondAvatars = useMemo(() => {
+    const players = [
+      { username: "Player 1", pfpUrl: "/images/lobby/1.jpg" },
+      { username: "Player 2", pfpUrl: "/images/lobby/2.jpg" },
+      { username: "Player 3", pfpUrl: "/images/lobby/3.jpg" },
+      { username: "Player 4", pfpUrl: "/images/lobby/4.jpg" },
+      { username: "Player 5", pfpUrl: "/images/lobby/5.jpg" },
+      { username: "Player 6", pfpUrl: "/images/lobby/6.jpg" },
+      { username: "Player 7", pfpUrl: "/images/lobby/7.jpg" },
+      { username: "Player 8", pfpUrl: "/images/lobby/8.jpg" },
+      { username: "Player 9", pfpUrl: "/images/lobby/9.jpg" },
+      { username: "Player 10", pfpUrl: "/images/lobby/10.jpg" },
+      { username: "Player 11", pfpUrl: "/images/lobby/11.jpg" },
+      { username: "Player 12", pfpUrl: "/images/lobby/12.jpg" },
+      { username: "Player 13", pfpUrl: "/images/lobby/13.jpg" },
+      { username: "Player 14", pfpUrl: "/images/lobby/14.jpg" },
+      { username: "Player 15", pfpUrl: "/images/lobby/14.jpg" },
+      { username: "Player 16", pfpUrl: "/images/lobby/16.jpg" },
+      { username: "Player 17", pfpUrl: "/images/lobby/17.jpg" },
+      { username: "Player 18", pfpUrl: "/images/lobby/18.jpg" },
+      { username: "Player 19", pfpUrl: "/images/lobby/19.jpg" },
+      { username: "Player 20", pfpUrl: "/images/lobby/20.jpg" },
+      { username: "Player 21", pfpUrl: "/images/lobby/21.jpg" },
+      { username: "Player 22", pfpUrl: "/images/lobby/22.jpg" },
+      { username: "Player 23", pfpUrl: "/images/lobby/23.jpg" },
+      { username: "Player 24", pfpUrl: "/images/lobby/24.jpg" },
+      { username: "Player 25", pfpUrl: "/images/lobby/25.jpg" },
+    ];
+    return players.map((player) => ({
+      id: player.username,
+      src: player.pfpUrl,
+      alt: player.username,
+    }));
+  }, []);
   // Fixed pattern defining which grid cells (1-based column index) are filled in each row
   const pattern: number[][] = [
     [2, 4, 6], // Row 1
@@ -42,7 +76,7 @@ export function AvatarDiamond({
   // Calculate the total capacity of the diamond pattern
   const capacity = pattern.reduce((n, row) => n + row.length, 0);
   // Limit the input avatars to the diamond's capacity
-  const data = avatars.slice(0, capacity);
+  const data = diamondAvatars.slice(0, capacity);
 
   // Map the pattern to slot data including row, column, and avatar info
   const slots: { row: number; col: number; avatar?: Avatar }[] = [];
