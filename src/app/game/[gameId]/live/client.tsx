@@ -36,7 +36,7 @@ export default function LiveGameClient({
   const router = useRouter();
   const { prefs, toggleSound } = useUserPreferences();
   const { signIn, getToken } = useAuth();
-  const { playUrl, play, stopAll } = useSound();
+  const { playUrl, play, stopAll, stopUrl, stop } = useSound();
   const [, action, pending] = React.useActionState(submitAnswerAction, {
     error: "",
     success: false,
@@ -60,13 +60,17 @@ export default function LiveGameClient({
   React.useEffect(() => {
     if (!currentQuestion) return;
 
+    // Track what we're playing to clean up properly
+    const soundUrl = currentQuestion.soundUrl;
+    const hasSoundUrl = !!soundUrl;
+
     // Stop all sounds first to prevent overlap
     stopAll();
 
     // Small delay to ensure previous sounds are stopped
     const timeoutId = setTimeout(() => {
-      if (currentQuestion.soundUrl) {
-        playUrl(currentQuestion.soundUrl, { loop: true, volume: 1 });
+      if (hasSoundUrl) {
+        playUrl(soundUrl, { loop: true, volume: 1 });
       } else {
         play("questionStart", { volume: 0.5 });
       }
@@ -74,10 +78,15 @@ export default function LiveGameClient({
 
     return () => {
       clearTimeout(timeoutId);
-      stopAll();
+      // Stop only the specific sound we played
+      if (hasSoundUrl && soundUrl) {
+        stopUrl(soundUrl);
+      } else {
+        stop("questionStart");
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentQuestion?.id, currentQuestion?.soundUrl, playUrl, play, stopAll]);
+  }, [currentQuestion?.id, currentQuestion?.soundUrl, playUrl, play, stopAll, stopUrl, stop]);
 
   // Redirect to score page when all questions are answered
   React.useEffect(() => {

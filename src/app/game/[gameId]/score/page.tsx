@@ -1,8 +1,6 @@
-import { cache, Suspense } from "react";
+import { cache } from "react";
 import { prisma } from "@/lib/db";
 import ScorePageClient from "./client";
-import { Spinner } from "@/components/ui/spinner";
-import Header from "@/components/Header";
 
 // type for the cached score payload
 export type ScorePagePayload = {
@@ -116,10 +114,7 @@ export default async function ScorePage({
 
   return (
     <div className="flex flex-col text-white overflow-hidden">
-      <Header />
-      <Suspense fallback={<Spinner />}>
-        <ScorePageClient scorePayloadPromise={scorePayloadPromise} />
-      </Suspense>
+      <ScorePageClient scorePayloadPromise={scorePayloadPromise} />
     </div>
   );
 }

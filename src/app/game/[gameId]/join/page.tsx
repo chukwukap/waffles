@@ -5,7 +5,7 @@ export default async function JoinGamePage({
 }: {
   searchParams: Promise<{ gameId: string; fid: string }>;
 }) {
-  const { gameId, fid } = await searchParams;
+  const { gameId } = await searchParams;
 
   return <JoinGameClient gameId={gameId} />;
 }

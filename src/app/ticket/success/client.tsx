@@ -103,7 +103,7 @@ export default function TicketSuccessClient({
           SHARE TICKET
         </button>
         <Link
-          href={`/game/${gameInfo.id}?fid=${userInfo?.fid ?? 0}`}
+          href={`/game?fid=${userInfo?.fid ?? 0}`}
           className="mt-6 text-sm font-body uppercase text-[#00CFF2] transition hover:text-[#33defa]"
         >
           BACK TO HOME

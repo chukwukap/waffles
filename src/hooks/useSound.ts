@@ -146,7 +146,7 @@ export function useSoundUrlEffect(
   url: string | null | undefined,
   options?: { volume?: number; loop?: boolean }
 ): void {
-  const { playUrl, stopAll } = useSound();
+  const { playUrl, stopUrl, stopAll } = useSound();
   const previousUrlRef = useRef<string | null | undefined>(null);
 
   useEffect(() => {
@@ -155,28 +155,30 @@ export function useSoundUrlEffect(
       return;
     }
 
-    // Stop previous URL sound
-    if (previousUrlRef.current) {
-      stopAll();
-    }
-
+    const previousUrl = previousUrlRef.current;
     previousUrlRef.current = url;
+
+    // Stop previous URL sound specifically (not all sounds)
+    if (previousUrl) {
+      stopUrl(previousUrl);
+    }
 
     if (!url) {
       return;
     }
 
-    // Small delay to ensure previous sounds are stopped
+    // Small delay to ensure previous sound is stopped
     const timeoutId = setTimeout(() => {
       playUrl(url, options);
     }, 50);
 
     return () => {
       clearTimeout(timeoutId);
+      // Only stop this specific URL on cleanup
       if (url) {
-        stopAll();
+        stopUrl(url);
       }
     };
-  }, [url, playUrl, stopAll, options?.volume, options?.loop]);
+  }, [url, playUrl, stopUrl, options?.volume, options?.loop]);
 }
 

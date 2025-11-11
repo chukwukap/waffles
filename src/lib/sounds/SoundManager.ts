@@ -139,10 +139,15 @@ class SoundManagerClass {
     const playPromise = audio.play();
     if (playPromise !== undefined) {
       playPromise.catch((error) => {
-        if (error.name !== "NotAllowedError") {
+        // AbortError is expected when stopping sounds - ignore it
+        // NotAllowedError means user interaction required - also ignore
+        if (error.name !== "NotAllowedError" && error.name !== "AbortError") {
           console.warn(`[SoundManager] Failed to play URL:`, error);
         }
-        this.sounds.delete(url);
+        // Only delete if it's still the same instance (wasn't replaced)
+        if (this.sounds.get(url) === instance) {
+          this.sounds.delete(url);
+        }
       });
     }
 
@@ -151,7 +156,10 @@ class SoundManagerClass {
       audio.addEventListener(
         "ended",
         () => {
-          this.sounds.delete(url);
+          // Only delete if it's still the same instance
+          if (this.sounds.get(url) === instance) {
+            this.sounds.delete(url);
+          }
         },
         { once: true }
       );
@@ -186,7 +194,10 @@ class SoundManagerClass {
     const instance = this.sounds.get(url);
     if (instance) {
       try {
-        instance.audio.pause();
+        // Pause and reset - AbortError from play() promise is expected
+        instance.audio.pause().catch(() => {
+          // Ignore pause errors (e.g., if already paused)
+        });
         instance.audio.currentTime = 0;
         this.sounds.delete(url);
       } catch (error) {
@@ -203,7 +214,10 @@ class SoundManagerClass {
 
     this.sounds.forEach((instance, key) => {
       try {
-        instance.audio.pause();
+        // Pause and reset - AbortError from play() promise is expected
+        instance.audio.pause().catch(() => {
+          // Ignore pause errors (e.g., if already paused)
+        });
         instance.audio.currentTime = 0;
         // Only delete URL sounds, keep predefined sounds for reuse
         if (!(key in SOUNDS)) {
