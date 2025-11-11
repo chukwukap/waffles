@@ -224,8 +224,8 @@ export function QuestionCard({
                   onClick={() => {
                     handleAnswerSelect(idx);
                   }}
-                  // Disable all buttons while a submission is in progress or in extra phase
-                  disabled={pending || phase === "extra"}
+                  // Disable all buttons while a submission is in progress
+                  disabled={pending}
                 >
                   <span className="block w-full mx-auto truncate select-none">
                     {opt}

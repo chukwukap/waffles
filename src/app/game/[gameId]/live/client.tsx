@@ -56,6 +56,7 @@ export default function LiveGameClient({
     error: "",
     success: false,
   });
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   // Track when question phase starts to calculate time taken
   React.useEffect(() => {
@@ -76,8 +77,10 @@ export default function LiveGameClient({
   // Submit answer when extra phase ends
   const submitAnswer = React.useCallback(async () => {
     if (!gameInfo || !userInfo || !gameInfo.questions[questionIndex]) {
-      return;
+      return false;
     }
+
+    setIsSubmitting(true);
 
     const question = gameInfo.questions[questionIndex];
     const questionTimeLimit = gameInfo.config?.questionTimeLimit ?? 10;
@@ -102,7 +105,8 @@ export default function LiveGameClient({
       authToken = await signIn();
       if (!authToken) {
         console.error("Authentication required to submit answer");
-        return;
+        setIsSubmitting(false);
+        return false;
       }
     }
 
@@ -119,6 +123,7 @@ export default function LiveGameClient({
 
     // Submit the answer
     await action(formData);
+    return true;
   }, [
     gameInfo,
     userInfo,
@@ -131,6 +136,33 @@ export default function LiveGameClient({
     action,
   ]);
 
+  // Navigate to next question/round after submission completes
+  React.useEffect(() => {
+    if (phase === "extra" && isSubmitting && !pending) {
+      // Submission completed, now navigate to next phase
+      setIsSubmitting(false);
+
+      const next = questionIndex + 1;
+      if (next >= (gameInfo?.questions.length ?? 0)) {
+        setPhase("done");
+        return;
+      }
+
+      // Check if next question is in a different round using Round model
+      const currentQuestion = gameInfo?.questions[questionIndex];
+      const nextQuestion = gameInfo?.questions[next];
+      const isEndOfRound =
+        currentQuestion?.round.roundNum !== nextQuestion?.round.roundNum;
+
+      if (isEndOfRound) {
+        setPhase("round");
+      } else {
+        setQuestionIndex(next);
+        setPhase("question");
+      }
+    }
+  }, [phase, isSubmitting, pending, questionIndex, gameInfo?.questions]);
+
   // Whenever a phase finishes, call this to move forward
   const nextPhase = async () => {
     switch (phase) {
@@ -138,26 +170,13 @@ export default function LiveGameClient({
         setPhase("extra");
         break;
       case "extra": {
-        // Submit answer before moving to next question
-        await submitAnswer();
-        const next = questionIndex + 1;
-        if (next >= (gameInfo?.questions.length ?? 0)) {
-          setPhase("done");
+        // Don't navigate if submission is still pending
+        if (pending || isSubmitting) {
           return;
         }
-        
-        // Check if next question is in a different round using Round model
-        const currentQuestion = gameInfo?.questions[questionIndex];
-        const nextQuestion = gameInfo?.questions[next];
-        const isEndOfRound =
-          currentQuestion?.round.roundNum !== nextQuestion?.round.roundNum;
-        
-        if (isEndOfRound) {
-          setPhase("round");
-        } else {
-          setQuestionIndex(next);
-          setPhase("question");
-        }
+
+        // Submit answer - navigation will happen in useEffect when submission completes
+        await submitAnswer();
         break;
       }
       case "round": {
