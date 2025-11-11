@@ -130,9 +130,7 @@ export default function GameHomePageClient({
   // Helper function to render the action button based on game state
   const renderActionButton = () => {
     if (!gameExists) {
-      return (
-        <GameActionButton disabled>NONE</GameActionButton>
-      );
+      return <GameActionButton disabled>NONE</GameActionButton>;
     }
 
     if (hasEnded) {

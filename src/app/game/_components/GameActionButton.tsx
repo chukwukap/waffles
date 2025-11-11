@@ -31,6 +31,7 @@ interface GameActionButtonProps {
 /**
  * Reusable game action button component
  * Handles all button states: disabled, active links, countdown, etc.
+ * Uses Link component for all cases, with disabled handling for non-link states
  */
 export function GameActionButton({
   children,
@@ -93,40 +94,29 @@ export function GameActionButton({
     letterSpacing: "-0.02em",
   };
 
-  // If disabled, render as div
-  if (disabled) {
-    return (
-      <div className={buttonClasses} aria-disabled="true" tabIndex={-1}>
-        <span className={textClasses} style={textStyle}>
-          {children}
-        </span>
-      </div>
-    );
-  }
+  // Use Link for all cases - when disabled or no href, use "#" and prevent navigation
+  const linkHref = disabled || !href ? "#" : href;
 
-  // If href provided, render as Link
-  if (href) {
-    return (
-      <Link
-        href={href}
-        prefetch={false}
-        className={buttonClasses}
-        style={buttonStyle}
-      >
-        <span className={textClasses} style={textStyle}>
-          {children}
-        </span>
-      </Link>
-    );
-  }
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (disabled || !href) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
 
-  // Otherwise render as div (for countdown)
   return (
-    <div className={buttonClasses}>
+    <Link
+      href={linkHref}
+      prefetch={false}
+      className={buttonClasses}
+      style={buttonStyle}
+      onClick={handleClick}
+      aria-disabled={disabled}
+      tabIndex={disabled ? -1 : undefined}
+    >
       <span className={textClasses} style={textStyle}>
         {children}
       </span>
-    </div>
+    </Link>
   );
 }
-
