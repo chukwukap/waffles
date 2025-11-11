@@ -44,11 +44,13 @@ export default function TicketPageClientImpl({
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [userTicketInfo, setUserTicketInfo] = useState<UserTicketInfo | null>(null);
+  const [userTicketInfo, setUserTicketInfo] = useState<UserTicketInfo | null>(
+    null
+  );
 
   // Check if we should show success from URL params (for page refresh)
   const successParam = searchParams.get("success");
-  
+
   // Check if user already has a ticket for this game
   useEffect(() => {
     if (!userInfo?.fid || !gameInfo?.id) {
@@ -83,7 +85,10 @@ export default function TicketPageClientImpl({
     fetchTicketInfo();
   }, [userInfo?.fid, gameInfo?.id]);
 
-  const shouldShowSuccess = showSuccess || successParam === "true" || (userTicketInfo?.hasTicket && userTicketInfo?.ticketStatus === "confirmed");
+  const shouldShowSuccess =
+    showSuccess ||
+    successParam === "true" ||
+    (userTicketInfo?.hasTicket && userTicketInfo?.ticketStatus === "confirmed");
 
   // OnchainKit Hooks
   // const { sendTokenAsync } = useSendToken();

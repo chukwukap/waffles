@@ -1,53 +1,19 @@
-// ───────────────────────── RoundCountdownView.tsx ─────────────────────────
 "use client";
 
 import { useCountdown } from "@/hooks/useCountdown";
-import React from "react";
-import { useSound } from "@/hooks/useSound";
-import { Prisma } from "@prisma/client";
-import { useRouter } from "next/navigation";
-import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
 const BLUE = "#1E8BFF";
 
-/**
- * New props interface for the component.
- * These values are now passed down from the parent (QuestionView).
- */
-interface RoundCountdownViewProps {
-  gameInfo: Prisma.GameGetPayload<{
-    include: {
-      config: {
-        select: {
-          roundTimeLimit: true;
-        };
-      };
-    };
-  }>;
-}
+export default function RoundCountdownCard({
+  duration,
+  onComplete,
+}: {
+  duration: number;
+  onComplete: () => void;
+}) {
+  const t = useCountdown(duration, onComplete);
 
-export default function RoundCountdownView({
-  gameInfo,
-}: RoundCountdownViewProps) {
-  const router = useRouter();
-  const { context } = useMiniKit();
-  const { play, stop } = useSound();
-  const roundTimeLimitMs = (gameInfo?.config?.roundTimeLimit ?? 15) * 1000;
-  const msLeft = useCountdown(roundTimeLimitMs, () => {
-    router.push(`/game/${gameInfo.id}/active?fid=${context?.user.fid}`);
-  });
-  // The 'percent' prop (1.0 -> 0.0) is the same as the old 'ratio'
-  const secondsLeft = Math.ceil(msLeft / 1000);
-  const ratio = secondsLeft / (gameInfo?.config?.roundTimeLimit ?? 15);
-  const totalSeconds = gameInfo?.config?.roundTimeLimit ?? 15;
-
-  // Play round break sound on mount, stop on unmount
-  React.useEffect(() => {
-    play("roundBreak", { loop: true, volume: 0.4 });
-    return () => {
-      stop("roundBreak");
-    };
-  }, [play, stop]);
+  const ratio = t / duration;
 
   return (
     <div className="animate-up">
@@ -64,11 +30,7 @@ export default function RoundCountdownView({
         </h1>
 
         <div className="grid place-items-center">
-          <CountdownCircle
-            ratio={ratio}
-            total={totalSeconds}
-            secondsLeft={secondsLeft}
-          />
+          <CountdownCircle ratio={ratio} secondsLeft={t} />
         </div>
 
         <p className="mt-10 text-center text-muted text-lg font-display">
@@ -84,10 +46,8 @@ export default function RoundCountdownView({
 
 function CountdownCircle({
   ratio,
-  total,
   secondsLeft,
 }: {
-  total: number; // total seconds in this round break
   ratio: number; // 1.0 → 0.0 progress (percent remaining)
   secondsLeft: number; // integer seconds left
 }) {
@@ -109,7 +69,6 @@ function CountdownCircle({
       aria-label="Next round countdown"
       aria-live="polite"
       aria-valuemin={0}
-      aria-valuemax={total}
       aria-valuenow={secondsLeft}
     >
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
