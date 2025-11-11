@@ -1,4 +1,4 @@
-import TicketPageClientImpl from "./client";
+import TicketSuccessClient from "./client";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { Suspense } from "react";
@@ -7,7 +7,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { Spinner } from "@/components/ui/spinner";
 import Header from "@/components/Header";
 
-export type TicketPageUserInfo = Prisma.UserGetPayload<{
+export type TicketSuccessUserInfo = Prisma.UserGetPayload<{
   select: {
     fid: true;
     imageUrl: true;
@@ -16,7 +16,7 @@ export type TicketPageUserInfo = Prisma.UserGetPayload<{
   };
 }>;
 
-export type TicketPageGameInfo = Prisma.GameGetPayload<{
+export type TicketSuccessGameInfo = Prisma.GameGetPayload<{
   select: {
     id: true;
     name: true;
@@ -28,12 +28,12 @@ export type TicketPageGameInfo = Prisma.GameGetPayload<{
   };
 }>;
 
-export default async function TicketPage({
+export default async function TicketSuccessPage({
   searchParams,
 }: {
-  searchParams: Promise<{ fid: string }>;
+  searchParams: Promise<{ fid: string; gameId?: string }>;
 }) {
-  const { fid } = await searchParams;
+  const { fid, gameId } = await searchParams;
 
   if (!fid) {
     console.warn("FID NOT FOUND");
@@ -42,12 +42,25 @@ export default async function TicketPage({
 
   const getGameInfo = async () => {
     const now = new Date();
+    
+    // If gameId is provided, fetch that specific game
+    if (gameId) {
+      const game = await prisma.game.findUnique({
+        where: { id: Number(gameId) },
+        include: {
+          config: true,
+          _count: { select: { tickets: true } },
+        },
+      });
+      if (game) return game;
+    }
+    
+    // Otherwise, fetch the next upcoming game
     return prisma.game
       .findFirst({
         where: { endTime: { gt: now } },
         include: {
           config: true,
-          questions: { orderBy: { id: "asc" } },
           _count: { select: { tickets: true } },
         },
         orderBy: { startTime: "asc" },
@@ -88,7 +101,7 @@ export default async function TicketPage({
           </div>
         }
       >
-        <TicketPageClientImpl
+        <TicketSuccessClient
           gameInfoPromise={gameInfoPromise}
           userInfoPromise={userInfoPromise}
         />
@@ -97,3 +110,4 @@ export default async function TicketPage({
     </div>
   );
 }
+

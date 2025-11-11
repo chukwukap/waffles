@@ -1,13 +1,9 @@
 "use client";
 
-import { useCallback, useMemo, useState, use } from "react";
+import { useMemo, useState, use } from "react";
 import { useRouter } from "next/navigation";
-import { useComposeCast } from "@coinbase/onchainkit/minikit";
 import Image from "next/image";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
-
-import { env } from "@/lib/env";
-import { Share } from "./_components/Share";
 
 import { purchaseTicketAction } from "@/actions/ticket";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,12 +30,10 @@ export default function TicketPageClientImpl({
   const userInfo = use(userInfoPromise);
 
   const [isPurchasing, setIsPurchasing] = useState(false);
-  const [showShare, setShowShare] = useState(false);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
 
   // OnchainKit Hooks
   // const { sendTokenAsync } = useSendToken();
-  const { composeCastAsync } = useComposeCast();
   const { signIn } = useAuth();
 
   // --- Handlers ---
@@ -89,7 +83,8 @@ export default function TicketPageClientImpl({
         );
 
         router.refresh();
-        setShowShare(true); // Show the share screen
+        // Redirect to success page
+        router.push(`/ticket/success?fid=${userInfo.fid}&gameId=${gameInfo.id}`);
       } else {
         throw new Error(result.error);
       }
@@ -125,32 +120,6 @@ export default function TicketPageClientImpl({
     }
   };
 
-  const shareTicket = useCallback(async () => {
-    //
-    if (!userInfo?._count.tickets || !gameInfo) return; // Use combined ticket state
-
-    try {
-      const message = `Just secured my waffle ticket for ${gameInfo.name}! 🧇`;
-      const result = await composeCastAsync({
-        text: message,
-        embeds: [env.rootUrl ? { url: env.rootUrl } : undefined].filter(
-          Boolean
-        ) as [],
-      });
-
-      if (result?.cast) {
-        notify.success("Shared successfully!");
-        console.log("Cast created successfully:", result.cast.hash);
-      } else {
-        notify.info("Cast cancelled.");
-        console.log("User cancelled the cast");
-      }
-    } catch (error) {
-      console.error("Error sharing cast:", error);
-      notify.error("Unable to share your ticket right now.");
-    }
-  }, [userInfo?._count.tickets, gameInfo, composeCastAsync]);
-
   // --- Derived State ---
   const prizePool = useMemo(() => {
     const ticketPrice = gameInfo?.config?.ticketPrice ?? 50;
@@ -175,21 +144,7 @@ export default function TicketPageClientImpl({
 
   return (
     <div className="flex-1 flex flex-col items-center gap-3 justify-center overflow-y-auto pt-1">
-      {showShare ? (
-        <Share
-          gameTitle={gameInfo.name}
-          theme={theme}
-          username={userInfo?.name || "Player"}
-          avatarUrl={userInfo?.imageUrl || "/images/avatars/a.png"}
-          prizePool={prizePool}
-          startTime={gameInfo.startTime}
-          fid={userInfo?.fid ?? 0}
-          onShare={shareTicket}
-          gameId={gameInfo.id}
-        />
-      ) : (
-        <>
-          <main className="flex flex-col items-center justify-center flex-1 w-full px-4 pb-20  text-center">
+      <main className="flex flex-col items-center justify-center flex-1 w-full px-4 pb-20  text-center">
             <div className="flex flex-row items-center justify-between w-[350px] h-[50px] mx-auto">
               <div className="flex flex-col justify-center items-start h-full">
                 <p className="font-body text-[#99A0AE] text-sm leading-[130%] tracking-[-0.03em]">
@@ -294,8 +249,6 @@ export default function TicketPageClientImpl({
               </p>
             </div>
           </main>
-        </>
-      )}
     </div>
   );
 }

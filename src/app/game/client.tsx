@@ -153,7 +153,7 @@ export default function GameHomePageClient({
       // User doesn't have a ticket - show link to purchase page
       return (
         <GameActionButton
-          href={fid ? `/lobby?fid=${fid}` : "/lobby"}
+          href={fid ? `/ticket?fid=${fid}` : "/ticket"}
           variant="wide"
           backgroundColor={neonPinkColor}
           textColor="dark"
