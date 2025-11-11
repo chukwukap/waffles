@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, use, useCallback, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { useComposeCast } from "@coinbase/onchainkit/minikit";
@@ -35,7 +35,6 @@ export default function TicketPageClientImpl({
   gameInfoPromise,
   userInfoPromise,
 }: TicketPageClientImplProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const gameInfo = use(gameInfoPromise);
@@ -132,7 +131,6 @@ export default function TicketPageClientImpl({
       }
 
       const result = await purchaseTicketAction(null, formData);
-      console.log("resultttttttttttt: ", result);
 
       if (result.success) {
         notify.success(
@@ -141,7 +139,6 @@ export default function TicketPageClientImpl({
             : "Ticket secured!"
         );
 
-        router.refresh();
         // Refresh ticket info and show success UI
         const response = await fetch(
           `/api/user/ticket?fid=${userInfo.fid}&gameId=${gameInfo.id}`
@@ -172,7 +169,6 @@ export default function TicketPageClientImpl({
         message.includes("already exists")
       ) {
         displayError = "You already have a ticket for this game.";
-        router.refresh();
       } else if (message.includes("Authentication required")) {
         displayError = message;
       } else if (message) {

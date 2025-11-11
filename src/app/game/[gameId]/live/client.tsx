@@ -16,7 +16,16 @@ export default function LiveGameClient({
   gameInfoPromise: Promise<Prisma.GameGetPayload<{
     include: {
       config: true;
-      questions: true;
+      questions: {
+        include: {
+          round: {
+            select: {
+              id: true;
+              roundNum: true;
+            };
+          };
+        };
+      };
       _count: { select: { answers: true } };
     };
   }> | null>;
@@ -34,9 +43,15 @@ export default function LiveGameClient({
   const [questionIndex, setQuestionIndex] = React.useState(() => {
     return userInfo?._count.answers ?? 0;
   });
-  const [selectedAnswerIndex, setSelectedAnswerIndex] = React.useState<number | null>(null);
-  const [questionStartTime, setQuestionStartTime] = React.useState<number | null>(null);
-  const [questionEndTime, setQuestionEndTime] = React.useState<number | null>(null);
+  const [selectedAnswerIndex, setSelectedAnswerIndex] = React.useState<
+    number | null
+  >(null);
+  const [questionStartTime, setQuestionStartTime] = React.useState<
+    number | null
+  >(null);
+  const [questionEndTime, setQuestionEndTime] = React.useState<number | null>(
+    null
+  );
   const [, action, pending] = React.useActionState(submitAnswerAction, {
     error: "",
     success: false,
@@ -66,18 +81,20 @@ export default function LiveGameClient({
 
     const question = gameInfo.questions[questionIndex];
     const questionTimeLimit = gameInfo.config?.questionTimeLimit ?? 10;
-    
+
     // Calculate time taken (in seconds) from question start to question end
     // Use questionEndTime if available, otherwise fall back to current time
     const endTime = questionEndTime ?? Date.now();
-    const timeTaken = questionStartTime && endTime
-      ? Math.min((endTime - questionStartTime) / 1000, questionTimeLimit)
-      : questionTimeLimit;
+    const timeTaken =
+      questionStartTime && endTime
+        ? Math.min((endTime - questionStartTime) / 1000, questionTimeLimit)
+        : questionTimeLimit;
 
     // Get selected answer option or null if no selection
-    const selected = selectedAnswerIndex !== null 
-      ? question.options[selectedAnswerIndex] ?? null
-      : null;
+    const selected =
+      selectedAnswerIndex !== null
+        ? question.options[selectedAnswerIndex] ?? null
+        : null;
 
     // Get auth token (authenticate if needed)
     let authToken = getToken();
@@ -102,7 +119,17 @@ export default function LiveGameClient({
 
     // Submit the answer
     await action(formData);
-  }, [gameInfo, userInfo, questionIndex, selectedAnswerIndex, questionStartTime, questionEndTime, getToken, signIn, action]);
+  }, [
+    gameInfo,
+    userInfo,
+    questionIndex,
+    selectedAnswerIndex,
+    questionStartTime,
+    questionEndTime,
+    getToken,
+    signIn,
+    action,
+  ]);
 
   // Whenever a phase finishes, call this to move forward
   const nextPhase = async () => {
@@ -118,8 +145,13 @@ export default function LiveGameClient({
           setPhase("done");
           return;
         }
+        
+        // Check if next question is in a different round using Round model
+        const currentQuestion = gameInfo?.questions[questionIndex];
+        const nextQuestion = gameInfo?.questions[next];
         const isEndOfRound =
-          next % (gameInfo?.config?.questionsPerGame ?? 3) === 0;
+          currentQuestion?.round.roundNum !== nextQuestion?.round.roundNum;
+        
         if (isEndOfRound) {
           setPhase("round");
         } else {

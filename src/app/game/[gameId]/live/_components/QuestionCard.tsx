@@ -36,9 +36,12 @@ export function QuestionCard({
 }) {
   const { playUrl, play, stopAll, stopUrl, stop } = useSound();
   // Use controlled prop if provided, otherwise use internal state
-  const [internalChosenIdx, setInternalChosenIdx] = React.useState<number | null>(null);
-  const chosenIdx = selectedAnswerIndex !== undefined ? selectedAnswerIndex : internalChosenIdx;
-  
+  const [internalChosenIdx, setInternalChosenIdx] = React.useState<
+    number | null
+  >(null);
+  const chosenIdx =
+    selectedAnswerIndex !== undefined ? selectedAnswerIndex : internalChosenIdx;
+
   const handleAnswerSelect = (index: number) => {
     if (onAnswerSelect) {
       onAnswerSelect(index);

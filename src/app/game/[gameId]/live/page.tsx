@@ -11,7 +11,19 @@ export default async function LiveGamePage({
     where: { id: Number(gameId) },
     include: {
       config: true,
-      questions: true,
+      questions: {
+        include: {
+          round: {
+            select: {
+              id: true,
+              roundNum: true,
+            },
+          },
+        },
+        orderBy: {
+          id: "asc",
+        },
+      },
       _count: { select: { answers: true } },
     },
   });
