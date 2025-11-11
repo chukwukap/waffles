@@ -1,5 +1,5 @@
 "use server";
-import LobbyPageClientImpl from "./client";
+import TicketPageClientImpl from "./client";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { Suspense } from "react";
@@ -8,7 +8,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { Spinner } from "@/components/ui/spinner";
 import Header from "@/components/Header";
 
-export type LobbyPageUserInfo = Prisma.UserGetPayload<{
+export type TicketPageUserInfo = Prisma.UserGetPayload<{
   select: {
     fid: true;
     imageUrl: true;
@@ -17,7 +17,7 @@ export type LobbyPageUserInfo = Prisma.UserGetPayload<{
   };
 }>;
 
-export type LobbyPageGameInfo = Prisma.GameGetPayload<{
+export type TicketPageGameInfo = Prisma.GameGetPayload<{
   select: {
     id: true;
     name: true;
@@ -29,7 +29,7 @@ export type LobbyPageGameInfo = Prisma.GameGetPayload<{
   };
 }>;
 
-export default async function LobbyPage({
+export default async function TicketPage({
   searchParams,
 }: {
   searchParams: Promise<{ fid: string }>;
@@ -89,7 +89,7 @@ export default async function LobbyPage({
           </div>
         }
       >
-        <LobbyPageClientImpl
+        <TicketPageClientImpl
           gameInfoPromise={gameInfoPromise}
           userInfoPromise={userInfoPromise}
         />

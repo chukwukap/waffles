@@ -17,17 +17,17 @@ import { notify } from "@/components/ui/Toaster";
 import { CardStack } from "@/components/CardStack";
 import { motion } from "framer-motion";
 
-import { LobbyPageGameInfo, LobbyPageUserInfo } from "./page";
+import { TicketPageGameInfo, TicketPageUserInfo } from "./page";
 
-type LobbyPageClientImplProps = {
-  gameInfoPromise: Promise<LobbyPageGameInfo>;
-  userInfoPromise: Promise<LobbyPageUserInfo | null>;
+type TicketPageClientImplProps = {
+  gameInfoPromise: Promise<TicketPageGameInfo>;
+  userInfoPromise: Promise<TicketPageUserInfo | null>;
 };
 
-export default function LobbyPageClientImpl({
+export default function TicketPageClientImpl({
   gameInfoPromise,
   userInfoPromise,
-}: LobbyPageClientImplProps) {
+}: TicketPageClientImplProps) {
   const router = useRouter();
 
   const gameInfo = use(gameInfoPromise);
@@ -40,7 +40,7 @@ export default function LobbyPageClientImpl({
   // OnchainKit Hooks
   // const { sendTokenAsync } = useSendToken();
   const { composeCastAsync } = useComposeCast();
-  const { signIn, getToken } = useAuth();
+  const { signIn } = useAuth();
 
   // --- Handlers ---
   const handlePurchase = async () => {

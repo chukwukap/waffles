@@ -137,7 +137,7 @@ export default function GameHomePageClient({
           tabIndex={-1}
         >
           <span
-            className="px-0 flex items-end justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%] text-(--color-neon-pink) font-bold"
+            className="px-0 flex items-end justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%] text-(--color-neon-pink) font-bold whitespace-nowrap"
             style={{ letterSpacing: "-0.02em" }}
           >
             NONE
@@ -154,7 +154,7 @@ export default function GameHomePageClient({
           tabIndex={-1}
         >
           <span
-            className="px-0 flex items-end justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%] text-(--color-neon-pink) font-bold"
+            className="px-0 flex items-center justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%] text-(--color-neon-pink) font-bold whitespace-nowrap"
             style={{ letterSpacing: "-0.02em" }}
           >
             ENDED
@@ -177,7 +177,7 @@ export default function GameHomePageClient({
             }}
           >
             <span
-              className="px-0 flex items-end justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%]"
+              className="px-0 flex items-center justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%] whitespace-nowrap"
               style={{
                 color: "#171523",
                 fontWeight: 700,
@@ -195,7 +195,7 @@ export default function GameHomePageClient({
         <Link
           href={fid ? `/lobby?fid=${fid}` : "/lobby"}
           prefetch={false}
-          className="order-1 box-border z-0 flex h-10 min-w-[64px] w-[clamp(72px,20vw,110px)] max-w-[140px] flex-none flex-row items-center justify-center rounded-full border-2 border-(--color-neon-pink) px-4 py-1 sm:px-5 sm:py-2 tabular-nums"
+          className="order-1 box-border z-0 flex h-10 min-w-[80px] w-[clamp(90px,22vw,130px)] max-w-[150px] flex-none flex-row items-center justify-center rounded-full border-2 border-(--color-neon-pink) px-3 py-1 sm:px-4 sm:py-2 tabular-nums"
           style={{
             background: neonPinkColor,
             textDecoration: "none",
@@ -203,7 +203,7 @@ export default function GameHomePageClient({
           }}
         >
           <span
-            className="px-0 flex items-end justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%]"
+            className="px-0 flex items-center justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%] whitespace-nowrap"
             style={{
               color: "#171523",
               fontWeight: 700,
