@@ -1,13 +1,14 @@
 "use client";
-
 import { Prisma } from "@prisma/client";
 import * as React from "react";
-import QuestionCard from "./_components/QuestionCard";
-import RoundCountdownCard from "./_components/RoundCountdownCard";
-import { submitAnswerAction } from "@/actions/game";
-import { useAuth } from "@/hooks/useAuth";
 
-export type Phase = "question" | "extra" | "round" | "done";
+import QuestionCard from "./_components/QuestionCard";
+
+import { submitAnswerAction, completeRoundAction } from "@/actions/game";
+import { useAuth } from "@/hooks/useAuth";
+import { EXTRA_TIME_SECONDS } from "@/lib/constants";
+import { useRouter } from "next/navigation";
+import RoundCountdownCard from "./_components/RoundCountdownCard";
 
 export default function LiveGameClient({
   gameInfoPromise,
@@ -26,24 +27,37 @@ export default function LiveGameClient({
           };
         };
       };
+
       _count: { select: { answers: true } };
     };
   }> | null>;
+
   userInfoPromise: Promise<Prisma.UserGetPayload<{
     include: {
       _count: { select: { answers: true } };
     };
   }> | null>;
 }) {
+  const router = useRouter();
   const gameInfo = React.use(gameInfoPromise);
   const userInfo = React.use(userInfoPromise);
+
+  console.log("game questions: ", gameInfo?.questions);
+
+  const questionTotalTime =
+    gameInfo?.config?.questionTimeLimit ?? 10 + EXTRA_TIME_SECONDS;
+  const answerCount = userInfo?._count.answers;
+  const question = gameInfo?.questions[answerCount!];
+  // next question is the question after the current question.
+  const isLastQuestionInRound =
+    (answerCount! + 1) % (gameInfo?.config?.questionsPerGame ?? 1) === 0;
+  console.log("question: ", question);
+  console.log("questoin index: ", answerCount);
+  console.log("answers: ", answerCount);
+  console.log("last question in round: ", isLastQuestionInRound);
   const { getToken, signIn } = useAuth();
 
-  const [phase, setPhase] = React.useState<Phase>("question");
-  const [questionIndex, setQuestionIndex] = React.useState(() => {
-    return userInfo?._count.answers ?? 0;
-  });
-  const [selectedAnswerIndex, setSelectedAnswerIndex] = React.useState<
+  const [selectedOptionIndex, setSelectedOptionIndex] = React.useState<
     number | null
   >(null);
   const [questionStartTime, setQuestionStartTime] = React.useState<
@@ -52,175 +66,201 @@ export default function LiveGameClient({
   const [questionEndTime, setQuestionEndTime] = React.useState<number | null>(
     null
   );
-  const [, action, pending] = React.useActionState(submitAnswerAction, {
-    error: "",
-    success: false,
-  });
-  const hasSubmittedRef = React.useRef(false);
+  const [actionState, action, pending] = React.useActionState(
+    submitAnswerAction,
+    {
+      error: "",
+      success: false,
+    }
+  );
 
   // Track when question phase starts to calculate time taken
   React.useEffect(() => {
-    if (phase === "question" && gameInfo?.questions[questionIndex]) {
+    if (question) {
       setQuestionStartTime(Date.now());
       setQuestionEndTime(null);
-      setSelectedAnswerIndex(null); // Reset selection for new question
+      setSelectedOptionIndex(null); // Reset selection for new question
     }
-  }, [phase, questionIndex, gameInfo?.questions]);
+  }, [question]);
 
-  // Track when question phase ends (moves to extra phase)
+  // Track when question phase ends (moves to next question)
   React.useEffect(() => {
-    if (phase === "extra" && questionStartTime && !questionEndTime) {
+    if (questionStartTime && !questionEndTime) {
       setQuestionEndTime(Date.now());
     }
-  }, [phase, questionStartTime, questionEndTime]);
+  }, [questionStartTime, questionEndTime]);
 
-  // Submit answer when extra phase ends
-  const submitAnswer = React.useCallback(async () => {
-    if (!gameInfo || !userInfo || !gameInfo.questions[questionIndex]) {
+  const submitOption = React.useCallback(
+    async (qIdx: number, opIndex: number | null) => {
+      if (!gameInfo || !userInfo || !gameInfo.questions[qIdx]) {
+        return;
+      }
+
+      const questionTimeLimit =
+        gameInfo.config?.questionTimeLimit ?? 10 + EXTRA_TIME_SECONDS;
+
+      // Calculate time taken (in seconds) from question start to question end
+
+      const endTime = questionEndTime ?? Date.now();
+
+      const timeTaken =
+        questionStartTime && endTime
+          ? Math.min((endTime - questionStartTime) / 1000, questionTimeLimit)
+          : questionTimeLimit;
+
+      // Get selected answer option or null if no selection
+
+      const selected = opIndex !== null ? question?.options[opIndex] : null;
+
+      // Get auth token (authenticate if needed)
+
+      let authToken = getToken();
+
+      if (!authToken) {
+        authToken = await signIn();
+
+        if (!authToken) {
+          console.error("Authentication required to submit answer");
+
+          return;
+        }
+      }
+
+      // Create FormData with all required fields
+
+      const formData = new FormData();
+
+      formData.append("fid", String(userInfo.fid));
+
+      formData.append("gameId", String(gameInfo.id));
+
+      formData.append("questionId", String(question?.id ?? ""));
+
+      formData.append("timeTaken", String(timeTaken));
+
+      formData.append("authToken", authToken);
+
+      if (selected !== null) {
+        formData.append("selected", selected ?? "");
+      }
+      // Submit the answer
+      React.startTransition(() => {
+        action(formData);
+      });
+    },
+    [
+      gameInfo,
+      userInfo,
+      questionEndTime,
+      questionStartTime,
+      question?.options,
+      question?.id,
+      getToken,
+      signIn,
+      action,
+    ]
+  );
+
+  const handleQuestionDone = React.useCallback(() => {
+    console.log("question done, submitting option....", selectedOptionIndex);
+
+    submitOption(answerCount!, selectedOptionIndex);
+    console.log("new state", actionState);
+
+    const next = answerCount! + 1;
+
+    if (next >= (gameInfo?.questions.length ?? 0)) {
+      router.push(`/game/${gameInfo?.id}/score/?fid=${userInfo?.fid}`);
+
       return;
     }
 
-    const question = gameInfo.questions[questionIndex];
-    const questionTimeLimit = gameInfo.config?.questionTimeLimit ?? 10;
+    // Check if next question is in a different round using Round model
+    const nextQuestion = gameInfo?.questions[next];
+    const isEndOfRound =
+      question?.round.roundNum !== nextQuestion?.round.roundNum;
+    if (isEndOfRound) {
+    } else {
+      // router.refresh();
+    }
+  }, [
+    selectedOptionIndex,
+    answerCount,
+    submitOption,
+    userInfo?.fid,
+    actionState,
+    gameInfo?.questions,
+    gameInfo?.id,
+    question?.round.roundNum,
+    router,
+  ]);
 
-    // Calculate time taken (in seconds) from question start to question end
-    const endTime = questionEndTime ?? Date.now();
-    const timeTaken =
-      questionStartTime && endTime
-        ? Math.min((endTime - questionStartTime) / 1000, questionTimeLimit)
-        : questionTimeLimit;
+  // change selected option index and update question end time if it is different from the current one.
+  const handleSelectOption = React.useCallback(
+    (index: number | null) => {
+      console.log("setting option index to", index);
+      setSelectedOptionIndex(index);
+      if (selectedOptionIndex !== index) {
+        setQuestionEndTime(Date.now());
+      }
+    },
+    [setSelectedOptionIndex, selectedOptionIndex]
+  );
 
-    // Get selected answer option or null if no selection
-    const selected =
-      selectedAnswerIndex !== null
-        ? question.options[selectedAnswerIndex] ?? null
-        : null;
+  // Handle round countdown completion
+  const handleRoundCountdownComplete = React.useCallback(async () => {
+    if (!userInfo || !gameInfo || !question) {
+      console.error("Missing data for round completion");
+      return;
+    }
 
-    // Get auth token (authenticate if needed)
+    // Get auth token
     let authToken = getToken();
     if (!authToken) {
       authToken = await signIn();
       if (!authToken) {
-        console.error("Authentication required to submit answer");
+        console.error("Authentication required to complete round");
         return;
       }
     }
 
-    // Create FormData with all required fields
-    const formData = new FormData();
-    formData.append("fid", String(userInfo.fid));
-    formData.append("gameId", String(gameInfo.id));
-    formData.append("questionId", String(question.id));
-    formData.append("timeTaken", String(timeTaken));
-    formData.append("authToken", authToken);
-    if (selected !== null) {
-      formData.append("selected", selected);
+    // Mark round as completed
+    const result = await completeRoundAction({
+      fid: userInfo.fid,
+      gameId: gameInfo.id,
+      roundId: question.round.id,
+      authToken,
+    });
+
+    if (result.success) {
+      console.log("Round completed successfully");
+      // Refresh to get next question
+      router.refresh();
+    } else {
+      console.error("Failed to complete round:", result.error);
     }
+  }, [userInfo, gameInfo, question, getToken, signIn, router]);
 
-    // Submit the answer
-    hasSubmittedRef.current = true;
-    action(formData);
-  }, [
-    gameInfo,
-    userInfo,
-    questionIndex,
-    selectedAnswerIndex,
-    questionStartTime,
-    questionEndTime,
-    getToken,
-    signIn,
-    action,
-  ]);
-
-  // Navigate to next question/round after submission completes
-  React.useEffect(() => {
-    if (phase === "extra" && hasSubmittedRef.current && !pending) {
-      hasSubmittedRef.current = false;
-
-      const next = questionIndex + 1;
-      if (next >= (gameInfo?.questions.length ?? 0)) {
-        setPhase("done");
-        return;
-      }
-
-      // Check if next question is in a different round using Round model
-      const currentQuestion = gameInfo?.questions[questionIndex];
-      const nextQuestion = gameInfo?.questions[next];
-      const isEndOfRound =
-        currentQuestion?.round.roundNum !== nextQuestion?.round.roundNum;
-
-      if (isEndOfRound) {
-        setPhase("round");
-      } else {
-        setQuestionIndex(next);
-        setPhase("question");
-      }
-    }
-  }, [phase, pending, questionIndex, gameInfo?.questions]);
-
-  // Whenever a phase finishes, call this to move forward
-  const nextPhase = async () => {
-    switch (phase) {
-      case "question":
-        setPhase("extra");
-        break;
-      case "extra": {
-        // Don't navigate if submission is still pending
-        if (pending) {
-          return;
-        }
-
-        // Submit answer - navigation will happen in useEffect when submission completes
-        submitAnswer();
-        break;
-      }
-      case "round": {
-        const next = questionIndex + 1;
-        setQuestionIndex(next);
-        setPhase("question");
-        break;
-      }
-      default:
-        break;
-    }
-  };
+  console.log("question >>>>>>>>>>>>>>>>>>>>>>>>>>> client:", question);
 
   return (
     <>
-      {phase === "question" && gameInfo?.questions && (
-        <QuestionCard
-          question={gameInfo?.questions[questionIndex]}
-          phase={phase}
-          totalQuestions={gameInfo?.questions.length ?? 0}
-          questionNumber={questionIndex + 1}
-          duration={gameInfo?.config?.questionTimeLimit ?? 10}
-          pending={pending}
-          onComplete={nextPhase}
-          selectedAnswerIndex={selectedAnswerIndex}
-          onAnswerSelect={setSelectedAnswerIndex}
-        />
-      )}
-      {phase === "extra" && gameInfo?.questions && (
-        <QuestionCard
-          question={gameInfo?.questions[questionIndex]}
-          phase={phase}
-          totalQuestions={gameInfo?.questions.length ?? 0}
-          questionNumber={questionIndex + 1}
-          duration={3}
-          onComplete={nextPhase}
-          pending={pending}
-          selectedAnswerIndex={selectedAnswerIndex}
-          onAnswerSelect={setSelectedAnswerIndex}
-        />
-      )}
-      {phase === "round" && (
+      {isLastQuestionInRound ? (
         <RoundCountdownCard
           duration={gameInfo?.config?.roundTimeLimit ?? 15}
-          onComplete={nextPhase}
+          onComplete={handleRoundCountdownComplete}
         />
-      )}
-      {phase === "done" && (
-        <div className="text-center p-4">Game finished!</div>
+      ) : (
+        <QuestionCard
+          question={question!}
+          questionNumber={answerCount! + 1}
+          totalQuestions={gameInfo?.questions.length ?? 0}
+          duration={questionTotalTime}
+          submitting={pending}
+          onComplete={handleQuestionDone}
+          selectedOptionIndex={selectedOptionIndex}
+          onSelectOption={handleSelectOption}
+        />
       )}
     </>
   );
