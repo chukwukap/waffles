@@ -26,6 +26,12 @@ export async function submitAnswerAction(
   previousState: SubmitAnswerResult,
   formData: FormData
 ): Promise<SubmitAnswerResult> {
+  console.log("[submitAnswerAction] ----------------------------");
+  console.log("[submitAnswerAction] Incoming FormData:");
+  for (const [key, value] of formData.entries()) {
+    console.log(`  ${key}:`, value);
+  }
+
   const rawFid = formData.get("fid");
   const rawGameId = formData.get("gameId");
   const rawQuestionId = formData.get("questionId");
@@ -49,7 +55,7 @@ export async function submitAnswerAction(
     const firstError =
       validation.error.issues?.[0]?.message || "Invalid input.";
     console.warn(
-      "submitAnswerAction validation failed:",
+      "[submitAnswerAction] Validation failed:",
       validation.error.issues
     );
     return { success: false, error: firstError };
@@ -58,9 +64,24 @@ export async function submitAnswerAction(
   const { fid, gameId, questionId, selected, timeTaken, authToken } =
     validation.data;
 
+  console.log("[submitAnswerAction] Parsed Form Data:", {
+    fid,
+    gameId,
+    questionId,
+    selected,
+    timeTaken,
+    // don't log the authToken for security; log if present.
+    hasAuthToken: !!authToken,
+  });
+
   // Verify authentication - REQUIRED for answer submissions
   const authResult = await verifyAuthenticatedUser(authToken ?? null, fid);
+  console.log("[submitAnswerAction] Auth result:", authResult);
   if (!authResult.authenticated) {
+    console.warn(
+      "[submitAnswerAction] Authentication failed:",
+      authResult.error
+    );
     return {
       success: false,
       error: authResult.error || "Authentication required to submit answers",
@@ -73,7 +94,9 @@ export async function submitAnswerAction(
       where: { fid },
       select: { id: true },
     });
+    console.log("[submitAnswerAction] User fetch:", user);
     if (!user) {
+      console.warn("[submitAnswerAction] User not found for fid:", fid);
       return { success: false, error: "User not found." };
     }
 
@@ -89,13 +112,26 @@ export async function submitAnswerAction(
       }),
     ]);
 
+    console.log(
+      "[submitAnswerAction] Question fetch:",
+      question,
+      "| Game fetch:",
+      game
+    );
+
     if (!question) {
+      console.warn("[submitAnswerAction] Question not found (id):", questionId);
       return { success: false, error: "Question not found." };
     }
     if (!game) {
+      console.warn("[submitAnswerAction] Game not found (id):", gameId);
       return { success: false, error: "Game not found." };
     }
     if (!game.config) {
+      console.warn(
+        "[submitAnswerAction] Game configuration missing for game:",
+        gameId
+      );
       return { success: false, error: "Game configuration missing." };
     }
 
@@ -105,10 +141,17 @@ export async function submitAnswerAction(
       Number.isFinite(questionTimeLimit) && questionTimeLimit > 0
         ? questionTimeLimit
         : 10;
-    // Sanitize time and determine correctness
     const sanitizedTime = Math.min(Math.max(0, timeTaken), maxTime);
     const correct = selected !== null && selected === question.correctAnswer;
     const newPoints = correct ? calculateScore(sanitizedTime, maxTime) : 0;
+
+    console.log("[submitAnswerAction] Sanitation && Calculation:", {
+      questionTimeLimit,
+      maxTime,
+      sanitizedTime,
+      correct,
+      newPoints,
+    });
 
     // 4. Use a transaction for atomic update
     await prisma.$transaction(async (tx) => {
@@ -119,6 +162,8 @@ export async function submitAnswerAction(
         },
         select: { isCorrect: true, timeTaken: true },
       });
+
+      console.log("[submitAnswerAction] Previous answer:", previousAnswer);
 
       // Calculate the points from the *previous* answer
       const previousPoints =
@@ -146,6 +191,8 @@ export async function submitAnswerAction(
         },
       });
 
+      console.log("[submitAnswerAction] Answer upserted!");
+
       // Find the existing total Score record for this user/game
       const existingScore = await tx.score.findUnique({
         where: { userId_gameId: { userId: user.id, gameId } },
@@ -155,6 +202,13 @@ export async function submitAnswerAction(
       // Calculate the *change* in points
       const pointsDelta = newPoints - previousPoints;
 
+      console.log(
+        "[submitAnswerAction] Existing score:",
+        existingScore,
+        "pointsDelta:",
+        pointsDelta
+      );
+
       if (existingScore) {
         // If score exists, update it with the delta
         const nextTotalPoints = Math.max(0, existingScore.points + pointsDelta);
@@ -162,25 +216,43 @@ export async function submitAnswerAction(
           where: { userId_gameId: { userId: user.id, gameId } },
           data: { points: nextTotalPoints },
         });
+        console.log(
+          "[submitAnswerAction] Updated existing score to",
+          nextTotalPoints
+        );
       } else {
         // If no score record exists, create one with the new points
         await tx.score.create({
           data: { userId: user.id, gameId, points: newPoints },
         });
+        console.log(
+          "[submitAnswerAction] Created new score record with points",
+          newPoints
+        );
       }
     });
 
     // Revalidate the game path to ensure data is fresh for the next load
-    revalidatePath(`/game/${gameId}`);
+    console.log(
+      "[submitAnswerAction] Revalidating path:",
+      `/game/${gameId}/live`
+    );
+    console.log("[submitAnswerAction] SUCCESS!");
+    console.log("[submitAnswerAction] ----------------------------");
+    // refreshing data
+    revalidatePath(`/game/${gameId}/live`);
 
     return { success: true, error: "" };
   } catch (err) {
-    console.error("submitAnswerAction Error:", err);
+    console.error("[submitAnswerAction] Error caught:", err);
     // Handle potential Prisma unique constraint violation (though upsert should prevent this)
     if (
       err instanceof Prisma.PrismaClientKnownRequestError &&
       err.code === "P2002"
     ) {
+      console.warn(
+        "[submitAnswerAction] Prisma unique constraint violation (P2002)"
+      );
       return {
         success: false,
         error: "A database conflict occurred. Please try again.",
@@ -353,6 +425,105 @@ export async function leaveGameAction(
     return {
       success: false,
       error: "Failed to leave game due to a server error.",
+    };
+  }
+}
+
+// Schema for marking round completion
+const completeRoundSchema = z.object({
+  fid: z.number().int().positive("Invalid FID format."),
+  gameId: z.number().int().positive("Invalid Game ID."),
+  roundId: z.number().int().positive("Invalid Round ID."),
+  authToken: z.string().optional().nullable(),
+});
+
+export type CompleteRoundResult =
+  | { success: true }
+  | { success: false; error: string };
+
+/**
+ * Marks a round as completed for a user.
+ * - User must exist and be authenticated.
+ * - Game and Round must exist.
+ * - Idempotent: safe to call multiple times (uses upsert).
+ * - Creates RoundCompletion record when user completes all questions in a round.
+ */
+export async function completeRoundAction(
+  input: z.input<typeof completeRoundSchema>
+): Promise<CompleteRoundResult> {
+  const validation = completeRoundSchema.safeParse(input);
+  if (!validation.success) {
+    const firstError = validation.error.message || "Invalid input.";
+    console.warn("completeRoundAction validation failed:", validation.error.message);
+    return { success: false, error: firstError };
+  }
+
+  const { fid, gameId, roundId, authToken } = validation.data;
+
+  // Verify authentication
+  const authResult = await verifyAuthenticatedUser(authToken ?? null, fid);
+  if (!authResult.authenticated) {
+    return {
+      success: false,
+      error: authResult.error || "Authentication required to complete round",
+    };
+  }
+
+  try {
+    // Find user by FID
+    const user = await prisma.user.findUnique({
+      where: { fid },
+      select: { id: true },
+    });
+    if (!user) {
+      return { success: false, error: "User not found." };
+    }
+
+    // Verify game and round exist
+    const round = await prisma.round.findUnique({
+      where: { id: roundId },
+      select: { gameId: true },
+    });
+    if (!round) {
+      return { success: false, error: "Round not found." };
+    }
+    if (round.gameId !== gameId) {
+      return { success: false, error: "Round does not belong to this game." };
+    }
+
+    // Create or update RoundCompletion record (idempotent)
+    await prisma.roundCompletion.upsert({
+      where: {
+        userId_gameId_roundId: {
+          userId: user.id,
+          gameId,
+          roundId,
+        },
+      },
+      update: {}, // Already exists, no update needed
+      create: {
+        userId: user.id,
+        gameId,
+        roundId,
+      },
+    });
+
+    // Revalidate the game path
+    revalidatePath(`/game/${gameId}/live`);
+
+    return { success: true };
+  } catch (err: unknown) {
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === "P2002"
+    ) {
+      // Already exists, treat as success (idempotency)
+      return { success: true };
+    }
+    console.error("completeRoundAction Error:", err);
+    return {
+      success: false,
+      error: "Failed to complete round due to a server error.",
     };
   }
 }
