@@ -21,7 +21,7 @@ export function useCountdown(
   const rAFRef = React.useRef<number | null>(null);
   const endTimeRef = React.useRef<number | null>(null);
   const remainingRef = React.useRef(remaining);
-  
+
   // Keep remainingRef in sync with remaining state
   React.useEffect(() => {
     remainingRef.current = remaining;
@@ -65,12 +65,15 @@ export function useCountdown(
   React.useEffect(() => {
     if (isRunning) {
       // --- Start or Resume ---
-      // We calculate a new end time based on the *current* remaining time
-      // Use remainingRef to avoid dependency on remaining state
-      endTimeRef.current = Date.now() + remainingRef.current * 1000;
+      // Only start if not already running (avoid double-start from reset effect)
+      if (!rAFRef.current) {
+        // We calculate a new end time based on the *current* remaining time
+        // Use remainingRef to avoid dependency on remaining state
+        endTimeRef.current = Date.now() + remainingRef.current * 1000;
 
-      // Start the animation frame loop
-      rAFRef.current = requestAnimationFrame(loop);
+        // Start the animation frame loop
+        rAFRef.current = requestAnimationFrame(loop);
+      }
     } else {
       // --- Pause ---
       // Stop any existing loop
@@ -134,10 +137,18 @@ export function useCountdown(
     }
     endTimeRef.current = null;
 
-    // Reset to initial state
+    // Reset to initial state and update ref synchronously
     setRemaining(durationSec);
+    remainingRef.current = durationSec; // Update ref synchronously to avoid race condition
     setIsRunning(autoStart);
-  }, [durationSec, autoStart]); // Reset when duration or autoStart changes
+    
+    // If autoStart is true, restart the timer immediately
+    // This ensures the timer starts even if isRunning was already true
+    if (autoStart) {
+      endTimeRef.current = Date.now() + durationSec * 1000;
+      rAFRef.current = requestAnimationFrame(loop);
+    }
+  }, [durationSec, autoStart, loop]); // Reset when duration or autoStart changes
 
   // --- Derived State ---
 
