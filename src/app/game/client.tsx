@@ -106,8 +106,10 @@ export default function GameHomePageClient({
     const fetchTicketInfo = async () => {
       try {
         const gameId = upcomingOrActiveGame.id;
-        console.log(`[Ticket Check] Checking ticket for fid=${fid}, gameId=${gameId}`);
-        
+        console.log(
+          `[Ticket Check] Checking ticket for fid=${fid}, gameId=${gameId}`
+        );
+
         const response = await fetch(
           `/api/user/ticket?fid=${fid}&gameId=${gameId}`
         );
@@ -187,7 +189,7 @@ export default function GameHomePageClient({
       // User doesn't have a ticket - show link to purchase page
       return (
         <GameActionButton
-          href={fid ? `/ticket?fid=${fid}` : "/ticket"}
+          href={fid ? `/game/${upcomingOrActiveGame.id}/ticket?fid=${fid}` : `/game/${upcomingOrActiveGame.id}/ticket`}
           variant="wide"
           backgroundColor={neonPinkColor}
           textColor="dark"
