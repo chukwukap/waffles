@@ -1,9 +1,29 @@
 "use client";
 
-import { use, useRef, useState, useEffect } from "react";
+import { use, useRef, useState, useEffect, useMemo } from "react";
 import { Clock } from "@/components/icons";
-import { calculatePrizePool, cn, formatMsToMMSS } from "@/lib/utils";
+import { calculatePrizePool, cn } from "@/lib/utils";
 import { BottomNav } from "@/components/BottomNav";
+
+/**
+ * Formats remaining seconds into "MMm SSs" string.
+ * @param remainingSeconds Total remaining seconds.
+ * @returns A string formatted as "Xm YYS"
+ */
+function formatTime(remainingSeconds: number): string {
+  // Ensure we're working with a non-negative number
+  const seconds = Math.max(0, remainingSeconds);
+
+  // Calculate minutes and the remaining seconds
+  const minutes = Math.floor(seconds / 60);
+  const secondsPart = Math.floor(seconds % 60);
+
+  // Pad the seconds part to always be two digits
+  const paddedSeconds = String(secondsPart).padStart(2, "0");
+
+  // Return the final formatted string
+  return `${minutes}M ${paddedSeconds}S`;
+}
 
 import { useCountdown } from "@/hooks/useCountdown";
 import { AvatarDiamond } from "./_components/AvatarDiamond";
@@ -46,15 +66,25 @@ export default function GameHomePageClient({
   const startTimeMs = upcomingOrActiveGame?.startTime?.getTime() ?? 0;
   const endTimeMs = upcomingOrActiveGame?.endTime?.getTime() ?? 0;
 
+  // This prevents passing a new duration (from Date.now()) on every render,
+  // which was causing the infinite loop.
+  const initialDurationSec = useMemo(() => {
+    if (!startTimeMs) return 0;
+    // Calculate difference and ensure it's not negative
+    const duration = (startTimeMs - Date.now()) / 1000;
+    return Math.max(0, duration);
+  }, [startTimeMs]);
+
   // When timer hits zero, refresh once (transition to gameInfo)
   const hasFiredRef = useRef(false);
-  const msLeft = useCountdown(startTimeMs, () => {
+  const countdown = useCountdown(initialDurationSec, () => {
+    // <-- Use the stable duration here
     if (!hasFiredRef.current) {
       hasFiredRef.current = true;
       // router.refresh();
     }
   });
-  const formattedTime = formatMsToMMSS(msLeft);
+  const formattedTime = formatTime(countdown.remaining);
 
   const formattedPrizePool = `$${calculatePrizePool({
     ticketsNum: upcomingOrActiveGame?._count.tickets ?? 0,
@@ -75,8 +105,11 @@ export default function GameHomePageClient({
 
     const fetchTicketInfo = async () => {
       try {
+        const gameId = upcomingOrActiveGame.id;
+        console.log(`[Ticket Check] Checking ticket for fid=${fid}, gameId=${gameId}`);
+        
         const response = await fetch(
-          `/api/user/ticket?fid=${fid}&gameId=${upcomingOrActiveGame.id}`
+          `/api/user/ticket?fid=${fid}&gameId=${gameId}`
         );
 
         if (!response.ok) {
@@ -84,6 +117,7 @@ export default function GameHomePageClient({
         }
 
         const data: UserTicketInfo = await response.json();
+        console.log(`[Ticket Check] Result for gameId=${gameId}:`, data);
         setUserTicketInfo(data);
       } catch (error) {
         console.error("Error fetching ticket information:", error);
@@ -141,7 +175,7 @@ export default function GameHomePageClient({
       if (gottenTicket) {
         return (
           <GameActionButton
-            href={`/game/${upcomingOrActiveGame.id}/join?gameId=${upcomingOrActiveGame.id}`}
+            href={`/game/${upcomingOrActiveGame.id}/live?gameId=${upcomingOrActiveGame.id}&fid=${fid}`}
             backgroundColor={neonPinkColor}
             textColor="dark"
           >
