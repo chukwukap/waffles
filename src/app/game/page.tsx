@@ -13,31 +13,14 @@ export default async function GameHomePage() {
 
 async function getUpComingOrActiveGame() {
   const now = new Date();
-  
-  // First, try to find an active game (currently running)
-  const activeGame = await prisma.game.findFirst({
-    where: {
-      startTime: { lte: now },
-      endTime: { gt: now },
-    },
-    orderBy: { id: "desc" }, // Most recently created active game
-    include: {
-      config: true,
-      _count: { select: { tickets: true, participants: true } },
-    },
-  });
 
-  if (activeGame) {
-    return activeGame;
-  }
-
-  // If no active game, find the most recently created upcoming game
+  // Find the most recently created game that hasn't ended yet
+  // Single query: gets active or upcoming games, ordered by most recent first
   return prisma.game.findFirst({
     where: {
-      startTime: { gt: now },
       endTime: { gt: now },
     },
-    orderBy: { id: "desc" }, // Most recently created upcoming game
+    orderBy: { id: "desc" }, // Most recently created game
     include: {
       config: true,
       _count: { select: { tickets: true, participants: true } },
