@@ -3,7 +3,18 @@
  * Reused by both prisma seed and game seed scripts
  */
 
-export const gameQuestions = [
+// Helper function to convert relative URLs to full URLs
+const makeFullUrl = (baseUrl: string, path: string): string => {
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return path; // Already a full URL
+  }
+  const cleanBaseUrl = baseUrl.replace(/\/$/, "");
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  return `${cleanBaseUrl}${cleanPath}`;
+};
+
+// Raw game questions data with relative URLs
+const rawGameQuestions = [
   // Round 1
   {
     roundNum: 1,
@@ -132,6 +143,27 @@ export const gameQuestions = [
   },
 ];
 
+/**
+ * Get game questions with full URLs based on base URL
+ * @param baseUrl - Base URL (e.g., "http://localhost:3000" or "https://example.com")
+ */
+export const getGameQuestions = (baseUrl: string) => {
+  return rawGameQuestions.map((round) => ({
+    roundNum: round.roundNum,
+    data: round.data.map((q) => ({
+      ...q,
+      imageUrl: makeFullUrl(baseUrl, q.imageUrl),
+      soundUrl: q.soundUrl ? makeFullUrl(baseUrl, q.soundUrl) : null,
+    })),
+  }));
+};
+
+/**
+ * Export raw questions for backward compatibility (uses relative URLs)
+ * @deprecated Use getGameQuestions() with baseUrl instead
+ */
+export const gameQuestions = rawGameQuestions;
+
 export const defaultGameConfig = {
   ticketPrice: 50,
   roundTimeLimit: 15,
@@ -142,4 +174,3 @@ export const defaultGameConfig = {
   soundEnabled: false,
   theme: "MOVIES" as const,
 };
-
