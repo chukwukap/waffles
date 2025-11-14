@@ -66,7 +66,7 @@ export function QuestionCardHeader({
           >
             <defs>
               <clipPath id={`timer-clip-${clipPathId}`}>
-                <rect width={78 * (percentage / 100)} height="12" />
+                <rect x="0" y="0" width={78 * (1 - percentage / 100)} height="12" />
               </clipPath>
             </defs>
             <g clipPath={`url(#timer-clip-${clipPathId})`}>
