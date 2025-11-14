@@ -135,7 +135,7 @@ export function QuestionCard({
         questionNumber={questionNumber}
         totalQuestions={totalQuestions}
         remaining={remaining}
-        duration={duration}
+        duration={duration - 3}
       />
 
       {/* Question Card Content */}
