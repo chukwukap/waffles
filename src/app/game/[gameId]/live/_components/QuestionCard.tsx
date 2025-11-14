@@ -42,7 +42,7 @@ export function QuestionCard({
     }
   );
 
-  const { remaining, start, reset } = useCountdown(
+  const { remaining, percentage, start, reset } = useCountdown(
     duration,
     async () => {
       if (!context) {
@@ -135,7 +135,7 @@ export function QuestionCard({
         questionNumber={questionNumber}
         totalQuestions={totalQuestions}
         remaining={remaining}
-        duration={duration}
+        percentage={percentage}
       />
 
       {/* Question Card Content */}
