@@ -1,41 +1,42 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { HomeIcon, LeaderboardIcon, ProfileIcon } from "./icons";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
 const navItems = [
-  { icon: HomeIcon, label: "Lobby", href: "/lobby" },
+  { icon: HomeIcon, label: "Lobby", href: "/game" },
   { icon: LeaderboardIcon, label: "Leaderboard", href: "/leaderboard" },
   { icon: ProfileIcon, label: "Profile", href: "/profile" },
 ];
 
 export function BottomNav() {
   const pathname = usePathname();
-  const router = useRouter();
   const { context: miniKitContext } = useMiniKit();
   const fid = miniKitContext?.user?.fid;
 
   return (
-    <nav
+    <footer
       className={cn(
-        "fixed bottom-0 left-0 right-0 z-50",
         "border-t-2 border-border",
-        "bg-[#191919]",
-        "shrink-0"
+        "bg-[#0F0F10]",
+        "shrink-0",
+        "w-full"
       )}
     >
-      <div className="mx-auto flex max-w-2xl items-stretch justify-around">
+      <nav className="flex items-stretch justify-around w-full">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive =
             pathname === item.href || pathname.startsWith(item.href + "/");
+          const hrefWithFid = fid ? `${item.href}?fid=${fid}` : item.href;
 
           return (
-            <button
+            <Link
               key={item.href}
-              onClick={() => router.push(`${item.href}?fid=${fid}`)}
+              href={hrefWithFid}
               className={cn(
                 "flex flex-1 flex-col items-center justify-center gap-1 px-4 py-3",
                 "transition-colors duration-150 ease-in-out",
@@ -54,10 +55,10 @@ export function BottomNav() {
               <span className="text-xs font-medium font-display">
                 {item.label}
               </span>
-            </button>
+            </Link>
           );
         })}
-      </div>
-    </nav>
+      </nav>
+    </footer>
   );
 }

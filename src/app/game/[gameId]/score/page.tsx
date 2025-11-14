@@ -107,7 +107,11 @@ export default async function ScorePage({
 
   // Defensive: check params early
   if (!fid || isNaN(Number(fid)) || !gameId || isNaN(Number(gameId))) {
-    return null;
+    return (
+      <div className="flex flex-col text-white overflow-hidden">
+        <p className="text-lg">Score not found.</p>
+      </div>
+    );
   }
 
   const scorePayloadPromise = getScorePagePayload(Number(gameId), Number(fid));

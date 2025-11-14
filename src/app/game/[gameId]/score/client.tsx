@@ -9,6 +9,7 @@ import { FlashIcon } from "@/components/icons";
 import { useRouter } from "next/navigation";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { ScorePagePayload } from "./page";
+import Link from "next/link";
 
 export default function ScorePageClient({
   scorePayloadPromise,
@@ -17,7 +18,6 @@ export default function ScorePageClient({
 }) {
   const scorePayload = use(scorePayloadPromise);
 
-  const router = useRouter();
   const { context: miniKitContext } = useMiniKit();
   const fid = miniKitContext?.user?.fid;
 
@@ -64,15 +64,18 @@ export default function ScorePageClient({
         <FancyBorderButton className="text-[#14B985] border-[#14B985]">
           SHARE SCORE
         </FancyBorderButton>
-        <button
+        <Link
+          href={`/lobby?fid=${fid}`}
           className="
             flex flex-row justify-center items-center
             font-body
             text-[#00CFF2]
             bg-transparent
             border-none
-            mt-1"
-          onClick={() => router.push(`/lobby?fid=${fid}`)}
+            mt-1
+            no-underline
+            cursor-pointer
+          "
         >
           <span
             className="
@@ -80,7 +83,7 @@ export default function ScorePageClient({
           >
             BACK TO HOME
           </span>
-        </button>
+        </Link>
       </div>
 
       <Leaderboard entries={leaderboard} className="mt-10" />

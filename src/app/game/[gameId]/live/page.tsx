@@ -1,6 +1,8 @@
 import LiveGameClient from "./client";
 import { prisma } from "@/lib/db";
 
+export const revalidate = 0;
+
 export default async function LiveGamePage({
   searchParams,
 }: {
@@ -12,6 +14,9 @@ export default async function LiveGamePage({
     include: {
       config: true,
       questions: {
+        where: {
+          gameId: Number(gameId),
+        },
         include: {
           round: {
             select: {
@@ -24,13 +29,30 @@ export default async function LiveGamePage({
           id: "asc",
         },
       },
-      _count: { select: { answers: true } },
+      _count: {
+        select: {
+          answers: {
+            where: {
+              gameId: Number(gameId),
+              userId: Number(fid),
+            },
+          },
+        },
+      },
     },
   });
   const userInfoPromise = prisma.user.findUnique({
     where: { fid: Number(fid) },
     include: {
-      _count: { select: { answers: true } },
+      _count: {
+        select: {
+          answers: {
+            where: {
+              gameId: Number(gameId),
+            },
+          },
+        },
+      },
     },
   });
 

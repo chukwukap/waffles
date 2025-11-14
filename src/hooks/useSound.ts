@@ -3,28 +3,34 @@
 
 import { useEffect, useCallback, useRef } from "react";
 import { SoundManager } from "@/lib/sounds/SoundManager";
-import { useUserPreferences } from "@/components/providers/userPreference";
+import { useLocalStorage } from "./useLocalStorage";
 import type { SoundName } from "@/lib/sounds/config";
+
+const SOUND_STORAGE_KEY = "waffles:soundEnabled";
 
 /**
  * Hook for playing sounds with automatic preference handling
  *
  * @example
- * const { play, stop } = useSound();
+ * const { play, stop, toggleSound, soundEnabled } = useSound();
  * play('click');
+ * toggleSound(); // Toggle sound on/off
  *
  * @example
  * const { playUrl } = useSound();
  * playUrl('/sounds/scenes/matrix.mp3', { loop: true });
  */
 export function useSound() {
-  const { prefs } = useUserPreferences();
+  const [soundEnabled, setSoundEnabled] = useLocalStorage<boolean>(
+    SOUND_STORAGE_KEY,
+    true
+  );
   const activeUrlRef = useRef<string>("");
 
   // Update SoundManager when preferences change
   useEffect(() => {
-    SoundManager.setEnabled(prefs.soundEnabled);
-  }, [prefs.soundEnabled]);
+    SoundManager.setEnabled(soundEnabled);
+  }, [soundEnabled]);
 
   // Initialize audio context on first user interaction
   useEffect(() => {
@@ -35,7 +41,7 @@ export function useSound() {
     };
 
     // Only add listeners if sound is enabled
-    if (prefs.soundEnabled) {
+    if (soundEnabled) {
       window.addEventListener("pointerdown", handleInteraction, { once: true });
       window.addEventListener("keydown", handleInteraction, { once: true });
     }
@@ -44,24 +50,28 @@ export function useSound() {
       window.removeEventListener("pointerdown", handleInteraction);
       window.removeEventListener("keydown", handleInteraction);
     };
-  }, [prefs.soundEnabled]);
+  }, [soundEnabled]);
+
+  const toggleSound = useCallback(() => {
+    setSoundEnabled((prev) => !prev);
+  }, [setSoundEnabled]);
 
   const play = useCallback(
     (name: SoundName, options?: { volume?: number; loop?: boolean }) => {
-      if (!prefs.soundEnabled) return;
+      if (!soundEnabled) return;
       SoundManager.play(name, options);
     },
-    [prefs.soundEnabled]
+    [soundEnabled]
   );
 
   const playUrl = useCallback(
     (url: string, options?: { volume?: number; loop?: boolean }): string => {
-      if (!prefs.soundEnabled) return "";
+      if (!soundEnabled) return "";
       const soundId = SoundManager.playUrl(url, options);
       activeUrlRef.current = soundId;
       return soundId;
     },
-    [prefs.soundEnabled]
+    [soundEnabled]
   );
 
   const stop = useCallback((name: SoundName) => {
@@ -86,7 +96,9 @@ export function useSound() {
     stop,
     stopUrl,
     stopAll,
-    soundEnabled: prefs.soundEnabled,
+    soundEnabled,
+    toggleSound,
+    setSoundEnabled,
   };
 }
 
@@ -105,7 +117,7 @@ export function useSoundEffect(
   soundName?: SoundName,
   options?: { volume?: number; loop?: boolean }
 ): void {
-  const { play, playUrl, stopAll } = useSound();
+  const { play, stopAll } = useSound();
   const previousTriggerRef = useRef<string | number | null | undefined>(null);
 
   useEffect(() => {
@@ -130,7 +142,7 @@ export function useSoundEffect(
       clearTimeout(timeoutId);
       stopAll();
     };
-  }, [trigger, soundName, play, stopAll, options?.volume, options?.loop]);
+  }, [trigger, soundName, play, stopAll, options]);
 }
 
 /**
@@ -143,7 +155,7 @@ export function useSoundUrlEffect(
   url: string | null | undefined,
   options?: { volume?: number; loop?: boolean }
 ): void {
-  const { playUrl, stopUrl, stopAll } = useSound();
+  const { playUrl, stopUrl } = useSound();
   const previousUrlRef = useRef<string | null | undefined>(null);
 
   useEffect(() => {
@@ -176,5 +188,5 @@ export function useSoundUrlEffect(
         stopUrl(url);
       }
     };
-  }, [url, playUrl, stopUrl, options?.volume, options?.loop]);
+  }, [url, playUrl, stopUrl, options]);
 }

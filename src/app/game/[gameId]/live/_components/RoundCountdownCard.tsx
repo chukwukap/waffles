@@ -11,9 +11,7 @@ export default function RoundCountdownCard({
   duration: number;
   onComplete: () => void;
 }) {
-  const t = useCountdown(duration, onComplete);
-
-  const ratio = t / duration;
+  const { remaining, percentage } = useCountdown(duration, onComplete);
 
   return (
     <div className="animate-up">
@@ -30,7 +28,7 @@ export default function RoundCountdownCard({
         </h1>
 
         <div className="grid place-items-center">
-          <CountdownCircle ratio={ratio} secondsLeft={t} />
+          <CountdownCircle percentage={percentage} secondsLeft={remaining} />
         </div>
 
         <p className="mt-10 text-center text-muted text-lg font-display">
@@ -45,10 +43,10 @@ export default function RoundCountdownCard({
 }
 
 function CountdownCircle({
-  ratio,
+  percentage,
   secondsLeft,
 }: {
-  ratio: number; // 1.0 → 0.0 progress (percent remaining)
+  percentage: number; // 0 → 100 (percent complete), per useCountdown.ts
   secondsLeft: number; // integer seconds left
 }) {
   const size = 240;
@@ -56,11 +54,15 @@ function CountdownCircle({
   const r = (size - stroke) / 2;
   const circumference = 2 * Math.PI * r;
 
-  // 'ratio' is percent remaining (1.0 -> 0).
-  // This formula makes the dashOffset go from 0 (full circle)
-  // to 'circumference' (empty circle) as ratio goes from 1 to 0.
-  const dashOffset = circumference * (1 - ratio);
-  // const angle = ratio * 360 - 90; // For the commented-out dot
+  // In useCountdown.ts, `percentage` is (progress as 0-100, 100 = fully elapsed).
+  // For the circular progress, we want:
+  // - Full circle visible when percentage = 0 (countdown starts)
+  // - No circle visible when percentage = 100 (countdown ends)
+  // strokeDashoffset: 0 = full circle visible, circumference = no circle visible
+  // So: dashOffset = circumference * (percentage / 100)
+  const dashOffset = circumference * (percentage / 100);
+
+  const timeDisplay = Math.ceil(secondsLeft);
 
   return (
     <div
@@ -98,31 +100,6 @@ function CountdownCircle({
         </g>
       </svg>
 
-      {/* Moving progress dot (commented out in original) */}
-      {/* <div
-        className="absolute left-1/2 top-1/2"
-        style={{
-          transform: `translate(-50%, -50%) rotate(${angle}deg)`,
-          transition: "transform 0.2s linear",
-          width: size,
-          height: size,
-          pointerEvents: "none",
-        }}
-      >
-        <span
-          className="absolute block rounded-full"
-          style={{
-            width: stroke + 6,
-            height: stroke + 6,
-            background: BLUE,
-            left: "50%",
-            top: "50%",
-            transform: `translate(-50%, -50%) translateY(${-r}px)`,
-            boxShadow: "0 0 0 2px rgba(30,139,255,0.35)",
-          }}
-        />
-      </div> */}
-
       {/* Timer Text */}
       <div className="pointer-events-none absolute inset-0 grid place-items-center">
         <span
@@ -131,7 +108,7 @@ function CountdownCircle({
             fontSize: "clamp(2.5rem, 10vw, 7rem)",
           }}
         >
-          {String(secondsLeft).padStart(2, "0")}
+          {String(timeDisplay).padStart(2, "0")}
         </span>
       </div>
     </div>

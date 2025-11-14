@@ -27,7 +27,6 @@ model User {
   chats              Chat[]
   answers            Answer[]
   gameParticipants   GameParticipant[] // <-- users who have really joined (played) games
-  roundCompletions   RoundCompletion[]
   waitlist           Waitlist?
   waitlistReferrals  Waitlist[]          @relation("WaitlistReferral")
   notificationTokens NotificationToken[]
@@ -61,7 +60,6 @@ model Game {
   config       GameConfig?
   answers      Answer[]
   participants GameParticipant[] // <-- users who have really joined (played) this game
-  roundCompletions RoundCompletion[]
 }
 
 model Round {
@@ -70,7 +68,6 @@ model Round {
   gameId    Int
   roundNum  Int // 1-based index for round (e.g., 1, 2, 3, ...)
   questions Question[]
-  completions RoundCompletion[]
 
   @@unique([gameId, roundNum])
   @@index([gameId])
@@ -88,23 +85,6 @@ model GameParticipant {
   @@unique([gameId, userId])
   @@index([userId])
   @@index([gameId])
-}
-
-model RoundCompletion {
-  id          Int      @id @default(autoincrement())
-  game        Game     @relation(fields: [gameId], references: [id])
-  gameId      Int
-  round       Round    @relation(fields: [roundId], references: [id])
-  roundId     Int
-  user        User     @relation(fields: [userId], references: [id])
-  userId      Int
-  completedAt DateTime @default(now())
-  // Records when a user completes all questions in a round
-
-  @@unique([userId, gameId, roundId])
-  @@index([userId])
-  @@index([gameId])
-  @@index([roundId])
 }
 
 model GameConfig {

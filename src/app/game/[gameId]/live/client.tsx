@@ -1,14 +1,37 @@
 "use client";
 import { Prisma } from "@prisma/client";
 import * as React from "react";
-
 import QuestionCard from "./_components/QuestionCard";
-
-import { submitAnswerAction, completeRoundAction } from "@/actions/game";
-import { useAuth } from "@/hooks/useAuth";
 import { EXTRA_TIME_SECONDS } from "@/lib/constants";
 import { useRouter } from "next/navigation";
 import RoundCountdownCard from "./_components/RoundCountdownCard";
+
+/**
+ * Determines if a round countdown should be shown before the next question.
+ * Show countdown at the start of each new round (except the first question of the game).
+ * @param currentIdx - The index of the current question
+ * @param questions - The question list with `round.roundNum`
+ * @returns boolean
+ */
+function shouldShowRoundCountdown(
+  currentIdx: number,
+  questions: { round: { id: number; roundNum: number } }[]
+): boolean {
+  if (!questions || questions.length === 0) return false;
+  if (currentIdx + 1 >= questions.length) return false; // about to end
+
+  const thisRound = questions[currentIdx]?.round?.roundNum;
+  const nextRound = questions[currentIdx + 1]?.round?.roundNum;
+  // Show round countdown if this is the last question in a round
+  if (
+    typeof thisRound === "number" &&
+    typeof nextRound === "number" &&
+    nextRound > thisRound
+  ) {
+    return true;
+  }
+  return false;
+}
 
 export default function LiveGameClient({
   gameInfoPromise,
@@ -42,224 +65,62 @@ export default function LiveGameClient({
   const gameInfo = React.use(gameInfoPromise);
   const userInfo = React.use(userInfoPromise);
 
-  console.log("game questions: ", gameInfo?.questions);
-
   const questionTotalTime =
-    gameInfo?.config?.questionTimeLimit ?? 10 + EXTRA_TIME_SECONDS;
-  const answerCount = userInfo?._count.answers;
-  const question = gameInfo?.questions[answerCount!];
-  // next question is the question after the current question.
-  const isLastQuestionInRound =
-    (answerCount! + 1) % (gameInfo?.config?.questionsPerGame ?? 1) === 0;
-  console.log("question: ", question);
-  console.log("questoin index: ", answerCount);
-  console.log("answers: ", answerCount);
-  console.log("last question in round: ", isLastQuestionInRound);
-  const { getToken, signIn } = useAuth();
+    (gameInfo?.config?.questionTimeLimit ?? 10) + EXTRA_TIME_SECONDS;
+  const [currentQuestionIndex, setCurrentQuestionIndex] = React.useState(0);
 
-  const [selectedOptionIndex, setSelectedOptionIndex] = React.useState<
-    number | null
-  >(null);
-  const [questionStartTime, setQuestionStartTime] = React.useState<
-    number | null
-  >(null);
-  const [questionEndTime, setQuestionEndTime] = React.useState<number | null>(
-    null
-  );
-  const [actionState, action, pending] = React.useActionState(
-    submitAnswerAction,
-    {
-      error: "",
-      success: false,
-    }
-  );
+  // Track whether we're currently displaying a round countdown
+  const [showRoundCountdown, setShowRoundCountdown] = React.useState(false);
 
-  // Track when question phase starts to calculate time taken
-  React.useEffect(() => {
-    if (question) {
-      setQuestionStartTime(Date.now());
-      setQuestionEndTime(null);
-      setSelectedOptionIndex(null); // Reset selection for new question
-    }
-  }, [question]);
+  // Reveals the next question after round countdown completes
+  const handleRoundCountdownComplete = React.useCallback(() => {
+    setShowRoundCountdown(false);
+    setCurrentQuestionIndex((prev) => prev + 1);
+  }, []);
 
-  // Track when question phase ends (moves to next question)
-  React.useEffect(() => {
-    if (questionStartTime && !questionEndTime) {
-      setQuestionEndTime(Date.now());
-    }
-  }, [questionStartTime, questionEndTime]);
+  // This function decides whether we should move to the next question or redirect to the score page,
+  // also checks if a round countdown should show before next question.
+  const handleQuestionCompleted = React.useCallback(() => {
+    const nextQuestionIndex = currentQuestionIndex + 1;
+    const questions = gameInfo?.questions || [];
 
-  const submitOption = React.useCallback(
-    async (qIdx: number, opIndex: number | null) => {
-      if (!gameInfo || !userInfo || !gameInfo.questions[qIdx]) {
-        return;
-      }
-
-      const questionTimeLimit =
-        gameInfo.config?.questionTimeLimit ?? 10 + EXTRA_TIME_SECONDS;
-
-      // Calculate time taken (in seconds) from question start to question end
-
-      const endTime = questionEndTime ?? Date.now();
-
-      const timeTaken =
-        questionStartTime && endTime
-          ? Math.min((endTime - questionStartTime) / 1000, questionTimeLimit)
-          : questionTimeLimit;
-
-      // Get selected answer option or null if no selection
-
-      const selected = opIndex !== null ? question?.options[opIndex] : null;
-
-      // Get auth token (authenticate if needed)
-
-      let authToken = getToken();
-
-      if (!authToken) {
-        authToken = await signIn();
-
-        if (!authToken) {
-          console.error("Authentication required to submit answer");
-
-          return;
-        }
-      }
-
-      // Create FormData with all required fields
-
-      const formData = new FormData();
-
-      formData.append("fid", String(userInfo.fid));
-
-      formData.append("gameId", String(gameInfo.id));
-
-      formData.append("questionId", String(question?.id ?? ""));
-
-      formData.append("timeTaken", String(timeTaken));
-
-      formData.append("authToken", authToken);
-
-      if (selected !== null) {
-        formData.append("selected", selected ?? "");
-      }
-      // Submit the answer
-      React.startTransition(() => {
-        action(formData);
-      });
-    },
-    [
-      gameInfo,
-      userInfo,
-      questionEndTime,
-      questionStartTime,
-      question?.options,
-      question?.id,
-      getToken,
-      signIn,
-      action,
-    ]
-  );
-
-  const handleQuestionDone = React.useCallback(() => {
-    console.log("question done, submitting option....", selectedOptionIndex);
-
-    submitOption(answerCount!, selectedOptionIndex);
-    console.log("new state", actionState);
-
-    const next = answerCount! + 1;
-
-    if (next >= (gameInfo?.questions.length ?? 0)) {
+    // If we've reached the end of the questions, redirect to the score page
+    if (nextQuestionIndex >= questions.length) {
       router.push(`/game/${gameInfo?.id}/score/?fid=${userInfo?.fid}`);
-
       return;
     }
 
-    // Check if next question is in a different round using Round model
-    const nextQuestion = gameInfo?.questions[next];
-    const isEndOfRound =
-      question?.round.roundNum !== nextQuestion?.round.roundNum;
-    if (isEndOfRound) {
-    } else {
-      // router.refresh();
+    // Decide if round countdown is needed before next question
+    if (shouldShowRoundCountdown(currentQuestionIndex, questions)) {
+      setShowRoundCountdown(true);
+      // Do NOT increment currentQuestionIndex yet; it increments when countdown ends
+      return;
     }
+
+    // Otherwise, advance to the next question immediately
+    setCurrentQuestionIndex(nextQuestionIndex);
   }, [
-    selectedOptionIndex,
-    answerCount,
-    submitOption,
-    userInfo?.fid,
-    actionState,
+    currentQuestionIndex,
     gameInfo?.questions,
     gameInfo?.id,
-    question?.round.roundNum,
     router,
+    userInfo?.fid,
   ]);
-
-  // change selected option index and update question end time if it is different from the current one.
-  const handleSelectOption = React.useCallback(
-    (index: number | null) => {
-      console.log("setting option index to", index);
-      setSelectedOptionIndex(index);
-      if (selectedOptionIndex !== index) {
-        setQuestionEndTime(Date.now());
-      }
-    },
-    [setSelectedOptionIndex, selectedOptionIndex]
-  );
-
-  // Handle round countdown completion
-  const handleRoundCountdownComplete = React.useCallback(async () => {
-    if (!userInfo || !gameInfo || !question) {
-      console.error("Missing data for round completion");
-      return;
-    }
-
-    // Get auth token
-    let authToken = getToken();
-    if (!authToken) {
-      authToken = await signIn();
-      if (!authToken) {
-        console.error("Authentication required to complete round");
-        return;
-      }
-    }
-
-    // Mark round as completed
-    const result = await completeRoundAction({
-      fid: userInfo.fid,
-      gameId: gameInfo.id,
-      roundId: question.round.id,
-      authToken,
-    });
-
-    if (result.success) {
-      console.log("Round completed successfully");
-      // Refresh to get next question
-      router.refresh();
-    } else {
-      console.error("Failed to complete round:", result.error);
-    }
-  }, [userInfo, gameInfo, question, getToken, signIn, router]);
-
-  console.log("question >>>>>>>>>>>>>>>>>>>>>>>>>>> client:", question);
 
   return (
     <>
-      {isLastQuestionInRound ? (
+      {showRoundCountdown ? (
         <RoundCountdownCard
           duration={gameInfo?.config?.roundTimeLimit ?? 15}
           onComplete={handleRoundCountdownComplete}
         />
       ) : (
         <QuestionCard
-          question={question!}
-          questionNumber={answerCount! + 1}
+          question={gameInfo!.questions[currentQuestionIndex]}
+          questionNumber={currentQuestionIndex + 1}
           totalQuestions={gameInfo?.questions.length ?? 0}
           duration={questionTotalTime}
-          submitting={pending}
-          onComplete={handleQuestionDone}
-          selectedOptionIndex={selectedOptionIndex}
-          onSelectOption={handleSelectOption}
+          onComplete={handleQuestionCompleted}
         />
       )}
     </>

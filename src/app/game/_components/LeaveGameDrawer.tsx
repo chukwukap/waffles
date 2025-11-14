@@ -1,21 +1,39 @@
 "use client";
 
-import { useEffect } from "react";
+import {
+  SetStateAction,
+  Dispatch,
+  startTransition,
+  useActionState,
+  useCallback,
+  useEffect,
+} from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { notify } from "@/components/ui/Toaster";
+import { leaveGameAction } from "@/actions/game";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
 interface LeaveGameDrawerProps {
   open: boolean;
-  onClose: () => void;
-  onConfirmLeave: () => void;
+  setIsLeaveGameDrawerOpen: Dispatch<SetStateAction<boolean>>;
+  gameId: number;
 }
 
 export default function LeaveGameDrawer({
   open,
-  onClose,
-  onConfirmLeave,
+  setIsLeaveGameDrawerOpen,
+  gameId,
 }: LeaveGameDrawerProps) {
+  const { context } = useMiniKit();
+  const router = useRouter();
+
+  const [state, leaveGameAct, pending] = useActionState(leaveGameAction, {
+    success: false,
+    error: "",
+  });
   useEffect(() => {
     if (!open) return;
     const originalOverflow = document.body.style.overflow;
@@ -29,12 +47,40 @@ export default function LeaveGameDrawer({
     if (!open) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        onClose();
+        setIsLeaveGameDrawerOpen(false);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, onClose]);
+  }, [open, setIsLeaveGameDrawerOpen]);
+
+  // Handle successful leave
+  useEffect(() => {
+    if (state.success && !pending) {
+      notify.success("You've left the game");
+      setIsLeaveGameDrawerOpen(false);
+      router.push("/game");
+    } else if (!state.success && state.error && !pending) {
+      notify.error(state.error);
+    }
+  }, [state, pending, setIsLeaveGameDrawerOpen, router]);
+
+  const handleLeaveGame = useCallback(() => {
+    if (!context?.user.fid) {
+      notify.error("Failed to leave game: No FID found.");
+      return;
+    }
+    if (!gameId) {
+      notify.error("Failed to leave game: No game ID found.");
+      return;
+    }
+    const formData = new FormData();
+    formData.append("fid", String(context.user.fid));
+    formData.append("gameId", String(gameId));
+    startTransition(() => {
+      leaveGameAct(formData);
+    });
+  }, [context?.user.fid, gameId, leaveGameAct]);
 
   return (
     <AnimatePresence>
@@ -51,7 +97,7 @@ export default function LeaveGameDrawer({
         >
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={onClose}
+            onClick={() => setIsLeaveGameDrawerOpen(false)}
             aria-hidden="true"
           />
           <motion.div
@@ -111,7 +157,7 @@ export default function LeaveGameDrawer({
                     </p>
                   </div>
                   <button
-                    onClick={onClose}
+                    onClick={() => setIsLeaveGameDrawerOpen(false)}
                     className={cn(
                       "group w-full rounded-xl bg-white px-4 py-[12px] border-0 relative text-center select-none",
                       "border-r-[5px] border-b-[5px] border-[#14B985]",
@@ -132,7 +178,8 @@ export default function LeaveGameDrawer({
                   {/* Secondary CTA (YES, LEAVE) */}
                   <div className="mt-3">
                     <button
-                      onClick={onConfirmLeave}
+                      onClick={handleLeaveGame}
+                      disabled={pending}
                       className="w-full rounded-xl px-4 py-[12px] text-center transition hover:bg-white/5 active:bg-white/10"
                     >
                       <span

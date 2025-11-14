@@ -240,7 +240,6 @@ export async function submitAnswerAction(
     console.log("[submitAnswerAction] SUCCESS!");
     console.log("[submitAnswerAction] ----------------------------");
     // refreshing data
-    revalidatePath(`/game/${gameId}/live`);
 
     return { success: true, error: "" };
   } catch (err) {
@@ -258,10 +257,8 @@ export async function submitAnswerAction(
         error: "A database conflict occurred. Please try again.",
       };
     }
-    return {
-      success: false,
-      error: "Failed to submit answer due to a server error.",
-    };
+    // propagate the error to the client
+    throw err;
   }
 }
 
@@ -349,7 +346,8 @@ export async function joinGameAction(
 // LeaveGame schema and handler for removing user participation from the current active game (deleting GameParticipant)
 
 const leaveGameSchema = z.object({
-  fid: z.number().int().positive("Invalid FID."),
+  fid: z.coerce.number().int().positive("Invalid FID."),
+  gameId: z.coerce.number().int().positive("Invalid Game ID."),
 });
 
 export type LeaveGameResult =
@@ -357,24 +355,31 @@ export type LeaveGameResult =
   | { success: false; error: string };
 
 /**
- * Removes the GameParticipant record (user's participation) for the current active game.
- * - Only removes participation for the *currently* active Game.
+ * Removes the GameParticipant record (user's participation) for the specified game.
+ * - Removes participation for the specified gameId.
  * - Does NOT revoke ticket or answers; only removes participation.
  * - Safe to call multiple times (idempotent).
  * - Triggers revalidation of the game view if any.
  *
- * Expects only fid.
+ * Expects fid and gameId.
  */
 export async function leaveGameAction(
-  input: z.input<typeof leaveGameSchema>
+  previousState: LeaveGameResult,
+  formData: FormData
 ): Promise<LeaveGameResult> {
-  const validated = leaveGameSchema.safeParse(input);
-  if (!validated.success) {
-    const firstError = validated.error.message || "Invalid input.";
-    console.warn("leaveGameAction validation failed:", validated.error.message);
+  const rawFid = formData.get("fid");
+  const rawGameId = formData.get("gameId");
+  const validation = leaveGameSchema.safeParse({
+    fid: rawFid,
+    gameId: rawGameId,
+  });
+  if (!validation.success) {
+    const firstError =
+      validation.error.issues?.[0]?.message || "Invalid input.";
+    console.warn("leaveGameAction validation failed:", validation.error.issues);
     return { success: false, error: firstError };
   }
-  const { fid } = validated.data;
+  const { fid, gameId } = validation.data;
 
   try {
     // Find user by FID
@@ -386,31 +391,23 @@ export async function leaveGameAction(
       return { success: false, error: "User not found." };
     }
 
-    // Find active GameParticipant record for this user.
-    // Active game is one where game.startTime <= now <= game.endTime
-    const now = new Date();
-    const activeParticipant = await prisma.gameParticipant.findFirst({
-      where: {
-        userId: user.id,
-        game: {
-          startTime: { lte: now },
-          endTime: { gte: now },
-        },
-      },
-      include: { game: true },
+    // Verify game exists
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      select: { id: true },
     });
-
-    if (!activeParticipant || !activeParticipant.game) {
-      return { success: false, error: "No active game participation found." };
+    if (!game) {
+      return { success: false, error: "Game not found." };
     }
 
     // Remove participation (delete the record)
     await prisma.gameParticipant.deleteMany({
-      where: { userId: user.id, gameId: activeParticipant.gameId },
+      where: { userId: user.id, gameId },
     });
 
-    // Revalidate the game path for the game left
-    revalidatePath(`/game/${activeParticipant.gameId}`);
+    // Revalidate paths to ensure UI updates
+    revalidatePath(`/game/${gameId}`);
+    revalidatePath("/game");
 
     return { success: true };
   } catch (err: unknown) {
@@ -425,105 +422,6 @@ export async function leaveGameAction(
     return {
       success: false,
       error: "Failed to leave game due to a server error.",
-    };
-  }
-}
-
-// Schema for marking round completion
-const completeRoundSchema = z.object({
-  fid: z.number().int().positive("Invalid FID format."),
-  gameId: z.number().int().positive("Invalid Game ID."),
-  roundId: z.number().int().positive("Invalid Round ID."),
-  authToken: z.string().optional().nullable(),
-});
-
-export type CompleteRoundResult =
-  | { success: true }
-  | { success: false; error: string };
-
-/**
- * Marks a round as completed for a user.
- * - User must exist and be authenticated.
- * - Game and Round must exist.
- * - Idempotent: safe to call multiple times (uses upsert).
- * - Creates RoundCompletion record when user completes all questions in a round.
- */
-export async function completeRoundAction(
-  input: z.input<typeof completeRoundSchema>
-): Promise<CompleteRoundResult> {
-  const validation = completeRoundSchema.safeParse(input);
-  if (!validation.success) {
-    const firstError = validation.error.message || "Invalid input.";
-    console.warn("completeRoundAction validation failed:", validation.error.message);
-    return { success: false, error: firstError };
-  }
-
-  const { fid, gameId, roundId, authToken } = validation.data;
-
-  // Verify authentication
-  const authResult = await verifyAuthenticatedUser(authToken ?? null, fid);
-  if (!authResult.authenticated) {
-    return {
-      success: false,
-      error: authResult.error || "Authentication required to complete round",
-    };
-  }
-
-  try {
-    // Find user by FID
-    const user = await prisma.user.findUnique({
-      where: { fid },
-      select: { id: true },
-    });
-    if (!user) {
-      return { success: false, error: "User not found." };
-    }
-
-    // Verify game and round exist
-    const round = await prisma.round.findUnique({
-      where: { id: roundId },
-      select: { gameId: true },
-    });
-    if (!round) {
-      return { success: false, error: "Round not found." };
-    }
-    if (round.gameId !== gameId) {
-      return { success: false, error: "Round does not belong to this game." };
-    }
-
-    // Create or update RoundCompletion record (idempotent)
-    await prisma.roundCompletion.upsert({
-      where: {
-        userId_gameId_roundId: {
-          userId: user.id,
-          gameId,
-          roundId,
-        },
-      },
-      update: {}, // Already exists, no update needed
-      create: {
-        userId: user.id,
-        gameId,
-        roundId,
-      },
-    });
-
-    // Revalidate the game path
-    revalidatePath(`/game/${gameId}/live`);
-
-    return { success: true };
-  } catch (err: unknown) {
-    if (
-      err instanceof Prisma.PrismaClientKnownRequestError &&
-      err.code === "P2002"
-    ) {
-      // Already exists, treat as success (idempotency)
-      return { success: true };
-    }
-    console.error("completeRoundAction Error:", err);
-    return {
-      success: false,
-      error: "Failed to complete round due to a server error.",
     };
   }
 }

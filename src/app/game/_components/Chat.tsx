@@ -142,7 +142,7 @@ export const Chat = ({
       <Backdrop isOpen={isOpen} onClose={onClose} />
       {/* Drawer */}
       <div
-        className={`fixed bottom-0 left-0 right-0 z-50 flex h-[644px] w-full flex-col
+        className={`fixed bottom-0 left-0 right-0 z-50 flex h-[600px] w-full flex-col
                     rounded-t-[20px] bg-linear-to-b from-[#1E1E0E] to-black
                     transition-transform duration-500 ease-in-out
                     ${isOpen ? "translate-y-0" : "translate-y-full"}`}

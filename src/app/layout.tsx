@@ -46,13 +46,11 @@ export default function RootLayout({
       )}
       suppressHydrationWarning
     >
-      <body
-        className={cn(
-          "text-foreground app-background relative h-full overflow-hidden"
-        )}
-      >
+      <body className={cn("text-foreground app-background")}>
         <Providers>
-          <div className="h-dvh flex flex-col overflow-hidden">{children}</div>
+          <main className="h-dvh flex flex-col overflow-hidden">
+            {children}
+          </main>
         </Providers>
       </body>
     </html>

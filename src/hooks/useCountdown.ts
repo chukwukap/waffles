@@ -104,7 +104,10 @@ export function useCountdown(
   const pause = React.useCallback(() => {
     if (endTimeRef.current) {
       // Update remaining to exact paused time
-      const exactRemaining = Math.max(0, (endTimeRef.current - Date.now()) / 1000);
+      const exactRemaining = Math.max(
+        0,
+        (endTimeRef.current - Date.now()) / 1000
+      );
       setRemaining(exactRemaining);
       remainingRef.current = exactRemaining;
     }

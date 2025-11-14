@@ -5,13 +5,7 @@ import Image from "next/image";
 import { motion, useMotionValue, useTransform } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-interface CardImage {
-  src: string;
-  alt?: string;
-}
-
 interface CardStackProps {
-  images: CardImage[];
   size?: number | string;
   borderColor?: string;
   rotations?: number[];
@@ -24,7 +18,6 @@ interface CardStackProps {
 const DEFAULT_ROTATIONS = [-9, 6, -4, 7];
 
 export function CardStack({
-  images,
   size = "clamp(32px, 6vw, 48px)",
   borderColor = "#FFFFFF",
   rotations = DEFAULT_ROTATIONS,
@@ -33,6 +26,14 @@ export function CardStack({
   ariaLabel = "Image card stack",
   className,
 }: CardStackProps) {
+  const spotsAvatars = useMemo(() => {
+    return [
+      "/images/lobby/1.jpg",
+      "/images/lobby/2.jpg",
+      "/images/lobby/3.jpg",
+      "/images/lobby/4.jpg",
+    ];
+  }, []);
   const x = useMotionValue(0);
   const tilt = useTransform(x, [-100, 100], [-4, 4]);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -49,8 +50,8 @@ export function CardStack({
     }
   };
   const cardsToDisplay = useMemo(
-    () => images.slice(0, maxCards),
-    [images, maxCards]
+    () => spotsAvatars.slice(0, maxCards),
+    [spotsAvatars, maxCards]
   );
 
   const styleVariables = {
@@ -74,7 +75,7 @@ export function CardStack({
 
         return (
           <motion.div
-            key={img.src + i}
+            key={spotsAvatars[i] + i}
             style={{
               width: "var(--card-size)",
               height: "var(--card-size)",
@@ -98,8 +99,8 @@ export function CardStack({
               className="w-full h-full"
             >
               <Image
-                src={img.src}
-                alt={img.alt ?? `Card ${i + 1}`}
+                src={spotsAvatars[i]}
+                alt={`Card ${i + 1}`}
                 fill
                 sizes="var(--card-size)"
                 className="object-cover"

@@ -6,19 +6,16 @@ import { useGetTokenBalance } from "@coinbase/onchainkit/wallet";
 import { WalletIcon } from "lucide-react";
 import { base } from "viem/chains";
 import { useAccount } from "wagmi";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import LeaveGameDrawer from "./LeaveGameDrawer";
-import { leaveGameAction } from "@/actions/game";
-import { useRouter, usePathname } from "next/navigation";
-import { notify } from "@/components/ui/Toaster";
-import { useMiniKit } from "@coinbase/onchainkit/minikit";
+import { usePathname, useSearchParams } from "next/navigation";
 import Image from "next/image";
 
 export function GameHeader() {
-  const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const gameId = Number(searchParams.get("gameId"));
   const { address } = useAccount();
-  const { context } = useMiniKit();
   const { roundedBalance } = useGetTokenBalance(address as `0x${string}`, {
     address: env.nextPublicUsdcAddress as `0x${string}`,
     decimals: 6,
@@ -30,21 +27,6 @@ export function GameHeader() {
 
   const [isLeaveGameDrawerOpen, setIsLeaveGameDrawerOpen] = useState(false);
 
-  const leaveGame = useCallback(async () => {
-    try {
-      if (!context?.user.fid) {
-        notify.error("Failed to leave game: No FID found.");
-        return;
-      }
-      await leaveGameAction({ fid: context?.user.fid });
-      setIsLeaveGameDrawerOpen(false);
-      router.refresh();
-    } catch {
-      notify.error("Failed to leave game:");
-      setIsLeaveGameDrawerOpen(false);
-    }
-  }, [context?.user.fid, router]);
-
   // Detect if we are on the /live route
   const isLiveRoute = pathname?.includes("/live");
 
@@ -52,22 +34,16 @@ export function GameHeader() {
     <>
       <header
         className={cn(
-          "sticky top-0 z-40 px-4 py-2 flex items-center justify-between border-b border-border backdrop-blur-sm"
+          "sticky top-0 left-0 shrink-0 z-40 flex items-center justify-between w-[393px] h-[52px] bg-[#191919] border-b border-b-[#FFFFFF12] pt-[12px] px-4 pb-[12px]"
         )}
       >
-        <div
-          className={
-            isLiveRoute
-              ? "relative w-[84px] h-[24px] flex items-center"
-              : "relative w-[148px] h-[60px]"
-          }
-        >
+        <div className="relative w-[122.56px] h-[23.29px]">
           {isLiveRoute ? (
             <Image
-              src="/logo-live.svg"
+              src="/logo-live.png"
               alt="Live game logo"
               fill
-              sizes="(max-width: 640px) 84px, 84px"
+              sizes="122.56px"
               priority
               className="object-contain"
             />
@@ -76,36 +52,39 @@ export function GameHeader() {
               src="/logo-onboarding.png"
               alt="Waffles logo icon"
               fill
-              sizes="(max-width: 640px) 148px, 148px"
+              sizes="122.56px"
               priority
               className="object-contain"
             />
           )}
         </div>
-        <div className="flex items-center gap-2">
-          {isLiveRoute ? (
-            // Always show the Leave Game button on the /live route
-            <button
-              onClick={() => setIsLeaveGameDrawerOpen(true)}
-              className="flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1.5 text-xs text-foreground hover:bg-white/20 transition-colors"
-            >
-              <LeaveGameIcon className="w-4 h-4" />
-              <span>leave game</span>
-            </button>
-          ) : (
-            <div className="flex items-center gap-1.5  rounded-full px-3 py-1.5 border border-white/10">
-              <WalletIcon className="w-4 h-4 text-foreground" />
-              <span className="text-xs text-foreground">
-                {`$${roundedBalance}`}
-              </span>
-            </div>
-          )}
-        </div>
+
+        {isLiveRoute ? (
+          // Always show the Leave Game button on the /live route
+          <button
+            onClick={() => setIsLeaveGameDrawerOpen(true)}
+            className="flex items-center bg-white/10 rounded-full px-[12px] py-[6px] w-[130.9916px] h-[28px] hover:bg-white/20 transition-colors font-body"
+          >
+            <LeaveGameIcon className="w-[15px] h-[15px] mr-2" />
+            <span className="text-[16px] leading-[100%] text-center text-white">
+              leave game
+            </span>
+          </button>
+        ) : (
+          <div className="flex items-center  px-3 py-1.5 rounded-full bg-[#F9F9F91A] font-body">
+            <WalletIcon className="w-[12px] h-[10.8px] opacity-100 text-white mr-1" />
+
+            <span className="text-center font-normal not-italic text-[16px] leading-[100%] tracking-[0px] text-white">
+              {`$${Number(roundedBalance).toFixed(2)}`}
+            </span>
+          </div>
+        )}
       </header>
+
       <LeaveGameDrawer
         open={isLeaveGameDrawerOpen}
-        onClose={() => setIsLeaveGameDrawerOpen(false)}
-        onConfirmLeave={leaveGame}
+        setIsLeaveGameDrawerOpen={setIsLeaveGameDrawerOpen}
+        gameId={gameId!}
       />
     </>
   );

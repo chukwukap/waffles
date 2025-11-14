@@ -25,8 +25,8 @@ type Props = {
  * Purely presentational component.
  */
 export function AvatarDiamond({
-  cellMin = 32,
-  cellMax = 54,
+  cellMin = 31,
+  cellMax = 53,
   gap = 2,
   className = "",
 }: Props) {

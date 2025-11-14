@@ -73,9 +73,12 @@ export function GameActionButton({
     disabledClasses
   );
 
-  // Text span classes
+  // Text span classes - remove text-xs, add arcadeclassic font, 16px font, 114.999...% line-height, center, bottom align
   const textClasses = cn(
-    "px-0 flex items-center justify-center w-full min-w-0 select-none not-italic text-center text-xs leading-[115%] whitespace-nowrap",
+    "flex items-end justify-center w-full min-w-0 select-none not-italic text-center whitespace-nowrap font-body",
+    "font-normal", // 400 weight
+    "text-[16px]",
+    "leading-[115%]", // 115% line-height
     textColorClasses
   );
 
@@ -88,10 +91,15 @@ export function GameActionButton({
       }
     : {};
 
-  // Text inline styles
+  // Text inline styles to match: fontWeight 400, fontStyle normal, fontFamily ArcadeClassic, fontSize 16px, lineHeight ~115%, letterSpacing 0, center
   const textStyle = {
-    fontWeight: textColor === "dark" ? 700 : undefined,
-    letterSpacing: "-0.02em",
+    fontWeight: 400,
+    fontStyle: "normal",
+    fontSize: "16px",
+    lineHeight: "115%",
+    textAlign: "center" as const,
+    verticalAlign: "bottom" as const,
+    letterSpacing: "0",
   };
 
   // Use Link for all cases - when disabled or no href, use "#" and prevent navigation

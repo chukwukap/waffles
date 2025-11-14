@@ -1,18 +1,18 @@
 "use client";
 
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import Image from "next/image";
 
 export function GameSummaryCard({
-  avatarUrl,
-  username,
   theme,
   prizePool,
 }: {
-  avatarUrl: string;
-  username: string;
   theme: string;
   prizePool: number;
 }) {
+  const { context: miniKitContext } = useMiniKit();
+  const username = miniKitContext?.user?.username;
+  const avatarUrl = miniKitContext?.user?.pfpUrl;
   const formattedPrize = prizePool.toLocaleString("en-US", {
     style: "currency",
     currency: "USD",
@@ -31,13 +31,21 @@ export function GameSummaryCard({
       {/* ─────────── Top Row: User joined ─────────── */}
       <div className="absolute top-[16px] left-[14px] flex flex-row items-center gap-[10px] w-[295px] h-[54px]">
         <div className="w-[54px] h-[54px] rounded-full overflow-hidden bg-[#D9D9D9]">
-          <Image
-            src={avatarUrl}
-            alt="User avatar"
-            width={54}
-            height={54}
-            className="object-cover"
-          />
+          {avatarUrl ? (
+            <Image
+              src={avatarUrl}
+              alt="User avatar"
+              width={54}
+              height={54}
+              className="object-cover"
+            />
+          ) : (
+            <div className="w-[54px] h-[54px] rounded-full overflow-hidden bg-[#D9D9D9] flex items-center justify-center">
+              <span className="font-body text-white text-[23px] leading-[130%]">
+                {username?.[0]?.toUpperCase() ?? "•"}
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col justify-center items-start w-[159px] h-[48px]">

@@ -9,7 +9,11 @@ export type TicketPageUserInfo = Prisma.UserGetPayload<{
     fid: true;
     imageUrl: true;
     name: true;
-    _count: { select: { tickets: true } };
+    tickets: {
+      where: {
+        gameId: number;
+      };
+    };
   };
 }>;
 
@@ -21,7 +25,15 @@ export type TicketPageGameInfo = Prisma.GameGetPayload<{
     startTime: true;
     endTime: true;
     config: true;
-    _count: { select: { tickets: true } };
+    _count: {
+      select: {
+        tickets: {
+          where: {
+            gameId: number;
+          };
+        };
+      };
+    };
   };
 }>;
 
@@ -56,7 +68,15 @@ export default async function TicketPage({
           startTime: true,
           endTime: true,
           config: true,
-          _count: { select: { tickets: true } },
+          _count: {
+            select: {
+              tickets: {
+                where: {
+                  gameId: gameIdNum,
+                },
+              },
+            },
+          },
         },
       })
       .then((game) => {
@@ -77,7 +97,11 @@ export default async function TicketPage({
         fid: true,
         imageUrl: true,
         name: true,
-        _count: { select: { tickets: true } },
+        tickets: {
+          where: {
+            gameId: gameIdNum,
+          },
+        },
       },
     });
   };

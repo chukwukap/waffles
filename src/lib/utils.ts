@@ -16,26 +16,24 @@ export function calculatePrizePool({
 }) {
   return ticketsNum * ticketPrice + additionPrizePool;
 }
-/**
- * Check if a question number is a snapshot of the total number of questions for a round.
- * @param x - The current question number.
- * @param totalQuestions - The total number of questions.
- * @returns True if x is a snapshot of totalQuestions, false otherwise.
- */
-export function isSnapshot(x: number, totalQuestions: number): boolean {
-  const step = Math.floor(totalQuestions / 3);
-  return x === step || x === step * 2 || x === totalQuestions;
-}
 
 /**
- * Formats milliseconds into a MM:SS string (0-padded).
+ * Formats remaining seconds into "MM:SS" string.
+ * @param remainingSeconds Total remaining seconds.
+ * @returns A string formatted as "MM:SS"
  */
-export function formatMsToMMSS(ms: number): string {
-  if (!isFinite(ms) || ms < 0) ms = 0;
-  const totalSeconds = Math.ceil(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return (
-    String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0")
-  );
+export function formatTimeColon(remainingSeconds: number): string {
+  // Ensure we're working with a non-negative number
+  const seconds = Math.max(0, remainingSeconds);
+
+  // Calculate minutes and the remaining seconds
+  const minutes = Math.floor(seconds / 60);
+  const secondsPart = Math.floor(seconds % 60);
+
+  // Pad both parts to always be two digits
+  const paddedMinutes = String(minutes).padStart(2, "0");
+  const paddedSeconds = String(secondsPart).padStart(2, "0");
+
+  // Return the final formatted string
+  return `${paddedMinutes}:${paddedSeconds}`;
 }

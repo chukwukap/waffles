@@ -2,48 +2,24 @@
 
 import { use, useRef, useState, useEffect, useMemo } from "react";
 import { Clock } from "@/components/icons";
-import { calculatePrizePool, cn } from "@/lib/utils";
-import { BottomNav } from "@/components/BottomNav";
-
-/**
- * Formats remaining seconds into "MMm SSs" string.
- * @param remainingSeconds Total remaining seconds.
- * @returns A string formatted as "Xm YYS"
- */
-function formatTime(remainingSeconds: number): string {
-  // Ensure we're working with a non-negative number
-  const seconds = Math.max(0, remainingSeconds);
-
-  // Calculate minutes and the remaining seconds
-  const minutes = Math.floor(seconds / 60);
-  const secondsPart = Math.floor(seconds % 60);
-
-  // Pad the seconds part to always be two digits
-  const paddedSeconds = String(secondsPart).padStart(2, "0");
-
-  // Return the final formatted string
-  return `${minutes}M ${paddedSeconds}S`;
-}
+import { calculatePrizePool } from "@/lib/utils";
 
 import { useCountdown } from "@/hooks/useCountdown";
 import { AvatarDiamond } from "./_components/AvatarDiamond";
-import ChatTickerOverlay from "./_components/ChatTickerOverlay";
+import LiveEventFeed from "./_components/LiveEventFeed";
 import { Chat } from "./_components/Chat";
 import { GameActionButton } from "./_components/GameActionButton";
-import { Prisma } from "@prisma/client";
+import { Prisma, Ticket } from "@prisma/client";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
-// User ticket information type matching API response
-interface UserTicketInfo {
-  hasTicket: boolean;
-  ticketStatus: "pending" | "confirmed" | null;
-  ticketId: number | null;
+function formatTime(remainingSeconds: number): string {
+  const seconds = Math.max(0, remainingSeconds);
+  const minutes = Math.floor(seconds / 60);
+  const secondsPart = Math.floor(seconds % 60);
+  const paddedSeconds = String(secondsPart).padStart(2, "0");
+  return `${minutes}M ${paddedSeconds}S`;
 }
 
-/**
- * View displayed while waiting for the next gameInfo to start.
- * Shows a countdown, prize pool, player avatars, and chat.
- */
 export default function GameHomePageClient({
   upcomingOrActiveGamePromise,
 }: {
@@ -58,30 +34,21 @@ export default function GameHomePageClient({
   const fid = miniKitContext?.user?.fid;
   const upcomingOrActiveGame = use(upcomingOrActiveGamePromise);
   const [chatOpen, setChatOpen] = useState(false);
-  const [userTicketInfo, setUserTicketInfo] = useState<UserTicketInfo | null>(
-    null
-  );
+  const [ticket, setTicket] = useState<Ticket | null>(null);
 
-  // startTime and endTime are always Date (from Prisma)
   const startTimeMs = upcomingOrActiveGame?.startTime?.getTime() ?? 0;
   const endTimeMs = upcomingOrActiveGame?.endTime?.getTime() ?? 0;
 
-  // This prevents passing a new duration (from Date.now()) on every render,
-  // which was causing the infinite loop.
   const initialDurationSec = useMemo(() => {
     if (!startTimeMs) return 0;
-    // Calculate difference and ensure it's not negative
     const duration = (startTimeMs - Date.now()) / 1000;
     return Math.max(0, duration);
   }, [startTimeMs]);
 
-  // When timer hits zero, refresh once (transition to gameInfo)
   const hasFiredRef = useRef(false);
   const countdown = useCountdown(initialDurationSec, () => {
-    // <-- Use the stable duration here
     if (!hasFiredRef.current) {
       hasFiredRef.current = true;
-      // router.refresh();
     }
   });
   const formattedTime = formatTime(countdown.remaining);
@@ -96,20 +63,15 @@ export default function GameHomePageClient({
   })}`;
   const playerCount = upcomingOrActiveGame?._count.participants ?? 0;
 
-  // Fetch user ticket information when fid and gameId are available
   useEffect(() => {
     if (!fid || !upcomingOrActiveGame?.id) {
-      setUserTicketInfo(null);
+      setTicket(null);
       return;
     }
 
     const fetchTicketInfo = async () => {
       try {
         const gameId = upcomingOrActiveGame.id;
-        console.log(
-          `[Ticket Check] Checking ticket for fid=${fid}, gameId=${gameId}`
-        );
-
         const response = await fetch(
           `/api/user/ticket?fid=${fid}&gameId=${gameId}`
         );
@@ -118,78 +80,54 @@ export default function GameHomePageClient({
           throw new Error("Failed to fetch ticket information");
         }
 
-        const data: UserTicketInfo = await response.json();
-        console.log(`[Ticket Check] Result for gameId=${gameId}:`, data);
-        setUserTicketInfo(data);
+        const data: Ticket = await response.json();
+        setTicket(data);
       } catch (error) {
         console.error("Error fetching ticket information:", error);
-        // Set default "no ticket" state on error
-        setUserTicketInfo({
-          hasTicket: false,
-          ticketStatus: null,
-          ticketId: null,
-        });
+        setTicket(null);
       }
     };
 
     fetchTicketInfo();
   }, [fid, upcomingOrActiveGame?.id]);
 
-  // Determine if game has started or ended
   const now = Date.now();
   const gameExists = upcomingOrActiveGame !== null;
   const hasStarted = gameExists && now >= startTimeMs && now < endTimeMs;
   const hasEnded = gameExists && now >= endTimeMs;
 
-  // Check if user has a confirmed ticket for this game
-  const gottenTicket =
-    userTicketInfo?.hasTicket === true &&
-    userTicketInfo?.ticketStatus === "confirmed";
-
-  // We'll use the same neon pink as .text-(--color-neon-pink)
   const neonPinkColor = "var(--color-neon-pink)";
 
-  // Helper function to get the status text based on game state
   const getStatusText = () => {
-    if (!gameExists) {
-      return "No upcoming games. Please check back soon!";
-    }
-    if (hasEnded) {
-      return "Game has ended";
-    }
-    if (hasStarted) {
-      return "Game is LIVE";
-    }
+    if (!gameExists) return "No upcoming games. Please check back soon!";
+    if (hasEnded) return "Game has ended";
+    if (hasStarted) return "Game is LIVE";
     return "GAME STARTS IN";
   };
 
-  // Helper function to render the action button based on game state
   const renderActionButton = () => {
-    if (!gameExists) {
-      return <GameActionButton disabled>NONE</GameActionButton>;
-    }
-
-    if (hasEnded) {
-      return <GameActionButton disabled>ENDED</GameActionButton>;
-    }
-
+    if (!gameExists) return null;
+    if (hasEnded) return <GameActionButton disabled>ENDED</GameActionButton>;
     if (hasStarted) {
-      if (gottenTicket) {
+      if (ticket) {
         return (
           <GameActionButton
             href={`/game/${upcomingOrActiveGame.id}/live?gameId=${upcomingOrActiveGame.id}&fid=${fid}`}
             backgroundColor={neonPinkColor}
+            variant="wide"
             textColor="dark"
           >
             START
           </GameActionButton>
         );
       }
-
-      // User doesn't have a ticket - show link to purchase page
       return (
         <GameActionButton
-          href={fid ? `/game/${upcomingOrActiveGame.id}/ticket?fid=${fid}` : `/game/${upcomingOrActiveGame.id}/ticket`}
+          href={
+            fid
+              ? `/game/${upcomingOrActiveGame.id}/ticket?fid=${fid}`
+              : `/game/${upcomingOrActiveGame.id}/ticket`
+          }
           variant="wide"
           backgroundColor={neonPinkColor}
           textColor="dark"
@@ -198,99 +136,62 @@ export default function GameHomePageClient({
         </GameActionButton>
       );
     }
-
-    // Game hasn't started yet - show countdown
     return <GameActionButton>{formattedTime}</GameActionButton>;
   };
 
   return (
-    <div
-      className={cn(
-        "w-full min-h-[92dvh] flex flex-col flex-1 text-foreground overflow-hidden items-center relative max-w-screen-sm mx-auto px-4"
-      )}
-    >
-      <section className="flex-1 flex flex-col items-center gap-3 w-full pt-6 pb-4 overflow-visible">
-        {/* Header */}
-        <div className="flex w-full h-10 min-h-[38px] items-center justify-center gap-0.5 p-2 sm:p-3">
-          <div className="order-0 flex h-7 sm:h-[28px] min-w-0 flex-1 flex-col justify-center gap-3.5 font-body">
-            <div className="order-0 flex h-7 sm:h-[28px] min-w-0 w-full flex-row items-center gap-2">
-              <span
-                className="h-7 w-7 flex-none sm:h-[28px] sm:w-[28px]"
-                aria-label="Countdown"
-              >
-                <Clock />
-              </span>
-              <span
-                className="truncate pl-1 select-none text-white font-normal leading-[0.92] tracking-tight"
-                style={{
-                  fontSize: "clamp(1rem,4vw,1.6rem)",
-                  letterSpacing: "-0.03em",
-                }}
-              >
-                {getStatusText()}
-              </span>
-            </div>
-          </div>
-          {/* Action Button */}
-          {renderActionButton()}
-        </div>
-        {/* Prize Pool Display */}
-        <div className="flex w-full min-h-24 flex-col items-center justify-end gap-1 pb-2.5">
-          <p className="w-auto min-w-[60px] sm:min-w-[80px] select-none text-center font-display font-medium leading-[1.3] tracking-tight text-muted text-[0.95rem] sm:text-base md:text-lg">
-            Current prize pool
-          </p>
-          <div className="flex min-h-10 sm:min-h-[2.7rem] w-full items-center justify-center px-2 sm:px-4">
-            <span className="block min-w-[70px] sm:min-w-[90px] select-none text-center font-body font-normal leading-[0.92] tracking-tight text-success text-[clamp(2rem,6vw,3rem)]">
-              {formattedPrizePool}
+    <>
+      <section className="flex-1 overflow-y-auto  space-y-1 px-3">
+        <div className="flex w-full h-10 min-h-[38px] items-center justify-center gap-0.5 p-2 sm:p-3 my-8">
+          <div className="flex h-7 sm:h-[28px] min-w-0 flex-1 items-center gap-2 font-body">
+            <Clock
+              className="flex-none h-[28px] w-[28px]"
+              aria-label="Countdown"
+            />
+
+            <span className="truncate pl-1 select-none text-white font-normal leading-[0.92] tracking-[-0.03em] text-[26px] font-body">
+              {getStatusText()}
             </span>
           </div>
+          {renderActionButton()}
         </div>
-        <div className="w-full flex justify-center">
+        <div className="flex flex-col items-center justify-center mb-2">
+          <p className="font-display font-medium text-[16px] leading-[130%] tracking-[-0.03em] text-center text-(--text-soft-400,#99A0AE)">
+            Current prize pool
+          </p>
+          <span className="block text-[64px] text-center font-normal not-italic leading-[0.92] tracking-[-0.03em] text-[#14B985] font-body">
+            {formattedPrizePool}
+          </span>
+        </div>
+        <div className="w-full flex flex-col items-center justify-center mb-4">
           <AvatarDiamond
             cellMin={32}
             cellMax={54}
             gap={2}
             className="scale-95 sm:scale-100"
           />
+          <p className="mt-1 min-w-[120px] text-center font-display font-medium tracking-[-0.03em] text-muted text-[clamp(13px,4vw,16px)] leading-[130%]">
+            {playerCount === 0
+              ? "No players have joined yet"
+              : `${playerCount.toLocaleString()} ${
+                  playerCount === 1 ? "player has" : "players have"
+                } joined`}
+          </p>
         </div>
-        <p className="mt-1 min-w-[120px] text-center font-display font-medium tracking-[-0.03em] text-muted text-[clamp(13px,4vw,16px)] leading-[130%]">
-          {playerCount} {playerCount === 1 ? "player has" : "players have"}{" "}
-          joined
-        </p>
+        <LiveEventFeed maxEvents={5} />
+        <Chat isOpen={chatOpen} onClose={() => setChatOpen(false)} />
       </section>
-      <ChatTickerOverlay bottomOffset={150} />
-      <ChatInput onOpenChat={() => setChatOpen(true)} bottomOffset={60} />
-      <BottomNav />
-      <Chat isOpen={chatOpen} onClose={() => setChatOpen(false)} />
-    </div>
+      <ChatInput onOpenChat={() => setChatOpen(true)} />
+    </>
   );
 }
 
-// --- Chat Input Component ---
-const ChatInput = ({
-  onOpenChat,
-  bottomOffset,
-}: {
-  onOpenChat: () => void;
-  bottomOffset: number;
-}) => {
+const ChatInput = ({ onOpenChat }: { onOpenChat: () => void }) => {
   return (
-    <div
-      className="absolute left-0 right-0 h-[78px] w-full px-4 pt-3 pb-5"
-      style={{ bottom: `${bottomOffset}px` }}
-    >
+    <div className="w-full h-[78px] pt-[12px] pr-[16px] pb-[12px] pl-[16px] flex flex-col  bg-[#0E0E0E]">
       <button
         onClick={onOpenChat}
-        className="flex h-full w-full items-center rounded-full bg-white/5 px-4 py-[14px] text-white/40 transition-all duration-200 ease-in-out
-                   hover:bg-white/10
-                   active:bg-white/15
-                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-        style={{
-          fontSize: "14px",
-          fontWeight: 500,
-          letterSpacing: "-0.03em",
-          lineHeight: "130%",
-        }}
+        className="flex items-center justify-start w-[361px] h-[46px] pt-[14px] pr-4 pb-[14px] pl-4 rounded-[900px] bg-white/5 text-white/80 font-display font-medium text-[14px] leading-[130%] tracking-[-0.03em]"
       >
         Type...
       </button>

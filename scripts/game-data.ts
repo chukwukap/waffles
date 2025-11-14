@@ -20,7 +20,7 @@ const rawGameQuestions = [
     roundNum: 1,
     data: [
       {
-        text: "Which classic film is this scene from? (All are Marlon Brando classics)",
+        text: "Guess the movie",
         imageUrl: "/images/scenes/godfather.jpg",
         soundUrl: "/sounds/scenes/godfather.mp3",
         correctAnswer: "The Godfather (1972)",
@@ -32,7 +32,7 @@ const rawGameQuestions = [
         ],
       },
       {
-        text: "Which film is this desert sci-fi scene from?",
+        text: "Guess the movie",
         imageUrl: "/images/scenes/dune.jpg",
         soundUrl: "/sounds/scenes/dune.mp3",
         correctAnswer: "Dune (2021/2024)",
@@ -44,7 +44,7 @@ const rawGameQuestions = [
         ],
       },
       {
-        text: "Which film features this famous villain?",
+        text: "Guess the movie",
         imageUrl: "/images/scenes/dark-knight.jpg",
         soundUrl: "/sounds/scenes/dark-knight.mp3",
         correctAnswer: "The Dark Knight (2008)",
@@ -62,7 +62,7 @@ const rawGameQuestions = [
     roundNum: 2,
     data: [
       {
-        text: "Which film about financial excess is this scene from?",
+        text: "Guess the movie",
         imageUrl: "/images/scenes/wolf-of-wall-street.jpg",
         soundUrl: "/sounds/scenes/wolf-of-wall-street.mp3",
         correctAnswer: "The Wolf of Wall Street (2013)",
@@ -74,7 +74,7 @@ const rawGameQuestions = [
         ],
       },
       {
-        text: "Which movie about a visionary tech founder is this from?",
+        text: "Guess the movie",
         imageUrl: "/images/scenes/social-network.jpg",
         soundUrl: "/sounds/scenes/social-network.mp3",
         correctAnswer: "The Social Network (2010)",
@@ -86,7 +86,7 @@ const rawGameQuestions = [
         ],
       },
       {
-        text: "Which mind-bending sci-fi film is this iconic scene from?",
+        text: "Guess the movie",
         imageUrl: "/images/scenes/matrix.jpg",
         soundUrl: "/sounds/scenes/matrix.mp3",
         correctAnswer: "The Matrix (1999)",
@@ -104,7 +104,7 @@ const rawGameQuestions = [
     roundNum: 3,
     data: [
       {
-        text: "Which prestige TV show features this scene of a man breaking bad?",
+        text: "Guess the movie",
         imageUrl: "/images/scenes/breaking-bad.jpg",
         soundUrl: "/sounds/scenes/breaking-bad.mp3",
         correctAnswer: "Breaking Bad (2008-2013)",
@@ -116,7 +116,7 @@ const rawGameQuestions = [
         ],
       },
       {
-        text: "Which epic fantasy show features this battle for the throne?",
+        text: "Guess the movie",
         imageUrl: "/images/scenes/got.jpg",
         soundUrl: "/sounds/scenes/got.mp3",
         correctAnswer: "Game of Thrones (2011-2019)",
@@ -128,7 +128,7 @@ const rawGameQuestions = [
         ],
       },
       {
-        text: "Which TV show is a direct inspiration or sibling to Stranger Things?",
+        text: "Guess the movie",
         imageUrl: "/images/scenes/stranger-things.jpg",
         soundUrl: "/sounds/scenes/stranger-things.mp3",
         correctAnswer: "Stranger Things (2016-Present)",

@@ -1,3 +1,4 @@
+import { BottomNav } from "@/components/BottomNav";
 import GameHomePageClient from "./client";
 import { prisma } from "@/lib/db";
 
@@ -5,9 +6,12 @@ export default async function GameHomePage() {
   const upcomingOrActiveGamePromise = getUpComingOrActiveGame();
 
   return (
-    <GameHomePageClient
-      upcomingOrActiveGamePromise={upcomingOrActiveGamePromise}
-    />
+    <>
+      <GameHomePageClient
+        upcomingOrActiveGamePromise={upcomingOrActiveGamePromise}
+      />
+      <BottomNav />
+    </>
   );
 }
 

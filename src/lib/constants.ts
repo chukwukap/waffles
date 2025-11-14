@@ -4,3 +4,5 @@ export const PALETTES = [
   { bg: "#D7EBFF", border: "#2E7DFF", text: "#151515" },
   { bg: "#D8FFF1", border: "#18DCA5", text: "#151515" },
 ] as const;
+
+export const EXTRA_TIME_SECONDS = 3; // 3 seconds

@@ -1,143 +1,145 @@
 "use client";
+
 import * as React from "react";
-import { cn, formatMsToMMSS } from "@/lib/utils";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 import { PALETTES } from "@/lib/constants";
-import { PixelButton } from "@/components/buttons/PixelButton";
-import { SoundOnIcon, SoundOffIcon } from "@/components/icons";
+
 import { useCountdown } from "@/hooks/useCountdown";
 import { Question } from "@prisma/client";
 import { useSound } from "@/hooks/useSound";
-import { Phase } from "../client";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
+import { useAuth } from "@/hooks/useAuth";
+import { submitAnswerAction } from "@/actions/game";
+import { QuestionCardHeader } from "./QuestionCardHeader";
+import { QuestionOption } from "./QuestionOption";
 
-/**
- * Presentational card for displaying a question, image, options, and timer.
- */
 export function QuestionCard({
   question,
-  phase,
-  pending,
-  totalQuestions,
   questionNumber,
+  totalQuestions,
   duration,
   onComplete,
-  selectedAnswerIndex,
-  onAnswerSelect,
 }: {
   question: Question;
-  phase: Phase;
-  pending: boolean;
-  totalQuestions: number;
   questionNumber: number;
+  totalQuestions: number;
   duration: number;
   onComplete: () => void;
-  selectedAnswerIndex?: number | null;
-  onAnswerSelect?: (index: number | null) => void;
 }) {
-  const { playUrl, play, stopAll, stopUrl, stop } = useSound();
-  // Use controlled prop if provided, otherwise use internal state
-  const [internalChosenIdx, setInternalChosenIdx] = React.useState<
+  const { context } = useMiniKit();
+  const { getToken, signIn } = useAuth();
+  const [selectedOptionIndex, setSelectedOptionIndex] = React.useState<
     number | null
   >(null);
-  const chosenIdx =
-    selectedAnswerIndex !== undefined ? selectedAnswerIndex : internalChosenIdx;
 
-  const handleAnswerSelect = (index: number) => {
-    if (onAnswerSelect) {
-      onAnswerSelect(index);
-    } else {
-      setInternalChosenIdx(index);
+  const { playUrl, play, stopAll, stopUrl, stop, soundEnabled } = useSound();
+  const [, submitAnswerAct, pending] = React.useActionState(
+    submitAnswerAction,
+    {
+      error: "",
+      success: false,
     }
-  };
+  );
 
-  const t = useCountdown(duration, onComplete);
-  // Play question sound when question changes
+  const { remaining, start, reset } = useCountdown(
+    duration,
+    async () => {
+      if (!context) {
+        console.error("context is not available");
+        return;
+      }
+
+      let authToken = getToken();
+
+      if (!authToken) {
+        authToken = await signIn();
+
+        if (!authToken) {
+          console.error("Authentication required to submit answer");
+
+          return;
+        }
+      }
+
+      // submit answer to the server
+      const formData = new FormData();
+
+      formData.append("fid", String(context.user?.fid));
+
+      formData.append("gameId", String(question.gameId));
+
+      formData.append("questionId", String(question.id));
+
+      formData.append("timeTaken", String(remaining));
+
+      formData.append("authToken", authToken);
+
+      const selected =
+        selectedOptionIndex !== null
+          ? question?.options[selectedOptionIndex]
+          : null;
+
+      if (selected !== null) {
+        formData.append("selected", selected ?? "");
+      }
+      // Submit the answer
+      React.startTransition(() => {
+        submitAnswerAct(formData);
+      });
+      setSelectedOptionIndex(null);
+      return;
+      onComplete();
+    },
+    false
+  );
+
+  // start the countdown when the component mounts
+  React.useEffect(() => {
+    reset();
+    start();
+  }, [reset, start, question.id]);
+
+  // ───────────────────────── PLAY SOUND ON QUESTION CHANGE ─────────────────────────
   React.useEffect(() => {
     if (!question) return;
 
-    // Track what we're playing to clean up properly
+    // stop any currently playing sounds before new one
+    stopAll();
+
     const soundUrl = question.soundUrl;
     const hasSoundUrl = !!soundUrl;
 
-    // Stop all sounds first to prevent overlap
-    stopAll();
-
-    // Small delay to ensure previous sounds are stopped
-    const timeoutId = setTimeout(() => {
+    // play new question sound immediately (no delay)
+    if (soundEnabled) {
       if (hasSoundUrl) {
         playUrl(soundUrl, { loop: true, volume: 1 });
       } else {
         play("questionStart", { volume: 0.5 });
       }
-    }, 50);
+    }
 
     return () => {
-      clearTimeout(timeoutId);
-      // Stop only the specific sound we played
       if (hasSoundUrl && soundUrl) {
         stopUrl(soundUrl);
       } else {
         stop("questionStart");
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [question?.id, question?.soundUrl, playUrl, play, stopAll, stopUrl, stop]);
+  }, [play, playUrl, question, soundEnabled, stop, stopAll, stopUrl]);
 
+  // ───────────────────────── UI ─────────────────────────
   return (
-    <div className="w-full max-w-md sm:max-w-lg mx-auto mt-4">
-      {/* Question Header */}
-      <div className="w-full flex items-center justify-between px-3 py-1 ">
-        {/* Question Counter */}
-        <span className="font-editundo text-white text-[18px] leading-none tracking-tight">
-          {String(questionNumber).padStart(2, "0")}/
-          {String(totalQuestions).padStart(2, "0")}
-        </span>
+    <div className="w-full max-w-md sm:max-w-lg mx-auto mt-2">
+      <QuestionCardHeader
+        questionNumber={questionNumber}
+        totalQuestions={totalQuestions}
+        remaining={remaining}
+      />
 
-        {/* Sound Toggle Button */}
-        <button
-          onClick={() => {}}
-          className=" bg-white/15 rounded-full p-2 backdrop-blur-sm active:scale-95 transition-transform mr-auto ml-3"
-          aria-label={false ? "Mute sound" : "Unmute sound"}
-          type="button"
-        >
-          {false ? (
-            <SoundOnIcon className="w-4 h-4 text-white" />
-          ) : (
-            <SoundOffIcon className="w-4 h-4 text-white" />
-          )}
-        </button>
-
-        {/* --- FIXED TIMER LOGIC --- */}
-        {/* Show question timer (white) */}
-        {phase === "question" && (
-          <div className="flex items-center gap-2">
-            <span className="font-pixel text-white text-lg">
-              {formatMsToMMSS(t * 1000)}
-            </span>
-          </div>
-        )}
-
-        {/* Show gap timer (red with clock) */}
-        {phase === "extra" && (
-          <div className="flex items-center gap-1">
-            <Image
-              src="/images/icons/clock.svg"
-              width={30}
-              height={30}
-              priority={true}
-              alt="clock"
-              className="w-[30px] h-[30px]" // Use fixed size for stability
-            />
-            <span className="font-pixel text-[#B93814] text-2xl">
-              {formatMsToMMSS(t * 1000)}
-            </span>
-          </div>
-        )}
-      </div>
-      {/* Question Card */}
-
+      {/* Question Card Content */}
       <section
-        className="mx-auto w-full max-w-screen-sm px-4 pb-8 pt-8 animate-up"
+        className="mx-auto w-full max-w-screen-sm px-4  animate-up"
         aria-live="polite"
       >
         {/* Game Title */}
@@ -162,90 +164,50 @@ export function QuestionCard({
           grow-0
         "
         >
-          Guess the Movie
+          {question.text}
         </div>
 
         {/* Image Section */}
-        <figure
-          className="mx-auto mb-8 w-full flex justify-center"
-          style={{ borderRadius: 10 }}
-        >
-          <div
-            className="relative w-full overflow-hidden"
-            style={{
-              aspectRatio: "299/158",
-              borderRadius: 10,
-              maxWidth: 380,
-              minWidth: 200,
-              background: "#17171a",
-              border: "1px solid #313136",
-              boxShadow: "0 8px 0 #000",
-            }}
-          >
-            {question.imageUrl ? (
-              <Image
-                src={question.imageUrl}
-                alt={question.text}
-                fill
-                className="object-cover w-full h-full"
-                style={{ borderRadius: 10 }}
-                priority
-                sizes="(max-width: 600px) 95vw, 380px"
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-muted">
-                No image available
-              </div>
-            )}
+        <figure className="mx-auto mb-4 flex justify-center">
+          <div className="relative w-[299px] h-[158px] rounded-[10px] overflow-hidden bg-[#17171a] border border-[#313136] shadow-[0_8px_0_#000]">
+            <Image
+              src={question.imageUrl}
+              alt={question.text}
+              fill
+              className="object-cover w-full h-full rounded-[10px]"
+              sizes="299px"
+            />
           </div>
         </figure>
 
         {/* Options */}
-        <ul className={cn("mx-auto flex w-full flex-col gap-4")}>
+        <ul className={cn("mx-auto mb-2 flex w-full flex-col gap-2")}>
           {question.options.map((opt, idx) => {
             const palette = PALETTES[idx % PALETTES.length];
-            const isChosen = chosenIdx === idx;
 
             return (
-              <li
+              <QuestionOption
                 key={idx}
-                className={cn(
-                  "min-w-0 flex justify-center transition-all duration-200 ease-out",
-                  isChosen && "scale-105 z-10", // Scale up if chosen
-                  !isChosen && "scale-90 opacity-50" // Scale down and dim if not chosen
-                )}
-              >
-                <PixelButton
-                  aria-pressed={isChosen}
-                  tabIndex={-1}
-                  backgroundColor={palette.bg}
-                  textColor={palette.text}
-                  borderColor={palette.border}
-                  onClick={() => {
-                    handleAnswerSelect(idx);
-                  }}
-                  // Disable all buttons while a submission is in progress
-                  disabled={pending}
-                >
-                  <span className="block w-full mx-auto truncate select-none">
-                    {opt}
-                  </span>
-                </PixelButton>
-              </li>
+                option={opt}
+                index={idx}
+                palette={palette}
+                selectedOptionIndex={selectedOptionIndex}
+                onSelect={setSelectedOptionIndex}
+                disabled={pending}
+              />
             );
           })}
         </ul>
 
         {/* Submitted Footer */}
-        {chosenIdx !== null && (
+        {selectedOptionIndex !== null && (
           <div
             className={cn(
-              "mx-auto mt-10 text-center text-sm text-white/80 font-semibold transition-opacity md:text-base",
+              "mx-auto text-center font-display font-medium text-[16px] leading-[130%] tracking-[-0.03em] text-[#99A0AE] transition-opacity",
               "opacity-100"
             )}
             aria-live="polite"
           >
-            {/* Show "Submitting..." text when the action is pending */}
             {pending
               ? "Submitting..."
               : "Answer selected! Waiting for time to run out..."}

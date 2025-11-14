@@ -14,14 +14,11 @@ const purchaseSchema = z.object({
   authToken: z.string().optional().nullable(), // Authentication token
 });
 
-export type PurchaseResult =
-  | { success: true; ticket: Ticket; alreadyExists?: boolean }
-  | {
-      success: false;
-      error: string;
-      alreadyExists?: boolean;
-      existingTicket?: Ticket;
-    };
+export type PurchaseResult = {
+  status: "success" | "error";
+  error?: string;
+  ticket?: Ticket;
+};
 
 /**
  * Server Action to create or confirm a ticket purchase for a user and game.
@@ -41,7 +38,7 @@ export async function purchaseTicketAction(
 
   if (!validation.success) {
     const firstError = validation.error.issues[0]?.message || "Invalid input.";
-    return { success: false, error: firstError };
+    return { status: "error", error: firstError };
   }
 
   const { fid, gameId, txHash, authToken } = validation.data;
@@ -50,7 +47,7 @@ export async function purchaseTicketAction(
   const authResult = await verifyAuthenticatedUser(authToken ?? null, fid);
   if (!authResult.authenticated) {
     return {
-      success: false,
+      status: "error",
       error: authResult.error || "Authentication required for purchases",
     };
   }
@@ -61,7 +58,10 @@ export async function purchaseTicketAction(
       where: { fid: fid },
     });
     if (!user) {
-      return { success: false, error: "User not found. Please sync profile." };
+      return {
+        status: "error",
+        error: "User not found. Please go through onboarding first.",
+      };
     }
     const userId = user.id;
 
@@ -71,10 +71,10 @@ export async function purchaseTicketAction(
       include: { config: true },
     });
     if (!game) {
-      return { success: false, error: "Game not found." };
+      return { status: "error", error: "Game not found." };
     }
     if (!game.config) {
-      return { success: false, error: "Game configuration is missing." };
+      return { status: "error", error: "Game configuration is missing." };
     }
 
     // 3. Check for Existing Ticket (Idempotency)
@@ -91,9 +91,9 @@ export async function purchaseTicketAction(
           where: { id: existingTicket.id },
           data: { txHash: txHash, status: "confirmed" }, // Update status too
         });
-        return { success: true, ticket: updatedTicket };
+        return { status: "success", ticket: updatedTicket };
       }
-      return { success: true, ticket: existingTicket, alreadyExists: true };
+      return { status: "success", ticket: existingTicket };
     }
 
     // 4. Generate Unique Code
@@ -105,7 +105,7 @@ export async function purchaseTicketAction(
       }
       if (attempt === 9) {
         return {
-          success: false,
+          status: "error",
           error: "Could not generate unique ticket code.",
         };
       }
@@ -129,7 +129,7 @@ export async function purchaseTicketAction(
 
     // 7. Revalidate relevant data caches
 
-    return { success: true, ticket: newTicket };
+    return { status: "success", ticket: newTicket };
   } catch (e) {
     console.error("Purchase Ticket Action Error:", e);
     // Handle potential Prisma unique constraint violation if race condition occurs
@@ -147,14 +147,13 @@ export async function purchaseTicketAction(
         const existing = await prisma.ticket.findUnique({
           where: { gameId_userId: { gameId, userId: user.id } },
         });
-        if (existing)
-          return { success: true, ticket: existing, alreadyExists: true };
+        if (existing) return { status: "success", ticket: existing };
       }
       return {
-        success: false,
+        status: "error",
         error: "Ticket already exists (race condition).",
       };
     }
-    return { success: false, error: "Internal Server Error during purchase." };
+    return { status: "error", error: "Internal Server Error during purchase." };
   }
 }
