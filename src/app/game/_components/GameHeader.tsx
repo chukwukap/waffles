@@ -37,25 +37,44 @@ export function GameHeader() {
           "sticky top-0 left-0 shrink-0 z-40 flex items-center justify-between w-[393px] h-[52px] bg-[#191919] border-b border-b-[#FFFFFF12] pt-[12px] px-4 pb-[12px]"
         )}
       >
-        <div className="relative w-[122.56px] h-[23.29px]">
+        <div className="flex items-center gap-2">
           {isLiveRoute ? (
-            <Image
-              src="/logo-live.png"
-              alt="Live game logo"
-              fill
-              sizes="122.56px"
-              priority
-              className="object-contain"
-            />
+            <>
+              <div className="relative w-[122.56px] h-[23.29px]">
+                <Image
+                  src="/logo.png"
+                  alt="Live game logo"
+                  fill
+                  sizes="122.56px"
+                  priority
+                  className="object-contain"
+                />
+              </div>
+              {/* red glowing point */}
+              <span className="flex items-center gap-1.5">
+                <span
+                  className="w-2 h-2 rounded-full bg-[#FC1919] animate-pulse"
+                  style={{
+                    boxShadow:
+                      "0 0 6px rgba(252, 25, 25, 0.8), 0 0 12px rgba(252, 25, 25, 0.4)",
+                  }}
+                />
+                <span className="text-[#FC1919] text-[18px] not-italic font-normal leading-[92%] tracking-[-0.03em]">
+                  Live
+                </span>
+              </span>
+            </>
           ) : (
-            <Image
-              src="/logo-onboarding.png"
-              alt="Waffles logo icon"
-              fill
-              sizes="122.56px"
-              priority
-              className="object-contain"
-            />
+            <div className="relative w-[122.56px] h-[23.29px]">
+              <Image
+                src="/logo-onboarding.png"
+                alt="Waffles logo icon"
+                fill
+                sizes="122.56px"
+                priority
+                className="object-contain"
+              />
+            </div>
           )}
         </div>
 

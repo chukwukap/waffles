@@ -64,7 +64,7 @@ export function QuestionCardHeader({
       ) : (
         <div className="flex items-center gap-1">
           <Image
-            src="/images/icons/clock.svg"
+            src="/images/icons/clock.png"
             width={30}
             height={30}
             priority={true}

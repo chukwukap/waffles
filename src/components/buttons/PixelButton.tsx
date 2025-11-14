@@ -49,7 +49,7 @@ const PixelButton = React.forwardRef<HTMLButtonElement, PixelButtonProps>(
         <button
           style={buttonStyle}
           className={cn(
-            "pixel-corners flex h-full w-full items-center justify-center px-6 py-3 font-display text-[14px] uppercase tracking-wider",
+            "pixel-corners flex h-full w-full items-center justify-center px-6 py-3 font-display text-[14px]  tracking-wider",
             "disabled:cursor-not-allowed disabled:opacity-60",
             className
           )}
