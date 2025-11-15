@@ -6,7 +6,6 @@ import Leaderboard from "./_components/Leaderboard";
 import Image from "next/image";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { FlashIcon } from "@/components/icons";
-import { useRouter } from "next/navigation";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { ScorePagePayload } from "./page";
 import Link from "next/link";
@@ -37,14 +36,13 @@ export default function ScorePageClient({
       <Image
         src="/images/illustrations/waffles.svg"
         alt="waffle"
-        width={200}
-        height={200}
-        className="mb-4"
+        width={228}
+        height={132}
       />
 
-      <h1 className="font-pixel text-[44px] leading-none">GAME OVER</h1>
-      <p className="text-[#99A0AE] text-[16px] font-sans mt-1 uppercase">
-        {category} & Anime
+      <h1 className="font-body text-[44px] leading-none">GAME OVER</h1>
+      <p className="text-[#99A0AE] text-[16px] font-display mt-1 capitalize">
+        {category.toLowerCase()}
       </p>
 
       <WinningsCard

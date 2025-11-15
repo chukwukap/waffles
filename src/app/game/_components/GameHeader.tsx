@@ -39,18 +39,18 @@ export function GameHeader() {
       >
         {isLiveRoute ? (
           <div className="flex items-center gap-2">
-            <div className="relative w-[122.56px] h-[23.29px]">
+            <div className="relative w-[29.96px] h-[23.24px]">
               <Image
                 src="/logo.png"
                 alt="Live game logo"
                 fill
-                sizes="122.56px"
+                sizes="29.96px"
                 priority
                 className="object-contain"
               />
             </div>
             {/* red glowing point */}
-            <span className="flex items-center gap-1.5">
+            <span className="flex items-center gap-1.5 mr-auto">
               <span
                 className="w-2 h-2 rounded-full bg-[#FC1919] animate-pulse"
                 style={{

@@ -88,7 +88,6 @@ export function QuestionCard({
         submitAnswerAct(formData);
       });
       setSelectedOptionIndex(null);
-      return;
       onComplete();
     },
     false

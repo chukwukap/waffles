@@ -116,9 +116,5 @@ export default async function ScorePage({
 
   const scorePayloadPromise = getScorePagePayload(Number(gameId), Number(fid));
 
-  return (
-    <div className="flex flex-col text-white overflow-hidden">
-      <ScorePageClient scorePayloadPromise={scorePayloadPromise} />
-    </div>
-  );
+  return <ScorePageClient scorePayloadPromise={scorePayloadPromise} />;
 }

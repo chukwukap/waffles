@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { FlashIcon, TrendIcon } from "@/components/icons";
+import { ReactNode } from "react";
 
 interface Props {
   winnings: number;
@@ -9,11 +10,42 @@ interface Props {
   avatarUrl: string;
 }
 
+interface StatCardProps {
+  label: string;
+  value: number | string;
+  icon: ReactNode;
+  iconColor: string;
+}
+
 function getTrophy(rank: number) {
   if (rank === 1) return "/images/trophies/gold.svg";
   if (rank === 2) return "/images/trophies/silver.svg";
   if (rank === 3) return "/images/trophies/bronze.svg";
   return "/images/trophies/participant.svg";
+}
+
+function StatCard({ label, value, icon, iconColor }: StatCardProps) {
+  const displayValue =
+    typeof value === "number" ? value.toLocaleString() : value;
+
+  return (
+    <div
+      className="
+        flex flex-col gap-1
+        bg-white/5 border border-white/10
+        rounded-2xl p-3 sm:p-4
+      "
+    >
+      <span className="text-[#99A0AE] text-sm font-display">{label}</span>
+
+      <div className="flex items-center gap-2">
+        <span className={iconColor}>{icon}</span>
+        <span className="font-body text-[clamp(1rem,2vw,1.25rem)] text-white leading-none">
+          {displayValue}
+        </span>
+      </div>
+    </div>
+  );
 }
 
 export default function WinningsCard({
@@ -27,33 +59,42 @@ export default function WinningsCard({
 
   return (
     <div
-      className="
-        w-full max-w-sm
+      className={`
+        w-[361px] h-[202px]
         rounded-3xl
         p-4 sm:p-5
         bg-linear-to-b from-transparent to-[#1BF5B0]/12
         border border-white/5
         flex flex-col gap-4
         my-5
-      "
+        font-display
+        font-medium 
+        text-[16px]
+        leading-[130%]
+        tracking-[-0.03em]
+        text-center
+      `}
+      style={{
+        fontWeight: 500,
+        fontStyle: "normal",
+        letterSpacing: "-0.03em",
+      }}
     >
       {/* Top Row */}
       <div className="flex items-center justify-between w-full">
-        <p className="text-[#99A0AE] font-display text-base sm:text-[15px]">
-          Winnings
-        </p>
+        <p className="text-[#99A0AE] font-display text-[14px]">Winnings</p>
 
         <div className="flex items-center gap-2">
           {avatarUrl && (
             <Image
               src={avatarUrl}
               alt={username}
-              width={22}
-              height={22}
-              className="rounded-full w-5 h-5 sm:w-6 sm:h-6"
+              width={20}
+              height={20}
+              className="rounded-full"
             />
           )}
-          <span className="font-body text-base sm:text-lg text-white leading-none">
+          <span className="font-body text-[18px] text-white leading-none">
             {username}
           </span>
         </div>
@@ -64,7 +105,7 @@ export default function WinningsCard({
         <p
           className="
             font-body
-            text-[clamp(2.2rem,6vw,3rem)]
+            text-[48px]
             leading-none
             text-[#14B985]
           "
@@ -72,52 +113,23 @@ export default function WinningsCard({
           ${winnings.toLocaleString()}
         </p>
 
-        <Image
-          src={trophy}
-          alt="trophy"
-          width={40}
-          height={40}
-          className="w-8 h-8 sm:w-10 sm:h-10"
-        />
+        <Image src={trophy} alt="trophy" width={39} height={48} />
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 w-full">
-        {/* Score */}
-        <div
-          className="
-            flex flex-col gap-1
-            bg-white/5 border border-white/10
-            rounded-2xl p-3 sm:p-4
-          "
-        >
-          <span className="text-[#99A0AE] text-sm font-display">Score</span>
-
-          <div className="flex items-center gap-2">
-            <FlashIcon className="w-5 h-5 text-[#FFC931]" />
-            <span className="font-body text-[clamp(1rem,2vw,1.25rem)] text-white leading-none">
-              {score.toLocaleString()}
-            </span>
-          </div>
-        </div>
-
-        {/* Rank */}
-        <div
-          className="
-            flex flex-col gap-1
-            bg-white/5 border border-white/10
-            rounded-2xl p-3 sm:p-4
-          "
-        >
-          <span className="text-[#99A0AE] text-sm font-display">Rank</span>
-
-          <div className="flex items-center gap-2">
-            <TrendIcon className="w-5 h-5 text-[#14B985]" />
-            <span className="font-body text-[clamp(1rem,2vw,1.25rem)] text-white leading-none">
-              {rank}
-            </span>
-          </div>
-        </div>
+        <StatCard
+          label="Score"
+          value={score}
+          icon={<FlashIcon className="w-5 h-5" />}
+          iconColor="text-[#FFC931]"
+        />
+        <StatCard
+          label="Rank"
+          value={rank}
+          icon={<TrendIcon className="w-5 h-5" />}
+          iconColor="text-[#14B985]"
+        />
       </div>
     </div>
   );
