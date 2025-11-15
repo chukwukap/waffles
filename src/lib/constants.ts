@@ -10,7 +10,7 @@ export const EXTRA_TIME_SECONDS = 3; // 3 seconds
 export const SOUNDS = {
   background: {
     path: "/sounds/background.wav",
-    volume: 0.5,
+    volume: 0.1,
     loop: true,
   },
   click: {

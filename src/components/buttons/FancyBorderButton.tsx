@@ -15,7 +15,15 @@ export const FancyBorderButton = React.forwardRef<
   FancyBorderButtonProps
 >(
   (
-    { children, fullWidth = true, className, type = "button", onClick, disabled, ...props },
+    {
+      children,
+      fullWidth = true,
+      className,
+      type = "button",
+      onClick,
+      disabled,
+      ...props
+    },
     ref
   ) => {
     const { playSound } = useSound();

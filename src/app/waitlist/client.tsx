@@ -275,20 +275,6 @@ export function WaitlistClient() {
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
         >
           <CardStack
-            images={[
-              {
-                src: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/bc698287-5adc-4cc5-a503-de16963ed900/original",
-              },
-              {
-                src: "https://wrpcd.net/cdn-cgi/imagedelivery/BXluQx4ige9GuW0Ia56BHw/6aa18817-6238-4b25-086f-1edd0c438f00/anim=false,fit=contain,f=auto,w=576",
-              },
-              {
-                src: "https://wrpcd.net/cdn-cgi/image/anim=false,fit=contain,f=auto,w=576/https%3A%2F%2Ftba-mobile.mypinata.cloud%2Fipfs%2FQmdD5hZrJz1CDVLs2Tg5JLnNR8hjWFVZmMqVWRAWoWYFJd%3FpinataGatewayToken%3D3nq0UVhtd3rYmgYDdb1I9qv7rHsw-_DzwdWkZPRQ-QW1avFI9dCS8knaSfq_R5_q",
-              },
-              {
-                src: "https://wrpcd.net/cdn-cgi/image/anim=false,fit=contain,f=auto,w=576/https%3A%2F%2Fi.imgur.com%2FNqeHHhK.png",
-              },
-            ]}
             size="clamp(30px, 9vw, 42px)"
             borderColor="#FFFFFF"
             rotations={[-8, 5, -5, 7]}

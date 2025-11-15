@@ -68,20 +68,6 @@ export default function JoinGameClient({ gameId }: { gameId: string }) {
 
         <div className="flex items-center justify-center gap-3 pointer-events-auto">
           <CardStack
-            images={[
-              {
-                src: "/images/avatars/a.png",
-              },
-              {
-                src: "/images/avatars/b.png",
-              },
-              {
-                src: "/images/avatars/c.png",
-              },
-              {
-                src: "/images/avatars/d.png",
-              },
-            ]}
             size="clamp(32px, 7vw, 52px)"
             rotations={[-8.7, 5.85, -3.57, 7.56]}
             ariaLabel={`${joinedCount} players have joined`}
