@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils"; // Assuming a utility like tailwind-merge
+import { useSound } from "@/components/providers/SoundContext";
 
 interface PixelButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -22,10 +23,14 @@ const PixelButton = React.forwardRef<HTMLButtonElement, PixelButtonProps>(
       borderColor = "#FFC931",
       textColor = "#FFD972",
       borderWidth = 4, // Default to a 4px border
+      onClick,
+      disabled,
       ...props
     },
     ref
   ) => {
+    const { playSound } = useSound();
+
     const containerStyle = {
       backgroundColor: borderColor,
       padding: `${borderWidth}px`,
@@ -34,6 +39,13 @@ const PixelButton = React.forwardRef<HTMLButtonElement, PixelButtonProps>(
     const buttonStyle = {
       backgroundColor: backgroundColor,
       color: textColor,
+    };
+
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (!disabled) {
+        playSound("click");
+      }
+      onClick?.(e);
     };
 
     return (
@@ -54,6 +66,8 @@ const PixelButton = React.forwardRef<HTMLButtonElement, PixelButtonProps>(
             className
           )}
           ref={ref}
+          onClick={handleClick}
+          disabled={disabled}
           {...props}
         >
           {children}
