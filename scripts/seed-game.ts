@@ -1,36 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { getGameQuestions, defaultGameConfig } from "./game-data";
 
-// Resolve root URL (similar to env.ts but works in standalone scripts)
-const resolveRootUrl = (): string => {
-  const explicitUrl =
-    process.env.NEXT_PUBLIC_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? null;
-
-  if (explicitUrl) {
-    try {
-      new URL(explicitUrl);
-      return explicitUrl.replace(/\/$/, "");
-    } catch {
-      console.warn(
-        `Invalid NEXT_PUBLIC_URL provided: ${explicitUrl}. Falling back...`
-      );
-    }
-  }
-
-  if (
-    process.env.VERCEL_ENV === "production" &&
-    process.env.VERCEL_PROJECT_PRODUCTION_URL
-  ) {
-    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
-  }
-
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-
-  return "http://localhost:3000";
-};
-
 const prisma = new PrismaClient();
 
 /**
@@ -61,12 +31,10 @@ async function main() {
   const startTime = new Date(now + startMinutes * 60 * 1000);
   const endTime = new Date(now + durationHours * 60 * 60 * 1000);
 
-  // Get root URL and game questions with full URLs
-  const rootUrl = resolveRootUrl();
-  const gameQuestions = getGameQuestions(rootUrl);
+  // Get game questions
+  const gameQuestions = getGameQuestions();
 
   console.log(`Creating new game...`);
-  console.log(`Root URL: ${rootUrl}`);
   console.log(`Start time: ${startTime.toISOString()}`);
   console.log(`End time: ${endTime.toISOString()}`);
 

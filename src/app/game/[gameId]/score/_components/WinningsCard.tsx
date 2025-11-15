@@ -36,11 +36,13 @@ function StatCard({ label, value, icon, iconColor }: StatCardProps) {
         rounded-2xl p-3 sm:p-4
       "
     >
-      <span className="text-[#99A0AE] text-sm font-display">{label}</span>
+      <span className="text-[#99A0AE] text-[14px] font-display text-left">
+        {label}
+      </span>
 
       <div className="flex items-center gap-2">
         <span className={iconColor}>{icon}</span>
-        <span className="font-body text-[clamp(1rem,2vw,1.25rem)] text-white leading-none">
+        <span className="font-body text-[20px] text-white leading-none">
           {displayValue}
         </span>
       </div>
@@ -62,7 +64,7 @@ export default function WinningsCard({
       className={`
         w-[361px] h-[202px]
         rounded-3xl
-        p-4 sm:p-5
+        p-[12px]
         bg-linear-to-b from-transparent to-[#1BF5B0]/12
         border border-white/5
         flex flex-col gap-4
@@ -121,13 +123,13 @@ export default function WinningsCard({
         <StatCard
           label="Score"
           value={score}
-          icon={<FlashIcon className="w-5 h-5" />}
+          icon={<FlashIcon className="w-[24px] h-[24px]" />}
           iconColor="text-[#FFC931]"
         />
         <StatCard
           label="Rank"
           value={rank}
-          icon={<TrendIcon className="w-5 h-5" />}
+          icon={<TrendIcon className="w-[24px] h-[24px]" />}
           iconColor="text-[#14B985]"
         />
       </div>

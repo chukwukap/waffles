@@ -53,8 +53,8 @@ export default function ScorePageClient({
         username={userInfo.username}
       />
 
-      <p className="text-white/80 text-sm mt-3 flex items-center gap-2 font-display">
-        <FlashIcon className="w-4 h-4 text-[#FFC931]" />
+      <p className="text-white/80 text-[12px] my-1 flex items-center gap-2 font-display">
+        <FlashIcon className="w-[16px] h-[16px] text-[#FFC931]" />
         You finished faster than {percentile}% of your friends
       </p>
 
@@ -63,7 +63,7 @@ export default function ScorePageClient({
           SHARE SCORE
         </FancyBorderButton>
         <Link
-          href={`/lobby?fid=${fid}`}
+          href={`/game?fid=${fid}`}
           className="
             flex flex-row justify-center items-center
             font-body
@@ -77,7 +77,9 @@ export default function ScorePageClient({
         >
           <span
             className="
-              w-[107px] h-[21px] flex items-end justify-center text-center flex-none order-1"
+              text-[18px]
+              flex items-end justify-center text-center flex-none order-1
+            "
           >
             BACK TO HOME
           </span>

@@ -1,6 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 import { getGameQuestions, defaultGameConfig } from "../scripts/game-data";
-import { env } from "../src/lib/env";
 
 const prisma = new PrismaClient();
 // $> pnpm prisma db seed
@@ -16,7 +15,7 @@ const prisma = new PrismaClient();
 
 async function main() {
   // Reuse shared game data with full URLs
-  const questions = getGameQuestions(env.rootUrl);
+  const questions = getGameQuestions();
 
   // Create the game
   const game = await prisma.game.upsert({

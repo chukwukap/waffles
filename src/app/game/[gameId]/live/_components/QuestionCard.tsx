@@ -7,7 +7,7 @@ import { PALETTES } from "@/lib/constants";
 
 import { useCountdown } from "@/hooks/useCountdown";
 import { Question } from "@prisma/client";
-import { useSound } from "@/hooks/useSound";
+import { useSound } from "@/components/providers/SoundContext";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useAuth } from "@/hooks/useAuth";
 import { submitAnswerAction } from "@/actions/game";
@@ -33,7 +33,7 @@ export function QuestionCard({
     number | null
   >(null);
 
-  const { playUrl, play, stopAll, stopUrl, stop, soundEnabled } = useSound();
+  const { playSound } = useSound();
   const [, submitAnswerAct, pending] = React.useActionState(
     submitAnswerAction,
     {
@@ -93,39 +93,18 @@ export function QuestionCard({
     false
   );
 
+  // ───────────────────────── PLAY SOUND ON QUESTION CHANGE ─────────────────────────
+  React.useEffect(() => {
+    if (!question || !question.soundUrl) return;
+
+    playSound(question.soundUrl);
+  }, [playSound, question]);
+
   // start the countdown when the component mounts
   React.useEffect(() => {
     reset();
     start();
   }, [reset, start, question.id]);
-
-  // ───────────────────────── PLAY SOUND ON QUESTION CHANGE ─────────────────────────
-  React.useEffect(() => {
-    if (!question) return;
-
-    // stop any currently playing sounds before new one
-    stopAll();
-
-    const soundUrl = question.soundUrl;
-    const hasSoundUrl = !!soundUrl;
-
-    // play new question sound immediately (no delay)
-    if (soundEnabled) {
-      if (hasSoundUrl) {
-        playUrl(soundUrl, { loop: true, volume: 1 });
-      } else {
-        play("questionStart", { volume: 0.5 });
-      }
-    }
-
-    return () => {
-      if (hasSoundUrl && soundUrl) {
-        stopUrl(soundUrl);
-      } else {
-        stop("questionStart");
-      }
-    };
-  }, [play, playUrl, question, soundEnabled, stop, stopAll, stopUrl]);
 
   // ───────────────────────── UI ─────────────────────────
   return (
