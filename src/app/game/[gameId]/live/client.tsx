@@ -74,17 +74,6 @@ export default function LiveGameClient({
   // Track whether we're currently displaying a round countdown
   const [showRoundCountdown, setShowRoundCountdown] = React.useState(false);
 
-  // Play background sound when live game starts
-  React.useEffect(() => {
-    playSound("background");
-
-    // Cleanup: stop background sound when component unmounts
-    return () => {
-      // The background sound will be stopped when gameOver plays or component unmounts
-      // Since we use a single audio element, playing gameOver will automatically stop background
-    };
-  }, [playSound]);
-
   // Reveals the next question after round countdown completes
   const handleRoundCountdownComplete = React.useCallback(() => {
     setShowRoundCountdown(false);

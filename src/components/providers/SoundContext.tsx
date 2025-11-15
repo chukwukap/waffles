@@ -31,6 +31,7 @@ const isSoundName = (sound: string): sound is SoundName => {
 export function SoundProvider({ children }: { children: React.ReactNode }) {
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const backgroundAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const getAudio = (): HTMLAudioElement => {
     if (!audioRef.current) {
@@ -43,6 +44,11 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
   const playSound = useCallback(
     (soundOrUrl: SoundName | string): void => {
       if (!isSoundEnabled) return;
+
+      // Skip background sound - it's managed separately in the provider
+      if (soundOrUrl === "background") {
+        return;
+      }
 
       let path: string, volume: number, loop: boolean;
 
@@ -129,14 +135,53 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
     setIsSoundEnabled((prev) => {
       const isNowEnabled = !prev;
       if (!isNowEnabled) {
-        // Your logic to stop sound on mute is correct
+        // Stop all sounds when muting
         const audio = getAudio();
         audio.pause();
         audio.currentTime = 0;
+        if (backgroundAudioRef.current) {
+          backgroundAudioRef.current.pause();
+          backgroundAudioRef.current.currentTime = 0;
+        }
+      } else {
+        // Resume background sound when unmuting
+        if (backgroundAudioRef.current) {
+          backgroundAudioRef.current.play().catch((error) => {
+            console.error("Error resuming background sound:", error);
+          });
+        }
       }
       return isNowEnabled;
     });
   }, []); // Empty dep array is correct
+
+  // Initialize background sound when app starts
+  React.useEffect(() => {
+    if (!isSoundEnabled) return;
+
+    // Create a separate audio element for background music
+    if (!backgroundAudioRef.current) {
+      const bgSound = SOUNDS.background;
+      const audio = new Audio(bgSound.path);
+      audio.volume = bgSound.volume ?? 0.5;
+      audio.loop = bgSound.loop ?? true;
+      backgroundAudioRef.current = audio;
+
+      // Start playing background sound
+      audio.play().catch((error) => {
+        console.error("Error playing background sound:", error);
+      });
+    }
+
+    // Cleanup: stop background sound when component unmounts (app closes)
+    return () => {
+      if (backgroundAudioRef.current) {
+        backgroundAudioRef.current.pause();
+        backgroundAudioRef.current.currentTime = 0;
+        backgroundAudioRef.current = null;
+      }
+    };
+  }, [isSoundEnabled]);
 
   // Using useMemo for the context value is a key performance optimization.
   const value = useMemo(
