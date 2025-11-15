@@ -12,7 +12,10 @@ import { SOUNDS, SoundName } from "@/lib/constants";
 type SoundContextType = {
   isSoundEnabled: boolean;
   toggleSound: () => void;
-  playSound: (soundOrUrl: SoundName | string) => void;
+  playSound: {
+    (sound: SoundName): void;
+    (url: string): void;
+  };
 };
 
 const SoundContext = createContext<SoundContextType | null>(null);
@@ -36,8 +39,9 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
     return audioRef.current;
   };
 
+  // Function overloads for better autocomplete
   const playSound = useCallback(
-    (soundOrUrl: keyof typeof SOUNDS | string) => {
+    (soundOrUrl: SoundName | string): void => {
       if (!isSoundEnabled) return;
 
       let path: string, volume: number, loop: boolean;
@@ -116,7 +120,10 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
       }
     },
     [isSoundEnabled]
-  );
+  ) as {
+    (sound: SoundName): void;
+    (url: string): void;
+  };
 
   const toggleSound = useCallback(() => {
     setIsSoundEnabled((prev) => {
