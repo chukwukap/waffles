@@ -95,10 +95,11 @@ export function QuestionCard({
 
   // ───────────────────────── PLAY SOUND ON QUESTION CHANGE ─────────────────────────
   React.useEffect(() => {
-    if (!question || !question.soundUrl) return;
+    if (!question) return;
 
-    playSound(question.soundUrl);
-  }, [playSound, question]);
+    playSound("questionStart");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playSound, question.id]);
 
   // start the countdown when the component mounts
   React.useEffect(() => {

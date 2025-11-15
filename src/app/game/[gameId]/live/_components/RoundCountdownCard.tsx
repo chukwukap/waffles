@@ -6,7 +6,6 @@ import { ChatInput } from "@/app/game/_components/chat/ChatTrigger";
 import { Chat } from "@/app/game/_components/chat/Chat";
 import { useEffect, useState } from "react";
 import { useSound } from "@/components/providers/SoundContext";
-import { SOUNDS } from "@/lib/constants";
 
 export default function RoundCountdownCard({
   duration,
@@ -19,7 +18,7 @@ export default function RoundCountdownCard({
   const { playSound } = useSound();
 
   useEffect(() => {
-    playSound(SOUNDS.roundBreak.path);
+    playSound("roundBreak");
   }, [playSound]);
 
   return (

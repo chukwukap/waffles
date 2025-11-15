@@ -14,42 +14,32 @@ export const SOUNDS = {
     loop: true,
   },
   click: {
-    path: "/sounds/click_001.ogg",
+    path: "/sounds/click.wav",
     volume: 0.5,
     loop: false,
   },
   questionStart: {
-    path: "/sounds/click_001.ogg",
+    path: "/sounds/question-start.wav",
     volume: 0.5,
     loop: false,
   },
   countdown: {
-    path: "/sounds/click_001.ogg",
+    path: "/sounds/countdown.wav",
     volume: 0.5,
     loop: false,
   },
-  correct: {
-    path: "/sounds/click_001.ogg",
-    volume: 0.6,
-    loop: false,
-  },
-  wrong: {
-    path: "/sounds/click_001.ogg",
-    volume: 0.6,
-    loop: false,
-  },
   gameOver: {
-    path: "/sounds/click_001.ogg",
+    path: "/sounds/game-over.wav",
     volume: 0.7,
     loop: false,
   },
   nextQuestion: {
-    path: "/sounds/click_001.ogg",
+    path: "/sounds/next-question.wav",
     volume: 0.5,
     loop: false,
   },
   roundBreak: {
-    path: "/sounds/click_001.ogg",
+    path: "/sounds/round-break.wav",
     volume: 0.4,
     loop: true,
   },

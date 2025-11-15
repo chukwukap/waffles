@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { PixelButton } from "@/components/buttons/PixelButton";
+import { useSound } from "@/components/providers/SoundContext";
 
 interface QuestionOptionProps {
   option: string;
@@ -24,8 +25,16 @@ export function QuestionOption({
   onSelect,
   disabled,
 }: QuestionOptionProps) {
+  const { playSound } = useSound();
   const isSubmittedOption =
     selectedOptionIndex !== null && selectedOptionIndex === index;
+
+  const handleClick = () => {
+    if (!disabled && selectedOptionIndex === null) {
+      playSound("click");
+    }
+    onSelect(index);
+  };
 
   return (
     <li
@@ -44,7 +53,7 @@ export function QuestionOption({
         backgroundColor={palette.bg}
         textColor={palette.text}
         borderColor={palette.border}
-        onClick={() => onSelect(index)}
+        onClick={handleClick}
         disabled={disabled}
       >
         <span

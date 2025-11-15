@@ -6,11 +6,16 @@ import { useSound } from "@/components/providers/SoundContext";
  * It uses the hook to get the current state and the toggle function.
  */
 export function SoundToggle() {
-  const { isSoundEnabled, toggleSound } = useSound();
+  const { isSoundEnabled, toggleSound, playSound } = useSound();
+
+  const handleClick = () => {
+    playSound("click");
+    toggleSound();
+  };
 
   return (
     <button
-      onClick={toggleSound}
+      onClick={handleClick}
       aria-label={isSoundEnabled ? "Mute sound" : "Unmute sound"}
       type="button"
       className="

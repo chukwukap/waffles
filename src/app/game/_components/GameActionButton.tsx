@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useSound } from "@/components/providers/SoundContext";
 
 interface GameActionButtonProps {
   /**
@@ -41,6 +44,8 @@ export function GameActionButton({
   textColor = "neon-pink",
   backgroundColor,
 }: GameActionButtonProps) {
+  const { playSound } = useSound();
+
   // Base button classes
   const baseClasses =
     "order-1 box-border z-0 flex h-10 flex-none flex-row items-center justify-center rounded-full border-2 border-(--color-neon-pink) tabular-nums";
@@ -109,6 +114,8 @@ export function GameActionButton({
     if (disabled || !href) {
       e.preventDefault();
       e.stopPropagation();
+    } else {
+      playSound("click");
     }
   };
 

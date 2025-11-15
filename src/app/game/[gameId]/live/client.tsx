@@ -5,6 +5,7 @@ import QuestionCard from "./_components/QuestionCard";
 import { EXTRA_TIME_SECONDS } from "@/lib/constants";
 import { useRouter } from "next/navigation";
 import RoundCountdownCard from "./_components/RoundCountdownCard";
+import { useSound } from "@/components/providers/SoundContext";
 
 /**
  * Determines if a round countdown should be shown before the next question.
@@ -64,6 +65,7 @@ export default function LiveGameClient({
   const router = useRouter();
   const gameInfo = React.use(gameInfoPromise);
   const userInfo = React.use(userInfoPromise);
+  const { playSound } = useSound();
 
   const questionTotalTime =
     (gameInfo?.config?.questionTimeLimit ?? 10) + EXTRA_TIME_SECONDS;
@@ -72,11 +74,23 @@ export default function LiveGameClient({
   // Track whether we're currently displaying a round countdown
   const [showRoundCountdown, setShowRoundCountdown] = React.useState(false);
 
+  // Play background sound when live game starts
+  React.useEffect(() => {
+    playSound("background");
+
+    // Cleanup: stop background sound when component unmounts
+    return () => {
+      // The background sound will be stopped when gameOver plays or component unmounts
+      // Since we use a single audio element, playing gameOver will automatically stop background
+    };
+  }, [playSound]);
+
   // Reveals the next question after round countdown completes
   const handleRoundCountdownComplete = React.useCallback(() => {
     setShowRoundCountdown(false);
+    playSound("nextQuestion");
     setCurrentQuestionIndex((prev) => prev + 1);
-  }, []);
+  }, [playSound]);
 
   // This function decides whether we should move to the next question or redirect to the score page,
   // also checks if a round countdown should show before next question.
@@ -86,6 +100,7 @@ export default function LiveGameClient({
 
     // If we've reached the end of the questions, redirect to the score page
     if (nextQuestionIndex >= questions.length) {
+      playSound("gameOver");
       router.push(`/game/${gameInfo?.id}/score/?fid=${userInfo?.fid}`);
       return;
     }
@@ -98,6 +113,7 @@ export default function LiveGameClient({
     }
 
     // Otherwise, advance to the next question immediately
+    playSound("nextQuestion");
     setCurrentQuestionIndex(nextQuestionIndex);
   }, [
     currentQuestionIndex,
@@ -105,6 +121,7 @@ export default function LiveGameClient({
     gameInfo?.id,
     router,
     userInfo?.fid,
+    playSound,
   ]);
 
   return (

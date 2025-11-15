@@ -12,8 +12,6 @@ import { GameActionButton } from "./_components/GameActionButton";
 import { Prisma, Ticket } from "@prisma/client";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { ChatInput } from "@/app/game/_components/chat/ChatTrigger";
-import { SOUNDS } from "@/lib/constants";
-import { useSound } from "@/components/providers/SoundContext";
 
 function formatTime(remainingSeconds: number): string {
   const seconds = Math.max(0, remainingSeconds);
@@ -34,7 +32,6 @@ export default function GameHomePageClient({
   }> | null>;
 }) {
   const { context: miniKitContext } = useMiniKit();
-  const { playSound } = useSound();
   const fid = miniKitContext?.user?.fid;
   const upcomingOrActiveGame = use(upcomingOrActiveGamePromise);
   const [chatOpen, setChatOpen] = useState(false);
@@ -66,10 +63,6 @@ export default function GameHomePageClient({
     maximumFractionDigits: 2,
   })}`;
   const playerCount = upcomingOrActiveGame?._count.participants ?? 0;
-
-  useEffect(() => {
-    playSound(SOUNDS.background.path);
-  }, [playSound]);
 
   useEffect(() => {
     if (!fid || !upcomingOrActiveGame?.id) {
