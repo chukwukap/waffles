@@ -2,7 +2,6 @@
 
 import { prisma } from "@/lib/db";
 import { z } from "zod";
-import { Prisma } from "@prisma/client";
 
 interface ValidationSuccess {
   valid: true;
