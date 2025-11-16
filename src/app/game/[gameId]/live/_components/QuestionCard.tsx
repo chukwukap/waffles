@@ -95,9 +95,9 @@ export function QuestionCard({
 
   // ───────────────────────── PLAY SOUND ON QUESTION CHANGE ─────────────────────────
   React.useEffect(() => {
-    if (!question) return;
+    if (!question || !question.soundUrl) return;
 
-    playSound("questionStart");
+    playSound(question.soundUrl, 0.8);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playSound, question.id]);
 
