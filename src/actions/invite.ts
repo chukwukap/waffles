@@ -5,7 +5,6 @@ import { z } from "zod";
 
 interface ValidationSuccess {
   valid: true;
-  message?: string;
   inviterId: number;
   inviteeId: number;
   code: string;
@@ -18,44 +17,48 @@ interface ValidationError {
 
 export type ValidateReferralResult = ValidationSuccess | ValidationError;
 
-const actionSchema = z.object({
+const validateSchema = z.object({
   code: z.string().length(6, "Code must be 6 characters."),
-  fid: z.number().int().positive("Invalid FID format."),
+  fid: z.coerce.number().int().positive("Invalid FID format."),
 });
 
 export async function validateReferralAction(
-  prevState: ValidateReferralResult | null,
+  _prevState: ValidateReferralResult | null,
   formData: FormData
 ): Promise<ValidateReferralResult> {
-  const rawCode = formData.get("code");
-  const rawFid = formData.get("fid");
-
-  const validation = actionSchema.safeParse({
-    code: rawCode,
-    fid: rawFid,
+  const validation = validateSchema.safeParse({
+    code: formData.get("code"),
+    fid: formData.get("fid"),
   });
 
   if (!validation.success) {
-    const firstError = validation.error.issues[0]?.message ?? "Invalid input.";
-    return { valid: false, error: firstError };
+    const error = validation.error.issues[0]?.message ?? "Invalid input.";
+    return { valid: false, error };
   }
 
   const { code, fid } = validation.data;
 
   try {
-    const invitee = await prisma.user.findUnique({
-      where: { fid },
-    });
+    // Fetch invitee and referral in parallel
+    const [invitee, referral] = await Promise.all([
+      prisma.user.findUnique({
+        where: { fid },
+        select: { id: true },
+      }),
+      prisma.referral.findUnique({
+        where: { code },
+        select: {
+          inviterId: true,
+          inviteeId: true,
+          code: true,
+        },
+      }),
+    ]);
+
     if (!invitee) {
-      return {
-        valid: false,
-        error: "User not found. Complete onboarding first.",
-      };
+      return { valid: false, error: "User not found. Complete onboarding first." };
     }
 
-    const referral = await prisma.referral.findUnique({
-      where: { code },
-    });
     if (!referral) {
       return { valid: false, error: "Invalid code." };
     }
@@ -64,46 +67,59 @@ export async function validateReferralAction(
       return { valid: false, error: "Cannot use your own code." };
     }
 
-    const duplicate = await prisma.referral.findFirst({
+    if (referral.inviteeId) {
+      if (referral.inviteeId === invitee.id) {
+        // Already validated by this user
+        return {
+          valid: true,
+          inviterId: referral.inviterId,
+          inviteeId: invitee.id,
+          code: referral.code,
+        };
+      }
+      return { valid: false, error: "Code already redeemed by another user." };
+    }
+
+    // Check for existing referral relationship
+    const existingReferral = await prisma.referral.findFirst({
       where: {
         inviterId: referral.inviterId,
         inviteeId: invitee.id,
       },
+      select: { code: true },
     });
-    if (duplicate) {
-      if (duplicate.code === code) {
+
+    if (existingReferral) {
+      if (existingReferral.code === code) {
         return {
           valid: true,
-          message: "Code already validated.",
           inviterId: referral.inviterId,
           inviteeId: invitee.id,
-          code: duplicate.code,
-        };
-      } else {
-        return {
-          valid: false,
-          error: "Referral already established with this inviter.",
+          code: referral.code,
         };
       }
+      return { valid: false, error: "Referral already established with this inviter." };
     }
 
-    if (referral.inviteeId && referral.inviteeId !== invitee.id) {
-      return { valid: false, error: "Code already redeemed by another user." };
-    }
-
-    let finalReferral = referral;
-    if (!referral.inviteeId) {
-      finalReferral = await prisma.referral.update({
-        where: { code },
-        data: { inviteeId: invitee.id, acceptedAt: new Date() },
-      });
-    }
+    // Create referral relationship
+    const updatedReferral = await prisma.referral.update({
+      where: { code },
+      data: {
+        inviteeId: invitee.id,
+        acceptedAt: new Date(),
+      },
+      select: {
+        inviterId: true,
+        inviteeId: true,
+        code: true,
+      },
+    });
 
     return {
       valid: true,
-      inviterId: finalReferral.inviterId,
-      inviteeId: finalReferral.inviteeId!,
-      code: finalReferral.code,
+      inviterId: updatedReferral.inviterId,
+      inviteeId: updatedReferral.inviteeId!,
+      code: updatedReferral.code,
     };
   } catch (err) {
     console.error("[VALIDATE_REFERRAL_ACTION_ERROR]", err);
@@ -111,21 +127,19 @@ export async function validateReferralAction(
   }
 }
 
-const REFERRAL_CODE_LENGTH = 6;
-const MAX_CODE_GENERATION_RETRIES = 10;
+const CODE_LENGTH = 6;
+const MAX_RETRIES = 10;
+const CODE_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
-function generateCode(length = REFERRAL_CODE_LENGTH): string {
-  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  const bytes = new Uint8Array(length);
+function generateCode(): string {
+  const bytes = new Uint8Array(CODE_LENGTH);
   crypto.getRandomValues(bytes);
-  let code = "";
-  for (let i = 0; i < length; i++) {
-    code += alphabet[bytes[i] % alphabet.length];
-  }
-  return code;
+  return Array.from(bytes)
+    .map((byte) => CODE_ALPHABET[byte % CODE_ALPHABET.length])
+    .join("");
 }
 
-const inputSchema = z.object({
+const referralCodeSchema = z.object({
   fid: z.number().int().positive("Invalid FID format."),
 });
 
@@ -141,28 +155,30 @@ export type ReferralCodeResult =
 export async function getOrCreateReferralCodeAction(
   fid: number | null | undefined
 ): Promise<ReferralCodeResult> {
-  const validation = inputSchema.safeParse({ fid });
+  const validation = referralCodeSchema.safeParse({ fid });
   if (!validation.success) {
-    const firstError =
-      validation.error.message || "Invalid Farcaster ID provided.";
-    return { success: false, error: firstError };
+    const error = validation.error.issues[0]?.message ?? "Invalid FID format.";
+    return { success: false, error };
   }
-  const validatedFid = validation.data.fid;
 
   try {
     const inviter = await prisma.user.findUnique({
-      where: { fid: validatedFid },
+      where: { fid: validation.data.fid },
       select: { id: true },
     });
 
     if (!inviter) {
-      return { success: false, error: "Inviter user not found." };
+      return { success: false, error: "User not found." };
     }
-    const inviterId = inviter.id;
 
     const existingReferral = await prisma.referral.findFirst({
-      where: { inviterId },
+      where: { inviterId: inviter.id },
       orderBy: { createdAt: "asc" },
+      select: {
+        code: true,
+        inviterId: true,
+        inviteeId: true,
+      },
     });
 
     if (existingReferral) {
@@ -174,46 +190,45 @@ export async function getOrCreateReferralCodeAction(
       };
     }
 
-    let newCode: string | null = null;
-    for (let tries = 0; tries < MAX_CODE_GENERATION_RETRIES; tries++) {
-      const potentialCode = generateCode();
-      const collision = await prisma.referral.findUnique({
-        where: { code: potentialCode },
+    // Generate unique code
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      const code = generateCode();
+      const exists = await prisma.referral.findUnique({
+        where: { code },
+        select: { code: true },
       });
-      if (!collision) {
-        newCode = potentialCode;
-        break;
-      }
-    } //
 
-    if (!newCode) {
-      console.error(
-        `Failed to generate unique referral code for inviterId ${inviterId} after ${MAX_CODE_GENERATION_RETRIES} tries.`
-      );
-      return {
-        success: false,
-        error: "Failed to generate a unique referral code. Please try again.",
-      };
+      if (!exists) {
+        const newReferral = await prisma.referral.create({
+          data: { code, inviterId: inviter.id },
+          select: {
+            code: true,
+            inviterId: true,
+            inviteeId: true,
+          },
+        });
+
+        return {
+          success: true,
+          code: newReferral.code,
+          inviterId: newReferral.inviterId,
+          inviteeId: newReferral.inviteeId,
+        };
+      }
     }
 
-    const newReferral = await prisma.referral.create({
-      data: {
-        code: newCode,
-        inviterId,
-      },
-    });
-
-    return {
-      success: true,
-      code: newReferral.code,
-      inviterId: newReferral.inviterId,
-      inviteeId: newReferral.inviteeId,
-    };
-  } catch (err) {
-    console.error("Error in getOrCreateReferralCodeAction:", err);
+    console.error(
+      `Failed to generate unique code for inviterId ${inviter.id} after ${MAX_RETRIES} attempts`
+    );
     return {
       success: false,
-      error: "An unexpected error occurred while processing the referral code.",
+      error: "Failed to generate a unique referral code. Please try again.",
+    };
+  } catch (err) {
+    console.error("[GET_OR_CREATE_REFERRAL_CODE_ERROR]", err);
+    return {
+      success: false,
+      error: "An unexpected error occurred.",
     };
   }
 }
@@ -228,25 +243,22 @@ export async function getUserInviteDataAction(
   try {
     const user = await prisma.user.findUnique({
       where: { fid },
-      select: {
-        referrals: {
-          take: 1,
-          select: {
-            code: true,
-          },
-        },
-      },
+      select: { id: true },
     });
 
     if (!user) {
-      return null;
+      return { code: null };
     }
 
-    return {
-      code: user.referrals[0]?.code || null,
-    };
+    const referral = await prisma.referral.findFirst({
+      where: { inviterId: user.id },
+      select: { code: true },
+      orderBy: { createdAt: "asc" },
+    });
+
+    return { code: referral?.code ?? null };
   } catch (err) {
     console.error("[GET_USER_INVITE_DATA_ERROR]", err);
-    return null;
+    return { code: null };
   }
 }
