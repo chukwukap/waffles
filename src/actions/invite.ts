@@ -219,46 +219,33 @@ export async function getOrCreateReferralCodeAction(
   }
 }
 
-export type UserWithInviteData = Prisma.UserGetPayload<{
-  select: {
-    fid: true;
-    name: true;
-    imageUrl: true;
-    referrals: {
-      take: 1;
-      select: {
-        code: true;
-        inviter: {
-          select: { fid: true; name: true; imageUrl: true };
-        };
-      };
-    };
-  };
-}>;
+export type UserInviteCode = {
+  code: string | null;
+};
 
 export async function getUserInviteDataAction(
   fid: number
-): Promise<UserWithInviteData | null> {
+): Promise<UserInviteCode | null> {
   try {
     const user = await prisma.user.findUnique({
       where: { fid },
       select: {
-        fid: true,
-        name: true,
-        imageUrl: true,
         referrals: {
           take: 1,
           select: {
             code: true,
-            inviter: {
-              select: { fid: true, name: true, imageUrl: true },
-            },
           },
         },
       },
     });
 
-    return user;
+    if (!user) {
+      return null;
+    }
+
+    return {
+      code: user.referrals[0]?.code || null,
+    };
   } catch (err) {
     console.error("[GET_USER_INVITE_DATA_ERROR]", err);
     return null;

@@ -14,7 +14,6 @@ import { PixelButton } from "@/components/buttons/PixelButton";
 import {
   validateReferralAction,
   getUserInviteDataAction,
-  type UserWithInviteData,
   type ValidateReferralResult,
 } from "@/actions/invite";
 import { useRouter } from "next/navigation";
@@ -27,7 +26,6 @@ export default function InvitePageClient() {
   const router = useRouter();
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const [userData, setUserData] = useState<UserWithInviteData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState<
     "idle" | "validating" | "success" | "failed"
@@ -35,11 +33,10 @@ export default function InvitePageClient() {
   const [inputCode, setInputCode] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const [validationState, validateAction, isPending] =
-    useActionState<ValidateReferralResult | null, FormData>(
-      validateReferralAction,
-      null
-    );
+  const [validationState, validateAction, isPending] = useActionState<
+    ValidateReferralResult | null,
+    FormData
+  >(validateReferralAction, null);
 
   // Fetch user invite data on mount
   useEffect(() => {
@@ -52,9 +49,8 @@ export default function InvitePageClient() {
       try {
         setIsLoading(true);
         const data = await getUserInviteDataAction(fid);
-        setUserData(data);
-        if (data?.referrals?.[0]?.code) {
-          setInputCode(data.referrals[0].code);
+        if (data?.code) {
+          setInputCode(data.code);
         }
       } catch (err) {
         console.error("Error fetching user invite data:", err);
@@ -206,52 +202,52 @@ export default function InvitePageClient() {
                     ? "CHECKING..."
                     : "GET IN"}
                 </FancyBorderButton>
-              {(isPending || status === "validating") && (
-                <p
-                  className="text-xs mt-2 text-[#a0a0a0]"
-                  style={{
-                    fontFamily: "'Press Start 2P', 'Geist Mono', monospace",
-                    letterSpacing: "0.04em",
-                  }}
-                >
-                  Validating...
-                </p>
-              )}
-              {status === "failed" && error && (
-                <PixelButton
-                  className="flex items-center gap-2 font-body"
-                  backgroundColor="#FF5252"
-                  borderColor="#FF5252"
-                  textColor="#FFFFFF"
-                  type="button"
-                >
-                  <Image
-                    src="/images/icons/icon-invalid.png"
-                    alt="Invalid Invite Code"
-                    width={20}
-                    height={20}
-                  />
-                  <span>{error || "Invalid"}</span>
-                </PixelButton>
-              )}
-              {status === "success" && (
-                <PixelButton
-                  className="flex items-center gap-2 font-body"
-                  backgroundColor="#14B985"
-                  borderColor="#14B985"
-                  textColor="#FFFFFF"
-                  onClick={() => router.push("/lobby")}
-                  type="button"
-                >
-                  <Image
-                    src="/images/icons/icon-valid.png"
-                    alt="Valid Invite Code"
-                    width={20}
-                    height={20}
-                  />
-                  <span>Valid</span>
-                </PixelButton>
-              )}
+                {(isPending || status === "validating") && (
+                  <p
+                    className="text-xs mt-2 text-[#a0a0a0]"
+                    style={{
+                      fontFamily: "'Press Start 2P', 'Geist Mono', monospace",
+                      letterSpacing: "0.04em",
+                    }}
+                  >
+                    Validating...
+                  </p>
+                )}
+                {status === "failed" && error && (
+                  <PixelButton
+                    className="flex items-center gap-2 font-body"
+                    backgroundColor="#FF5252"
+                    borderColor="#FF5252"
+                    textColor="#FFFFFF"
+                    type="button"
+                  >
+                    <Image
+                      src="/images/icons/icon-invalid.png"
+                      alt="Invalid Invite Code"
+                      width={20}
+                      height={20}
+                    />
+                    <span>{error || "Invalid"}</span>
+                  </PixelButton>
+                )}
+                {status === "success" && (
+                  <PixelButton
+                    className="flex items-center gap-2 font-body"
+                    backgroundColor="#14B985"
+                    borderColor="#14B985"
+                    textColor="#FFFFFF"
+                    onClick={() => router.push("/lobby")}
+                    type="button"
+                  >
+                    <Image
+                      src="/images/icons/icon-valid.png"
+                      alt="Valid Invite Code"
+                      width={20}
+                      height={20}
+                    />
+                    <span>Valid</span>
+                  </PixelButton>
+                )}
               </form>
             )}
           </div>
