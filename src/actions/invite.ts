@@ -56,7 +56,10 @@ export async function validateReferralAction(
     ]);
 
     if (!invitee) {
-      return { valid: false, error: "User not found. Complete onboarding first." };
+      return {
+        valid: false,
+        error: "User not found. Complete onboarding first.",
+      };
     }
 
     if (!referral) {
@@ -67,9 +70,9 @@ export async function validateReferralAction(
       return { valid: false, error: "Cannot use your own code." };
     }
 
+    // Check if code already redeemed
     if (referral.inviteeId) {
       if (referral.inviteeId === invitee.id) {
-        // Already validated by this user
         return {
           valid: true,
           inviterId: referral.inviterId,
@@ -80,7 +83,7 @@ export async function validateReferralAction(
       return { valid: false, error: "Code already redeemed by another user." };
     }
 
-    // Check for existing referral relationship
+    // Check for existing referral relationship with this inviter
     const existingReferral = await prisma.referral.findFirst({
       where: {
         inviterId: referral.inviterId,
@@ -98,7 +101,10 @@ export async function validateReferralAction(
           code: referral.code,
         };
       }
-      return { valid: false, error: "Referral already established with this inviter." };
+      return {
+        valid: false,
+        error: "Referral already established with this inviter.",
+      };
     }
 
     // Create referral relationship
@@ -239,7 +245,7 @@ export type UserInviteCode = {
 
 export async function getUserInviteDataAction(
   fid: number
-): Promise<UserInviteCode | null> {
+): Promise<UserInviteCode> {
   try {
     const user = await prisma.user.findUnique({
       where: { fid },

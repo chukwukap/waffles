@@ -49,7 +49,7 @@ export default function InvitePageClient() {
       try {
         setIsLoading(true);
         const data = await getUserInviteDataAction(fid);
-        if (data?.code) {
+        if (data.code) {
           setInputCode(data.code);
         }
       } catch (err) {
