@@ -3,6 +3,46 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { useGameEvents } from "@/hooks/useGameEvents";
 
+// Helper function to get first letter of username
+const getInitial = (username: string): string => {
+  return username?.charAt(0)?.toUpperCase() || "?";
+};
+
+// Avatar component with fallback to initials
+function AvatarWithFallback({
+  src,
+  username,
+}: {
+  src: string;
+  username: string;
+}) {
+  const [imageError, setImageError] = useState(false);
+
+  if (imageError) {
+    return (
+      <div
+        className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-white text-xs font-semibold"
+        style={{
+          backgroundColor: "#4F46E5", // Indigo background for initials
+        }}
+      >
+        {getInitial(username)}
+      </div>
+    );
+  }
+
+  return (
+    <Image
+      src={src}
+      alt="avatar"
+      width={24}
+      height={24}
+      className="w-6 h-6 rounded-full shrink-0"
+      onError={() => setImageError(true)}
+    />
+  );
+}
+
 type EventType = "join" | "chat";
 
 interface Event {
@@ -105,13 +145,21 @@ export default function LiveEventFeed({
               animate={{ opacity: getOpacity(index), y: 0 }}
               transition={{ duration: 0.5, ease: "easeInOut" }}
             >
-              <Image
-                src={event.avatar || "/images/lobby/1.jpg"}
-                alt="avatar"
-                width={24}
-                height={24}
-                className="w-6 h-6 rounded-full shrink-0"
-              />
+              {event.avatar ? (
+                <AvatarWithFallback
+                  src={event.avatar}
+                  username={event.username}
+                />
+              ) : (
+                <div
+                  className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-white text-xs font-semibold"
+                  style={{
+                    backgroundColor: "#4F46E5", // Indigo background for initials
+                  }}
+                >
+                  {getInitial(event.username)}
+                </div>
+              )}
               <div className="text-sm truncate">
                 {event.type === "join" ? (
                   <span className="text-gray-400 italic font-display font-bold">

@@ -179,7 +179,10 @@ export default function GameHomePageClient({
                 } joined`}
           </p>
         </div>
-        <LiveEventFeed maxEvents={5} gameId={upcomingOrActiveGame?.id ?? null} />
+        <LiveEventFeed
+          maxEvents={5}
+          gameId={upcomingOrActiveGame?.id ?? null}
+        />
         <Chat
           isOpen={chatOpen}
           onClose={() => setChatOpen(false)}
