@@ -167,22 +167,23 @@ export function WaitlistClient() {
     return "You're on the waitlist!";
   };
 
-  // Shared heading styles
-  const headingBaseClasses = "font-body text-white text-[clamp(32px,8vw,44px)] leading-[92%]";
-  const headingJoinClasses = "font-body font-normal not-italic text-[44px] leading-[92%] tracking-[-0.03em] text-center text-white";
-  const descriptionClasses = "text-[#99A0AE] font-display text-[clamp(14px,3.4vw,18px)] leading-[130%] mt-3";
-  const errorClasses = "text-red-400 text-sm mt-2";
+  const headingClasses =
+    "font-body font-normal not-italic text-[44px] leading-[92%] tracking-[-0.03em] text-center text-white";
+  const descriptionClasses =
+    "text-[#99A0AE] font-display font-medium text-[16px] leading-[130%] tracking-[-0.03em] text-center mb-2";
+  const buttonClasses = "w-[361px] mx-auto";
+  const errorClasses = "text-red-400 text-sm";
 
   // Render content based on state
   const renderContent = () => {
     if (isLoading) {
-      return <h1 className={headingBaseClasses}>LOADING...</h1>;
+      return <h1 className={headingClasses}>LOADING...</h1>;
     }
 
     if (error) {
       return (
         <>
-          <h1 className={headingBaseClasses}>ERROR</h1>
+          <h1 className={headingClasses}>ERROR</h1>
           <p className={errorClasses}>{error}</p>
         </>
       );
@@ -191,15 +192,17 @@ export function WaitlistClient() {
     if (onList) {
       return (
         <>
-          <h1 className={headingBaseClasses}>
-            YOU&apos;RE ON <br /> THE LIST
-          </h1>
+          <h1 className={headingClasses}>YOU&apos;RE ON THE LIST</h1>
           <p className={descriptionClasses}>
             {rankMsg(rank)}
             <br />
             {friendText(invites)}
           </p>
-          <FancyBorderButton onClick={share} className="mt-2" disabled={pending}>
+          <FancyBorderButton
+            onClick={share}
+            className={buttonClasses}
+            disabled={pending}
+          >
             SHARE
           </FancyBorderButton>
         </>
@@ -208,9 +211,9 @@ export function WaitlistClient() {
 
     return (
       <>
-        <h1 className={headingJoinClasses}>JOIN THE WAITLIST</h1>
+        <h1 className={headingClasses}>JOIN THE WAITLIST</h1>
         <p className={descriptionClasses}>
-          Join now to be first to play when Waffles launches
+          Join now to be first to play when <br /> Waffles launches
         </p>
         {state.error && <p className={errorClasses}>{state.error}</p>}
         <form action={handleSubmit} className="mt-6">
@@ -218,7 +221,11 @@ export function WaitlistClient() {
             <input type="hidden" name="fid" value={context.user.fid} />
           )}
           {ref && <input type="hidden" name="ref" value={ref} />}
-          <FancyBorderButton type="submit" disabled={pending}>
+          <FancyBorderButton
+            type="submit"
+            disabled={pending}
+            className={buttonClasses}
+          >
             {pending ? "JOINING..." : "GET ME ON THE LIST"}
           </FancyBorderButton>
         </form>
@@ -228,13 +235,13 @@ export function WaitlistClient() {
 
   return (
     <>
-      <section className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
+      <section className="flex-1 overflow-y-auto px-4 space-y-4">
         <motion.div
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <div className="w-[224px] h-[42px] relative mt-10 mx-auto">
+          <div className="w-[224px] h-[42px] relative mt-14 mx-auto">
             <Image
               src="/logo-onboarding.png"
               alt="WAFFLES logo"
@@ -260,7 +267,7 @@ export function WaitlistClient() {
               height={189}
               priority
               alt="scroll"
-              className="mx-auto my-8"
+              className="mx-auto my-6"
             />
           </motion.div>
         </motion.div>
@@ -273,16 +280,16 @@ export function WaitlistClient() {
           {renderContent()}
         </motion.div>
         <motion.div
-          className="mt-8 mb-[env(safe-area-inset-bottom)] pb-6 flex items-center justify-center gap-2"
+          className="mt-4 mb-[env(safe-area-inset-bottom)] pb-6 flex items-center justify-center gap-2"
           animate={{ y: [0, -4, 0] }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
         >
           <CardStack
-            size="clamp(30px, 9vw, 42px)"
+            size="clamp(25px, 9vw, 42px)"
             borderColor="#FFFFFF"
             rotations={[-8, 5, -5, 7]}
           />
-          <p className="font-medium font-display text-[#99A0AE] text-[16px] leading-[130%] tracking-[-0.03em] text-center mt-3">
+          <p className="font-medium font-display text-[#99A0AE] text-[16px] leading-[130%] tracking-[-0.03em] text-center">
             {invites === 0
               ? "You and others are on the list"
               : `You and ${invites} friend${

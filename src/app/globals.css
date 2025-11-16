@@ -320,15 +320,15 @@ more robust and common pattern for layering effects.
 */
 
 .app-background {
-  --gradient-color-start: #1e1e1e;
+  --gradient-color-start: #111111;
   --gradient-color-end: #000000;
 
   position: relative;
-  background-color: var(--gradient-color-start);
+  background-color: var(--gradient-color-end);
   background-image: linear-gradient(
     to bottom,
-    var(--gradient-color-start),
-    var(--gradient-color-end)
+    var(--gradient-color-start) 0%,
+    var(--gradient-color-end) 40%
   );
   min-height: 100vh;
   width: 100%;
@@ -337,7 +337,7 @@ more robust and common pattern for layering effects.
 
 .app-background::after {
   --noise-svg: url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  --noise-opacity: 0.055;
+  --noise-opacity: 0.09;
 
   content: "";
   position: absolute;

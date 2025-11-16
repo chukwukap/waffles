@@ -1,57 +1,31 @@
-import InvitePageClient from "./_components/InvitePageClient";
-import { prisma } from "@/lib/db";
-import { Prisma } from "@prisma/client";
-import { cache, Suspense } from "react";
-import { Spinner } from "@/components/ui/spinner";
+import InvitePageClient from "./client";
+import { minikitConfig } from "../../../../minikit.config";
+import { env } from "@/lib/env";
+import { Metadata } from "next";
 
-export default async function InvitePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ fid: string }>;
-}) {
-  const { fid } = await searchParams;
-  const getUserWithInviteData = cache(async (fid: number) =>
-    prisma.user.findUnique({
-      where: { fid },
-      select: {
-        fid: true,
-        name: true,
-        imageUrl: true,
-        referrals: {
-          take: 1,
-          select: {
-            code: true,
-            inviter: {
-              select: { fid: true, name: true, imageUrl: true },
-            },
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: minikitConfig.miniapp.name,
+    description: `You're invited to join the waitlist.`,
+    other: {
+      "fc:frame": JSON.stringify({
+        version: minikitConfig.miniapp.version,
+        imageUrl: `${env.rootUrl}/api/og/invite`,
+        button: {
+          title: `Open app`,
+          action: {
+            name: `Open app`,
+            type: "launch_frame",
+            url: `${env.rootUrl}/invite`,
+            splashImageUrl: minikitConfig.miniapp.splashImageUrl,
+            splashBackgroundColor: minikitConfig.miniapp.splashBackgroundColor,
           },
         },
-      },
-    })
-  );
-
-  const payloadPromise = getUserWithInviteData(Number(fid));
-
-  return (
-    <Suspense fallback={<Spinner />}>
-      <InvitePageClient payloadPromise={payloadPromise} />
-    </Suspense>
-  );
+      }),
+    },
+  };
 }
 
-export type UserWithInviteData = Prisma.UserGetPayload<{
-  select: {
-    fid: true;
-    name: true;
-    imageUrl: true;
-    referrals: {
-      take: 1;
-      select: {
-        code: true;
-        inviter: {
-          select: { fid: true; name: true; imageUrl: true };
-        };
-      };
-    };
-  };
-}>;
+export default function InvitePage() {
+  return <InvitePageClient />;
+}

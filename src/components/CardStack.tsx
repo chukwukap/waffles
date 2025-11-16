@@ -18,7 +18,7 @@ interface CardStackProps {
 const DEFAULT_ROTATIONS = [-9, 6, -4, 7];
 
 export function CardStack({
-  size = "clamp(32px, 6vw, 48px)",
+  size = "clamp(21px, 6vw, 48px)",
   borderColor = "#FFFFFF",
   rotations = DEFAULT_ROTATIONS,
   interactive = false,

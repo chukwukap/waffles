@@ -1,48 +1,97 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useCallback, use } from "react";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  startTransition,
+} from "react";
 import Image from "next/image";
 import { PixelInput } from "@/components/inputs/PixelInput";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { PixelButton } from "@/components/buttons/PixelButton";
-import { validateReferralAction } from "@/actions/invite";
-import { UserWithInviteData } from "../page";
+import {
+  validateReferralAction,
+  getUserInviteDataAction,
+  type UserWithInviteData,
+  type ValidateReferralResult,
+} from "@/actions/invite";
 import { useRouter } from "next/navigation";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
+import { useActionState } from "react";
 
-export default function InvitePageClient({
-  payloadPromise,
-}: {
-  payloadPromise: Promise<UserWithInviteData | null>;
-}) {
-  const payload = use(payloadPromise);
+export default function InvitePageClient() {
+  const { context } = useMiniKit();
+  const fid = context?.user?.fid;
   const router = useRouter();
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [userData, setUserData] = useState<UserWithInviteData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState<
     "idle" | "validating" | "success" | "failed"
   >("idle");
-  const [inputCode, setInputCode] = useState(
-    payload?.referrals?.[0]?.code || ""
-  );
+  const [inputCode, setInputCode] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  const [validationState, validateAction, isPending] =
+    useActionState<ValidateReferralResult | null, FormData>(
+      validateReferralAction,
+      null
+    );
+
+  // Fetch user invite data on mount
+  useEffect(() => {
+    if (!fid) {
+      setIsLoading(false);
+      return;
+    }
+
+    const fetchUserData = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getUserInviteDataAction(fid);
+        setUserData(data);
+        if (data?.referrals?.[0]?.code) {
+          setInputCode(data.referrals[0].code);
+        }
+      } catch (err) {
+        console.error("Error fetching user invite data:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [fid]);
+
+  // Handle validation result
+  useEffect(() => {
+    if (validationState) {
+      if (validationState.valid) {
+        setError(null);
+        setStatus("success");
+      } else {
+        setError(validationState.error);
+        setStatus("failed");
+      }
+    }
+  }, [validationState]);
+
   const runValidation = useCallback(
-    async (codeToValidate: string) => {
-      if (!payload?.fid) return;
+    (codeToValidate: string) => {
+      if (!fid) return;
 
       const formData = new FormData();
       formData.append("code", codeToValidate);
-      formData.append("fid", String(payload.fid));
+      formData.append("fid", String(fid));
 
-      const result = await validateReferralAction(null, formData);
-
-      if (result.valid) {
-        setError(null);
-        console.log("Referral validated");
-      } else {
-        setError(result.error);
-      }
+      startTransition(() => {
+        validateAction(formData);
+      });
     },
-    [payload?.fid]
+    [fid, validateAction]
   );
 
   useEffect(() => {
@@ -72,7 +121,7 @@ export default function InvitePageClient({
     };
   }, [inputCode, runValidation]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedCode = inputCode.trim().toUpperCase();
 
@@ -81,22 +130,14 @@ export default function InvitePageClient({
       setStatus("failed");
       return;
     }
-    if (!payload?.fid) {
+    if (!fid) {
       setError("User not identified.");
       setStatus("failed");
       return;
     }
 
-    await runValidation(trimmedCode);
-
-    const formData = new FormData();
-    formData.append("code", trimmedCode);
-    formData.append("fid", String(payload.fid));
-    const result = await validateReferralAction(null, formData);
-
-    if (result.valid) {
-      setStatus("success");
-    }
+    setStatus("validating");
+    runValidation(trimmedCode);
   };
 
   return (
@@ -133,32 +174,39 @@ export default function InvitePageClient({
               <span className="block">ENTER YOUR</span>
               <span className="block">INVITE CODE</span>
             </h2>
-            <form
-              onSubmit={handleSubmit}
-              className="w-full  flex flex-col items-center gap-6"
-              autoComplete="off"
-            >
-              <label htmlFor="inviteCodeInput" className="sr-only">
-                Invite Code
-              </label>
-              <PixelInput
-                id="inviteCodeInput"
-                type="text"
-                value={inputCode}
-                onChange={(e) => setInputCode(e.target.value)}
-                placeholder="INVITE CODE"
-                maxLength={6}
-                autoFocus
-                style={{ textTransform: "uppercase" }}
-              />
-              <FancyBorderButton
-                disabled={
-                  inputCode.trim().length !== 6 || status === "validating"
-                }
+            {isLoading ? (
+              <p className="text-center text-white/60">Loading...</p>
+            ) : (
+              <form
+                onSubmit={handleSubmit}
+                className="w-full  flex flex-col items-center gap-6"
+                autoComplete="off"
               >
-                {status === "validating" ? "CHECKING..." : "GET IN"}
-              </FancyBorderButton>
-              {status === "validating" && (
+                <label htmlFor="inviteCodeInput" className="sr-only">
+                  Invite Code
+                </label>
+                <PixelInput
+                  id="inviteCodeInput"
+                  type="text"
+                  value={inputCode}
+                  onChange={(e) => setInputCode(e.target.value)}
+                  placeholder="INVITE CODE"
+                  maxLength={6}
+                  autoFocus
+                  style={{ textTransform: "uppercase" }}
+                />
+                <FancyBorderButton
+                  disabled={
+                    inputCode.trim().length !== 6 ||
+                    isPending ||
+                    status === "validating"
+                  }
+                >
+                  {isPending || status === "validating"
+                    ? "CHECKING..."
+                    : "GET IN"}
+                </FancyBorderButton>
+              {(isPending || status === "validating") && (
                 <p
                   className="text-xs mt-2 text-[#a0a0a0]"
                   style={{
@@ -204,7 +252,8 @@ export default function InvitePageClient({
                   <span>Valid</span>
                 </PixelButton>
               )}
-            </form>
+              </form>
+            )}
           </div>
         </div>
       </div>

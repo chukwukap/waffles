@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/db";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 
 interface ValidationSuccess {
   valid: true;
@@ -215,5 +216,51 @@ export async function getOrCreateReferralCodeAction(
       success: false,
       error: "An unexpected error occurred while processing the referral code.",
     };
+  }
+}
+
+export type UserWithInviteData = Prisma.UserGetPayload<{
+  select: {
+    fid: true;
+    name: true;
+    imageUrl: true;
+    referrals: {
+      take: 1;
+      select: {
+        code: true;
+        inviter: {
+          select: { fid: true; name: true; imageUrl: true };
+        };
+      };
+    };
+  };
+}>;
+
+export async function getUserInviteDataAction(
+  fid: number
+): Promise<UserWithInviteData | null> {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { fid },
+      select: {
+        fid: true,
+        name: true,
+        imageUrl: true,
+        referrals: {
+          take: 1,
+          select: {
+            code: true,
+            inviter: {
+              select: { fid: true, name: true, imageUrl: true },
+            },
+          },
+        },
+      },
+    });
+
+    return user;
+  } catch (err) {
+    console.error("[GET_USER_INVITE_DATA_ERROR]", err);
+    return null;
   }
 }
