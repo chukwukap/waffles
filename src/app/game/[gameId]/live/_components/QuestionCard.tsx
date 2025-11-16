@@ -97,7 +97,7 @@ export function QuestionCard({
   React.useEffect(() => {
     if (!question || !question.soundUrl) return;
 
-    playSound(question.soundUrl, 0.8);
+    playSound(question.soundUrl, { volume: 0.8 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playSound, question.id]);
 

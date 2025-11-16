@@ -9,12 +9,16 @@ import React, {
 import { SOUNDS, SoundName } from "@/lib/constants";
 
 // --- 1. Create the Sound Context ---
+type PlaySoundOptions = {
+  volume?: number;
+};
+
 type SoundContextType = {
   isSoundEnabled: boolean;
   toggleSound: () => void;
   playSound: {
     (sound: SoundName): void;
-    (url: string, volume?: number): void;
+    (url: string, options?: PlaySoundOptions): void;
   };
 };
 
@@ -42,7 +46,7 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
 
   // Function overloads for better autocomplete
   const playSound = useCallback(
-    (soundOrUrl: SoundName | string, urlVolume?: number): void => {
+    (soundOrUrl: SoundName | string, options?: PlaySoundOptions): void => {
       if (!isSoundEnabled) return;
 
       // Skip background sound - it's managed separately in the provider
@@ -68,7 +72,7 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
         soundOrUrl.startsWith("http")
       ) {
         path = soundOrUrl;
-        volume = urlVolume ?? 0.7; // Default to higher volume for question sounds
+        volume = options?.volume ?? 0.7; // Default to higher volume for question sounds
         loop = false;
       } else {
         // --- Handle invalid sound ---
@@ -128,7 +132,7 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
     [isSoundEnabled]
   ) as {
     (sound: SoundName): void;
-    (url: string, volume?: number): void;
+    (url: string, options?: PlaySoundOptions): void;
   };
 
   const toggleSound = useCallback(() => {
