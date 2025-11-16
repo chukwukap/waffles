@@ -44,14 +44,10 @@ export default function RootLayout({
         fontInput.variable,
         "suppress-hydration-warning"
       )}
-      suppressHydrationWarning
+      // suppressHydrationWarning
     >
       <body className={cn("text-foreground app-background")}>
-        <Providers>
-          <main className="h-dvh flex flex-col overflow-hidden">
-            {children}
-          </main>
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

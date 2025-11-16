@@ -27,7 +27,7 @@ export function MinikitProvider({ children }: Props) {
       miniKit={{
         enabled: true,
         autoConnect: true,
-        notificationProxyUrl: undefined,
+        // notificationProxyUrl: env.rootUrl,
       }}
     >
       <IsMiniAppReady>{children}</IsMiniAppReady>
