@@ -1,34 +1,38 @@
 import "./globals.css";
 import { fontBody, fontDisplay, fontInput } from "@/lib/fonts";
-
 import { cn } from "@/lib/utils";
-
 import { Providers } from "@/components/providers/";
-import { minikitConfig } from "../../minikit.config";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
-export async function generateMetadata(): Promise<Metadata> {
-  return {
-    title: minikitConfig.miniapp.name,
-    description: minikitConfig.miniapp.description,
-    other: {
-      "fc:frame": JSON.stringify({
-        version: minikitConfig.miniapp.version,
-        imageUrl: minikitConfig.miniapp.heroImageUrl,
-        button: {
-          title: `Play now`,
-          action: {
-            name: `Play now`,
-            type: "launch_frame",
-            url: minikitConfig.miniapp.homeUrl,
-            splashImageUrl: minikitConfig.miniapp.splashImageUrl,
-            splashBackgroundColor: minikitConfig.miniapp.splashBackgroundColor,
-          },
-        },
-      }),
-    },
-  };
-}
+export const metadata: Metadata = {
+  title: "Waffles",
+  description: "Pattern-matching tournaments built for Farcaster.",
+  keywords: ["waffles", "games", "farcaster", "social", "tournaments", "fun"],
+  openGraph: {
+    title: "Waffles",
+    description: "Play daily social games",
+    url: "https://demo.playwaffles.fun",
+    type: "website",
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        alt: "Waffles OG Image",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Waffles",
+    description: "Play daily social games",
+    images: ["/og.png"],
+  },
+  icons: {
+    icon: "/favicon.ico",
+  },
+  metadataBase: new URL("https://demo.playwaffles.fun"),
+};
 
 export default function RootLayout({
   children,
@@ -44,7 +48,7 @@ export default function RootLayout({
         fontInput.variable,
         "suppress-hydration-warning"
       )}
-      // suppressHydrationWarning
+      suppressHydrationWarning
     >
       <body className={cn("text-foreground app-background")}>
         <Providers>{children}</Providers>

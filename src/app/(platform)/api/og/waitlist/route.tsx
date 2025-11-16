@@ -13,13 +13,31 @@ export const runtime = "edge";
  */
 export async function GET(request: NextRequest) {
   try {
-    // 1. EXTRACT AND VALIDATE URL PARAMETERS
-    // ===========================================
     const { searchParams } = request.nextUrl;
 
     // Get the 'rank' query parameter
     const hasRank = searchParams.has("rank");
     const waitlistRank = hasRank ? searchParams.get("rank") : null;
+
+    // If rank is not passed in, return the default waitlist image immediately
+    if (!waitlistRank) {
+      // This is equivalent to just returning the static waitlist-default.png
+      const defaultImageUrl = `${env.rootUrl}/images/share/waitlist-default.png`;
+      const defaultImageRes = await fetch(defaultImageUrl);
+      if (!defaultImageRes.ok) {
+        return new Response("Failed to fetch default waitlist image", {
+          status: 500,
+        });
+      }
+      // Forward the correct content type header if available
+      const contentType =
+        defaultImageRes.headers.get("content-type") || "image/png";
+      const defaultImageArrayBuffer = await defaultImageRes.arrayBuffer();
+      return new Response(defaultImageArrayBuffer, {
+        status: 200,
+        headers: { "content-type": contentType },
+      });
+    }
 
     // Sanitize and validate the input. We'll allow 1-6 digits.
     // This provides a safe default and prevents layout-breaking input.
@@ -31,55 +49,29 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 2. LOAD REQUIRED ASSETS (FONT & IMAGE URLS)
-    // ===========================================
-    // ImageResponse runs on the server and cannot access local files
-    // directly. All assets (fonts, images) must be fetched from an
-    // absolute URL or provided as data.
-
-    // Get the application's base URL
-    // In production (Vercel), NEXT_PUBLIC_VERCEL_URL is set automatically.
-    // In development, we fall back to localhost.
-
     // --- LOAD CUSTOM FONT ---
-    // The font file MUST be in the /public directory.
-    //
-    //!!! IMPORTANT!!!
-    // UPDATE 'YourPixelFont.ttf' to your actual font filename.
-    // (e.g., /public/fonts/PressStart2P-Regular.ttf)
     const fontUrl = `${env.rootUrl}/fonts/editundo_bd.ttf`;
-
-    // Fetch the font and convert it to an ArrayBuffer [1, 2]
     const fontData = await fetch(fontUrl).then((res) => res.arrayBuffer());
 
     // --- DEFINE IMAGE ASSET URLS ---
-    // All <img> tags and backgroundImages MUST use absolute URLs. [1]
-    // These files MUST be in the /public directory. [3]
-    //
-    //!!! IMPORTANT!!!
-    // UPDATE these paths to match your filenames in /public
     const bgImageUrl = `${env.rootUrl}/images/share/waitlist-bg.png`;
     const logoImageUrl = `${env.rootUrl}/logo-onboarding.png`;
     const scrollImageUrl = `${env.rootUrl}/images/share/scroll.png`;
 
-    // 3. DEFINE THE IMAGE JSX/HTML
-    // ===========================================
-    // This JSX is not React. It's converted by Satori, which only
-    // supports flexbox, absolute positioning, and a subset of CSS. [1, 4]
-    // All styles must be inline.
+    // Define the OG image JSX structure
     const element = (
       <div
         style={{
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          justifyContent: "space-between", // Pushes logo to top, button to bottom
+          justifyContent: "space-between",
           width: "100%",
           height: "100%",
-          backgroundImage: `url(${bgImageUrl})`, // Set background image [1]
-          backgroundSize: "100% 100%", // Cover the container
+          backgroundImage: `url(${bgImageUrl})`,
+          backgroundSize: "100% 100%",
           padding: "40px 20px",
-          fontFamily: '"PixelFont"', // Use the font name defined in options
+          fontFamily: '"PixelFont"',
           color: "white",
           letterSpacing: "1px",
         }}
@@ -87,14 +79,13 @@ export async function GET(request: NextRequest) {
         {/* === TOP LOGO === */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={logoImageUrl} width="212" height="42" alt="WAFFLES Logo" />
-
         {/* === MIDDLE CONTENT === */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: 20, // 'gap' is supported in flex containers
+            gap: 20,
           }}
         >
           {/* Dynamic Text: "I'M #4 ON THE" */}
@@ -109,10 +100,8 @@ export async function GET(request: NextRequest) {
             <span style={{ color: "#FCD34D" }}>{validatedRank}</span>
             &nbsp;ON THE
           </div>
-
           {/* Static Text: "WAITLIST" */}
           <div style={{ fontSize: 50 }}>WAITLIST</div>
-
           {/* Scroll Image */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -120,24 +109,22 @@ export async function GET(request: NextRequest) {
             width="250"
             height="277"
             alt="Waitlist Scroll"
-            style={{ marginTop: 30 }} // 'margin' is supported
+            style={{ marginTop: 30 }}
           />
         </div>
-
         {/* === BOTTOM BUTTON === */}
-        {/* We create the button with CSS for crisp, clear text */}
         <div
           style={{
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            backgroundColor: "#FCD34D", // Button yellow
-            color: "#1F2937", // Dark gray text
+            backgroundColor: "#FCD34D",
+            color: "#1F2937",
             fontSize: 24,
             width: 300,
             height: 50,
             borderRadius: 25,
-            border: "3px solid #000", // Pixel-art style border
+            border: "3px solid #000",
             letterSpacing: "0.5px",
           }}
         >
@@ -146,13 +133,9 @@ export async function GET(request: NextRequest) {
       </div>
     );
 
-    // 4. RETURN THE IMAGERESPONSE
-    // ===========================================
     return new ImageResponse(element, {
-      // Set the image dimensions to match your square card
       width: 800,
       height: 800,
-      // Pass the font data to the options [1]
       fonts: [
         {
           name: "Editundo BD",
@@ -163,7 +146,6 @@ export async function GET(request: NextRequest) {
       ],
     });
   } catch (e: unknown) {
-    // Handle any errors during image generation
     console.error(e);
     return new Response(`Failed to generate the image`, {
       status: 500,

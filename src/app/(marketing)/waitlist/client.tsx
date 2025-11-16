@@ -41,55 +41,48 @@ export function WaitlistClient() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch waitlist data from API
-  useEffect(() => {
+  // Fetch waitlist data helper
+  const fetchWaitlistData = useCallback(async () => {
     if (!fid) {
       setIsLoading(false);
       return;
     }
 
-    const fetchWaitlistData = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const response = await fetch(`/api/waitlist?fid=${fid}`);
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await fetch(`/api/waitlist?fid=${fid}`);
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch waitlist data");
-        }
-
-        const data: WaitlistData = await response.json();
-        setWaitlistData(data);
-      } catch (err) {
-        console.error("Error fetching waitlist data:", err);
-        setError("Failed to load waitlist data");
-        // Set default data on error
-        setWaitlistData({
-          onList: false,
-          rank: null,
-          invites: 0,
-        });
-      } finally {
-        setIsLoading(false);
+      if (!response.ok) {
+        throw new Error("Failed to fetch waitlist data");
       }
-    };
 
-    fetchWaitlistData();
+      const data: WaitlistData = await response.json();
+      setWaitlistData(data);
+    } catch (err) {
+      console.error("Error fetching waitlist data:", err);
+      setError("Failed to load waitlist data");
+      setWaitlistData({
+        onList: false,
+        rank: null,
+        invites: 0,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }, [fid]);
+
+  // Fetch waitlist data on mount
+  useEffect(() => {
+    fetchWaitlistData();
+  }, [fetchWaitlistData]);
 
   // Refresh waitlist data after successful join
   useEffect(() => {
     if (state.ok && !state.already && !pending && fid) {
-      fetch(`/api/waitlist?fid=${fid}`)
-        .then((res) => res.json())
-        .then((data: WaitlistData) => {
-          setWaitlistData(data);
-        })
-        .catch((err) => {
-          console.error("Error refreshing waitlist data:", err);
-        });
+      fetchWaitlistData();
     }
-  }, [state.ok, state.already, pending, fid]);
+  }, [state.ok, state.already, pending, fid, fetchWaitlistData]);
 
   const { onList, rank, invites } = waitlistData || {
     onList: false,
@@ -146,13 +139,18 @@ export function WaitlistClient() {
     router,
   ]);
 
+  // Shuffle the splash images randomly
   const splashImages = [
+    "/images/splash/crew-4.png",
     "/images/splash/crew-1.png",
+    "/images/splash/crew-8.png",
     "/images/splash/crew-2.png",
     "/images/splash/crew-3.png",
-    "/images/splash/crew-4.png",
-    "/images/splash/crew-5.png",
     "/images/splash/crew-6.png",
+    "/images/splash/crew-5.png",
+    "/images/splash/crew-7.png",
+    "/images/splash/crew-9.png",
+    "/images/splash/crew-10.png",
   ];
 
   // Helper for good English messages
@@ -160,8 +158,8 @@ export function WaitlistClient() {
     n === 0
       ? "No friends invited yet. Share to climb the list!"
       : n === 1
-      ? "You’ve invited 1 friend. Share to move up!"
-      : `You’ve invited ${n} friends. Share to move up!`;
+      ? "You've invited 1 friend. Share to move up!"
+      : `You've invited ${n} friends. Share to move up!`;
 
   const rankMsg = (n: number | null) => {
     if (n === 1) return "You're #1 on the waitlist.";
@@ -169,21 +167,79 @@ export function WaitlistClient() {
     return "You're on the waitlist!";
   };
 
+  // Shared heading styles
+  const headingBaseClasses = "font-body text-white text-[clamp(32px,8vw,44px)] leading-[92%]";
+  const headingJoinClasses = "font-body font-normal not-italic text-[44px] leading-[92%] tracking-[-0.03em] text-center text-white";
+  const descriptionClasses = "text-[#99A0AE] font-display text-[clamp(14px,3.4vw,18px)] leading-[130%] mt-3";
+  const errorClasses = "text-red-400 text-sm mt-2";
+
+  // Render content based on state
+  const renderContent = () => {
+    if (isLoading) {
+      return <h1 className={headingBaseClasses}>LOADING...</h1>;
+    }
+
+    if (error) {
+      return (
+        <>
+          <h1 className={headingBaseClasses}>ERROR</h1>
+          <p className={errorClasses}>{error}</p>
+        </>
+      );
+    }
+
+    if (onList) {
+      return (
+        <>
+          <h1 className={headingBaseClasses}>
+            YOU&apos;RE ON <br /> THE LIST
+          </h1>
+          <p className={descriptionClasses}>
+            {rankMsg(rank)}
+            <br />
+            {friendText(invites)}
+          </p>
+          <FancyBorderButton onClick={share} className="mt-2" disabled={pending}>
+            SHARE
+          </FancyBorderButton>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <h1 className={headingJoinClasses}>JOIN THE WAITLIST</h1>
+        <p className={descriptionClasses}>
+          Join now to be first to play when Waffles launches
+        </p>
+        {state.error && <p className={errorClasses}>{state.error}</p>}
+        <form action={handleSubmit} className="mt-6">
+          {context?.user?.fid && (
+            <input type="hidden" name="fid" value={context.user.fid} />
+          )}
+          {ref && <input type="hidden" name="ref" value={ref} />}
+          <FancyBorderButton type="submit" disabled={pending}>
+            {pending ? "JOINING..." : "GET ME ON THE LIST"}
+          </FancyBorderButton>
+        </form>
+      </>
+    );
+  };
+
   return (
-    <div className="relative min-h-screen w-full  overflow-hidden">
-      <main className="relative w-full max-w-[420px] mx-auto text-white pt-[env(safe-area-inset-top)] px-4">
+    <>
+      <section className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
         <motion.div
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="mt-6 flex justify-center"
         >
-          <div className="flex flex-row items-center justify-center mt-10">
+          <div className="w-[224px] h-[42px] relative mt-10 mx-auto">
             <Image
               src="/logo-onboarding.png"
               alt="WAFFLES logo"
-              width={200}
-              height={150}
+              width={224}
+              height={42}
               priority
               className="object-contain"
             />
@@ -193,7 +249,6 @@ export function WaitlistClient() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.1 }}
-          className="flex justify-center mt-[7vh]"
         >
           <motion.div
             animate={{ y: [0, -8, 0] }}
@@ -205,7 +260,7 @@ export function WaitlistClient() {
               height={189}
               priority
               alt="scroll"
-              className="w-[38vw] max-w-[170px]"
+              className="mx-auto my-8"
             />
           </motion.div>
         </motion.div>
@@ -215,59 +270,7 @@ export function WaitlistClient() {
           transition={{ duration: 0.55, delay: 0.2 }}
           className="mt-[2vh] flex flex-col items-center text-center"
         >
-          {isLoading ? (
-            <>
-              <h1 className="font-body text-white text-[clamp(32px,8vw,44px)] leading-[92%]">
-                LOADING...
-              </h1>
-            </>
-          ) : error ? (
-            <>
-              <h1 className="font-body text-white text-[clamp(32px,8vw,44px)] leading-[92%]">
-                ERROR
-              </h1>
-              <p className="text-red-400 text-sm mt-2">{error}</p>
-            </>
-          ) : onList ? (
-            <>
-              <h1 className="font-body text-white text-[clamp(32px,8vw,44px)] leading-[92%]">
-                YOU&apos;RE ON <br /> THE LIST
-              </h1>
-              <p className="text-[#99A0AE] font-display text-[clamp(14px,3.4vw,18px)] leading-[130%] mt-3">
-                {rankMsg(rank)}
-                <br />
-                {friendText(invites)}
-              </p>
-              <FancyBorderButton
-                onClick={share}
-                className="mt-2"
-                disabled={pending}
-              >
-                SHARE
-              </FancyBorderButton>
-            </>
-          ) : (
-            <>
-              <h1 className="font-body text-white text-[clamp(32px,8vw,44px)] leading-[92%]">
-                JOIN THE WAITLIST
-              </h1>
-              <p className="text-[#99A0AE] font-display text-[clamp(14px,3.4vw,18px)] leading-[130%] mt-3">
-                Join now to be first to play when Waffles launches
-              </p>
-              {state.error && (
-                <p className="text-red-400 text-sm mt-2">{state.error}</p>
-              )}
-              <form action={handleSubmit} className="mt-6">
-                {context?.user?.fid && (
-                  <input type="hidden" name="fid" value={context.user.fid} />
-                )}
-                {ref && <input type="hidden" name="ref" value={ref} />}
-                <FancyBorderButton type="submit" disabled={pending}>
-                  {pending ? "JOINING..." : "GET ME ON THE LIST"}
-                </FancyBorderButton>
-              </form>
-            </>
-          )}
+          {renderContent()}
         </motion.div>
         <motion.div
           className="mt-8 mb-[env(safe-area-inset-bottom)] pb-6 flex items-center justify-center gap-2"
@@ -279,7 +282,7 @@ export function WaitlistClient() {
             borderColor="#FFFFFF"
             rotations={[-8, 5, -5, 7]}
           />
-          <p className="text-[#99A0AE] font-display text-[clamp(14px,3.4vw,18px)] leading-[130%] mt-3">
+          <p className="font-medium font-display text-[#99A0AE] text-[16px] leading-[130%] tracking-[-0.03em] text-center mt-3">
             {invites === 0
               ? "You and others are on the list"
               : `You and ${invites} friend${
@@ -287,10 +290,9 @@ export function WaitlistClient() {
                 } are on the list`}
           </p>
         </motion.div>
-      </main>
-
-      <div className="absolute bottom-0 w-full flex justify-center items-end pointer-events-none">
-        <div className="flex flex-row items-end -space-x-4">
+      </section>
+      <footer className="shrink-0">
+        <div className="flex flex-row items-stretch  -space-x-16">
           {splashImages.map((src, index) => (
             <Image
               priority
@@ -303,7 +305,7 @@ export function WaitlistClient() {
             />
           ))}
         </div>
-      </div>
-    </div>
+      </footer>
+    </>
   );
 }

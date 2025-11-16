@@ -5,6 +5,38 @@ import { Metadata } from "next";
 import { cache } from "react";
 import { env } from "@/lib/env";
 
+export async function generateMetadata({
+  searchParams,
+}: Props): Promise<Metadata> {
+  const sParams = await searchParams;
+  const rank = sParams.rank ? parseInt(sParams.rank as string) : null;
+
+  const IMAGE_URL = sParams.ref
+    ? `${env.rootUrl}/api/og/waitlist?rank=${rank}&ref=${sParams.ref}`
+    : `${env.rootUrl}/images/share/waitlist-default.png`;
+
+  return {
+    title: minikitConfig.miniapp.name,
+    description: `You're #${rank} on the waitlist.`,
+    other: {
+      "fc:frame": JSON.stringify({
+        version: minikitConfig.miniapp.version,
+        imageUrl: IMAGE_URL,
+        button: {
+          title: `Join the waitlist ➡️📋`,
+          action: {
+            name: `Join the waitlist`,
+            type: "launch_frame",
+            url: `${env.rootUrl}/waitlist`,
+            splashImageUrl: minikitConfig.miniapp.splashImageUrl,
+            splashBackgroundColor: minikitConfig.miniapp.splashBackgroundColor,
+          },
+        },
+      }),
+    },
+  };
+}
+
 /**
  * Calculates fair waitlist rank, considering both creation time and invites.
  * A user's rank is determined by their waitlist "score" (more invites = better), then by earliest join.
@@ -64,38 +96,6 @@ export const getUser = cache(async (fid: number) => {
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
-
-export async function generateMetadata({
-  searchParams,
-}: Props): Promise<Metadata> {
-  const sParams = await searchParams;
-  const rank = sParams.rank ? parseInt(sParams.rank as string) : null;
-
-  const IMAGE_URL = sParams.ref
-    ? `${env.rootUrl}/api/og/waitlist?rank=${rank}&ref=${sParams.ref}`
-    : `${env.rootUrl}/images/share/waitlist-bg.png`;
-
-  return {
-    title: minikitConfig.miniapp.name,
-    description: `You're #${rank} on the waitlist.`,
-    other: {
-      "fc:frame": JSON.stringify({
-        version: minikitConfig.miniapp.version,
-        imageUrl: IMAGE_URL,
-        button: {
-          title: `Join the waitlist ➡️📋`,
-          action: {
-            name: `Join the waitlist`,
-            type: "launch_frame",
-            url: `${env.rootUrl}/waitlist`,
-            splashImageUrl: minikitConfig.miniapp.splashImageUrl,
-            splashBackgroundColor: minikitConfig.miniapp.splashBackgroundColor,
-          },
-        },
-      }),
-    },
-  };
-}
 
 export default async function WaitlistPage() {
   return <WaitlistClient />;
