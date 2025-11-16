@@ -6,6 +6,7 @@ import { useGameEvents } from "@/hooks/useGameEvents";
 import { sendMessageAction } from "@/actions/chat";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useSound } from "@/components/providers/SoundContext";
+import { ChatWithUser } from "@/state/types";
 
 interface ChatCommentType {
   id: number;
@@ -62,8 +63,8 @@ export const Chat = ({
         const response = await fetch(`/api/chat?gameId=${gameId}`);
         if (!response.ok) throw new Error("Failed to fetch messages");
 
-        const messages = await response.json();
-        const formattedComments: ChatCommentType[] = messages.map((msg: any) => ({
+        const messages: ChatWithUser[] = await response.json();
+        const formattedComments: ChatCommentType[] = messages.map((msg) => ({
           id: msg.id,
           name: msg.user.name ?? "anon",
           time: new Date(msg.createdAt).toLocaleTimeString("en-US", {
