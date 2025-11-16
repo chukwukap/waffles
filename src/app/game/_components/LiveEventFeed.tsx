@@ -1,93 +1,79 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { useGameEvents } from "@/hooks/useGameEvents";
 
 type EventType = "join" | "chat";
 
-// --- Mock Data ---
-// In a real app, this data would come from your backend/websocket
-const mockUsernames = [
-  "uxpotato",
-  "delfin0x",
-  "cyberverse.eth",
-  "ninja",
-  "reactdev",
-];
-const mockEventContents = [
-  "is this thing working",
-  "joined the lobby",
-  "readyyyyy",
-  "LFG!",
-  "hello world",
-  "gm",
-];
-const mockAvatars = [
-  "/images/lobby/1.jpg", // uxpotato
-  "/images/lobby/2.jpg", // delfin0x
-  "/images/lobby/3.jpg", // cyberverse.eth
-  "/images/lobby/4.jpg", // ninja
-  "/images/lobby/5.jpg", // reactdev
-];
-
 interface Event {
   id: number;
-  avatar: string;
+  avatar: string | null;
   content: string;
   type: EventType;
   username: string;
 }
 
-let eventId = 0;
-
-const createMockEvent = (): Event => {
-  const userIndex = Math.floor(Math.random() * mockUsernames.length);
-  const content =
-    Math.random() > 0.3
-      ? mockEventContents[Math.floor(Math.random() * mockEventContents.length)]
-      : "joined the lobby";
-
-  if (content === "joined the lobby") {
-    return {
-      id: eventId++,
-      avatar: mockAvatars[userIndex],
-      content: `${mockUsernames[userIndex]} joined the lobby`,
-      type: "join",
-      username: mockUsernames[userIndex],
-    };
-  } else {
-    return {
-      id: eventId++,
-      avatar: mockAvatars[userIndex],
-      content: content,
-      type: "chat",
-      username: mockUsernames[userIndex],
-    };
-  }
-};
-
 // --- LiveEventFeed Component ---
-// This is the component you requested.
-// It shows the last `maxEvents` and fades them out.
+// Shows real-time game events (chat messages and player joins)
 export default function LiveEventFeed({
   maxEvents = 5,
+  gameId,
 }: {
   maxEvents: number;
+  gameId: number | null;
 }) {
   const [events, setEvents] = useState<Event[]>([]);
 
-  // Simulate receiving new events every 2.5 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
+  // Handle chat events
+  const handleChat = useCallback(
+    (chatEvent: {
+      id: number;
+      user: { name: string; imageUrl: string | null };
+      message: string;
+    }) => {
+      const newEvent: Event = {
+        id: chatEvent.id,
+        avatar: chatEvent.user.imageUrl,
+        content: chatEvent.message,
+        type: "chat",
+        username: chatEvent.user.name,
+      };
+
       setEvents((currentEvents) => {
-        const newEvent = createMockEvent();
-        // Add new event and keep only the last `maxEvents`
         return [...currentEvents, newEvent].slice(-maxEvents);
       });
-    }, 2500); // New event every 2.5s
+    },
+    [maxEvents]
+  );
 
-    // Clear interval on component unmount
-    return () => clearInterval(interval);
-  }, [maxEvents]);
+  // Handle join events
+  const handleJoin = useCallback(
+    (joinEvent: {
+      id: number;
+      user: { name: string; imageUrl: string | null };
+    }) => {
+      const newEvent: Event = {
+        id: joinEvent.id,
+        avatar: joinEvent.user.imageUrl,
+        content: `${joinEvent.user.name} joined the lobby`,
+        type: "join",
+        username: joinEvent.user.name,
+      };
+
+      setEvents((currentEvents) => {
+        return [...currentEvents, newEvent].slice(-maxEvents);
+      });
+    },
+    [maxEvents]
+  );
+
+  // Subscribe to real-time events
+  useGameEvents({
+    gameId,
+    enabled: !!gameId,
+    onChat: handleChat,
+    onJoin: handleJoin,
+  });
 
   // Calculate opacity based on index.
   // The newest event (last in the array) has the highest opacity.
@@ -120,7 +106,7 @@ export default function LiveEventFeed({
               transition={{ duration: 0.5, ease: "easeInOut" }}
             >
               <Image
-                src={event.avatar}
+                src={event.avatar || "/images/lobby/1.jpg"}
                 alt="avatar"
                 width={24}
                 height={24}

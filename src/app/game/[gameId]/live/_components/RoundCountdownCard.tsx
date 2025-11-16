@@ -10,9 +10,11 @@ import { useSound } from "@/components/providers/SoundContext";
 export default function RoundCountdownCard({
   duration,
   onComplete,
+  gameId,
 }: {
   duration: number;
   onComplete: () => void;
+  gameId: number | null;
 }) {
   const [chatOpen, setChatOpen] = useState(false);
   const { playSound } = useSound();
@@ -25,9 +27,13 @@ export default function RoundCountdownCard({
     <>
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
         <CountdownTimer duration={duration} onComplete={onComplete} />
-        <LiveEventFeed maxEvents={5} />
+        <LiveEventFeed maxEvents={5} gameId={gameId} />
       </div>
-      <Chat isOpen={chatOpen} onClose={() => setChatOpen(false)} />
+      <Chat
+        isOpen={chatOpen}
+        onClose={() => setChatOpen(false)}
+        gameId={gameId}
+      />
       <ChatInput onOpenChat={() => setChatOpen(true)} />
     </>
   );

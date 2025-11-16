@@ -119,6 +119,7 @@ export default function LiveGameClient({
         <RoundCountdownCard
           duration={gameInfo?.config?.roundTimeLimit ?? 15}
           onComplete={handleRoundCountdownComplete}
+          gameId={gameInfo?.id ?? null}
         />
       ) : (
         <QuestionCard

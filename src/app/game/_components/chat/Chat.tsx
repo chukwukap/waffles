@@ -2,62 +2,87 @@ import { useState, useRef, useEffect } from "react";
 import { ChatIcon, SendIcon } from "@/components/icons";
 import Backdrop from "@/components/ui/Backdrop";
 import { ChatComment } from "./ChatComment";
+import { useGameEvents } from "@/hooks/useGameEvents";
+import { sendMessageAction } from "@/actions/chat";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
+import { useSound } from "@/components/providers/SoundContext";
+
+interface ChatCommentType {
+  id: number;
+  name: string;
+  time: string;
+  message: string;
+  avatarUrl: string | null;
+}
 
 export const Chat = ({
   isOpen,
   onClose,
+  gameId,
 }: {
   isOpen: boolean;
   onClose: () => void;
+  gameId: number | null;
 }) => {
+  const { context: miniKitContext } = useMiniKit();
+  const fid = miniKitContext?.user?.fid;
+  const { playSound } = useSound();
   const [message, setMessage] = useState("");
-  const [comments, setComments] = useState([
-    {
-      id: 1,
-      name: "rugpull847",
-      time: "13:42",
-      message: "game tuff man",
-      avatarUrl: "/images/lobby/1.jpg",
-    },
-    {
-      id: 2,
-      name: "ianbowenthe",
-      time: "13:42",
-      message: "LFGGGG",
-      avatarUrl: "/images/lobby/2.jpg",
-    },
-    {
-      id: 3,
-      name: "funddswen",
-      time: "13:42",
-      message: "Next round come onnnn",
-      avatarUrl: "/images/lobby/3.jpg",
-    },
-    {
-      id: 4,
-      name: "apestonk",
-      time: "13:42",
-      message: "👀",
-      avatarUrl: "/images/lobby/4.jpg",
-    },
-    {
-      id: 5,
-      name: "0xpotato",
-      time: "13:42",
-      message: "is this thing working",
-      avatarUrl: "/images/lobby/5.jpg",
-    },
-    {
-      id: 6,
-      name: "bullishmaxi",
-      time: "13:42",
-      message: "i love this game",
-      avatarUrl: "/images/lobby/6.jpg",
-    },
-  ]);
-
+  const [comments, setComments] = useState<ChatCommentType[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const chatListRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null); // Ref for the input
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Subscribe to real-time chat events
+  useGameEvents({
+    gameId,
+    enabled: isOpen && !!gameId,
+    onChat: (chatEvent) => {
+      const comment: ChatCommentType = {
+        id: chatEvent.id,
+        name: chatEvent.user.name,
+        time: new Date(chatEvent.createdAt).toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        }),
+        message: chatEvent.message,
+        avatarUrl: chatEvent.user.imageUrl,
+      };
+      setComments((prev) => [...prev, comment]);
+    },
+  });
+
+  // Load initial chat messages when opening
+  useEffect(() => {
+    if (!isOpen || !gameId) return;
+
+    const fetchMessages = async () => {
+      try {
+        const response = await fetch(`/api/chat?gameId=${gameId}`);
+        if (!response.ok) throw new Error("Failed to fetch messages");
+
+        const messages = await response.json();
+        const formattedComments: ChatCommentType[] = messages.map((msg: any) => ({
+          id: msg.id,
+          name: msg.user.name ?? "anon",
+          time: new Date(msg.createdAt).toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          }),
+          message: msg.message,
+          avatarUrl: msg.user.imageUrl,
+        }));
+
+        setComments(formattedComments);
+      } catch (error) {
+        console.error("Error fetching chat messages:", error);
+      }
+    };
+
+    fetchMessages();
+  }, [isOpen, gameId]);
 
   // Auto-scroll to bottom when new comments are added
   useEffect(() => {
@@ -66,24 +91,26 @@ export const Chat = ({
     }
   }, [comments]);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (message.trim() === "") return;
+    if (message.trim() === "" || !gameId || !fid || isSubmitting) return;
 
-    const newComment = {
-      id: Date.now(),
-      name: "You",
-      time: new Date().toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      }),
+    setIsSubmitting(true);
+    playSound("click");
+
+    const result = await sendMessageAction({
+      gameId,
       message: message.trim(),
-      avatarUrl: "/images/lobby/7.jpg", // Placeholder for user's avatar
-    };
+      fid,
+    });
 
-    setComments([...comments, newComment]);
-    setMessage("");
+    if (result.success) {
+      setMessage("");
+    } else {
+      console.error("Failed to send message:", result.error);
+    }
+
+    setIsSubmitting(false);
   };
 
   const hasText = message.trim().length > 0;
@@ -144,15 +171,21 @@ export const Chat = ({
           ref={chatListRef}
           className="flex-1 space-y-3.5 overflow-y-auto p-4"
         >
-          {comments.map((comment) => (
-            <ChatComment
-              key={comment.id}
-              name={comment.name}
-              time={comment.time}
-              message={comment.message}
-              avatarUrl={comment.avatarUrl}
-            />
-          ))}
+          {comments.length === 0 ? (
+            <div className="flex items-center justify-center h-full text-white/40">
+              No messages yet. Be the first to chat!
+            </div>
+          ) : (
+            comments.map((comment) => (
+              <ChatComment
+                key={comment.id}
+                name={comment.name}
+                time={comment.time}
+                message={comment.message}
+                avatarUrl={comment.avatarUrl}
+              />
+            ))
+          )}
         </div>
 
         {/* Footer Input */}
@@ -163,27 +196,28 @@ export const Chat = ({
             className="flex h-[58px] w-full items-center gap-3 rounded-full bg-white/5 px-4 cursor-text" // Add cursor-text
           >
             <input
-              ref={inputRef} // Assign the ref
+              ref={inputRef}
               type="text"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Type a comment"
+              disabled={isSubmitting}
               className="flex-1 font-display bg-transparent text-sm font-medium text-white placeholder:text-white/40
-                         focus:outline-none"
+                         focus:outline-none disabled:opacity-50"
               style={{ letterSpacing: "-0.03em" }}
             />
             {/* Send Button - appears when there is text */}
             <button
               type="submit"
-              disabled={!hasText}
+              disabled={!hasText || isSubmitting}
               className={`flex h-[30px] w-[50px] items-center justify-center rounded-full bg-blue-500
                          transition-all duration-200 ease-in-out
                          ${
-                           hasText
+                           hasText && !isSubmitting
                              ? "scale-100 opacity-100"
                              : "scale-50 opacity-0"
                          }
-                         ${!hasText ? "pointer-events-none" : ""}
+                         ${!hasText || isSubmitting ? "pointer-events-none" : ""}
                          hover:bg-blue-400 active:bg-blue-600
                          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
                          focus-visible:ring-offset-2 focus-visible:ring-offset-black`}
