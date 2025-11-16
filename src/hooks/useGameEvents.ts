@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 
-type EventType = "chat" | "join" | "connected" | "error";
+// type EventType = "chat" | "join" | "connected" | "error";
 
 interface ChatEvent {
   type: "chat";
@@ -38,7 +38,7 @@ interface JoinEvent {
 type GameEvent =
   | ChatEvent
   | JoinEvent
-  | { type: "connected" | "error"; [key: string]: any };
+  | { type: "connected" | "error"; message?: string };
 
 interface UseGameEventsOptions {
   gameId: number | null;
@@ -124,4 +124,3 @@ export function useGameEvents({
     disconnect,
   };
 }
-
