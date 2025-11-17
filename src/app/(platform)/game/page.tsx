@@ -57,3 +57,5 @@ async function getUpComingOrActiveGame() {
     },
   });
 }
+
+export const dynamic = "force-dynamic";

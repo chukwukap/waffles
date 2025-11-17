@@ -154,6 +154,7 @@ export function QuestionCard({
               src={question.imageUrl}
               alt={question.text}
               fill
+              fetchPriority="high"
               className="object-cover w-full h-full rounded-[10px]"
               sizes="299px"
             />

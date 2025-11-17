@@ -8,18 +8,19 @@ import React, {
   startTransition,
 } from "react";
 import Image from "next/image";
-import { PixelInput } from "@/components/inputs/PixelInput";
+
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
-import { PixelButton } from "@/components/buttons/PixelButton";
 import {
   validateReferralAction,
   getUserInviteDataAction,
   type ValidateReferralResult,
 } from "@/actions/invite";
-import { useRouter } from "next/navigation";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useActionState } from "react";
-
+import { useRouter } from "next/navigation";
+import { InvitePageHeader } from "./_components/InviteHeader";
+import { InviteInput } from "./_components/InviteInput";
+import { InfoButton, FailedIcon, SuccessIcon } from "./_components/InfoButton";
 export default function InvitePageClient() {
   const { context } = useMiniKit();
   const fid = context?.user?.fid;
@@ -68,12 +69,18 @@ export default function InvitePageClient() {
       if (validationState.valid) {
         setError(null);
         setStatus("success");
+        // Auto-redirect to game lobby after successful validation
+        const redirectTimer = setTimeout(() => {
+          router.push("/game");
+        }, 1500); // Small delay to show success state
+
+        return () => clearTimeout(redirectTimer);
       } else {
         setError(validationState.error);
         setStatus("failed");
       }
     }
-  }, [validationState]);
+  }, [validationState, router]);
 
   const runValidation = useCallback(
     (codeToValidate: string) => {
@@ -137,122 +144,94 @@ export default function InvitePageClient() {
   };
 
   return (
-    // Outer background container fills all available space and is absolutely positioned
-    <div className="relative min-h-screen flex flex-col w-full">
-      {/* BG layer (fills parent) */}
-      <div
-        className="absolute inset-0 w-full h-full app-background-gradient pointer-events-none z-0"
-        aria-hidden="true"
-      />
+    <>
+      <InvitePageHeader />
 
-      {/* Main invite contents positioned with max width and centered */}
-      <div className="z-10 relative flex flex-col flex-1 w-full min-h-screen">
-        <div
-          className={
-            "p-4 flex items-center justify-center border-y border-border bg-transparent"
-          }
+      <div className="flex-1 overflow-y-auto px-4 space-y-4">
+        <div className="flex justify-center w-[95px] h-[113px] mx-auto my-8">
+          <Image
+            src="/images/illustrations/invite-key.png"
+            alt="Invite Key"
+            width={95}
+            height={113}
+            fetchPriority="high"
+          />
+        </div>
+        <h2
+          className="
+            text-center
+            font-normal
+            font-body
+            text-[44px]
+            not-italic
+            leading-[0.92]
+            tracking-[-0.03em]
+          "
         >
-          <Image src="/images/logo.svg" alt="Logo" width={32} height={32} />
-        </div>
-
-        <div className="flex flex-col items-center justify-center flex-1 py-16 px-4">
-          <div className="w-full max-w-md mx-auto">
-            <div className="mb-6 flex justify-center">
-              <Image
-                src="/images/illustrations/invite-key.png"
-                alt="Invite Key"
-                width={105}
-                height={105}
-                style={{ imageRendering: "pixelated" }}
-              />
-            </div>
-            <h2 className="mb-8 text-center text-3xl leading-tight font-bold uppercase tracking-wider">
-              <span className="block">ENTER YOUR</span>
-              <span className="block">INVITE CODE</span>
-            </h2>
-            {isLoading ? (
-              <p className="text-center text-white/60">Loading...</p>
-            ) : (
-              <form
-                onSubmit={handleSubmit}
-                className="w-full  flex flex-col items-center gap-6"
-                autoComplete="off"
+          ENTER YOUR INVITE CODE
+        </h2>
+        {isLoading ? (
+          <p className="text-center text-white/60">Loading...</p>
+        ) : (
+          <form
+            onSubmit={handleSubmit}
+            className="w-full  flex flex-col items-center gap-6"
+            autoComplete="off"
+          >
+            <label htmlFor="inviteCodeInput" className="sr-only">
+              Invite Code
+            </label>
+            <InviteInput
+              id="inviteCodeInput"
+              type="text"
+              value={inputCode}
+              onChange={(e) => setInputCode(e.target.value)}
+              placeholder="INVITE CODE"
+              maxLength={6}
+              autoFocus
+              style={{ textTransform: "uppercase" }}
+            />
+            <FancyBorderButton
+              disabled={
+                inputCode.trim().length !== 6 ||
+                isPending ||
+                status === "validating"
+              }
+            >
+              {isPending || status === "validating" ? "CHECKING..." : "GET IN"}
+            </FancyBorderButton>
+            {(isPending || status === "validating") && (
+              <p
+                className="text-xs mt-2 text-[#a0a0a0]"
+                style={{
+                  fontFamily: "'Press Start 2P', 'Geist Mono', monospace",
+                  letterSpacing: "0.04em",
+                }}
               >
-                <label htmlFor="inviteCodeInput" className="sr-only">
-                  Invite Code
-                </label>
-                <PixelInput
-                  id="inviteCodeInput"
-                  type="text"
-                  value={inputCode}
-                  onChange={(e) => setInputCode(e.target.value)}
-                  placeholder="INVITE CODE"
-                  maxLength={6}
-                  autoFocus
-                  style={{ textTransform: "uppercase" }}
-                />
-                <FancyBorderButton
-                  disabled={
-                    inputCode.trim().length !== 6 ||
-                    isPending ||
-                    status === "validating"
-                  }
-                >
-                  {isPending || status === "validating"
-                    ? "CHECKING..."
-                    : "GET IN"}
-                </FancyBorderButton>
-                {(isPending || status === "validating") && (
-                  <p
-                    className="text-xs mt-2 text-[#a0a0a0]"
-                    style={{
-                      fontFamily: "'Press Start 2P', 'Geist Mono', monospace",
-                      letterSpacing: "0.04em",
-                    }}
-                  >
-                    Validating...
-                  </p>
-                )}
-                {status === "failed" && error && (
-                  <PixelButton
-                    className="flex items-center gap-2 font-body"
-                    backgroundColor="#FF5252"
-                    borderColor="#FF5252"
-                    textColor="#FFFFFF"
-                    type="button"
-                  >
-                    <Image
-                      src="/images/icons/icon-invalid.png"
-                      alt="Invalid Invite Code"
-                      width={20}
-                      height={20}
-                    />
-                    <span>{error || "Invalid"}</span>
-                  </PixelButton>
-                )}
-                {status === "success" && (
-                  <PixelButton
-                    className="flex items-center gap-2 font-body"
-                    backgroundColor="#14B985"
-                    borderColor="#14B985"
-                    textColor="#FFFFFF"
-                    onClick={() => router.push("/lobby")}
-                    type="button"
-                  >
-                    <Image
-                      src="/images/icons/icon-valid.png"
-                      alt="Valid Invite Code"
-                      width={20}
-                      height={20}
-                    />
-                    <span>Valid</span>
-                  </PixelButton>
-                )}
-              </form>
+                Validating...
+              </p>
             )}
-          </div>
-        </div>
+            {status === "failed" && error && (
+              <InfoButton
+                text={error || "Invalid"}
+                onClick={() => {}}
+                type="button"
+                className="mt-15"
+              >
+                <FailedIcon className="h-[18px] w-[18px]" />
+                <span>{error || "Invalid"}</span>
+              </InfoButton>
+            )}
+
+            {status === "success" && (
+              <InfoButton text="Valid" onClick={() => {}} type="button">
+                <SuccessIcon className="h-[18px] w-[18px]" />
+                <span>Valid</span>
+              </InfoButton>
+            )}
+          </form>
+        )}
       </div>
-    </div>
+    </>
   );
 }
