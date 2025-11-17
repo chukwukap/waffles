@@ -14,30 +14,66 @@ export type MutualsData = {
  * Mutuals are users who follow each other (bidirectional follows).
  * If there aren't enough mutuals, fills remaining slots with top players.
  */
+/**
+ * Fetches all users that a given user follows (with pagination)
+ */
+async function fetchAllFollowing(fid: number): Promise<number[]> {
+  let cursor: string | null = "";
+  const fids: number[] = [];
+
+  do {
+    const result = await neynar.fetchUserFollowing({
+      fid,
+      limit: 150,
+      cursor: cursor || undefined,
+    });
+
+    fids.push(...result.result.users.map((u) => u.fid));
+    cursor = result.result.next?.cursor || null;
+  } while (cursor !== "" && cursor !== null);
+
+  return fids;
+}
+
+/**
+ * Fetches all users that follow a given user (with pagination)
+ */
+async function fetchAllFollowers(fid: number): Promise<number[]> {
+  let cursor: string | null = "";
+  const fids: number[] = [];
+
+  do {
+    const result = await neynar.fetchUserFollowers({
+      fid,
+      limit: 150,
+      cursor: cursor || undefined,
+    });
+
+    fids.push(...result.result.users.map((u) => u.fid));
+    cursor = result.result.next?.cursor || null;
+  } while (cursor !== "" && cursor !== null);
+
+  return fids;
+}
+
 export async function getMutualsAction(
   fid: number,
   gameId: number | null,
   context: "waitlist" | "game"
 ): Promise<MutualsData> {
   try {
-    // Fetch user's following and followers from Neynar
-    const [followingResponse, followersResponse] = await Promise.all([
-      neynar.fetchUserFollowing({ fid, limit: 150 }),
-      neynar.fetchUserFollowers({ fid, limit: 150 }),
+    // Fetch user's following and followers from Neynar (with pagination)
+    const [followingFids, followersFids] = await Promise.all([
+      fetchAllFollowing(fid),
+      fetchAllFollowers(fid),
     ]);
 
-    // Extract FIDs from responses
-    const followingFids = new Set(
-      followingResponse.result.users.map((u) => u.fid)
-    );
-    const followersFids = new Set(
-      followersResponse.result.users.map((u) => u.fid)
-    );
+    // Convert to Sets for efficient lookup
+    const followingSet = new Set(followingFids);
+    const followersSet = new Set(followersFids);
 
     // Find mutuals: users who appear in both lists (bidirectional follows)
-    const mutualFids = Array.from(followingFids).filter((fid) =>
-      followersFids.has(fid)
-    );
+    const mutualFids = followingFids.filter((fid) => followersSet.has(fid));
 
     if (mutualFids.length === 0) {
       // No mutuals found, return top players only
