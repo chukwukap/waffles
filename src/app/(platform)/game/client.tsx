@@ -5,13 +5,14 @@ import { Clock } from "@/components/icons";
 import { calculatePrizePool } from "@/lib/utils";
 
 import { useCountdown } from "@/hooks/useCountdown";
-import { AvatarDiamond } from "./_components/AvatarDiamond";
 import LiveEventFeed from "./_components/LiveEventFeed";
 import { Chat } from "./_components/chat/Chat";
 import { GameActionButton } from "./_components/GameActionButton";
 import { Prisma, Ticket } from "@prisma/client";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { ChatInput } from "@/app/(platform)/game/_components/chat/ChatTrigger";
+import { getMutualsAction, type MutualsData } from "@/actions/mutuals";
+import { CardStack } from "@/components/CardStack";
 
 function formatTime(remainingSeconds: number): string {
   const seconds = Math.max(0, remainingSeconds);
@@ -36,6 +37,7 @@ export default function GameHomePageClient({
   const upcomingOrActiveGame = use(upcomingOrActiveGamePromise);
   const [chatOpen, setChatOpen] = useState(false);
   const [ticket, setTicket] = useState<Ticket | null>(null);
+  const [mutualsData, setMutualsData] = useState<MutualsData | null>(null);
 
   const startTimeMs = upcomingOrActiveGame?.startTime?.getTime() ?? 0;
   const endTimeMs = upcomingOrActiveGame?.endTime?.getTime() ?? 0;
@@ -63,6 +65,26 @@ export default function GameHomePageClient({
     maximumFractionDigits: 2,
   })}`;
   const playerCount = upcomingOrActiveGame?._count.participants ?? 0;
+
+  // Fetch mutuals data
+  useEffect(() => {
+    if (!fid || !upcomingOrActiveGame?.id) return;
+
+    const fetchMutuals = async () => {
+      try {
+        const data = await getMutualsAction(
+          fid,
+          upcomingOrActiveGame.id,
+          "game"
+        );
+        setMutualsData(data);
+      } catch (err) {
+        console.error("Error fetching mutuals:", err);
+      }
+    };
+
+    fetchMutuals();
+  }, [fid, upcomingOrActiveGame?.id]);
 
   useEffect(() => {
     if (!fid || !upcomingOrActiveGame?.id) {
@@ -165,17 +187,24 @@ export default function GameHomePageClient({
           </span>
         </div>
         <div className="w-full flex flex-col items-center justify-center mb-4">
-          <AvatarDiamond
-            cellMin={32}
-            cellMax={54}
-            gap={2}
-            className="scale-95 sm:scale-100"
+          <CardStack
+            size="clamp(32px, 7vw, 54px)"
+            borderColor="#FFFFFF"
+            imageUrls={
+              mutualsData?.mutuals
+                .map((m) => m.imageUrl)
+                .filter((url): url is string => url !== null) ?? undefined
+            }
           />
           <p className="mt-1 min-w-[120px] text-center font-display font-medium tracking-[-0.03em] text-muted text-[clamp(13px,4vw,16px)] leading-[130%]">
-            {playerCount === 0
-              ? "No players have joined yet"
-              : `${playerCount.toLocaleString()} ${
-                  playerCount === 1 ? "player has" : "players have"
+            {mutualsData?.mutualCount === 0
+              ? playerCount === 0
+                ? "No players have joined yet"
+                : `${playerCount.toLocaleString()} ${
+                    playerCount === 1 ? "player has" : "players have"
+                  } joined`
+              : `${mutualsData?.mutualCount ?? 0} friend${
+                  (mutualsData?.mutualCount ?? 0) === 1 ? "" : "s"
                 } joined`}
           </p>
         </div>

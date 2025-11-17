@@ -13,6 +13,7 @@ interface CardStackProps {
   maxCards?: number;
   ariaLabel?: string;
   className?: string;
+  imageUrls?: string[];
 }
 
 const DEFAULT_ROTATIONS = [-9, 6, -4, 7];
@@ -25,8 +26,9 @@ export function CardStack({
   maxCards = 4,
   ariaLabel = "Image card stack",
   className,
+  imageUrls,
 }: CardStackProps) {
-  const spotsAvatars = useMemo(() => {
+  const defaultAvatars = useMemo(() => {
     return [
       "/images/lobby/1.jpg",
       "/images/lobby/2.jpg",
@@ -34,6 +36,14 @@ export function CardStack({
       "/images/lobby/4.jpg",
     ];
   }, []);
+
+  const spotsAvatars = useMemo(() => {
+    // Use provided imageUrls if available, otherwise fallback to default
+    if (imageUrls && imageUrls.length > 0) {
+      return imageUrls;
+    }
+    return defaultAvatars;
+  }, [imageUrls, defaultAvatars]);
   const x = useMotionValue(0);
   const tilt = useTransform(x, [-100, 100], [-4, 4]);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -72,10 +82,11 @@ export function CardStack({
     >
       {cardsToDisplay.map((img, i) => {
         const staticRotation = rotations[i % rotations.length] ?? 0;
+        const imageUrl = spotsAvatars[i];
 
         return (
           <motion.div
-            key={spotsAvatars[i] + i}
+            key={`${imageUrl}-${i}`}
             style={{
               width: "var(--card-size)",
               height: "var(--card-size)",
@@ -99,7 +110,7 @@ export function CardStack({
               className="w-full h-full"
             >
               <Image
-                src={spotsAvatars[i]}
+                src={imageUrl}
                 alt={`Card ${i + 1}`}
                 fill
                 sizes="var(--card-size)"

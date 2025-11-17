@@ -8,6 +8,7 @@ import { TicketPageGameInfo, TicketPageUserInfo } from "./page";
 import { WaffleCard } from "./_components/WaffleCard";
 import { Ticket } from "@prisma/client";
 import { SuccessCard } from "./_components/SuccessCard";
+import { getMutualsAction, type MutualsData } from "@/actions/mutuals";
 type TicketPageClientImplProps = {
   gameInfoPromise: Promise<TicketPageGameInfo | null>;
   userInfoPromise: Promise<TicketPageUserInfo | null>;
@@ -23,6 +24,7 @@ export default function TicketPageClientImpl({
   const [ticket, setTicket] = useState<Ticket | null>(
     userInfo && userInfo.tickets.length > 0 ? userInfo.tickets[0] : null
   );
+  const [mutualsData, setMutualsData] = useState<MutualsData | null>(null);
 
   // Check if user already has a ticket for this game
   useEffect(() => {
@@ -48,6 +50,22 @@ export default function TicketPageClientImpl({
     };
 
     fetchTicket();
+  }, [userInfo?.fid, gameInfo?.id]);
+
+  // Fetch mutuals data
+  useEffect(() => {
+    if (!userInfo?.fid || !gameInfo?.id) return;
+
+    const fetchMutuals = async () => {
+      try {
+        const data = await getMutualsAction(userInfo.fid, gameInfo.id, "game");
+        setMutualsData(data);
+      } catch (err) {
+        console.error("Error fetching mutuals:", err);
+      }
+    };
+
+    fetchMutuals();
   }, [userInfo?.fid, gameInfo?.id]);
 
   // --- Derived State ---
@@ -119,9 +137,21 @@ export default function TicketPageClientImpl({
       </div>
 
       <div className="flex flex-col items-center mb-8">
-        <CardStack size="clamp(32px,7vw,48px)" borderColor="#fff" />
+        <CardStack
+          size="clamp(32px,7vw,48px)"
+          borderColor="#fff"
+          imageUrls={
+            mutualsData?.mutuals
+              .map((m) => m.imageUrl)
+              .filter((url): url is string => url !== null) ?? undefined
+          }
+        />
         <p className="font-display text-[#99A0AE] text-sm mt-2">
-          and 2 others have joined the game
+          {mutualsData?.mutualCount === 0
+            ? "and others have joined the game"
+            : `and ${mutualsData?.mutualCount ?? 0} other${
+                (mutualsData?.mutualCount ?? 0) === 1 ? "" : "s"
+              } have joined the game`}
         </p>
       </div>
     </div>

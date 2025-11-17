@@ -17,6 +17,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { joinWaitlistAction, type JoinWaitlistState } from "@/actions/waitlist";
 import { useAddFrame, useMiniKit } from "@coinbase/onchainkit/minikit";
 import { env } from "@/lib/env";
+import { getMutualsAction, type MutualsData } from "@/actions/mutuals";
 
 export interface WaitlistData {
   onList: boolean;
@@ -40,6 +41,7 @@ export function WaitlistClient() {
   const [waitlistData, setWaitlistData] = useState<WaitlistData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mutualsData, setMutualsData] = useState<MutualsData | null>(null);
 
   // Fetch waitlist data helper
   const fetchWaitlistData = useCallback(async () => {
@@ -76,6 +78,22 @@ export function WaitlistClient() {
   useEffect(() => {
     fetchWaitlistData();
   }, [fetchWaitlistData]);
+
+  // Fetch mutuals data
+  useEffect(() => {
+    if (!fid) return;
+
+    const fetchMutuals = async () => {
+      try {
+        const data = await getMutualsAction(fid, null, "waitlist");
+        setMutualsData(data);
+      } catch (err) {
+        console.error("Error fetching mutuals:", err);
+      }
+    };
+
+    fetchMutuals();
+  }, [fid]);
 
   // Refresh waitlist data after successful join
   useEffect(() => {
@@ -288,12 +306,17 @@ export function WaitlistClient() {
             size="clamp(25px, 9vw, 42px)"
             borderColor="#FFFFFF"
             rotations={[-8, 5, -5, 7]}
+            imageUrls={
+              mutualsData?.mutuals
+                .map((m) => m.imageUrl)
+                .filter((url): url is string => url !== null) ?? undefined
+            }
           />
           <p className="font-medium font-display text-[#99A0AE] text-[16px] leading-[130%] tracking-[-0.03em] text-center">
-            {invites === 0
+            {mutualsData?.mutualCount === 0
               ? "You and others are on the list"
-              : `You and ${invites} friend${
-                  invites === 1 ? "" : "s"
+              : `You and ${mutualsData?.mutualCount ?? 0} friend${
+                  (mutualsData?.mutualCount ?? 0) === 1 ? "" : "s"
                 } are on the list`}
           </p>
         </motion.div>
