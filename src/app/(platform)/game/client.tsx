@@ -5,6 +5,7 @@ import { Clock } from "@/components/icons";
 import { calculatePrizePool } from "@/lib/utils";
 
 import { useCountdown } from "@/hooks/useCountdown";
+import { AvatarDiamond } from "./_components/AvatarDiamond";
 import LiveEventFeed from "./_components/LiveEventFeed";
 import { Chat } from "./_components/chat/Chat";
 import { GameActionButton } from "./_components/GameActionButton";
@@ -12,7 +13,6 @@ import { Prisma, Ticket } from "@prisma/client";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { ChatInput } from "@/app/(platform)/game/_components/chat/ChatTrigger";
 import { getMutualsAction, type MutualsData } from "@/actions/mutuals";
-import { CardStack } from "@/components/CardStack";
 
 function formatTime(remainingSeconds: number): string {
   const seconds = Math.max(0, remainingSeconds);
@@ -187,14 +187,11 @@ export default function GameHomePageClient({
           </span>
         </div>
         <div className="w-full flex flex-col items-center justify-center mb-4">
-          <CardStack
-            size="clamp(32px, 7vw, 54px)"
-            borderColor="#FFFFFF"
-            imageUrls={
-              mutualsData?.mutuals
-                .map((m) => m.imageUrl)
-                .filter((url): url is string => url !== null) ?? undefined
-            }
+          <AvatarDiamond
+            cellMin={32}
+            cellMax={54}
+            gap={2}
+            className="scale-95 sm:scale-100"
           />
           <p className="mt-1 min-w-[120px] text-center font-display font-medium tracking-[-0.03em] text-muted text-[clamp(13px,4vw,16px)] leading-[130%]">
             {mutualsData?.mutualCount === 0
