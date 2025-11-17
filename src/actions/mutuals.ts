@@ -15,21 +15,61 @@ export type MutualsData = {
  * If there aren't enough mutuals, fills remaining slots with top players.
  */
 /**
+ * Type guard for Neynar API response structure
+ */
+type NeynarResponse = {
+  result?: {
+    users?: Array<{ user?: { fid?: number }; fid?: number }>;
+    next?: { cursor?: string | null };
+  };
+  users?: Array<{ user?: { fid?: number }; fid?: number }>;
+  next?: { cursor?: string | null };
+};
+
+/**
+ * Extracts FIDs from Neynar response
+ */
+function extractFids(response: NeynarResponse): number[] {
+  const users =
+    response.result?.users ||
+    (response.users as Array<{ user?: { fid?: number }; fid?: number }>) ||
+    [];
+  const fids: number[] = [];
+
+  for (const user of users) {
+    const fid = user.user?.fid || user.fid;
+    if (fid && typeof fid === "number") {
+      fids.push(fid);
+    }
+  }
+
+  return fids;
+}
+
+/**
+ * Extracts cursor from Neynar response
+ */
+function extractCursor(response: NeynarResponse): string | null {
+  return response.result?.next?.cursor || response.next?.cursor || null;
+}
+
+/**
  * Fetches all users that a given user follows (with pagination)
+ * Based on: https://docs.neynar.com/docs/how-to-fetch-mutual-followfollowers-in-farcaster
  */
 async function fetchAllFollowing(fid: number): Promise<number[]> {
   let cursor: string | null = "";
   const fids: number[] = [];
 
   do {
-    const result = await neynar.fetchUserFollowing({
+    const result = (await neynar.fetchUserFollowing({
       fid,
       limit: 150,
       cursor: cursor || undefined,
-    });
+    })) as NeynarResponse;
 
-    fids.push(...result.result.users.map((u) => u.fid));
-    cursor = result.result.next?.cursor || null;
+    fids.push(...extractFids(result));
+    cursor = extractCursor(result);
   } while (cursor !== "" && cursor !== null);
 
   return fids;
@@ -37,20 +77,21 @@ async function fetchAllFollowing(fid: number): Promise<number[]> {
 
 /**
  * Fetches all users that follow a given user (with pagination)
+ * Based on: https://docs.neynar.com/docs/how-to-fetch-mutual-followfollowers-in-farcaster
  */
 async function fetchAllFollowers(fid: number): Promise<number[]> {
   let cursor: string | null = "";
   const fids: number[] = [];
 
   do {
-    const result = await neynar.fetchUserFollowers({
+    const result = (await neynar.fetchUserFollowers({
       fid,
       limit: 150,
       cursor: cursor || undefined,
-    });
+    })) as NeynarResponse;
 
-    fids.push(...result.result.users.map((u) => u.fid));
-    cursor = result.result.next?.cursor || null;
+    fids.push(...extractFids(result));
+    cursor = extractCursor(result);
   } while (cursor !== "" && cursor !== null);
 
   return fids;
@@ -69,7 +110,6 @@ export async function getMutualsAction(
     ]);
 
     // Convert to Sets for efficient lookup
-    const followingSet = new Set(followingFids);
     const followersSet = new Set(followersFids);
 
     // Find mutuals: users who appear in both lists (bidirectional follows)
@@ -87,9 +127,6 @@ export async function getMutualsAction(
     });
 
     const mutualUserIds = mutualUsers.map((u) => u.id);
-    const mutualFidToImageUrl = new Map(
-      mutualUsers.map((u) => [u.fid, u.imageUrl])
-    );
 
     // Filter mutuals who have joined game/waitlist
     let joinedMutuals: Array<{ fid: number; imageUrl: string | null }> = [];
