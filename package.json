@@ -10,9 +10,6 @@
     "postinstall": "prisma generate",
     "seed:game": "tsx scripts/seed-game.ts"
   },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  },
   "dependencies": {
     "@coinbase/onchainkit": "^1.1.1",
     "@farcaster/miniapp-node": "^0.1.11",
