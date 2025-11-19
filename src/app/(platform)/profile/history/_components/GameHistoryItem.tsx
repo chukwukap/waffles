@@ -129,8 +129,8 @@ export default function GameHistoryItem({ game }: GameHistoryItemProps) {
             <FancyBorderButton
               onClick={handleClaim}
               disabled={isClaiming}
-              className="h-[34px] text-[16px] border-[#14B985] text-[#14B985] w-full"
-              fullWidth
+              className="w-[92px] h-[29px] text-[12px] border-[#14B985] text-[#14B985]"
+              fullWidth={false}
             >
               CLAIM
             </FancyBorderButton>
