@@ -3,12 +3,14 @@ import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 
 import { BottomNav } from "@/components/BottomNav";
+import { cache } from "react";
 
+// This type is still correct
 export type TicketPageUserInfo = Prisma.UserGetPayload<{
   select: {
     fid: true;
-    imageUrl: true;
-    name: true;
+    username: true; // Use new 'username' field
+    pfpUrl: true; // Use new 'pfpUrl' field
     tickets: {
       where: {
         gameId: number;
@@ -17,14 +19,18 @@ export type TicketPageUserInfo = Prisma.UserGetPayload<{
   };
 }>;
 
+// This type is UPDATED to reflect the new schema
 export type TicketPageGameInfo = Prisma.GameGetPayload<{
   select: {
     id: true;
-    name: true;
+    title: true;
     description: true;
-    startTime: true;
-    endTime: true;
-    config: true;
+    startsAt: true;
+    endsAt: true;
+    theme: true;
+    entryFee: true;
+    prizePool: true;
+    maxPlayers: true;
     _count: {
       select: {
         tickets: {
@@ -37,19 +43,21 @@ export type TicketPageGameInfo = Prisma.GameGetPayload<{
   };
 }>;
 
+// This is the server component
 export default async function TicketPage({
   params,
   searchParams,
 }: {
   params: Promise<{ gameId: string }>;
-  searchParams: Promise<{ fid: string }>;
+  searchParams: Promise<{ fid: string; ticketCode?: string }>; // Added ticketCode
 }) {
   const { gameId } = await params;
-  const { fid } = await searchParams;
+  const { fid, ticketCode } = await searchParams; // Added ticketCode
 
   if (!fid) {
     console.warn("FID NOT FOUND");
-    return null;
+    // Handle this case gracefully, maybe redirect or show error
+    // For now, we'll let it pass to getUserInfo which will return null
   }
 
   const gameIdNum = Number(gameId);
@@ -57,17 +65,21 @@ export default async function TicketPage({
     throw new Error("Invalid game ID");
   }
 
-  const getGameInfo = async () => {
+  // UPDATED getGameInfo to use new schema
+  const getGameInfo = cache(async () => {
     return prisma.game
       .findUnique({
         where: { id: gameIdNum },
         select: {
           id: true,
-          name: true,
+          title: true,
           description: true,
-          startTime: true,
-          endTime: true,
-          config: true,
+          startsAt: true,
+          endsAt: true,
+          theme: true,
+          entryFee: true,
+          prizePool: true,
+          maxPlayers: true,
           _count: {
             select: {
               tickets: {
@@ -85,9 +97,10 @@ export default async function TicketPage({
         }
         return game;
       });
-  };
+  });
 
-  const getUserInfo = async (fid: number | null) => {
+  // UPDATED getUserInfo to use new field names
+  const getUserInfo = cache(async (fid: number | null) => {
     if (fid === null || isNaN(Number(fid))) {
       return null;
     }
@@ -95,8 +108,8 @@ export default async function TicketPage({
       where: { fid },
       select: {
         fid: true,
-        imageUrl: true,
-        name: true,
+        username: true, // Use new 'username' field
+        pfpUrl: true, // Use new 'pfpUrl' field
         tickets: {
           where: {
             gameId: gameIdNum,
@@ -104,7 +117,7 @@ export default async function TicketPage({
         },
       },
     });
-  };
+  });
 
   const gameInfoPromise = getGameInfo();
   const userInfoPromise = getUserInfo(Number(fid));

@@ -1,7 +1,7 @@
 "use client";
 
 import { use } from "react";
-import WinningsCard from "./_components/WinningsCard";
+import WinningsCard from "../_component/WinningsCard";
 import Leaderboard from "./_components/Leaderboard";
 import Image from "next/image";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
@@ -49,7 +49,7 @@ export default function ScorePageClient({
         winnings={winnings}
         score={score}
         rank={rank}
-        avatarUrl={userInfo.avatarUrl}
+        pfpUrl={userInfo.pfpUrl} // CHANGED: from avatarUrl
         username={userInfo.username}
       />
 

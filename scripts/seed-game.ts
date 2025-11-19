@@ -1,15 +1,19 @@
 import { PrismaClient } from "@prisma/client";
-import { getGameQuestions, defaultGameConfig } from "./game-data";
+import {
+  getGameQuestions,
+  defaultGameConfig,
+  getCorrectIndex,
+} from "./game-data";
 
 const prisma = new PrismaClient();
 
 /**
- * Seed a new game with questions and rounds
- * Usage: pnpm seed:game
+ * Seed a new game with questions
+ * Usage: pnpm seed:game [startMinutes] [durationHours]
  *
  * Creates a new game with:
- * - Start time: 1 minute from now
- * - End time: 1 hour from now
+ * - Start time: 1 minute from now (or custom)
+ * - End time: 1 hour from now (or custom)
  * - Default game configuration
  * - All rounds and questions from game-data.ts
  */
@@ -28,67 +32,60 @@ async function main() {
   }
 
   const now = Date.now();
-  const startTime = new Date(now + startMinutes * 60 * 1000);
-  const endTime = new Date(now + durationHours * 60 * 60 * 1000);
+  const startsAt = new Date(now + startMinutes * 60 * 1000);
+  const endsAt = new Date(now + durationHours * 60 * 60 * 1000);
 
   // Get game questions
-  const gameQuestions = getGameQuestions();
+  const rounds = getGameQuestions();
 
   console.log(`Creating new game...`);
-  console.log(`Start time: ${startTime.toISOString()}`);
-  console.log(`End time: ${endTime.toISOString()}`);
+  console.log(`Start time: ${startsAt.toISOString()}`);
+  console.log(`End time: ${endsAt.toISOString()}`);
 
   // Create the game
   const game = await prisma.game.create({
     data: {
-      name: "Movie & TV Scene Quiz",
+      title: "Movie & TV Scene Quiz",
       description: "Guess the movie or TV show a famous scene is from.",
-      startTime,
-      endTime,
-      config: {
-        create: defaultGameConfig,
-      },
+      theme: defaultGameConfig.theme,
+      status: "SCHEDULED",
+      startsAt,
+      endsAt,
+      entryFee: defaultGameConfig.entryFee,
+      prizePool: defaultGameConfig.prizePool,
+      roundDurationSec: defaultGameConfig.roundDurationSec,
+      questionCount: defaultGameConfig.questionCount,
+      maxPlayers: defaultGameConfig.maxPlayers,
     },
   });
 
   console.log(`✓ Created game with ID: ${game.id}`);
 
-  // Create rounds and their questions
-  for (const round of gameQuestions) {
-    const createdRound = await prisma.round.create({
-      data: {
-        gameId: game.id,
-        roundNum: round.roundNum,
-      },
-    });
-
+  // Create questions for each round
+  for (const round of rounds) {
     // Create questions for this round
     await prisma.question.createMany({
-      data: round.data.map((q) => ({
+      data: round.questions.map((q) => ({
         gameId: game.id,
-        roundId: createdRound.id,
-        text: q.text,
-        imageUrl: q.imageUrl,
-        soundUrl: q.soundUrl,
-        correctAnswer: q.correctAnswer,
+        roundIndex: round.roundIndex,
+        content: q.content,
+        mediaUrl: q.mediaUrl,
         options: q.options,
-        createdAt: new Date(),
+        correctIndex: getCorrectIndex(q.correctAnswer, q.options),
+        durationSec: defaultGameConfig.roundDurationSec,
       })),
     });
 
     console.log(
-      `✓ Created round ${round.roundNum} with ${round.data.length} questions`
+      `✓ Created round ${round.roundIndex} with ${round.questions.length} questions`
     );
   }
 
+  const totalQuestions = rounds.reduce((sum, r) => sum + r.questions.length, 0);
+
   console.log(`\n✅ Successfully seeded game ${game.id}!`);
-  console.log(`   Total rounds: ${gameQuestions.length}`);
-  console.log(
-    `   Total questions: ${gameQuestions.reduce(
-      (sum, r) => sum + r.data.length,
-      0
-    )}`
-  );
+  console.log(`   Total rounds: ${rounds.length}`);
+  console.log(`   Total questions: ${totalQuestions}`);
 }
 
 main()

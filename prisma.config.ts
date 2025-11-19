@@ -1,9 +1,7 @@
 import path from "node:path";
-import { defineConfig, env } from "prisma/config";
+import { defineConfig } from "prisma/config";
 
-type Env = {
-  DATABASE_URL: string;
-};
+process.loadEnvFile();
 
 export default defineConfig({
   engine: "classic",
@@ -13,7 +11,6 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    url: env<Env>("DATABASE_URL"),
+    url: process.env.DATABASE_URL!,
   },
 });
-

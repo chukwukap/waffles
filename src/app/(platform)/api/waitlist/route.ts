@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
 
-// Query parameter validation schema
+// Query parameter validation schema (still valid)
 const querySchema = z.object({
   fid: z
     .string()
@@ -11,44 +11,41 @@ const querySchema = z.object({
 });
 
 /**
- * Calculates fair waitlist rank, considering both creation time and invites.
- * A user's rank is determined by their waitlist "score" (more invites = better), then by earliest join.
- * - Score = invites * 10000 - createdAt timestamp (smaller = better)
- * - Higher invites always ranks above, earlier join time breaks ties.
+ * Calculates fair waitlist rank, considering both invites and creation time.
+ * A user's rank is determined by their "score".
+ * - Score = inviteQuota * 1_000_000_000 - createdAt timestamp (higher score is better)
+ * - Higher invite quota always ranks above, earlier join time breaks ties.
  * Returns 1-based rank (1 = best). Returns null if not on waitlist.
  */
 async function getWaitlistRank(fid: number): Promise<number | null> {
   const user = await prisma.user.findUnique({
     where: { fid },
-    select: { id: true, fid: true, waitlist: true },
+    select: { id: true, status: true, inviteQuota: true, createdAt: true },
   });
 
-  if (!user || !user.waitlist) {
+  // Not on waitlist or not a user
+  if (!user || user.status !== "WAITLIST") {
     return null;
   }
 
-  const waitlistEntry = user.waitlist;
+  // Calculate the user's score
   const userScore =
-    (waitlistEntry.invites || 0) * 10000 -
-    new Date(waitlistEntry.createdAt).getTime();
+    user.inviteQuota * 1_000_000_000 - new Date(user.createdAt).getTime();
 
-  // Find how many waitlist entries have a better (lower) score
-  const allEntries = await prisma.waitlist.findMany({
-    select: { invites: true, createdAt: true },
+  // Find how many waitlist entries have a better (higher) score
+  const allEntries = await prisma.user.findMany({
+    where: { status: "WAITLIST" },
+    select: { inviteQuota: true, createdAt: true },
   });
 
   let betterCount = 0;
   for (const entry of allEntries) {
     const entryScore =
-      (entry.invites || 0) * 10000 - new Date(entry.createdAt).getTime();
+      entry.inviteQuota * 1_000_000_000 - new Date(entry.createdAt).getTime();
+
     if (entryScore > userScore) {
-      // lower score = better
-      continue;
-    }
-    if (entryScore < userScore) {
       betterCount++;
     }
-    // If scores are equal, do not increment (user and entry tie, i.e., the user is only ranked after those clearly better).
   }
 
   return betterCount + 1; // 1-based rank
@@ -62,7 +59,7 @@ export interface WaitlistData {
 
 /**
  * GET /api/waitlist?fid=<fid>
- * Fetches waitlist data for a given user FID
+ * Fetches waitlist data for a given user FID using the new User schema
  */
 export async function GET(request: NextRequest) {
   try {
@@ -82,7 +79,7 @@ export async function GET(request: NextRequest) {
     // Fetch user data
     const user = await prisma.user.findUnique({
       where: { fid },
-      select: { id: true, fid: true, waitlist: true },
+      select: { id: true, fid: true, status: true },
     });
 
     if (!user) {
@@ -94,14 +91,19 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Calculate rank
-    const rank = await getWaitlistRank(user.fid);
+    // Calculate rank and invites in parallel
+    const [rank, invites] = await Promise.all([
+      getWaitlistRank(user.fid),
+      prisma.referralReward.count({
+        where: { inviterId: user.id },
+      }),
+    ]);
 
     // Return waitlist data
     const waitlistData: WaitlistData = {
-      onList: rank !== null,
+      onList: user.status === "WAITLIST",
       rank,
-      invites: user.waitlist?.invites ?? 0,
+      invites,
     };
 
     return NextResponse.json(waitlistData);

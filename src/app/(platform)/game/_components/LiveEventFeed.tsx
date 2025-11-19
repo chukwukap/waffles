@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
@@ -68,15 +69,15 @@ export default function LiveEventFeed({
   const handleChat = useCallback(
     (chatEvent: {
       id: number;
-      user: { name: string; imageUrl: string | null };
+      user: { username: string; pfpUrl: string | null };
       message: string;
     }) => {
       const newEvent: Event = {
         id: chatEvent.id,
-        avatar: chatEvent.user.imageUrl,
+        avatar: chatEvent.user.pfpUrl,
         content: chatEvent.message,
         type: "chat",
-        username: chatEvent.user.name,
+        username: chatEvent.user.username,
       };
 
       setEvents((currentEvents) => {
@@ -90,14 +91,14 @@ export default function LiveEventFeed({
   const handleJoin = useCallback(
     (joinEvent: {
       id: number;
-      user: { name: string; imageUrl: string | null };
+      user: { username: string; pfpUrl: string | null };
     }) => {
       const newEvent: Event = {
         id: joinEvent.id,
-        avatar: joinEvent.user.imageUrl,
-        content: `${joinEvent.user.name} joined the lobby`,
+        avatar: joinEvent.user.pfpUrl,
+        content: `${joinEvent.user.username} joined the lobby`,
         type: "join",
-        username: joinEvent.user.name,
+        username: joinEvent.user.username,
       };
 
       setEvents((currentEvents) => {

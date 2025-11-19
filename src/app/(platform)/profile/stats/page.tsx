@@ -1,118 +1,136 @@
 import { cache } from "react";
-import StatsClient from "./_components/statsClient";
+
 import { prisma } from "@/lib/db";
 import type { AllTimeStats } from "@/lib/types";
+import { calculateStreak } from "@/lib/streaks";
+import StatsClient from "./client";
 
 // Single optimized query pass to get all relevant participation data for stats
 const getAllTimeStats = cache(async (fid: number): Promise<AllTimeStats> => {
-  // Get user's game participations, joinedAt, tickets/winnings, scores in one go
-  const participations = await prisma.gameParticipant.findMany({
-    where: { userId: fid },
+  // 1. Find user by FID to get their internal ID
+  const user = await prisma.user.findUnique({
+    where: { fid },
+    select: { id: true },
+  });
+
+  if (!user) {
+    // Return empty stats if user not found
+    return {
+      totalGames: 0,
+      wins: 0,
+      winRate: "0%",
+      totalWon: "$0.00",
+      highestScore: 0,
+      averageScore: 0,
+      currentStreak: 0,
+      bestRank: "-",
+    };
+  }
+
+  // 2. Get all user's game participations, including game and ticket info
+  const participations = await prisma.gamePlayer.findMany({
+    where: { userId: user.id },
     select: {
       gameId: true,
       joinedAt: true,
+      score: true,
+      rank: true, // Get the final rank
       game: {
         select: {
-          scores: {
-            select: {
-              userId: true,
-              points: true,
-            },
-          },
+          // Get this user's ticket for this game to find winnings
           tickets: {
-            where: { userId: fid },
-            select: {
-              amountUSDC: true,
-              userId: true,
+            where: {
+              userId: user.id,
+              status: "PAID", // Or "REDEEMED", based on your logic
             },
-            take: 1, // only for this user
+            select: { amountUSDC: true },
+            take: 1,
           },
         },
       },
     },
+    orderBy: {
+      joinedAt: "desc", // For streak calculation
+    },
   });
 
   const totalGames = participations.length;
+  if (totalGames === 0) {
+    return {
+      totalGames: 0,
+      wins: 0,
+      winRate: "0%",
+      totalWon: "$0.00",
+      highestScore: 0,
+      averageScore: 0,
+      currentStreak: 0,
+      bestRank: "-",
+    };
+  }
 
-  // Prepare to calculate stats
+  // 3. Prepare to calculate stats
   let wins = 0;
   let totalWon = 0;
   let highestScore = 0;
   let scoreSum = 0;
-  let gamesWithScore = 0;
-
-  // For computing streak and best rank
-  const streakArr: Array<{ joinedAt: Date; win: boolean }> = [];
   let bestRank: number = Infinity;
+  const gameDates: Date[] = [];
 
   for (const part of participations) {
-    // Find the user's ticket for this game (should only be 0 or 1)
-    const ticket = part.game.tickets?.[0];
-    const amountUSDC = ticket?.amountUSDC ?? 0;
-
-    // Only consider games with score for average/highest, rank, etc
-    const userScoreObj = part.game.scores.find((s) => s.userId === fid);
-    const userPoints = userScoreObj?.points ?? null;
-
-    if (userPoints !== null) {
-      gamesWithScore++;
-      scoreSum += userPoints;
-      if (userPoints > highestScore) highestScore = userPoints;
-
-      // Calculate rank for this game (sort descending)
-      const sorted = [...part.game.scores].sort((a, b) => b.points - a.points);
-      const myRank = sorted.findIndex((s) => s.userId === fid);
-      if (myRank !== -1 && myRank + 1 < bestRank) {
-        bestRank = myRank + 1;
-      }
-    }
-
-    const won = !!amountUSDC && amountUSDC > 0;
-    if (won) {
+    const winnings = part.game.tickets[0]?.amountUSDC ?? 0;
+    if (winnings > 0) {
+      // Assuming winnings > 0 means a "win"
+      // You might change this to `part.rank === 1`
       wins++;
-      totalWon += amountUSDC;
+      totalWon += winnings;
     }
 
-    streakArr.push({ joinedAt: part.joinedAt, win: won });
+    if (part.rank === 1) {
+      // Or, if "wins" strictly means 1st place
+      // wins++; // Uncomment this if rank 1 = win
+    }
+
+    if (part.score > highestScore) {
+      highestScore = part.score;
+    }
+    scoreSum += part.score;
+
+    if (part.rank !== null && part.rank < bestRank) {
+      bestRank = part.rank;
+    }
+
+    gameDates.push(part.joinedAt);
   }
 
-  // Average score (including only games with score)
-  const averageScore = gamesWithScore > 0 ? scoreSum / gamesWithScore : 0;
-
-  // Current streak, ordered by joinedAt DESC (most recent first, consecutive wins)
-  streakArr.sort((a, b) => b.joinedAt.getTime() - a.joinedAt.getTime());
-  let currentStreak = 0;
-  for (let i = 0; i < streakArr.length; ++i) {
-    if (streakArr[i].win) currentStreak++;
-    else break;
-  }
-
-  // Best rank for UI
+  // 4. Final calculations
+  const averageScore = totalGames > 0 ? scoreSum / totalGames : 0;
+  const winRate = totalGames > 0 ? (wins / totalGames) * 100 : 0;
+  const currentStreak = calculateStreak(gameDates);
   const bestRankDisplay = bestRank === Infinity ? "-" : bestRank;
 
-  // Structure matches AllTimeStats
+  // 5. Structure matches AllTimeStats
   return {
     totalGames,
     wins,
-    winRate:
-      totalGames > 0 ? `${((wins / totalGames) * 100).toFixed(1)}%` : "0.0%",
-    totalWon: totalWon.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+    winRate: `${winRate.toFixed(1)}%`,
+    totalWon: totalWon.toLocaleString("en-US", {
+      style: "currency",
+      currency: "USD",
     }),
     highestScore,
-    averageScore: Math.round(averageScore * 100) / 100,
+    averageScore: Math.round(averageScore),
     currentStreak,
     bestRank: bestRankDisplay,
   };
 });
 
 export default async function AllTimeStatsPage({
-  params,
+  searchParams,
 }: {
-  params: Promise<{ fid: string }>;
+  // Use searchParams to get fid
+  searchParams: Promise<{ fid: string }>;
 }) {
-  const { fid } = await params;
+  const { fid } = await searchParams;
   if (!fid) {
     return null;
   }

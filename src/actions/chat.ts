@@ -67,7 +67,7 @@ export async function sendMessageAction(
       data: {
         userId: user.id,
         gameId,
-        message: sanitizedMessage,
+        text: sanitizedMessage,
       },
       select: { id: true },
     });

@@ -9,6 +9,7 @@ import { WaffleCard } from "./_components/WaffleCard";
 import { Ticket } from "@prisma/client";
 import { SuccessCard } from "./_components/SuccessCard";
 import { getMutualsAction, type MutualsData } from "@/actions/mutuals";
+
 type TicketPageClientImplProps = {
   gameInfoPromise: Promise<TicketPageGameInfo | null>;
   userInfoPromise: Promise<TicketPageUserInfo | null>;
@@ -70,17 +71,17 @@ export default function TicketPageClientImpl({
 
   // --- Derived State ---
   const prizePool = useMemo(() => {
-    const ticketPrice = gameInfo?.config?.ticketPrice ?? 50;
-    const additionPrizePool = gameInfo?.config?.additionPrizePool;
+    const ticketPrice = gameInfo?.entryFee ?? 50; // CHANGED
+    const additionPrizePool = gameInfo?.prizePool; // CHANGED
     const pool =
-      gameInfo?._count?.tickets ?? 0 * ticketPrice + (additionPrizePool ?? 0);
+      (gameInfo?._count?.tickets ?? 0) * ticketPrice + (additionPrizePool ?? 0);
     return pool;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameInfo, ticket]);
 
   const theme = useMemo(() => {
-    return gameInfo?.config?.theme ? gameInfo.config.theme : "UNHINGED";
-  }, [gameInfo?.config?.theme]);
+    return gameInfo?.theme ? gameInfo.theme : "CRYPTO"; // CHANGED (and set default)
+  }, [gameInfo?.theme]);
 
   if (ticket !== null) {
     return (
@@ -128,8 +129,8 @@ export default function TicketPageClientImpl({
         <WaffleCard
           spots={gameInfo?._count?.tickets ?? 0}
           prizePool={prizePool}
-          price={gameInfo?.config?.ticketPrice ?? 0}
-          maxPlayers={gameInfo?.config?.maxPlayers ?? 0}
+          price={gameInfo?.entryFee ?? 0} // CHANGED
+          maxPlayers={gameInfo?.maxPlayers ?? 0} // CHANGED
           fid={userInfo?.fid ?? 0}
           gameId={gameInfo?.id ?? 0}
           setTicket={setTicket}
@@ -142,7 +143,7 @@ export default function TicketPageClientImpl({
           borderColor="#fff"
           imageUrls={
             mutualsData?.mutuals
-              .map((m) => m.imageUrl)
+              .map((m) => m.pfpUrl) // CHANGED: imageUrl -> pfpUrl
               .filter((url): url is string => url !== null) ?? undefined
           }
         />

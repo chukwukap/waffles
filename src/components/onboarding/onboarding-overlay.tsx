@@ -74,7 +74,7 @@ export function OnboardingOverlay({ onComplete }: OnboardingOverlayProps) {
 
   return (
     <div
-      className="fixed inset-0 z-81 flex flex-col pt-4 bg-[#191919]"
+      className="inset-0 z-81 flex flex-col pt-4 app-background fixed!"
       role="dialog"
       aria-modal="true"
       aria-labelledby="onboarding-title"

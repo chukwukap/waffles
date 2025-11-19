@@ -7,158 +7,198 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// NOTE: To accurately determine if a user *joined* a game (i.e., actually started playing),
-// we need a model that records this action explicitly.
-// The following 'GameParticipant' model records each time a user joins (starts) a game.
-// This is separate from ticket purchase.
+// ==========================================
+// 1. USER & GROWTH (The "Account" Layer)
+// ==========================================
 
 model User {
-  id                 Int                 @id @default(autoincrement())
-  fid                Int                 @unique
-  name               String?
-  imageUrl           String?
-  wallet             String?             @unique
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  invitations        Referral[]          @relation("UserInviter")
-  referrals          Referral[]          @relation("UserInvitee")
-  tickets            Ticket[]
-  scores             Score[]
-  chats              Chat[]
-  answers            Answer[]
-  gameParticipants   GameParticipant[] // <-- users who have really joined (played) games
-  waitlist           Waitlist?
-  waitlistReferrals  Waitlist[]          @relation("WaitlistReferral")
-  notificationTokens NotificationToken[]
+  id       Int     @id @default(autoincrement())
+  fid      Int     @unique // Farcaster ID
+  username String? // 'name' is vague. 'username' implies display handle.
+  pfpUrl   String? // 'imageUrl' is generic. 'pfpUrl' is specific.
+  wallet   String? @unique
+
+  // -- VIRAL LOOP --
+  inviteCode  String     @unique // REMOVED @default(cuid())
+  inviteQuota Int        @default(3) // Renamed: "Quota" implies a limit
+  status      UserStatus @default(WAITLIST)
+
+  // -- RELATIONSHIPS --
+  invitedBy   User?            @relation("ReferralTree", fields: [invitedById], references: [id])
+  invitedById Int?
+  invites     User[]           @relation("ReferralTree")
+  rewards     ReferralReward[] @relation("InviterRewards")
+
+  // -- DATA --
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tickets Ticket[]
+  games   GamePlayer[] // The games they actually played
+  answers Answer[]
+  notifs  NotificationToken[]
+  chats   Chat[]
 }
 
-model Referral {
-  id         Int       @id @default(autoincrement())
-  code       String    @unique
-  inviter    User      @relation("UserInviter", fields: [inviterId], references: [id])
-  inviterId  Int
-  invitee    User?     @relation("UserInvitee", fields: [inviteeId], references: [id])
-  inviteeId  Int?
+enum UserStatus {
+  WAITLIST
+  ACTIVE
+  BANNED
+}
+
+// RENAMED: Focuses on the outcome (The Reward), not the process (Tracking)
+model ReferralReward {
+  id        Int  @id @default(autoincrement())
+  inviter   User @relation("InviterRewards", fields: [inviterId], references: [id])
+  inviterId Int
+
+  inviteeId Int @unique // One reward per new user
+
+  status RewardStatus @default(PENDING)
+  amount Int          @default(0) // Points or USDC
+
   createdAt  DateTime  @default(now())
-  acceptedAt DateTime?
+  unlockedAt DateTime? // When invitee played their first game
 
-  @@index([code])
+  @@index([inviterId])
 }
+
+enum RewardStatus {
+  PENDING // Invitee registered
+  UNLOCKED // Invitee played
+  CLAIMED // Money sent to wallet
+}
+
+// ==========================================
+// 2. THE ARENA (The "Game" Layer)
+// ==========================================
 
 model Game {
-  id           Int               @id @default(autoincrement())
-  name         String
-  description  String?
-  startTime    DateTime
-  endTime      DateTime
-  createdAt    DateTime          @default(now())
-  questions    Question[]
-  rounds       Round[]
-  tickets      Ticket[]
-  scores       Score[]
-  chats        Chat[]
-  config       GameConfig?
-  answers      Answer[]
-  participants GameParticipant[] // <-- users who have really joined (played) this game
-}
+  id Int @id @default(autoincrement())
 
-model Round {
-  id        Int        @id @default(autoincrement())
-  game      Game       @relation(fields: [gameId], references: [id])
-  gameId    Int
-  roundNum  Int // 1-based index for round (e.g., 1, 2, 3, ...)
+  // -- INFO --
+  title       String // 'name' is okay, 'title' is better for events
+  description String?
+  theme       GameTheme
+  status      GameStatus @default(SCHEDULED)
+
+  // -- TIMING --
+  startsAt DateTime // 'startTime' -> 'startsAt' (Standard convention)
+  endsAt   DateTime
+
+  // -- CONFIGURATION (Merged from GameConfig) --
+  entryFee         Int @default(50)
+  prizePool        Int @default(0)
+  roundDurationSec Int @default(15) // _Sec suffix makes units obvious
+  questionCount    Int @default(9)
+  maxPlayers       Int @default(200)
+
+  // -- DATA --
   questions Question[]
+  tickets   Ticket[]
+  players   GamePlayer[] // The Leaderboard
+  answers   Answer[]
+  chats     Chat[]
 
-  @@unique([gameId, roundNum])
-  @@index([gameId])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, startsAt]) // For finding the "next game" quickly
 }
 
-model GameParticipant {
-  id       Int      @id @default(autoincrement())
-  game     Game     @relation(fields: [gameId], references: [id])
-  gameId   Int
-  user     User     @relation(fields: [userId], references: [id])
-  userId   Int
-  joinedAt DateTime @default(now())
-  // This table accurately records that a user "joined" (started playing) a game.
-
-  @@unique([gameId, userId])
-  @@index([userId])
-  @@index([gameId])
+enum GameTheme {
+  FOOTBALL
+  MOVIES
+  ANIME
+  POLITICS
+  CRYPTO
 }
 
-model GameConfig {
-  id                Int     @id @default(autoincrement())
-  gameId            Int     @unique
-  game              Game    @relation(fields: [gameId], references: [id])
-  ticketPrice       Int     @default(50)
-  additionPrizePool Int     @default(0)
-  roundTimeLimit    Int     @default(15) // round countdown time
-  questionTimeLimit Int     @default(10) // question countdown time
-  questionsPerGame  Int     @default(9)
-  theme             String // FOOTBALL | MOVIES | ANIME | POLITICS | CRYPTO enum
-  scoreMultiplier   Float   @default(1.0)
-  scorePenalty      Float?
-  maxPlayers        Int     @default(200)
-  soundEnabled      Boolean @default(true)
+enum GameStatus {
+  SCHEDULED
+  LIVE
+  ENDED
+  CANCELLED
 }
 
 model Question {
-  id            Int      @id @default(autoincrement())
-  game          Game     @relation(fields: [gameId], references: [id])
-  gameId        Int
-  round         Round    @relation(fields: [roundId], references: [id])
-  roundId       Int
-  text          String
-  imageUrl      String
-  soundUrl      String?
-  options       String[]
-  correctAnswer String
-  createdAt     DateTime @default(now())
-  answers       Answer[]
+  id     Int  @id @default(autoincrement())
+  game   Game @relation(fields: [gameId], references: [id])
+  gameId Int
 
-  @@index([gameId])
-  @@index([roundId])
+  roundIndex Int @default(1) // e.g. 1, 2, 3... 
+
+  // -- CONTENT --
+  content      String // 'text' is fine, 'content' is broader
+  mediaUrl     String? // 'imageUrl' -> 'mediaUrl' (allows video/audio later)
+  soundUrl     String? // Added this from your original schema
+  options      String[]
+  correctIndex Int // RENAMED: Explicitly tells you it's an array index (0-3)
+
+  durationSec Int @default(10)
+
+  answers Answer[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([gameId, roundIndex])
 }
 
+// ==========================================
+// 3. THE ACTION (The "Play" Layer)
+// ==========================================
+
+// The "Receipt"
 model Ticket {
-  id          Int       @id @default(autoincrement())
-  code        String    @unique
-  game        Game      @relation(fields: [gameId], references: [id])
-  gameId      Int
-  user        User      @relation(fields: [userId], references: [id])
-  userId      Int
-  amountUSDC  Float
-  txHash      String?
-  status      String    @default("pending")
+  id     Int    @id @default(autoincrement())
+  code   String @unique @default(cuid())
+  game   Game   @relation(fields: [gameId], references: [id])
+  gameId Int
+  user   User   @relation(fields: [userId], references: [id])
+  userId Int
+
+  amountUSDC Float
+  txHash     String?
+  status     TicketStatus @default(PENDING)
+
   purchasedAt DateTime  @default(now())
-  usedAt      DateTime?
+  redeemedAt  DateTime? // 'usedAt' -> 'redeemedAt' (More transactional)
+  updatedAt   DateTime  @updatedAt
 
   @@unique([gameId, userId])
 }
 
-model Score {
-  id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    Int
-  game      Game     @relation(fields: [gameId], references: [id])
-  gameId    Int
-  points    Int      @default(0)
-  createdAt DateTime @default(now())
-
-  @@unique([userId, gameId])
+enum TicketStatus {
+  PENDING
+  PAID
+  FAILED
+  REDEEMED // They have entered the lobby
 }
 
-model Chat {
-  id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    Int
-  game      Game     @relation(fields: [gameId], references: [id])
-  gameId    Int
-  message   String
-  createdAt DateTime @default(now())
+// RENAMED: GameParticipant -> GamePlayer
+// This is the "Live State" of a user in a specific game.
+model GamePlayer {
+  id     Int  @id @default(autoincrement())
+  game   Game @relation(fields: [gameId], references: [id])
+  gameId Int
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+
+  claimedAt DateTime? // Timestamp when the prize was claimed
+
+  // -- LEADERBOARD DATA --
+  score        Int      @default(0)
+  rank         Int? // Null until game ends
+  isEliminated Boolean  @default(false)
+  joinedAt     DateTime @default(now())
+
+  // Faster Lookups: We want to find the top scorers of a specific game quickly
+  @@unique([gameId, userId])
+  @@index([gameId, score(sort: Desc)])
 }
 
+// The "Audit Log"
 model Answer {
   id         Int      @id @default(autoincrement())
   user       User     @relation(fields: [userId], references: [id])
@@ -167,41 +207,44 @@ model Answer {
   gameId     Int
   question   Question @relation(fields: [questionId], references: [id])
   questionId Int
-  selected   String
-  isCorrect  Boolean
-  timeTaken  Int
-  createdAt  DateTime @default(now())
 
-  @@unique([userId, gameId, questionId])
-}
-
-model Waitlist {
-  id     Int  @id @default(autoincrement())
-  user   User @relation(fields: [userId], references: [id])
-  userId Int  @unique
-
-  referredBy     Int?
-  referredByUser User? @relation("WaitlistReferral", fields: [referredBy], references: [id])
+  selectedIndex Int // RENAMED: Matches correctIndex
+  isCorrect     Boolean
+  latencyMs     Int // 'timeTaken' -> 'latencyMs' (Technical precision)
+  pointsEarned  Int     @default(0)
 
   createdAt DateTime @default(now())
-  invites   Int      @default(0)
 
-  @@index([createdAt])
+  @@unique([userId, questionId]) // User can't answer the same question twice
+  @@index([gameId, userId]) // For quickly finding all of a user's answers in a game
+}
+
+// ==========================================
+// 4. UTILS
+// ==========================================
+
+model Chat {
+  id        Int      @id @default(autoincrement())
+  game      Game     @relation(fields: [gameId], references: [id])
+  gameId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  text      String // 'message' -> 'text' (Shorter)
+  createdAt DateTime @default(now())
+
+  @@index([gameId, createdAt]) // For loading chat history fast
 }
 
 model NotificationToken {
   id        Int      @id @default(autoincrement())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    Int
-  appFid    Int // The FID of the client app (e.g., Base app is 309857)
+  appFid    Int
   token     String
-  url       String
+  url       String // Added this back from your original schema
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Tokens are unique per user-client combination
   @@unique([userId, appFid])
-  @@index([userId])
-  @@index([appFid])
   @@index([token])
 }

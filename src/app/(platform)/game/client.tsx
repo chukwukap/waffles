@@ -9,10 +9,11 @@ import { AvatarDiamond } from "./_components/AvatarDiamond";
 import LiveEventFeed from "./_components/LiveEventFeed";
 import { Chat } from "./_components/chat/Chat";
 import { GameActionButton } from "./_components/GameActionButton";
-import { Prisma, Ticket } from "@prisma/client";
+import { Ticket } from "@prisma/client";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { ChatInput } from "@/app/(platform)/game/_components/chat/ChatTrigger";
 import { getMutualsAction, type MutualsData } from "@/actions/mutuals";
+import { UpcomingGamePayload } from "./page"; // <-- Import the type
 
 function formatTime(remainingSeconds: number): string {
   const seconds = Math.max(0, remainingSeconds);
@@ -25,22 +26,21 @@ function formatTime(remainingSeconds: number): string {
 export default function GameHomePageClient({
   upcomingOrActiveGamePromise,
 }: {
-  upcomingOrActiveGamePromise: Promise<Prisma.GameGetPayload<{
-    include: {
-      config: true;
-      _count: { select: { tickets: true; participants: true } };
-    };
-  }> | null>;
+  upcomingOrActiveGamePromise: Promise<UpcomingGamePayload | null>; // <-- Use imported type
 }) {
-  const { context: miniKitContext } = useMiniKit();
+  const {
+    context: miniKitContext,
+    isMiniAppReady,
+    setMiniAppReady,
+  } = useMiniKit();
   const fid = miniKitContext?.user?.fid;
   const upcomingOrActiveGame = use(upcomingOrActiveGamePromise);
   const [chatOpen, setChatOpen] = useState(false);
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [mutualsData, setMutualsData] = useState<MutualsData | null>(null);
 
-  const startTimeMs = upcomingOrActiveGame?.startTime?.getTime() ?? 0;
-  const endTimeMs = upcomingOrActiveGame?.endTime?.getTime() ?? 0;
+  const startTimeMs = upcomingOrActiveGame?.startsAt?.getTime() ?? 0; // CHANGED: startTime -> startsAt
+  const endTimeMs = upcomingOrActiveGame?.endsAt?.getTime() ?? 0; // CHANGED: endTime -> endsAt
 
   const initialDurationSec = useMemo(() => {
     if (!startTimeMs) return 0;
@@ -58,14 +58,19 @@ export default function GameHomePageClient({
 
   const formattedPrizePool = `$${calculatePrizePool({
     ticketsNum: upcomingOrActiveGame?._count.tickets ?? 0,
-    ticketPrice: upcomingOrActiveGame?.config?.ticketPrice ?? 0,
-    additionPrizePool: upcomingOrActiveGame?.config?.additionPrizePool ?? 0,
+    ticketPrice: upcomingOrActiveGame?.entryFee ?? 0, // CHANGED: config.ticketPrice -> entryFee
+    additionPrizePool: upcomingOrActiveGame?.prizePool ?? 0, // CHANGED: config.additionPrizePool -> prizePool
   }).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
-  const playerCount = upcomingOrActiveGame?._count.participants ?? 0;
+  const playerCount = upcomingOrActiveGame?._count.players ?? 0; // CHANGED: participants -> players
 
+  useEffect(() => {
+    if (!isMiniAppReady) {
+      setMiniAppReady();
+    }
+  }, [isMiniAppReady, setMiniAppReady]);
   // Fetch mutuals data
   useEffect(() => {
     if (!fid || !upcomingOrActiveGame?.id) return;

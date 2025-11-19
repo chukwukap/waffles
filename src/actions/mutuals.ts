@@ -1,121 +1,27 @@
 "use server";
 
-import { neynar } from "@/lib/neynarClient";
+import { getMutualFids } from "@/lib/neynarClient";
 import { prisma } from "@/lib/db";
 
 export type MutualsData = {
-  mutuals: Array<{ fid: number; imageUrl: string | null }>;
+  mutuals: Array<{ fid: number; pfpUrl: string | null }>;
   mutualCount: number;
   totalCount: number;
 };
 
 /**
- * Fetches mutual connections who have joined the game or waitlist.
- * Mutuals are users who follow each other (bidirectional follows).
- * If there aren't enough mutuals, fills remaining slots with top players.
+ * Gets mutuals with fallback to top players.
  */
-/**
- * Type guard for Neynar API response structure
- */
-type NeynarResponse = {
-  result?: {
-    users?: Array<{ user?: { fid?: number }; fid?: number }>;
-    next?: { cursor?: string | null };
-  };
-  users?: Array<{ user?: { fid?: number }; fid?: number }>;
-  next?: { cursor?: string | null };
-};
-
-/**
- * Extracts FIDs from Neynar response
- */
-function extractFids(response: NeynarResponse): number[] {
-  const users =
-    response.result?.users ||
-    (response.users as Array<{ user?: { fid?: number }; fid?: number }>) ||
-    [];
-  const fids: number[] = [];
-
-  for (const user of users) {
-    const fid = user.user?.fid || user.fid;
-    if (fid && typeof fid === "number") {
-      fids.push(fid);
-    }
-  }
-
-  return fids;
-}
-
-/**
- * Extracts cursor from Neynar response
- */
-function extractCursor(response: NeynarResponse): string | null {
-  return response.result?.next?.cursor || response.next?.cursor || null;
-}
-
-/**
- * Fetches all users that a given user follows (with pagination)
- * Based on: https://docs.neynar.com/docs/how-to-fetch-mutual-followfollowers-in-farcaster
- */
-async function fetchAllFollowing(fid: number): Promise<number[]> {
-  let cursor: string | null = "";
-  const fids: number[] = [];
-
-  do {
-    const result = (await neynar.fetchUserFollowing({
-      fid,
-      limit: 150,
-      cursor: cursor || undefined,
-    })) as NeynarResponse;
-
-    fids.push(...extractFids(result));
-    cursor = extractCursor(result);
-  } while (cursor !== "" && cursor !== null);
-
-  return fids;
-}
-
-/**
- * Fetches all users that follow a given user (with pagination)
- * Based on: https://docs.neynar.com/docs/how-to-fetch-mutual-followfollowers-in-farcaster
- */
-async function fetchAllFollowers(fid: number): Promise<number[]> {
-  let cursor: string | null = "";
-  const fids: number[] = [];
-
-  do {
-    const result = (await neynar.fetchUserFollowers({
-      fid,
-      limit: 150,
-      cursor: cursor || undefined,
-    })) as NeynarResponse;
-
-    fids.push(...extractFids(result));
-    cursor = extractCursor(result);
-  } while (cursor !== "" && cursor !== null);
-
-  return fids;
-}
-
 export async function getMutualsAction(
   fid: number,
   gameId: number | null,
   context: "waitlist" | "game"
 ): Promise<MutualsData> {
   try {
-    // Fetch user's following and followers from Neynar (with pagination)
-    const [followingFids, followersFids] = await Promise.all([
-      fetchAllFollowing(fid),
-      fetchAllFollowers(fid),
-    ]);
+    // This now efficiently gets at most 1000 mutual FIDs using our neynarClient utility
+    const mutualFids = await getMutualFids(fid);
 
-    // Convert to Sets for efficient lookup
-    const followersSet = new Set(followersFids);
-
-    // Find mutuals: users who appear in both lists (bidirectional follows)
-    const mutualFids = followingFids.filter((fid) => followersSet.has(fid));
-
-    if (mutualFids.length === 0) {
+    if (!mutualFids || mutualFids.length === 0) {
       // No mutuals found, return top players only
       return await getTopPlayersOnly(fid, gameId, context);
     }
@@ -123,53 +29,52 @@ export async function getMutualsAction(
     // Get user IDs for mutuals from our database
     const mutualUsers = await prisma.user.findMany({
       where: { fid: { in: mutualFids } },
-      select: { id: true, fid: true, imageUrl: true },
+      select: { id: true, fid: true, pfpUrl: true },
     });
 
     const mutualUserIds = mutualUsers.map((u) => u.id);
 
     // Filter mutuals who have joined game/waitlist
-    let joinedMutuals: Array<{ fid: number; imageUrl: string | null }> = [];
+    let joinedMutuals: Array<{ fid: number; pfpUrl: string | null }> = [];
 
     if (context === "waitlist") {
-      const waitlistEntries = await prisma.waitlist.findMany({
-        where: { userId: { in: mutualUserIds } },
-        include: {
-          user: {
-            select: { fid: true, imageUrl: true },
-          },
+      const waitlistEntries = await prisma.user.findMany({
+        where: {
+          id: { in: mutualUserIds },
+          status: "WAITLIST",
         },
+        select: { fid: true, pfpUrl: true },
       });
 
       joinedMutuals = waitlistEntries.map((entry) => ({
-        fid: entry.user.fid,
-        imageUrl: entry.user.imageUrl,
+        fid: entry.fid,
+        pfpUrl: entry.pfpUrl,
       }));
     } else if (context === "game" && gameId) {
-      const gameParticipants = await prisma.gameParticipant.findMany({
+      const gameParticipants = await prisma.gamePlayer.findMany({
         where: {
           gameId,
           userId: { in: mutualUserIds },
         },
         include: {
           user: {
-            select: { fid: true, imageUrl: true },
+            select: { fid: true, pfpUrl: true },
           },
         },
       });
 
       joinedMutuals = gameParticipants.map((participant) => ({
         fid: participant.user.fid,
-        imageUrl: participant.user.imageUrl,
+        pfpUrl: participant.user.pfpUrl,
       }));
     }
 
     // Get total count for context
     let totalCount = 0;
     if (context === "waitlist") {
-      totalCount = await prisma.waitlist.count();
+      totalCount = await prisma.user.count({ where: { status: "WAITLIST" } });
     } else if (context === "game" && gameId) {
-      totalCount = await prisma.gameParticipant.count({
+      totalCount = await prisma.gamePlayer.count({
         where: { gameId },
       });
     }
@@ -221,9 +126,9 @@ async function getTopPlayersOnly(
 
   let totalCount = 0;
   if (context === "waitlist") {
-    totalCount = await prisma.waitlist.count();
+    totalCount = await prisma.user.count({ where: { status: "WAITLIST" } });
   } else if (context === "game" && gameId) {
-    totalCount = await prisma.gameParticipant.count({
+    totalCount = await prisma.gamePlayer.count({
       where: { gameId },
     });
   }
@@ -243,39 +148,36 @@ async function getTopPlayers(
   gameId: number | null,
   context: "waitlist" | "game",
   limit: number
-): Promise<Array<{ fid: number; imageUrl: string | null }>> {
+): Promise<Array<{ fid: number; pfpUrl: string | null }>> {
   if (context === "waitlist") {
-    // Top waitlist users by earliest join time
-    const waitlistEntries = await prisma.waitlist.findMany({
-      orderBy: { createdAt: "asc" },
+    // Top waitlist users by invite quota, then earliest join
+    const waitlistEntries = await prisma.user.findMany({
+      where: { status: "WAITLIST" },
+      orderBy: [{ inviteQuota: "desc" }, { createdAt: "asc" }],
       take: limit,
-      include: {
-        user: {
-          select: { fid: true, imageUrl: true },
-        },
-      },
+      select: { fid: true, pfpUrl: true },
     });
 
     return waitlistEntries.map((entry) => ({
-      fid: entry.user.fid,
-      imageUrl: entry.user.imageUrl,
+      fid: entry.fid,
+      pfpUrl: entry.pfpUrl,
     }));
   } else if (context === "game" && gameId) {
-    // Top players by score for the game
-    const scores = await prisma.score.findMany({
+    // Top players by score from GamePlayer
+    const scores = await prisma.gamePlayer.findMany({
       where: { gameId },
-      orderBy: { points: "desc" },
+      orderBy: { score: "desc" },
       take: limit,
       include: {
         user: {
-          select: { fid: true, imageUrl: true },
+          select: { fid: true, pfpUrl: true },
         },
       },
     });
 
     return scores.map((score) => ({
       fid: score.user.fid,
-      imageUrl: score.user.imageUrl,
+      pfpUrl: score.user.pfpUrl,
     }));
   }
 

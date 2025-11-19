@@ -1,17 +1,39 @@
 /**
  * Shared game seed data
  * Reused by both prisma seed and game seed scripts
+ *
+ * Updated to match Prisma schema structure:
+ * - Uses roundIndex instead of roundNum
+ * - Uses content instead of text
+ * - Uses mediaUrl instead of imageUrl
+ * - Uses correctIndex (computed from correctAnswer)
+ * - soundUrl kept for reference but not stored in DB
  */
 
+// Question data structure matching Prisma schema
+export interface QuestionData {
+  content: string; // Question text
+  mediaUrl: string; // Image/video URL
+  soundUrl?: string; // Audio URL (for reference, not stored in DB)
+  correctAnswer: string; // The correct answer text (used to compute correctIndex)
+  options: string[]; // Array of answer options
+}
+
+// Round data structure
+export interface RoundData {
+  roundIndex: number; // Round number (1, 2, 3, etc.)
+  questions: QuestionData[]; // Questions for this round
+}
+
 // Raw game questions data with relative URLs
-const rawGameQuestions = [
+const rawGameQuestions: RoundData[] = [
   // Round 1
   {
-    roundNum: 1,
-    data: [
+    roundIndex: 1,
+    questions: [
       {
-        text: "Guess the movie",
-        imageUrl: "/images/scenes/godfather.jpg",
+        content: "Guess the movie",
+        mediaUrl: "/images/scenes/godfather.jpg",
         soundUrl: "/sounds/scenes/godfather.mp3",
         correctAnswer: "The Godfather (1972)",
         options: [
@@ -22,8 +44,8 @@ const rawGameQuestions = [
         ],
       },
       {
-        text: "Guess the movie",
-        imageUrl: "/images/scenes/dune.jpg",
+        content: "Guess the movie",
+        mediaUrl: "/images/scenes/dune.jpg",
         soundUrl: "/sounds/scenes/dune.mp3",
         correctAnswer: "Dune (2021/2024)",
         options: [
@@ -34,8 +56,8 @@ const rawGameQuestions = [
         ],
       },
       {
-        text: "Guess the movie",
-        imageUrl: "/images/scenes/dark-knight.jpg",
+        content: "Guess the movie",
+        mediaUrl: "/images/scenes/dark-knight.jpg",
         soundUrl: "/sounds/scenes/dark-knight.mp3",
         correctAnswer: "The Dark Knight (2008)",
         options: [
@@ -49,11 +71,11 @@ const rawGameQuestions = [
   },
   // Round 2
   {
-    roundNum: 2,
-    data: [
+    roundIndex: 2,
+    questions: [
       {
-        text: "Guess the movie",
-        imageUrl: "/images/scenes/wolf-of-wall-street.jpg",
+        content: "Guess the movie",
+        mediaUrl: "/images/scenes/wolf-of-wall-street.jpg",
         soundUrl: "/sounds/scenes/wolf-of-wall-street.mp3",
         correctAnswer: "The Wolf of Wall Street (2013)",
         options: [
@@ -64,8 +86,8 @@ const rawGameQuestions = [
         ],
       },
       {
-        text: "Guess the movie",
-        imageUrl: "/images/scenes/social-network.jpg",
+        content: "Guess the movie",
+        mediaUrl: "/images/scenes/social-network.jpg",
         soundUrl: "/sounds/scenes/social-network.mp3",
         correctAnswer: "The Social Network (2010)",
         options: [
@@ -76,8 +98,8 @@ const rawGameQuestions = [
         ],
       },
       {
-        text: "Guess the movie",
-        imageUrl: "/images/scenes/matrix.jpg",
+        content: "Guess the movie",
+        mediaUrl: "/images/scenes/matrix.jpg",
         soundUrl: "/sounds/scenes/matrix.mp3",
         correctAnswer: "The Matrix (1999)",
         options: [
@@ -91,11 +113,11 @@ const rawGameQuestions = [
   },
   // Round 3
   {
-    roundNum: 3,
-    data: [
+    roundIndex: 3,
+    questions: [
       {
-        text: "Guess the movie",
-        imageUrl: "/images/scenes/breaking-bad.jpg",
+        content: "Guess the movie",
+        mediaUrl: "/images/scenes/breaking-bad.jpg",
         soundUrl: "/sounds/scenes/breaking-bad.mp3",
         correctAnswer: "Breaking Bad (2008-2013)",
         options: [
@@ -106,8 +128,8 @@ const rawGameQuestions = [
         ],
       },
       {
-        text: "Guess the movie",
-        imageUrl: "/images/scenes/got.jpg",
+        content: "Guess the movie",
+        mediaUrl: "/images/scenes/got.jpg",
         soundUrl: "/sounds/scenes/got.mp3",
         correctAnswer: "Game of Thrones (2011-2019)",
         options: [
@@ -118,8 +140,8 @@ const rawGameQuestions = [
         ],
       },
       {
-        text: "Guess the movie",
-        imageUrl: "/images/scenes/stranger-things.jpg",
+        content: "Guess the movie",
+        mediaUrl: "/images/scenes/stranger-things.jpg",
         soundUrl: "/sounds/scenes/stranger-things.mp3",
         correctAnswer: "Stranger Things (2016-Present)",
         options: [
@@ -133,23 +155,54 @@ const rawGameQuestions = [
   },
 ];
 
-export const getGameQuestions = () => {
+/**
+ * Get game questions data
+ * Returns rounds with questions matching the Prisma schema structure
+ */
+export const getGameQuestions = (): RoundData[] => {
   return rawGameQuestions;
 };
 
 /**
- * Export raw questions for backward compatibility (uses relative URLs)
- * @deprecated Use getGameQuestions() with baseUrl instead
+ * Helper function to compute correctIndex from correctAnswer
+ * Finds the index of the correct answer in the options array
+ */
+export const getCorrectIndex = (
+  correctAnswer: string,
+  options: string[]
+): number => {
+  const index = options.findIndex((option) => option === correctAnswer);
+  if (index === -1) {
+    console.warn(
+      `Correct answer "${correctAnswer}" not found in options. Defaulting to index 0.`
+    );
+    return 0;
+  }
+  return index;
+};
+
+/**
+ * Export raw questions for backward compatibility
+ * @deprecated Use getGameQuestions() instead
  */
 export const gameQuestions = rawGameQuestions;
 
+/**
+ * Default game configuration
+ * Maps to Prisma Game model fields
+ */
 export const defaultGameConfig = {
-  ticketPrice: 50,
-  roundTimeLimit: 15,
-  questionsPerGame: 9,
-  scoreMultiplier: 1.0,
-  scorePenalty: 0,
-  maxPlayers: 200,
-  soundEnabled: false,
-  theme: "MOVIES" as const,
+  entryFee: 50, // Maps to Game.entryFee
+  roundDurationSec: 15, // Maps to Game.roundDurationSec
+  questionCount: 9, // Maps to Game.questionCount
+  maxPlayers: 200, // Maps to Game.maxPlayers
+  prizePool: 0, // Maps to Game.prizePool
+  theme: "MOVIES" as const, // Maps to Game.theme (GameTheme enum)
+  // Legacy fields for backward compatibility
+  ticketPrice: 50, // Alias for entryFee
+  roundTimeLimit: 15, // Alias for roundDurationSec
+  questionsPerGame: 9, // Alias for questionCount
+  soundEnabled: false, // Not stored in schema, kept for reference
+  scoreMultiplier: 1.0, // Not stored in schema, kept for reference
+  scorePenalty: 0, // Not stored in schema, kept for reference
 };

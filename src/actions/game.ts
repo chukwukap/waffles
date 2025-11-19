@@ -12,15 +12,17 @@ const submitAnswerSchema = z.object({
   fid: z.coerce.number().int().positive("Invalid FID format."),
   gameId: z.coerce.number().int().positive("Invalid Game ID."),
   questionId: z.coerce.number().int().positive("Invalid Question ID."),
-  selected: z.string().nullable(),
-  timeTaken: z.coerce.number().nonnegative("Time taken cannot be negative."),
+  // CHANGED: Expecting the index (0, 1, 2, 3) or null for no answer
+  selectedIndex: z.coerce.number().int().optional().nullable(),
+  // CHANGED: Expecting milliseconds
+  timeTakenMs: z.coerce.number().nonnegative("Time taken cannot be negative."),
   authToken: z.string().optional().nullable(), // Authentication token
 });
 
 export type SubmitAnswerResult = { success: boolean; error: string };
 
 /**
- * Accepts FormData for answer submission, following the referral validation pattern.
+ * Accepts FormData for answer submission, following the new schema.
  */
 export async function submitAnswerAction(
   previousState: SubmitAnswerResult,
@@ -32,22 +34,20 @@ export async function submitAnswerAction(
     console.log(`  ${key}:`, value);
   }
 
+  // CHANGED: Read new form fields
   const rawFid = formData.get("fid");
   const rawGameId = formData.get("gameId");
   const rawQuestionId = formData.get("questionId");
-  const rawSelected = formData.has("selected")
-    ? formData.get("selected")
-    : null;
-  // Permitting blank or omitted to still mean null
-  const rawTimeTaken = formData.get("timeTaken");
+  const rawSelectedIndex = formData.get("selectedIndex"); // This will be "0", "1", etc. or null
+  const rawTimeTakenMs = formData.get("timeTakenMs");
   const rawAuthToken = formData.get("authToken");
 
   const validation = submitAnswerSchema.safeParse({
     fid: rawFid,
     gameId: rawGameId,
     questionId: rawQuestionId,
-    selected: rawSelected === "" ? "noanswer" : rawSelected,
-    timeTaken: rawTimeTaken,
+    selectedIndex: rawSelectedIndex, // Zod will coerce to number or null
+    timeTakenMs: rawTimeTakenMs,
     authToken: rawAuthToken,
   });
 
@@ -61,16 +61,17 @@ export async function submitAnswerAction(
     return { success: false, error: firstError };
   }
 
-  const { fid, gameId, questionId, selected, timeTaken, authToken } =
+  // CHANGED: Use new validated fields
+  const { fid, gameId, questionId, selectedIndex, timeTakenMs, authToken } =
     validation.data;
+  const selectedIndexValue = selectedIndex ?? -1; // Use -1 for "no answer"
 
   console.log("[submitAnswerAction] Parsed Form Data:", {
     fid,
     gameId,
     questionId,
-    selected,
-    timeTaken,
-    // don't log the authToken for security; log if present.
+    selectedIndex,
+    timeTakenMs,
     hasAuthToken: !!authToken,
   });
 
@@ -101,54 +102,35 @@ export async function submitAnswerAction(
     }
 
     // 2. Get Game and Question info
-    const [question, game] = await Promise.all([
-      prisma.question.findUnique({
-        where: { id: questionId },
-        select: { correctAnswer: true },
-      }),
-      prisma.game.findUnique({
-        where: { id: gameId },
-        include: { config: true },
-      }),
-    ]);
+    // CHANGED: Removed game fetch, simplified question fetch
+    const question = await prisma.question.findUnique({
+      where: { id: questionId },
+      select: { correctIndex: true, durationSec: true }, // Get new fields
+    });
 
-    console.log(
-      "[submitAnswerAction] Question fetch:",
-      question,
-      "| Game fetch:",
-      game
-    );
+    console.log("[submitAnswerAction] Question fetch:", question);
 
     if (!question) {
       console.warn("[submitAnswerAction] Question not found (id):", questionId);
       return { success: false, error: "Question not found." };
     }
-    if (!game) {
-      console.warn("[submitAnswerAction] Game not found (id):", gameId);
-      return { success: false, error: "Game not found." };
-    }
-    if (!game.config) {
-      console.warn(
-        "[submitAnswerAction] Game configuration missing for game:",
-        gameId
-      );
-      return { success: false, error: "Game configuration missing." };
-    }
 
     // 3. Calculate score based on new submission
-    const questionTimeLimit = game.config.questionTimeLimit ?? 10;
-    const maxTime =
-      Number.isFinite(questionTimeLimit) && questionTimeLimit > 0
-        ? questionTimeLimit
-        : 10;
-    const sanitizedTime = Math.min(Math.max(0, timeTaken), maxTime);
-    const correct = selected !== null && selected === question.correctAnswer;
-    const newPoints = correct ? calculateScore(sanitizedTime, maxTime) : 0;
+    const maxTimeSec = question.durationSec ?? 10;
+    // Convert MS to Sec for calculation
+    const timeTakenSec = timeTakenMs / 1000;
+    // Clamp time to be within [0, maxTimeSec]
+    const sanitizedTimeSec = Math.min(Math.max(0, timeTakenSec), maxTimeSec);
+    // CHANGED: Compare index with correctIndex
+    const correct = selectedIndex === question.correctIndex;
+    const newPoints = correct
+      ? calculateScore(sanitizedTimeSec, maxTimeSec)
+      : 0;
 
     console.log("[submitAnswerAction] Sanitation && Calculation:", {
-      questionTimeLimit,
-      maxTime,
-      sanitizedTime,
+      maxTimeSec,
+      timeTakenSec,
+      sanitizedTimeSec,
       correct,
       newPoints,
     });
@@ -158,45 +140,53 @@ export async function submitAnswerAction(
       // Find the *previous* answer for this question, if any
       const previousAnswer = await tx.answer.findUnique({
         where: {
-          userId_gameId_questionId: { userId: user.id, gameId, questionId },
+          // userId_gameId_questionId: { userId: user.id, gameId, questionId },
+          userId_questionId: { userId: user.id, questionId },
         },
-        select: { isCorrect: true, timeTaken: true },
+        select: { isCorrect: true, latencyMs: true }, // CHANGED: timeTaken -> latencyMs
       });
 
       console.log("[submitAnswerAction] Previous answer:", previousAnswer);
 
       // Calculate the points from the *previous* answer
+      const previousTimeSec = (previousAnswer?.latencyMs ?? 0) / 1000;
       const previousPoints =
-        previousAnswer?.isCorrect && Number.isFinite(previousAnswer.timeTaken)
-          ? calculateScore(previousAnswer.timeTaken!, maxTime)
+        previousAnswer?.isCorrect && Number.isFinite(previousTimeSec)
+          ? calculateScore(previousTimeSec, maxTimeSec)
           : 0;
 
       // Upsert the new answer
       await tx.answer.upsert({
         where: {
-          userId_gameId_questionId: { userId: user.id, gameId, questionId },
+          // userId_gameId_questionId: { userId: user.id, gameId, questionId },
+          userId_questionId: { userId: user.id, questionId },
         },
         update: {
-          selected: selected ?? (undefined as string | undefined),
+          // CHANGED: Save index and latency
+          selectedIndex: selectedIndexValue,
           isCorrect: correct,
-          timeTaken: sanitizedTime,
+          latencyMs: timeTakenMs,
+          pointsEarned: newPoints,
         },
         create: {
           userId: user.id,
           gameId,
           questionId,
-          selected: selected ?? "", // Use empty string if null, as selected is not nullable
+          // CHANGED: Save index and latency
+          selectedIndex: selectedIndexValue,
           isCorrect: correct,
-          timeTaken: sanitizedTime,
+          latencyMs: timeTakenMs,
+          pointsEarned: newPoints,
         },
       });
 
       console.log("[submitAnswerAction] Answer upserted!");
 
-      // Find the existing total Score record for this user/game
-      const existingScore = await tx.score.findUnique({
-        where: { userId_gameId: { userId: user.id, gameId } },
-        select: { points: true },
+      // Find the existing total Score record for this user/game (now on GamePlayer)
+      // CHANGED: Query GamePlayer
+      const existingScore = await tx.gamePlayer.findUnique({
+        where: { gameId_userId: { gameId, userId: user.id } },
+        select: { score: true },
       });
 
       // Calculate the *change* in points
@@ -211,10 +201,11 @@ export async function submitAnswerAction(
 
       if (existingScore) {
         // If score exists, update it with the delta
-        const nextTotalPoints = Math.max(0, existingScore.points + pointsDelta);
-        await tx.score.update({
-          where: { userId_gameId: { userId: user.id, gameId } },
-          data: { points: nextTotalPoints },
+        const nextTotalPoints = Math.max(0, existingScore.score + pointsDelta);
+        // CHANGED: Update GamePlayer
+        await tx.gamePlayer.update({
+          where: { gameId_userId: { gameId, userId: user.id } },
+          data: { score: nextTotalPoints },
         });
         console.log(
           "[submitAnswerAction] Updated existing score to",
@@ -222,8 +213,10 @@ export async function submitAnswerAction(
         );
       } else {
         // If no score record exists, create one with the new points
-        await tx.score.create({
-          data: { userId: user.id, gameId, points: newPoints },
+        // This should ideally be created by joinGameAction, but this is a safeguard
+        // CHANGED: Create GamePlayer
+        await tx.gamePlayer.create({
+          data: { userId: user.id, gameId, score: newPoints },
         });
         console.log(
           "[submitAnswerAction] Created new score record with points",
@@ -232,19 +225,16 @@ export async function submitAnswerAction(
       }
     });
 
-    // Revalidate the game path to ensure data is fresh for the next load
     console.log(
       "[submitAnswerAction] Revalidating path:",
       `/game/${gameId}/live`
     );
     console.log("[submitAnswerAction] SUCCESS!");
     console.log("[submitAnswerAction] ----------------------------");
-    // refreshing data
 
     return { success: true, error: "" };
   } catch (err) {
     console.error("[submitAnswerAction] Error caught:", err);
-    // Handle potential Prisma unique constraint violation (though upsert should prevent this)
     if (
       err instanceof Prisma.PrismaClientKnownRequestError &&
       err.code === "P2002"
@@ -257,8 +247,11 @@ export async function submitAnswerAction(
         error: "A database conflict occurred. Please try again.",
       };
     }
-    // propagate the error to the client
-    throw err;
+    // Don't re-throw, just return error
+    return {
+      success: false,
+      error: "An unexpected server error occurred.",
+    };
   }
 }
 
@@ -277,8 +270,7 @@ export type JoinGameResult =
  * - User must exist.
  * - Game must exist.
  * - User can only join the same game once (unique constraint).
- * - Uses GameParticipant model in Prisma.
- * - Leverages fetchGameById from @data.ts for game lookup.
+ * - Uses GamePlayer model in Prisma. (CHANGED)
  */
 export async function joinGameAction(
   input: z.input<typeof joinGameSchema>
@@ -301,27 +293,29 @@ export async function joinGameAction(
       return { success: false, error: "User not found." };
     }
 
-    // Use cache-backed fetchGameById from @data.ts
+    // Find game
     const game = await prisma.game.findUnique({
       where: { id: gameId },
-      include: { config: true },
+      select: { id: true }, // Simplified, no longer need config
     });
     if (!game) {
       return { success: false, error: "Game not found." };
     }
 
-    // Create GameParticipant if it doesn't already exist (idempotent)
-    await prisma.gameParticipant.upsert({
+    // Create GamePlayer if it doesn't already exist (idempotent)
+    // CHANGED: Renamed to gamePlayer
+    await prisma.gamePlayer.upsert({
       where: {
         gameId_userId: {
           gameId,
           userId: user.id,
         },
       },
-      update: {},
+      update: {}, // Nothing to update if they already joined
       create: {
         gameId,
         userId: user.id,
+        score: 0, // Start with 0 score
       },
     });
 
@@ -334,6 +328,7 @@ export async function joinGameAction(
       err instanceof Prisma.PrismaClientKnownRequestError &&
       err.code === "P2002"
     ) {
+      // This is now expected behavior for an upsert, means they already joined.
       return { success: true };
     }
     console.error("joinGameAction Error:", err);
@@ -343,7 +338,8 @@ export async function joinGameAction(
     };
   }
 }
-// LeaveGame schema and handler for removing user participation from the current active game (deleting GameParticipant)
+// LeaveGame schema and handler for removing user participation
+// CHANGED: Uses GamePlayer
 
 const leaveGameSchema = z.object({
   fid: z.coerce.number().int().positive("Invalid FID."),
@@ -355,13 +351,7 @@ export type LeaveGameResult =
   | { success: false; error: string };
 
 /**
- * Removes the GameParticipant record (user's participation) for the specified game.
- * - Removes participation for the specified gameId.
- * - Does NOT revoke ticket or answers; only removes participation.
- * - Safe to call multiple times (idempotent).
- * - Triggers revalidation of the game view if any.
- *
- * Expects fid and gameId.
+ * Removes the GamePlayer record (user's participation) for the specified game.
  */
 export async function leaveGameAction(
   previousState: LeaveGameResult,
@@ -401,7 +391,8 @@ export async function leaveGameAction(
     }
 
     // Remove participation (delete the record)
-    await prisma.gameParticipant.deleteMany({
+    // CHANGED: Renamed to gamePlayer
+    await prisma.gamePlayer.deleteMany({
       where: { userId: user.id, gameId },
     });
 

@@ -19,7 +19,7 @@ export function OnboardingGate({ children }: OnboardingGateProps) {
   const { isReady, shouldShowOnboarding, completeOnboarding } = useOnboarding();
 
   if (!isReady) {
-    return null;
+    // return null;
     return <SplashScreen />;
   }
 

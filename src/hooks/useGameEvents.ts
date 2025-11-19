@@ -13,8 +13,8 @@ interface ChatEvent {
     user: {
       id: number;
       fid: number;
-      name: string;
-      imageUrl: string | null;
+      username: string;
+      pfpUrl: string | null;
     };
   };
 }
@@ -29,8 +29,8 @@ interface JoinEvent {
     user: {
       id: number;
       fid: number;
-      name: string;
-      imageUrl: string | null;
+      username: string;
+      pfpUrl: string | null;
     };
   };
 }

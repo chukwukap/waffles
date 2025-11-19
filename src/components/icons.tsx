@@ -158,7 +158,6 @@ export const ArrowLeftIcon = (props: React.SVGProps<SVGSVGElement>) => (
     />
   </svg>
 );
-
 export function GamePadIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
@@ -803,7 +802,7 @@ export function CopyIcon(props: React.SVGProps<SVGSVGElement>) {
     >
       <path
         d="M17.5 14.9998H5.83333V1.6665H12.5V3.33317H14.1667V4.99984H12.5V6.6665H14.1667V4.99984H15.8333V6.6665H17.5V14.9998ZM7.5 3.33317V13.3332H15.8333V8.33317H10.8333V3.33317H7.5ZM2.5 4.99984H4.16667V16.6665H14.1667V18.3332H2.5V4.99984Z"
-        fill="#00CFF2"
+        fill="currentColor"
       />
     </svg>
   );
@@ -870,7 +869,6 @@ export function SoundOnIcon(props: React.SVGProps<SVGSVGElement>) {
       viewBox="0 0 18 18"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
       {...props}
     >
       <path
@@ -889,7 +887,6 @@ export function SoundOffIcon(props: React.SVGProps<SVGSVGElement>) {
       viewBox="0 0 18 18"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
       {...props}
     >
       <path
@@ -908,7 +905,6 @@ export function TrendIcon(props: React.SVGProps<SVGSVGElement>) {
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
       {...props}
     >
       <path
@@ -922,8 +918,8 @@ export function TrendIcon(props: React.SVGProps<SVGSVGElement>) {
 export function FlashIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
-      width={24}
-      height={24}
+      width="24"
+      height="24"
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -968,6 +964,108 @@ export function ChatIcon(props: React.SVGProps<SVGSVGElement>) {
       <path
         d="M22 2H2V16H4V4H20V16H12V18H10V20H8V16H2V18H6V22H10V20H12V18H22V2Z"
         fill="#1B8FF5"
+      />
+    </svg>
+  );
+}
+
+export function DiscordIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      width="48"
+      height="48"
+      viewBox="0 0 48 48"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <circle cx="24" cy="24" r="24" fill="#5865F2" />
+      <path
+        d="M32.405 16C30.985 15.325 29.475 14.84 27.885 14.555C27.695 14.885 27.48 15.34 27.325 15.695C25.64 15.455 23.965 15.455 22.31 15.695C22.155 15.335 21.935 14.885 21.74 14.555C20.15 14.84 18.64 15.325 17.22 16C14.36 20.18 13.625 24.265 14.005 28.29C15.735 29.54 17.395 30.15 19.01 30.645C19.42 30.095 19.785 29.51 20.09 28.91C19.505 28.69 18.945 28.43 18.405 28.13C18.545 28.025 18.68 27.915 18.81 27.805C22.14 29.32 25.81 29.32 29.095 27.805C29.225 27.915 29.36 28.025 29.5 28.13C28.955 28.43 28.395 28.69 27.81 28.91C28.12 29.51 28.485 30.095 28.895 30.645C30.515 30.15 32.17 29.54 33.9 28.29C34.34 23.795 33.195 19.775 32.405 16ZM20.265 25.61C19.245 25.61 18.41 24.68 18.41 23.54C18.41 22.4 19.225 21.47 20.265 21.47C21.32 21.47 22.155 22.4 22.135 23.54C22.135 24.68 21.32 25.61 20.265 25.61ZM27.705 25.61C26.685 25.61 25.85 24.68 25.85 23.54C25.85 22.4 26.665 21.47 27.705 21.47C28.76 21.47 29.595 22.4 29.575 23.54C29.575 24.68 28.76 25.61 27.705 25.61Z"
+        fill="white"
+      />
+    </svg>
+  );
+}
+
+export function XIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      width="48"
+      height="48"
+      viewBox="0 0 48 48"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <circle cx="24" cy="24" r="24" fill="black" />
+      <path
+        d="M27.7217 21.5515L34.7042 13.44H33.05L26.9866 20.482L22.1441 13.44H16.5608L23.9066 24.1225L16.5608 32.64H18.215L24.6408 25.1912L29.7708 32.64H35.3541L27.7208 21.5515H27.7217ZM25.4566 24.1772L24.7141 23.116L18.8108 14.6799H21.3374L26.1083 21.4972L26.8508 22.5584L33.0508 31.4184H30.5241L25.4566 24.178V24.1772Z"
+        fill="white"
+      />
+    </svg>
+  );
+}
+
+export function FarcasterIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      width="48"
+      height="48"
+      viewBox="0 0 48 48"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <rect width="48" height="48" rx="24" fill="#855DCD" />
+      <path
+        d="M33.6 14.4H14.4V24H19.2V33.6H28.8V24H33.6V14.4ZM28.8 24V28.8H19.2V24H28.8Z"
+        fill="white"
+      />
+      <path d="M19.2 19.2H24V24H19.2V19.2Z" fill="#855DCD" />
+      <path d="M24 19.2H28.8V24H24V19.2Z" fill="#855DCD" />
+    </svg>
+  );
+}
+
+export function GroupIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      width="48"
+      height="48"
+      viewBox="0 0 48 48"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <circle cx="24" cy="24" r="24" fill="#C7A8E0" />
+      <path
+        d="M24.375 24.375C26.4461 24.375 28.125 22.6961 28.125 20.625C28.125 18.5539 26.4461 16.875 24.375 16.875C22.3039 16.875 20.625 18.5539 20.625 20.625C20.625 22.6961 22.3039 24.375 24.375 24.375Z"
+        fill="#2C124E"
+      />
+      <path
+        d="M17.8125 23.4375C19.3658 23.4375 20.625 22.1783 20.625 20.625C20.625 19.0717 19.3658 17.8125 17.8125 17.8125C16.2592 17.8125 15 19.0717 15 20.625C15 22.1783 16.2592 23.4375 17.8125 23.4375Z"
+        fill="#2C124E"
+        fillOpacity="0.5"
+      />
+      <path
+        d="M30.9375 23.4375C32.4908 23.4375 33.75 22.1783 33.75 20.625C33.75 19.0717 32.4908 17.8125 30.9375 17.8125C29.3842 17.8125 28.125 19.0717 28.125 20.625C28.125 22.1783 29.3842 23.4375 30.9375 23.4375Z"
+        fill="#2C124E"
+        fillOpacity="0.5"
+      />
+      <path
+        d="M24.375 26.25C20.625 26.25 16.875 28.125 16.875 30.9375V31.875H31.875V30.9375C31.875 28.125 28.125 26.25 24.375 26.25Z"
+        fill="#2C124E"
+      />
+      <path
+        d="M13.125 30.9375C13.125 29.2687 14.6437 27.9187 16.875 27.3375C17.2875 29.1562 18.9375 30.5063 20.9437 30.8438C20.1 32.5312 18.6375 33.75 16.875 33.75H13.125V30.9375Z"
+        fill="#2C124E"
+        fillOpacity="0.5"
+      />
+      <path
+        d="M35.625 30.9375V33.75H31.875C30.1125 33.75 28.65 32.5312 27.8063 30.8438C29.8125 30.5063 31.4625 29.1562 31.875 27.3375C34.1063 27.9187 35.625 29.2687 35.625 30.9375Z"
+        fill="#2C124E"
+        fillOpacity="0.5"
       />
     </svg>
   );

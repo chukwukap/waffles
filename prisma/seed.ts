@@ -1,5 +1,9 @@
 import { PrismaClient } from "@prisma/client";
-import { getGameQuestions, defaultGameConfig } from "../scripts/game-data";
+import {
+  getGameQuestions,
+  defaultGameConfig,
+  getCorrectIndex,
+} from "../scripts/game-data";
 
 const prisma = new PrismaClient();
 // $> pnpm prisma db seed
@@ -15,42 +19,39 @@ const prisma = new PrismaClient();
 
 async function main() {
   // Reuse shared game data with full URLs
-  const questions = getGameQuestions();
+  const rounds = getGameQuestions();
 
   // Create the game
   const game = await prisma.game.upsert({
     where: { id: 1 },
     update: {},
     create: {
-      name: "Movie & TV Scene Quiz",
+      title: "Movie & TV Scene Quiz",
       description: "Guess the movie or TV show a famous scene is from.",
-      startTime: new Date(Date.now() + 1 * 60 * 1000), // 1 minute from now
-      endTime: new Date(Date.now() + 1 * 60 * 60 * 1000), // 1 hour from now
-      config: {
-        create: defaultGameConfig,
-      },
+      theme: defaultGameConfig.theme,
+      status: "SCHEDULED",
+      startsAt: new Date(Date.now() + 1 * 60 * 1000), // 1 minute from now
+      endsAt: new Date(Date.now() + 1 * 60 * 60 * 1000), // 1 hour from now
+      entryFee: defaultGameConfig.entryFee,
+      prizePool: defaultGameConfig.prizePool,
+      roundDurationSec: defaultGameConfig.roundDurationSec,
+      questionCount: defaultGameConfig.questionCount,
+      maxPlayers: defaultGameConfig.maxPlayers,
     },
   });
 
-  // Create rounds and their questions
-  for (const round of questions) {
-    const createdRound = await prisma.round.create({
-      data: {
-        gameId: game.id,
-        roundNum: round.roundNum,
-      },
-    });
+  // Create questions for each round
+  for (const round of rounds) {
     // Create questions for this round
     await prisma.question.createMany({
-      data: round.data.map((q) => ({
+      data: round.questions.map((q) => ({
         gameId: game.id,
-        roundId: createdRound.id,
-        text: q.text,
-        imageUrl: q.imageUrl,
-        soundUrl: q.soundUrl,
-        correctAnswer: q.correctAnswer,
+        roundIndex: round.roundIndex,
+        content: q.content,
+        mediaUrl: q.mediaUrl,
         options: q.options,
-        createdAt: new Date(),
+        correctIndex: getCorrectIndex(q.correctAnswer, q.options),
+        durationSec: defaultGameConfig.roundDurationSec,
       })),
     });
   }

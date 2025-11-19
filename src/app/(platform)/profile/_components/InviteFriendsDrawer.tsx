@@ -1,237 +1,144 @@
-"use client";
-
-import * as React from "react";
-import { createPortal } from "react-dom";
-import Image from "next/image";
-import { CopyIcon, InviteFriendsIcon } from "@/components/icons";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
-import { motion, AnimatePresence } from "framer-motion";
+import { CopyIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
-import { notify } from "@/components/ui/Toaster";
+import { Check } from "lucide-react";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 
-interface InviteFriendsDrawerProps {
-  open: boolean;
-  code: string;
+// --- COMPONENT: InviteDrawer (The actual Drawer) ---
+export const InviteDrawer = ({ isOpen, onClose, inviteLink }: { isOpen: boolean; onClose: () => void; inviteLink: string }) => {
+  const [copied, setCopied] = useState(false);
 
-  onClose: () => void;
-}
-
-export function InviteFriendsDrawer({
-  open,
-  code,
-  onClose,
-}: InviteFriendsDrawerProps) {
-  const [mounted, setMounted] = React.useState(false);
-  const drawerRef = React.useRef<HTMLDivElement | null>(null);
-
-  const startY = React.useRef<number | null>(null);
-  const [dragY, setDragY] = React.useState(0);
-  const isDragging = startY.current !== null;
-
-  React.useEffect(() => setMounted(true), []);
-
-  React.useEffect(() => {
-    if (!open) {
-      document.documentElement.style.overflow = "";
-      return;
-    }
-    document.documentElement.style.overflow = "hidden";
-    return () => {
-      document.documentElement.style.overflow = "";
+  // Handle Escape key to close
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) onClose();
     };
-  }, [open]);
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [isOpen, onClose]);
 
-  React.useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-
-  const onPointerDown = React.useCallback((e: React.PointerEvent) => {
-    startY.current = e.clientY;
-    setDragY(0);
-    drawerRef.current?.setPointerCapture(e.pointerId);
-  }, []);
-
-  const onPointerMove = React.useCallback((e: React.PointerEvent) => {
-    if (startY.current == null) return;
-    const dy = Math.max(0, e.clientY - startY.current);
-    setDragY(dy);
-  }, []);
-
-  const onPointerUp = React.useCallback(
-    (e: React.PointerEvent) => {
-      if (startY.current == null) return;
-
-      drawerRef.current?.releasePointerCapture(e.pointerId);
-
-      const dy = dragY;
-      startY.current = null;
-      setDragY(0);
-      if (dy > 140) onClose();
-    },
-    [dragY, onClose]
-  );
-
-  const copyCode = React.useCallback(async () => {
-    if (!navigator.clipboard) {
-      notify.error("Clipboard not available.");
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(code);
-      notify.success("Code copied!");
-    } catch (err) {
-      console.error("Failed to copy code:", err);
-      notify.error("Couldn't copy code.");
-    }
-  }, [code]);
-
-  const shareInvite = React.useCallback(async () => {
-    const text = `Join me on Waffles — use my invite code: ${code}`;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: "Waffle Invite", text });
-      } catch (err) {
-        if ((err as DOMException)?.name !== "AbortError") {
-          console.error("Failed to share:", err);
-          notify.error("Could not share invite.");
-        }
-      }
+  // Lock body scroll when open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
     } else {
-      await copyCode();
+      document.body.style.overflow = 'unset';
     }
-  }, [code, copyCode]);
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [isOpen]);
 
-  if (!mounted) return null;
+  const handleCopy = (e: React.MouseEvent<HTMLElement>) => {
+    e.stopPropagation(); // Prevent triggering parent clicks if any
+    navigator.clipboard.writeText(inviteLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
-  return createPortal(
-    <AnimatePresence>
-      {open && (
-        <>
-          <motion.div
-            key="backdrop"
-            aria-hidden
-            className="fixed inset-0 z-80 bg-black/60 backdrop-blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+  return (
+    <>
+      {/* BACKDROP */}
+      <div
+        className={cn(
+          "fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ease-out",
+          isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        )}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* DRAWER PANEL */}
+      <div
+        className={cn(
+          "fixed bottom-0 left-0 right-0 z-50 flex flex-col items-center justify-end pointer-events-none",
+          // Use a container to center the drawer max-width on desktop if needed, 
+          // but keeping it bottom-anchored as per standard mobile drawer behavior.
+        )}
+      >
+        <div
+          className={cn(
+            "relative w-full max-w-[393px] mx-auto bg-white shadow-2xl overflow-hidden",
+            "transition-transform duration-500 cubic-bezier(0.32, 0.72, 0, 1)", // Custom 'ease-out-expo' feel
+            "border-t-2 border-white/20", // Subtle highlight
+            isOpen ? "translate-y-0 pointer-events-auto" : "translate-y-full pointer-events-none"
+          )}
+          style={{
+            height: '518px',
+            borderTopLeftRadius: '20px',
+            borderTopRightRadius: '20px',
+          }}
+        >
+          {/* --- DRAWER INTERNALS --- */}
+          {/* Background Image */}
+          <div className="absolute inset-0 z-0 select-none">
+            <Image
+              src="/images/share/invite-bg.png"
+              alt="Invite Background"
+              fill
+              className="object-cover opacity-90"
+            />
+            <div className="absolute inset-0 bg-white/30 backdrop-blur-[1px]"></div>
+          </div>
+          {/* Drag Handle (Visual Only) */}
+          <div
             onClick={onClose}
+            className="absolute z-20 bg-black/20 rounded-full left-1/2 -translate-x-1/2 cursor-pointer hover:bg-black/30 transition-colors"
+            style={{ top: '12px', width: '36px', height: '5px', opacity: 0.4 }}
           />
-
-          <motion.section
-            key="drawer"
-            ref={drawerRef}
-            id="invite-friends-drawer"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Invite friends"
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            className={cn(
-              "fixed inset-x-0 bottom-0 z-81 isolate",
-              "mx-auto w-full max-w-screen-sm",
-              "rounded-t-[1.25rem] overflow-hidden",
-              "border-t border-white/5",
-              "bg-linear-to-b from-[#1E1E1E] to-black",
-              "shadow-[0_-20px_60px_rgba(0,0,0,.6)]",
-              "transition-[transform,opacity] duration-300 ease-[cubic-bezier(.2,.8,.2,1)]"
-            )}
-            style={
-              isDragging
-                ? {
-                    transform: `translateY(${dragY}px)`,
-                    opacity: Math.max(0.6, 1 - dragY / 800),
-                    transition: "none",
-                  }
-                : undefined
-            }
-            initial={{ y: "100%", opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: "100%", opacity: 0 }}
-            transition={{ type: "spring", stiffness: 280, damping: 30 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              className="relative border-b border-white/5 bg-[#191919] px-4 pb-3 pt-6 cursor-grab active:cursor-grabbing"
-              data-drag-handle
+          {/* Content Wrapper */}
+          <div className="relative z-10 flex flex-col items-center justify-start h-full pt-12 px-6 text-center">
+            {/* Chain Icon */}
+            <div className="relative transition-transform hover:scale-105 duration-300 select-none" style={{ width: '86.5px', height: '75px' }}>
+              <Image src="/images/illustrations/link-icon.png" alt="Link Icon" fill className="object-contain" />
+            </div>
+            {/* Title */}
+            <h2
+              className="font-body text-[#110047] uppercase mb-8 select-none"
+              style={{ fontSize: '30px', lineHeight: '115%', letterSpacing: '0%', maxWidth: '300px' }}
             >
-              <div
-                className="absolute left-1/2 top-3 h-1 w-9 -translate-x-1/2 rounded-full bg-white/40"
-                aria-hidden
-              />
-              <div className="mx-auto flex w-full max-w-xs items-center justify-center gap-2">
-                <InviteFriendsIcon className="h-6 w-6 text-waffle-yellow" />{" "}
-                <h2
-                  className="font-edit-undo text-white leading-[1.15]"
-                  style={{ fontSize: "clamp(1.05rem, 3.7vw, 1.25rem)" }}
-                >
-                  INVITE FRIENDS
-                </h2>
-              </div>
+              INVITE FRIENDS TO WAFFLES!
+            </h2>
+            {/* farcaster icon */}
+            <div className="relative overflow-hidden w-[30px] h-[30px] rounded-full opacity-100 mb-6 transition-transform hover:scale-105 duration-300 select-none">
+              <Image src="/images/icons/farcaster.png" alt="Farcaster Icon" fill className="object-contain" />
             </div>
-            <div className="mx-auto flex w-full max-w-xs flex-col gap-3.5 px-4 py-4">
-              <div className="rounded-2xl border border-white/10 bg-[linear-gradient(90deg,rgba(255,255,255,0)_0%,rgba(255,201,49,.12)_100%)] flex flex-col items-center justify-center gap-3 px-3 py-12 sm:py-14">
-                <Image
-                  src="/images/icons/gift.svg"
-                  alt=""
-                  width={96}
-                  height={96}
-                  className="w-24 h-24 sm:w-28 sm:h-28"
-                  priority
-                />
-                <div className="mt-1.5 flex w-full flex-col items-center">
-                  <p
-                    className="font-display text-muted tracking-[-0.03em]"
-                    style={{
-                      fontSize: "clamp(0.95rem, 3vw, 1rem)",
-                      lineHeight: "130%",
-                    }}
-                  >
-                    Your code is
-                  </p>
-                  <p
-                    className="font-edit-undo text-white select-all"
-                    style={{
-                      fontSize: "clamp(1.9rem, 6vw, 2.375rem)",
-                      lineHeight: "1.3",
-                    }}
-                  >
-                    {code || "------"}
-                  </p>
-                </div>
+            {/* Description */}
+            <p
+              className="font-display font-medium text-[18px] leading-[1.12] tracking-[-0.03em] text-center text-[#110047] mb-6"
+            >
+              Add your invite link to your Farcaster bio to earn daily bonus points!
+            </p>
+            {/* Link Display Box */}
+            <FancyBorderButton onClick={handleCopy} className="w-full max-w-[340px] h-[52px] px-4 mb-6" >
+              <span
+                className="font-display font-medium text-[15px] leading-[1.15] tracking-[-0.02em] lowercase text-[#110047] truncate select-none  text-center"
+              >
+                {inviteLink}
+              </span>
+              <div className="text-[#110047] ml-1">
+                {copied ? <Check size={20} className="text-green-500 animate-bounce" /> : <CopyIcon className="opacity-60 group-hover:opacity-100 transition-opacity" />}
               </div>
-              <FancyBorderButton
-                onClick={shareInvite}
-                className="border-waffle-gold"
-                disabled={!code || code === "------"}
-              >
-                SHARE INVITE
-              </FancyBorderButton>
-              <button
-                onClick={copyCode}
-                disabled={!code || code === "------"}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl py-2.5 transition hover:bg-white/5 active:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <CopyIcon />
+            </FancyBorderButton>
+            {/* Action Button */}
+            <button onClick={handleCopy} className="w-full">
+              {copied ? (
                 <span
-                  className="font-edit-undo text-[#00CFF2] tracking-[-0.02em]"
-                  style={{
-                    fontSize: "clamp(1rem, 3.2vw, 1.125rem)",
-                    lineHeight: "1.15",
-                  }}
+                  className="flex items-center justify-center gap-2 font-body font-normal text-[18px] leading-[1.15] tracking-[-0.02em] text-[#110047]"
                 >
-                  COPY CODE
+                  <Check strokeWidth={3} /> COPIED!
                 </span>
-              </button>
-            </div>
-          </motion.section>
-        </>
-      )}
-    </AnimatePresence>,
-    document.body
+              ) : (
+                <span
+                  className="flex items-center justify-center gap-2 font-body font-normal text-[18px] leading-[1.15] tracking-[-0.02em] text-[#110047]"
+                >
+                  <CopyIcon strokeWidth={3} fill="#110047" /> COPY LINK
+                </span>
+              )}
+            </button>
+          </div>
+
+        </div>
+      </div >
+    </>
   );
-}
+};

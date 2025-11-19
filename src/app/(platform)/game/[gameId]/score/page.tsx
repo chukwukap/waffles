@@ -6,7 +6,7 @@ import ScorePageClient from "./client";
 export type ScorePagePayload = {
   userInfo: {
     username: string;
-    avatarUrl: string;
+    pfpUrl: string; // Changed from avatarUrl
   };
   category: string;
   winnings: number;
@@ -15,7 +15,7 @@ export type ScorePagePayload = {
   percentile: number;
   leaderboard: Array<{
     username: string;
-    avatarUrl: string;
+    pfpUrl: string; // Changed from avatarUrl
     score: number;
   }>;
 };
@@ -25,8 +25,9 @@ const getScorePagePayload = cache(
     if (!fid || isNaN(Number(fid))) return null;
 
     // Do all required DB reads in parallel
-    const [userScore, leaderboard, allScores] = await Promise.all([
-      prisma.score.findFirst({
+    const [gamePlayer, allPlayersInGame] = await Promise.all([
+      // 1. Get this user's GamePlayer record, including their user info and the game theme
+      prisma.gamePlayer.findFirst({
         where: {
           gameId: Number(gameId),
           user: { fid: Number(fid) },
@@ -34,63 +35,62 @@ const getScorePagePayload = cache(
         include: {
           game: {
             select: {
-              config: {
-                select: { theme: true },
-              },
+              theme: true, // Get theme from Game
             },
           },
           user: {
-            select: { id: true, imageUrl: true, name: true },
+            select: { id: true, pfpUrl: true, username: true }, // Get new fields
           },
         },
       }),
-      prisma.score.findMany({
+      // 2. Get all players in this game, sorted by score, for ranking
+      prisma.gamePlayer.findMany({
         where: { gameId: Number(gameId) },
-        orderBy: { points: "desc" },
-        take: 3,
+        orderBy: { score: "desc" },
         include: {
           user: {
-            select: { name: true, imageUrl: true },
+            select: { username: true, pfpUrl: true }, // Get new fields
           },
         },
-      }),
-      prisma.score.findMany({
-        where: { gameId: Number(gameId) },
-        orderBy: { points: "desc" },
-        select: { userId: true },
       }),
     ]);
 
-    // Defensive: If user doesn't have a score, return null
-    if (!userScore) {
+    // Defensive: If user didn't play (no GamePlayer record), return null
+    if (!gamePlayer || !gamePlayer.user) {
       return null;
     }
 
-    const sortedUserIds = allScores.map((s) => s.userId);
-    const userRank = sortedUserIds.indexOf(userScore.user.id) + 1;
+    // 3. Calculate Rank and Percentile
+    const userRank =
+      allPlayersInGame.findIndex((p) => p.userId === gamePlayer.user.id) + 1;
+    const totalPlayers = allPlayersInGame.length;
     const percentile =
-      allScores.length > 0
-        ? Math.round(((allScores.length - userRank) / allScores.length) * 100)
+      totalPlayers > 0
+        ? Math.round(((totalPlayers - userRank) / totalPlayers) * 100)
         : 0;
 
-    // Placeholder for winnings logic
-    const winnings = 50;
+    // 4. Placeholder for winnings logic
+    // TODO: Implement real winnings calculation
+    const winnings = userRank === 1 ? 50 : 0; // Example: Winner gets $50
+
+    // 5. Format leaderboard (Top 3)
+    const leaderboard = allPlayersInGame.slice(0, 3).map((p) => ({
+      username: p.user?.username ?? "anon",
+      pfpUrl: p.user?.pfpUrl ?? "", // Use new field
+      score: p.score,
+    }));
 
     return {
       userInfo: {
-        username: userScore.user.name ?? "",
-        avatarUrl: userScore.user.imageUrl ?? "",
+        username: gamePlayer.user.username ?? "Player",
+        pfpUrl: gamePlayer.user.pfpUrl ?? "", // Use new field
       },
-      category: userScore.game?.config?.theme ?? "UNKNOWN",
+      category: gamePlayer.game?.theme ?? "UNKNOWN",
       winnings,
-      score: userScore.points ?? 0,
+      score: gamePlayer.score ?? 0,
       rank: userRank,
       percentile,
-      leaderboard: leaderboard.map((r) => ({
-        username: r.user?.name ?? "anon",
-        avatarUrl: r.user?.imageUrl ?? "",
-        score: r.points,
-      })),
+      leaderboard,
     };
   }
 );

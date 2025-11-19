@@ -7,7 +7,7 @@ import { LeaderboardEntry } from "@/lib/types";
 
 interface Top3Props {
   entries: LeaderboardEntry[];
-  currentUserId?: number | null;
+  currentUserId?: number | null; // This is the user's FID
 }
 
 const cardStyles = [
@@ -48,8 +48,9 @@ export function Top3({ entries, currentUserId }: Top3Props) {
       }
     >
       {topEntries.map((entry, i) => {
+        // BUG FIX: Compare currentUserId (FID) to entry.fid, not entry.id
         const isCurrentUser =
-          currentUserId != null && String(entry.id) === String(currentUserId);
+          currentUserId != null && entry.fid === currentUserId;
         const styles = cardStyles[i] ?? cardStyles[cardStyles.length - 1];
 
         const formattedPoints = entry.points.toLocaleString(undefined, {

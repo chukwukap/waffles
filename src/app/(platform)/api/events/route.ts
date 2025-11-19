@@ -49,6 +49,22 @@ export async function GET(request: NextRequest) {
         let lastChatId = 0;
         let lastParticipantId = 0;
 
+        // Find the "current" last IDs to avoid sending old messages
+        const [lastChat, lastPlayer] = await Promise.all([
+          prisma.chat.findFirst({
+            where: { gameId },
+            orderBy: { id: "desc" },
+            select: { id: true },
+          }),
+          prisma.gamePlayer.findFirst({
+            where: { gameId },
+            orderBy: { id: "desc" },
+            select: { id: true },
+          }),
+        ]);
+        lastChatId = lastChat?.id ?? 0;
+        lastParticipantId = lastPlayer?.id ?? 0;
+
         const pollInterval = setInterval(async () => {
           try {
             // Fetch new chat messages
@@ -62,8 +78,8 @@ export async function GET(request: NextRequest) {
                   select: {
                     id: true,
                     fid: true,
-                    name: true,
-                    imageUrl: true,
+                    username: true, // CHANGED
+                    pfpUrl: true, // CHANGED
                   },
                 },
               },
@@ -79,13 +95,13 @@ export async function GET(request: NextRequest) {
                     id: chat.id,
                     userId: chat.userId,
                     gameId: chat.gameId,
-                    message: chat.message,
+                    text: chat.text, // CHANGED
                     createdAt: chat.createdAt.toISOString(),
                     user: {
                       id: chat.user.id,
                       fid: chat.user.fid,
-                      name: chat.user.name ?? "anon",
-                      imageUrl: chat.user.imageUrl,
+                      username: chat.user.username ?? "anon", // CHANGED
+                      pfpUrl: chat.user.pfpUrl, // CHANGED
                     },
                   },
                 })
@@ -94,7 +110,8 @@ export async function GET(request: NextRequest) {
             }
 
             // Fetch new participants (join events)
-            const newParticipants = await prisma.gameParticipant.findMany({
+            // CHANGED: Query GamePlayer
+            const newParticipants = await prisma.gamePlayer.findMany({
               where: {
                 gameId,
                 id: { gt: lastParticipantId },
@@ -104,8 +121,8 @@ export async function GET(request: NextRequest) {
                   select: {
                     id: true,
                     fid: true,
-                    name: true,
-                    imageUrl: true,
+                    username: true, // CHANGED
+                    pfpUrl: true, // CHANGED
                   },
                 },
               },
@@ -125,8 +142,8 @@ export async function GET(request: NextRequest) {
                     user: {
                       id: participant.user.id,
                       fid: participant.user.fid,
-                      name: participant.user.name ?? "anon",
-                      imageUrl: participant.user.imageUrl,
+                      username: participant.user.username ?? "anon", // CHANGED
+                      pfpUrl: participant.user.pfpUrl, // CHANGED
                     },
                   },
                 })

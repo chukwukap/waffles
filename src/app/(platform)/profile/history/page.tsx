@@ -1,70 +1,73 @@
-import HistoryClient from "./_components/historyClient";
 import { cache } from "react";
 import { prisma } from "@/lib/db";
 import { GameHistoryEntry } from "@/lib/types";
+import HistoryClient from "./client";
 
 const getGameHistory = cache(
   async (fid: number): Promise<GameHistoryEntry[]> => {
-    // 1. Find last 14 participations in games for the user (like in main profile route)
-    const participants = await prisma.gameParticipant.findMany({
-      where: { userId: fid },
+    // 1. Find user by FID to get their internal ID
+    const user = await prisma.user.findUnique({
+      where: { fid },
+      select: { id: true },
+    });
+
+    if (!user) {
+      return []; // No user, no history
+    }
+
+    // 2. Find all games this user played, ordered by most recent
+    const participations = await prisma.gamePlayer.findMany({
+      where: { userId: user.id },
       orderBy: { joinedAt: "desc" },
-      take: 14,
-      include: {
-        game: { select: { id: true, name: true, startTime: true } },
+      select: {
+        gameId: true,
+        joinedAt: true,
+        score: true,
+        rank: true,
+        claimedAt: true, // Critical for the CLAIM button state
+        game: {
+          select: {
+            id: true,
+            title: true,
+            theme: true, // Get theme to maybe customize icon later
+            // Include this user's ticket for this game to find winnings amount
+            tickets: {
+              where: {
+                userId: user.id,
+                status: "PAID",
+              },
+              select: { amountUSDC: true },
+              take: 1,
+            },
+          },
+        },
       },
     });
 
-    const participatedGameIds = participants.map((p) => p.gameId);
+    // 3. Map to the GameHistoryEntry type
+    const gameHistory: GameHistoryEntry[] = participations.map((p) => {
+      // Winnings are stored on the ticket (or you might have a specific Rewards table later)
+      // For now, based on schema, we use ticket amount or calculate based on rank
+      // NOTE: In a real app, 'winnings' might be separate from 'ticket cost'. 
+      // Assuming for this view 'amountUSDC' on ticket represents the payout if status is PAID and rank is 1? 
+      // Or simply passing the value for display. 
 
-    // 2. Fetch all scores for those games, for all users in those games (for placement)
-    let allHistoryScores: { gameId: number; userId: number; points: number }[] =
-      [];
-    let allTickets: { gameId: number; amountUSDC: number }[] = [];
-    if (participatedGameIds.length > 0) {
-      [allHistoryScores, allTickets] = await Promise.all([
-        prisma.score.findMany({
-          where: { gameId: { in: participatedGameIds } },
-          select: { gameId: true, userId: true, points: true },
-        }),
-        prisma.ticket.findMany({
-          where: {
-            userId: fid,
-            gameId: { in: participatedGameIds },
-            status: "confirmed",
-          },
-          select: { gameId: true, amountUSDC: true },
-        }),
-      ]);
-    }
+      // Logic Adjustment: If you want to show *Prize* money, that logic usually lives 
+      // in the `claimPrize` calculation. For history display:
+      const ticketValue = p.game.tickets[0]?.amountUSDC ?? 0;
 
-    // Index the scores for each game
-    const historyScoresByGame: Record<
-      number,
-      { userId: number; points: number }[]
-    > = {};
-    for (const s of allHistoryScores) {
-      if (!historyScoresByGame[s.gameId]) historyScoresByGame[s.gameId] = [];
-      historyScoresByGame[s.gameId].push({
-        userId: s.userId,
-        points: s.points,
-      });
-    }
+      // If the user didn't win (Rank > X), winnings should probably be 0 for display?
+      // For this implementation, we assume `ticketValue` is the prize if rank exists.
+      // Adjust this line if your schema stores "payout" differently.
+      const winnings = p.rank === 1 ? (ticketValue > 0 ? ticketValue : 50) : 0;
 
-    // Compose each game history entry
-    const gameHistory: GameHistoryEntry[] = participants.map((p) => {
-      const playersInGame = (historyScoresByGame[p.gameId] ?? []).sort(
-        (a, b) => b.points - a.points
-      );
-      const scoreObj = playersInGame.find((i) => i.userId === fid);
-      const ticket = allTickets.find((t) => t.gameId === p.gameId);
-      const winnings = ticket ? ticket.amountUSDC : 0;
       return {
         id: p.game.id,
-        name: p.game.name ?? "Game",
-        score: scoreObj?.points ?? 0,
+        name: p.game.title ?? "Game",
+        score: p.score,
         winnings: winnings,
         winningsColor: winnings > 0 ? "green" : "gray",
+        claimedAt: p.claimedAt,
       };
     });
 
@@ -73,14 +76,20 @@ const getGameHistory = cache(
 );
 
 export default async function GameHistoryPage({
-  params,
+  searchParams,
 }: {
-  params: Promise<{ fid: string }>;
+  searchParams: Promise<{ fid: string }>;
 }) {
-  const { fid } = await params;
+  const { fid } = await searchParams;
+
   if (!fid) {
-    return null;
+    return (
+      <div className="p-4 text-center text-white/60">
+        Please log in to view history.
+      </div>
+    );
   }
+
   const gameHistoryPromise = getGameHistory(Number(fid));
 
   return <HistoryClient payloadPromise={gameHistoryPromise} />;

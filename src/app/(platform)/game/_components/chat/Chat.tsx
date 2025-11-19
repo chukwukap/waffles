@@ -1,3 +1,4 @@
+"use client";
 import { useState, useRef, useEffect } from "react";
 import { ChatIcon, SendIcon } from "@/components/icons";
 import Backdrop from "@/components/ui/Backdrop";
@@ -41,14 +42,14 @@ export const Chat = ({
     onChat: (chatEvent) => {
       const comment: ChatCommentType = {
         id: chatEvent.id,
-        name: chatEvent.user.name,
+        name: chatEvent.user.username,
         time: new Date(chatEvent.createdAt).toLocaleTimeString("en-US", {
           hour: "2-digit",
           minute: "2-digit",
           hour12: false,
         }),
         message: chatEvent.message,
-        avatarUrl: chatEvent.user.imageUrl,
+        avatarUrl: chatEvent.user.pfpUrl,
       };
       setComments((prev) => [...prev, comment]);
     },
@@ -66,14 +67,14 @@ export const Chat = ({
         const messages: ChatWithUser[] = await response.json();
         const formattedComments: ChatCommentType[] = messages.map((msg) => ({
           id: msg.id,
-          name: msg.user.name ?? "anon",
+          name: msg.user.username ?? "anon",
           time: new Date(msg.createdAt).toLocaleTimeString("en-US", {
             hour: "2-digit",
             minute: "2-digit",
             hour12: false,
           }),
-          message: msg.message,
-          avatarUrl: msg.user.imageUrl,
+          message: msg.text,
+          avatarUrl: msg.user.pfpUrl,
         }));
 
         setComments(formattedComments);

@@ -3,8 +3,6 @@
 import { OnchainKitProvider } from "@coinbase/onchainkit";
 import { base } from "wagmi/chains";
 import { env } from "@/lib/env";
-import { useMiniKit } from "@coinbase/onchainkit/minikit";
-import { useEffect } from "react";
 
 interface Props {
   children: React.ReactNode;
@@ -27,20 +25,10 @@ export function MinikitProvider({ children }: Props) {
       miniKit={{
         enabled: true,
         autoConnect: true,
-        // notificationProxyUrl: env.rootUrl,
+        notificationProxyUrl: env.rootUrl + "/api/webhook",
       }}
     >
-      <IsMiniAppReady>{children}</IsMiniAppReady>
+      {children}
     </OnchainKitProvider>
   );
-}
-
-export function IsMiniAppReady({ children }: { children: React.ReactNode }) {
-  const { isFrameReady, setFrameReady } = useMiniKit();
-  useEffect(() => {
-    if (!isFrameReady) {
-      setFrameReady();
-    }
-  }, [setFrameReady, isFrameReady]);
-  return <>{children}</>;
 }

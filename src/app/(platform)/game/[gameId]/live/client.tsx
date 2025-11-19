@@ -1,33 +1,38 @@
 "use client";
-import { Prisma } from "@prisma/client";
 import * as React from "react";
-import QuestionCard from "./_components/QuestionCard";
-import { EXTRA_TIME_SECONDS } from "@/lib/constants";
 import { useRouter } from "next/navigation";
+
+import QuestionCard from "./_components/QuestionCard";
 import RoundCountdownCard from "./_components/RoundCountdownCard";
+// Import the new payload types from the page
+import { LiveGameInfoPayload, LiveGameUserInfoPayload } from "./page";
 import { useSound } from "@/components/providers/SoundContext";
+import { EXTRA_TIME_SECONDS } from "@/lib/constants";
 
 /**
  * Determines if a round countdown should be shown before the next question.
- * Show countdown at the start of each new round (except the first question of the game).
+ * Show countdown if the *next* question has a different roundIndex than the current one.
  * @param currentIdx - The index of the current question
- * @param questions - The question list with `round.roundNum`
+ * @param questions - The full, ordered list of questions
  * @returns boolean
  */
 function shouldShowRoundCountdown(
   currentIdx: number,
-  questions: { round: { id: number; roundNum: number } }[]
+  questions: LiveGameInfoPayload["questions"]
 ): boolean {
   if (!questions || questions.length === 0) return false;
-  if (currentIdx + 1 >= questions.length) return false; // about to end
 
-  const thisRound = questions[currentIdx]?.round?.roundNum;
-  const nextRound = questions[currentIdx + 1]?.round?.roundNum;
+  // No next question, so no countdown
+  if (currentIdx + 1 >= questions.length) return false;
+
+  const thisRoundIndex = questions[currentIdx]?.roundIndex;
+  const nextRoundIndex = questions[currentIdx + 1]?.roundIndex;
+
   // Show round countdown if this is the last question in a round
   if (
-    typeof thisRound === "number" &&
-    typeof nextRound === "number" &&
-    nextRound > thisRound
+    typeof thisRoundIndex === "number" &&
+    typeof nextRoundIndex === "number" &&
+    nextRoundIndex > thisRoundIndex
   ) {
     return true;
   }
@@ -37,42 +42,26 @@ function shouldShowRoundCountdown(
 export default function LiveGameClient({
   gameInfoPromise,
   userInfoPromise,
+  initialQuestionIndex = 0, // New prop for resuming game
 }: {
-  gameInfoPromise: Promise<Prisma.GameGetPayload<{
-    include: {
-      config: true;
-      questions: {
-        include: {
-          round: {
-            select: {
-              id: true;
-              roundNum: true;
-            };
-          };
-        };
-      };
-
-      _count: { select: { answers: true } };
-    };
-  }> | null>;
-
-  userInfoPromise: Promise<Prisma.UserGetPayload<{
-    include: {
-      _count: { select: { answers: true } };
-    };
-  }> | null>;
+  gameInfoPromise: Promise<LiveGameInfoPayload | null>;
+  userInfoPromise: Promise<LiveGameUserInfoPayload | null>;
+  initialQuestionIndex?: number;
 }) {
   const router = useRouter();
   const gameInfo = React.use(gameInfoPromise);
   const userInfo = React.use(userInfoPromise);
   const { playSound } = useSound();
 
-  const questionTotalTime =
-    (gameInfo?.config?.questionTimeLimit ?? 10) + EXTRA_TIME_SECONDS;
-  const [currentQuestionIndex, setCurrentQuestionIndex] = React.useState(0);
-
-  // Track whether we're currently displaying a round countdown
+  // Initialize state with the calculated index from the server
+  const [currentQuestionIndex, setCurrentQuestionIndex] =
+    React.useState(initialQuestionIndex);
   const [showRoundCountdown, setShowRoundCountdown] = React.useState(false);
+
+  // Get the duration for the *current* question
+  const questionTotalTime =
+    (gameInfo?.questions[currentQuestionIndex]?.durationSec ?? 10) +
+    EXTRA_TIME_SECONDS;
 
   // Reveals the next question after round countdown completes
   const handleRoundCountdownComplete = React.useCallback(() => {
@@ -81,8 +70,7 @@ export default function LiveGameClient({
     setCurrentQuestionIndex((prev) => prev + 1);
   }, [playSound]);
 
-  // This function decides whether we should move to the next question or redirect to the score page,
-  // also checks if a round countdown should show before next question.
+  // This function decides what to do after a question's time is up
   const handleQuestionCompleted = React.useCallback(() => {
     const nextQuestionIndex = currentQuestionIndex + 1;
     const questions = gameInfo?.questions || [];
@@ -90,7 +78,7 @@ export default function LiveGameClient({
     // If we've reached the end of the questions, redirect to the score page
     if (nextQuestionIndex >= questions.length) {
       playSound("gameOver");
-      router.push(`/game/${gameInfo?.id}/score/?fid=${userInfo?.fid}`);
+      router.push(`/game/${gameInfo?.id}/score?fid=${userInfo?.fid}`);
       return;
     }
 
@@ -113,20 +101,38 @@ export default function LiveGameClient({
     playSound,
   ]);
 
+  // Ensure we have game info and questions before rendering
+  if (!gameInfo || !gameInfo.questions || gameInfo.questions.length === 0) {
+    // You could return a loading spinner or an error message here
+    return (
+      <div className="flex-1 flex items-center justify-center text-white/60">
+        Loading game questions...
+      </div>
+    );
+  }
+
+  if (!userInfo) {
+    return (
+      <div className="flex-1 flex items-center justify-center text-white/60">
+        Loading user info...
+      </div>
+    );
+  }
+
   return (
     <>
       {showRoundCountdown ? (
         <RoundCountdownCard
-          duration={gameInfo?.config?.roundTimeLimit ?? 15}
+          duration={gameInfo?.roundDurationSec ?? 15} // Use new field
           onComplete={handleRoundCountdownComplete}
           gameId={gameInfo?.id ?? null}
         />
       ) : (
         <QuestionCard
-          question={gameInfo!.questions[currentQuestionIndex]}
+          question={gameInfo.questions[currentQuestionIndex]}
           questionNumber={currentQuestionIndex + 1}
-          totalQuestions={gameInfo?.questions.length ?? 0}
-          duration={questionTotalTime}
+          totalQuestions={gameInfo.questions.length}
+          duration={questionTotalTime} // Use the calculated duration
           onComplete={handleQuestionCompleted}
         />
       )}

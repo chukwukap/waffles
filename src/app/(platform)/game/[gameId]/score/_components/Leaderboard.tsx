@@ -19,7 +19,7 @@ const THEMES = [
 
 interface Entry {
   username: string;
-  avatarUrl?: string | null;
+  pfpUrl?: string | null; // CHANGED: from avatarUrl
   score: number;
 }
 
@@ -65,7 +65,7 @@ export default function Leaderboard({ entries, className }: Props) {
           {/* User info (avatar and username) */}
           <span className="flex items-center gap-3 flex-1 min-w-0">
             <Image
-              src={e.avatarUrl ?? "/images/avatar-default.png"}
+              src={e.pfpUrl ?? "/images/avatar-default.png"} // CHANGED: from avatarUrl
               width={36}
               height={36}
               alt=""

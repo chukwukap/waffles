@@ -6,13 +6,16 @@ import { cn } from "@/lib/utils";
 import { PALETTES } from "@/lib/constants";
 
 import { useCountdown } from "@/hooks/useCountdown";
-import { Question } from "@prisma/client";
 import { useSound } from "@/components/providers/SoundContext";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useAuth } from "@/hooks/useAuth";
 import { submitAnswerAction } from "@/actions/game";
 import { QuestionCardHeader } from "./QuestionCardHeader";
 import { QuestionOption } from "./QuestionOption";
+import type { LiveGameInfoPayload } from "../page"; // Import the payload type
+
+// Get the specific type for a single question
+type Question = LiveGameInfoPayload["questions"][number];
 
 export function QuestionCard({
   question,
@@ -34,7 +37,7 @@ export function QuestionCard({
   >(null);
 
   const { playSound } = useSound();
-  const [, submitAnswerAct, pending] = React.useActionState(
+  const [submissionState, submitAnswerAct, pending] = React.useActionState(
     submitAnswerAction,
     {
       error: "",
@@ -54,35 +57,28 @@ export function QuestionCard({
 
       if (!authToken) {
         authToken = await signIn();
-
         if (!authToken) {
           console.error("Authentication required to submit answer");
-
           return;
         }
       }
 
       // submit answer to the server
       const formData = new FormData();
-
       formData.append("fid", String(context.user?.fid));
-
       formData.append("gameId", String(question.gameId));
-
       formData.append("questionId", String(question.id));
 
-      formData.append("timeTaken", String(remaining));
-
+      // BUG FIX: Calculate time *taken*, not time *remaining*
+      const timeTakenMs = (duration - remaining) * 1000;
+      formData.append("timeTakenMs", String(timeTakenMs));
       formData.append("authToken", authToken);
 
-      const selected =
-        selectedOptionIndex !== null
-          ? question?.options[selectedOptionIndex]
-          : null;
-
-      if (selected !== null) {
-        formData.append("selected", selected ?? "");
+      // SCHEMA FIX: Send the selected *index*
+      if (selectedOptionIndex !== null) {
+        formData.append("selectedIndex", String(selectedOptionIndex));
       }
+
       // Submit the answer
       React.startTransition(() => {
         submitAnswerAct(formData);
@@ -95,6 +91,7 @@ export function QuestionCard({
 
   // ───────────────────────── PLAY SOUND ON QUESTION CHANGE ─────────────────────────
   React.useEffect(() => {
+    // Use the new soundUrl field
     if (!question || !question.soundUrl) return;
 
     playSound(question.soundUrl, { volume: 0.8 });
@@ -114,7 +111,7 @@ export function QuestionCard({
         questionNumber={questionNumber}
         totalQuestions={totalQuestions}
         remaining={remaining}
-        duration={duration - 3}
+        duration={duration - 3} // Keep old duration logic for header
       />
 
       {/* Question Card Content */}
@@ -122,7 +119,7 @@ export function QuestionCard({
         className="mx-auto w-full max-w-screen-sm px-4  animate-up"
         aria-live="polite"
       >
-        {/* Game Title */}
+        {/* Game Title - Use new `content` field */}
         <div
           className="
           mx-auto
@@ -144,22 +141,24 @@ export function QuestionCard({
           grow-0
         "
         >
-          {question.text}
+          {question.content}
         </div>
 
-        {/* Image Section */}
-        <figure className="mx-auto mb-4 flex justify-center">
-          <div className="relative w-[299px] h-[158px] rounded-[10px] overflow-hidden bg-[#17171a] border border-[#313136] shadow-[0_8px_0_#000]">
-            <Image
-              src={question.imageUrl}
-              alt={question.text}
-              fill
-              fetchPriority="high"
-              className="object-cover w-full h-full rounded-[10px]"
-              sizes="299px"
-            />
-          </div>
-        </figure>
+        {/* Image Section - Use new `mediaUrl` field and check if it exists */}
+        {question.mediaUrl && (
+          <figure className="mx-auto mb-4 flex justify-center">
+            <div className="relative w-[299px] h-[158px] rounded-[10px] overflow-hidden bg-[#17171a] border border-[#313136] shadow-[0_8px_0_#000]">
+              <Image
+                src={question.mediaUrl}
+                alt={question.content || "Question media"}
+                fill
+                fetchPriority="high"
+                className="object-cover w-full h-full rounded-[10px]"
+                sizes="299px"
+              />
+            </div>
+          </figure>
+        )}
 
         {/* Options */}
         <ul className={cn("mx-auto mb-2 flex w-full flex-col gap-2")}>

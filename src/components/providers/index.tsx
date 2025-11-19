@@ -8,10 +8,12 @@ import { SoundProvider } from "./SoundContext";
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <MinikitProvider>
-      <OnboardingGate>
-        <SoundProvider>{children}</SoundProvider>
-        <GlobalToaster />
-      </OnboardingGate>
+      <SoundProvider>
+        <OnboardingGate>
+          {children}
+          <GlobalToaster />
+        </OnboardingGate>
+      </SoundProvider>
     </MinikitProvider>
   );
 }

@@ -5,32 +5,34 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import type { User } from "@prisma/client";
 
+// CHANGED: Use new field names
 const updateProfileSchema = z
   .object({
     fid: z.number().int().positive("Invalid FID format."),
-    name: z
+    username: z // CHANGED
       .string()
       .trim()
       .min(1, "Name cannot be empty.")
       .optional()
       .nullable(),
     wallet: z.string().trim().optional().nullable(),
-    imageUrl: z.string().url("Invalid image URL.").optional().nullable(),
+    pfpUrl: z.string().url("Invalid image URL.").optional().nullable(), // CHANGED
   })
   .refine(
     (data) =>
-      data.name !== undefined ||
+      data.username !== undefined || // CHANGED
       data.wallet !== undefined ||
-      data.imageUrl !== undefined,
+      data.pfpUrl !== undefined, // CHANGED
     {
       message:
-        "At least one field (name, wallet, or imageUrl) must be provided for update.",
+        "At least one field (username, wallet, or pfpUrl) must be provided for update.",
     }
   );
 
+// CHANGED: Use new field names
 type UpdatedUserProfile = Pick<
   User,
-  "id" | "name" | "wallet" | "imageUrl" | "fid"
+  "id" | "username" | "wallet" | "pfpUrl" | "fid"
 >;
 
 // Result type for the action
@@ -39,7 +41,7 @@ export type UpdateProfileResult =
   | { success: false; error: string | z.ZodIssue[] };
 
 /**
- * Server Action to update a user's profile information (name, wallet, imageUrl).
+ * Server Action to update a user's profile information (username, wallet, pfpUrl).
  */
 export async function updateProfileAction(
   input: z.input<typeof updateProfileSchema>
@@ -57,6 +59,8 @@ export async function updateProfileAction(
   if (Object.keys(updateData).length === 0) {
     return { success: false, error: "No update data provided." };
   }
+
+  // This logic is fine, it dynamically builds the update object
   const filteredUpdateData = Object.entries(updateData).reduce(
     (acc, [key, value]) => {
       if (value !== undefined) {
@@ -77,14 +81,15 @@ export async function updateProfileAction(
       return { success: false, error: "User not found." };
     }
 
+    // CHANGED: Use new field names in 'select'
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: filteredUpdateData,
       select: {
         id: true,
-        name: true,
+        username: true,
         wallet: true,
-        imageUrl: true,
+        pfpUrl: true,
         fid: true,
       },
     });

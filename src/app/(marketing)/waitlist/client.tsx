@@ -18,6 +18,9 @@ import { joinWaitlistAction, type JoinWaitlistState } from "@/actions/waitlist";
 import { useAddFrame, useMiniKit } from "@coinbase/onchainkit/minikit";
 import { env } from "@/lib/env";
 import { getMutualsAction, type MutualsData } from "@/actions/mutuals";
+import { WaitlistTasks } from "./_components/WaitlistTasks"; // Import the new component
+import { ArrowLeftIcon } from "@/components/icons";
+import { WaitlistFooter } from "./_components/Footer";
 
 export interface WaitlistData {
   onList: boolean;
@@ -32,16 +35,17 @@ export function WaitlistClient() {
   const ref = searchParams.get("ref") || null;
   const addFrame = useAddFrame();
   const router = useRouter();
-
   const [state, action, pending] = useActionState<JoinWaitlistState, FormData>(
     joinWaitlistAction,
     { ok: false }
   );
-
   const [waitlistData, setWaitlistData] = useState<WaitlistData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mutualsData, setMutualsData] = useState<MutualsData | null>(null);
+
+  // New State for toggling views
+  const [showTasks, setShowTasks] = useState(false);
 
   // Fetch waitlist data helper
   const fetchWaitlistData = useCallback(async () => {
@@ -157,27 +161,6 @@ export function WaitlistClient() {
     router,
   ]);
 
-  // Shuffle the splash images randomly
-  const splashImages = [
-    "/images/splash/crew-4.png",
-    "/images/splash/crew-1.png",
-    "/images/splash/crew-8.png",
-    "/images/splash/crew-2.png",
-    "/images/splash/crew-3.png",
-    "/images/splash/crew-6.png",
-    "/images/splash/crew-5.png",
-    "/images/splash/crew-7.png",
-    "/images/splash/crew-9.png",
-    "/images/splash/crew-10.png",
-  ];
-
-  // Helper for good English messages
-  const friendText = (n: number) =>
-    n === 0
-      ? "No friends invited yet. Share to climb the list!"
-      : n === 1
-      ? "You've invited 1 friend. Share to move up!"
-      : `You've invited ${n} friends. Share to move up!`;
 
   const rankMsg = (n: number | null) => {
     if (n === 1) return "You're #1 on the waitlist.";
@@ -188,69 +171,170 @@ export function WaitlistClient() {
   const headingClasses =
     "font-body font-normal not-italic text-[44px] leading-[92%] tracking-[-0.03em] text-center text-white";
   const descriptionClasses =
-    "text-[#99A0AE] font-display font-medium text-[16px] leading-[130%] tracking-[-0.03em] text-center mb-2";
-  const buttonClasses = "w-[361px] mx-auto";
+    "text-[#99A0AE] font-display font-medium text-[16px] leading-[130%] tracking-[-0.03em] text-center mb-2 text-pretty max-w-[320px] mx-auto";
+  const buttonClasses = "w-[361px] mx-auto text-[#191919] text-[26px]";
   const errorClasses = "text-red-400 text-sm";
 
-  // Render content based on state
-  const renderContent = () => {
-    if (isLoading) {
-      return <h1 className={headingClasses}>LOADING...</h1>;
-    }
+  // ───────────────────────── RENDER LOGIC ─────────────────────────
 
-    if (error) {
-      return (
-        <>
-          <h1 className={headingClasses}>ERROR</h1>
-          <p className={errorClasses}>{error}</p>
-        </>
-      );
-    }
+  // 1. Loading
+  if (isLoading) {
+    return (
+      <section className="flex-1 flex items-center justify-center">
+        <h1 className={headingClasses}>LOADING...</h1>
+      </section>
+    );
+  }
 
-    if (onList) {
-      return (
-        <>
-          <h1 className={headingClasses}>YOU&apos;RE ON THE LIST</h1>
-          <p className={descriptionClasses}>
-            {rankMsg(rank)}
-            <br />
-            {friendText(invites)}
-          </p>
-          <FancyBorderButton
-            onClick={share}
-            className={buttonClasses}
-            disabled={pending}
+  // 2. Error
+  if (error) {
+    return (
+      <section className="flex-1 flex flex-col items-center justify-center gap-4">
+        <h1 className={headingClasses}>ERROR</h1>
+        <p className={errorClasses}>{error}</p>
+      </section>
+    );
+  }
+
+  // 3. Task View (If toggled ON)
+  if (showTasks) {
+    return (
+      <section className="flex-1 overflow-y-auto px-4 pb-8">
+        {/* Task Header */}
+        <div className="relative flex items-center justify-center h-[52px] mb-2">
+          <button
+            onClick={() => setShowTasks(false)}
+            className="absolute left-0 p-2 hover:bg-white/10 rounded-full transition-colors"
           >
-            SHARE
-          </FancyBorderButton>
-        </>
-      );
-    }
+            <ArrowLeftIcon className="w-5 h-5 text-white" />
+          </button>
+          {/* Logo in header (optional based on design, usually centered) */}
+          <div className="relative w-[124px] h-[24px]">
+            <Image
+              src="/logo-onboarding.png"
+              alt="Waffles"
+              fill
+              className="object-contain"
+            />
+          </div>
+        </div>
 
+        <div className="mt-4">
+          <WaitlistTasks invitesCount={invites} onInviteClick={share} />
+        </div>
+      </section>
+    );
+  }
+
+  // 4. Main View: ON LIST
+  if (onList) {
     return (
       <>
-        <h1 className={headingClasses}>JOIN THE WAITLIST</h1>
-        <p className={descriptionClasses}>
-          Join now to be first to play when <br /> Waffles launches
-        </p>
-        {state.error && <p className={errorClasses}>{state.error}</p>}
-        <form action={handleSubmit} className="mt-6">
-          {context?.user?.fid && (
-            <input type="hidden" name="fid" value={context.user.fid} />
-          )}
-          {ref && <input type="hidden" name="ref" value={ref} />}
-          <FancyBorderButton
-            type="submit"
-            disabled={pending}
-            className={buttonClasses}
+        <section className="flex-1 overflow-y-auto px-4 space-y-4 flex flex-col items-center">
+
+          {/* Logo */}
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="mt-14"
           >
-            {pending ? "JOINING..." : "GET ME ON THE LIST"}
-          </FancyBorderButton>
-        </form>
+            <div className="w-[224px] h-[42px] relative">
+              <Image
+                src="/logo-onboarding.png"
+                alt="WAFFLES logo"
+                width={224}
+                height={42}
+                priority
+                className="object-contain"
+              />
+            </div>
+          </motion.div>
+
+          {/* Scroll Illustration */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.1 }}
+            className="flex-1 flex items-center justify-center min-h-[200px]"
+          >
+            <motion.div
+              animate={{ y: [0, -8, 0] }}
+              transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <Image
+                src="/images/illustrations/waitlist-scroll.svg"
+                width={170}
+                height={189}
+                priority
+                alt="scroll"
+                className="drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
+              />
+            </motion.div>
+          </motion.div>
+
+          {/* Content: Rank & Description */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.2 }}
+            className="flex flex-col items-center text-center w-full pb-4"
+          >
+            {/* Dynamic Rank Message based on Figma design */}
+            <p className={descriptionClasses}>
+              {rankMsg(rank)} Move up faster by completing tasks and inviting friends!
+            </p>
+
+            {/* Primary Action: COMPLETE TASKS */}
+            <div className="mt-6 w-full flex flex-col items-center gap-4">
+              <FancyBorderButton
+                onClick={() => setShowTasks(true)}
+                className={buttonClasses}
+                disabled={pending}
+              >
+                COMPLETE TASKS
+              </FancyBorderButton>
+
+              {/* Secondary Action: SHARE WAITLIST (Text Link Style) */}
+              <button
+                onClick={share}
+                className="font-body text-[#00CFF2] text-[24px] leading-none tracking-normal hover:opacity-80 transition-opacity uppercase"
+              >
+                SHARE WAITLIST
+              </button>
+            </div>
+          </motion.div>
+
+          {/* Mutuals Footer */}
+          <motion.div
+            className="mb-[env(safe-area-inset-bottom)] pb-6 flex items-center justify-center gap-2 shrink-0"
+            animate={{ y: [0, -4, 0] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <CardStack
+              size="clamp(25px, 9vw, 42px)"
+              borderColor="#FFFFFF"
+              rotations={[-8, 5, -5, 7]}
+              imageUrls={
+                mutualsData?.mutuals
+                  .map((m) => m.pfpUrl)
+                  .filter((url): url is string => url !== null) ?? undefined
+              }
+            />
+            <p className="font-medium font-display text-[#99A0AE] text-[16px] leading-[130%] tracking-[-0.03em] text-center">
+              {mutualsData?.mutualCount === 0
+                ? "You and others are on the list"
+                : `You and ${mutualsData?.mutualCount ?? 0} friend${(mutualsData?.mutualCount ?? 0) === 1 ? "" : "s"
+                } are on the list`}
+            </p>
+          </motion.div>
+
+        </section>
       </>
     );
-  };
+  }
 
+  // 5. Default View: NOT ON LIST (Join Form)
   return (
     <>
       <section className="flex-1 overflow-y-auto px-4 space-y-4">
@@ -295,7 +379,25 @@ export function WaitlistClient() {
           transition={{ duration: 0.55, delay: 0.2 }}
           className="mt-[2vh] flex flex-col items-center text-center"
         >
-          {renderContent()}
+          {/* Join Form UI */}
+          <h1 className={headingClasses}>JOIN THE WAITLIST</h1>
+          <p className={descriptionClasses}>
+            Join now to be first to play when <br /> Waffles launches
+          </p>
+          {state.error && <p className={errorClasses}>{state.error}</p>}
+          <form action={handleSubmit} className="mt-6">
+            {context?.user?.fid && (
+              <input type="hidden" name="fid" value={context.user.fid} />
+            )}
+            {ref && <input type="hidden" name="ref" value={ref} />}
+            <FancyBorderButton
+              type="submit"
+              disabled={pending}
+              className={buttonClasses}
+            >
+              {pending ? "JOINING..." : "GET ME ON THE LIST"}
+            </FancyBorderButton>
+          </form>
         </motion.div>
         <motion.div
           className="mt-4 mb-[env(safe-area-inset-bottom)] pb-6 flex items-center justify-center gap-2"
@@ -308,34 +410,19 @@ export function WaitlistClient() {
             rotations={[-8, 5, -5, 7]}
             imageUrls={
               mutualsData?.mutuals
-                .map((m) => m.imageUrl)
+                .map((m) => m.pfpUrl)
                 .filter((url): url is string => url !== null) ?? undefined
             }
           />
           <p className="font-medium font-display text-[#99A0AE] text-[16px] leading-[130%] tracking-[-0.03em] text-center">
             {mutualsData?.mutualCount === 0
               ? "You and others are on the list"
-              : `You and ${mutualsData?.mutualCount ?? 0} friend${
-                  (mutualsData?.mutualCount ?? 0) === 1 ? "" : "s"
-                } are on the list`}
+              : `You and ${mutualsData?.mutualCount ?? 0} friend${(mutualsData?.mutualCount ?? 0) === 1 ? "" : "s"
+              } are on the list`}
           </p>
         </motion.div>
       </section>
-      <footer className="shrink-0">
-        <div className="flex flex-row items-stretch  -space-x-16">
-          {splashImages.map((src, index) => (
-            <Image
-              priority
-              key={src}
-              src={src}
-              alt={`Splash character ${index + 1}`}
-              width={68}
-              height={88}
-              className="h-20 w-auto object-contain"
-            />
-          ))}
-        </div>
-      </footer>
+      <WaitlistFooter />
     </>
   );
 }

@@ -3,65 +3,23 @@
 import { prisma } from "@/lib/db";
 import { z } from "zod";
 import { cookies } from "next/headers";
-import { revalidatePath } from "next/cache"; // Use revalidatePath if revalidateTag is not sufficient
+import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client";
 
+// --- 6-Character Code Generation ---
 const REFERRAL_CODE_LENGTH = 6;
 const MAX_CODE_GENERATION_RETRIES = 10;
+const CODE_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 function generateReferralCode(): string {
-  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   const bytes = new Uint8Array(REFERRAL_CODE_LENGTH);
   crypto.getRandomValues(bytes);
-  let code = "";
-  for (let i = 0; i < REFERRAL_CODE_LENGTH; i++) {
-    code += alphabet[bytes[i] % alphabet.length];
-  }
-  return code;
+  return Array.from(bytes)
+    .map((byte) => CODE_ALPHABET[byte % CODE_ALPHABET.length])
+    .join("");
 }
 
-async function ensureReferral(
-  inviterId: number
-): Promise<{ code: string; existed: boolean; id: number }> {
-  const existing = await prisma.referral.findFirst({
-    where: { inviterId },
-    orderBy: { createdAt: "asc" },
-    select: { code: true, id: true },
-  });
-  if (existing) return { ...existing, existed: true };
-
-  for (let attempt = 0; attempt < MAX_CODE_GENERATION_RETRIES; attempt++) {
-    const code = generateReferralCode();
-    try {
-      const newReferral = await prisma.referral.create({
-        data: {
-          code,
-          inviterId,
-        },
-        select: { code: true, id: true },
-      });
-      // After creating a new referral, revalidate the lobby/upcoming games path
-      revalidatePath("/"); // Invalidate the home/lobby page
-      return { ...newReferral, existed: false };
-    } catch (err) {
-      if (
-        typeof err === "object" &&
-        err !== null &&
-        "code" in err &&
-        err.code === "P2002"
-      ) {
-        console.warn(
-          `Referral code collision on attempt ${attempt + 1}, retrying...`
-        );
-        continue;
-      }
-      throw err;
-    }
-  }
-  throw new Error(
-    `Failed to generate unique referral code for inviterId ${inviterId} after ${MAX_CODE_GENERATION_RETRIES} attempts.`
-  );
-}
-
+// --- Zod Schema (Updated field names) ---
 const syncUserSchema = z.object({
   fid: z.number().int().positive("FID must be a positive integer."),
   username: z
@@ -74,21 +32,23 @@ const syncUserSchema = z.object({
   wallet: z.string().trim().optional().nullable(),
 });
 
+// --- Action Return Types (Simplified) ---
 type SyncedUser = {
   fid: number;
-  name: string | null;
-  imageUrl: string | null;
+  username: string | null;
+  pfpUrl: string | null;
   wallet: string | null;
-};
-type SyncedReferral = {
-  id: number;
-  code: string;
+  inviteCode: string;
 };
 
 export type SyncUserResult =
-  | { success: true; user: SyncedUser; referral: SyncedReferral }
+  | { success: true; user: SyncedUser }
   | { success: false; error: string };
 
+/**
+ * Server Action: Creates a new user (with a unique invite code) or
+ * updates an existing user's profile information.
+ */
 export async function syncUserAction(
   input: z.input<typeof syncUserSchema>
 ): Promise<SyncUserResult> {
@@ -98,56 +58,105 @@ export async function syncUserAction(
     console.warn("syncUserAction validation failed:", validation.error.message);
     return { success: false, error: firstError };
   }
-  const data = validation.data;
+
+  const { fid, username, pfpUrl, wallet } = validation.data;
+  const updateData = { username, pfpUrl, wallet };
 
   try {
-    const user = await prisma.user.upsert({
-      where: { fid: data.fid },
-      update: {
-        name: data.username,
-        imageUrl: data.pfpUrl,
-        wallet: data.wallet,
-      },
-      create: {
-        fid: data.fid,
-        name: data.username,
-        imageUrl: data.pfpUrl,
-        wallet: data.wallet,
-      },
-      select: {
-        id: true,
-        fid: true,
-        name: true,
-        imageUrl: true,
-        wallet: true,
-      },
+    // 1. Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { fid },
     });
 
+    let user: SyncedUser;
+
+    if (existingUser) {
+      // 2. USER EXISTS: Update their profile
+      const updatedUser = await prisma.user.update({
+        where: { fid },
+        data: updateData,
+        select: {
+          fid: true,
+          username: true,
+          pfpUrl: true,
+          wallet: true,
+          inviteCode: true,
+        },
+      });
+      user = updatedUser;
+    } else {
+      // 3. NEW USER: Create them with a unique invite code
+      let newInviteCode = "";
+      let created = false;
+
+      for (let attempt = 0; attempt < MAX_CODE_GENERATION_RETRIES; attempt++) {
+        newInviteCode = generateReferralCode();
+        try {
+          const newUser = await prisma.user.create({
+            data: {
+              fid,
+              username,
+              pfpUrl,
+              wallet,
+              inviteCode: newInviteCode,
+            },
+            select: {
+              fid: true,
+              username: true,
+              pfpUrl: true,
+              wallet: true,
+              inviteCode: true,
+            },
+          });
+          user = newUser;
+          created = true;
+          break; // Success!
+        } catch (err: unknown) {
+          if (
+            err instanceof Prisma.PrismaClientKnownRequestError &&
+            "code" in err &&
+            err.code === "P2002" &&
+            "meta" in err &&
+            typeof err.meta === "object" &&
+            err.meta &&
+            "target" in err.meta &&
+            Array.isArray(err.meta.target) &&
+            err.meta.target.includes("inviteCode")
+          ) {
+            // Unique constraint violation on inviteCode. Loop will retry.
+            console.warn(
+              `Invite code collision for ${newInviteCode}, retrying...`
+            );
+          } else {
+            // Different error, throw it
+            throw err;
+          }
+        }
+      }
+
+      if (!created) {
+        throw new Error(
+          `Failed to create user: Could not generate a unique invite code after ${MAX_CODE_GENERATION_RETRIES} attempts.`
+        );
+      }
+    }
+
+    // 4. Set cookie
     try {
-      const cookieStore = await cookies();
-      cookieStore.set("fid", String(user.fid), {
+      (await cookies()).set("fid", String(user!.fid), {
         sameSite: "none",
         priority: "high",
-        maxAge: 60 * 60 * 24 * 30, // 30 days in seconds
+        maxAge: 60 * 60 * 24 * 30, // 30 days
         secure: process.env.NODE_ENV === "production",
       });
     } catch (cookieErr) {
       console.warn(`Failed to set fid cookie:`, cookieErr);
-      throw new Error(`Failed to set fid cookie: ${cookieErr}`);
+      // Don't fail the whole action, just log the warning
     }
 
-    const referral = await ensureReferral(user.id);
-
-    return {
-      success: true,
-      user: {
-        fid: user.fid,
-        name: user.name,
-        imageUrl: user.imageUrl,
-        wallet: user.wallet,
-      },
-      referral: { id: referral.id, code: referral.code },
-    };
+    // 5. Revalidate lobby path and return success
+    revalidatePath("/game");
+    return { success: true, user: user! };
   } catch (err) {
     console.error("syncUserAction Error:", err);
     return {

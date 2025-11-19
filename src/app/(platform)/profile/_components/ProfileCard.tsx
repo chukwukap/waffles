@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { UploadIcon } from "@/components/icons";
-import { cn } from "@/lib/utils";
 
 interface ProfileCardProps {
   username: string;
@@ -18,89 +17,122 @@ export function ProfileCard({
   onUpload,
 }: ProfileCardProps) {
   return (
-    <section
-      className={cn(
-        "relative isolate overflow-hidden rounded-2xl border border-white/10",
-        "px-3 py-3 sm:px-4 sm:py-3.5"
-      )}
-      aria-label={`${username} profile summary`}
+    <div
+      className="relative overflow-hidden group select-none"
+      style={{
+        width: "361px",
+        height: "152px",
+        borderRadius: "16px",
+        border: "1px solid rgba(255, 255, 255, 0.08)", // #FFFFFF14
+        background:
+          "linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 201, 49, 0.12) 100%)",
+        padding: "12px",
+      }}
     >
-      <div aria-hidden className="absolute inset-0 -z-10">
-        <Image
-          src={avatarUrl || "/images/avatars/a.png"}
-          alt=""
-          fill
-          quality={50}
-          className="object-cover object-center opacity-70 blur-lg scale-110"
-          priority
-          sizes="(max-width: 640px) 100vw, 640px"
-        />
-        <div className="absolute inset-0 bg-linear-to-r from-black/20 via-transparent to-black/30" />
+      {/* Upload Icon (Top Left) */}
+      <div
+        onClick={onUpload}
+        className="absolute top-3 left-3 z-20 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-[2px] border border-white/5 cursor-pointer hover:bg-white/20 transition-colors active:scale-95"
+        role="button"
+        aria-label="Upload"
+      >
+        <UploadIcon className="text-white h-4 w-4" />
       </div>
-      <div className="flex items-start justify-between gap-2">
-        <button
-          onClick={onUpload}
-          aria-label="Upload new avatar"
-          disabled={!onUpload}
-          className={cn(
-            "grid size-9 shrink-0 place-items-center rounded-full bg-white/15",
-            "transition-opacity hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-white/30",
-            !onUpload && "opacity-30 cursor-not-allowed pointer-events-none"
-          )}
-        >
-          <UploadIcon className="h-[18px] w-[18px] text-white" />
-        </button>
-        <div className="flex min-w-0 flex-col items-center gap-3">
-          <div className="flex items-center gap-2">
+
+      {/* Background PFP Effect - Ghost Image */}
+      <div className="absolute right-[-20px] top-[-20px] w-[200px] h-[200px] z-0 opacity-[0.07] pointer-events-none grayscale contrast-150">
+        <Image
+          src={avatarUrl}
+          alt={`${username} avatar`}
+          className="w-full h-full object-cover rounded-full blur-xs"
+          fill
+          sizes="200px"
+        />
+      </div>
+
+      {/* Inner Content Container */}
+      <div
+        className="relative z-10 flex flex-col justify-between h-full"
+        style={{
+          width: "100%",
+          height: "128px",
+          paddingTop: "4px",
+          paddingBottom: "4px",
+        }}
+      >
+        {/* Top Row: Avatar & Username */}
+        <div className="flex items-center justify-center gap-3 w-full">
+          {/* Avatar Circle */}
+          <div className="relative w-10 h-10 rounded-full bg-[#4AD2FF] overflow-hidden border border-white/10 shadow-sm shrink-0">
             <Image
-              src={avatarUrl || "/images/avatars/a.png"}
-              alt={`${username}'s avatar`}
-              width={36}
-              height={36}
-              className="h-9 w-9 rounded-full bg-white/10 ring-2 ring-black/20 object-cover"
-              priority
+              src={avatarUrl}
+              alt={`${username} avatar`}
+              className="w-full h-full object-cover"
+              fill
+              sizes="40px"
             />
-            <span
-              className="font-body text-white tracking-tight"
-              style={{ fontSize: "clamp(1.05rem,2.6vw,1.25rem)" }}
-            >
-              {username || "Player"}
-            </span>
           </div>
-          <div className="flex flex-col items-center gap-1">
-            <span
-              className="font-display text-white/95"
-              style={{
-                fontSize: "clamp(.85rem,2vw,1rem)",
-                letterSpacing: "-0.03em",
-              }}
+
+          {/* Username */}
+          <span
+            className="font-body text-white uppercase tracking-widest"
+            style={{
+              fontSize: "18px",
+              lineHeight: "130%",
+              fontWeight: 400,
+              opacity: 0.9,
+            }}
+          >
+            {username}
+          </span>
+        </div>
+
+        {/* Bottom Section: Streak Label + Count */}
+        <div className="flex flex-col items-center justify-end pb-1">
+          {/* Label: Streak */}
+          <span
+            className="font-display text-white/80 mb-1"
+            style={{
+              fontSize: "14px",
+              fontWeight: 500,
+              lineHeight: "130%",
+              letterSpacing: "-0.03em",
+            }}
+          >
+            Streak
+          </span>
+
+          {/* Row: Fire Icon + Number */}
+          <div className="flex items-center gap-2">
+            {/* Fire Icon */}
+            <div
+              className="flex items-center justify-center"
+              style={{ width: "20px", height: "36px" }}
             >
-              Streak
-            </span>
-            <div className="flex items-center gap-2">
               <Image
                 src="/images/icons/streak-flame.svg"
-                alt=""
-                width={20}
-                height={36}
-                className="h-9 w-5 object-contain"
+                width={28}
+                height={28}
+                fetchPriority="high"
+                alt="Streak Flame"
+                className="w-full h-full object-contain drop-shadow-[0_0_8px_rgba(255,165,0,0.5)]"
               />
-              <span
-                className="font-body text-foreground leading-none tabular-nums"
-                style={{ fontSize: "clamp(1.75rem,4.6vw,2.25rem)" }}
-              >
-                {streak ?? 0}
-              </span>
             </div>
+
+            {/* Number */}
+            <span
+              className="font-body text-white"
+              style={{
+                fontSize: "34px",
+                lineHeight: "90%",
+                fontWeight: 400,
+              }}
+            >
+              {streak}
+            </span>
           </div>
         </div>
-        <div
-          className="pointer-events-none size-9 shrink-0 opacity-0"
-          aria-hidden
-        >
-          <UploadIcon className="h-[18px] w-[18px]" />
-        </div>
       </div>
-    </section>
+    </div>
   );
 }

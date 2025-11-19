@@ -10,6 +10,7 @@ import { useState } from "react";
 import LeaveGameDrawer from "./LeaveGameDrawer";
 import { usePathname, useSearchParams } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 
 export function GameHeader() {
   const pathname = usePathname();
@@ -39,7 +40,7 @@ export function GameHeader() {
       >
         {isLiveRoute ? (
           <div className="flex items-center gap-2">
-            <div className="relative w-[29.96px] h-[23.24px]">
+            <Link href={`/game`} className="relative w-[29.96px] h-[23.24px]">
               <Image
                 src="/logo.png"
                 alt="Live game logo"
@@ -48,7 +49,7 @@ export function GameHeader() {
                 priority
                 className="object-contain"
               />
-            </div>
+            </Link>
             {/* red glowing point */}
             <span className="flex items-center gap-1.5 mr-auto">
               <span

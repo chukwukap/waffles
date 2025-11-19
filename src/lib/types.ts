@@ -18,8 +18,8 @@ export type ChatWithUser = Prisma.ChatGetPayload<{
       select: {
         fid: true;
         id: true;
-        name: true;
-        imageUrl: true;
+        username: true; // CHANGED
+        pfpUrl: true; // CHANGED
       };
     };
   };
@@ -30,7 +30,7 @@ export type GameThemes = "FOOTBALL" | "MOVIES" | "POLITICS" | "CRYPTO";
 export interface PlayerInfo {
   username: string | null;
   wallet: string | null;
-  pfpUrl: string | null;
+  pfpUrl: string | null; // CHANGED
 }
 
 export interface Ticket {
@@ -62,6 +62,7 @@ export interface GameHistoryEntry {
   id: number | string;
   name: string;
   score: number;
+  claimedAt: string | Date | null;
   winnings: number;
   winningsColor?: "green" | "gray";
 }
@@ -88,20 +89,21 @@ export interface ProfileStatsData {
   bestRank: number | null;
 }
 
+// UPDATED LeaderboardEntry
 export interface LeaderboardEntry {
-  id: string | number;
+  id: string | number; // This will be the User ID
   fid: number;
   rank: number;
   username: string | null;
   points: number;
-  pfpUrl: string | null;
+  pfpUrl: string | null; // CHANGED
 }
 
 export type FriendSummary = {
   fid: number;
   username: string;
   displayName?: string | null;
-  pfpUrl?: string | null;
+  pfpUrl?: string | null; // CHANGED
   relationship: {
     isFollower: boolean;
     isFollowing: boolean;
