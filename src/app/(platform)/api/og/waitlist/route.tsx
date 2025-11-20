@@ -1,9 +1,11 @@
 import { env } from "@/lib/env";
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 
-// Set the runtime to edge for the best performance
-export const runtime = "edge";
+// Use Node.js runtime to allow file system access
+export const runtime = "nodejs";
 
 /**
  * API Route Handler to generate a dynamic waitlist OG image.
@@ -21,21 +23,19 @@ export async function GET(request: NextRequest) {
 
     // If rank is not passed in, return the default waitlist image immediately
     if (!waitlistRank) {
-      // This is equivalent to just returning the static waitlist-default.png
-      const defaultImageUrl = `${env.rootUrl}/images/share/waitlist-default.png`;
-      const defaultImageRes = await fetch(defaultImageUrl);
-      if (!defaultImageRes.ok) {
-        return new Response("Failed to fetch default waitlist image", {
-          status: 500,
-        });
-      }
-      // Forward the correct content type header if available
-      const contentType =
-        defaultImageRes.headers.get("content-type") || "image/png";
-      const defaultImageArrayBuffer = await defaultImageRes.arrayBuffer();
-      return new Response(defaultImageArrayBuffer, {
+      // Read default image from filesystem
+      const defaultImagePath = join(
+        process.cwd(),
+        "public/images/share/waitlist-default.png"
+      );
+      const defaultImageBuffer = await readFile(defaultImagePath);
+
+      return new Response(defaultImageBuffer, {
         status: 200,
-        headers: { "content-type": contentType },
+        headers: {
+          "content-type": "image/png",
+          "Cache-Control": "public, max-age=86400, immutable",
+        },
       });
     }
 
@@ -49,14 +49,24 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // --- LOAD CUSTOM FONT ---
-    const fontUrl = `${env.rootUrl}/fonts/editundo_bd.ttf`;
-    const fontData = await fetch(fontUrl).then((res) => res.arrayBuffer());
+    // --- LOAD ASSETS FROM FILESYSTEM ---
+    const publicDir = join(process.cwd(), "public");
+    const fontPath = join(publicDir, "fonts/editundo_bd.ttf");
+    const bgPath = join(publicDir, "images/share/waitlist-bg.png");
+    const logoPath = join(publicDir, "logo-onboarding.png");
+    const scrollPath = join(publicDir, "images/share/scroll.png");
 
-    // --- DEFINE IMAGE ASSET URLS ---
-    const bgImageUrl = `${env.rootUrl}/images/share/waitlist-bg.png`;
-    const logoImageUrl = `${env.rootUrl}/logo-onboarding.png`;
-    const scrollImageUrl = `${env.rootUrl}/images/share/scroll.png`;
+    const [fontData, bgBuffer, logoBuffer, scrollBuffer] = await Promise.all([
+      readFile(fontPath),
+      readFile(bgPath),
+      readFile(logoPath),
+      readFile(scrollPath),
+    ]);
+
+    // Convert images to Base64 Data URIs
+    const bgBase64 = `data:image/png;base64,${bgBuffer.toString("base64")}`;
+    const logoBase64 = `data:image/png;base64,${logoBuffer.toString("base64")}`;
+    const scrollBase64 = `data:image/png;base64,${scrollBuffer.toString("base64")}`;
 
     // Define the OG image JSX structure
     const element = (
@@ -68,7 +78,7 @@ export async function GET(request: NextRequest) {
           justifyContent: "space-between",
           width: "100%",
           height: "100%",
-          backgroundImage: `url(${bgImageUrl})`,
+          backgroundImage: `url(${bgBase64})`,
           backgroundSize: "100% 100%",
           padding: "40px 20px",
           fontFamily: '"PixelFont"',
@@ -78,7 +88,7 @@ export async function GET(request: NextRequest) {
       >
         {/* === TOP LOGO === */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={logoImageUrl} width="212" height="42" alt="WAFFLES Logo" />
+        <img src={logoBase64} width="212" height="42" alt="WAFFLES Logo" />
         {/* === MIDDLE CONTENT === */}
         <div
           style={{
@@ -105,7 +115,7 @@ export async function GET(request: NextRequest) {
           {/* Scroll Image */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={scrollImageUrl}
+            src={scrollBase64}
             width="250"
             height="277"
             alt="Waitlist Scroll"
@@ -139,11 +149,14 @@ export async function GET(request: NextRequest) {
       fonts: [
         {
           name: "Editundo BD",
-          data: fontData,
+          data: fontData.buffer as ArrayBuffer,
           style: "normal",
           weight: 700,
         },
       ],
+      headers: {
+        "Cache-Control": "public, max-age=86400, immutable",
+      },
     });
   } catch (e: unknown) {
     console.error(e);

@@ -21,7 +21,7 @@ model User {
   // -- VIRAL LOOP --
   inviteCode     String     @unique // REMOVED @default(cuid())
   inviteQuota    Int        @default(3) // Renamed: "Quota" implies a limit
-  status         UserStatus @default(WAITLIST)
+  status         UserStatus @default(NONE)
   completedTasks String[]   @default([]) // Track completed waitlist tasks
 
   // -- RELATIONSHIPS --
@@ -42,6 +42,7 @@ model User {
 }
 
 enum UserStatus {
+  NONE
   WAITLIST
   ACTIVE
   BANNED
@@ -78,26 +79,26 @@ model Game {
   id Int @id @default(autoincrement())
 
   // -- INFO --
-  title       String // 'name' is okay, 'title' is better for events
+  title       String
   description String?
   theme       GameTheme
   status      GameStatus @default(SCHEDULED)
 
   // -- TIMING --
-  startsAt DateTime // 'startTime' -> 'startsAt' (Standard convention)
+  startsAt DateTime
   endsAt   DateTime
 
-  // -- CONFIGURATION (Merged from GameConfig) --
+  // -- CONFIGURATION --
   entryFee         Int @default(50)
   prizePool        Int @default(0)
-  roundDurationSec Int @default(15) // _Sec suffix makes units obvious
+  roundDurationSec Int @default(15)
   questionCount    Int @default(9)
   maxPlayers       Int @default(200)
 
   // -- DATA --
   questions Question[]
   tickets   Ticket[]
-  players   GamePlayer[] // The Leaderboard
+  players   GamePlayer[]
   answers   Answer[]
   chats     Chat[]
 
@@ -130,11 +131,11 @@ model Question {
   roundIndex Int @default(1) // e.g. 1, 2, 3... 
 
   // -- CONTENT --
-  content      String // 'text' is fine, 'content' is broader
-  mediaUrl     String? // 'imageUrl' -> 'mediaUrl' (allows video/audio later)
-  soundUrl     String? // Added this from your original schema
+  content      String
+  mediaUrl     String?
+  soundUrl     String?
   options      String[]
-  correctIndex Int // RENAMED: Explicitly tells you it's an array index (0-3)
+  correctIndex Int
 
   durationSec Int @default(10)
 

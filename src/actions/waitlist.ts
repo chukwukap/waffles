@@ -46,7 +46,7 @@ export async function joinWaitlistAction(
     });
 
     if (!user) {
-      return { ok: false, error: "User not found. Please sync profile first." };
+      return { ok: false, error: "User not found." };
     }
 
     // 2. Check if already active or on list

@@ -43,11 +43,16 @@ export async function GET(request: NextRequest) {
     // Find user by FID
     const user = await prisma.user.findUnique({
       where: { fid },
-      select: { id: true },
+      select: { id: true, status: true }, // Added status
     });
 
     if (!user) {
       return NextResponse.json<Ticket | null>(null);
+    }
+
+    // Enforce access control
+    if (user.status !== "ACTIVE") {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
     // Check if user has a ticket for this game

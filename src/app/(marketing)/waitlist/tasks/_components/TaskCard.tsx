@@ -1,4 +1,4 @@
-import React from "react";
+
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
@@ -58,7 +58,7 @@ export function TaskCard({
         if (inviteGoalMet) {
             showCompleteButton = true;
         } else {
-            // Invite task that isn't met yet usually shows progress or nothing? 
+            // Invite task that isn't met yet usually shows progress or nothing?
             // Based on previous code, it didn't have a "GO" button for invite, just "COMPLETE" when ready.
             // Let's assume no button if not met.
             showCompleteButton = false;
@@ -76,20 +76,20 @@ export function TaskCard({
     return (
         <div
             className={cn(
-                "flex items-center gap-[12px] p-[12px] rounded-[16px]",
+                "flex items-center justify-center gap-[12px] px-[12px] py-[8px] rounded-[16px]",
                 "bg-[#FFFFFF08] border border-[#FFFFFF14]",
-                "w-[361px] transition-all duration-300",
+                " transition-all duration-300",
                 // Interaction: Hover effect on card
                 !isCompleted && "hover:border-white/30 hover:bg-[#FFFFFF0C]",
 
                 // Height adjustment
-                (showCompleteButton || showGoButton) ? "h-[109px]" : "h-[86px]",
+                showCompleteButton || showGoButton ? "h-[109px]" : "h-[86px]",
                 // Gray out if completed
                 isCompleted && "opacity-50"
             )}
         >
             {/* Icon */}
-            <div className="shrink-0 w-[48px] h-[48px] relative">
+            <div className="shrink-0 w-[48px] h-[48px] rounded-full overflow-hidden relative">
                 <Image
                     src={task.iconPath}
                     alt={task.title}
@@ -98,8 +98,8 @@ export function TaskCard({
                 />
             </div>
 
-            {/* Text & Action */}
-            <div className="flex-1 flex flex-col justify-between h-full py-1">
+            {/* Text*/}
+            <div className="flex-1 flex flex-col justify-between">
                 <div className="flex flex-col gap-0.5">
                     {/* Title */}
                     <p
@@ -141,21 +141,20 @@ export function TaskCard({
                         COMPLETE
                     </button>
                 )}
-
-                {showGoButton && (
-                    /* GO BUTTON */
-                    <button
-                        onClick={() => onGo(task)}
-                        className={cn(
-                            "w-fit font-body font-normal text-[24px] leading-[100%] tracking-normal text-[#00CFF2]",
-                            "hover:opacity-80 transition-all duration-200 text-left",
-                            "hover:translate-x-1" // Hover effect
-                        )}
-                    >
-                        GO
-                    </button>
-                )}
             </div>
+            {showGoButton && (
+                /* GO BUTTON */
+                <button
+                    onClick={() => onGo(task)}
+                    className={cn(
+                        "w-fit font-body font-normal text-[24px] leading-[100%] tracking-normal text-[#00CFF2]",
+                        "hover:opacity-80 transition-all duration-200 text-left",
+                        "hover:translate-x-1" // Hover effect
+                    )}
+                >
+                    GO
+                </button>
+            )}
         </div>
     );
 }

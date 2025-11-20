@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 
 import { BottomNav } from "@/components/BottomNav";
 import { cache } from "react";
+import { redirect } from "next/navigation";
 
 // This type is still correct
 export type TicketPageUserInfo = Prisma.UserGetPayload<{
@@ -11,6 +12,7 @@ export type TicketPageUserInfo = Prisma.UserGetPayload<{
     fid: true;
     username: true; // Use new 'username' field
     pfpUrl: true; // Use new 'pfpUrl' field
+    status: true; // Added status
     tickets: {
       where: {
         gameId: number;
@@ -55,9 +57,7 @@ export default async function TicketPage({
   const { fid, ticketCode } = await searchParams; // Added ticketCode
 
   if (!fid) {
-    console.warn("FID NOT FOUND");
-    // Handle this case gracefully, maybe redirect or show error
-    // For now, we'll let it pass to getUserInfo which will return null
+    redirect("/invite");
   }
 
   const gameIdNum = Number(gameId);
@@ -110,6 +110,7 @@ export default async function TicketPage({
         fid: true,
         username: true, // Use new 'username' field
         pfpUrl: true, // Use new 'pfpUrl' field
+        status: true, // Added status
         tickets: {
           where: {
             gameId: gameIdNum,
@@ -121,6 +122,12 @@ export default async function TicketPage({
 
   const gameInfoPromise = getGameInfo();
   const userInfoPromise = getUserInfo(Number(fid));
+
+  // Enforce access control
+  const userInfo = await userInfoPromise;
+  if (!userInfo || userInfo.status !== "ACTIVE") {
+    redirect("/invite");
+  }
 
   return (
     <>

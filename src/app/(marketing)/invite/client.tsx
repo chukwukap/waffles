@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
 import { InvitePageHeader } from "./_components/InviteHeader";
 import { InviteInput } from "./_components/InviteInput";
 import { InfoButton, FailedIcon, SuccessIcon } from "./_components/InfoButton";
+import { validateReferralSchema } from "@/lib/schemas";
 export default function InvitePageClient() {
   const { context } = useMiniKit();
   const fid = context?.user?.fid;
@@ -124,15 +125,20 @@ export default function InvitePageClient() {
     };
   }, [inputCode, runValidation]);
 
+
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedCode = inputCode.trim().toUpperCase();
 
-    if (trimmedCode.length !== 6) {
-      setError("Code must be 6 characters.");
+    const validation = validateReferralSchema.shape.code.safeParse(trimmedCode);
+
+    if (!validation.success) {
+      setError(validation.error.issues[0].message);
       setStatus("failed");
       return;
     }
+
     if (!fid) {
       setError("User not identified.");
       setStatus("failed");
@@ -214,7 +220,7 @@ export default function InvitePageClient() {
             {status === "failed" && error && (
               <InfoButton
                 text={error || "Invalid"}
-                onClick={() => {}}
+                onClick={() => { }}
                 type="button"
                 className="mt-15"
               >
@@ -224,7 +230,7 @@ export default function InvitePageClient() {
             )}
 
             {status === "success" && (
-              <InfoButton text="Valid" onClick={() => {}} type="button">
+              <InfoButton text="Valid" onClick={() => { }} type="button">
                 <SuccessIcon className="h-[18px] w-[18px]" />
                 <span>Valid</span>
               </InfoButton>

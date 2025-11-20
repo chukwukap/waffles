@@ -4,6 +4,7 @@ import { LeaderboardEntry } from "@/lib/types";
 import LeaderboardClientPage from "./_components/leaderboardClientPage";
 import { BottomNav } from "@/components/BottomNav";
 import { env } from "@/lib/env";
+import { redirect } from "next/navigation";
 
 export type TabKey = "current" | "allTime";
 
@@ -127,6 +128,7 @@ export const getLeaderboardData = cache(
   }
 );
 
+
 /**
  * This is the main Server Component for the leaderboard page.
  */
@@ -138,6 +140,20 @@ export default async function LeaderboardPage({
   const { fid, tab } = await searchParams;
   const activeTab = (tab || "current") as TabKey;
   const userFid = fid ? Number(fid) : null;
+
+  if (!userFid) {
+    redirect("/invite");
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { fid: userFid },
+    select: { status: true },
+  });
+
+  // Enforce access control
+  if (!user || user.status !== "ACTIVE") {
+    redirect("/invite");
+  }
 
   // Start fetching Page 0 on the server.
   const initialDataPromise = getLeaderboardData(activeTab, 0);

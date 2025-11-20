@@ -56,6 +56,7 @@ export interface WaitlistData {
   rank: number | null;
   invites: number;
   completedTasks: string[];
+  status: string;
 }
 
 /**
@@ -90,6 +91,7 @@ export async function GET(request: NextRequest) {
         rank: null,
         invites: 0,
         completedTasks: [],
+        status: "NONE",
       });
     }
 
@@ -107,6 +109,7 @@ export async function GET(request: NextRequest) {
       rank,
       invites,
       completedTasks: user.completedTasks,
+      status: user.status,
     };
 
     return NextResponse.json(waitlistData);

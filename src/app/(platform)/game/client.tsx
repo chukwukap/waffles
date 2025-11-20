@@ -13,6 +13,8 @@ import { Ticket } from "@prisma/client";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { ChatInput } from "@/app/(platform)/game/_components/chat/ChatTrigger";
 import { UpcomingGamePayload } from "./page"; // <-- Import the type
+import { useRouter } from "next/navigation";
+import { useWaitlistData } from "@/hooks/useWaitlistData";
 
 function formatTime(remainingSeconds: number): string {
   const seconds = Math.max(0, remainingSeconds);
@@ -33,6 +35,26 @@ export default function GameHomePageClient({
     setMiniAppReady,
   } = useMiniKit();
   const fid = miniKitContext?.user?.fid;
+  const router = useRouter();
+  const { data: waitlistData, isLoading: isWaitlistLoading } = useWaitlistData(fid);
+
+  // Enforce access control: Only ACTIVE users can play
+  useEffect(() => {
+    if (isMiniAppReady) {
+      // If not logged in, or loaded and not active, redirect to invite
+      if (!fid) {
+        router.replace("/invite");
+        return;
+      }
+
+      if (!isWaitlistLoading && waitlistData) {
+        if (waitlistData.status !== "ACTIVE") {
+          router.replace("/invite");
+        }
+      }
+    }
+  }, [isMiniAppReady, fid, isWaitlistLoading, waitlistData, router]);
+
   const upcomingOrActiveGame = use(upcomingOrActiveGamePromise);
   const [chatOpen, setChatOpen] = useState(false);
   const [ticket, setTicket] = useState<Ticket | null>(null);

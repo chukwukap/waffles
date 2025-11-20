@@ -3,15 +3,15 @@
 import { prisma } from "@/lib/db";
 import { randomBytes } from "crypto";
 import { z } from "zod";
-import type { Ticket } from "@prisma/client"; // Import Prisma type
+import type { Ticket } from "@prisma/client";
 import { verifyAuthenticatedUser } from "@/lib/auth";
 
 // Schema for input validation
 const purchaseSchema = z.object({
   fid: z.number().int().positive("Invalid FID format."),
   gameId: z.number().int().positive("Invalid Game ID."),
-  txHash: z.string().optional().nullable(), // Optional transaction hash
-  authToken: z.string().optional().nullable(), // Authentication token
+  txHash: z.string().optional().nullable(),
+  authToken: z.string().optional().nullable(),
 });
 
 export type PurchaseResult = {
@@ -56,6 +56,7 @@ export async function purchaseTicketAction(
     // 1. Find User
     const user = await prisma.user.findUnique({
       where: { fid: fid },
+      select: { id: true, status: true }, // Added status
     });
     if (!user) {
       return {
@@ -63,6 +64,15 @@ export async function purchaseTicketAction(
         error: "User not found. Please go through onboarding first.",
       };
     }
+
+    // Enforce access control
+    if (user.status !== "ACTIVE") {
+      return {
+        status: "error",
+        error: "Access denied. You must be invited to play.",
+      };
+    }
+
     const userId = user.id;
 
     // 2. Find Game & Config

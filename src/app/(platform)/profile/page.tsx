@@ -1,9 +1,9 @@
-
 import ProfilePageClient from "./client";
 import { prisma } from "@/lib/db";
 import { GameHistoryEntry, ProfileStatsData } from "@/lib/types";
 import { cache } from "react";
-import { calculateStreak } from "@/lib/streaks"; // Assuming this is in lib
+import { calculateStreak } from "@/lib/streaks";
+import { redirect } from "next/navigation";
 
 // Define the payload type for the client
 interface ProfilePagePayload {
@@ -50,6 +50,7 @@ const getProfilePageData = cache(
         pfpUrl: true,
         wallet: true,
         inviteCode: true,
+        status: true, // Added status
 
         // Stats Data: Get all games the user played
         games: {
@@ -101,6 +102,11 @@ const getProfilePageData = cache(
         inviteCode: null,
         referralStatusData: null,
       };
+    }
+
+    // Enforce access control
+    if (userFull.status !== "ACTIVE") {
+      redirect("/invite");
     }
 
     // 4. Process the data into stats

@@ -1,10 +1,7 @@
 "use client";
 
 import { useMiniKit, useComposeCast } from "@coinbase/onchainkit/minikit";
-import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import Image from "next/image";
-import { SubHeader } from "@/components/ui/SubHeader";
 import { WaitlistTasks } from "./_components/WaitlistTasks";
 import { env } from "@/lib/env";
 import { notify } from "@/components/ui/Toaster";
@@ -12,8 +9,6 @@ import type { WaitlistData } from "@/app/(platform)/api/waitlist/route";
 
 export function TasksPageClient() {
     const { context, isMiniAppReady, setMiniAppReady } = useMiniKit();
-    const router = useRouter();
-    const searchParams = useSearchParams();
     const fid = context?.user?.fid;
 
     // We might need rank for sharing, though mostly we need invites count for the tasks
@@ -71,37 +66,22 @@ export function TasksPageClient() {
         }
     }, [composeCastAsync, fid, waitlistData?.rank]);
 
-    const headingClasses =
-        "font-body font-normal not-italic text-[44px] leading-[92%] tracking-[-0.03em] text-center text-white";
 
     if (isLoading) {
         return (
             <section className="flex-1 flex items-center justify-center">
-                <h1 className={headingClasses}>LOADING...</h1>
+                <h1 className={"font-body font-normal not-italic text-[44px] leading-[92%] tracking-[-0.03em] text-center text-white"}>LOADING...</h1>
             </section>
         );
     }
-
     return (
-        <section className="flex-1 overflow-y-auto pb-8">
-            {/* Task Header */}
-            <div className="sticky top-0 z-50 w-full backdrop-blur-md mb-2">
-                <SubHeader
-                    title="TASKS"
-                    onBack={() => router.back()}
-                    className="h-[52px]"
-                    backButtonClassName="bg-transparent hover:bg-white/10"
-                />
-            </div>
-
-            <div className="mt-4 px-4">
-                <WaitlistTasks
-                    invitesCount={waitlistData?.invites ?? 0}
-                    onInviteClick={share}
-                    completedTasks={waitlistData?.completedTasks ?? []}
-                    fid={fid}
-                />
-            </div>
-        </section>
+        <div className="mt-4 px-4">
+            <WaitlistTasks
+                invitesCount={waitlistData?.invites ?? 0}
+                onInviteClick={share}
+                completedTasks={waitlistData?.completedTasks ?? []}
+                fid={fid}
+            />
+        </div>
     );
 }

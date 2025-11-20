@@ -3,6 +3,8 @@
 import { prisma } from "@/lib/db";
 import { z } from "zod";
 
+import { sendMessageSchema } from "@/lib/schemas";
+
 // Utility function: Remove or redact URLs from a string.
 function sanitizeMessage(input: string): string {
   // This will remove any http(s):// or www. links and any URL-looking words
@@ -13,16 +15,6 @@ function sanitizeMessage(input: string): string {
     "[link removed]"
   );
 }
-
-const sendMessageSchema = z.object({
-  gameId: z.number().int().positive("Invalid Game ID."),
-  message: z
-    .string()
-    .trim()
-    .min(1, "Message cannot be empty.")
-    .max(500, "Message exceeds 500 characters."),
-  fid: z.number().int().positive("Invalid FID format."),
-});
 
 export type SendMessageResult =
   | { success: true; messageId: number }

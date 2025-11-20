@@ -2,6 +2,8 @@ import { cache } from "react";
 import { prisma } from "@/lib/db";
 import ScorePageClient from "./client";
 
+import { redirect } from "next/navigation";
+
 // type for the cached score payload
 export type ScorePagePayload = {
   userInfo: {
@@ -39,7 +41,7 @@ const getScorePagePayload = cache(
             },
           },
           user: {
-            select: { id: true, pfpUrl: true, username: true }, // Get new fields
+            select: { id: true, pfpUrl: true, username: true, status: true }, // Get new fields + status
           },
         },
       }),
@@ -58,6 +60,11 @@ const getScorePagePayload = cache(
     // Defensive: If user didn't play (no GamePlayer record), return null
     if (!gamePlayer || !gamePlayer.user) {
       return null;
+    }
+
+    // Enforce access control
+    if (gamePlayer.user.status !== "ACTIVE") {
+      redirect("/invite");
     }
 
     // 3. Calculate Rank and Percentile

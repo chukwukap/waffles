@@ -6,6 +6,8 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 
+import { syncUserSchema } from "@/lib/schemas";
+
 // --- 6-Character Code Generation ---
 const REFERRAL_CODE_LENGTH = 6;
 const MAX_CODE_GENERATION_RETRIES = 10;
@@ -18,19 +20,6 @@ function generateReferralCode(): string {
     .map((byte) => CODE_ALPHABET[byte % CODE_ALPHABET.length])
     .join("");
 }
-
-// --- Zod Schema (Updated field names) ---
-const syncUserSchema = z.object({
-  fid: z.number().int().positive("FID must be a positive integer."),
-  username: z
-    .string()
-    .trim()
-    .min(1, "Username cannot be empty.")
-    .optional()
-    .nullable(),
-  pfpUrl: z.string().url("Invalid PFP URL.").optional().nullable(),
-  wallet: z.string().trim().optional().nullable(),
-});
 
 // --- Action Return Types (Simplified) ---
 type SyncedUser = {

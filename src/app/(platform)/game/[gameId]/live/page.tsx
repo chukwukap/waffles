@@ -30,6 +30,7 @@ export type LiveGameInfoPayload = Prisma.GameGetPayload<{
 export type LiveGameUserInfoPayload = Prisma.UserGetPayload<{
   select: {
     fid: true;
+    status: true; // Added status
   };
 }>;
 
@@ -50,11 +51,16 @@ export default async function LiveGamePage({
   // 1. Get User Data (we need the internal ID to check answers)
   const user = await prisma.user.findUnique({
     where: { fid: fidNum },
-    select: { id: true, fid: true },
+    select: { id: true, fid: true, status: true }, // Added status
   });
 
   if (!user) {
     redirect("/game");
+  }
+
+  // Enforce access control
+  if (user.status !== "ACTIVE") {
+    redirect("/invite");
   }
 
   // 2. Fetch Game Data (to get total questions count)

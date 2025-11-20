@@ -93,12 +93,20 @@ export async function submitAnswerAction(
     // 1. Get User
     const user = await prisma.user.findUnique({
       where: { fid },
-      select: { id: true },
+      select: { id: true, status: true }, // Added status
     });
     console.log("[submitAnswerAction] User fetch:", user);
     if (!user) {
       console.warn("[submitAnswerAction] User not found for fid:", fid);
       return { success: false, error: "User not found." };
+    }
+
+    // Enforce access control
+    if (user.status !== "ACTIVE") {
+      return {
+        success: false,
+        error: "Access denied. You must be invited to play.",
+      };
     }
 
     // 2. Get Game and Question info
@@ -302,7 +310,35 @@ export async function joinGameAction(
       return { success: false, error: "Game not found." };
     }
 
-    // Create GamePlayer if it doesn't already exist (idempotent)
+    // 3. Verify and Redeem Ticket
+    const ticket = await prisma.ticket.findUnique({
+      where: {
+        gameId_userId: {
+          gameId,
+          userId: user.id,
+        },
+      },
+    });
+
+    if (!ticket || ticket.status !== "PAID") {
+      // Allow re-joining if already REDEEMED
+      if (ticket?.status === "REDEEMED") {
+        // Already redeemed, proceed to ensure GamePlayer exists
+      } else {
+        return { success: false, error: "Valid ticket required to join." };
+      }
+    } else {
+      // Mark ticket as REDEEMED
+      await prisma.ticket.update({
+        where: { id: ticket.id },
+        data: {
+          status: "REDEEMED",
+          redeemedAt: new Date(),
+        },
+      });
+    }
+
+    // 4. Create GamePlayer if it doesn't already exist (idempotent)
     // CHANGED: Renamed to gamePlayer
     await prisma.gamePlayer.upsert({
       where: {

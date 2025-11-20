@@ -20,12 +20,24 @@ const slides: Slide[] = [
     icon: "/images/illustrations/waffle-ticket.png",
     title: "Buy a Waffle",
     description:
-      "Buy your ticket, play the game, and share in the prize pool with other winners",
+      (
+        <>
+          Buy your ticket, play the game, and share in
+          <br />
+          the prize pool with other winners
+        </>
+      )
   },
   {
     icon: "/images/illustrations/money-bag.png",
     title: "Win Big",
-    description: "The faster you connect the dots, the bigger your share",
+    description: (
+      <>
+        The faster you connect the dots, the
+        <br />
+        bigger your share
+      </>
+    ),
   },
   {
     icon: "/images/illustrations/crown.png",
@@ -74,7 +86,7 @@ export function OnboardingOverlay({ onComplete }: OnboardingOverlayProps) {
 
   return (
     <div
-      className="inset-0 z-81 flex flex-col pt-4 app-background fixed!"
+      className="inset-0 z-81 flex flex-col pt-8  app-background fixed!"
       role="dialog"
       aria-modal="true"
       aria-labelledby="onboarding-title"
@@ -106,7 +118,7 @@ export function OnboardingOverlay({ onComplete }: OnboardingOverlayProps) {
             exit="exit"
             className="absolute inset-0 flex items-center justify-center"
           >
-            <div className="flex flex-col items-center gap-16 text-center">
+            <div className="flex flex-col items-center gap-8 text-center w-full">
               <div className="relative w-[262px] h-[177px] ">
                 <Image
                   src={currentSlide.icon}
@@ -117,7 +129,7 @@ export function OnboardingOverlay({ onComplete }: OnboardingOverlayProps) {
                 />
               </div>
 
-              <div className="flex flex-col items-center w-[361px] h-[171px] gap-5">
+              <div className="flex flex-col items-center w-full px-4 gap-5">
                 <div className="flex flex-col items-center gap-1">
                   <h2 className="text-[44px] text-white font-normal text-center leading-[0.92] tracking-[-0.03em] font-body">
                     {currentSlide.title}
@@ -129,9 +141,9 @@ export function OnboardingOverlay({ onComplete }: OnboardingOverlayProps) {
 
                 <FancyBorderButton
                   onClick={handleNext}
-                  className="text-[26px] text-[#1E1E1E]"
+                  className="text-[26px] text-[#1E1E1E] w-full max-w-full"
                 >
-                  {currentSlideIndex < slides.length - 1 ? "Next" : "Let's Go"}
+                  {currentSlideIndex === 0 ? "Next" : "Let's Go"}
                 </FancyBorderButton>
               </div>
             </div>

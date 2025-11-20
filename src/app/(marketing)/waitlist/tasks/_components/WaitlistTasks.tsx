@@ -26,18 +26,18 @@ const TASKS: Task[] = [
     },
     {
         id: "twitter_follow",
-        iconPath: "/images/icons/twitter.png", // Placeholder path, user will provide
-        title: "Follow on Twitter",
-        text: "Follow @Wafflesdotfun on Twitter",
-        actionUrl: "https://twitter.com/Wafflesdotfun",
+        iconPath: "/images/icons/x.png", // Placeholder path, user will provide
+        title: "Follow on X",
+        text: "Follow @playwaffles on X",
+        actionUrl: "https://x.com/playwaffles",
         type: "link",
     },
     {
         id: "twitter_rt",
-        iconPath: "/images/icons/twitter.png", // Placeholder path, user will provide
+        iconPath: "/images/icons/x.png", // Placeholder path, user will provide
         title: "Retweet Post",
         text: "RT our pinned tweet about Waffles",
-        actionUrl: "https://twitter.com/Wafflesdotfun",
+        actionUrl: "https://x.com/playwaffles",
         type: "link",
     },
     {
@@ -61,6 +61,7 @@ const TASKS: Task[] = [
         iconPath: "/images/icons/invite.png", // Placeholder path, user will provide
         title: "Invite Friends",
         text: "Get 3 friends to join the waitlist",
+        actionUrl: "https://warpcast.com/~/compose?text=I%27m%20joining%20Waffles!&embeds[]=https://playwaffles.fun",
         type: "invite",
     },
 ];

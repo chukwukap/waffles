@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/db";
 import { z } from "zod";
 
-// --- Result Types (to match client expectations) ---
+import { validateReferralSchema } from "@/lib/schemas";
 
 interface ValidationSuccess {
   valid: true;
@@ -19,15 +19,6 @@ interface ValidationError {
 
 export type ValidateReferralResult = ValidationSuccess | ValidationError;
 
-// --- Schemas ---
-
-const validateSchema = z.object({
-  // The 6-character code the user entered
-  code: z.string().trim().length(6, "Code must be 6 characters.").toUpperCase(),
-  // The FID of the user *using* the code
-  fid: z.coerce.number().int().positive("Invalid FID format."),
-});
-
 /**
  * Server Action: Validates an invite code and links the invitee to the inviter.
  * This is the core of the referral system.
@@ -36,7 +27,7 @@ export async function validateReferralAction(
   _prevState: ValidateReferralResult | null,
   formData: FormData
 ): Promise<ValidateReferralResult> {
-  const validation = validateSchema.safeParse({
+  const validation = validateReferralSchema.safeParse({
     code: formData.get("code"),
     fid: formData.get("fid"),
   });
@@ -57,7 +48,7 @@ export async function validateReferralAction(
       }),
       prisma.user.findUnique({
         where: { fid },
-        select: { id: true, invitedById: true },
+        select: { id: true, invitedById: true, status: true },
       }),
     ]);
 
@@ -74,52 +65,71 @@ export async function validateReferralAction(
     if (inviter.id === invitee.id) {
       return { valid: false, error: "You cannot invite yourself." };
     }
-    if (invitee.invitedById) {
-      // User has already been referred.
-      // If it's by the *same* person, it's a success.
-      if (invitee.invitedById === inviter.id) {
+
+    // CHANGED: Logic to allow waitlisted users to be activated
+    // If user is already ACTIVE, we enforce strict referral rules (cannot change referrer)
+    if (invitee.status === "ACTIVE") {
+      if (invitee.invitedById) {
+        if (invitee.invitedById === inviter.id) {
+          return {
+            valid: true,
+            inviterId: inviter.id,
+            inviteeId: invitee.id,
+            code: code,
+          };
+        }
         return {
-          valid: true,
-          inviterId: inviter.id,
-          inviteeId: invitee.id,
-          code: code,
+          valid: false,
+          error: "You have already accepted an invite from someone else.",
         };
       }
-      // If by a *different* person, it's an error.
-      return {
-        valid: false,
-        error: "You have already been referred by someone else.",
-      };
+      return { valid: false, error: "You have already accepted an invite." };
     }
+
+    // If user is NOT ACTIVE (e.g. WAITLIST or NONE), we allow them to proceed.
+    // This will overwrite their invitedById (if any) and set them to ACTIVE.
+
     if (inviter.inviteQuota <= 0) {
       return { valid: false, error: "Inviter has no invites left." };
     }
 
     // 3. All checks passed. Perform the referral in a transaction.
-    await prisma.$transaction([
-      // a. Link invitee to inviter
-      prisma.user.update({
+    await prisma.$transaction(async (tx) => {
+      // a. Decrement inviter's quota - strictly ensure > 0 to prevent race conditions
+      const quotaUpdate = await tx.user.updateMany({
+        where: { id: inviter.id, inviteQuota: { gt: 0 } },
+        data: { inviteQuota: { decrement: 1 } },
+      });
+
+      if (quotaUpdate.count === 0) {
+        throw new Error("Inviter has no invites left.");
+      }
+
+      // b. Link invitee to inviter
+      await tx.user.update({
         where: { id: invitee.id },
         data: {
           invitedById: inviter.id,
           status: "ACTIVE", // <-- Activate the user!
         },
-      }),
-      // b. Decrement inviter's quota
-      prisma.user.update({
-        where: { id: inviter.id },
-        data: { inviteQuota: { decrement: 1 } },
-      }),
-      // c. Log the reward event
-      prisma.referralReward.create({
-        data: {
+      });
+
+      // c. Log or Update the reward event
+      // Use upsert to handle case where user was already referred on waitlist
+      await tx.referralReward.upsert({
+        where: { inviteeId: invitee.id },
+        update: {
+          inviterId: inviter.id, // Update to the new inviter (the one who activated them)
+          status: "PENDING",
+        },
+        create: {
           inviterId: inviter.id,
           inviteeId: invitee.id,
-          status: "PENDING", // Will be "UNLOCKED" after first game
-          amount: 0, // Set your reward amount here
+          status: "PENDING",
+          amount: 0,
         },
-      }),
-    ]);
+      });
+    });
 
     return {
       valid: true,

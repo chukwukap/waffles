@@ -8,6 +8,7 @@ import { sendMessageAction } from "@/actions/chat";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useSound } from "@/components/providers/SoundContext";
 import { ChatWithUser } from "@/lib/types";
+import { sendMessageSchema } from "@/lib/schemas";
 
 interface ChatCommentType {
   id: number;
@@ -93,9 +94,18 @@ export const Chat = ({
     }
   }, [comments]);
 
+
+
+  // ... inside component
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (message.trim() === "" || !gameId || !fid || isSubmitting) return;
+
+    const validation = sendMessageSchema.shape.message.safeParse(message);
+    if (!validation.success || !gameId || !fid || isSubmitting) {
+      // Optional: Handle validation error UI here if needed, e.g. toast
+      return;
+    }
 
     setIsSubmitting(true);
     playSound("click");
@@ -214,14 +224,12 @@ export const Chat = ({
               disabled={!hasText || isSubmitting}
               className={`flex h-[30px] w-[50px] items-center justify-center rounded-full bg-blue-500
                          transition-all duration-200 ease-in-out
-                         ${
-                           hasText && !isSubmitting
-                             ? "scale-100 opacity-100"
-                             : "scale-50 opacity-0"
-                         }
-                         ${
-                           !hasText || isSubmitting ? "pointer-events-none" : ""
-                         }
+                         ${hasText && !isSubmitting
+                  ? "scale-100 opacity-100"
+                  : "scale-50 opacity-0"
+                }
+                         ${!hasText || isSubmitting ? "pointer-events-none" : ""
+                }
                          hover:bg-blue-400 active:bg-blue-600
                          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
                          focus-visible:ring-offset-2 focus-visible:ring-offset-black`}
