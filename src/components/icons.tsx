@@ -1070,3 +1070,14 @@ export function GroupIcon(props: React.SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+
+export function CupIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+      <path d="M10.6667 2H4.00004V3.33333H1.33337V10H5.33337V3.33333H10.6667V10H14.6667V3.33333H12V2H10.6667ZM13.3334 4.66667V8.66667H12V4.66667H13.3334ZM4.00004 8.66667H2.66671V4.66667H4.00004V8.66667ZM12 10H4.00004V11.3333H12V10ZM7.33337 11.3333H8.66671V12.6667H10.6667V14H5.33337V12.6667H7.33337V11.3333Z" fill="#14B985" />
+    </svg>
+
+
+  );
+}

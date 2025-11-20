@@ -1,7 +1,5 @@
 "use client";
-
 import {
-  ArrowRightIcon,
   InviteFriendsIcon,
   UploadIcon,
 } from "@/components/icons";

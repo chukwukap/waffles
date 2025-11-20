@@ -55,6 +55,7 @@ export interface WaitlistData {
   onList: boolean;
   rank: number | null;
   invites: number;
+  completedTasks: string[];
 }
 
 /**
@@ -79,7 +80,7 @@ export async function GET(request: NextRequest) {
     // Fetch user data
     const user = await prisma.user.findUnique({
       where: { fid },
-      select: { id: true, fid: true, status: true },
+      select: { id: true, fid: true, status: true, completedTasks: true },
     });
 
     if (!user) {
@@ -88,6 +89,7 @@ export async function GET(request: NextRequest) {
         onList: false,
         rank: null,
         invites: 0,
+        completedTasks: [],
       });
     }
 
@@ -104,6 +106,7 @@ export async function GET(request: NextRequest) {
       onList: user.status === "WAITLIST",
       rank,
       invites,
+      completedTasks: user.completedTasks,
     };
 
     return NextResponse.json(waitlistData);

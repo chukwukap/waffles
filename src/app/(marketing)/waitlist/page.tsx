@@ -1,24 +1,19 @@
-import { prisma } from "@/lib/db";
 import { WaitlistClient } from "./client";
 import { minikitConfig } from "../../../../minikit.config";
 import { Metadata } from "next";
-import { cache } from "react";
+
 import { env } from "@/lib/env";
 
 export async function generateMetadata({
   searchParams,
-}: Props): Promise<Metadata> {
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}): Promise<Metadata> {
   const sParams = await searchParams;
-  // We need to get the fid from the ref to calculate the rank for the person being shared
-  const refFid = sParams.ref ? parseInt(sParams.ref as string) : null;
-  let rank: number | null = null;
+  const rank = sParams.rank ? parseInt(sParams.rank as string) : null;
 
-  if (refFid) {
-    rank = await getWaitlistRank(refFid);
-  }
-
-  const IMAGE_URL = sParams.ref
-    ? `${env.rootUrl}/api/og/waitlist?rank=${rank}&ref=${sParams.ref}`
+  const IMAGE_URL = sParams.rank
+    ? `${env.rootUrl}/api/og/waitlist?rank=${rank}`
     : `${env.rootUrl}/images/share/waitlist-default.png`;
 
   return {
@@ -52,45 +47,43 @@ export async function generateMetadata({
  * - Higher invite quota always ranks above, earlier join time breaks ties.
  * Returns 1-based rank (1 = best). Returns null if not on waitlist.
  */
-export const getWaitlistRank = cache(
-  async (fid: number): Promise<number | null> => {
-    const user = await prisma.user.findUnique({
-      where: { fid },
-      select: { id: true, status: true, inviteQuota: true, createdAt: true },
-    });
+// export const getWaitlistRank = cache(
+//   async (fid: number): Promise<number | null> => {
+//     const user = await prisma.user.findUnique({
+//       where: { fid },
+//       select: { id: true, status: true, inviteQuota: true, createdAt: true },
+//     });
 
-    // Not on waitlist or not a user
-    if (!user || user.status !== "WAITLIST") {
-      return null;
-    }
+//     // Not on waitlist or not a user
+//     if (!user || user.status !== "WAITLIST") {
+//       return null;
+//     }
 
-    // Calculate the user's score
-    const userScore =
-      user.inviteQuota * 1_000_000_000 - new Date(user.createdAt).getTime();
+//     // Calculate the user's score
+//     const userScore =
+//       user.inviteQuota * 1_000_000_000 - new Date(user.createdAt).getTime();
 
-    // Find how many waitlist entries have a better (higher) score
-    const allEntries = await prisma.user.findMany({
-      where: { status: "WAITLIST" },
-      select: { inviteQuota: true, createdAt: true },
-    });
+//     // Find how many waitlist entries have a better (higher) score
+//     const allEntries = await prisma.user.findMany({
+//       where: { status: "WAITLIST" },
+//       select: { inviteQuota: true, createdAt: true },
+//     });
 
-    let betterCount = 0;
-    for (const entry of allEntries) {
-      const entryScore =
-        entry.inviteQuota * 1_000_000_000 - new Date(entry.createdAt).getTime();
+//     let betterCount = 0;
+//     for (const entry of allEntries) {
+//       const entryScore =
+//         entry.inviteQuota * 1_000_000_000 - new Date(entry.createdAt).getTime();
 
-      if (entryScore > userScore) {
-        betterCount++;
-      }
-    }
+//       if (entryScore > userScore) {
+//         betterCount++;
+//       }
+//     }
 
-    return betterCount + 1; // 1-based rank
-  }
-);
+//     return betterCount + 1; // 1-based rank
+//   }
+// );
 
-type Props = {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-};
+
 
 export default async function WaitlistPage() {
   return <WaitlistClient />;

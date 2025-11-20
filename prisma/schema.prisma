@@ -19,9 +19,10 @@ model User {
   wallet   String? @unique
 
   // -- VIRAL LOOP --
-  inviteCode  String     @unique // REMOVED @default(cuid())
-  inviteQuota Int        @default(3) // Renamed: "Quota" implies a limit
-  status      UserStatus @default(WAITLIST)
+  inviteCode     String     @unique // REMOVED @default(cuid())
+  inviteQuota    Int        @default(3) // Renamed: "Quota" implies a limit
+  status         UserStatus @default(WAITLIST)
+  completedTasks String[]   @default([]) // Track completed waitlist tasks
 
   // -- RELATIONSHIPS --
   invitedBy   User?            @relation("ReferralTree", fields: [invitedById], references: [id])

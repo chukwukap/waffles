@@ -3,7 +3,7 @@
 import { cache } from "react";
 import { prisma } from "@/lib/db";
 import { redirect } from "next/navigation";
-import { SubHeader } from "../../_components/SubHeader";
+import { SubHeader } from "@/components/ui/SubHeader";
 import GameDetailsClient from "./client";
 
 // Define the precise payload needed for the client

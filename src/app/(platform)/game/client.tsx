@@ -12,7 +12,6 @@ import { GameActionButton } from "./_components/GameActionButton";
 import { Ticket } from "@prisma/client";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { ChatInput } from "@/app/(platform)/game/_components/chat/ChatTrigger";
-import { getMutualsAction, type MutualsData } from "@/actions/mutuals";
 import { UpcomingGamePayload } from "./page"; // <-- Import the type
 
 function formatTime(remainingSeconds: number): string {
@@ -37,7 +36,11 @@ export default function GameHomePageClient({
   const upcomingOrActiveGame = use(upcomingOrActiveGamePromise);
   const [chatOpen, setChatOpen] = useState(false);
   const [ticket, setTicket] = useState<Ticket | null>(null);
-  const [mutualsData, setMutualsData] = useState<MutualsData | null>(null);
+  const [mutualsData, setMutualsData] = useState<{
+    mutuals: Array<{ fid: number; pfpUrl: string | null }>;
+    mutualCount: number;
+    totalCount: number;
+  } | null>(null);
 
   const startTimeMs = upcomingOrActiveGame?.startsAt?.getTime() ?? 0; // CHANGED: startTime -> startsAt
   const endTimeMs = upcomingOrActiveGame?.endsAt?.getTime() ?? 0; // CHANGED: endTime -> endsAt
@@ -77,12 +80,13 @@ export default function GameHomePageClient({
 
     const fetchMutuals = async () => {
       try {
-        const data = await getMutualsAction(
-          fid,
-          upcomingOrActiveGame.id,
-          "game"
+        const res = await fetch(
+          `/api/mutuals?fid=${fid}&gameId=${upcomingOrActiveGame.id}&context=game`
         );
-        setMutualsData(data);
+        if (res.ok) {
+          const data = await res.json();
+          setMutualsData(data);
+        }
       } catch (err) {
         console.error("Error fetching mutuals:", err);
       }
@@ -202,12 +206,10 @@ export default function GameHomePageClient({
             {mutualsData?.mutualCount === 0
               ? playerCount === 0
                 ? "No players have joined yet"
-                : `${playerCount.toLocaleString()} ${
-                    playerCount === 1 ? "player has" : "players have"
-                  } joined`
-              : `${mutualsData?.mutualCount ?? 0} friend${
-                  (mutualsData?.mutualCount ?? 0) === 1 ? "" : "s"
-                } joined`}
+                : `${playerCount.toLocaleString()} ${playerCount === 1 ? "player has" : "players have"
+                } joined`
+              : `${mutualsData?.mutualCount ?? 0} friend${(mutualsData?.mutualCount ?? 0) === 1 ? "" : "s"
+              } joined`}
           </p>
         </div>
         <LiveEventFeed

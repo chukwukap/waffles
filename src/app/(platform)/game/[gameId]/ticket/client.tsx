@@ -8,7 +8,6 @@ import { TicketPageGameInfo, TicketPageUserInfo } from "./page";
 import { WaffleCard } from "./_components/WaffleCard";
 import { Ticket } from "@prisma/client";
 import { SuccessCard } from "./_components/SuccessCard";
-import { getMutualsAction, type MutualsData } from "@/actions/mutuals";
 
 type TicketPageClientImplProps = {
   gameInfoPromise: Promise<TicketPageGameInfo | null>;
@@ -25,7 +24,11 @@ export default function TicketPageClientImpl({
   const [ticket, setTicket] = useState<Ticket | null>(
     userInfo && userInfo.tickets.length > 0 ? userInfo.tickets[0] : null
   );
-  const [mutualsData, setMutualsData] = useState<MutualsData | null>(null);
+  const [mutualsData, setMutualsData] = useState<{
+    mutuals: Array<{ fid: number; pfpUrl: string | null }>;
+    mutualCount: number;
+    totalCount: number;
+  } | null>(null);
 
   // Check if user already has a ticket for this game
   useEffect(() => {
@@ -59,8 +62,13 @@ export default function TicketPageClientImpl({
 
     const fetchMutuals = async () => {
       try {
-        const data = await getMutualsAction(userInfo.fid, gameInfo.id, "game");
-        setMutualsData(data);
+        const res = await fetch(
+          `/api/mutuals?fid=${userInfo.fid}&gameId=${gameInfo.id}&context=game`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setMutualsData(data);
+        }
       } catch (err) {
         console.error("Error fetching mutuals:", err);
       }
@@ -150,9 +158,8 @@ export default function TicketPageClientImpl({
         <p className="font-display text-[#99A0AE] text-sm mt-2">
           {mutualsData?.mutualCount === 0
             ? "and others have joined the game"
-            : `and ${mutualsData?.mutualCount ?? 0} other${
-                (mutualsData?.mutualCount ?? 0) === 1 ? "" : "s"
-              } have joined the game`}
+            : `and ${mutualsData?.mutualCount ?? 0} other${(mutualsData?.mutualCount ?? 0) === 1 ? "" : "s"
+            } have joined the game`}
         </p>
       </div>
     </div>

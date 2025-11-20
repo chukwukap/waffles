@@ -120,3 +120,55 @@ export async function joinWaitlistAction(
     return { ok: false, error: "An unexpected error occurred." };
   }
 }
+
+export type CompleteTaskState = {
+  success: boolean;
+  message?: string;
+  error?: string;
+};
+
+export async function completeWaitlistTask(
+  prevState: CompleteTaskState | null,
+  formData: FormData
+): Promise<CompleteTaskState> {
+  try {
+    const fid = Number(formData.get("fid"));
+    const taskId = formData.get("taskId") as string;
+
+    if (!fid || !taskId) {
+      return { success: false, error: "Missing FID or Task ID" };
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { fid },
+      select: { id: true, completedTasks: true },
+    });
+
+    if (!user) {
+      return { success: false, error: "User not found" };
+    }
+
+    // Check if already completed
+    if (user.completedTasks.includes(taskId)) {
+      return { success: true, message: "Task already completed" };
+    }
+
+    // Add task to completed list
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        completedTasks: {
+          push: taskId,
+        },
+      },
+    });
+
+    revalidatePath("/waitlist");
+    revalidatePath("/waitlist/tasks");
+
+    return { success: true, message: "Task completed successfully" };
+  } catch (error) {
+    console.error("Error completing task:", error);
+    return { success: false, error: "Failed to complete task" };
+  }
+}

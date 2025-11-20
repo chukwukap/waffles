@@ -1,4 +1,4 @@
-import { SubHeader } from "../_components/SubHeader";
+import { SubHeader } from "@/components/ui/SubHeader";
 export default function HistoryLayout({
   children,
 }: {

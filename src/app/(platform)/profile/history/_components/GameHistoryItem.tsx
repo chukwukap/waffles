@@ -1,7 +1,7 @@
 "use client";
 
 import { claimPrizeAction, ClaimPrizeResult } from "@/actions/prize";
-import { WaffleIcon, FlashIcon } from "@/components/icons";
+import { WaffleIcon, FlashIcon, CupIcon } from "@/components/icons";
 import { Spinner } from "@/components/ui/spinner";
 import { notify } from "@/components/ui/Toaster";
 import { GameHistoryEntry } from "@/lib/types";
@@ -129,10 +129,11 @@ export default function GameHistoryItem({ game }: GameHistoryItemProps) {
             <FancyBorderButton
               onClick={handleClaim}
               disabled={isClaiming}
-              className="w-[92px] h-[29px] text-[12px] border-[#14B985] text-[#14B985] mx-0"
+              className="w-[92px] h-[29px] text-[12px] border-[#14B985] text-[#14B985] ml-12 px-0.5"
               fullWidth={false}
             >
-              CLAIM
+              <CupIcon className="mr-1" />
+              <span>CLAIM</span>
             </FancyBorderButton>
           )}
         </div>

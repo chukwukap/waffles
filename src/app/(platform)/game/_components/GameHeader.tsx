@@ -66,14 +66,16 @@ export function GameHeader() {
           </div>
         ) : (
           <div className="relative w-[122.56px] h-[23.29px]">
-            <Image
-              src="/logo-onboarding.png"
-              alt="Waffles logo icon"
-              fill
-              sizes="122.56px"
-              priority
-              className="object-contain"
-            />
+            <Link href="/game">
+              <Image
+                src="/logo-onboarding.png"
+                alt="Waffles logo icon"
+                fill
+                sizes="122.56px"
+                priority
+                className="object-contain"
+              />
+            </Link>
           </div>
         )}
 
