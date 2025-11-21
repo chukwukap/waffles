@@ -19,6 +19,9 @@ model User {
   pfpUrl   String? 
   wallet   String? @unique
 
+  // -- ADMIN --
+  role UserRole @default(USER)
+
   // -- VIRAL LOOP --
   inviteCode     String     @unique 
   inviteQuota    Int        @default(3) 
@@ -40,6 +43,12 @@ model User {
   answers Answer[]
   notifs  NotificationToken[]
   chats   Chat[]
+  auditLogs AuditLog[]
+}
+
+enum UserRole {
+  USER
+  ADMIN
 }
 
 enum UserStatus {
@@ -82,6 +91,7 @@ model Game {
   title       String
   description String?
   theme       GameTheme
+  coverUrl    String?
   status      GameStatus @default(SCHEDULED)
 
   // -- TIMING --
@@ -132,12 +142,12 @@ model Question {
 
   // -- CONTENT --
   content      String
-  mediaUrl     String?
-  soundUrl     String?
+  mediaUrl     String? // Optional image/video for the question
+  soundUrl     String? // Optional audio for the question
   options      String[]
   correctIndex Int
 
-  durationSec Int @default(10)
+  durationSec  Int     @default(10)
 
   answers Answer[]
 
@@ -249,4 +259,25 @@ model NotificationToken {
 
   @@unique([userId, appFid])
   @@index([token])
+}
+
+// ==========================================
+// 5. ADMIN (Audit & Logging)
+// ==========================================
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  admin      User     @relation(fields: [adminId], references: [id])
+  adminId    Int
+  
+  action     String   // "CREATE_GAME", "BAN_USER", "UPDATE_GAME", etc.
+  entityType String   // "Game", "User", "Question", etc.
+  entityId   Int?     // ID of affected entity
+  details    Json?    // Additional context (before/after values, etc.)
+  ip         String?  // Admin's IP address
+  
+  createdAt  DateTime @default(now())
+  
+  @@index([adminId, createdAt])
+  @@index([entityType, entityId])
 }

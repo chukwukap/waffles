@@ -49,6 +49,7 @@ export type GameMinAggregateOutputType = {
   title: string | null
   description: string | null
   theme: $Enums.GameTheme | null
+  coverUrl: string | null
   status: $Enums.GameStatus | null
   startsAt: Date | null
   endsAt: Date | null
@@ -66,6 +67,7 @@ export type GameMaxAggregateOutputType = {
   title: string | null
   description: string | null
   theme: $Enums.GameTheme | null
+  coverUrl: string | null
   status: $Enums.GameStatus | null
   startsAt: Date | null
   endsAt: Date | null
@@ -83,6 +85,7 @@ export type GameCountAggregateOutputType = {
   title: number
   description: number
   theme: number
+  coverUrl: number
   status: number
   startsAt: number
   endsAt: number
@@ -120,6 +123,7 @@ export type GameMinAggregateInputType = {
   title?: true
   description?: true
   theme?: true
+  coverUrl?: true
   status?: true
   startsAt?: true
   endsAt?: true
@@ -137,6 +141,7 @@ export type GameMaxAggregateInputType = {
   title?: true
   description?: true
   theme?: true
+  coverUrl?: true
   status?: true
   startsAt?: true
   endsAt?: true
@@ -154,6 +159,7 @@ export type GameCountAggregateInputType = {
   title?: true
   description?: true
   theme?: true
+  coverUrl?: true
   status?: true
   startsAt?: true
   endsAt?: true
@@ -258,6 +264,7 @@ export type GameGroupByOutputType = {
   title: string
   description: string | null
   theme: $Enums.GameTheme
+  coverUrl: string | null
   status: $Enums.GameStatus
   startsAt: Date
   endsAt: Date
@@ -298,6 +305,7 @@ export type GameWhereInput = {
   title?: Prisma.StringFilter<"Game"> | string
   description?: Prisma.StringNullableFilter<"Game"> | string | null
   theme?: Prisma.EnumGameThemeFilter<"Game"> | $Enums.GameTheme
+  coverUrl?: Prisma.StringNullableFilter<"Game"> | string | null
   status?: Prisma.EnumGameStatusFilter<"Game"> | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFilter<"Game"> | Date | string
   endsAt?: Prisma.DateTimeFilter<"Game"> | Date | string
@@ -320,6 +328,7 @@ export type GameOrderByWithRelationInput = {
   title?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   theme?: Prisma.SortOrder
+  coverUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   startsAt?: Prisma.SortOrder
   endsAt?: Prisma.SortOrder
@@ -345,6 +354,7 @@ export type GameWhereUniqueInput = Prisma.AtLeast<{
   title?: Prisma.StringFilter<"Game"> | string
   description?: Prisma.StringNullableFilter<"Game"> | string | null
   theme?: Prisma.EnumGameThemeFilter<"Game"> | $Enums.GameTheme
+  coverUrl?: Prisma.StringNullableFilter<"Game"> | string | null
   status?: Prisma.EnumGameStatusFilter<"Game"> | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFilter<"Game"> | Date | string
   endsAt?: Prisma.DateTimeFilter<"Game"> | Date | string
@@ -367,6 +377,7 @@ export type GameOrderByWithAggregationInput = {
   title?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   theme?: Prisma.SortOrder
+  coverUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   startsAt?: Prisma.SortOrder
   endsAt?: Prisma.SortOrder
@@ -392,6 +403,7 @@ export type GameScalarWhereWithAggregatesInput = {
   title?: Prisma.StringWithAggregatesFilter<"Game"> | string
   description?: Prisma.StringNullableWithAggregatesFilter<"Game"> | string | null
   theme?: Prisma.EnumGameThemeWithAggregatesFilter<"Game"> | $Enums.GameTheme
+  coverUrl?: Prisma.StringNullableWithAggregatesFilter<"Game"> | string | null
   status?: Prisma.EnumGameStatusWithAggregatesFilter<"Game"> | $Enums.GameStatus
   startsAt?: Prisma.DateTimeWithAggregatesFilter<"Game"> | Date | string
   endsAt?: Prisma.DateTimeWithAggregatesFilter<"Game"> | Date | string
@@ -408,6 +420,7 @@ export type GameCreateInput = {
   title: string
   description?: string | null
   theme: $Enums.GameTheme
+  coverUrl?: string | null
   status?: $Enums.GameStatus
   startsAt: Date | string
   endsAt: Date | string
@@ -430,6 +443,7 @@ export type GameUncheckedCreateInput = {
   title: string
   description?: string | null
   theme: $Enums.GameTheme
+  coverUrl?: string | null
   status?: $Enums.GameStatus
   startsAt: Date | string
   endsAt: Date | string
@@ -451,6 +465,7 @@ export type GameUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   theme?: Prisma.EnumGameThemeFieldUpdateOperationsInput | $Enums.GameTheme
+  coverUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -473,6 +488,7 @@ export type GameUncheckedUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   theme?: Prisma.EnumGameThemeFieldUpdateOperationsInput | $Enums.GameTheme
+  coverUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -495,6 +511,7 @@ export type GameCreateManyInput = {
   title: string
   description?: string | null
   theme: $Enums.GameTheme
+  coverUrl?: string | null
   status?: $Enums.GameStatus
   startsAt: Date | string
   endsAt: Date | string
@@ -511,6 +528,7 @@ export type GameUpdateManyMutationInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   theme?: Prisma.EnumGameThemeFieldUpdateOperationsInput | $Enums.GameTheme
+  coverUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -528,6 +546,7 @@ export type GameUncheckedUpdateManyInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   theme?: Prisma.EnumGameThemeFieldUpdateOperationsInput | $Enums.GameTheme
+  coverUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -545,6 +564,7 @@ export type GameCountOrderByAggregateInput = {
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
   theme?: Prisma.SortOrder
+  coverUrl?: Prisma.SortOrder
   status?: Prisma.SortOrder
   startsAt?: Prisma.SortOrder
   endsAt?: Prisma.SortOrder
@@ -571,6 +591,7 @@ export type GameMaxOrderByAggregateInput = {
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
   theme?: Prisma.SortOrder
+  coverUrl?: Prisma.SortOrder
   status?: Prisma.SortOrder
   startsAt?: Prisma.SortOrder
   endsAt?: Prisma.SortOrder
@@ -588,6 +609,7 @@ export type GameMinOrderByAggregateInput = {
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
   theme?: Prisma.SortOrder
+  coverUrl?: Prisma.SortOrder
   status?: Prisma.SortOrder
   startsAt?: Prisma.SortOrder
   endsAt?: Prisma.SortOrder
@@ -696,6 +718,7 @@ export type GameCreateWithoutQuestionsInput = {
   title: string
   description?: string | null
   theme: $Enums.GameTheme
+  coverUrl?: string | null
   status?: $Enums.GameStatus
   startsAt: Date | string
   endsAt: Date | string
@@ -717,6 +740,7 @@ export type GameUncheckedCreateWithoutQuestionsInput = {
   title: string
   description?: string | null
   theme: $Enums.GameTheme
+  coverUrl?: string | null
   status?: $Enums.GameStatus
   startsAt: Date | string
   endsAt: Date | string
@@ -753,6 +777,7 @@ export type GameUpdateWithoutQuestionsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   theme?: Prisma.EnumGameThemeFieldUpdateOperationsInput | $Enums.GameTheme
+  coverUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -774,6 +799,7 @@ export type GameUncheckedUpdateWithoutQuestionsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   theme?: Prisma.EnumGameThemeFieldUpdateOperationsInput | $Enums.GameTheme
+  coverUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -794,6 +820,7 @@ export type GameCreateWithoutTicketsInput = {
   title: string
   description?: string | null
   theme: $Enums.GameTheme
+  coverUrl?: string | null
   status?: $Enums.GameStatus
   startsAt: Date | string
   endsAt: Date | string
@@ -815,6 +842,7 @@ export type GameUncheckedCreateWithoutTicketsInput = {
   title: string
   description?: string | null
   theme: $Enums.GameTheme
+  coverUrl?: string | null
   status?: $Enums.GameStatus
   startsAt: Date | string
   endsAt: Date | string
@@ -851,6 +879,7 @@ export type GameUpdateWithoutTicketsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   theme?: Prisma.EnumGameThemeFieldUpdateOperationsInput | $Enums.GameTheme
+  coverUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -872,6 +901,7 @@ export type GameUncheckedUpdateWithoutTicketsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   theme?: Prisma.EnumGameThemeFieldUpdateOperationsInput | $Enums.GameTheme
+  coverUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -892,6 +922,7 @@ export type GameCreateWithoutPlayersInput = {
   title: string
   description?: string | null
   theme: $Enums.GameTheme
+  coverUrl?: string | null
   status?: $Enums.GameStatus
   startsAt: Date | string
   endsAt: Date | string
@@ -913,6 +944,7 @@ export type GameUncheckedCreateWithoutPlayersInput = {
   title: string
   description?: string | null
   theme: $Enums.GameTheme
+  coverUrl?: string | null
   status?: $Enums.GameStatus
   startsAt: Date | string
   endsAt: Date | string
@@ -949,6 +981,7 @@ export type GameUpdateWithoutPlayersInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   theme?: Prisma.EnumGameThemeFieldUpdateOperationsInput | $Enums.GameTheme
+  coverUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -970,6 +1003,7 @@ export type GameUncheckedUpdateWithoutPlayersInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   theme?: Prisma.EnumGameThemeFieldUpdateOperationsInput | $Enums.GameTheme
+  coverUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -990,6 +1024,7 @@ export type GameCreateWithoutAnswersInput = {
   title: string
   description?: string | null
   theme: $Enums.GameTheme
+  coverUrl?: string | null
   status?: $Enums.GameStatus
   startsAt: Date | string
   endsAt: Date | string
@@ -1011,6 +1046,7 @@ export type GameUncheckedCreateWithoutAnswersInput = {
   title: string
   description?: string | null
   theme: $Enums.GameTheme
+  coverUrl?: string | null
   status?: $Enums.GameStatus
   startsAt: Date | string
   endsAt: Date | string
@@ -1047,6 +1083,7 @@ export type GameUpdateWithoutAnswersInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   theme?: Prisma.EnumGameThemeFieldUpdateOperationsInput | $Enums.GameTheme
+  coverUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1068,6 +1105,7 @@ export type GameUncheckedUpdateWithoutAnswersInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   theme?: Prisma.EnumGameThemeFieldUpdateOperationsInput | $Enums.GameTheme
+  coverUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1088,6 +1126,7 @@ export type GameCreateWithoutChatsInput = {
   title: string
   description?: string | null
   theme: $Enums.GameTheme
+  coverUrl?: string | null
   status?: $Enums.GameStatus
   startsAt: Date | string
   endsAt: Date | string
@@ -1109,6 +1148,7 @@ export type GameUncheckedCreateWithoutChatsInput = {
   title: string
   description?: string | null
   theme: $Enums.GameTheme
+  coverUrl?: string | null
   status?: $Enums.GameStatus
   startsAt: Date | string
   endsAt: Date | string
@@ -1145,6 +1185,7 @@ export type GameUpdateWithoutChatsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   theme?: Prisma.EnumGameThemeFieldUpdateOperationsInput | $Enums.GameTheme
+  coverUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1166,6 +1207,7 @@ export type GameUncheckedUpdateWithoutChatsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   theme?: Prisma.EnumGameThemeFieldUpdateOperationsInput | $Enums.GameTheme
+  coverUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1254,6 +1296,7 @@ export type GameSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   title?: boolean
   description?: boolean
   theme?: boolean
+  coverUrl?: boolean
   status?: boolean
   startsAt?: boolean
   endsAt?: boolean
@@ -1277,6 +1320,7 @@ export type GameSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   title?: boolean
   description?: boolean
   theme?: boolean
+  coverUrl?: boolean
   status?: boolean
   startsAt?: boolean
   endsAt?: boolean
@@ -1294,6 +1338,7 @@ export type GameSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   title?: boolean
   description?: boolean
   theme?: boolean
+  coverUrl?: boolean
   status?: boolean
   startsAt?: boolean
   endsAt?: boolean
@@ -1311,6 +1356,7 @@ export type GameSelectScalar = {
   title?: boolean
   description?: boolean
   theme?: boolean
+  coverUrl?: boolean
   status?: boolean
   startsAt?: boolean
   endsAt?: boolean
@@ -1323,7 +1369,7 @@ export type GameSelectScalar = {
   updatedAt?: boolean
 }
 
-export type GameOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "theme" | "status" | "startsAt" | "endsAt" | "entryFee" | "prizePool" | "roundDurationSec" | "questionCount" | "maxPlayers" | "createdAt" | "updatedAt", ExtArgs["result"]["game"]>
+export type GameOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "theme" | "coverUrl" | "status" | "startsAt" | "endsAt" | "entryFee" | "prizePool" | "roundDurationSec" | "questionCount" | "maxPlayers" | "createdAt" | "updatedAt", ExtArgs["result"]["game"]>
 export type GameInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   questions?: boolean | Prisma.Game$questionsArgs<ExtArgs>
   tickets?: boolean | Prisma.Game$ticketsArgs<ExtArgs>
@@ -1349,6 +1395,7 @@ export type $GamePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     title: string
     description: string | null
     theme: $Enums.GameTheme
+    coverUrl: string | null
     status: $Enums.GameStatus
     startsAt: Date
     endsAt: Date
@@ -1791,6 +1838,7 @@ export interface GameFieldRefs {
   readonly title: Prisma.FieldRef<"Game", 'String'>
   readonly description: Prisma.FieldRef<"Game", 'String'>
   readonly theme: Prisma.FieldRef<"Game", 'GameTheme'>
+  readonly coverUrl: Prisma.FieldRef<"Game", 'String'>
   readonly status: Prisma.FieldRef<"Game", 'GameStatus'>
   readonly startsAt: Prisma.FieldRef<"Game", 'DateTime'>
   readonly endsAt: Prisma.FieldRef<"Game", 'DateTime'>

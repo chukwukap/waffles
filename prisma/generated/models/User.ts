@@ -46,6 +46,7 @@ export type UserMinAggregateOutputType = {
   username: string | null
   pfpUrl: string | null
   wallet: string | null
+  role: $Enums.UserRole | null
   inviteCode: string | null
   inviteQuota: number | null
   status: $Enums.UserStatus | null
@@ -60,6 +61,7 @@ export type UserMaxAggregateOutputType = {
   username: string | null
   pfpUrl: string | null
   wallet: string | null
+  role: $Enums.UserRole | null
   inviteCode: string | null
   inviteQuota: number | null
   status: $Enums.UserStatus | null
@@ -74,6 +76,7 @@ export type UserCountAggregateOutputType = {
   username: number
   pfpUrl: number
   wallet: number
+  role: number
   inviteCode: number
   inviteQuota: number
   status: number
@@ -105,6 +108,7 @@ export type UserMinAggregateInputType = {
   username?: true
   pfpUrl?: true
   wallet?: true
+  role?: true
   inviteCode?: true
   inviteQuota?: true
   status?: true
@@ -119,6 +123,7 @@ export type UserMaxAggregateInputType = {
   username?: true
   pfpUrl?: true
   wallet?: true
+  role?: true
   inviteCode?: true
   inviteQuota?: true
   status?: true
@@ -133,6 +138,7 @@ export type UserCountAggregateInputType = {
   username?: true
   pfpUrl?: true
   wallet?: true
+  role?: true
   inviteCode?: true
   inviteQuota?: true
   status?: true
@@ -235,6 +241,7 @@ export type UserGroupByOutputType = {
   username: string | null
   pfpUrl: string | null
   wallet: string | null
+  role: $Enums.UserRole
   inviteCode: string
   inviteQuota: number
   status: $Enums.UserStatus
@@ -273,6 +280,7 @@ export type UserWhereInput = {
   username?: Prisma.StringNullableFilter<"User"> | string | null
   pfpUrl?: Prisma.StringNullableFilter<"User"> | string | null
   wallet?: Prisma.StringNullableFilter<"User"> | string | null
+  role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   inviteCode?: Prisma.StringFilter<"User"> | string
   inviteQuota?: Prisma.IntFilter<"User"> | number
   status?: Prisma.EnumUserStatusFilter<"User"> | $Enums.UserStatus
@@ -288,6 +296,7 @@ export type UserWhereInput = {
   answers?: Prisma.AnswerListRelationFilter
   notifs?: Prisma.NotificationTokenListRelationFilter
   chats?: Prisma.ChatListRelationFilter
+  auditLogs?: Prisma.AuditLogListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -296,6 +305,7 @@ export type UserOrderByWithRelationInput = {
   username?: Prisma.SortOrderInput | Prisma.SortOrder
   pfpUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   wallet?: Prisma.SortOrderInput | Prisma.SortOrder
+  role?: Prisma.SortOrder
   inviteCode?: Prisma.SortOrder
   inviteQuota?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -311,6 +321,7 @@ export type UserOrderByWithRelationInput = {
   answers?: Prisma.AnswerOrderByRelationAggregateInput
   notifs?: Prisma.NotificationTokenOrderByRelationAggregateInput
   chats?: Prisma.ChatOrderByRelationAggregateInput
+  auditLogs?: Prisma.AuditLogOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -323,6 +334,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   username?: Prisma.StringNullableFilter<"User"> | string | null
   pfpUrl?: Prisma.StringNullableFilter<"User"> | string | null
+  role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   inviteQuota?: Prisma.IntFilter<"User"> | number
   status?: Prisma.EnumUserStatusFilter<"User"> | $Enums.UserStatus
   completedTasks?: Prisma.StringNullableListFilter<"User">
@@ -337,6 +349,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   answers?: Prisma.AnswerListRelationFilter
   notifs?: Prisma.NotificationTokenListRelationFilter
   chats?: Prisma.ChatListRelationFilter
+  auditLogs?: Prisma.AuditLogListRelationFilter
 }, "id" | "fid" | "wallet" | "inviteCode">
 
 export type UserOrderByWithAggregationInput = {
@@ -345,6 +358,7 @@ export type UserOrderByWithAggregationInput = {
   username?: Prisma.SortOrderInput | Prisma.SortOrder
   pfpUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   wallet?: Prisma.SortOrderInput | Prisma.SortOrder
+  role?: Prisma.SortOrder
   inviteCode?: Prisma.SortOrder
   inviteQuota?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -368,6 +382,7 @@ export type UserScalarWhereWithAggregatesInput = {
   username?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   pfpUrl?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   wallet?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  role?: Prisma.EnumUserRoleWithAggregatesFilter<"User"> | $Enums.UserRole
   inviteCode?: Prisma.StringWithAggregatesFilter<"User"> | string
   inviteQuota?: Prisma.IntWithAggregatesFilter<"User"> | number
   status?: Prisma.EnumUserStatusWithAggregatesFilter<"User"> | $Enums.UserStatus
@@ -382,6 +397,7 @@ export type UserCreateInput = {
   username?: string | null
   pfpUrl?: string | null
   wallet?: string | null
+  role?: $Enums.UserRole
   inviteCode: string
   inviteQuota?: number
   status?: $Enums.UserStatus
@@ -396,6 +412,7 @@ export type UserCreateInput = {
   answers?: Prisma.AnswerCreateNestedManyWithoutUserInput
   notifs?: Prisma.NotificationTokenCreateNestedManyWithoutUserInput
   chats?: Prisma.ChatCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutAdminInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -404,6 +421,7 @@ export type UserUncheckedCreateInput = {
   username?: string | null
   pfpUrl?: string | null
   wallet?: string | null
+  role?: $Enums.UserRole
   inviteCode: string
   inviteQuota?: number
   status?: $Enums.UserStatus
@@ -418,6 +436,7 @@ export type UserUncheckedCreateInput = {
   answers?: Prisma.AnswerUncheckedCreateNestedManyWithoutUserInput
   notifs?: Prisma.NotificationTokenUncheckedCreateNestedManyWithoutUserInput
   chats?: Prisma.ChatUncheckedCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutAdminInput
 }
 
 export type UserUpdateInput = {
@@ -425,6 +444,7 @@ export type UserUpdateInput = {
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pfpUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -439,6 +459,7 @@ export type UserUpdateInput = {
   answers?: Prisma.AnswerUpdateManyWithoutUserNestedInput
   notifs?: Prisma.NotificationTokenUpdateManyWithoutUserNestedInput
   chats?: Prisma.ChatUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutAdminNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -447,6 +468,7 @@ export type UserUncheckedUpdateInput = {
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pfpUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -461,6 +483,7 @@ export type UserUncheckedUpdateInput = {
   answers?: Prisma.AnswerUncheckedUpdateManyWithoutUserNestedInput
   notifs?: Prisma.NotificationTokenUncheckedUpdateManyWithoutUserNestedInput
   chats?: Prisma.ChatUncheckedUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutAdminNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -469,6 +492,7 @@ export type UserCreateManyInput = {
   username?: string | null
   pfpUrl?: string | null
   wallet?: string | null
+  role?: $Enums.UserRole
   inviteCode: string
   inviteQuota?: number
   status?: $Enums.UserStatus
@@ -483,6 +507,7 @@ export type UserUpdateManyMutationInput = {
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pfpUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -497,6 +522,7 @@ export type UserUncheckedUpdateManyInput = {
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pfpUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -535,6 +561,7 @@ export type UserCountOrderByAggregateInput = {
   username?: Prisma.SortOrder
   pfpUrl?: Prisma.SortOrder
   wallet?: Prisma.SortOrder
+  role?: Prisma.SortOrder
   inviteCode?: Prisma.SortOrder
   inviteQuota?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -557,6 +584,7 @@ export type UserMaxOrderByAggregateInput = {
   username?: Prisma.SortOrder
   pfpUrl?: Prisma.SortOrder
   wallet?: Prisma.SortOrder
+  role?: Prisma.SortOrder
   inviteCode?: Prisma.SortOrder
   inviteQuota?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -571,6 +599,7 @@ export type UserMinOrderByAggregateInput = {
   username?: Prisma.SortOrder
   pfpUrl?: Prisma.SortOrder
   wallet?: Prisma.SortOrder
+  role?: Prisma.SortOrder
   inviteCode?: Prisma.SortOrder
   inviteQuota?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -625,6 +654,10 @@ export type IntFieldUpdateOperationsInput = {
 
 export type NullableStringFieldUpdateOperationsInput = {
   set?: string | null
+}
+
+export type EnumUserRoleFieldUpdateOperationsInput = {
+  set?: $Enums.UserRole
 }
 
 export type StringFieldUpdateOperationsInput = {
@@ -774,11 +807,26 @@ export type UserUpdateOneRequiredWithoutNotifsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutNotifsInput, Prisma.UserUpdateWithoutNotifsInput>, Prisma.UserUncheckedUpdateWithoutNotifsInput>
 }
 
+export type UserCreateNestedOneWithoutAuditLogsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAuditLogsInput, Prisma.UserUncheckedCreateWithoutAuditLogsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAuditLogsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutAuditLogsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAuditLogsInput, Prisma.UserUncheckedCreateWithoutAuditLogsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAuditLogsInput
+  upsert?: Prisma.UserUpsertWithoutAuditLogsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAuditLogsInput, Prisma.UserUpdateWithoutAuditLogsInput>, Prisma.UserUncheckedUpdateWithoutAuditLogsInput>
+}
+
 export type UserCreateWithoutInvitesInput = {
   fid: number
   username?: string | null
   pfpUrl?: string | null
   wallet?: string | null
+  role?: $Enums.UserRole
   inviteCode: string
   inviteQuota?: number
   status?: $Enums.UserStatus
@@ -792,6 +840,7 @@ export type UserCreateWithoutInvitesInput = {
   answers?: Prisma.AnswerCreateNestedManyWithoutUserInput
   notifs?: Prisma.NotificationTokenCreateNestedManyWithoutUserInput
   chats?: Prisma.ChatCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutAdminInput
 }
 
 export type UserUncheckedCreateWithoutInvitesInput = {
@@ -800,6 +849,7 @@ export type UserUncheckedCreateWithoutInvitesInput = {
   username?: string | null
   pfpUrl?: string | null
   wallet?: string | null
+  role?: $Enums.UserRole
   inviteCode: string
   inviteQuota?: number
   status?: $Enums.UserStatus
@@ -813,6 +863,7 @@ export type UserUncheckedCreateWithoutInvitesInput = {
   answers?: Prisma.AnswerUncheckedCreateNestedManyWithoutUserInput
   notifs?: Prisma.NotificationTokenUncheckedCreateNestedManyWithoutUserInput
   chats?: Prisma.ChatUncheckedCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutAdminInput
 }
 
 export type UserCreateOrConnectWithoutInvitesInput = {
@@ -825,6 +876,7 @@ export type UserCreateWithoutInvitedByInput = {
   username?: string | null
   pfpUrl?: string | null
   wallet?: string | null
+  role?: $Enums.UserRole
   inviteCode: string
   inviteQuota?: number
   status?: $Enums.UserStatus
@@ -838,6 +890,7 @@ export type UserCreateWithoutInvitedByInput = {
   answers?: Prisma.AnswerCreateNestedManyWithoutUserInput
   notifs?: Prisma.NotificationTokenCreateNestedManyWithoutUserInput
   chats?: Prisma.ChatCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutAdminInput
 }
 
 export type UserUncheckedCreateWithoutInvitedByInput = {
@@ -846,6 +899,7 @@ export type UserUncheckedCreateWithoutInvitedByInput = {
   username?: string | null
   pfpUrl?: string | null
   wallet?: string | null
+  role?: $Enums.UserRole
   inviteCode: string
   inviteQuota?: number
   status?: $Enums.UserStatus
@@ -859,6 +913,7 @@ export type UserUncheckedCreateWithoutInvitedByInput = {
   answers?: Prisma.AnswerUncheckedCreateNestedManyWithoutUserInput
   notifs?: Prisma.NotificationTokenUncheckedCreateNestedManyWithoutUserInput
   chats?: Prisma.ChatUncheckedCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutAdminInput
 }
 
 export type UserCreateOrConnectWithoutInvitedByInput = {
@@ -887,6 +942,7 @@ export type UserUpdateWithoutInvitesInput = {
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pfpUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -900,6 +956,7 @@ export type UserUpdateWithoutInvitesInput = {
   answers?: Prisma.AnswerUpdateManyWithoutUserNestedInput
   notifs?: Prisma.NotificationTokenUpdateManyWithoutUserNestedInput
   chats?: Prisma.ChatUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutAdminNestedInput
 }
 
 export type UserUncheckedUpdateWithoutInvitesInput = {
@@ -908,6 +965,7 @@ export type UserUncheckedUpdateWithoutInvitesInput = {
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pfpUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -921,6 +979,7 @@ export type UserUncheckedUpdateWithoutInvitesInput = {
   answers?: Prisma.AnswerUncheckedUpdateManyWithoutUserNestedInput
   notifs?: Prisma.NotificationTokenUncheckedUpdateManyWithoutUserNestedInput
   chats?: Prisma.ChatUncheckedUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutAdminNestedInput
 }
 
 export type UserUpsertWithWhereUniqueWithoutInvitedByInput = {
@@ -948,6 +1007,7 @@ export type UserScalarWhereInput = {
   username?: Prisma.StringNullableFilter<"User"> | string | null
   pfpUrl?: Prisma.StringNullableFilter<"User"> | string | null
   wallet?: Prisma.StringNullableFilter<"User"> | string | null
+  role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   inviteCode?: Prisma.StringFilter<"User"> | string
   inviteQuota?: Prisma.IntFilter<"User"> | number
   status?: Prisma.EnumUserStatusFilter<"User"> | $Enums.UserStatus
@@ -962,6 +1022,7 @@ export type UserCreateWithoutRewardsInput = {
   username?: string | null
   pfpUrl?: string | null
   wallet?: string | null
+  role?: $Enums.UserRole
   inviteCode: string
   inviteQuota?: number
   status?: $Enums.UserStatus
@@ -975,6 +1036,7 @@ export type UserCreateWithoutRewardsInput = {
   answers?: Prisma.AnswerCreateNestedManyWithoutUserInput
   notifs?: Prisma.NotificationTokenCreateNestedManyWithoutUserInput
   chats?: Prisma.ChatCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutAdminInput
 }
 
 export type UserUncheckedCreateWithoutRewardsInput = {
@@ -983,6 +1045,7 @@ export type UserUncheckedCreateWithoutRewardsInput = {
   username?: string | null
   pfpUrl?: string | null
   wallet?: string | null
+  role?: $Enums.UserRole
   inviteCode: string
   inviteQuota?: number
   status?: $Enums.UserStatus
@@ -996,6 +1059,7 @@ export type UserUncheckedCreateWithoutRewardsInput = {
   answers?: Prisma.AnswerUncheckedCreateNestedManyWithoutUserInput
   notifs?: Prisma.NotificationTokenUncheckedCreateNestedManyWithoutUserInput
   chats?: Prisma.ChatUncheckedCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutAdminInput
 }
 
 export type UserCreateOrConnectWithoutRewardsInput = {
@@ -1019,6 +1083,7 @@ export type UserUpdateWithoutRewardsInput = {
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pfpUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -1032,6 +1097,7 @@ export type UserUpdateWithoutRewardsInput = {
   answers?: Prisma.AnswerUpdateManyWithoutUserNestedInput
   notifs?: Prisma.NotificationTokenUpdateManyWithoutUserNestedInput
   chats?: Prisma.ChatUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutAdminNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRewardsInput = {
@@ -1040,6 +1106,7 @@ export type UserUncheckedUpdateWithoutRewardsInput = {
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pfpUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -1053,6 +1120,7 @@ export type UserUncheckedUpdateWithoutRewardsInput = {
   answers?: Prisma.AnswerUncheckedUpdateManyWithoutUserNestedInput
   notifs?: Prisma.NotificationTokenUncheckedUpdateManyWithoutUserNestedInput
   chats?: Prisma.ChatUncheckedUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutAdminNestedInput
 }
 
 export type UserCreateWithoutTicketsInput = {
@@ -1060,6 +1128,7 @@ export type UserCreateWithoutTicketsInput = {
   username?: string | null
   pfpUrl?: string | null
   wallet?: string | null
+  role?: $Enums.UserRole
   inviteCode: string
   inviteQuota?: number
   status?: $Enums.UserStatus
@@ -1073,6 +1142,7 @@ export type UserCreateWithoutTicketsInput = {
   answers?: Prisma.AnswerCreateNestedManyWithoutUserInput
   notifs?: Prisma.NotificationTokenCreateNestedManyWithoutUserInput
   chats?: Prisma.ChatCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutAdminInput
 }
 
 export type UserUncheckedCreateWithoutTicketsInput = {
@@ -1081,6 +1151,7 @@ export type UserUncheckedCreateWithoutTicketsInput = {
   username?: string | null
   pfpUrl?: string | null
   wallet?: string | null
+  role?: $Enums.UserRole
   inviteCode: string
   inviteQuota?: number
   status?: $Enums.UserStatus
@@ -1094,6 +1165,7 @@ export type UserUncheckedCreateWithoutTicketsInput = {
   answers?: Prisma.AnswerUncheckedCreateNestedManyWithoutUserInput
   notifs?: Prisma.NotificationTokenUncheckedCreateNestedManyWithoutUserInput
   chats?: Prisma.ChatUncheckedCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutAdminInput
 }
 
 export type UserCreateOrConnectWithoutTicketsInput = {
@@ -1117,6 +1189,7 @@ export type UserUpdateWithoutTicketsInput = {
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pfpUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -1130,6 +1203,7 @@ export type UserUpdateWithoutTicketsInput = {
   answers?: Prisma.AnswerUpdateManyWithoutUserNestedInput
   notifs?: Prisma.NotificationTokenUpdateManyWithoutUserNestedInput
   chats?: Prisma.ChatUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutAdminNestedInput
 }
 
 export type UserUncheckedUpdateWithoutTicketsInput = {
@@ -1138,6 +1212,7 @@ export type UserUncheckedUpdateWithoutTicketsInput = {
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pfpUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -1151,6 +1226,7 @@ export type UserUncheckedUpdateWithoutTicketsInput = {
   answers?: Prisma.AnswerUncheckedUpdateManyWithoutUserNestedInput
   notifs?: Prisma.NotificationTokenUncheckedUpdateManyWithoutUserNestedInput
   chats?: Prisma.ChatUncheckedUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutAdminNestedInput
 }
 
 export type UserCreateWithoutGamesInput = {
@@ -1158,6 +1234,7 @@ export type UserCreateWithoutGamesInput = {
   username?: string | null
   pfpUrl?: string | null
   wallet?: string | null
+  role?: $Enums.UserRole
   inviteCode: string
   inviteQuota?: number
   status?: $Enums.UserStatus
@@ -1171,6 +1248,7 @@ export type UserCreateWithoutGamesInput = {
   answers?: Prisma.AnswerCreateNestedManyWithoutUserInput
   notifs?: Prisma.NotificationTokenCreateNestedManyWithoutUserInput
   chats?: Prisma.ChatCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutAdminInput
 }
 
 export type UserUncheckedCreateWithoutGamesInput = {
@@ -1179,6 +1257,7 @@ export type UserUncheckedCreateWithoutGamesInput = {
   username?: string | null
   pfpUrl?: string | null
   wallet?: string | null
+  role?: $Enums.UserRole
   inviteCode: string
   inviteQuota?: number
   status?: $Enums.UserStatus
@@ -1192,6 +1271,7 @@ export type UserUncheckedCreateWithoutGamesInput = {
   answers?: Prisma.AnswerUncheckedCreateNestedManyWithoutUserInput
   notifs?: Prisma.NotificationTokenUncheckedCreateNestedManyWithoutUserInput
   chats?: Prisma.ChatUncheckedCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutAdminInput
 }
 
 export type UserCreateOrConnectWithoutGamesInput = {
@@ -1215,6 +1295,7 @@ export type UserUpdateWithoutGamesInput = {
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pfpUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -1228,6 +1309,7 @@ export type UserUpdateWithoutGamesInput = {
   answers?: Prisma.AnswerUpdateManyWithoutUserNestedInput
   notifs?: Prisma.NotificationTokenUpdateManyWithoutUserNestedInput
   chats?: Prisma.ChatUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutAdminNestedInput
 }
 
 export type UserUncheckedUpdateWithoutGamesInput = {
@@ -1236,6 +1318,7 @@ export type UserUncheckedUpdateWithoutGamesInput = {
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pfpUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -1249,6 +1332,7 @@ export type UserUncheckedUpdateWithoutGamesInput = {
   answers?: Prisma.AnswerUncheckedUpdateManyWithoutUserNestedInput
   notifs?: Prisma.NotificationTokenUncheckedUpdateManyWithoutUserNestedInput
   chats?: Prisma.ChatUncheckedUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutAdminNestedInput
 }
 
 export type UserCreateWithoutAnswersInput = {
@@ -1256,6 +1340,7 @@ export type UserCreateWithoutAnswersInput = {
   username?: string | null
   pfpUrl?: string | null
   wallet?: string | null
+  role?: $Enums.UserRole
   inviteCode: string
   inviteQuota?: number
   status?: $Enums.UserStatus
@@ -1269,6 +1354,7 @@ export type UserCreateWithoutAnswersInput = {
   games?: Prisma.GamePlayerCreateNestedManyWithoutUserInput
   notifs?: Prisma.NotificationTokenCreateNestedManyWithoutUserInput
   chats?: Prisma.ChatCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutAdminInput
 }
 
 export type UserUncheckedCreateWithoutAnswersInput = {
@@ -1277,6 +1363,7 @@ export type UserUncheckedCreateWithoutAnswersInput = {
   username?: string | null
   pfpUrl?: string | null
   wallet?: string | null
+  role?: $Enums.UserRole
   inviteCode: string
   inviteQuota?: number
   status?: $Enums.UserStatus
@@ -1290,6 +1377,7 @@ export type UserUncheckedCreateWithoutAnswersInput = {
   games?: Prisma.GamePlayerUncheckedCreateNestedManyWithoutUserInput
   notifs?: Prisma.NotificationTokenUncheckedCreateNestedManyWithoutUserInput
   chats?: Prisma.ChatUncheckedCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutAdminInput
 }
 
 export type UserCreateOrConnectWithoutAnswersInput = {
@@ -1313,6 +1401,7 @@ export type UserUpdateWithoutAnswersInput = {
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pfpUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -1326,6 +1415,7 @@ export type UserUpdateWithoutAnswersInput = {
   games?: Prisma.GamePlayerUpdateManyWithoutUserNestedInput
   notifs?: Prisma.NotificationTokenUpdateManyWithoutUserNestedInput
   chats?: Prisma.ChatUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutAdminNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAnswersInput = {
@@ -1334,6 +1424,7 @@ export type UserUncheckedUpdateWithoutAnswersInput = {
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pfpUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -1347,6 +1438,7 @@ export type UserUncheckedUpdateWithoutAnswersInput = {
   games?: Prisma.GamePlayerUncheckedUpdateManyWithoutUserNestedInput
   notifs?: Prisma.NotificationTokenUncheckedUpdateManyWithoutUserNestedInput
   chats?: Prisma.ChatUncheckedUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutAdminNestedInput
 }
 
 export type UserCreateWithoutChatsInput = {
@@ -1354,6 +1446,7 @@ export type UserCreateWithoutChatsInput = {
   username?: string | null
   pfpUrl?: string | null
   wallet?: string | null
+  role?: $Enums.UserRole
   inviteCode: string
   inviteQuota?: number
   status?: $Enums.UserStatus
@@ -1367,6 +1460,7 @@ export type UserCreateWithoutChatsInput = {
   games?: Prisma.GamePlayerCreateNestedManyWithoutUserInput
   answers?: Prisma.AnswerCreateNestedManyWithoutUserInput
   notifs?: Prisma.NotificationTokenCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutAdminInput
 }
 
 export type UserUncheckedCreateWithoutChatsInput = {
@@ -1375,6 +1469,7 @@ export type UserUncheckedCreateWithoutChatsInput = {
   username?: string | null
   pfpUrl?: string | null
   wallet?: string | null
+  role?: $Enums.UserRole
   inviteCode: string
   inviteQuota?: number
   status?: $Enums.UserStatus
@@ -1388,6 +1483,7 @@ export type UserUncheckedCreateWithoutChatsInput = {
   games?: Prisma.GamePlayerUncheckedCreateNestedManyWithoutUserInput
   answers?: Prisma.AnswerUncheckedCreateNestedManyWithoutUserInput
   notifs?: Prisma.NotificationTokenUncheckedCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutAdminInput
 }
 
 export type UserCreateOrConnectWithoutChatsInput = {
@@ -1411,6 +1507,7 @@ export type UserUpdateWithoutChatsInput = {
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pfpUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -1424,6 +1521,7 @@ export type UserUpdateWithoutChatsInput = {
   games?: Prisma.GamePlayerUpdateManyWithoutUserNestedInput
   answers?: Prisma.AnswerUpdateManyWithoutUserNestedInput
   notifs?: Prisma.NotificationTokenUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutAdminNestedInput
 }
 
 export type UserUncheckedUpdateWithoutChatsInput = {
@@ -1432,6 +1530,7 @@ export type UserUncheckedUpdateWithoutChatsInput = {
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pfpUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -1445,6 +1544,7 @@ export type UserUncheckedUpdateWithoutChatsInput = {
   games?: Prisma.GamePlayerUncheckedUpdateManyWithoutUserNestedInput
   answers?: Prisma.AnswerUncheckedUpdateManyWithoutUserNestedInput
   notifs?: Prisma.NotificationTokenUncheckedUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutAdminNestedInput
 }
 
 export type UserCreateWithoutNotifsInput = {
@@ -1452,6 +1552,7 @@ export type UserCreateWithoutNotifsInput = {
   username?: string | null
   pfpUrl?: string | null
   wallet?: string | null
+  role?: $Enums.UserRole
   inviteCode: string
   inviteQuota?: number
   status?: $Enums.UserStatus
@@ -1465,6 +1566,7 @@ export type UserCreateWithoutNotifsInput = {
   games?: Prisma.GamePlayerCreateNestedManyWithoutUserInput
   answers?: Prisma.AnswerCreateNestedManyWithoutUserInput
   chats?: Prisma.ChatCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutAdminInput
 }
 
 export type UserUncheckedCreateWithoutNotifsInput = {
@@ -1473,6 +1575,7 @@ export type UserUncheckedCreateWithoutNotifsInput = {
   username?: string | null
   pfpUrl?: string | null
   wallet?: string | null
+  role?: $Enums.UserRole
   inviteCode: string
   inviteQuota?: number
   status?: $Enums.UserStatus
@@ -1486,6 +1589,7 @@ export type UserUncheckedCreateWithoutNotifsInput = {
   games?: Prisma.GamePlayerUncheckedCreateNestedManyWithoutUserInput
   answers?: Prisma.AnswerUncheckedCreateNestedManyWithoutUserInput
   chats?: Prisma.ChatUncheckedCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutAdminInput
 }
 
 export type UserCreateOrConnectWithoutNotifsInput = {
@@ -1509,6 +1613,7 @@ export type UserUpdateWithoutNotifsInput = {
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pfpUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -1522,6 +1627,7 @@ export type UserUpdateWithoutNotifsInput = {
   games?: Prisma.GamePlayerUpdateManyWithoutUserNestedInput
   answers?: Prisma.AnswerUpdateManyWithoutUserNestedInput
   chats?: Prisma.ChatUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutAdminNestedInput
 }
 
 export type UserUncheckedUpdateWithoutNotifsInput = {
@@ -1530,6 +1636,7 @@ export type UserUncheckedUpdateWithoutNotifsInput = {
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pfpUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -1543,6 +1650,113 @@ export type UserUncheckedUpdateWithoutNotifsInput = {
   games?: Prisma.GamePlayerUncheckedUpdateManyWithoutUserNestedInput
   answers?: Prisma.AnswerUncheckedUpdateManyWithoutUserNestedInput
   chats?: Prisma.ChatUncheckedUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutAdminNestedInput
+}
+
+export type UserCreateWithoutAuditLogsInput = {
+  fid: number
+  username?: string | null
+  pfpUrl?: string | null
+  wallet?: string | null
+  role?: $Enums.UserRole
+  inviteCode: string
+  inviteQuota?: number
+  status?: $Enums.UserStatus
+  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  invitedBy?: Prisma.UserCreateNestedOneWithoutInvitesInput
+  invites?: Prisma.UserCreateNestedManyWithoutInvitedByInput
+  rewards?: Prisma.ReferralRewardCreateNestedManyWithoutInviterInput
+  tickets?: Prisma.TicketCreateNestedManyWithoutUserInput
+  games?: Prisma.GamePlayerCreateNestedManyWithoutUserInput
+  answers?: Prisma.AnswerCreateNestedManyWithoutUserInput
+  notifs?: Prisma.NotificationTokenCreateNestedManyWithoutUserInput
+  chats?: Prisma.ChatCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutAuditLogsInput = {
+  id?: number
+  fid: number
+  username?: string | null
+  pfpUrl?: string | null
+  wallet?: string | null
+  role?: $Enums.UserRole
+  inviteCode: string
+  inviteQuota?: number
+  status?: $Enums.UserStatus
+  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  invitedById?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  invites?: Prisma.UserUncheckedCreateNestedManyWithoutInvitedByInput
+  rewards?: Prisma.ReferralRewardUncheckedCreateNestedManyWithoutInviterInput
+  tickets?: Prisma.TicketUncheckedCreateNestedManyWithoutUserInput
+  games?: Prisma.GamePlayerUncheckedCreateNestedManyWithoutUserInput
+  answers?: Prisma.AnswerUncheckedCreateNestedManyWithoutUserInput
+  notifs?: Prisma.NotificationTokenUncheckedCreateNestedManyWithoutUserInput
+  chats?: Prisma.ChatUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutAuditLogsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutAuditLogsInput, Prisma.UserUncheckedCreateWithoutAuditLogsInput>
+}
+
+export type UserUpsertWithoutAuditLogsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutAuditLogsInput, Prisma.UserUncheckedUpdateWithoutAuditLogsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutAuditLogsInput, Prisma.UserUncheckedCreateWithoutAuditLogsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutAuditLogsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutAuditLogsInput, Prisma.UserUncheckedUpdateWithoutAuditLogsInput>
+}
+
+export type UserUpdateWithoutAuditLogsInput = {
+  fid?: Prisma.IntFieldUpdateOperationsInput | number
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pfpUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  invitedBy?: Prisma.UserUpdateOneWithoutInvitesNestedInput
+  invites?: Prisma.UserUpdateManyWithoutInvitedByNestedInput
+  rewards?: Prisma.ReferralRewardUpdateManyWithoutInviterNestedInput
+  tickets?: Prisma.TicketUpdateManyWithoutUserNestedInput
+  games?: Prisma.GamePlayerUpdateManyWithoutUserNestedInput
+  answers?: Prisma.AnswerUpdateManyWithoutUserNestedInput
+  notifs?: Prisma.NotificationTokenUpdateManyWithoutUserNestedInput
+  chats?: Prisma.ChatUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutAuditLogsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  fid?: Prisma.IntFieldUpdateOperationsInput | number
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pfpUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  invitedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  invites?: Prisma.UserUncheckedUpdateManyWithoutInvitedByNestedInput
+  rewards?: Prisma.ReferralRewardUncheckedUpdateManyWithoutInviterNestedInput
+  tickets?: Prisma.TicketUncheckedUpdateManyWithoutUserNestedInput
+  games?: Prisma.GamePlayerUncheckedUpdateManyWithoutUserNestedInput
+  answers?: Prisma.AnswerUncheckedUpdateManyWithoutUserNestedInput
+  notifs?: Prisma.NotificationTokenUncheckedUpdateManyWithoutUserNestedInput
+  chats?: Prisma.ChatUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInvitedByInput = {
@@ -1551,6 +1765,7 @@ export type UserCreateManyInvitedByInput = {
   username?: string | null
   pfpUrl?: string | null
   wallet?: string | null
+  role?: $Enums.UserRole
   inviteCode: string
   inviteQuota?: number
   status?: $Enums.UserStatus
@@ -1564,6 +1779,7 @@ export type UserUpdateWithoutInvitedByInput = {
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pfpUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -1577,6 +1793,7 @@ export type UserUpdateWithoutInvitedByInput = {
   answers?: Prisma.AnswerUpdateManyWithoutUserNestedInput
   notifs?: Prisma.NotificationTokenUpdateManyWithoutUserNestedInput
   chats?: Prisma.ChatUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutAdminNestedInput
 }
 
 export type UserUncheckedUpdateWithoutInvitedByInput = {
@@ -1585,6 +1802,7 @@ export type UserUncheckedUpdateWithoutInvitedByInput = {
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pfpUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -1598,6 +1816,7 @@ export type UserUncheckedUpdateWithoutInvitedByInput = {
   answers?: Prisma.AnswerUncheckedUpdateManyWithoutUserNestedInput
   notifs?: Prisma.NotificationTokenUncheckedUpdateManyWithoutUserNestedInput
   chats?: Prisma.ChatUncheckedUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutAdminNestedInput
 }
 
 export type UserUncheckedUpdateManyWithoutInvitedByInput = {
@@ -1606,6 +1825,7 @@ export type UserUncheckedUpdateManyWithoutInvitedByInput = {
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pfpUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -1627,6 +1847,7 @@ export type UserCountOutputType = {
   answers: number
   notifs: number
   chats: number
+  auditLogs: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1637,6 +1858,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   answers?: boolean | UserCountOutputTypeCountAnswersArgs
   notifs?: boolean | UserCountOutputTypeCountNotifsArgs
   chats?: boolean | UserCountOutputTypeCountChatsArgs
+  auditLogs?: boolean | UserCountOutputTypeCountAuditLogsArgs
 }
 
 /**
@@ -1698,6 +1920,13 @@ export type UserCountOutputTypeCountChatsArgs<ExtArgs extends runtime.Types.Exte
   where?: Prisma.ChatWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountAuditLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AuditLogWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1705,6 +1934,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   username?: boolean
   pfpUrl?: boolean
   wallet?: boolean
+  role?: boolean
   inviteCode?: boolean
   inviteQuota?: boolean
   status?: boolean
@@ -1720,6 +1950,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   answers?: boolean | Prisma.User$answersArgs<ExtArgs>
   notifs?: boolean | Prisma.User$notifsArgs<ExtArgs>
   chats?: boolean | Prisma.User$chatsArgs<ExtArgs>
+  auditLogs?: boolean | Prisma.User$auditLogsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1729,6 +1960,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   username?: boolean
   pfpUrl?: boolean
   wallet?: boolean
+  role?: boolean
   inviteCode?: boolean
   inviteQuota?: boolean
   status?: boolean
@@ -1745,6 +1977,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   username?: boolean
   pfpUrl?: boolean
   wallet?: boolean
+  role?: boolean
   inviteCode?: boolean
   inviteQuota?: boolean
   status?: boolean
@@ -1761,6 +1994,7 @@ export type UserSelectScalar = {
   username?: boolean
   pfpUrl?: boolean
   wallet?: boolean
+  role?: boolean
   inviteCode?: boolean
   inviteQuota?: boolean
   status?: boolean
@@ -1770,7 +2004,7 @@ export type UserSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "fid" | "username" | "pfpUrl" | "wallet" | "inviteCode" | "inviteQuota" | "status" | "completedTasks" | "invitedById" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "fid" | "username" | "pfpUrl" | "wallet" | "role" | "inviteCode" | "inviteQuota" | "status" | "completedTasks" | "invitedById" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   invitedBy?: boolean | Prisma.User$invitedByArgs<ExtArgs>
   invites?: boolean | Prisma.User$invitesArgs<ExtArgs>
@@ -1780,6 +2014,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   answers?: boolean | Prisma.User$answersArgs<ExtArgs>
   notifs?: boolean | Prisma.User$notifsArgs<ExtArgs>
   chats?: boolean | Prisma.User$chatsArgs<ExtArgs>
+  auditLogs?: boolean | Prisma.User$auditLogsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1800,6 +2035,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     answers: Prisma.$AnswerPayload<ExtArgs>[]
     notifs: Prisma.$NotificationTokenPayload<ExtArgs>[]
     chats: Prisma.$ChatPayload<ExtArgs>[]
+    auditLogs: Prisma.$AuditLogPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1807,6 +2043,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     username: string | null
     pfpUrl: string | null
     wallet: string | null
+    role: $Enums.UserRole
     inviteCode: string
     inviteQuota: number
     status: $Enums.UserStatus
@@ -2216,6 +2453,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   answers<T extends Prisma.User$answersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$answersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AnswerPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   notifs<T extends Prisma.User$notifsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$notifsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   chats<T extends Prisma.User$chatsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$chatsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ChatPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  auditLogs<T extends Prisma.User$auditLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2250,6 +2488,7 @@ export interface UserFieldRefs {
   readonly username: Prisma.FieldRef<"User", 'String'>
   readonly pfpUrl: Prisma.FieldRef<"User", 'String'>
   readonly wallet: Prisma.FieldRef<"User", 'String'>
+  readonly role: Prisma.FieldRef<"User", 'UserRole'>
   readonly inviteCode: Prisma.FieldRef<"User", 'String'>
   readonly inviteQuota: Prisma.FieldRef<"User", 'Int'>
   readonly status: Prisma.FieldRef<"User", 'UserStatus'>
@@ -2837,6 +3076,30 @@ export type User$chatsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs
   take?: number
   skip?: number
   distinct?: Prisma.ChatScalarFieldEnum | Prisma.ChatScalarFieldEnum[]
+}
+
+/**
+ * User.auditLogs
+ */
+export type User$auditLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AuditLog
+   */
+  select?: Prisma.AuditLogSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AuditLog
+   */
+  omit?: Prisma.AuditLogOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AuditLogInclude<ExtArgs> | null
+  where?: Prisma.AuditLogWhereInput
+  orderBy?: Prisma.AuditLogOrderByWithRelationInput | Prisma.AuditLogOrderByWithRelationInput[]
+  cursor?: Prisma.AuditLogWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AuditLogScalarFieldEnum | Prisma.AuditLogScalarFieldEnum[]
 }
 
 /**

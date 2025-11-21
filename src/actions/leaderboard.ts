@@ -1,6 +1,9 @@
 "use server";
 
-import { getLeaderboardData, TabKey } from "@/app/(platform)/leaderboard/page";
+import {
+  getLeaderboardData,
+  TabKey,
+} from "@/app/(app)/(game)/leaderboard/page";
 
 /**
  * Server Action to fetch subsequent pages of the leaderboard.

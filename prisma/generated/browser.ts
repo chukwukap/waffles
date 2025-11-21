@@ -62,3 +62,8 @@ export type Chat = Prisma.ChatModel
  * 
  */
 export type NotificationToken = Prisma.NotificationTokenModel
+/**
+ * Model AuditLog
+ * 
+ */
+export type AuditLog = Prisma.AuditLogModel

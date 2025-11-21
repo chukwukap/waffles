@@ -1,7 +1,6 @@
 import "./globals.css";
 import { fontBody, fontDisplay, fontInput } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
-import { Providers } from "@/components/providers/";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -50,8 +49,8 @@ export default function RootLayout({
       )}
       suppressHydrationWarning
     >
-      <body className={cn("text-foreground app-background")}>
-        <Providers>{children}</Providers>
+      <body className={cn("text-foreground bg-[#191919]")}>
+        {children}
       </body>
     </html>
   );
