@@ -1,11 +1,12 @@
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client"
+  output     = "./generated"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
+
 
 // ==========================================
 // 1. USER & GROWTH (The "Account" Layer)
@@ -13,16 +14,16 @@ datasource db {
 
 model User {
   id       Int     @id @default(autoincrement())
-  fid      Int     @unique // Farcaster ID
-  username String? // 'name' is vague. 'username' implies display handle.
-  pfpUrl   String? // 'imageUrl' is generic. 'pfpUrl' is specific.
+  fid      Int     @unique 
+  username String? 
+  pfpUrl   String? 
   wallet   String? @unique
 
   // -- VIRAL LOOP --
-  inviteCode     String     @unique // REMOVED @default(cuid())
-  inviteQuota    Int        @default(3) // Renamed: "Quota" implies a limit
+  inviteCode     String     @unique 
+  inviteQuota    Int        @default(3) 
   status         UserStatus @default(NONE)
-  completedTasks String[]   @default([]) // Track completed waitlist tasks
+  completedTasks String[]   @default([]) 
 
   // -- RELATIONSHIPS --
   invitedBy   User?            @relation("ReferralTree", fields: [invitedById], references: [id])
@@ -35,7 +36,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   tickets Ticket[]
-  games   GamePlayer[] // The games they actually played
+  games   GamePlayer[] 
   answers Answer[]
   notifs  NotificationToken[]
   chats   Chat[]
@@ -48,7 +49,6 @@ enum UserStatus {
   BANNED
 }
 
-// RENAMED: Focuses on the outcome (The Reward), not the process (Tracking)
 model ReferralReward {
   id        Int  @id @default(autoincrement())
   inviter   User @relation("InviterRewards", fields: [inviterId], references: [id])
@@ -165,7 +165,7 @@ model Ticket {
   status     TicketStatus @default(PENDING)
 
   purchasedAt DateTime  @default(now())
-  redeemedAt  DateTime? // 'usedAt' -> 'redeemedAt' (More transactional)
+  redeemedAt  DateTime? 
   updatedAt   DateTime  @updatedAt
 
   @@unique([gameId, userId])

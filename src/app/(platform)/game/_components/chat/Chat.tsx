@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { ChatIcon, SendIcon } from "@/components/icons";
+import { ChatIcon, SendIcon, UsersIcon } from "@/components/icons";
 import Backdrop from "@/components/ui/Backdrop";
 import { ChatComment } from "./ChatComment";
 import { useGameEvents } from "@/hooks/useGameEvents";
@@ -35,6 +35,7 @@ export const Chat = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const chatListRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [activeCount, setActiveCount] = useState(0);
 
   // Subscribe to real-time chat events
   useGameEvents({
@@ -53,6 +54,9 @@ export const Chat = ({
         avatarUrl: chatEvent.user.pfpUrl,
       };
       setComments((prev) => [...prev, comment]);
+    },
+    onStats: (stats) => {
+      setActiveCount(stats.onlineCount);
     },
   });
 
@@ -94,10 +98,6 @@ export const Chat = ({
     }
   }, [comments]);
 
-
-
-  // ... inside component
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -137,7 +137,7 @@ export const Chat = ({
                     transition-transform duration-500 ease-in-out
                     ${isOpen ? "translate-y-0" : "translate-y-full"}`}
       >
-        {/* Header */}
+        {/* ... Header ... */}
         <header
           className="relative flex h-[56px] w-full shrink-0 items-center border-b border-white/10 bg-[#191919] px-6 py-3 rounded-t-[20px]"
           style={{
@@ -201,11 +201,11 @@ export const Chat = ({
         </div>
 
         {/* Footer Input */}
-        <footer className="h-[98px] w-full shrink-0 bg-[#0E0E0E] p-4 pt-5">
+        <footer className="w-full shrink-0 bg-[#0E0E0E] p-4 pt-5 pb-8">
           <form
             onSubmit={handleSubmit}
             onClick={() => inputRef.current?.focus?.()} // Click wrapper to focus input
-            className="flex h-[58px] w-full items-center gap-3 rounded-full bg-white/5 px-4 cursor-text" // Add cursor-text
+            className="flex h-[58px] w-full items-center gap-3 rounded-full bg-white/5 px-4 cursor-text mb-3" // Add cursor-text
           >
             <input
               ref={inputRef}
@@ -238,6 +238,21 @@ export const Chat = ({
               <SendIcon />
             </button>
           </form>
+
+          {/* Active Player Count */}
+          <div className="flex items-center gap-2 px-2">
+            <UsersIcon className="w-4 h-[13.5px] text-[#B93814]" />
+            <span
+              className="text-[#99A0AE] text-xs font-medium text-center"
+              style={{
+                fontFamily: "Brockmann",
+                lineHeight: "130%",
+                letterSpacing: "-0.03em"
+              }}
+            >
+              {activeCount} players are active in the chat
+            </span>
+          </div>
         </footer>
       </div>
     </>

@@ -4,8 +4,9 @@ import { prisma } from "@/lib/db";
 
 import { Metadata } from "next";
 import { minikitConfig } from "../../../../minikit.config";
-import { Prisma } from "@prisma/client";
+
 import { cache } from "react";
+import { Prisma } from "../../../../prisma/generated/client";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
-import { Ticket } from "@prisma/client";
+import type { Ticket } from "../../../../../../prisma/generated/client";
 
 // Query parameter validation schema
 const querySchema = z.object({

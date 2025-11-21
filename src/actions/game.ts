@@ -5,8 +5,8 @@ import { calculateScore } from "@/lib/scoring";
 import { z } from "zod";
 import { verifyAuthenticatedUser } from "@/lib/auth";
 
-import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { Prisma } from "../../prisma/generated/client";
 
 const submitAnswerSchema = z.object({
   fid: z.coerce.number().int().positive("Invalid FID format."),

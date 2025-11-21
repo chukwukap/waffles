@@ -1,10 +1,10 @@
 import TicketPageClientImpl from "./client";
 import { prisma } from "@/lib/db";
-import { Prisma } from "@prisma/client";
 
 import { BottomNav } from "@/components/BottomNav";
 import { cache } from "react";
 import { redirect } from "next/navigation";
+import { Prisma } from "../../../../../../prisma/generated/client";
 
 // This type is still correct
 export type TicketPageUserInfo = Prisma.UserGetPayload<{

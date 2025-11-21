@@ -1,9 +1,9 @@
 "use server";
 
 import { prisma } from "@/lib/db";
-import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { Prisma } from "../../prisma/generated/client";
 
 export type JoinWaitlistState = {
   ok: boolean;

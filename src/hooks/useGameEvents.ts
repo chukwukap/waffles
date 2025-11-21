@@ -38,13 +38,15 @@ interface JoinEvent {
 type GameEvent =
   | ChatEvent
   | JoinEvent
-  | { type: "connected" | "error"; message?: string };
+  | { type: "connected" | "error"; message?: string }
+  | { type: "stats"; data: { onlineCount: number } };
 
 interface UseGameEventsOptions {
   gameId: number | null;
   enabled?: boolean;
   onChat?: (event: ChatEvent["data"]) => void;
   onJoin?: (event: JoinEvent["data"]) => void;
+  onStats?: (data: { onlineCount: number }) => void;
 }
 
 /**
@@ -55,6 +57,7 @@ export function useGameEvents({
   enabled = true,
   onChat,
   onJoin,
+  onStats,
 }: UseGameEventsOptions) {
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -88,6 +91,9 @@ export function useGameEvents({
           case "join":
             onJoin?.(gameEvent.data);
             break;
+          case "stats":
+            onStats?.(gameEvent.data);
+            break;
           case "error":
             setError(gameEvent.message || "Unknown error");
             break;
@@ -108,7 +114,7 @@ export function useGameEvents({
       eventSource.close();
       eventSourceRef.current = null;
     };
-  }, [gameId, enabled, onChat, onJoin]);
+  }, [gameId, enabled, onChat, onJoin, onStats]);
 
   const disconnect = useCallback(() => {
     if (eventSourceRef.current) {

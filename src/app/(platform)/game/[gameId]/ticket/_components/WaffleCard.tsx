@@ -9,8 +9,8 @@ import Image from "next/image";
 import { purchaseTicketAction } from "@/actions/ticket";
 import { useAuth } from "@/hooks/useAuth";
 import { notify } from "@/components/ui/Toaster";
-import { Ticket } from "@prisma/client";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
+import { Ticket } from "../../../../../../../prisma/generated/client";
 
 // --- InfoBox Helper Component ---
 // A small component for the "Spots" and "Prize pool" boxes

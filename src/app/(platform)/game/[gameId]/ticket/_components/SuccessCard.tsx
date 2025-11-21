@@ -6,7 +6,7 @@ import { notify } from "@/components/ui/Toaster";
 import { useCallback } from "react";
 import { env } from "@/lib/env";
 import { useComposeCast } from "@coinbase/onchainkit/minikit";
-import { Ticket } from "@prisma/client";
+import { Ticket } from "../../../../../../../prisma/generated/client";
 
 export const SuccessCard = ({
   theme,

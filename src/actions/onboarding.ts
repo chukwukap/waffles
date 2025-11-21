@@ -4,9 +4,9 @@ import { prisma } from "@/lib/db";
 import { z } from "zod";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { Prisma } from "@prisma/client";
 
 import { syncUserSchema } from "@/lib/schemas";
+import { Prisma } from "../../prisma/generated/client";
 
 // --- 6-Character Code Generation ---
 const REFERRAL_CODE_LENGTH = 6;

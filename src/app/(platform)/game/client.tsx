@@ -9,12 +9,12 @@ import { AvatarDiamond } from "./_components/AvatarDiamond";
 import LiveEventFeed from "./_components/LiveEventFeed";
 import { Chat } from "./_components/chat/Chat";
 import { GameActionButton } from "./_components/GameActionButton";
-import { Ticket } from "@prisma/client";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { ChatInput } from "@/app/(platform)/game/_components/chat/ChatTrigger";
 import { UpcomingGamePayload } from "./page"; // <-- Import the type
 import { useRouter } from "next/navigation";
 import { useWaitlistData } from "@/hooks/useWaitlistData";
+import { Ticket } from "../../../../prisma/generated/client";
 
 function formatTime(remainingSeconds: number): string {
   const seconds = Math.max(0, remainingSeconds);

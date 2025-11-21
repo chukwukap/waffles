@@ -3,8 +3,8 @@
 import { prisma } from "@/lib/db";
 import { randomBytes } from "crypto";
 import { z } from "zod";
-import type { Ticket } from "@prisma/client";
 import { verifyAuthenticatedUser } from "@/lib/auth";
+import type { Ticket } from "../../prisma/generated/client";
 
 // Schema for input validation
 const purchaseSchema = z.object({

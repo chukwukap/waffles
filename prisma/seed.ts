@@ -1,12 +1,15 @@
-import { PrismaClient } from "@prisma/client";
+import "dotenv/config";
+import { PrismaClient } from "./generated/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
+const prisma = new PrismaClient({ adapter });
+
 import {
   getGameQuestions,
   defaultGameConfig,
   getCorrectIndex,
 } from "../scripts/game-data";
-
-const prisma = new PrismaClient();
-// $> pnpm prisma db seed
 
 /**
  * In Next.js, files in /public are served at the root path.

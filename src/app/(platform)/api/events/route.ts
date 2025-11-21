@@ -150,6 +150,14 @@ export async function GET(request: NextRequest) {
               );
               lastParticipantId = participant.id;
             }
+
+            // Send updated player count (stats)
+            // We count distinct users who have joined
+            const onlineCount = await prisma.gamePlayer.count({
+              where: { gameId },
+            });
+
+            send(JSON.stringify({ type: "stats", data: { onlineCount } }));
           } catch (error) {
             console.error("Error polling events:", error);
             send(JSON.stringify({ type: "error", message: "Polling error" }));

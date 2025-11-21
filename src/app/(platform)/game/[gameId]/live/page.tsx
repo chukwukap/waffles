@@ -1,7 +1,7 @@
 import LiveGameClient from "./client";
 import { prisma } from "@/lib/db";
-import { Prisma } from "@prisma/client";
 import { redirect } from "next/navigation";
+import { Prisma } from "../../../../../../prisma/generated/client";
 
 export const revalidate = 0;
 

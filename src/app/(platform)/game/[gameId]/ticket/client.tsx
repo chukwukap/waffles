@@ -6,8 +6,8 @@ import { CardStack } from "@/components/CardStack";
 
 import { TicketPageGameInfo, TicketPageUserInfo } from "./page";
 import { WaffleCard } from "./_components/WaffleCard";
-import { Ticket } from "@prisma/client";
 import { SuccessCard } from "./_components/SuccessCard";
+import { Ticket } from "../../../../../../prisma/generated/client";
 
 type TicketPageClientImplProps = {
   gameInfoPromise: Promise<TicketPageGameInfo | null>;
