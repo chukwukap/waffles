@@ -12,12 +12,11 @@ import Image from "next/image";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import {
   validateReferralAction,
-  getUserInviteDataAction,
   type ValidateReferralResult,
 } from "@/actions/invite";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useActionState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { InvitePageHeader } from "./_components/InviteHeader";
 import { InviteInput } from "./_components/InviteInput";
 import { InfoButton, FailedIcon, SuccessIcon } from "./_components/InfoButton";
@@ -28,11 +27,14 @@ export default function InvitePageClient() {
   const router = useRouter();
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const [isLoading, setIsLoading] = useState(true);
+  const searchParams = useSearchParams();
+  const initialCode = searchParams.get("code") || searchParams.get("ref") || "";
+
+  const [isLoading, setIsLoading] = useState(false); // Start false, no fetch needed
   const [status, setStatus] = useState<
     "idle" | "validating" | "success" | "failed"
   >("idle");
-  const [inputCode, setInputCode] = useState("");
+  const [inputCode, setInputCode] = useState(initialCode);
   const [error, setError] = useState<string | null>(null);
 
   const [validationState, validateAction, isPending] = useActionState<
@@ -40,29 +42,15 @@ export default function InvitePageClient() {
     FormData
   >(validateReferralAction, null);
 
-  // Fetch user invite data on mount
+  // Auto-validate if code is present in URL
   useEffect(() => {
-    if (!fid) {
-      setIsLoading(false);
-      return;
+    if (initialCode && fid) {
+      // Optional: Auto-submit if code is present? 
+      // For now, just pre-fill. User clicks "Get In".
+      // Or we can debounce validate.
+      setInputCode(initialCode);
     }
-
-    const fetchUserData = async () => {
-      try {
-        setIsLoading(true);
-        const data = await getUserInviteDataAction(fid);
-        if (data.code) {
-          setInputCode(data.code);
-        }
-      } catch (err) {
-        console.error("Error fetching user invite data:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUserData();
-  }, [fid]);
+  }, [initialCode, fid]);
 
   // Handle validation result
   useEffect(() => {

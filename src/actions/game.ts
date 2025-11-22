@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/db";
-import { calculateScore } from "@/lib/scoring";
+import { calculateScore, QuestionDifficulty } from "@/lib/scoring";
 import { z } from "zod";
 import { verifyAuthenticatedUser } from "@/lib/auth";
 
@@ -125,22 +125,46 @@ export async function submitAnswerAction(
 
     // 3. Calculate score based on new submission
     const maxTimeSec = question.durationSec ?? 10;
-    // Convert MS to Sec for calculation
-    const timeTakenSec = timeTakenMs / 1000;
-    // Clamp time to be within [0, maxTimeSec]
-    const sanitizedTimeSec = Math.min(Math.max(0, timeTakenSec), maxTimeSec);
-    // CHANGED: Compare index with correctIndex
+    // Compare index with correctIndex
     const correct = selectedIndex === question.correctIndex;
-    const newPoints = correct
-      ? calculateScore(sanitizedTimeSec, maxTimeSec)
-      : 0;
 
-    console.log("[submitAnswerAction] Sanitation && Calculation:", {
+    // Calculate consecutive correct answers for combo bonus
+    // Fetch recent answers for this game to determine streak
+    const recentAnswers = await prisma.answer.findMany({
+      where: {
+        userId: user.id,
+        gameId: gameId,
+        questionId: { not: questionId }, // Exclude current question
+      },
+      orderBy: { createdAt: "desc" },
+      take: 10, // Look back enough to cover max combo
+      select: { isCorrect: true },
+    });
+
+    let consecutiveCorrect = 0;
+    for (const ans of recentAnswers) {
+      if (ans.isCorrect) consecutiveCorrect++;
+      else break;
+    }
+
+    // Use new scoring algorithm
+    const scoreResult = calculateScore({
+      timeTakenMs,
       maxTimeSec,
-      timeTakenSec,
-      sanitizedTimeSec,
+      isCorrect: correct,
+      difficulty: QuestionDifficulty.MEDIUM, // Default difficulty for now
+      consecutiveCorrect,
+    });
+
+    const newPoints = scoreResult.score;
+
+    console.log("[submitAnswerAction] Calculation:", {
+      timeTakenMs,
+      maxTimeSec,
       correct,
+      consecutiveCorrect,
       newPoints,
+      breakdown: scoreResult.breakdown,
     });
 
     // 4. Use a transaction for atomic update
@@ -151,17 +175,17 @@ export async function submitAnswerAction(
           // userId_gameId_questionId: { userId: user.id, gameId, questionId },
           userId_questionId: { userId: user.id, questionId },
         },
-        select: { isCorrect: true, latencyMs: true }, // CHANGED: timeTaken -> latencyMs
+        select: { isCorrect: true, latencyMs: true, pointsEarned: true }, // CHANGED: Added pointsEarned
       });
 
       console.log("[submitAnswerAction] Previous answer:", previousAnswer);
 
       // Calculate the points from the *previous* answer
-      const previousTimeSec = (previousAnswer?.latencyMs ?? 0) / 1000;
-      const previousPoints =
-        previousAnswer?.isCorrect && Number.isFinite(previousTimeSec)
-          ? calculateScore(previousTimeSec, maxTimeSec)
-          : 0;
+      // Calculate the points from the *previous* answer
+      // Note: We don't easily know the combo state at that previous time without complex queries.
+      // For simplicity in delta calculation, we'll assume the same combo or 0.
+      // Ideally, we should store the pointsEarned in the DB (which we do) and use that.
+      const previousPoints = previousAnswer?.pointsEarned ?? 0;
 
       // Upsert the new answer
       await tx.answer.upsert({

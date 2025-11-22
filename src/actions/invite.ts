@@ -4,6 +4,8 @@ import { prisma } from "@/lib/db";
 import { z } from "zod";
 
 import { validateReferralSchema } from "@/lib/schemas";
+import { trackServer } from "@/lib/analytics-server";
+import { checkRateLimit, inviteRateLimit } from "@/lib/ratelimit";
 
 interface ValidationSuccess {
   valid: true;
@@ -39,6 +41,30 @@ export async function validateReferralAction(
 
   const { code, fid } = validation.data;
 
+  // Rate limiting: 10 invite attempts per hour per FID
+  const rateLimitResult = await checkRateLimit(
+    inviteRateLimit,
+    `invite:${fid}`
+  );
+
+  if (!rateLimitResult.success) {
+    const resetTime =
+      typeof rateLimitResult.reset === "number"
+        ? rateLimitResult.reset
+        : rateLimitResult.reset.getTime();
+    const minutesUntilReset = Math.ceil((resetTime - Date.now()) / 60000);
+
+    await trackServer("invite_failed", {
+      fid,
+      reason: "rate_limited",
+      code,
+    });
+    return {
+      valid: false,
+      error: `Too many attempts. Please try again in ${minutesUntilReset} minutes.`,
+    };
+  }
+
   try {
     // 1. Find the inviter (by their share code) and invitee (by their FID)
     const [inviter, invitee] = await Promise.all([
@@ -54,15 +80,30 @@ export async function validateReferralAction(
 
     // 2. Run Validation Checks
     if (!invitee) {
+      await trackServer("invite_failed", {
+        fid,
+        reason: "user_not_found",
+        code,
+      });
       return {
         valid: false,
         error: "Your user account was not found.",
       };
     }
     if (!inviter) {
+      await trackServer("invite_failed", {
+        fid,
+        reason: "invalid_code",
+        code,
+      });
       return { valid: false, error: "Invalid invite code." };
     }
     if (inviter.id === invitee.id) {
+      await trackServer("invite_failed", {
+        fid,
+        reason: "self_invite",
+        code,
+      });
       return { valid: false, error: "You cannot invite yourself." };
     }
 
@@ -90,6 +131,11 @@ export async function validateReferralAction(
     // This will overwrite their invitedById (if any) and set them to ACTIVE.
 
     if (inviter.inviteQuota <= 0) {
+      await trackServer("invite_failed", {
+        fid,
+        reason: "quota_exhausted",
+        code,
+      });
       return { valid: false, error: "Inviter has no invites left." };
     }
 
@@ -129,6 +175,13 @@ export async function validateReferralAction(
           amount: 0,
         },
       });
+    });
+
+    // Track successful invite redemption
+    await trackServer("invite_redeemed", {
+      fid,
+      inviterFid: inviter.id,
+      code,
     });
 
     return {

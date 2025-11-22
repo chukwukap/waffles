@@ -29,7 +29,7 @@ export async function verifyAdminCredentials(
         fid: true,
         username: true,
         role: true,
-        wallet: true,
+        password: true,
       },
     });
 
@@ -41,15 +41,16 @@ export async function verifyAdminCredentials(
       return { success: false, error: "Access denied: Admin role required" };
     }
 
-    // Get admin password hash from environment
-    const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH;
-    if (!adminPasswordHash) {
-      console.error("ADMIN_PASSWORD_HASH not set in environment");
-      return { success: false, error: "Server configuration error" };
+    // Check if password is set
+    if (!user.password) {
+      return {
+        success: false,
+        error: "Password not set. Please complete signup.",
+      };
     }
 
-    // Verify password
-    const isValid = await bcrypt.compare(password, adminPasswordHash);
+    // Verify password against database hash
+    const isValid = await bcrypt.compare(password, user.password);
 
     if (!isValid) {
       return { success: false, error: "Invalid credentials" };
@@ -157,6 +158,79 @@ export async function requireAdminSession(): Promise<{
 export async function destroyAdminSession(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE_NAME);
+}
+
+/**
+ * Generate a random invite code
+ */
+function generateInviteCode(): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let code = "";
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
+/**
+ * Create admin account with password
+ */
+export async function createAdminAccount(
+  fid: number,
+  password: string,
+  signupSecret?: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    // Verify signup secret if configured
+    const requiredSecret = process.env.ADMIN_SIGNUP_SECRET;
+    if (requiredSecret && signupSecret !== requiredSecret) {
+      return { success: false, error: "Invalid signup code" };
+    }
+
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { fid },
+      select: { id: true, role: true, password: true, inviteCode: true },
+    });
+
+    // If user exists with password, they're already signed up
+    if (existingUser?.password) {
+      return {
+        success: false,
+        error: "Admin account already exists for this FID",
+      };
+    }
+
+    // Hash password
+    const hashedPassword = await hashPassword(password);
+
+    // Update or create user with admin role and password
+    if (existingUser) {
+      // User exists but no password - update them
+      await prisma.user.update({
+        where: { fid },
+        data: {
+          role: "ADMIN",
+          password: hashedPassword,
+        },
+      });
+    } else {
+      // Create new user with admin role
+      await prisma.user.create({
+        data: {
+          fid,
+          role: "ADMIN",
+          password: hashedPassword,
+          inviteCode: generateInviteCode(),
+        },
+      });
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Create admin account error:", error);
+    return { success: false, error: "Failed to create admin account" };
+  }
 }
 
 /**

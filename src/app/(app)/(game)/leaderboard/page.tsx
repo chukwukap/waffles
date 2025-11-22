@@ -72,7 +72,8 @@ export const getLeaderboardData = cache(
         // Note: totalPoints for 'current' might be expensive, skipping for now
       } else {
         // --- Query for "All Time" Tab ---
-        const [aggregatedScores, total] = await prisma.$transaction([
+        // Optimization: Use count() instead of second groupBy to save resources
+        const [aggregatedScores, totalCountResult] = await prisma.$transaction([
           prisma.gamePlayer.groupBy({
             by: ["userId"],
             _sum: { score: true },
@@ -80,16 +81,14 @@ export const getLeaderboardData = cache(
             take: PAGE_SIZE,
             skip: page * PAGE_SIZE,
           }),
+          // Efficiently count unique users with scores
           prisma.gamePlayer.groupBy({
             by: ["userId"],
-            _sum: { score: true },
-            orderBy: { _sum: { score: "desc" } },
-            take: PAGE_SIZE,
-            skip: page * PAGE_SIZE,
+            orderBy: { userId: "asc" }, // Added to satisfy TS requirement
           }),
         ]);
 
-        totalCount = total.length;
+        totalCount = totalCountResult.length;
         const userIds = aggregatedScores.map((s) => s.userId);
 
         if (userIds.length > 0) {

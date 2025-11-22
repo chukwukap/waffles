@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { EllipsisVerticalIcon, PencilIcon, TrashIcon, PlayIcon, StopIcon } from "@heroicons/react/24/outline";
+import { EllipsisVerticalIcon, PencilIcon, TrashIcon, PlayIcon, StopIcon, DocumentDuplicateIcon } from "@heroicons/react/24/outline";
 import { startGameAction, endGameAction } from "@/actions/admin/games";
+import { duplicateGameAction } from "@/actions/admin/duplicate-game";
 import { DeleteGameButton } from "@/components/admin/DeleteGameButton";
 import { notify } from "@/components/ui/Toaster";
 
@@ -64,6 +65,22 @@ export function GameActions({ game }: GameActionsProps) {
         }
     };
 
+    const handleDuplicateGame = async () => {
+        if (!confirm(`Duplicate "${game.title}"? This will create a copy with all questions.`)) {
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            await duplicateGameAction(game.id);
+            notify.success("Game duplicated successfully!");
+            // Note: action redirects automatically
+        } catch (error) {
+            notify.error("Failed to duplicate game");
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div className="relative">
             <button
@@ -102,6 +119,17 @@ export function GameActions({ game }: GameActionsProps) {
                             <span className="text-xs font-bold border border-current rounded px-1.5 py-0.5">Q</span>
                             Manage Questions
                         </Link>
+
+                        <div className="border-t border-slate-200 my-1" />
+
+                        <button
+                            onClick={handleDuplicateGame}
+                            disabled={isLoading}
+                            className="flex items-center gap-2 px-4 py-2 text-sm text-blue-700 hover:bg-blue-50 transition-colors w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <DocumentDuplicateIcon className="h-4 w-4" />
+                            Duplicate Game
+                        </button>
 
                         {game.status === "SCHEDULED" && (
                             <>

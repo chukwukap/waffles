@@ -4,8 +4,12 @@ import type { NextRequest } from "next/server";
 export function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
-  // Protect all admin routes except login
-  if (path.startsWith("/admin") && path !== "/admin/login") {
+  // Public admin routes that don't require authentication
+  const publicAdminPaths = ["/admin/login", "/admin/signup"];
+  const isPublicPath = publicAdminPaths.some((p) => path === p);
+
+  // Protect all admin routes except public ones
+  if (path.startsWith("/admin") && !isPublicPath) {
     const sessionCookie = request.cookies.get("admin-session");
 
     if (!sessionCookie) {

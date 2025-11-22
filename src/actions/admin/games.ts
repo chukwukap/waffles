@@ -92,6 +92,10 @@ export async function createGameAction(
     revalidatePath("/admin/games");
     redirect(`/admin/games/${game.id}/questions`);
   } catch (error) {
+    // Re-throw Next.js redirects (they're not actual errors)
+    if (error instanceof Error && error.message === "NEXT_REDIRECT") {
+      throw error;
+    }
     console.error("Create game error:", error);
     return { success: false, error: "Failed to create game" };
   }

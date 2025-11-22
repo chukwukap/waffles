@@ -63,6 +63,7 @@ export function MediaUpload({
     };
 
     const isAudio = accept.includes("audio");
+    const isVideo = accept.includes("video");
 
     return (
         <div className="space-y-2">
@@ -117,6 +118,14 @@ export function MediaUpload({
                             <div className="flex-1 min-w-0">
                                 <audio controls src={preview} className="w-full h-8" />
                             </div>
+                        </div>
+                    ) : isVideo ? (
+                        <div className="aspect-video relative bg-slate-100">
+                            <video
+                                src={preview}
+                                controls
+                                className="w-full h-full object-cover"
+                            />
                         </div>
                     ) : (
                         <div className="aspect-video relative bg-slate-100">

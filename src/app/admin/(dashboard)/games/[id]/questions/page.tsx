@@ -3,10 +3,12 @@ import Link from "next/link";
 import { QuestionForm } from "@/components/admin/QuestionForm";
 import { createQuestionAction } from "@/actions/admin/questions";
 import { QuestionList } from "@/components/admin/QuestionList";
+import { QuestionImport } from "@/components/admin/QuestionImport";
 import { notFound } from "next/navigation";
 
-export default async function GameQuestionsPage({ params }: { params: { id: string } }) {
-    const gameId = parseInt(params.id);
+export default async function GameQuestionsPage({ params }: { params: Promise<{ id: string }> }) {
+    const resolvedParams = await params;
+    const gameId = parseInt(resolvedParams.id);
 
     const game = await prisma.game.findUnique({
         where: { id: gameId },
@@ -22,7 +24,7 @@ export default async function GameQuestionsPage({ params }: { params: { id: stri
     }
 
     return (
-        <div className="max-w-5xl space-y-8">
+        <div className="max-w-7xl space-y-8">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <Link
@@ -39,6 +41,9 @@ export default async function GameQuestionsPage({ params }: { params: { id: stri
                     </div>
                 </div>
             </div>
+
+            {/* Bulk Import Section */}
+            <QuestionImport gameId={game.id} />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Question List (Left Column) */}

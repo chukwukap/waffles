@@ -22,12 +22,24 @@ export async function POST(request: Request): Promise<NextResponse> {
 
         return {
           allowedContentTypes: [
+            // Images
             "image/jpeg",
             "image/png",
             "image/gif",
             "image/webp",
+            "image/avif",
+            // Audio
             "audio/mpeg",
             "audio/wav",
+            "audio/ogg",
+            "audio/mp4",
+            "audio/aac",
+            "audio/webm",
+            // Video
+            "video/mp4",
+            "video/webm",
+            "video/quicktime",
+            "video/x-msvideo",
           ],
           tokenPayload: JSON.stringify({
             userId: session.userId,

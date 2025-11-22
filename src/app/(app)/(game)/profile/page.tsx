@@ -39,60 +39,29 @@ const getProfilePageData = cache(
       };
     }
 
-    // 2. Fetch all user data in one go
-    const userFull = await prisma.user.findUnique({
+    // 2. Fetch User Basic Info (Fast)
+    const userPromise = prisma.user.findUnique({
       where: { fid: fidRaw },
       select: {
-        // Profile Data
         id: true,
         fid: true,
         username: true,
         pfpUrl: true,
         wallet: true,
         inviteCode: true,
-        status: true, // Added status
-
-        // Stats Data: Get all games the user played
-        games: {
-          // This is GamePlayer[]
-          select: {
-            score: true,
-            rank: true, // This is finalRank, might be null
-            joinedAt: true,
-            claimedAt: true,
-            game: {
-              select: {
-                id: true,
-                title: true, // Renamed from name
-                startsAt: true, // Renamed from startTime
-                // Get this user's ticket for this game to find winnings
-                tickets: {
-                  where: {
-                    // userId: { equals: prisma.user.fields.id }, // Failsafe, though relation should handle
-                    status: "PAID", // or "REDEEMED" ? Let's check enum
-                  },
-                  select: { amountUSDC: true },
-                  take: 1,
-                },
-              },
-            },
-          },
-          orderBy: {
-            joinedAt: "desc", // For streak and history (most recent first)
-          },
-        },
-
-        // Referral Count
+        status: true,
         _count: {
-          select: {
-            rewards: true, // Counts records where this user is the inviter
-          },
+          select: { rewards: true },
         },
       },
     });
 
-    // 3. If user not found, bail
-    if (!userFull) {
+    // 3. Execute queries in parallel
+    // We need the user ID for the other queries, so we await user first
+    // Optimization: In a real high-scale app, we might cache the FID->ID mapping
+    const user = await userPromise;
+
+    if (!user) {
       return {
         profileData: null,
         stats: null,
@@ -105,73 +74,134 @@ const getProfilePageData = cache(
     }
 
     // Enforce access control
-    if (userFull.status !== "ACTIVE") {
+    if (user.status !== "ACTIVE") {
       redirect("/invite");
     }
 
-    // 4. Process the data into stats
-    const totalGames = userFull.games.length;
+    // 4. Parallel fetch for Stats and History
+    const [statsAggregate, recentGames, streakData] = await Promise.all([
+      // A. Aggregate Stats (Database does the math)
+      prisma.gamePlayer.aggregate({
+        where: { userId: user.id },
+        _count: { _all: true }, // Total games
+        _sum: { score: true }, // Total score
+        _max: { score: true }, // Highest score
+      }),
+
+      // B. Recent Game History (Limit to 14)
+      prisma.gamePlayer.findMany({
+        where: { userId: user.id },
+        orderBy: { joinedAt: "desc" },
+        take: 14,
+        select: {
+          score: true,
+          rank: true,
+          claimedAt: true,
+          joinedAt: true,
+          game: {
+            select: {
+              id: true,
+              title: true,
+              tickets: {
+                where: { status: "PAID" },
+                select: { amountUSDC: true },
+                take: 1,
+              },
+            },
+          },
+        },
+      }),
+
+      // C. Fetch data for streak calculation (Only need dates)
+      // Optimization: Only fetch joinedAt for streak calc
+      prisma.gamePlayer.findMany({
+        where: { userId: user.id },
+        select: { joinedAt: true },
+        orderBy: { joinedAt: "desc" },
+        // Fetch enough to calculate a reasonable streak, e.g., last 100 games
+        take: 100,
+      }),
+    ]);
+
+    // 5. Calculate derived stats
+    const totalGames = statsAggregate._count._all;
+    const highestScore = statsAggregate._max.score ?? 0;
+    const totalScore = statsAggregate._sum.score ?? 0;
+    const avgScore = totalGames > 0 ? totalScore / totalGames : 0;
+
+    // Calculate Wins and Total Won from recent history + aggregate if needed
+    // Note: For exact "Total Won" across ALL time, we'd need a separate aggregate query
+    // if we store winnings on GamePlayer. Since it's on Ticket, it's harder to aggregate.
+    // For now, we'll approximate or fetch all for winnings if strict accuracy is needed.
+    // Optimization: Let's fetch ALL games strictly for winnings/wins calculation if needed,
+    // OR (Better) add a `winnings` column to GamePlayer in the future.
+    // For this iteration, to keep it fast, we will calculate from the recent games
+    // AND a separate lightweight query for wins if totalGames > 14.
+
     let wins = 0;
     let totalWon = 0;
-    let highestScore = 0;
-    let scoreSum = 0;
-    const allRanks: (number | null)[] = [];
-    const gameDates: Date[] = [];
+    let bestRank: number | null = null;
 
-    for (const game of userFull.games) {
-      // Check for Win (assuming rank 1 is a win)
-      if (game.rank === 1) {
-        wins += 1;
-      }
-      // Sum Winnings
-      const winnings = game.game.tickets[0]?.amountUSDC ?? 0;
-      totalWon += winnings;
+    // If user has few games, recentGames has everything.
+    // If many games, we might miss some wins/winnings in the summary.
+    // To be accurate without fetching everything, we can do a specific query for wins.
+    if (totalGames > 0) {
+      const [winStats, bestRankStat] = await Promise.all([
+        prisma.gamePlayer.findMany({
+          where: { userId: user.id, rank: 1 }, // Assuming rank 1 is win
+          select: {
+            game: {
+              select: {
+                tickets: {
+                  where: { status: "PAID" },
+                  select: { amountUSDC: true },
+                  take: 1,
+                },
+              },
+            },
+          },
+        }),
+        // Find best rank efficiently
+        prisma.gamePlayer.findFirst({
+          where: { userId: user.id, rank: { not: null } },
+          orderBy: { rank: "asc" },
+          select: { rank: true },
+        }),
+      ]);
 
-      // Find Highest Score
-      if (game.score > highestScore) {
-        highestScore = game.score;
-      }
-      // Sum for Average
-      scoreSum += game.score;
-
-      // Collect Ranks
-      allRanks.push(game.rank);
-
-      // Collect Dates for Streak
-      gameDates.push(game.joinedAt);
+      wins = winStats.length;
+      totalWon = winStats.reduce(
+        (sum, r) => sum + (r.game.tickets[0]?.amountUSDC ?? 0),
+        0
+      );
+      bestRank = bestRankStat?.rank ?? null;
     }
 
-    const avgScore = totalGames > 0 ? scoreSum / totalGames : 0;
     const winRate = totalGames > 0 ? (wins / totalGames) * 100 : 0;
-    const bestRank =
-      allRanks.length > 0
-        ? Math.min(...allRanks.filter((r): r is number => r !== null))
-        : null;
 
-    // Calculate streak using the dedicated lib function
+    // Calculate streak
+    const gameDates = streakData.map((g) => g.joinedAt);
     const currentStreak = calculateStreak(gameDates);
 
-    // 5. Build Game History (max 14, already ordered by query)
-    const gameHistory: GameHistoryEntry[] = userFull.games
-      .slice(0, 14)
-      .map((g) => {
-        const winnings = g.game.tickets[0]?.amountUSDC ?? 0;
-        return {
-          id: g.game.id,
-          name: g.game.title ?? "Game",
-          score: g.score,
-          claimedAt: g.claimedAt,
-          winnings: winnings,
-          winningsColor: winnings > 0 ? "green" : "gray",
-        };
-      });
+    // Format History
+    const gameHistory: GameHistoryEntry[] = recentGames.map((g) => {
+      const winnings = g.game.tickets[0]?.amountUSDC ?? 0;
+      return {
+        id: g.game.id,
+        name: g.game.title ?? "Game",
+        score: g.score,
+        claimedAt: g.claimedAt,
+        winnings: winnings,
+        winningsColor: winnings > 0 ? "green" : "gray",
+      };
+    });
 
     // 6. Compile Final Payload
     const profileData = {
-      fid: userFull.fid,
-      username: userFull.username,
-      wallet: userFull.wallet,
-      pfpUrl: userFull.pfpUrl,
+      fid: user.fid,
+      username: user.username,
+      wallet: user.wallet,
+      pfpUrl: user.pfpUrl,
     };
 
     const stats: ProfileStatsData = {
@@ -191,8 +221,8 @@ const getProfilePageData = cache(
       gameHistory,
       streak: currentStreak,
       username: profileData.username,
-      inviteCode: userFull.inviteCode,
-      referralStatusData: userFull._count.rewards,
+      inviteCode: user.inviteCode,
+      referralStatusData: user._count.rewards,
     };
   }
 );

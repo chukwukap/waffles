@@ -1199,6 +1199,7 @@ export const UserScalarFieldEnum = {
   pfpUrl: 'pfpUrl',
   wallet: 'wallet',
   role: 'role',
+  password: 'password',
   inviteCode: 'inviteCode',
   inviteQuota: 'inviteQuota',
   status: 'status',

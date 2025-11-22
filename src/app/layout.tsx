@@ -1,7 +1,9 @@
 import "./globals.css";
+import { Suspense } from "react";
 import { fontBody, fontDisplay, fontInput } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
+import { AnalyticsProvider } from "@/components/providers/AnalyticsProvider";
 
 export const metadata: Metadata = {
   title: "Waffles",
@@ -49,7 +51,10 @@ export default function RootLayout({
       )}
       suppressHydrationWarning
     >
-      <body className={cn("text-foreground bg-[#191919]")}>
+      <body className="antialiased" suppressHydrationWarning>
+        <Suspense fallback={null}>
+          <AnalyticsProvider />
+        </Suspense>
         {children}
       </body>
     </html>

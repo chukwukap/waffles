@@ -1,7 +1,7 @@
 import { minikitConfig } from "../../../../minikit.config";
 import InvitePageClient from "./client";
-
 import { Metadata } from "next";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: minikitConfig.miniapp.name,
@@ -9,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default function InvitePage() {
-  return <InvitePageClient />;
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#191919]" />}>
+      <InvitePageClient />
+    </Suspense>
+  );
 }

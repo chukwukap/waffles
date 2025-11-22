@@ -45,9 +45,21 @@ export function QuestionCard({
     }
   );
 
-  const { remaining, start, reset } = useCountdown(
-    duration,
-    async () => {
+  // Track submission status to prevent double submits
+  const [hasSubmitted, setHasSubmitted] = React.useState(false);
+  // Track start time for accurate duration calculation
+  const startTimeRef = React.useRef<number>(Date.now());
+
+  // Reset start time when question changes
+  React.useEffect(() => {
+    startTimeRef.current = Date.now();
+    setHasSubmitted(false);
+    setSelectedOptionIndex(null);
+  }, [question.id]);
+
+  // Helper to submit answer
+  const submitAnswer = React.useCallback(
+    async (index: number | null, timeTakenMs: number) => {
       if (!context) {
         console.error("context is not available");
         return;
@@ -63,29 +75,56 @@ export function QuestionCard({
         }
       }
 
-      // submit answer to the server
       const formData = new FormData();
       formData.append("fid", String(context.user?.fid));
       formData.append("gameId", String(question.gameId));
       formData.append("questionId", String(question.id));
-
-      // BUG FIX: Calculate time *taken*, not time *remaining*
-      const timeTakenMs = (duration - remaining) * 1000;
       formData.append("timeTakenMs", String(timeTakenMs));
       formData.append("authToken", authToken);
 
-      // SCHEMA FIX: Send the selected *index*
-      if (selectedOptionIndex !== null) {
-        formData.append("selectedIndex", String(selectedOptionIndex));
+      if (index !== null) {
+        formData.append("selectedIndex", String(index));
       }
 
-      // Submit the answer
       React.startTransition(() => {
         submitAnswerAct(formData);
       });
-      setSelectedOptionIndex(null);
-      onComplete();
     },
+    [context, getToken, signIn, question.gameId, question.id, submitAnswerAct]
+  );
+
+  // Handler for user selecting an option
+  const handleSelect = (index: number) => {
+    if (hasSubmitted || pending) return;
+
+    // 1. Update UI immediately
+    setSelectedOptionIndex(index);
+    setHasSubmitted(true);
+
+    // 2. Calculate precise time taken
+    const now = Date.now();
+    const timeTakenMs = Math.min(now - startTimeRef.current, duration * 1000);
+
+    // 3. Submit immediately (Security: prevents looking up answer then submitting)
+    submitAnswer(index, timeTakenMs);
+  };
+
+  // Handler for timer completion
+  const handleTimerComplete = async () => {
+    // If timer runs out and we haven't submitted, submit a "timeout" (no answer)
+    if (!hasSubmitted) {
+      setHasSubmitted(true);
+      // Time taken is full duration
+      await submitAnswer(null, duration * 1000);
+    }
+
+    // Always trigger completion (navigation) when timer ends
+    onComplete();
+  };
+
+  const { remaining, start, reset } = useCountdown(
+    duration,
+    handleTimerComplete,
     false
   );
 
@@ -102,6 +141,8 @@ export function QuestionCard({
   React.useEffect(() => {
     reset();
     start();
+    // Reset start time again just in case reset() takes time
+    startTimeRef.current = Date.now();
   }, [reset, start, question.id]);
 
   // ───────────────────────── UI ─────────────────────────
@@ -172,8 +213,8 @@ export function QuestionCard({
                 index={idx}
                 palette={palette}
                 selectedOptionIndex={selectedOptionIndex}
-                onSelect={setSelectedOptionIndex}
-                disabled={pending}
+                onSelect={handleSelect}
+                disabled={pending || hasSubmitted}
               />
             );
           })}

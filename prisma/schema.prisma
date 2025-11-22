@@ -21,6 +21,7 @@ model User {
 
   // -- ADMIN --
   role UserRole @default(USER)
+  password String? // Hashed password for admin accounts
 
   // -- VIRAL LOOP --
   inviteCode     String     @unique 
@@ -220,15 +221,17 @@ model Answer {
   question   Question @relation(fields: [questionId], references: [id])
   questionId Int
 
-  selectedIndex Int // RENAMED: Matches correctIndex
+  selectedIndex Int // CHANGED: Stores the index of the selected option (or -1 for no answer)
   isCorrect     Boolean
-  latencyMs     Int // 'timeTaken' -> 'latencyMs' (Technical precision)
   pointsEarned  Int     @default(0)
+  latencyMs     Int // CHANGED: Time taken in milliseconds
 
   createdAt DateTime @default(now())
 
   @@unique([userId, questionId]) // User can't answer the same question twice
-  @@index([gameId, userId]) // For quickly finding all of a user's answers in a game
+  // Performance indexes
+  @@index([userId, isCorrect], name: "user_correct_idx")
+  @@index([gameId, userId], name: "game_user_idx") // For quickly finding all of a user's answers in a game
 }
 
 // ==========================================

@@ -206,8 +206,16 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
 export const useSound = () => {
   const context = useContext(SoundContext);
   if (!context) {
-    // This runtime check is a best practice.
-    throw new Error("useSound must be used within a SoundProvider");
+    // Return safe defaults when used outside provider (e.g., in error pages)
+    // This prevents crashes while maintaining functionality in normal contexts
+    return {
+      isSoundEnabled: false,
+      toggleSound: () => { },
+      playSound: (() => { }) as {
+        (sound: SoundName): void;
+        (url: string, options?: PlaySoundOptions): void;
+      },
+    };
   }
   return context;
 };
