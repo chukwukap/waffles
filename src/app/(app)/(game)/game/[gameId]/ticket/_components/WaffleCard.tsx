@@ -1,12 +1,6 @@
-import {
-  SetStateAction,
-  Dispatch,
-  startTransition,
-  useActionState,
-  useEffect,
-} from "react";
+import { SetStateAction, Dispatch, useState } from "react";
 import Image from "next/image";
-import { purchaseTicketAction } from "@/actions/ticket";
+import { createTicketCharge } from "@/actions/commerce";
 import { useAuth } from "@/hooks/useAuth";
 import { notify } from "@/components/ui/Toaster";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
@@ -76,47 +70,41 @@ export const WaffleCard = ({
   setTicket: Dispatch<SetStateAction<Ticket | null>>;
 }) => {
   const { signIn } = useAuth();
+  const [pending, setPending] = useState(false);
 
-  const [state, buyWaffleAction, pending] = useActionState(
-    purchaseTicketAction,
-    null
-  );
-
-  useEffect(() => {
-    if (state?.status === "success") {
-      setTicket(state.ticket ?? null);
-    }
-  }, [state, setTicket]);
   // --- Handlers ---
   const handlePurchase = async () => {
+    if (pending) return; // Prevent double clicks
+
     try {
-      // Authenticate user before purchase (REQUIRED for purchases)
+      setPending(true);
+      // 1. Authenticate user
       const token = await signIn();
       if (!token) {
         notify.error("Authentication required to purchase tickets.");
         return;
       }
 
-      notify.info("Processing purchase (test mode, no transaction sent)...");
+      notify.info("Creating payment...");
 
-      let txHash: string | null = null;
-      // SKIP sending token transaction for now, just call server action directly.
-      // Simulate a txHash for test purposes.
-      txHash =
-        "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdfa";
+      // 2. Create Coinbase Commerce charge
+      const result = await createTicketCharge({
+        fid,
+        gameId,
+        amount: price,
+        authToken: token,
+      });
 
-      // Call Server Action to record/confirm purchase
-      const formData = new FormData();
-      formData.append("fid", String(fid));
-      formData.append("gameId", String(gameId));
-      formData.append("authToken", token); // Include auth token
-      if (txHash) {
-        formData.append("txHash", txHash);
+      if (!result.success) {
+        notify.error(result.error || "Failed to create payment");
+        return;
       }
 
-      startTransition(() => {
-        buyWaffleAction(formData);
-      });
+      // 3. Redirect to Coinbase Commerce checkout
+      // The user will complete payment there and be redirected back
+      notify.success("Redirecting to checkout...");
+      window.location.href = result.chargeUrl;
+
     } catch (err) {
       console.error("Ticket purchase failed:", err);
       const message =
@@ -128,12 +116,8 @@ export const WaffleCard = ({
         displayError = "Transaction cancelled.";
       } else if (message.includes("Invite required")) {
         displayError = "Redeem an invite code before buying a ticket.";
-      } else if (message.includes("insufficient funds")) {
-        displayError = "Insufficient funds for transaction.";
-      } else if (
-        message.includes("already purchased") ||
-        message.includes("already exists")
-      ) {
+      } else if (message.includes("already purchased") ||
+        message.includes("already have a ticket")) {
         displayError = "You already have a ticket for this game.";
       } else if (message.includes("Authentication required")) {
         displayError = message;

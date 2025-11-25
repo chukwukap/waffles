@@ -28,6 +28,7 @@ export function useWaitlistData(fid?: number) {
       });
       if (!response.ok) throw new Error("Failed to fetch");
       const json: WaitlistData = await response.json();
+      console.log("waitlist data: ", json);
       setData(json);
       hasLoaded.current = true;
     } catch (err) {

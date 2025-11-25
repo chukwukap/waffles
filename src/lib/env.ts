@@ -35,6 +35,22 @@ const envSchema = z.object({
   VERCEL_PROJECT_PRODUCTION_URL: z.string().optional(),
   VERCEL_URL: z.string().optional(),
   VERCEL_ENV: z.enum(["production", "preview", "development"]).optional(),
+
+  // Coinbase Commerce (server-only)
+  COINBASE_COMMERCE_API_KEY: isServer
+    ? z.string().min(1, "COINBASE_COMMERCE_API_KEY is required")
+    : z.string().optional(),
+  COINBASE_COMMERCE_WEBHOOK_SECRET: isServer
+    ? z.string().min(1, "COINBASE_COMMERCE_WEBHOOK_SECRET is required")
+    : z.string().optional(),
+
+  // Payout Wallet (server-only)
+  PAYOUT_WALLET_PRIVATE_KEY: isServer
+    ? z
+        .string()
+        .regex(/^0x[a-fA-F0-9]{64}$/, "Invalid private key format")
+        .optional()
+    : z.string().optional(),
 });
 
 const getEnv = () => {
@@ -57,6 +73,10 @@ const getEnv = () => {
     VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL,
     VERCEL_URL: process.env.VERCEL_URL,
     VERCEL_ENV: process.env.VERCEL_ENV,
+    COINBASE_COMMERCE_API_KEY: process.env.COINBASE_COMMERCE_API_KEY,
+    COINBASE_COMMERCE_WEBHOOK_SECRET:
+      process.env.COINBASE_COMMERCE_WEBHOOK_SECRET,
+    PAYOUT_WALLET_PRIVATE_KEY: process.env.PAYOUT_WALLET_PRIVATE_KEY,
   });
 
   if (!parsed.success) {
@@ -76,6 +96,7 @@ const getEnv = () => {
       // Return defaults for client
       return {
         rootUrl: "http://localhost:3000",
+        nextPublicAppUrl: "http://localhost:3000",
         neynarApiKey: "",
         nextPublicOnchainkitApiKey:
           process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY || "",
@@ -89,6 +110,9 @@ const getEnv = () => {
           payload: undefined,
           signature: undefined,
         },
+        coinbaseCommerceApiKey: "",
+        coinbaseCommerceWebhookSecret: "",
+        payoutWalletPrivateKey: undefined,
       };
     }
   }
@@ -110,6 +134,7 @@ const getEnv = () => {
 
   return {
     rootUrl: resolveRootUrl().replace(/\/$/, ""),
+    nextPublicAppUrl: resolveRootUrl().replace(/\/$/, ""),
     neynarApiKey: data.NEYNAR_API_KEY!,
     nextPublicOnchainkitApiKey: data.NEXT_PUBLIC_ONCHAINKIT_API_KEY,
     waffleMainAddress: data.NEXT_PUBLIC_WAFFLE_MAIN_ADDRESS as `0x${string}`,
@@ -120,6 +145,9 @@ const getEnv = () => {
       payload: data.NEXT_PUBLIC_ACCOUNT_ASSOCIATION_PAYLOAD,
       signature: data.NEXT_PUBLIC_ACCOUNT_ASSOCIATION_SIGNATURE,
     },
+    coinbaseCommerceApiKey: data.COINBASE_COMMERCE_API_KEY || "",
+    coinbaseCommerceWebhookSecret: data.COINBASE_COMMERCE_WEBHOOK_SECRET || "",
+    payoutWalletPrivateKey: data.PAYOUT_WALLET_PRIVATE_KEY,
   };
 };
 

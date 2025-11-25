@@ -1,0 +1,14 @@
+# ==================================
+# Coinbase Commerce (Ticket Purchases)
+# ==================================
+# Get these from: https://commerce.coinbase.com/dashboard/settings
+COINBASE_COMMERCE_API_KEY=your_api_key_here
+COINBASE_COMMERCE_WEBHOOK_SECRET=your_webhook_secret_here
+
+# ======================================
+# Prize Payout Wallet (Server-side Only)
+# ======================================
+# CRITICAL SECURITY: Store this in encrypted environment variables
+# Create a dedicated wallet for payouts, keep limited funds
+# Format: 0x followed by 64 hex characters
+PAYOUT_WALLET_PRIVATE_KEY=0x0000000000000000000000000000000000000000000000000000000000000000

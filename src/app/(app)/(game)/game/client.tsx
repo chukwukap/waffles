@@ -26,10 +26,11 @@ function formatTime(remainingSeconds: number): string {
 }
 
 export default function GameHomePageClient({
-  upcomingOrActiveGamePromise,
+  gamePromise,
 }: {
-  upcomingOrActiveGamePromise: Promise<UpcomingGamePayload | null>; // <-- Use imported type
+  gamePromise: Promise<UpcomingGamePayload | null>; // <-- Use imported type
 }) {
+  const upcomingOrActiveGame = use(gamePromise);
   const {
     context: miniKitContext,
     isMiniAppReady,
@@ -50,7 +51,6 @@ export default function GameHomePageClient({
     if (isMiniAppReady) {
       // If not logged in, or loaded and not active, redirect to invite
       if (!fid) {
-        router.replace("/invite");
         return;
       }
 
@@ -62,7 +62,6 @@ export default function GameHomePageClient({
     }
   }, [isMiniAppReady, fid, isWaitlistLoading, waitlistData, router]);
 
-  const upcomingOrActiveGame = use(upcomingOrActiveGamePromise);
   const [chatOpen, setChatOpen] = useState(false);
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [mutualsData, setMutualsData] = useState<{
