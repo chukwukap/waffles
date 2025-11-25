@@ -6,7 +6,14 @@ import { env } from "@/lib/env";
 import { verifyAuthenticatedUser } from "@/lib/auth";
 
 // Initialize Coinbase Commerce client
-Client.init(env.coinbaseCommerceApiKey);
+if (!env.coinbaseCommerceApiKey) {
+  console.warn(
+    "⚠️  COINBASE_COMMERCE_API_KEY not set. " +
+      "Ticket purchases will fail until configured."
+  );
+} else {
+  Client.init(env.coinbaseCommerceApiKey);
+}
 
 export type CreateChargeResult =
   | { success: true; chargeId: string; chargeUrl: string; ticketId: number }
@@ -21,6 +28,14 @@ export async function createTicketCharge(data: {
   amount: number;
   authToken: string;
 }): Promise<CreateChargeResult> {
+  // Runtime validation: Check if Commerce is configured
+  if (!env.coinbaseCommerceApiKey) {
+    return {
+      success: false,
+      error: "Payment system not configured. Please contact support.",
+    };
+  }
+
   try {
     // 1. Verify authentication
     const authResult = await verifyAuthenticatedUser(data.authToken, data.fid);
@@ -108,8 +123,8 @@ export async function createTicketCharge(data: {
         userId: user.id.toString(),
         ticketCode: ticketCode,
       },
-      redirect_url: `${env.nextPublicAppUrl}/game?gameId=${data.gameId}`,
-      cancel_url: `${env.nextPublicAppUrl}/game/${data.gameId}/ticket`,
+      redirect_url: `${env.rootUrl}/game?gameId=${data.gameId}`,
+      cancel_url: `${env.rootUrl}/game/${data.gameId}/ticket`,
     };
 
     const charge = await resources.Charge.create(chargeData);

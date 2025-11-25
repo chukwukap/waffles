@@ -31,7 +31,6 @@ const envSchema = z.object({
 
   // URLs
   NEXT_PUBLIC_URL: z.string().url().optional(),
-  NEXT_PUBLIC_APP_URL: z.string().url().optional(),
   VERCEL_PROJECT_PRODUCTION_URL: z.string().optional(),
   VERCEL_URL: z.string().optional(),
   VERCEL_ENV: z.enum(["production", "preview", "development"]).optional(),
@@ -46,10 +45,7 @@ const envSchema = z.object({
 
   // Payout Wallet (server-only)
   PAYOUT_WALLET_PRIVATE_KEY: isServer
-    ? z
-        .string()
-        .regex(/^0x[a-fA-F0-9]{64}$/, "Invalid private key format")
-        .optional()
+    ? z.string().regex(/^0x[a-fA-F0-9]{64}$/, "Invalid private key format")
     : z.string().optional(),
 });
 
@@ -69,7 +65,6 @@ const getEnv = () => {
     NEXT_PUBLIC_ACCOUNT_ASSOCIATION_SIGNATURE:
       process.env.NEXT_PUBLIC_ACCOUNT_ASSOCIATION_SIGNATURE,
     NEXT_PUBLIC_URL: process.env.NEXT_PUBLIC_URL,
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL,
     VERCEL_URL: process.env.VERCEL_URL,
     VERCEL_ENV: process.env.VERCEL_ENV,
@@ -96,7 +91,6 @@ const getEnv = () => {
       // Return defaults for client
       return {
         rootUrl: "http://localhost:3000",
-        nextPublicAppUrl: "http://localhost:3000",
         neynarApiKey: "",
         nextPublicOnchainkitApiKey:
           process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY || "",
@@ -121,7 +115,6 @@ const getEnv = () => {
 
   const resolveRootUrl = () => {
     if (data.NEXT_PUBLIC_URL) return data.NEXT_PUBLIC_URL;
-    if (data.NEXT_PUBLIC_APP_URL) return data.NEXT_PUBLIC_APP_URL;
     if (
       data.VERCEL_ENV === "production" &&
       data.VERCEL_PROJECT_PRODUCTION_URL
@@ -134,7 +127,6 @@ const getEnv = () => {
 
   return {
     rootUrl: resolveRootUrl().replace(/\/$/, ""),
-    nextPublicAppUrl: resolveRootUrl().replace(/\/$/, ""),
     neynarApiKey: data.NEYNAR_API_KEY!,
     nextPublicOnchainkitApiKey: data.NEXT_PUBLIC_ONCHAINKIT_API_KEY,
     waffleMainAddress: data.NEXT_PUBLIC_WAFFLE_MAIN_ADDRESS as `0x${string}`,
