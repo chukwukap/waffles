@@ -44,48 +44,49 @@ export type UpcomingGamePayload = Prisma.GameGetPayload<{
 
 const getUpComingOrActiveGame = cache(
   async (): Promise<UpcomingGamePayload | null> => {
-    // Priority order: LIVE → SCHEDULED → ENDED
-    // Return the most recently created game from the highest priority status
-    const selectFields = {
-      id: true,
-      startsAt: true,
-      endsAt: true,
-      entryFee: true,
-      prizePool: true,
-      _count: {
-        select: {
-          tickets: true,
-          players: true,
+    // Fetch games and sort by priority: LIVE → SCHEDULED → ENDED
+    const games = await prisma.game.findMany({
+      where: {
+        status: { in: ["LIVE", "SCHEDULED", "ENDED"] },
+      },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        startsAt: true,
+        endsAt: true,
+        entryFee: true,
+        prizePool: true,
+        status: true,
+        _count: {
+          select: {
+            tickets: true,
+            players: true,
+          },
         },
       },
+    });
+
+    // Define priority order
+    const statusPriority: Record<string, number> = {
+      LIVE: 1,
+      SCHEDULED: 2,
+      ENDED: 3,
+      CANCELLED: 4
     };
 
-    // Try LIVE first
-    const liveGame = await prisma.game.findFirst({
-      where: { status: "LIVE" },
-      orderBy: { createdAt: "desc" },
-      select: selectFields,
+    // Sort by status priority, then by createdAt (already sorted desc)
+    const sortedGames = games.sort((a, b) => {
+      const priorityDiff = statusPriority[a.status] - statusPriority[b.status];
+      return priorityDiff;
     });
 
-    if (liveGame) return liveGame;
+    // Return the first game (highest priority, most recent)
+    const game = sortedGames[0];
+    if (!game) return null;
 
-    // Try SCHEDULED second
-    const scheduledGame = await prisma.game.findFirst({
-      where: { status: "SCHEDULED" },
-      orderBy: { createdAt: "desc" },
-      select: selectFields,
-    });
-
-    if (scheduledGame) return scheduledGame;
-
-    // Try ENDED last
-    const endedGame = await prisma.game.findFirst({
-      where: { status: "ENDED" },
-      orderBy: { createdAt: "desc" },
-      select: selectFields,
-    });
-
-    return endedGame;
+    // Remove status from the return type to match UpcomingGamePayload
+    const { status, ...gameWithoutStatus } = game;
+    return gameWithoutStatus;
   }
 );
 
