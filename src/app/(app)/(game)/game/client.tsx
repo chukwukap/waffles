@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { useWaitlistData } from "@/hooks/useWaitlistData";
 import { Ticket } from "../../../../../prisma/generated/client";
 import { ChatInput } from "./_components/chat/ChatTrigger";
+import { WaffleLoader } from "@/components/ui/WaffleLoader";
 
 function formatTime(remainingSeconds: number): string {
   const seconds = Math.max(0, remainingSeconds);
@@ -37,6 +38,12 @@ export default function GameHomePageClient({
   const fid = miniKitContext?.user?.fid;
   const router = useRouter();
   const { data: waitlistData, isLoading: isWaitlistLoading } = useWaitlistData(fid);
+
+  useEffect(() => {
+    if (!isMiniAppReady) {
+      setMiniAppReady();
+    }
+  }, [isMiniAppReady, setMiniAppReady]);
 
   // Enforce access control: Only ACTIVE users can play
   useEffect(() => {
@@ -91,11 +98,7 @@ export default function GameHomePageClient({
   })}`;
   const playerCount = upcomingOrActiveGame?._count.players ?? 0; // CHANGED: participants -> players
 
-  useEffect(() => {
-    if (!isMiniAppReady) {
-      setMiniAppReady();
-    }
-  }, [isMiniAppReady, setMiniAppReady]);
+
   // Fetch mutuals data
   useEffect(() => {
     if (!fid || !upcomingOrActiveGame?.id) return;
@@ -192,6 +195,14 @@ export default function GameHomePageClient({
     }
     return <GameActionButton>{formattedTime}</GameActionButton>;
   };
+
+  if (isWaitlistLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center h-full">
+        <WaffleLoader text="CHECKING ACCESS..." />
+      </div>
+    );
+  }
 
   return (
     <>

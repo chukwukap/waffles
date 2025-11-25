@@ -22,8 +22,8 @@ export function DashboardCharts({
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* User Growth Chart */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h3 className="text-lg font-semibold text-slate-900 mb-6">User Growth</h3>
+            <div className="bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-700">
+                <h3 className="text-lg font-semibold text-slate-100 mb-6">User Growth</h3>
                 <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={userGrowth}>
@@ -68,8 +68,8 @@ export function DashboardCharts({
             </div>
 
             {/* Revenue Chart */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h3 className="text-lg font-semibold text-slate-900 mb-6">Revenue (USDC)</h3>
+            <div className="bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-700">
+                <h3 className="text-lg font-semibold text-slate-100 mb-6">Revenue (USDC)</h3>
                 <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={revenueData}>

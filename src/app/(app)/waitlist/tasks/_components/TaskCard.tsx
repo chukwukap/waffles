@@ -58,11 +58,9 @@ export function TaskCard({
         if (inviteGoalMet) {
             showCompleteButton = true;
         } else {
-            // Invite task that isn't met yet usually shows progress or nothing?
-            // Based on previous code, it didn't have a "GO" button for invite, just "COMPLETE" when ready.
-            // Let's assume no button if not met.
+            // Invite task that isn't met yet
             showCompleteButton = false;
-            showGoButton = false; // Ensure no GO button for invite tasks
+            showGoButton = false;
         }
     } else {
         // Link task

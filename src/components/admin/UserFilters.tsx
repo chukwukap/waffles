@@ -45,13 +45,13 @@ export function UserFilters() {
                 <input
                     type="text"
                     placeholder="Search users by name or wallet..."
-                    className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     defaultValue={searchParams.get("q")?.toString()}
                     onChange={(e) => handleSearch(e.target.value)}
                 />
             </div>
             <select
-                className="px-4 py-2 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="px-4 py-2 border border-slate-600 rounded-lg bg-slate-800 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 defaultValue={searchParams.get("role")?.toString()}
                 onChange={(e) => handleRoleChange(e.target.value)}
             >
@@ -60,7 +60,7 @@ export function UserFilters() {
                 <option value="ADMIN">Admin</option>
             </select>
             <select
-                className="px-4 py-2 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="px-4 py-2 border border-slate-600 rounded-lg bg-slate-800 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 defaultValue={searchParams.get("status")?.toString()}
                 onChange={(e) => handleStatusChange(e.target.value)}
             >

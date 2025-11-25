@@ -9,7 +9,7 @@ export default function AdminLoading() {
             {/* Stats Grid Skeleton */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 {[...Array(4)].map((_, i) => (
-                    <div key={i} className="bg-white rounded-xl border border-slate-200 p-6 h-32">
+                    <div key={i} className="bg-slate-800 rounded-xl border border-slate-700 p-6 h-32">
                         <div className="flex justify-between items-start h-full">
                             <div className="space-y-3 w-full">
                                 <div className="h-4 w-24 bg-slate-200 rounded"></div>
@@ -23,20 +23,20 @@ export default function AdminLoading() {
 
             {/* Charts Skeleton */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white p-6 rounded-xl border border-slate-200 h-[350px]">
+                <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 h-[350px]">
                     <div className="h-6 w-32 bg-slate-200 rounded mb-6"></div>
-                    <div className="h-[250px] bg-slate-100 rounded w-full"></div>
+                    <div className="h-[250px] bg-slate-700 rounded w-full"></div>
                 </div>
-                <div className="bg-white p-6 rounded-xl border border-slate-200 h-[350px]">
+                <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 h-[350px]">
                     <div className="h-6 w-32 bg-slate-200 rounded mb-6"></div>
-                    <div className="h-[250px] bg-slate-100 rounded w-full"></div>
+                    <div className="h-[250px] bg-slate-700 rounded w-full"></div>
                 </div>
             </div>
 
             {/* Recent Activity Skeleton */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white rounded-xl border border-slate-200 h-64">
-                    <div className="border-b border-slate-200 p-4">
+                <div className="bg-slate-800 rounded-xl border border-slate-700 h-64">
+                    <div className="border-b border-slate-700 p-4">
                         <div className="h-6 w-32 bg-slate-200 rounded"></div>
                     </div>
                     <div className="p-4 space-y-4">
@@ -51,8 +51,8 @@ export default function AdminLoading() {
                         ))}
                     </div>
                 </div>
-                <div className="bg-white rounded-xl border border-slate-200 h-64">
-                    <div className="border-b border-slate-200 p-4">
+                <div className="bg-slate-800 rounded-xl border border-slate-700 h-64">
+                    <div className="border-b border-slate-700 p-4">
                         <div className="h-6 w-32 bg-slate-200 rounded"></div>
                     </div>
                     <div className="p-4 space-y-4">

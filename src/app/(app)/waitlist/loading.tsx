@@ -1,10 +1,5 @@
-import { Spinner } from "@/components/ui/spinner";
+import { WaffleLoader } from "@/components/ui/WaffleLoader";
 
-export default function WaitlistLoading() {
-  return (
-    <div className="w-full h-screen flex flex-col items-center justify-center gap-4">
-      <Spinner className="size-10" />
-      <p className="text-white/60 text-sm font-display">Waitlist</p>
-    </div>
-  );
+export default function Loading() {
+  return <WaffleLoader />;
 }

@@ -65,6 +65,7 @@ export async function duplicateGameAction(gameId: number): Promise<void> {
           mediaUrl: q.mediaUrl,
           soundUrl: q.soundUrl,
           durationSec: q.durationSec,
+          order: q.order,
         })),
       });
     }

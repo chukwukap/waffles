@@ -176,11 +176,27 @@ export async function completeWaitlistTask(
 
     const user = await prisma.user.findUnique({
       where: { fid },
-      select: { id: true, completedTasks: true },
+      select: {
+        id: true,
+        completedTasks: true,
+        _count: {
+          select: { invites: true },
+        },
+      },
     });
 
     if (!user) {
       return { success: false, error: "User not found" };
+    }
+
+    // Verify "invite_friends" task
+    if (taskId === "invite_friends") {
+      if (user._count.invites < 3) {
+        return {
+          success: false,
+          error: "You need 3 invites to complete this task.",
+        };
+      }
     }
 
     // Check if already completed

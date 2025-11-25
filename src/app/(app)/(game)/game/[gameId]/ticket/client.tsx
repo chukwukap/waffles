@@ -104,8 +104,8 @@ export default function TicketPageClientImpl({
   }
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 space-y-1">
-      <div className="flex flex-row items-center justify-between w-[350px] h-[50px] mt-4">
+    <div className="flex-1 overflow-y-auto px-4 space-y-1 w-full overflow-x-hidden">
+      <div className="flex flex-row items-center justify-between w-full max-w-[350px] h-[50px] mt-4 mx-auto">
         <div className="flex flex-col justify-center items-start h-full">
           <p className="font-medium font-display text-[14px] leading-[130%] tracking-[-0.03em] text-center text-[#99A0AE]">
             Next game theme

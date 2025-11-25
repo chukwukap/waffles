@@ -35,7 +35,7 @@ export function GameHeader() {
     <>
       <header
         className={cn(
-          "sticky top-0 left-0 shrink-0 z-40 flex items-center justify-between w-[393px] h-[52px] bg-[#191919] border-b border-b-[#FFFFFF12] pt-[12px] px-4 pb-[12px]"
+          "sticky top-0 left-0 shrink-0 z-40 flex items-center justify-between w-full max-w-[393px] h-[52px] bg-[#191919] border-b border-b-[#FFFFFF12] pt-[12px] px-4 pb-[12px]"
         )}
       >
         {isLiveRoute ? (

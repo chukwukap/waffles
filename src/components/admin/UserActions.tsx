@@ -38,7 +38,7 @@ export function UserActions({ user }: { user: any }) {
     };
 
     const handlePromoteToAdmin = async () => {
-        if (!confirm(`Promote ${user.username || user.fid} to ADMIN? This gives them full admin access.`)) return;
+        if (!confirm(`Promote ${user.username} to ADMIN? This gives them full admin access.`)) return;
 
         setLoading(true);
         const result = await promoteToAdminAction(user.id);
@@ -50,11 +50,11 @@ export function UserActions({ user }: { user: any }) {
     };
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-4">Actions</h3>
+        <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-6">
+            <h3 className="text-lg font-semibold text-slate-100 mb-4">Actions</h3>
             <div className="space-y-3">
                 <div>
-                    <p className="text-sm font-medium text-slate-700 mb-2">Change Status</p>
+                    <p className="text-sm font-medium text-slate-300 mb-2">Change Status</p>
                     <div className="flex flex-wrap gap-2">
                         <button
                             onClick={() => handleStatusChange("ACTIVE")}
@@ -80,7 +80,7 @@ export function UserActions({ user }: { user: any }) {
                     </div>
                 </div>
 
-                <div className="pt-3 border-t border-slate-200">
+                <div className="pt-3 border-t border-slate-700">
                     <button
                         onClick={handleQuotaAdjust}
                         disabled={loading}
@@ -91,7 +91,7 @@ export function UserActions({ user }: { user: any }) {
                 </div>
 
                 {user.role !== "ADMIN" && (
-                    <div className="pt-3 border-t border-slate-200">
+                    <div className="pt-3 border-t border-slate-700">
                         <button
                             onClick={handlePromoteToAdmin}
                             disabled={loading}

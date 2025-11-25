@@ -18,9 +18,8 @@ export function ProfileCard({
 }: ProfileCardProps) {
   return (
     <div
-      className="relative overflow-hidden group select-none"
+      className="relative overflow-hidden group select-none w-full max-w-[361px]"
       style={{
-        width: "361px",
         height: "152px",
         borderRadius: "16px",
         border: "1px solid rgba(255, 255, 255, 0.08)", // #FFFFFF14

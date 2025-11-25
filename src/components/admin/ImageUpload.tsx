@@ -64,7 +64,7 @@ export function ImageUpload({
 
     return (
         <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700">
+            <label className="block text-sm font-medium text-slate-300">
                 {label} {required && "*"}
             </label>
 
@@ -76,7 +76,7 @@ export function ImageUpload({
                     onClick={() => fileInputRef.current?.click()}
                     className={`
                         relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors
-                        ${uploading ? "bg-slate-50 border-slate-300" : "border-slate-300 hover:border-purple-500 hover:bg-purple-50"}
+                        ${uploading ? "bg-slate-900 border-slate-600" : "border-slate-600 hover:border-purple-500 hover:bg-purple-900/30"}
                         ${error ? "border-red-300 bg-red-50" : ""}
                     `}
                 >
@@ -97,17 +97,17 @@ export function ImageUpload({
                                 <ArrowUpTrayIcon className="h-5 w-5" />
                             </div>
                         )}
-                        <div className="text-sm font-medium text-slate-900">
+                        <div className="text-sm font-medium text-slate-100">
                             {uploading ? "Uploading..." : "Click to upload"}
                         </div>
-                        <div className="text-xs text-slate-500">
+                        <div className="text-xs text-slate-400">
                             {uploading ? "Please wait" : `Max size ${maxSizeMB}MB`}
                         </div>
                     </div>
                 </div>
             ) : (
-                <div className="relative rounded-xl overflow-hidden border border-slate-200 group">
-                    <div className="aspect-video relative bg-slate-100">
+                <div className="relative rounded-xl overflow-hidden border border-slate-700 group">
+                    <div className="aspect-video relative bg-slate-700">
                         {accept.startsWith("image") ? (
                             <Image
                                 src={preview}
@@ -116,7 +116,7 @@ export function ImageUpload({
                                 className="object-cover"
                             />
                         ) : (
-                            <div className="flex items-center justify-center h-full text-slate-500">
+                            <div className="flex items-center justify-center h-full text-slate-400">
                                 <div className="text-center">
                                     <PhotoIcon className="h-12 w-12 mx-auto mb-2" />
                                     <span className="text-sm">File uploaded</span>
@@ -128,7 +128,7 @@ export function ImageUpload({
                     <button
                         type="button"
                         onClick={handleRemove}
-                        className="absolute top-2 right-2 p-1.5 bg-white/90 backdrop-blur-sm rounded-full text-slate-600 hover:text-red-600 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-2 right-2 p-1.5 bg-slate-800/90 backdrop-blur-sm rounded-full text-slate-400 hover:text-red-600 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                         <XMarkIcon className="h-4 w-4" />
                     </button>

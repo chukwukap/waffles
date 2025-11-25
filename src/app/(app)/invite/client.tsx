@@ -14,7 +14,8 @@ import {
   validateReferralAction,
   type ValidateReferralResult,
 } from "@/actions/invite";
-import { useMiniKit } from "@coinbase/onchainkit/minikit";
+import { useMiniKit, useComposeCast } from "@coinbase/onchainkit/minikit";
+import { WaffleLoader } from "@/components/ui/WaffleLoader";
 import { useActionState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { InvitePageHeader } from "./_components/InviteHeader";
@@ -36,6 +37,7 @@ export default function InvitePageClient() {
   >("idle");
   const [inputCode, setInputCode] = useState(initialCode);
   const [error, setError] = useState<string | null>(null);
+  console.log(error)
 
   const [validationState, validateAction, isPending] = useActionState<
     ValidateReferralResult | null,
@@ -162,10 +164,12 @@ export default function InvitePageClient() {
             tracking-[-0.03em]
           "
         >
-          ENTER YOUR INVITE CODE
+          ENTER YOUR <br /> INVITE CODE
         </h2>
         {isLoading ? (
-          <p className="text-center text-white/60">Loading...</p>
+          <div className="py-12">
+            <WaffleLoader text="GENERATING CODE..." size={80} />
+          </div>
         ) : (
           <form
             onSubmit={handleSubmit}
@@ -207,18 +211,23 @@ export default function InvitePageClient() {
             )}
             {status === "failed" && error && (
               <InfoButton
-                text={error || "Invalid"}
+                text={"Invalid code"}
                 onClick={() => { }}
                 type="button"
                 className="mt-15"
               >
                 <FailedIcon className="h-[18px] w-[18px]" />
-                <span>{error || "Invalid"}</span>
+                <span>{"Invalid code"}</span>
               </InfoButton>
             )}
 
             {status === "success" && (
-              <InfoButton text="Valid" onClick={() => { }} type="button">
+              <InfoButton
+                text="Valid"
+                onClick={() => { }}
+                type="button"
+                className="bg-[#27AE60]"
+              >
                 <SuccessIcon className="h-[18px] w-[18px]" />
                 <span>Valid</span>
               </InfoButton>

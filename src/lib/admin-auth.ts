@@ -17,13 +17,13 @@ export interface AdminSession {
  * Verify admin credentials and create session
  */
 export async function verifyAdminCredentials(
-  fid: number,
+  username: string,
   password: string
 ): Promise<{ success: boolean; error?: string; session?: AdminSession }> {
   try {
-    // Find user by FID
-    const user = await prisma.user.findUnique({
-      where: { fid },
+    // Find user by username (case-insensitive check could be added if needed, but strict for now)
+    const user = await prisma.user.findFirst({
+      where: { username },
       select: {
         id: true,
         fid: true,
@@ -45,7 +45,7 @@ export async function verifyAdminCredentials(
     if (!user.password) {
       return {
         success: false,
-        error: "Password not set. Please complete signup.",
+        error: "Password not set. Please complete setup.",
       };
     }
 
@@ -176,55 +176,49 @@ function generateInviteCode(): string {
  * Create admin account with password
  */
 export async function createAdminAccount(
-  fid: number,
-  password: string,
-  signupSecret?: string
+  username: string,
+  password: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    // Verify signup secret if configured
-    const requiredSecret = process.env.ADMIN_SIGNUP_SECRET;
-    if (requiredSecret && signupSecret !== requiredSecret) {
-      return { success: false, error: "Invalid signup code" };
-    }
-
-    // Check if user exists
-    const existingUser = await prisma.user.findUnique({
-      where: { fid },
-      select: { id: true, role: true, password: true, inviteCode: true },
+    // Check if user exists by username
+    const existingUser = await prisma.user.findFirst({
+      where: { username },
+      select: { id: true, role: true, password: true },
     });
 
-    // If user exists with password, they're already signed up
-    if (existingUser?.password) {
+    if (!existingUser) {
       return {
         success: false,
-        error: "Admin account already exists for this FID",
+        error: "User not found. Please sign up in the main app first.",
+      };
+    }
+
+    // CRITICAL: Only allow if they are ALREADY an admin (manually assigned)
+    if (existingUser.role !== "ADMIN") {
+      return {
+        success: false,
+        error: "You must be manually assigned the Admin role first.",
+      };
+    }
+
+    // If user exists with password, they're already signed up
+    if (existingUser.password) {
+      return {
+        success: false,
+        error: "Admin account already exists for this user",
       };
     }
 
     // Hash password
     const hashedPassword = await hashPassword(password);
 
-    // Update or create user with admin role and password
-    if (existingUser) {
-      // User exists but no password - update them
-      await prisma.user.update({
-        where: { fid },
-        data: {
-          role: "ADMIN",
-          password: hashedPassword,
-        },
-      });
-    } else {
-      // Create new user with admin role
-      await prisma.user.create({
-        data: {
-          fid,
-          role: "ADMIN",
-          password: hashedPassword,
-          inviteCode: generateInviteCode(),
-        },
-      });
-    }
+    // Update user with password
+    await prisma.user.update({
+      where: { id: existingUser.id }, // Use ID for update to be safe
+      data: {
+        password: hashedPassword,
+      },
+    });
 
     return { success: true };
   } catch (error) {

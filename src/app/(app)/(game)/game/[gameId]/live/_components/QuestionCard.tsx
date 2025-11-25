@@ -169,7 +169,8 @@ export function QuestionCard({
           items-center
           justify-center
           select-none
-          w-[206px]
+          w-full
+          max-w-[206px]
           font-normal
           text-[36px]
           leading-[0.92]
@@ -187,15 +188,15 @@ export function QuestionCard({
 
         {/* Image Section - Use new `mediaUrl` field and check if it exists */}
         {question.mediaUrl && (
-          <figure className="mx-auto mb-4 flex justify-center">
-            <div className="relative w-[299px] h-[158px] rounded-[10px] overflow-hidden bg-[#17171a] border border-[#313136] shadow-[0_8px_0_#000]">
+          <figure className="mx-auto mb-4 flex justify-center w-full">
+            <div className="relative w-full max-w-[299px] h-[158px] rounded-[10px] overflow-hidden bg-[#17171a] border border-[#313136] shadow-[0_8px_0_#000]">
               <Image
                 src={question.mediaUrl}
                 alt={question.content || "Question media"}
                 fill
                 fetchPriority="high"
                 className="object-cover w-full h-full rounded-[10px]"
-                sizes="299px"
+                sizes="(max-width: 299px) 100vw, 299px"
               />
             </div>
           </figure>

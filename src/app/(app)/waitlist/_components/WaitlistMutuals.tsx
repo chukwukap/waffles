@@ -16,9 +16,10 @@ interface WaitlistMutualsProps {
 export function WaitlistMutuals({ mutualsData }: WaitlistMutualsProps) {
     return (
         <motion.div
-            className="mb-[env(safe-area-inset-bottom)] pb-6 flex items-center justify-center gap-2 shrink-0"
+            className="mb-[env(safe-area-inset-bottom)] pb-6 flex items-center justify-center gap-2 shrink-0 cursor-default"
             animate={{ y: [0, -4, 0] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            whileHover={{ scale: 1.05 }}
         >
             <CardStack
                 size="clamp(25px, 9vw, 42px)"

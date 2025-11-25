@@ -29,13 +29,13 @@ export default async function GameQuestionsPage({ params }: { params: Promise<{ 
                 <div className="flex items-center gap-4">
                     <Link
                         href="/admin/games"
-                        className="text-slate-600 hover:text-slate-900 font-medium"
+                        className="text-slate-400 hover:text-slate-100 font-medium"
                     >
                         ← Back
                     </Link>
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900">Manage Questions</h1>
-                        <p className="text-slate-600 mt-1">
+                        <h1 className="text-2xl font-bold text-slate-100">Manage Questions</h1>
+                        <p className="text-slate-400 mt-1">
                             {game.title} • {game.questions.length} Questions
                         </p>
                     </div>
@@ -48,14 +48,14 @@ export default async function GameQuestionsPage({ params }: { params: Promise<{ 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Question List (Left Column) */}
                 <div className="lg:col-span-2 space-y-4">
-                    <h2 className="text-lg font-semibold text-slate-900">Questions</h2>
+                    <h2 className="text-lg font-semibold text-slate-100">Questions</h2>
                     <QuestionList gameId={game.id} initialQuestions={game.questions} />
                 </div>
 
                 {/* Add Question Form (Right Column) */}
                 <div className="space-y-4">
-                    <h2 className="text-lg font-semibold text-slate-900">Add New Question</h2>
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 sticky top-6">
+                    <h2 className="text-lg font-semibold text-slate-100">Add New Question</h2>
+                    <div className="bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-700 sticky top-6">
                         <QuestionForm
                             gameId={game.id}
                             action={createQuestionAction.bind(null, game.id)}

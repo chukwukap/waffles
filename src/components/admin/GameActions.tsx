@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { EllipsisVerticalIcon, PencilIcon, TrashIcon, PlayIcon, StopIcon, DocumentDuplicateIcon } from "@heroicons/react/24/outline";
 import { startGameAction, endGameAction } from "@/actions/admin/games";
@@ -17,11 +18,29 @@ interface GameActionsProps {
             questions: number;
         };
     };
+    onOpenChange?: (isOpen: boolean) => void;
 }
 
-export function GameActions({ game }: GameActionsProps) {
+export function GameActions({ game, onOpenChange }: GameActionsProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [position, setPosition] = useState({ top: 0, right: 0 });
+    const buttonRef = useRef<HTMLButtonElement>(null);
+
+    const toggleOpen = (open: boolean) => {
+        setIsOpen(open);
+        onOpenChange?.(open);
+    };
+
+    useEffect(() => {
+        if (isOpen && buttonRef.current) {
+            const rect = buttonRef.current.getBoundingClientRect();
+            setPosition({
+                top: rect.bottom + window.scrollY + 4,
+                right: window.innerWidth - rect.right - window.scrollX,
+            });
+        }
+    }, [isOpen]);
 
     const handleStartGame = async () => {
         if (!confirm(`Start "${game.title}"? This will make it live for players.`)) {
@@ -33,7 +52,7 @@ export function GameActions({ game }: GameActionsProps) {
             const result = await startGameAction(game.id);
             if (result.success) {
                 notify.success("Game started successfully!");
-                setIsOpen(false);
+                toggleOpen(false);
             } else {
                 notify.error(result.error || "Failed to start game");
             }
@@ -54,7 +73,7 @@ export function GameActions({ game }: GameActionsProps) {
             const result = await endGameAction(game.id);
             if (result.success) {
                 notify.success("Game ended successfully!");
-                setIsOpen(false);
+                toggleOpen(false);
             } else {
                 notify.error(result.error || "Failed to end game");
             }
@@ -82,30 +101,34 @@ export function GameActions({ game }: GameActionsProps) {
     };
 
     return (
-        <div className="relative">
+        <>
             <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="p-1.5 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
+                ref={buttonRef}
+                onClick={() => toggleOpen(!isOpen)}
+                className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-700 rounded-lg transition-colors"
                 title="More actions"
                 disabled={isLoading}
             >
                 <EllipsisVerticalIcon className="h-5 w-5" />
             </button>
 
-            {isOpen && (
+            {isOpen && typeof document !== 'undefined' && createPortal(
                 <>
                     {/* Backdrop */}
                     <div
-                        className="fixed inset-0 z-10"
-                        onClick={() => setIsOpen(false)}
+                        className="fixed inset-0 z-40"
+                        onClick={() => toggleOpen(false)}
                     />
 
                     {/* Dropdown Menu */}
-                    <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-20">
+                    <div
+                        className="fixed w-48 bg-slate-800 rounded-lg shadow-lg border border-slate-700 py-1 z-50"
+                        style={{ top: `${position.top}px`, right: `${position.right}px` }}
+                    >
                         <Link
                             href={`/admin/games/${game.id}/edit`}
-                            className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
-                            onClick={() => setIsOpen(false)}
+                            className="flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors"
+                            onClick={() => toggleOpen(false)}
                         >
                             <PencilIcon className="h-4 w-4" />
                             Edit Game
@@ -113,14 +136,14 @@ export function GameActions({ game }: GameActionsProps) {
 
                         <Link
                             href={`/admin/games/${game.id}/questions`}
-                            className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
-                            onClick={() => setIsOpen(false)}
+                            className="flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors"
+                            onClick={() => toggleOpen(false)}
                         >
                             <span className="text-xs font-bold border border-current rounded px-1.5 py-0.5">Q</span>
                             Manage Questions
                         </Link>
 
-                        <div className="border-t border-slate-200 my-1" />
+                        <div className="border-t border-slate-700 my-1" />
 
                         <button
                             onClick={handleDuplicateGame}
@@ -133,7 +156,7 @@ export function GameActions({ game }: GameActionsProps) {
 
                         {game.status === "SCHEDULED" && (
                             <>
-                                <div className="border-t border-slate-200 my-1" />
+                                <div className="border-t border-slate-700 my-1" />
                                 <button
                                     onClick={handleStartGame}
                                     disabled={isLoading || game._count.questions === 0}
@@ -147,7 +170,7 @@ export function GameActions({ game }: GameActionsProps) {
 
                         {game.status === "LIVE" && (
                             <>
-                                <div className="border-t border-slate-200 my-1" />
+                                <div className="border-t border-slate-700 my-1" />
                                 <button
                                     onClick={handleEndGame}
                                     disabled={isLoading}
@@ -159,16 +182,17 @@ export function GameActions({ game }: GameActionsProps) {
                             </>
                         )}
 
-                        <div className="border-t border-slate-200 my-1" />
+                        <div className="border-t border-slate-700 my-1" />
                         <DeleteGameButton
                             gameId={game.id}
                             gameTitle={game.title}
-                            onSuccess={() => setIsOpen(false)}
+                            onSuccess={() => toggleOpen(false)}
                             variant="dropdown"
                         />
                     </div>
-                </>
+                </>,
+                document.body
             )}
-        </div>
+        </>
     );
 }

@@ -11,7 +11,7 @@ import { logAdminAction, AdminAction, EntityType } from "@/lib/audit";
 import { redirect } from "next/navigation";
 
 const loginSchema = z.object({
-  fid: z.coerce.number().int().positive("FID must be a positive number"),
+  username: z.string().min(1, "Username is required"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -25,7 +25,7 @@ export async function loginAdminAction(
   formData: FormData
 ): Promise<LoginResult> {
   const rawData = {
-    fid: formData.get("fid"),
+    username: formData.get("username"),
     password: formData.get("password"),
   };
 
@@ -37,10 +37,10 @@ export async function loginAdminAction(
     };
   }
 
-  const { fid, password } = validation.data;
+  const { username, password } = validation.data;
 
   // Verify credentials
-  const result = await verifyAdminCredentials(fid, password);
+  const result = await verifyAdminCredentials(username, password);
   if (!result.success || !result.session) {
     return {
       success: false,

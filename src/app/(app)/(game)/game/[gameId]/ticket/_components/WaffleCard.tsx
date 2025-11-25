@@ -146,26 +146,28 @@ export const WaffleCard = ({
   };
   return (
     <div
-      className="box-border flex flex-col justify-center items-center gap-6 p-5 px-3 border border-white/10 rounded-2xl"
-      // These dimensions match your CSS specs
-      style={{ width: "361px", height: "207px" }}
+      className="box-border flex flex-col justify-center items-center gap-6 p-5 px-3 border border-white/10 rounded-2xl w-full max-w-[361px] h-auto min-h-[207px]"
     >
       {/* Top section with Spots and Prize pool (in a new row wrapper) */}
-      <div className="flex flex-row justify-center items-center gap-6">
-        <InfoBox
-          iconUrl="/images/illustrations/seats.svg"
-          label="Spots"
-          value={`${spots}/${maxPlayers}`}
-        />
-        <InfoBox
-          iconUrl="/images/illustrations/money-stack.svg"
-          label="Prize pool"
-          value={`$${prizePool}`}
-        />
+      <div className="flex flex-row justify-center items-center gap-4 sm:gap-6 w-full">
+        <div className="flex-1 flex justify-center">
+          <InfoBox
+            iconUrl="/images/illustrations/seats.svg"
+            label="Spots"
+            value={`${spots}/${maxPlayers}`}
+          />
+        </div>
+        <div className="flex-1 flex justify-center">
+          <InfoBox
+            iconUrl="/images/illustrations/money-stack.svg"
+            label="Prize pool"
+            value={`$${prizePool}`}
+          />
+        </div>
       </div>
 
       {/* Button */}
-      <div className="w-full" style={{ width: "337px" }}>
+      <div className="w-full max-w-[337px]">
         <FancyBorderButton
           fullWidth
           disabled={pending}

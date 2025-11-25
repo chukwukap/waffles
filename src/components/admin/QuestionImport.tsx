@@ -88,16 +88,16 @@ export function QuestionImport({ gameId, onSuccess }: QuestionImportProps) {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h3 className="text-lg font-semibold text-slate-900 font-display">
+                    <h3 className="text-lg font-semibold text-slate-100 font-display">
                         Bulk Import Questions
                     </h3>
-                    <p className="text-sm text-slate-600 mt-1">
+                    <p className="text-sm text-slate-400 mt-1">
                         Upload a CSV file to add multiple questions at once
                     </p>
                 </div>
                 <button
                     onClick={handleDownloadTemplate}
-                    className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium text-slate-700 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-200 rounded-lg text-sm font-medium text-slate-300 transition-colors"
                 >
                     <DocumentArrowDownIcon className="h-4 w-4" />
                     Download Template
@@ -159,9 +159,9 @@ export function QuestionImport({ gameId, onSuccess }: QuestionImportProps) {
 
             {/* File Upload */}
             {!previewData && !result && (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-6">
                     <label className="block">
-                        <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-purple-500 hover:bg-purple-50 transition-colors cursor-pointer">
+                        <div className="border-2 border-dashed border-slate-600 rounded-xl p-8 text-center hover:border-purple-500 hover:bg-purple-900/30 transition-colors cursor-pointer">
                             <input
                                 type="file"
                                 accept=".csv"
@@ -178,10 +178,10 @@ export function QuestionImport({ gameId, onSuccess }: QuestionImportProps) {
                                     </div>
                                 )}
                                 <div>
-                                    <p className="text-sm font-medium text-slate-900">
+                                    <p className="text-sm font-medium text-slate-100">
                                         {parsing ? "Parsing..." : "Click to upload CSV file"}
                                     </p>
-                                    <p className="text-xs text-slate-500 mt-1">
+                                    <p className="text-xs text-slate-400 mt-1">
                                         {parsing ? "Please wait" : "or drag and drop"}
                                     </p>
                                 </div>
@@ -193,31 +193,31 @@ export function QuestionImport({ gameId, onSuccess }: QuestionImportProps) {
 
             {/* Preview Table */}
             {previewData && previewData.length > 0 && (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div className="p-4 border-b border-slate-200 bg-slate-50">
-                        <p className="text-sm font-medium text-slate-900">
+                <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 overflow-hidden">
+                    <div className="p-4 border-b border-slate-700 bg-slate-900">
+                        <p className="text-sm font-medium text-slate-100">
                             Preview: {previewData.length} question{previewData.length !== 1 ? "s" : ""} ready to import
                         </p>
                     </div>
                     <div className="overflow-x-auto max-h-96">
                         <table className="w-full text-sm">
-                            <thead className="bg-slate-50 sticky top-0">
+                            <thead className="bg-slate-900 sticky top-0">
                                 <tr>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-600">#</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-600">Question</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-600">Options</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-600">Answer</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-600">Duration</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-400">#</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-400">Question</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-400">Options</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-400">Answer</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-400">Duration</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {previewData.map((question, idx) => (
-                                    <tr key={idx} className="border-t border-slate-200 hover:bg-slate-50">
-                                        <td className="px-4 py-2 text-slate-500">{idx + 1}</td>
-                                        <td className="px-4 py-2 text-slate-900 max-w-md">
+                                    <tr key={idx} className="border-t border-slate-700 hover:bg-slate-700">
+                                        <td className="px-4 py-2 text-slate-400">{idx + 1}</td>
+                                        <td className="px-4 py-2 text-slate-100 max-w-md">
                                             <div className="truncate">{question.content}</div>
                                         </td>
-                                        <td className="px-4 py-2 text-slate-700 text-xs">
+                                        <td className="px-4 py-2 text-slate-300 text-xs">
                                             <div className="space-y-0.5">
                                                 {question.options.map((option, optIdx) => (
                                                     <div key={optIdx} className={optIdx === question.correctIndex ? "font-semibold text-green-700" : ""}>
@@ -231,16 +231,16 @@ export function QuestionImport({ gameId, onSuccess }: QuestionImportProps) {
                                                 #{question.correctIndex}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-2 text-slate-600">{question.durationSec}s</td>
+                                        <td className="px-4 py-2 text-slate-400">{question.durationSec}s</td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
-                    <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+                    <div className="p-4 border-t border-slate-700 bg-slate-900 flex items-center justify-between">
                         <button
                             onClick={handleReset}
-                            className="px-4 py-2 text-sm font-medium text-slate-700 hover:text-slate-900"
+                            className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-slate-100"
                         >
                             Cancel
                         </button>

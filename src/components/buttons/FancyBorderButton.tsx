@@ -4,8 +4,9 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { useSound } from "@/components/providers/SoundContext";
 
-interface FancyBorderButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+import { motion, HTMLMotionProps } from "framer-motion";
+
+interface FancyBorderButtonProps extends Omit<HTMLMotionProps<"button">, "children"> {
   children: React.ReactNode;
   fullWidth?: boolean;
 }
@@ -35,9 +36,11 @@ export const FancyBorderButton = React.forwardRef<
     };
 
     return (
-      <button
+      <motion.button
         ref={ref}
-        type={type}
+        type={type as "button" | "submit" | "reset"}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.95 }}
         className={cn(
           "relative flex items-center justify-center h-[54px] px-6",
           "bg-white text-[#191919]",
@@ -46,8 +49,8 @@ export const FancyBorderButton = React.forwardRef<
           "max-w-[361px] mx-auto",
           "rounded-[12px]",
           "border-[5px] border-t-0 border-l-0 border-(--brand-cyan)",
-          "transition-transform active:translate-y-[2px] active:border-b-[3px] active:border-r-[3px]",
-          "disabled:cursor-not-allowed disabled:opacity-60 disabled:active:translate-y-0 disabled:active:border-b-[5px] disabled:active:border-r-[5px]",
+          "transition-colors", // Removed transform transition as motion handles it
+          "disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100",
           className
         )}
         onClick={handleClick}
@@ -55,7 +58,7 @@ export const FancyBorderButton = React.forwardRef<
         {...props}
       >
         {children}
-      </button>
+      </motion.button>
     );
   }
 );

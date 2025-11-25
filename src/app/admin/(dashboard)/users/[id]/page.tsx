@@ -69,9 +69,10 @@ async function getUser(id: number) {
 export default async function UserDetailsPage({
     params,
 }: {
-    params: { id: string };
+    params: Promise<{ id: string }>;
 }) {
-    const user = await getUser(parseInt(params.id));
+    const { id } = await params;
+    const user = await getUser(parseInt(id));
 
     if (!user) {
         notFound();
@@ -82,42 +83,42 @@ export default async function UserDetailsPage({
             <div className="flex items-center gap-4">
                 <Link
                     href="/admin/users"
-                    className="text-slate-600 hover:text-slate-900"
+                    className="text-slate-400 hover:text-slate-100"
                 >
                     ← Back
                 </Link>
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">
+                    <h1 className="text-2xl font-bold text-slate-100">
                         {user.username || "Anonymous"}
                     </h1>
-                    <p className="text-slate-600">FID: {user.fid}</p>
+                    <p className="text-slate-400">@{user.username}</p>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* User Info */}
                 <div className="lg:col-span-2 space-y-6">
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                        <h3 className="text-lg font-semibold text-slate-900 mb-4">
+                    <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-6">
+                        <h3 className="text-lg font-semibold text-slate-100 mb-4">
                             User Information
                         </h3>
                         <dl className="grid grid-cols-2 gap-4 text-sm">
                             <div>
-                                <dt className="font-medium text-slate-500">FID</dt>
-                                <dd className="mt-1 text-slate-900">{user.fid}</dd>
+                                <dt className="font-medium text-slate-400">User ID</dt>
+                                <dd className="mt-1 text-slate-100">{user.fid}</dd>
                             </div>
                             <div>
-                                <dt className="font-medium text-slate-500">Username</dt>
-                                <dd className="mt-1 text-slate-900">{user.username || "—"}</dd>
+                                <dt className="font-medium text-slate-400">Username</dt>
+                                <dd className="mt-1 text-slate-100">{user.username || "—"}</dd>
                             </div>
                             <div>
-                                <dt className="font-medium text-slate-500">Wallet</dt>
-                                <dd className="mt-1 text-slate-900 font-mono text-xs truncate">
+                                <dt className="font-medium text-slate-400">Wallet</dt>
+                                <dd className="mt-1 text-slate-100 font-mono text-xs truncate">
                                     {user.wallet || "—"}
                                 </dd>
                             </div>
                             <div>
-                                <dt className="font-medium text-slate-500">Status</dt>
+                                <dt className="font-medium text-slate-400">Status</dt>
                                 <dd className="mt-1">
                                     <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                         {user.status}
@@ -125,24 +126,24 @@ export default async function UserDetailsPage({
                                 </dd>
                             </div>
                             <div>
-                                <dt className="font-medium text-slate-500">Role</dt>
+                                <dt className="font-medium text-slate-400">Role</dt>
                                 <dd className="mt-1">
-                                    <span className={user.role === "ADMIN" ? "text-purple-600 font-semibold" : "text-slate-900"}>
+                                    <span className={user.role === "ADMIN" ? "text-purple-600 font-semibold" : "text-slate-100"}>
                                         {user.role}
                                     </span>
                                 </dd>
                             </div>
                             <div>
-                                <dt className="font-medium text-slate-500">Invite Code</dt>
-                                <dd className="mt-1 text-slate-900 font-mono">{user.inviteCode}</dd>
+                                <dt className="font-medium text-slate-400">Invite Code</dt>
+                                <dd className="mt-1 text-slate-100 font-mono">{user.inviteCode}</dd>
                             </div>
                             <div>
-                                <dt className="font-medium text-slate-500">Invite Quota</dt>
-                                <dd className="mt-1 text-slate-900">{user.inviteQuota}</dd>
+                                <dt className="font-medium text-slate-400">Invite Quota</dt>
+                                <dd className="mt-1 text-slate-100">{user.inviteQuota}</dd>
                             </div>
                             <div>
-                                <dt className="font-medium text-slate-500">Joined</dt>
-                                <dd className="mt-1 text-slate-900">
+                                <dt className="font-medium text-slate-400">Joined</dt>
+                                <dd className="mt-1 text-slate-100">
                                     {new Date(user.createdAt).toLocaleDateString()}
                                 </dd>
                             </div>
@@ -151,38 +152,38 @@ export default async function UserDetailsPage({
 
                     {/* Activity Stats */}
                     <div className="grid grid-cols-3 gap-4">
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-                            <div className="text-2xl font-bold text-slate-900">{user._count.invites}</div>
-                            <div className="text-sm text-slate-600">Referrals</div>
+                        <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-4">
+                            <div className="text-2xl font-bold text-slate-100">{user._count.invites}</div>
+                            <div className="text-sm text-slate-400">Referrals</div>
                         </div>
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-                            <div className="text-2xl font-bold text-slate-900">{user._count.games}</div>
-                            <div className="text-sm text-slate-600">Games Played</div>
+                        <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-4">
+                            <div className="text-2xl font-bold text-slate-100">{user._count.games}</div>
+                            <div className="text-sm text-slate-400">Games Played</div>
                         </div>
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-                            <div className="text-2xl font-bold text-slate-900">{user._count.tickets}</div>
-                            <div className="text-sm text-slate-600">Tickets</div>
+                        <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-4">
+                            <div className="text-2xl font-bold text-slate-100">{user._count.tickets}</div>
+                            <div className="text-sm text-slate-400">Tickets</div>
                         </div>
                     </div>
 
                     {/* Recent Tickets */}
                     {user.tickets.length > 0 && (
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                            <h3 className="text-lg font-semibold text-slate-900 mb-4">
+                        <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-6">
+                            <h3 className="text-lg font-semibold text-slate-100 mb-4">
                                 Recent Tickets
                             </h3>
                             <div className="space-y-3">
                                 {user.tickets.map((ticket) => (
                                     <div key={ticket.id} className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
                                         <div>
-                                            <div className="font-medium text-slate-900">{ticket.game.title}</div>
-                                            <div className="text-sm text-slate-500">
+                                            <div className="font-medium text-slate-100">{ticket.game.title}</div>
+                                            <div className="text-sm text-slate-400">
                                                 {new Date(ticket.purchasedAt).toLocaleDateString()}
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <div className="font-medium text-slate-900">${ticket.amountUSDC}</div>
-                                            <div className="text-xs text-slate-500">{ticket.status}</div>
+                                            <div className="font-medium text-slate-100">${ticket.amountUSDC}</div>
+                                            <div className="text-xs text-slate-400">{ticket.status}</div>
                                         </div>
                                     </div>
                                 ))}

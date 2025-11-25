@@ -106,8 +106,8 @@ export default async function AnalyticsPage() {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-slate-900">Analytics</h1>
-                <p className="text-slate-600 mt-1">Detailed platform metrics and insights</p>
+                <h1 className="text-2xl font-bold text-slate-100">Analytics</h1>
+                <p className="text-slate-400 mt-1">Detailed platform metrics and insights</p>
             </div>
 
             {/* Stats Grid */}
@@ -143,23 +143,23 @@ export default async function AnalyticsPage() {
             </div>
 
             {/* Top Games */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200">
-                <div className="px-6 py-4 border-b border-slate-200">
-                    <h2 className="text-lg font-semibold text-slate-900">Top Games by Participation</h2>
+            <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700">
+                <div className="px-6 py-4 border-b border-slate-700">
+                    <h2 className="text-lg font-semibold text-slate-100">Top Games by Participation</h2>
                 </div>
-                <div className="divide-y divide-slate-200">
+                <div className="divide-y divide-slate-700">
                     {analytics.topGames.map((game, index) => (
                         <div key={game.id} className="px-6 py-4 flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <span className="text-2xl font-bold text-slate-300">#{index + 1}</span>
                                 <div>
-                                    <h3 className="font-medium text-slate-900">{game.title}</h3>
-                                    <p className="text-sm text-slate-500">{game._count.tickets} tickets sold</p>
+                                    <h3 className="font-medium text-slate-100">{game.title}</h3>
+                                    <p className="text-sm text-slate-400">{game._count.tickets} tickets sold</p>
                                 </div>
                             </div>
                             <div className="text-right">
                                 <div className="text-2xl font-bold text-purple-600">{game._count.players}</div>
-                                <div className="text-xs text-slate-500">players</div>
+                                <div className="text-xs text-slate-400">players</div>
                             </div>
                         </div>
                     ))}

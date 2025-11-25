@@ -37,52 +37,52 @@ export default async function AuditLogsPage({
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-slate-900">Audit Logs</h1>
-                <p className="text-slate-600 mt-1">
+                <h1 className="text-2xl font-bold text-slate-100">Audit Logs</h1>
+                <p className="text-slate-400 mt-1">
                     Track all admin actions - {total.toLocaleString()} total entries
                 </p>
             </div>
 
-            <div className="bg-white shadow-sm rounded-xl border border-slate-200 overflow-hidden">
-                <table className="min-w-full divide-y divide-slate-200">
-                    <thead className="bg-slate-50">
+            <div className="bg-slate-800 shadow-sm rounded-xl border border-slate-700 overflow-hidden">
+                <table className="min-w-full divide-y divide-slate-700">
+                    <thead className="bg-slate-900">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">
                                 Timestamp
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">
                                 Admin
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">
                                 Action
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">
                                 Entity
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">
                                 Details
                             </th>
                         </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-slate-200">
+                    <tbody className="bg-slate-800 divide-y divide-slate-700">
                         {logs.map((log) => (
-                            <tr key={log.id} className="hover:bg-slate-50">
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                            <tr key={log.id} className="hover:bg-slate-900">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
                                     {new Date(log.createdAt).toLocaleString()}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
-                                    {log.admin.username || `FID ${log.admin.fid}`}
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-100">
+                                    {log.admin.username}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                                         {log.action.replace(/_/g, " ")}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
                                     {log.entityType}
                                     {log.entityId && ` #${log.entityId}`}
                                 </td>
-                                <td className="px-6 py-4 text-sm text-slate-600 max-w-md truncate">
+                                <td className="px-6 py-4 text-sm text-slate-400 max-w-md truncate">
                                     {log.details ? JSON.stringify(log.details) : "—"}
                                 </td>
                             </tr>
@@ -97,12 +97,12 @@ export default async function AuditLogsPage({
                     {page > 1 && (
                         <a
                             href={`?page=${page - 1}`}
-                            className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50"
+                            className="px-4 py-2 border border-slate-600 rounded-lg hover:bg-slate-900"
                         >
                             Previous
                         </a>
                     )}
-                    <span className="px-4 py-2 text-sm text-slate-600">
+                    <span className="px-4 py-2 text-sm text-slate-400">
                         Page {page} of {totalPages}
                     </span>
                     {page < totalPages && (

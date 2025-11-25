@@ -5,9 +5,11 @@ import CircularProgress from "./CircularProgress";
 export const CountdownTimer = ({
   duration,
   onComplete,
+  nextRoundNumber,
 }: {
   duration: number;
   onComplete: () => void;
+  nextRoundNumber: number;
 }) => {
   const { remaining, percentage: elapsedPercentage } = useCountdown(
     duration,
@@ -27,8 +29,7 @@ export const CountdownTimer = ({
   return (
     // Main container with exact dimensions and layout
     <div
-      style={{ width: "361px", height: "388px" }}
-      className="flex flex-col items-center justify-start"
+      className="flex flex-col items-center justify-start w-full max-w-[361px] h-auto min-h-[388px]"
     >
       <div
         className="font-body text-white text-center uppercase mb-15"
@@ -41,17 +42,15 @@ export const CountdownTimer = ({
         PLEASE WAIT
       </div>
 
-      {/* "NEXT ROUND IN" text */}
-      {/* NOTE: Using 'font-body' as a fallback for 'Edit Undo BRK' */}
       <div
-        className="font-body text-white text-center"
+        className="font-body text-white text-center uppercase"
         style={{
           fontSize: "36px",
           lineHeight: "92%",
           letterSpacing: "-0.03em",
         }}
       >
-        NEXT ROUND IN
+        ROUND {nextRoundNumber} IN
       </div>
 
       {/* Timer Circle + Inner Text */}

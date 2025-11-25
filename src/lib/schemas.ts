@@ -1,7 +1,10 @@
 import { z } from "zod";
 
 // --- Common Schemas ---
-export const fidSchema = z.number().int().positive("Invalid FID format.");
+export const fidSchema = z.coerce
+  .number()
+  .int()
+  .positive("Invalid FID format.");
 export const walletSchema = z.string().trim().optional().nullable();
 export const usernameSchema = z
   .string()

@@ -23,17 +23,17 @@ export default function SettingsClient() {
 
     return (
         <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <h3 className="text-lg font-semibold text-slate-900 mb-4 font-display">
+            <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-6">
+                <h3 className="text-lg font-semibold text-slate-100 mb-4 font-display">
                     Change Password
                 </h3>
-                <p className="text-slate-600 text-sm mb-6">
+                <p className="text-slate-400 text-sm mb-6">
                     Update your admin password. You'll need to enter your current password
                     to confirm the change.
                 </p>
 
                 {showSuccess && (
-                    <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-lg text-sm border border-green-200">
+                    <div className="mb-4 p-3 bg-green-950 text-green-700 rounded-lg text-sm border border-green-200">
                         Password changed successfully!
                     </div>
                 )}
@@ -42,7 +42,7 @@ export default function SettingsClient() {
                     <div>
                         <label
                             htmlFor="currentPassword"
-                            className="block text-sm font-medium text-slate-700 mb-1"
+                            className="block text-sm font-medium text-slate-300 mb-1"
                         >
                             Current Password
                         </label>
@@ -51,7 +51,7 @@ export default function SettingsClient() {
                             name="currentPassword"
                             id="currentPassword"
                             placeholder="Enter current password"
-                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-slate-900"
+                            className="w-full px-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-slate-100"
                             required
                         />
                     </div>
@@ -59,7 +59,7 @@ export default function SettingsClient() {
                     <div>
                         <label
                             htmlFor="newPassword"
-                            className="block text-sm font-medium text-slate-700 mb-1"
+                            className="block text-sm font-medium text-slate-300 mb-1"
                         >
                             New Password
                         </label>
@@ -68,11 +68,11 @@ export default function SettingsClient() {
                             name="newPassword"
                             id="newPassword"
                             placeholder="Enter new password"
-                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-slate-900"
+                            className="w-full px-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-slate-100"
                             required
                             minLength={8}
                         />
-                        <p className="text-xs text-slate-500 mt-1">
+                        <p className="text-xs text-slate-400 mt-1">
                             Minimum 8 characters
                         </p>
                     </div>
@@ -80,7 +80,7 @@ export default function SettingsClient() {
                     <div>
                         <label
                             htmlFor="confirmPassword"
-                            className="block text-sm font-medium text-slate-700 mb-1"
+                            className="block text-sm font-medium text-slate-300 mb-1"
                         >
                             Confirm New Password
                         </label>
@@ -89,13 +89,13 @@ export default function SettingsClient() {
                             name="confirmPassword"
                             id="confirmPassword"
                             placeholder="Confirm new password"
-                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-slate-900"
+                            className="w-full px-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-slate-100"
                             required
                         />
                     </div>
 
                     {state && !state.success && (
-                        <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+                        <div className="p-3 bg-red-950 text-red-700 rounded-lg text-sm">
                             {state.error}
                         </div>
                     )}
@@ -109,7 +109,7 @@ export default function SettingsClient() {
                 </form>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="bg-blue-950 border border-blue-200 rounded-lg p-4">
                 <h4 className="font-semibold text-blue-900 mb-2">💡 Password Management</h4>
                 <ul className="text-sm text-blue-800 space-y-2">
                     <li>• Passwords are stored securely as bcrypt hashes in the database</li>

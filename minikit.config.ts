@@ -6,13 +6,16 @@ import { env } from "@/lib/env";
  * @see {@link https://miniapps.farcaster.xyz/docs/guides/publishing}
  */
 export const minikitConfig: MiniAppManifest = {
-  accountAssociation: {
-    header:
-      "eyJmaWQiOjc1NTA3NCwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDlmNWM5MzcyNzI3ZjdmNURjNTFiZUVmNjM1NGEyNTcwN0JjODk5MjgifQ",
-    payload: "eyJkb21haW4iOiJkZW1vLnBsYXl3YWZmbGVzLmZ1biJ9",
-    signature:
-      "FtI+P+iVw3AYtO2e9ie+lEjwqvchFEKkSLJ2kjMkv5NONgZxU/8FD2UgA6l8nibQeYSScLkmDjuTQ4JnB9c2pxs=",
-  },
+  // Only include accountAssociation if all env vars are set
+  ...(env.accountAssociation.header &&
+    env.accountAssociation.payload &&
+    env.accountAssociation.signature && {
+      accountAssociation: {
+        header: env.accountAssociation.header,
+        payload: env.accountAssociation.payload,
+        signature: env.accountAssociation.signature,
+      },
+    }),
   miniapp: {
     version: "1",
     name: "Waffles",

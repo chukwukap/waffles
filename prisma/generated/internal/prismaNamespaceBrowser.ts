@@ -137,6 +137,7 @@ export const QuestionScalarFieldEnum = {
   id: 'id',
   gameId: 'gameId',
   roundIndex: 'roundIndex',
+  order: 'order',
   content: 'content',
   mediaUrl: 'mediaUrl',
   soundUrl: 'soundUrl',
@@ -187,8 +188,8 @@ export const AnswerScalarFieldEnum = {
   questionId: 'questionId',
   selectedIndex: 'selectedIndex',
   isCorrect: 'isCorrect',
-  latencyMs: 'latencyMs',
   pointsEarned: 'pointsEarned',
+  latencyMs: 'latencyMs',
   createdAt: 'createdAt'
 } as const
 

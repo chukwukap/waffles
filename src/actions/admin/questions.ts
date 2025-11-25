@@ -144,7 +144,7 @@ export async function reorderQuestionsAction(
       orderedQuestionIds.map((id, index) =>
         prisma.question.update({
           where: { id },
-          data: { roundIndex: index + 1 },
+          data: { order: index },
         })
       )
     );

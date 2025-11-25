@@ -14,9 +14,9 @@ export default function GamesLoading() {
             </div>
 
             {/* Table Skeleton */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 overflow-hidden">
                 {/* Table Header */}
-                <div className="bg-slate-50 border-b border-slate-200 px-6 py-3">
+                <div className="bg-slate-900 border-b border-slate-700 px-6 py-3">
                     <div className="flex gap-4">
                         <div className="h-4 w-32 bg-slate-300 rounded animate-pulse" />
                         <div className="h-4 w-24 bg-slate-300 rounded animate-pulse" />
@@ -32,7 +32,7 @@ export default function GamesLoading() {
                         <div className="flex gap-4 items-center">
                             <div className="flex-1">
                                 <div className="h-5 w-48 bg-slate-200 rounded animate-pulse mb-2" />
-                                <div className="h-4 w-24 bg-slate-100 rounded animate-pulse" />
+                                <div className="h-4 w-24 bg-slate-700 rounded animate-pulse" />
                             </div>
                             <div className="h-6 w-20 bg-slate-200 rounded-full animate-pulse" />
                             <div className="h-4 w-36 bg-slate-200 rounded animate-pulse" />

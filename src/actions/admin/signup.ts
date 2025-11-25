@@ -6,10 +6,9 @@ import { redirect } from "next/navigation";
 
 const signupSchema = z
   .object({
-    fid: z.coerce.number().int().positive("FID must be a positive number"),
+    username: z.string().min(1, "Username is required"),
     password: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string(),
-    signupSecret: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -28,10 +27,9 @@ export async function signupAdminAction(
   formData: FormData
 ): Promise<SignupResult> {
   const rawData = {
-    fid: formData.get("fid"),
+    username: formData.get("username"),
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
-    signupSecret: formData.get("signupSecret") || undefined,
   };
 
   const validation = signupSchema.safeParse(rawData);
@@ -42,10 +40,10 @@ export async function signupAdminAction(
     };
   }
 
-  const { fid, password, signupSecret } = validation.data;
+  const { username, password } = validation.data;
 
   // Create admin account
-  const result = await createAdminAccount(fid, password, signupSecret);
+  const result = await createAdminAccount(username, password);
 
   if (!result.success) {
     return {

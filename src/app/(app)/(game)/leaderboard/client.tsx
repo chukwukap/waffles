@@ -15,6 +15,7 @@ import { fetchMoreLeaderboardData } from "@/actions/leaderboard";
 import { useInfiniteLoader } from "./_components/useInfiniteLoader";
 import { Top3 } from "./_components/Top3";
 import { Row } from "./_components/Row";
+import { WaffleLoader } from "@/components/ui/WaffleLoader";
 
 // This is the shape of the data fetched from the server
 type InitialData = Promise<LeaderboardApiResponse>;
@@ -157,7 +158,9 @@ export default function LeaderboardClientPage({
 
           {/* Loading Indicator */}
           {(isLoadingMore || isPending) && (
-            <div className="h-12 rounded-xl panel animate-pulse" />
+            <div className="py-4">
+              <WaffleLoader size={60} text="" />
+            </div>
           )}
 
           {/* Error Message */}

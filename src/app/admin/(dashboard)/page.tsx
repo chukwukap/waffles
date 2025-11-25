@@ -104,8 +104,8 @@ export default async function AdminDashboard() {
     return (
         <div className="space-y-8">
             <div>
-                <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-                <p className="text-slate-600 mt-1">
+                <h1 className="text-2xl font-bold text-slate-100">Dashboard</h1>
+                <p className="text-slate-400 mt-1">
                     Overview of your Waffles trivia platform
                 </p>
             </div>
@@ -149,23 +149,23 @@ export default async function AdminDashboard() {
             {/* Recent Activity Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Recent Games */}
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200">
-                    <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-                        <h2 className="text-lg font-semibold text-slate-900">Recent Games</h2>
+                <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700">
+                    <div className="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
+                        <h2 className="text-lg font-semibold text-slate-100">Recent Games</h2>
                         <Link href="/admin/games" className="text-sm text-purple-600 hover:underline">View all</Link>
                     </div>
-                    <div className="divide-y divide-slate-200">
+                    <div className="divide-y divide-slate-700">
                         {activity.games.length === 0 ? (
-                            <div className="p-6 text-center text-slate-500">No games yet</div>
+                            <div className="p-6 text-center text-slate-400">No games yet</div>
                         ) : (
                             activity.games.map((game) => (
-                                <div key={game.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50">
+                                <div key={game.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-900">
                                     <div>
-                                        <p className="font-medium text-slate-900">{game.title}</p>
-                                        <p className="text-xs text-slate-500">{new Date(game.startsAt).toLocaleDateString()}</p>
+                                        <p className="font-medium text-slate-100">{game.title}</p>
+                                        <p className="text-xs text-slate-400">{new Date(game.startsAt).toLocaleDateString()}</p>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${game.status === "LIVE" ? "bg-green-100 text-green-800" : "bg-slate-100 text-slate-600"
+                                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${game.status === "LIVE" ? "bg-green-100 text-green-800" : "bg-slate-700 text-slate-400"
                                             }`}>
                                             {game.status}
                                         </span>
@@ -177,27 +177,27 @@ export default async function AdminDashboard() {
                 </div>
 
                 {/* New Users */}
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200">
-                    <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-                        <h2 className="text-lg font-semibold text-slate-900">New Users</h2>
+                <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700">
+                    <div className="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
+                        <h2 className="text-lg font-semibold text-slate-100">New Users</h2>
                         <Link href="/admin/users" className="text-sm text-purple-600 hover:underline">View all</Link>
                     </div>
-                    <div className="divide-y divide-slate-200">
+                    <div className="divide-y divide-slate-700">
                         {activity.users.length === 0 ? (
-                            <div className="p-6 text-center text-slate-500">No users yet</div>
+                            <div className="p-6 text-center text-slate-400">No users yet</div>
                         ) : (
                             activity.users.map((user) => (
-                                <div key={user.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50">
+                                <div key={user.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-900">
                                     <div className="flex items-center gap-3">
                                         <div className="h-8 w-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold text-xs">
                                             {user.username?.[0] || "U"}
                                         </div>
                                         <div>
-                                            <p className="font-medium text-slate-900">{user.username || "Anonymous"}</p>
-                                            <p className="text-xs text-slate-500">FID: {user.fid}</p>
+                                            <p className="font-medium text-slate-100">{user.username || "Anonymous"}</p>
+                                            <p className="text-xs text-slate-400">@{user.username}</p>
                                         </div>
                                     </div>
-                                    <span className="text-xs text-slate-500">
+                                    <span className="text-xs text-slate-400">
                                         {new Date(user.createdAt).toLocaleDateString()}
                                     </span>
                                 </div>

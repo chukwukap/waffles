@@ -79,7 +79,7 @@ export const ChatComment = ({
     {/* Comment Body */}
     <div className="flex font-display w-full flex-col justify-center rounded-r-lg rounded-bl-lg border border-white/5 bg-white/10 p-3">
       <p
-        className="text-sm font-medium text-white"
+        className="text-sm font-medium text-white break-all"
         style={{ letterSpacing: "-0.03em" }}
       >
         {message}

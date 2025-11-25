@@ -126,6 +126,7 @@ export default function LiveGameClient({
           duration={gameInfo?.roundDurationSec ?? 15} // Use new field
           onComplete={handleRoundCountdownComplete}
           gameId={gameInfo?.id ?? null}
+          nextRoundNumber={gameInfo?.questions[currentQuestionIndex + 1]?.roundIndex ?? 1}
         />
       ) : (
         <QuestionCard

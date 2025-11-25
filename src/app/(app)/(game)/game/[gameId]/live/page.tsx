@@ -82,7 +82,7 @@ export default async function LiveGamePage({
         },
         orderBy: [
           { roundIndex: "asc" }, // Order by round first
-          { id: "asc" }, // Then by ID
+          { order: "asc" },
         ],
       },
     },

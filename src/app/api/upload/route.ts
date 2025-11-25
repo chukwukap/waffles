@@ -28,6 +28,7 @@ export async function POST(request: Request): Promise<NextResponse> {
             "image/gif",
             "image/webp",
             "image/avif",
+            "image/svg+xml",
             // Audio
             "audio/mpeg",
             "audio/wav",
@@ -45,6 +46,11 @@ export async function POST(request: Request): Promise<NextResponse> {
             userId: session.userId,
             username: session.username,
           }),
+          callbackUrl: `${
+            process.env.NEXT_PUBLIC_URL ||
+            request.headers.get("origin") ||
+            "http://localhost:3000"
+          }/api/upload`,
         };
       },
       onUploadCompleted: async ({ blob, tokenPayload }) => {

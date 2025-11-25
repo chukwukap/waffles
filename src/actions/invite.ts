@@ -96,7 +96,7 @@ export async function validateReferralAction(
         reason: "invalid_code",
         code,
       });
-      return { valid: false, error: "Invalid invite code." };
+      return { valid: false, error: "Invalid code." };
     }
     if (inviter.id === invitee.id) {
       await trackServer("invite_failed", {

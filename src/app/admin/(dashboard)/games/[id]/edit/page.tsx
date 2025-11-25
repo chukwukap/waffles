@@ -4,9 +4,10 @@ import { GameForm } from "@/components/admin/GameForm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-export default async function EditGamePage({ params }: { params: { id: string } }) {
+export default async function EditGamePage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
     const game = await prisma.game.findUnique({
-        where: { id: parseInt(params.id) },
+        where: { id: parseInt(id) },
     });
 
     if (!game) {
@@ -18,13 +19,13 @@ export default async function EditGamePage({ params }: { params: { id: string } 
             <div className="flex items-center gap-4">
                 <Link
                     href="/admin/games"
-                    className="text-slate-600 hover:text-slate-900 font-medium"
+                    className="text-slate-400 hover:text-slate-100 font-medium"
                 >
                     ← Back
                 </Link>
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Edit Game</h1>
-                    <p className="text-slate-600 mt-1">Update game details</p>
+                    <h1 className="text-2xl font-bold text-slate-100">Edit Game</h1>
+                    <p className="text-slate-400 mt-1">Update game details</p>
                 </div>
             </div>
 

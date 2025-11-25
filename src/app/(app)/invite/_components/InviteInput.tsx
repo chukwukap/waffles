@@ -29,9 +29,9 @@ const InviteInput = React.forwardRef<HTMLInputElement, InviteInputProps>(
           ref={ref}
           {...props}
           className={cn(
-            "w-full border-none bg-transparent p-0 text-center outline-none",
+            "h-full w-full border-none bg-transparent p-0 text-center outline-none",
             "text-[33px] font-body leading-[1.3] tracking-[-0.03em] text-white",
-            "placeholder:text-[14px] placeholder:font-body placeholder:leading-[1.3] placeholder:tracking-[-0.03em]"
+            "placeholder:text-[14px] placeholder:font-body placeholder:leading-[1.3] placeholder:tracking-[-0.03em] placeholder:text-center"
           )}
         />
       </div>

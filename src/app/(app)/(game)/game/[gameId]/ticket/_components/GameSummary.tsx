@@ -22,15 +22,15 @@ export function GameSummaryCard({
     <div
       className="
         relative flex flex-col box-border
-        w-[361px] h-[151px]
+        w-full max-w-[361px] h-[151px]
         border border-[#FFC931] rounded-[16px]
         mx-auto
         mt-8
       "
     >
       {/* ─────────── Top Row: User joined ─────────── */}
-      <div className="absolute top-[16px] left-[14px] flex flex-row items-center gap-[10px] w-[295px] h-[54px]">
-        <div className="w-[54px] h-[54px] rounded-full overflow-hidden bg-[#D9D9D9]">
+      <div className="absolute top-[16px] left-[14px] flex flex-row items-center gap-[10px] w-full max-w-[295px] h-[54px]">
+        <div className="w-[54px] h-[54px] rounded-full overflow-hidden bg-[#D9D9D9] shrink-0">
           {avatarUrl ? (
             <Image
               src={avatarUrl}
@@ -48,8 +48,8 @@ export function GameSummaryCard({
           )}
         </div>
 
-        <div className="flex flex-col justify-center items-start w-[159px] h-[48px]">
-          <span className="font-body text-white text-[23px] leading-[130%]">
+        <div className="flex flex-col justify-center items-start w-auto h-[48px]">
+          <span className="font-body text-white text-[23px] leading-[130%] truncate max-w-[200px]">
             {username}
           </span>
           <span className="font-display text-[#99A0AE] text-[14px] leading-[130%] tracking-[-0.03em]">
@@ -59,9 +59,9 @@ export function GameSummaryCard({
       </div>
 
       {/* ─────────── Bottom Row: Prize Pool + Theme ─────────── */}
-      <div className="absolute bottom-[15px] left-[15px] flex flex-row items-center gap-[12px]">
+      <div className="absolute bottom-[15px] left-[15px] flex flex-row items-center gap-[12px] flex-wrap">
         {/* Prize Pool */}
-        <div className="flex flex-row items-center justify-center gap-[8.5px] w-[87.79px] h-[32px]">
+        <div className="flex flex-row items-center justify-center gap-[8.5px] h-[32px]">
           <Image
             src="/images/illustrations/money-stack.svg"
             alt="Prize icon"
@@ -69,7 +69,7 @@ export function GameSummaryCard({
             height={28.44}
             className="object-contain"
           />
-          <div className="flex flex-col justify-center items-start w-[52px] h-[32px]">
+          <div className="flex flex-col justify-center items-start h-[32px]">
             <span className="font-display text-[#99A0AE] text-[11.38px] leading-[130%] tracking-[-0.03em]">
               Prize pool
             </span>
@@ -80,7 +80,7 @@ export function GameSummaryCard({
         </div>
 
         {/* Theme */}
-        <div className="flex flex-row items-center justify-center gap-[8.5px] w-[106.65px] h-[32px]">
+        <div className="flex flex-row items-center justify-center gap-[8.5px] h-[32px]">
           <Image
             src={`/images/themes/${theme}.svg`}
             alt="Football icon"
@@ -88,7 +88,7 @@ export function GameSummaryCard({
             height={28.43}
             className="object-contain"
           />
-          <div className="flex flex-col justify-center items-start w-[69px] h-[32px]">
+          <div className="flex flex-col justify-center items-start h-[32px]">
             <span className="font-display text-[#99A0AE] text-[11.38px] leading-[130%] tracking-[-0.03em]">
               Theme
             </span>

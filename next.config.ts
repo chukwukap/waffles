@@ -17,6 +17,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "**.supabase.co", // For Supabase storage
       },
+      {
+        protocol: "https",
+        hostname: "**.public.blob.vercel-storage.com", // For Vercel Blob
+      },
     ],
   },
   async headers() {

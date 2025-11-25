@@ -6,6 +6,7 @@ import { WaitlistTasks } from "./_components/WaitlistTasks";
 import { env } from "@/lib/env";
 import { notify } from "@/components/ui/Toaster";
 import { WaitlistData } from "../../(game)/api/waitlist/route";
+import { WaffleLoader } from "@/components/ui/WaffleLoader";
 
 export function TasksPageClient() {
     const { context, isMiniAppReady, setMiniAppReady } = useMiniKit();
@@ -70,7 +71,7 @@ export function TasksPageClient() {
     if (isLoading) {
         return (
             <section className="flex-1 flex items-center justify-center">
-                <h1 className={"font-body font-normal not-italic text-[44px] leading-[92%] tracking-[-0.03em] text-center text-white"}>LOADING...</h1>
+                <WaffleLoader text="LOADING TASKS..." />
             </section>
         );
     }
@@ -81,6 +82,7 @@ export function TasksPageClient() {
                 onInviteClick={share}
                 completedTasks={waitlistData?.completedTasks ?? []}
                 fid={fid}
+                onTaskCompleted={fetchWaitlistData}
             />
         </div>
     );

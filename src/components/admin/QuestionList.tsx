@@ -58,43 +58,43 @@ function SortableQuestionItem({ question, gameId }: { question: Question; gameId
         <div
             ref={setNodeRef}
             style={style}
-            className="bg-white border border-slate-200 rounded-lg p-4 flex items-start gap-4 group hover:border-purple-300 transition-colors"
+            className="bg-slate-800 border border-slate-700 rounded-lg p-4 flex items-start gap-4 group hover:border-purple-300 transition-colors"
         >
             <div
                 {...attributes}
                 {...listeners}
-                className="mt-1 cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600"
+                className="mt-1 cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-400"
             >
                 <Bars3Icon className="h-5 w-5" />
             </div>
 
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                    <span className="text-xs font-bold text-slate-400 bg-slate-700 px-2 py-0.5 rounded">
                         Round {question.roundIndex}
                     </span>
                     <span className="text-xs text-slate-400">{question.durationSec}s</span>
                     {question.mediaUrl && (
-                        <span className="text-xs flex items-center gap-1 text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                        <span className="text-xs flex items-center gap-1 text-blue-400 bg-blue-950 px-2 py-0.5 rounded">
                             <PhotoIcon className="h-3 w-3" /> Media
                         </span>
                     )}
                     {question.soundUrl && (
-                        <span className="text-xs flex items-center gap-1 text-pink-600 bg-pink-50 px-2 py-0.5 rounded">
+                        <span className="text-xs flex items-center gap-1 text-pink-400 bg-pink-950 px-2 py-0.5 rounded">
                             <MusicalNoteIcon className="h-3 w-3" /> Audio
                         </span>
                     )}
                 </div>
 
-                <p className="text-slate-900 font-medium truncate">{question.content}</p>
+                <p className="text-slate-100 font-medium truncate">{question.content}</p>
 
                 <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
                     {question.options.map((opt, idx) => (
                         <div
                             key={idx}
                             className={`px-2 py-1 rounded border ${idx === question.correctIndex
-                                    ? "bg-green-50 border-green-200 text-green-700"
-                                    : "bg-slate-50 border-slate-100 text-slate-500"
+                                ? "bg-green-950 border-green-700 text-green-400"
+                                : "bg-slate-900 border-slate-700 text-slate-400"
                                 }`}
                         >
                             <span className="font-bold mr-1">{String.fromCharCode(65 + idx)}.</span>
@@ -107,7 +107,7 @@ function SortableQuestionItem({ question, gameId }: { question: Question; gameId
                 {(question.mediaUrl || question.soundUrl) && (
                     <div className="mt-3 flex gap-4">
                         {question.mediaUrl && (
-                            <div className="relative h-20 w-32 rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
+                            <div className="relative h-20 w-32 rounded-lg overflow-hidden border border-slate-700 bg-slate-900">
                                 <img
                                     src={question.mediaUrl}
                                     alt="Question media"
@@ -116,7 +116,7 @@ function SortableQuestionItem({ question, gameId }: { question: Question; gameId
                             </div>
                         )}
                         {question.soundUrl && (
-                            <div className="flex items-center justify-center h-20 w-32 rounded-lg border border-slate-200 bg-slate-50">
+                            <div className="flex items-center justify-center h-20 w-32 rounded-lg border border-slate-700 bg-slate-900">
                                 <audio controls className="w-28 h-8">
                                     <source src={question.soundUrl} />
                                 </audio>
@@ -129,7 +129,7 @@ function SortableQuestionItem({ question, gameId }: { question: Question; gameId
             <form action={deleteQuestionAction.bind(null, question.id, gameId)}>
                 <button
                     type="submit"
-                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-950/50 rounded-lg transition-colors"
                     title="Delete Question"
                 >
                     <TrashIcon className="h-5 w-5" />
@@ -159,28 +159,34 @@ export function QuestionList({ gameId, initialQuestions }: QuestionListProps) {
                 const newIndex = items.findIndex((q) => q.id === over.id);
                 const newItems = arrayMove(items, oldIndex, newIndex);
 
-                // Update round indices locally for immediate feedback
-                const updatedItems = newItems.map((item, index) => ({
-                    ...item,
-                    roundIndex: index + 1
-                }));
-
                 // Trigger server action
                 setIsSaving(true);
-                reorderQuestionsAction(gameId, updatedItems.map(q => q.id))
+                reorderQuestionsAction(gameId, newItems.map(q => q.id))
                     .then(() => setIsSaving(false))
                     .catch(() => {
                         setIsSaving(false);
                         // Ideally revert state on error, but for now we just stop loading
                     });
 
-                return updatedItems;
+                return newItems;
             });
         }
     };
 
+    // Group questions by round
+    const questionsByRound = questions.reduce((acc, question) => {
+        const round = question.roundIndex;
+        if (!acc[round]) {
+            acc[round] = [];
+        }
+        acc[round].push(question);
+        return acc;
+    }, {} as Record<number, Question[]>);
+
+    const sortedRounds = Object.keys(questionsByRound).map(Number).sort((a, b) => a - b);
+
     return (
-        <div className="space-y-4">
+        <div className="space-y-8">
             {isSaving && (
                 <div className="text-xs text-purple-600 font-medium animate-pulse text-right">
                     Saving order...
@@ -195,21 +201,30 @@ export function QuestionList({ gameId, initialQuestions }: QuestionListProps) {
                     items={questions.map((q) => q.id)}
                     strategy={verticalListSortingStrategy}
                 >
-                    <div className="space-y-3">
-                        {questions.map((question) => (
-                            <SortableQuestionItem
-                                key={question.id}
-                                question={question}
-                                gameId={gameId}
-                            />
+                    <div className="space-y-8">
+                        {sortedRounds.map((roundIndex) => (
+                            <div key={roundIndex} className="space-y-3">
+                                <h3 className="text-lg font-bold text-white border-b border-slate-700 pb-2">
+                                    Round {roundIndex}
+                                </h3>
+                                <div className="space-y-3">
+                                    {questionsByRound[roundIndex].map((question) => (
+                                        <SortableQuestionItem
+                                            key={question.id}
+                                            question={question}
+                                            gameId={gameId}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
                         ))}
                     </div>
                 </SortableContext>
             </DndContext>
 
             {questions.length === 0 && (
-                <div className="text-center py-12 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">
-                    <p className="text-slate-500">No questions yet. Add one above!</p>
+                <div className="text-center py-12 bg-slate-900 rounded-xl border-2 border-dashed border-slate-700">
+                    <p className="text-slate-400">No questions yet. Add one above!</p>
                 </div>
             )}
         </div>

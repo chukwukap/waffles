@@ -32,8 +32,8 @@ export type AnswerAvgAggregateOutputType = {
   gameId: number | null
   questionId: number | null
   selectedIndex: number | null
-  latencyMs: number | null
   pointsEarned: number | null
+  latencyMs: number | null
 }
 
 export type AnswerSumAggregateOutputType = {
@@ -42,8 +42,8 @@ export type AnswerSumAggregateOutputType = {
   gameId: number | null
   questionId: number | null
   selectedIndex: number | null
-  latencyMs: number | null
   pointsEarned: number | null
+  latencyMs: number | null
 }
 
 export type AnswerMinAggregateOutputType = {
@@ -53,8 +53,8 @@ export type AnswerMinAggregateOutputType = {
   questionId: number | null
   selectedIndex: number | null
   isCorrect: boolean | null
-  latencyMs: number | null
   pointsEarned: number | null
+  latencyMs: number | null
   createdAt: Date | null
 }
 
@@ -65,8 +65,8 @@ export type AnswerMaxAggregateOutputType = {
   questionId: number | null
   selectedIndex: number | null
   isCorrect: boolean | null
-  latencyMs: number | null
   pointsEarned: number | null
+  latencyMs: number | null
   createdAt: Date | null
 }
 
@@ -77,8 +77,8 @@ export type AnswerCountAggregateOutputType = {
   questionId: number
   selectedIndex: number
   isCorrect: number
-  latencyMs: number
   pointsEarned: number
+  latencyMs: number
   createdAt: number
   _all: number
 }
@@ -90,8 +90,8 @@ export type AnswerAvgAggregateInputType = {
   gameId?: true
   questionId?: true
   selectedIndex?: true
-  latencyMs?: true
   pointsEarned?: true
+  latencyMs?: true
 }
 
 export type AnswerSumAggregateInputType = {
@@ -100,8 +100,8 @@ export type AnswerSumAggregateInputType = {
   gameId?: true
   questionId?: true
   selectedIndex?: true
-  latencyMs?: true
   pointsEarned?: true
+  latencyMs?: true
 }
 
 export type AnswerMinAggregateInputType = {
@@ -111,8 +111,8 @@ export type AnswerMinAggregateInputType = {
   questionId?: true
   selectedIndex?: true
   isCorrect?: true
-  latencyMs?: true
   pointsEarned?: true
+  latencyMs?: true
   createdAt?: true
 }
 
@@ -123,8 +123,8 @@ export type AnswerMaxAggregateInputType = {
   questionId?: true
   selectedIndex?: true
   isCorrect?: true
-  latencyMs?: true
   pointsEarned?: true
+  latencyMs?: true
   createdAt?: true
 }
 
@@ -135,8 +135,8 @@ export type AnswerCountAggregateInputType = {
   questionId?: true
   selectedIndex?: true
   isCorrect?: true
-  latencyMs?: true
   pointsEarned?: true
+  latencyMs?: true
   createdAt?: true
   _all?: true
 }
@@ -234,8 +234,8 @@ export type AnswerGroupByOutputType = {
   questionId: number
   selectedIndex: number
   isCorrect: boolean
-  latencyMs: number
   pointsEarned: number
+  latencyMs: number
   createdAt: Date
   _count: AnswerCountAggregateOutputType | null
   _avg: AnswerAvgAggregateOutputType | null
@@ -269,8 +269,8 @@ export type AnswerWhereInput = {
   questionId?: Prisma.IntFilter<"Answer"> | number
   selectedIndex?: Prisma.IntFilter<"Answer"> | number
   isCorrect?: Prisma.BoolFilter<"Answer"> | boolean
-  latencyMs?: Prisma.IntFilter<"Answer"> | number
   pointsEarned?: Prisma.IntFilter<"Answer"> | number
+  latencyMs?: Prisma.IntFilter<"Answer"> | number
   createdAt?: Prisma.DateTimeFilter<"Answer"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   game?: Prisma.XOR<Prisma.GameScalarRelationFilter, Prisma.GameWhereInput>
@@ -284,8 +284,8 @@ export type AnswerOrderByWithRelationInput = {
   questionId?: Prisma.SortOrder
   selectedIndex?: Prisma.SortOrder
   isCorrect?: Prisma.SortOrder
-  latencyMs?: Prisma.SortOrder
   pointsEarned?: Prisma.SortOrder
+  latencyMs?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   game?: Prisma.GameOrderByWithRelationInput
@@ -303,8 +303,8 @@ export type AnswerWhereUniqueInput = Prisma.AtLeast<{
   questionId?: Prisma.IntFilter<"Answer"> | number
   selectedIndex?: Prisma.IntFilter<"Answer"> | number
   isCorrect?: Prisma.BoolFilter<"Answer"> | boolean
-  latencyMs?: Prisma.IntFilter<"Answer"> | number
   pointsEarned?: Prisma.IntFilter<"Answer"> | number
+  latencyMs?: Prisma.IntFilter<"Answer"> | number
   createdAt?: Prisma.DateTimeFilter<"Answer"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   game?: Prisma.XOR<Prisma.GameScalarRelationFilter, Prisma.GameWhereInput>
@@ -318,8 +318,8 @@ export type AnswerOrderByWithAggregationInput = {
   questionId?: Prisma.SortOrder
   selectedIndex?: Prisma.SortOrder
   isCorrect?: Prisma.SortOrder
-  latencyMs?: Prisma.SortOrder
   pointsEarned?: Prisma.SortOrder
+  latencyMs?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.AnswerCountOrderByAggregateInput
   _avg?: Prisma.AnswerAvgOrderByAggregateInput
@@ -338,16 +338,16 @@ export type AnswerScalarWhereWithAggregatesInput = {
   questionId?: Prisma.IntWithAggregatesFilter<"Answer"> | number
   selectedIndex?: Prisma.IntWithAggregatesFilter<"Answer"> | number
   isCorrect?: Prisma.BoolWithAggregatesFilter<"Answer"> | boolean
-  latencyMs?: Prisma.IntWithAggregatesFilter<"Answer"> | number
   pointsEarned?: Prisma.IntWithAggregatesFilter<"Answer"> | number
+  latencyMs?: Prisma.IntWithAggregatesFilter<"Answer"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Answer"> | Date | string
 }
 
 export type AnswerCreateInput = {
   selectedIndex: number
   isCorrect: boolean
-  latencyMs: number
   pointsEarned?: number
+  latencyMs: number
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutAnswersInput
   game: Prisma.GameCreateNestedOneWithoutAnswersInput
@@ -361,16 +361,16 @@ export type AnswerUncheckedCreateInput = {
   questionId: number
   selectedIndex: number
   isCorrect: boolean
-  latencyMs: number
   pointsEarned?: number
+  latencyMs: number
   createdAt?: Date | string
 }
 
 export type AnswerUpdateInput = {
   selectedIndex?: Prisma.IntFieldUpdateOperationsInput | number
   isCorrect?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  latencyMs?: Prisma.IntFieldUpdateOperationsInput | number
   pointsEarned?: Prisma.IntFieldUpdateOperationsInput | number
+  latencyMs?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutAnswersNestedInput
   game?: Prisma.GameUpdateOneRequiredWithoutAnswersNestedInput
@@ -384,8 +384,8 @@ export type AnswerUncheckedUpdateInput = {
   questionId?: Prisma.IntFieldUpdateOperationsInput | number
   selectedIndex?: Prisma.IntFieldUpdateOperationsInput | number
   isCorrect?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  latencyMs?: Prisma.IntFieldUpdateOperationsInput | number
   pointsEarned?: Prisma.IntFieldUpdateOperationsInput | number
+  latencyMs?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -396,16 +396,16 @@ export type AnswerCreateManyInput = {
   questionId: number
   selectedIndex: number
   isCorrect: boolean
-  latencyMs: number
   pointsEarned?: number
+  latencyMs: number
   createdAt?: Date | string
 }
 
 export type AnswerUpdateManyMutationInput = {
   selectedIndex?: Prisma.IntFieldUpdateOperationsInput | number
   isCorrect?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  latencyMs?: Prisma.IntFieldUpdateOperationsInput | number
   pointsEarned?: Prisma.IntFieldUpdateOperationsInput | number
+  latencyMs?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -416,8 +416,8 @@ export type AnswerUncheckedUpdateManyInput = {
   questionId?: Prisma.IntFieldUpdateOperationsInput | number
   selectedIndex?: Prisma.IntFieldUpdateOperationsInput | number
   isCorrect?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  latencyMs?: Prisma.IntFieldUpdateOperationsInput | number
   pointsEarned?: Prisma.IntFieldUpdateOperationsInput | number
+  latencyMs?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -443,8 +443,8 @@ export type AnswerCountOrderByAggregateInput = {
   questionId?: Prisma.SortOrder
   selectedIndex?: Prisma.SortOrder
   isCorrect?: Prisma.SortOrder
-  latencyMs?: Prisma.SortOrder
   pointsEarned?: Prisma.SortOrder
+  latencyMs?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -454,8 +454,8 @@ export type AnswerAvgOrderByAggregateInput = {
   gameId?: Prisma.SortOrder
   questionId?: Prisma.SortOrder
   selectedIndex?: Prisma.SortOrder
-  latencyMs?: Prisma.SortOrder
   pointsEarned?: Prisma.SortOrder
+  latencyMs?: Prisma.SortOrder
 }
 
 export type AnswerMaxOrderByAggregateInput = {
@@ -465,8 +465,8 @@ export type AnswerMaxOrderByAggregateInput = {
   questionId?: Prisma.SortOrder
   selectedIndex?: Prisma.SortOrder
   isCorrect?: Prisma.SortOrder
-  latencyMs?: Prisma.SortOrder
   pointsEarned?: Prisma.SortOrder
+  latencyMs?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -477,8 +477,8 @@ export type AnswerMinOrderByAggregateInput = {
   questionId?: Prisma.SortOrder
   selectedIndex?: Prisma.SortOrder
   isCorrect?: Prisma.SortOrder
-  latencyMs?: Prisma.SortOrder
   pointsEarned?: Prisma.SortOrder
+  latencyMs?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -488,8 +488,8 @@ export type AnswerSumOrderByAggregateInput = {
   gameId?: Prisma.SortOrder
   questionId?: Prisma.SortOrder
   selectedIndex?: Prisma.SortOrder
-  latencyMs?: Prisma.SortOrder
   pointsEarned?: Prisma.SortOrder
+  latencyMs?: Prisma.SortOrder
 }
 
 export type AnswerCreateNestedManyWithoutUserInput = {
@@ -621,8 +621,8 @@ export type AnswerUncheckedUpdateManyWithoutQuestionNestedInput = {
 export type AnswerCreateWithoutUserInput = {
   selectedIndex: number
   isCorrect: boolean
-  latencyMs: number
   pointsEarned?: number
+  latencyMs: number
   createdAt?: Date | string
   game: Prisma.GameCreateNestedOneWithoutAnswersInput
   question: Prisma.QuestionCreateNestedOneWithoutAnswersInput
@@ -634,8 +634,8 @@ export type AnswerUncheckedCreateWithoutUserInput = {
   questionId: number
   selectedIndex: number
   isCorrect: boolean
-  latencyMs: number
   pointsEarned?: number
+  latencyMs: number
   createdAt?: Date | string
 }
 
@@ -675,16 +675,16 @@ export type AnswerScalarWhereInput = {
   questionId?: Prisma.IntFilter<"Answer"> | number
   selectedIndex?: Prisma.IntFilter<"Answer"> | number
   isCorrect?: Prisma.BoolFilter<"Answer"> | boolean
-  latencyMs?: Prisma.IntFilter<"Answer"> | number
   pointsEarned?: Prisma.IntFilter<"Answer"> | number
+  latencyMs?: Prisma.IntFilter<"Answer"> | number
   createdAt?: Prisma.DateTimeFilter<"Answer"> | Date | string
 }
 
 export type AnswerCreateWithoutGameInput = {
   selectedIndex: number
   isCorrect: boolean
-  latencyMs: number
   pointsEarned?: number
+  latencyMs: number
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutAnswersInput
   question: Prisma.QuestionCreateNestedOneWithoutAnswersInput
@@ -696,8 +696,8 @@ export type AnswerUncheckedCreateWithoutGameInput = {
   questionId: number
   selectedIndex: number
   isCorrect: boolean
-  latencyMs: number
   pointsEarned?: number
+  latencyMs: number
   createdAt?: Date | string
 }
 
@@ -730,8 +730,8 @@ export type AnswerUpdateManyWithWhereWithoutGameInput = {
 export type AnswerCreateWithoutQuestionInput = {
   selectedIndex: number
   isCorrect: boolean
-  latencyMs: number
   pointsEarned?: number
+  latencyMs: number
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutAnswersInput
   game: Prisma.GameCreateNestedOneWithoutAnswersInput
@@ -743,8 +743,8 @@ export type AnswerUncheckedCreateWithoutQuestionInput = {
   gameId: number
   selectedIndex: number
   isCorrect: boolean
-  latencyMs: number
   pointsEarned?: number
+  latencyMs: number
   createdAt?: Date | string
 }
 
@@ -780,16 +780,16 @@ export type AnswerCreateManyUserInput = {
   questionId: number
   selectedIndex: number
   isCorrect: boolean
-  latencyMs: number
   pointsEarned?: number
+  latencyMs: number
   createdAt?: Date | string
 }
 
 export type AnswerUpdateWithoutUserInput = {
   selectedIndex?: Prisma.IntFieldUpdateOperationsInput | number
   isCorrect?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  latencyMs?: Prisma.IntFieldUpdateOperationsInput | number
   pointsEarned?: Prisma.IntFieldUpdateOperationsInput | number
+  latencyMs?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   game?: Prisma.GameUpdateOneRequiredWithoutAnswersNestedInput
   question?: Prisma.QuestionUpdateOneRequiredWithoutAnswersNestedInput
@@ -801,8 +801,8 @@ export type AnswerUncheckedUpdateWithoutUserInput = {
   questionId?: Prisma.IntFieldUpdateOperationsInput | number
   selectedIndex?: Prisma.IntFieldUpdateOperationsInput | number
   isCorrect?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  latencyMs?: Prisma.IntFieldUpdateOperationsInput | number
   pointsEarned?: Prisma.IntFieldUpdateOperationsInput | number
+  latencyMs?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -812,8 +812,8 @@ export type AnswerUncheckedUpdateManyWithoutUserInput = {
   questionId?: Prisma.IntFieldUpdateOperationsInput | number
   selectedIndex?: Prisma.IntFieldUpdateOperationsInput | number
   isCorrect?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  latencyMs?: Prisma.IntFieldUpdateOperationsInput | number
   pointsEarned?: Prisma.IntFieldUpdateOperationsInput | number
+  latencyMs?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -823,16 +823,16 @@ export type AnswerCreateManyGameInput = {
   questionId: number
   selectedIndex: number
   isCorrect: boolean
-  latencyMs: number
   pointsEarned?: number
+  latencyMs: number
   createdAt?: Date | string
 }
 
 export type AnswerUpdateWithoutGameInput = {
   selectedIndex?: Prisma.IntFieldUpdateOperationsInput | number
   isCorrect?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  latencyMs?: Prisma.IntFieldUpdateOperationsInput | number
   pointsEarned?: Prisma.IntFieldUpdateOperationsInput | number
+  latencyMs?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutAnswersNestedInput
   question?: Prisma.QuestionUpdateOneRequiredWithoutAnswersNestedInput
@@ -844,8 +844,8 @@ export type AnswerUncheckedUpdateWithoutGameInput = {
   questionId?: Prisma.IntFieldUpdateOperationsInput | number
   selectedIndex?: Prisma.IntFieldUpdateOperationsInput | number
   isCorrect?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  latencyMs?: Prisma.IntFieldUpdateOperationsInput | number
   pointsEarned?: Prisma.IntFieldUpdateOperationsInput | number
+  latencyMs?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -855,8 +855,8 @@ export type AnswerUncheckedUpdateManyWithoutGameInput = {
   questionId?: Prisma.IntFieldUpdateOperationsInput | number
   selectedIndex?: Prisma.IntFieldUpdateOperationsInput | number
   isCorrect?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  latencyMs?: Prisma.IntFieldUpdateOperationsInput | number
   pointsEarned?: Prisma.IntFieldUpdateOperationsInput | number
+  latencyMs?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -866,16 +866,16 @@ export type AnswerCreateManyQuestionInput = {
   gameId: number
   selectedIndex: number
   isCorrect: boolean
-  latencyMs: number
   pointsEarned?: number
+  latencyMs: number
   createdAt?: Date | string
 }
 
 export type AnswerUpdateWithoutQuestionInput = {
   selectedIndex?: Prisma.IntFieldUpdateOperationsInput | number
   isCorrect?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  latencyMs?: Prisma.IntFieldUpdateOperationsInput | number
   pointsEarned?: Prisma.IntFieldUpdateOperationsInput | number
+  latencyMs?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutAnswersNestedInput
   game?: Prisma.GameUpdateOneRequiredWithoutAnswersNestedInput
@@ -887,8 +887,8 @@ export type AnswerUncheckedUpdateWithoutQuestionInput = {
   gameId?: Prisma.IntFieldUpdateOperationsInput | number
   selectedIndex?: Prisma.IntFieldUpdateOperationsInput | number
   isCorrect?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  latencyMs?: Prisma.IntFieldUpdateOperationsInput | number
   pointsEarned?: Prisma.IntFieldUpdateOperationsInput | number
+  latencyMs?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -898,8 +898,8 @@ export type AnswerUncheckedUpdateManyWithoutQuestionInput = {
   gameId?: Prisma.IntFieldUpdateOperationsInput | number
   selectedIndex?: Prisma.IntFieldUpdateOperationsInput | number
   isCorrect?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  latencyMs?: Prisma.IntFieldUpdateOperationsInput | number
   pointsEarned?: Prisma.IntFieldUpdateOperationsInput | number
+  latencyMs?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -912,8 +912,8 @@ export type AnswerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   questionId?: boolean
   selectedIndex?: boolean
   isCorrect?: boolean
-  latencyMs?: boolean
   pointsEarned?: boolean
+  latencyMs?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   game?: boolean | Prisma.GameDefaultArgs<ExtArgs>
@@ -927,8 +927,8 @@ export type AnswerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   questionId?: boolean
   selectedIndex?: boolean
   isCorrect?: boolean
-  latencyMs?: boolean
   pointsEarned?: boolean
+  latencyMs?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   game?: boolean | Prisma.GameDefaultArgs<ExtArgs>
@@ -942,8 +942,8 @@ export type AnswerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   questionId?: boolean
   selectedIndex?: boolean
   isCorrect?: boolean
-  latencyMs?: boolean
   pointsEarned?: boolean
+  latencyMs?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   game?: boolean | Prisma.GameDefaultArgs<ExtArgs>
@@ -957,12 +957,12 @@ export type AnswerSelectScalar = {
   questionId?: boolean
   selectedIndex?: boolean
   isCorrect?: boolean
-  latencyMs?: boolean
   pointsEarned?: boolean
+  latencyMs?: boolean
   createdAt?: boolean
 }
 
-export type AnswerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "gameId" | "questionId" | "selectedIndex" | "isCorrect" | "latencyMs" | "pointsEarned" | "createdAt", ExtArgs["result"]["answer"]>
+export type AnswerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "gameId" | "questionId" | "selectedIndex" | "isCorrect" | "pointsEarned" | "latencyMs" | "createdAt", ExtArgs["result"]["answer"]>
 export type AnswerInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   game?: boolean | Prisma.GameDefaultArgs<ExtArgs>
@@ -993,8 +993,8 @@ export type $AnswerPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     questionId: number
     selectedIndex: number
     isCorrect: boolean
-    latencyMs: number
     pointsEarned: number
+    latencyMs: number
     createdAt: Date
   }, ExtArgs["result"]["answer"]>
   composites: {}
@@ -1428,8 +1428,8 @@ export interface AnswerFieldRefs {
   readonly questionId: Prisma.FieldRef<"Answer", 'Int'>
   readonly selectedIndex: Prisma.FieldRef<"Answer", 'Int'>
   readonly isCorrect: Prisma.FieldRef<"Answer", 'Boolean'>
-  readonly latencyMs: Prisma.FieldRef<"Answer", 'Int'>
   readonly pointsEarned: Prisma.FieldRef<"Answer", 'Int'>
+  readonly latencyMs: Prisma.FieldRef<"Answer", 'Int'>
   readonly createdAt: Prisma.FieldRef<"Answer", 'DateTime'>
 }
     

@@ -36,6 +36,8 @@ export const Chat = ({
   const chatListRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [activeCount, setActiveCount] = useState(0);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const [showNewMessages, setShowNewMessages] = useState(false);
 
   // Subscribe to real-time chat events
   useGameEvents({
@@ -53,7 +55,15 @@ export const Chat = ({
         message: chatEvent.message,
         avatarUrl: chatEvent.user.pfpUrl,
       };
-      setComments((prev) => [...prev, comment]);
+      setComments((prev) => {
+        // Prevent duplicates
+        if (prev.some((c) => c.id === comment.id)) return prev;
+        return [...prev, comment];
+      });
+
+      if (!shouldAutoScroll) {
+        setShowNewMessages(true);
+      }
     },
     onStats: (stats) => {
       setActiveCount(stats.onlineCount);
@@ -83,6 +93,12 @@ export const Chat = ({
         }));
 
         setComments(formattedComments);
+        // Force scroll to bottom on initial load
+        setTimeout(() => {
+          if (chatListRef.current) {
+            chatListRef.current.scrollTop = chatListRef.current.scrollHeight;
+          }
+        }, 100);
       } catch (error) {
         console.error("Error fetching chat messages:", error);
       }
@@ -91,38 +107,69 @@ export const Chat = ({
     fetchMessages();
   }, [isOpen, gameId]);
 
-  // Auto-scroll to bottom when new comments are added
+  // Handle scroll events to determine if we should auto-scroll
+  const handleScroll = () => {
+    if (!chatListRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = chatListRef.current;
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+    setShouldAutoScroll(isNearBottom);
+    if (isNearBottom) {
+      setShowNewMessages(false);
+    }
+  };
+
+  // Auto-scroll effect
   useEffect(() => {
-    if (chatListRef.current) {
+    if (shouldAutoScroll && chatListRef.current) {
       chatListRef.current.scrollTop = chatListRef.current.scrollHeight;
     }
-  }, [comments]);
+  }, [comments, shouldAutoScroll]);
+
+  const scrollToBottom = () => {
+    if (chatListRef.current) {
+      chatListRef.current.scrollTo({
+        top: chatListRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+      setShouldAutoScroll(true);
+      setShowNewMessages(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const validation = sendMessageSchema.shape.message.safeParse(message);
     if (!validation.success || !gameId || !fid || isSubmitting) {
-      // Optional: Handle validation error UI here if needed, e.g. toast
       return;
     }
 
     setIsSubmitting(true);
     playSound("click");
 
+    // Optimistically clear input
+    const currentMessage = message;
+    setMessage("");
+
+    // Re-focus input
+    inputRef.current?.focus();
+
     const result = await sendMessageAction({
       gameId,
-      message: message.trim(),
+      message: currentMessage.trim(),
       fid,
     });
 
-    if (result.success) {
-      setMessage("");
-    } else {
+    if (!result.success) {
       console.error("Failed to send message:", result.error);
+      // Restore message on failure? Or just show error toast.
+      // For now, just logging error.
+      setMessage(currentMessage); // Restore text so user can try again
     }
 
     setIsSubmitting(false);
+    // Ensure we scroll to bottom after sending
+    setShouldAutoScroll(true);
   };
 
   const hasText = message.trim().length > 0;
@@ -132,7 +179,7 @@ export const Chat = ({
       <Backdrop isOpen={isOpen} onClose={onClose} />
       {/* Drawer */}
       <div
-        className={`fixed bottom-0 left-0 right-0 z-50 flex h-[600px] w-full flex-col
+        className={`fixed bottom-0 left-0 right-0 z-50 flex h-[85vh] w-full flex-col
                     rounded-t-[20px] bg-linear-to-b from-[#1E1E0E] to-black
                     transition-transform duration-500 ease-in-out
                     ${isOpen ? "translate-y-0" : "translate-y-full"}`}
@@ -166,22 +213,15 @@ export const Chat = ({
                 LOBBY&nbsp;CHAT
               </span>
             </div>
-            <span
-              className="text-white font-bold text-[1.1rem] font-body tracking-tight select-none"
-              style={{
-                fontSize: "1.1rem",
-                letterSpacing: "0.005em",
-              }}
-            >
-              00:10
-            </span>
+            {/* Removed hardcoded timer */}
           </div>
         </header>
 
         {/* Comment List */}
         <div
           ref={chatListRef}
-          className="flex-1 space-y-3.5 overflow-y-auto p-4"
+          onScroll={handleScroll}
+          className="flex-1 space-y-3.5 overflow-y-auto p-4 relative"
         >
           {comments.length === 0 ? (
             <div className="flex items-center justify-center h-full text-white/40">
@@ -200,12 +240,22 @@ export const Chat = ({
           )}
         </div>
 
+        {/* New Messages Indicator */}
+        {showNewMessages && (
+          <button
+            onClick={scrollToBottom}
+            className="absolute bottom-[140px] left-1/2 -translate-x-1/2 bg-blue-600 text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg z-10 animate-bounce"
+          >
+            New Messages ↓
+          </button>
+        )}
+
         {/* Footer Input */}
         <footer className="w-full shrink-0 bg-[#0E0E0E] p-4 pt-5 pb-8">
           <form
             onSubmit={handleSubmit}
             onClick={() => inputRef.current?.focus?.()} // Click wrapper to focus input
-            className="flex h-[58px] w-full items-center gap-3 rounded-full bg-white/5 px-4 cursor-text mb-3" // Add cursor-text
+            className="flex h-[58px] w-full items-center gap-3 rounded-full bg-white/5 px-4 cursor-text mb-3 focus-within:ring-1 focus-within:ring-white/20 transition-all"
           >
             <input
               ref={inputRef}
@@ -240,7 +290,7 @@ export const Chat = ({
           </form>
 
           {/* Active Player Count */}
-          <div className="flex items-center gap-2 px-2">
+          <div className="flex items-center gap-2 px-2 justify-start">
             <UsersIcon className="w-4 h-[13.5px] text-[#B93814]" />
             <span
               className="text-[#99A0AE] text-xs font-medium text-center"

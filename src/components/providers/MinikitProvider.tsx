@@ -3,9 +3,16 @@
 import { OnchainKitProvider } from "@coinbase/onchainkit";
 import { base } from "wagmi/chains";
 import { env } from "@/lib/env";
+import { useMiniKitInit } from "@/hooks/useMiniKitInit";
 
 interface Props {
   children: React.ReactNode;
+}
+
+function MiniKitInitializer({ children }: { children: React.ReactNode }) {
+  // This ensures MiniKit is initialized globally
+  useMiniKitInit();
+  return <>{children}</>;
 }
 
 export function MinikitProvider({ children }: Props) {
@@ -28,7 +35,7 @@ export function MinikitProvider({ children }: Props) {
         notificationProxyUrl: env.rootUrl + "/api/webhook",
       }}
     >
-      {children}
+      <MiniKitInitializer>{children}</MiniKitInitializer>
     </OnchainKitProvider>
   );
 }

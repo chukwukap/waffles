@@ -9,11 +9,11 @@ export default async function MediaLibraryPage() {
         return (
             <div className="max-w-6xl space-y-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 font-display">Media Library</h1>
-                    <p className="text-slate-600 mt-1">Manage your uploaded media files</p>
+                    <h1 className="text-2xl font-bold text-slate-100 font-display">Media Library</h1>
+                    <p className="text-slate-400 mt-1">Manage your uploaded media files</p>
                 </div>
 
-                <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+                <div className="bg-red-950 border border-red-200 rounded-xl p-6">
                     <p className="text-red-800">{result.error}</p>
                     <p className="text-sm text-red-600 mt-2">
                         Make sure <code className="text-xs bg-red-100 px-1 rounded">BLOB_READ_WRITE_TOKEN</code> is configured in your environment variables.
@@ -29,14 +29,14 @@ export default async function MediaLibraryPage() {
         <div className="max-w-7xl space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 font-display">Media Library</h1>
-                    <p className="text-slate-600 mt-1">
+                    <h1 className="text-2xl font-bold text-slate-100 font-display">Media Library</h1>
+                    <p className="text-slate-400 mt-1">
                         Manage your uploaded media files • {files.length} total
                     </p>
                 </div>
 
                 <Link
-                    href="/admin/games"
+                    href="/admin/media/upload"
                     className="px-4 py-2 bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium rounded-lg shadow-sm transition-colors"
                 >
                     Upload New Media

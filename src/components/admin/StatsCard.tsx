@@ -12,13 +12,13 @@ export function StatsCard({
     trend?: { value: string; isPositive: boolean };
 }) {
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md transition-shadow">
+        <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-6 hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between">
                 <div>
-                    <p className="text-sm font-medium text-slate-600">{title}</p>
-                    <p className="mt-2 text-3xl font-bold text-slate-900">{value}</p>
+                    <p className="text-sm font-medium text-slate-400">{title}</p>
+                    <p className="mt-2 text-3xl font-bold text-slate-100">{value}</p>
                     {subtitle && (
-                        <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
+                        <p className="mt-1 text-sm text-slate-400">{subtitle}</p>
                     )}
                     {trend && (
                         <div className="mt-2 flex items-center gap-1">
@@ -28,7 +28,7 @@ export function StatsCard({
                             >
                                 {trend.isPositive ? "↑" : "↓"} {trend.value}
                             </span>
-                            <span className="text-xs text-slate-500">vs last week</span>
+                            <span className="text-xs text-slate-400">vs last week</span>
                         </div>
                     )}
                 </div>
