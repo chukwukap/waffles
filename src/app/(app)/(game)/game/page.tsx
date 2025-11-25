@@ -44,7 +44,7 @@ export type UpcomingGamePayload = Prisma.GameGetPayload<{
 
 const getUpComingOrActiveGame = cache(
   async (): Promise<UpcomingGamePayload | null> => {
-    // Priority order: SCHEDULED → LIVE → ENDED
+    // Priority order: LIVE → SCHEDULED → ENDED
     // Return the most recently created game from the highest priority status
     const selectFields = {
       id: true,
@@ -60,16 +60,7 @@ const getUpComingOrActiveGame = cache(
       },
     };
 
-    // Try SCHEDULED first
-    const scheduledGame = await prisma.game.findFirst({
-      where: { status: "SCHEDULED" },
-      orderBy: { createdAt: "desc" },
-      select: selectFields,
-    });
-
-    if (scheduledGame) return scheduledGame;
-
-    // Try LIVE second
+    // Try LIVE first
     const liveGame = await prisma.game.findFirst({
       where: { status: "LIVE" },
       orderBy: { createdAt: "desc" },
@@ -77,6 +68,15 @@ const getUpComingOrActiveGame = cache(
     });
 
     if (liveGame) return liveGame;
+
+    // Try SCHEDULED second
+    const scheduledGame = await prisma.game.findFirst({
+      where: { status: "SCHEDULED" },
+      orderBy: { createdAt: "desc" },
+      select: selectFields,
+    });
+
+    if (scheduledGame) return scheduledGame;
 
     // Try ENDED last
     const endedGame = await prisma.game.findFirst({
