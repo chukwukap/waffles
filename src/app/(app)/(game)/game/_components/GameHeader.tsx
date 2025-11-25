@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { useGetTokenBalance } from "@coinbase/onchainkit/wallet";
 import { WalletIcon } from "lucide-react";
 import { base } from "viem/chains";
-import { useAccount } from "wagmi";
+import { useAccount, useConnect } from "wagmi";
 import { useState } from "react";
 import LeaveGameDrawer from "./LeaveGameDrawer";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -16,7 +16,8 @@ export function GameHeader() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const gameId = Number(searchParams.get("gameId"));
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
+  const { connect, connectors } = useConnect();
   const { roundedBalance } = useGetTokenBalance(address as `0x${string}`, {
     address: env.nextPublicUsdcAddress as `0x${string}`,
     decimals: 6,
@@ -25,6 +26,10 @@ export function GameHeader() {
     image: "/images/tokens/usdc.png",
     chainId: base.id,
   });
+
+  console.log("rounded balance: ----------------------------------->>>>", roundedBalance);
+  console.log("address: ", address);
+  console.log("isConnected: ", isConnected);
 
   const [isLeaveGameDrawerOpen, setIsLeaveGameDrawerOpen] = useState(false);
 
@@ -91,13 +96,25 @@ export function GameHeader() {
             </span>
           </button>
         ) : (
-          <div className="flex items-center  px-3 py-1.5 rounded-full bg-[#F9F9F91A] font-body">
-            <WalletIcon className="w-[12px] h-[10.8px] opacity-100 text-white mr-1" />
+          !isConnected || !address ? (
+            <button
+              onClick={() => connect({ connector: connectors[0] })}
+              className="flex items-center px-3 py-1.5 rounded-full bg-[#F9F9F91A] font-body hover:bg-[#F9F9F92A] transition-colors"
+            >
+              <WalletIcon className="w-[12px] h-[10.8px] opacity-100 text-white mr-1" />
+              <span className="text-center font-normal not-italic text-[16px] leading-[100%] tracking-[0px] text-white">
+                Connect
+              </span>
+            </button>
+          ) : (
+            <div className="flex items-center px-3 py-1.5 rounded-full bg-[#F9F9F91A] font-body">
+              <WalletIcon className="w-[12px] h-[10.8px] opacity-100 text-white mr-1" />
 
-            <span className="text-center font-normal not-italic text-[16px] leading-[100%] tracking-[0px] text-white">
-              {`$${Number(roundedBalance).toFixed(2)}`}
-            </span>
-          </div>
+              <span className="text-center font-normal not-italic text-[16px] leading-[100%] tracking-[0px] text-white">
+                {`$${Number(roundedBalance).toFixed(2)}`}
+              </span>
+            </div>
+          )
         )}
       </header>
 
