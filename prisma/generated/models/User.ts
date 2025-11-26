@@ -30,6 +30,7 @@ export type UserAvgAggregateOutputType = {
   id: number | null
   fid: number | null
   inviteQuota: number | null
+  waitlistPoints: number | null
   invitedById: number | null
 }
 
@@ -37,6 +38,7 @@ export type UserSumAggregateOutputType = {
   id: number | null
   fid: number | null
   inviteQuota: number | null
+  waitlistPoints: number | null
   invitedById: number | null
 }
 
@@ -51,6 +53,7 @@ export type UserMinAggregateOutputType = {
   inviteCode: string | null
   inviteQuota: number | null
   status: $Enums.UserStatus | null
+  waitlistPoints: number | null
   invitedById: number | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -67,6 +70,7 @@ export type UserMaxAggregateOutputType = {
   inviteCode: string | null
   inviteQuota: number | null
   status: $Enums.UserStatus | null
+  waitlistPoints: number | null
   invitedById: number | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -84,6 +88,7 @@ export type UserCountAggregateOutputType = {
   inviteQuota: number
   status: number
   completedTasks: number
+  waitlistPoints: number
   invitedById: number
   createdAt: number
   updatedAt: number
@@ -95,6 +100,7 @@ export type UserAvgAggregateInputType = {
   id?: true
   fid?: true
   inviteQuota?: true
+  waitlistPoints?: true
   invitedById?: true
 }
 
@@ -102,6 +108,7 @@ export type UserSumAggregateInputType = {
   id?: true
   fid?: true
   inviteQuota?: true
+  waitlistPoints?: true
   invitedById?: true
 }
 
@@ -116,6 +123,7 @@ export type UserMinAggregateInputType = {
   inviteCode?: true
   inviteQuota?: true
   status?: true
+  waitlistPoints?: true
   invitedById?: true
   createdAt?: true
   updatedAt?: true
@@ -132,6 +140,7 @@ export type UserMaxAggregateInputType = {
   inviteCode?: true
   inviteQuota?: true
   status?: true
+  waitlistPoints?: true
   invitedById?: true
   createdAt?: true
   updatedAt?: true
@@ -149,6 +158,7 @@ export type UserCountAggregateInputType = {
   inviteQuota?: true
   status?: true
   completedTasks?: true
+  waitlistPoints?: true
   invitedById?: true
   createdAt?: true
   updatedAt?: true
@@ -253,6 +263,7 @@ export type UserGroupByOutputType = {
   inviteQuota: number
   status: $Enums.UserStatus
   completedTasks: string[]
+  waitlistPoints: number
   invitedById: number | null
   createdAt: Date
   updatedAt: Date
@@ -293,6 +304,7 @@ export type UserWhereInput = {
   inviteQuota?: Prisma.IntFilter<"User"> | number
   status?: Prisma.EnumUserStatusFilter<"User"> | $Enums.UserStatus
   completedTasks?: Prisma.StringNullableListFilter<"User">
+  waitlistPoints?: Prisma.IntFilter<"User"> | number
   invitedById?: Prisma.IntNullableFilter<"User"> | number | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -319,6 +331,7 @@ export type UserOrderByWithRelationInput = {
   inviteQuota?: Prisma.SortOrder
   status?: Prisma.SortOrder
   completedTasks?: Prisma.SortOrder
+  waitlistPoints?: Prisma.SortOrder
   invitedById?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -348,6 +361,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   inviteQuota?: Prisma.IntFilter<"User"> | number
   status?: Prisma.EnumUserStatusFilter<"User"> | $Enums.UserStatus
   completedTasks?: Prisma.StringNullableListFilter<"User">
+  waitlistPoints?: Prisma.IntFilter<"User"> | number
   invitedById?: Prisma.IntNullableFilter<"User"> | number | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -374,6 +388,7 @@ export type UserOrderByWithAggregationInput = {
   inviteQuota?: Prisma.SortOrder
   status?: Prisma.SortOrder
   completedTasks?: Prisma.SortOrder
+  waitlistPoints?: Prisma.SortOrder
   invitedById?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -399,6 +414,7 @@ export type UserScalarWhereWithAggregatesInput = {
   inviteQuota?: Prisma.IntWithAggregatesFilter<"User"> | number
   status?: Prisma.EnumUserStatusWithAggregatesFilter<"User"> | $Enums.UserStatus
   completedTasks?: Prisma.StringNullableListFilter<"User">
+  waitlistPoints?: Prisma.IntWithAggregatesFilter<"User"> | number
   invitedById?: Prisma.IntNullableWithAggregatesFilter<"User"> | number | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
@@ -415,6 +431,7 @@ export type UserCreateInput = {
   inviteQuota?: number
   status?: $Enums.UserStatus
   completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   invitedBy?: Prisma.UserCreateNestedOneWithoutInvitesInput
@@ -440,6 +457,7 @@ export type UserUncheckedCreateInput = {
   inviteQuota?: number
   status?: $Enums.UserStatus
   completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  waitlistPoints?: number
   invitedById?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -464,6 +482,7 @@ export type UserUpdateInput = {
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   invitedBy?: Prisma.UserUpdateOneWithoutInvitesNestedInput
@@ -489,6 +508,7 @@ export type UserUncheckedUpdateInput = {
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   invitedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -514,6 +534,7 @@ export type UserCreateManyInput = {
   inviteQuota?: number
   status?: $Enums.UserStatus
   completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  waitlistPoints?: number
   invitedById?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -530,6 +551,7 @@ export type UserUpdateManyMutationInput = {
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -546,6 +568,7 @@ export type UserUncheckedUpdateManyInput = {
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   invitedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -586,6 +609,7 @@ export type UserCountOrderByAggregateInput = {
   inviteQuota?: Prisma.SortOrder
   status?: Prisma.SortOrder
   completedTasks?: Prisma.SortOrder
+  waitlistPoints?: Prisma.SortOrder
   invitedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -595,6 +619,7 @@ export type UserAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   fid?: Prisma.SortOrder
   inviteQuota?: Prisma.SortOrder
+  waitlistPoints?: Prisma.SortOrder
   invitedById?: Prisma.SortOrder
 }
 
@@ -609,6 +634,7 @@ export type UserMaxOrderByAggregateInput = {
   inviteCode?: Prisma.SortOrder
   inviteQuota?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  waitlistPoints?: Prisma.SortOrder
   invitedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -625,6 +651,7 @@ export type UserMinOrderByAggregateInput = {
   inviteCode?: Prisma.SortOrder
   inviteQuota?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  waitlistPoints?: Prisma.SortOrder
   invitedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -634,6 +661,7 @@ export type UserSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   fid?: Prisma.SortOrder
   inviteQuota?: Prisma.SortOrder
+  waitlistPoints?: Prisma.SortOrder
   invitedById?: Prisma.SortOrder
 }
 
@@ -854,6 +882,7 @@ export type UserCreateWithoutInvitesInput = {
   inviteQuota?: number
   status?: $Enums.UserStatus
   completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   invitedBy?: Prisma.UserCreateNestedOneWithoutInvitesInput
@@ -878,6 +907,7 @@ export type UserUncheckedCreateWithoutInvitesInput = {
   inviteQuota?: number
   status?: $Enums.UserStatus
   completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  waitlistPoints?: number
   invitedById?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -906,6 +936,7 @@ export type UserCreateWithoutInvitedByInput = {
   inviteQuota?: number
   status?: $Enums.UserStatus
   completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   invites?: Prisma.UserCreateNestedManyWithoutInvitedByInput
@@ -930,6 +961,7 @@ export type UserUncheckedCreateWithoutInvitedByInput = {
   inviteQuota?: number
   status?: $Enums.UserStatus
   completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   invites?: Prisma.UserUncheckedCreateNestedManyWithoutInvitedByInput
@@ -974,6 +1006,7 @@ export type UserUpdateWithoutInvitesInput = {
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   invitedBy?: Prisma.UserUpdateOneWithoutInvitesNestedInput
@@ -998,6 +1031,7 @@ export type UserUncheckedUpdateWithoutInvitesInput = {
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   invitedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1041,6 +1075,7 @@ export type UserScalarWhereInput = {
   inviteQuota?: Prisma.IntFilter<"User"> | number
   status?: Prisma.EnumUserStatusFilter<"User"> | $Enums.UserStatus
   completedTasks?: Prisma.StringNullableListFilter<"User">
+  waitlistPoints?: Prisma.IntFilter<"User"> | number
   invitedById?: Prisma.IntNullableFilter<"User"> | number | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -1057,6 +1092,7 @@ export type UserCreateWithoutRewardsInput = {
   inviteQuota?: number
   status?: $Enums.UserStatus
   completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   invitedBy?: Prisma.UserCreateNestedOneWithoutInvitesInput
@@ -1081,6 +1117,7 @@ export type UserUncheckedCreateWithoutRewardsInput = {
   inviteQuota?: number
   status?: $Enums.UserStatus
   completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  waitlistPoints?: number
   invitedById?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1120,6 +1157,7 @@ export type UserUpdateWithoutRewardsInput = {
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   invitedBy?: Prisma.UserUpdateOneWithoutInvitesNestedInput
@@ -1144,6 +1182,7 @@ export type UserUncheckedUpdateWithoutRewardsInput = {
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   invitedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1167,6 +1206,7 @@ export type UserCreateWithoutTicketsInput = {
   inviteQuota?: number
   status?: $Enums.UserStatus
   completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   invitedBy?: Prisma.UserCreateNestedOneWithoutInvitesInput
@@ -1191,6 +1231,7 @@ export type UserUncheckedCreateWithoutTicketsInput = {
   inviteQuota?: number
   status?: $Enums.UserStatus
   completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  waitlistPoints?: number
   invitedById?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1230,6 +1271,7 @@ export type UserUpdateWithoutTicketsInput = {
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   invitedBy?: Prisma.UserUpdateOneWithoutInvitesNestedInput
@@ -1254,6 +1296,7 @@ export type UserUncheckedUpdateWithoutTicketsInput = {
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   invitedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1277,6 +1320,7 @@ export type UserCreateWithoutGamesInput = {
   inviteQuota?: number
   status?: $Enums.UserStatus
   completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   invitedBy?: Prisma.UserCreateNestedOneWithoutInvitesInput
@@ -1301,6 +1345,7 @@ export type UserUncheckedCreateWithoutGamesInput = {
   inviteQuota?: number
   status?: $Enums.UserStatus
   completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  waitlistPoints?: number
   invitedById?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1340,6 +1385,7 @@ export type UserUpdateWithoutGamesInput = {
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   invitedBy?: Prisma.UserUpdateOneWithoutInvitesNestedInput
@@ -1364,6 +1410,7 @@ export type UserUncheckedUpdateWithoutGamesInput = {
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   invitedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1387,6 +1434,7 @@ export type UserCreateWithoutAnswersInput = {
   inviteQuota?: number
   status?: $Enums.UserStatus
   completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   invitedBy?: Prisma.UserCreateNestedOneWithoutInvitesInput
@@ -1411,6 +1459,7 @@ export type UserUncheckedCreateWithoutAnswersInput = {
   inviteQuota?: number
   status?: $Enums.UserStatus
   completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  waitlistPoints?: number
   invitedById?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1450,6 +1499,7 @@ export type UserUpdateWithoutAnswersInput = {
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   invitedBy?: Prisma.UserUpdateOneWithoutInvitesNestedInput
@@ -1474,6 +1524,7 @@ export type UserUncheckedUpdateWithoutAnswersInput = {
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   invitedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1497,6 +1548,7 @@ export type UserCreateWithoutChatsInput = {
   inviteQuota?: number
   status?: $Enums.UserStatus
   completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   invitedBy?: Prisma.UserCreateNestedOneWithoutInvitesInput
@@ -1521,6 +1573,7 @@ export type UserUncheckedCreateWithoutChatsInput = {
   inviteQuota?: number
   status?: $Enums.UserStatus
   completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  waitlistPoints?: number
   invitedById?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1560,6 +1613,7 @@ export type UserUpdateWithoutChatsInput = {
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   invitedBy?: Prisma.UserUpdateOneWithoutInvitesNestedInput
@@ -1584,6 +1638,7 @@ export type UserUncheckedUpdateWithoutChatsInput = {
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   invitedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1607,6 +1662,7 @@ export type UserCreateWithoutNotifsInput = {
   inviteQuota?: number
   status?: $Enums.UserStatus
   completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   invitedBy?: Prisma.UserCreateNestedOneWithoutInvitesInput
@@ -1631,6 +1687,7 @@ export type UserUncheckedCreateWithoutNotifsInput = {
   inviteQuota?: number
   status?: $Enums.UserStatus
   completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  waitlistPoints?: number
   invitedById?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1670,6 +1727,7 @@ export type UserUpdateWithoutNotifsInput = {
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   invitedBy?: Prisma.UserUpdateOneWithoutInvitesNestedInput
@@ -1694,6 +1752,7 @@ export type UserUncheckedUpdateWithoutNotifsInput = {
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   invitedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1717,6 +1776,7 @@ export type UserCreateWithoutAuditLogsInput = {
   inviteQuota?: number
   status?: $Enums.UserStatus
   completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   invitedBy?: Prisma.UserCreateNestedOneWithoutInvitesInput
@@ -1741,6 +1801,7 @@ export type UserUncheckedCreateWithoutAuditLogsInput = {
   inviteQuota?: number
   status?: $Enums.UserStatus
   completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  waitlistPoints?: number
   invitedById?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1780,6 +1841,7 @@ export type UserUpdateWithoutAuditLogsInput = {
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   invitedBy?: Prisma.UserUpdateOneWithoutInvitesNestedInput
@@ -1804,6 +1866,7 @@ export type UserUncheckedUpdateWithoutAuditLogsInput = {
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   invitedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1828,6 +1891,7 @@ export type UserCreateManyInvitedByInput = {
   inviteQuota?: number
   status?: $Enums.UserStatus
   completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1843,6 +1907,7 @@ export type UserUpdateWithoutInvitedByInput = {
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   invites?: Prisma.UserUpdateManyWithoutInvitedByNestedInput
@@ -1867,6 +1932,7 @@ export type UserUncheckedUpdateWithoutInvitedByInput = {
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   invites?: Prisma.UserUncheckedUpdateManyWithoutInvitedByNestedInput
@@ -1891,6 +1957,7 @@ export type UserUncheckedUpdateManyWithoutInvitedByInput = {
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -2001,6 +2068,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   inviteQuota?: boolean
   status?: boolean
   completedTasks?: boolean
+  waitlistPoints?: boolean
   invitedById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -2028,6 +2096,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   inviteQuota?: boolean
   status?: boolean
   completedTasks?: boolean
+  waitlistPoints?: boolean
   invitedById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -2046,6 +2115,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   inviteQuota?: boolean
   status?: boolean
   completedTasks?: boolean
+  waitlistPoints?: boolean
   invitedById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -2064,12 +2134,13 @@ export type UserSelectScalar = {
   inviteQuota?: boolean
   status?: boolean
   completedTasks?: boolean
+  waitlistPoints?: boolean
   invitedById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "fid" | "username" | "pfpUrl" | "wallet" | "role" | "password" | "inviteCode" | "inviteQuota" | "status" | "completedTasks" | "invitedById" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "fid" | "username" | "pfpUrl" | "wallet" | "role" | "password" | "inviteCode" | "inviteQuota" | "status" | "completedTasks" | "waitlistPoints" | "invitedById" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   invitedBy?: boolean | Prisma.User$invitedByArgs<ExtArgs>
   invites?: boolean | Prisma.User$invitesArgs<ExtArgs>
@@ -2114,6 +2185,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     inviteQuota: number
     status: $Enums.UserStatus
     completedTasks: string[]
+    waitlistPoints: number
     invitedById: number | null
     createdAt: Date
     updatedAt: Date
@@ -2560,6 +2632,7 @@ export interface UserFieldRefs {
   readonly inviteQuota: Prisma.FieldRef<"User", 'Int'>
   readonly status: Prisma.FieldRef<"User", 'UserStatus'>
   readonly completedTasks: Prisma.FieldRef<"User", 'String[]'>
+  readonly waitlistPoints: Prisma.FieldRef<"User", 'Int'>
   readonly invitedById: Prisma.FieldRef<"User", 'Int'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>

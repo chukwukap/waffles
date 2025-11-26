@@ -47,7 +47,7 @@ export default function StatsClient({
           <section
             className={cn(
               "grid grid-cols-2 gap-3 justify-items-center",
-              "w-full max-w-[361px] h-[200px]",
+              "w-full max-w-lg h-[200px]",
               "rounded-2xl border border-white/20",
               "py-6 px-3"
             )}
@@ -69,7 +69,7 @@ export default function StatsClient({
           <section
             className={cn(
               "grid grid-cols-2 gap-x-6 gap-y-6 justify-items-center",
-              "w-full max-w-[361px] h-[262px]",
+              "w-full max-w-lg h-[262px]",
               "rounded-2xl border border-white/20", // Assuming border color, user said border-width: 1px
               "pt-5 pb-5 px-3"
             )}

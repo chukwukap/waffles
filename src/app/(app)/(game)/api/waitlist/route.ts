@@ -24,7 +24,7 @@ async function getWaitlistRank(fid: number): Promise<number | null> {
   });
 
   // Not on waitlist or not a user
-  if (!user || user.status !== "WAITLIST") {
+  if (!user || (user.status !== "WAITLIST" && user.status !== "ACTIVE")) {
     return null;
   }
 
@@ -34,7 +34,7 @@ async function getWaitlistRank(fid: number): Promise<number | null> {
 
   // Find how many waitlist entries have a better (higher) score
   const allEntries = await prisma.user.findMany({
-    where: { status: "WAITLIST" },
+    where: { status: { in: ["WAITLIST", "ACTIVE"] } },
     select: { inviteQuota: true, createdAt: true },
   });
 
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
 
     // Return waitlist data
     const waitlistData: WaitlistData = {
-      onList: user.status === "WAITLIST",
+      onList: user.status === "WAITLIST" || user.status === "ACTIVE",
       rank,
       invites,
       completedTasks: user.completedTasks,

@@ -91,6 +91,7 @@ export const UserScalarFieldEnum = {
   inviteQuota: 'inviteQuota',
   status: 'status',
   completedTasks: 'completedTasks',
+  waitlistPoints: 'waitlistPoints',
   invitedById: 'invitedById',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

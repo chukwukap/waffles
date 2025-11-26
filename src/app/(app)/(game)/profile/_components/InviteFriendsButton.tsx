@@ -5,7 +5,7 @@ import React from 'react';
 const InviteFriendsButton = ({ onInvite }: { onInvite: () => void }) => {
     return (
         < div
-            className="relative flex items-center justify-between cursor-pointer group transition-all duration-300 ease-out hover:-translate-y-0.5 active:scale-[0.98] hover:shadow-[0_8px_24px_rgba(255,201,49,0.25)] w-full max-w-[361px]"
+            className="relative flex items-center justify-between cursor-pointer group transition-all duration-300 ease-out hover:-translate-y-0.5 active:scale-[0.98] hover:shadow-[0_8px_24px_rgba(255,201,49,0.25)] w-full max-w-lg"
             onClick={onInvite}
             style={{
                 height: '74px',

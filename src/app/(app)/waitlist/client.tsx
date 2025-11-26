@@ -1,6 +1,6 @@
 "use client";
 
-import { useComposeCast } from "@coinbase/onchainkit/minikit";
+import { useAddFrame, useComposeCast } from "@coinbase/onchainkit/minikit";
 import { notify } from "@/components/ui/Toaster";
 import {
   useCallback,
@@ -9,13 +9,14 @@ import {
   useActionState,
 } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import confetti from "canvas-confetti";
 
 import { joinWaitlistAction, type JoinWaitlistState } from "@/actions/waitlist";
+import { saveNotificationTokenAction } from "@/actions/notifications";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
-import { sdk } from "@farcaster/miniapp-sdk";
 import { env } from "@/lib/env";
 
 import { WaitlistFooter } from "./_components/Footer";
@@ -53,7 +54,8 @@ const itemVariants = {
 
 // --- Main Component ---
 export function WaitlistClient() {
-  const { context, isMiniAppReady, setMiniAppReady } = useMiniKit();
+  const { context } = useMiniKit();
+  const addFrame = useAddFrame()
   const searchParams = useSearchParams();
   const router = useRouter();
   const { composeCastAsync } = useComposeCast();
@@ -70,13 +72,6 @@ export function WaitlistClient() {
     joinWaitlistAction,
     { ok: false }
   );
-
-  // 3. Side Effects & Handlers
-
-  // Initialize MiniKit
-  useEffect(() => {
-    if (!isMiniAppReady) setMiniAppReady();
-  }, [isMiniAppReady, setMiniAppReady]);
 
   // Handle Join Success
   useEffect(() => {
@@ -112,29 +107,25 @@ export function WaitlistClient() {
     }
   }, [state.ok, pending, refetch]);
 
-  // Redirect ACTIVE users to game
-  useEffect(() => {
-    if (waitlistData?.status === "ACTIVE") {
-      router.replace("/game");
-    }
-  }, [waitlistData?.status, router]);
-
   const handleSubmit = useCallback(
     async (formData: FormData) => {
-      console.log("[WaitlistClient] handleSubmit called with fid:", fid);
+
 
       if (!fid) return;
 
-      // Trigger Add MiniApp
+      // Trigger Add MiniApp and store notification token
       try {
-        console.log("[WaitlistClient] Attempting to call sdk.actions.addMiniApp()");
-        console.log("[WaitlistClient] sdk object:", sdk);
-        console.log("[WaitlistClient] sdk.actions:", sdk?.actions);
+        const result = await addFrame()
 
-        const result = await sdk.actions.addMiniApp();
-        console.log("[WaitlistClient] addMiniApp result:", result);
+        // Store notification token if returned
+        if (result && context?.client.clientFid) {
+          await saveNotificationTokenAction(
+            fid,
+            context.client.clientFid,
+            result);
+        }
       } catch (error) {
-        console.error("[WaitlistClient] Failed to add miniapp:", error);
+        console.error("Failed to add miniapp:", error);
         // Continue with join even if addMiniApp fails
       }
 
@@ -142,7 +133,7 @@ export function WaitlistClient() {
         action(formData);
       });
     },
-    [action, fid]
+    [action, fid, context?.client.clientFid]
   );
 
   const handleShare = useCallback(async () => {
@@ -191,87 +182,108 @@ export function WaitlistClient() {
 
   if (waitlistData?.onList) {
     return (
-      <motion.section
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="flex-1 overflow-y-auto px-4 space-y-4 flex flex-col items-center"
-      >
-        {/* Logo */}
-        <motion.div variants={itemVariants} className="mt-14">
-          <div className="w-[224px] h-[42px] relative">
-            <Image
-              src="/logo-onboarding.png"
-              alt="WAFFLES logo"
-              width={224}
-              height={42}
-              priority
-              className="object-contain"
-            />
-          </div>
-        </motion.div>
-
-        {/* Scroll Illustration */}
-        <motion.div
-          variants={itemVariants}
-          className="flex-1 flex items-center justify-center min-h-[200px]"
+      <>
+        <motion.section
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="flex-1 overflow-y-auto px-4 space-y-2 flex flex-col items-center"
         >
-          <motion.div
-            animate={{ y: [0, -12, 0], rotate: [0, -2, 2, 0] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            whileHover={{ scale: 1.05, rotate: 0 }}
-          >
-            <Image
-              src="/images/illustrations/waitlist-scroll.svg"
-              width={170}
-              height={189}
-              priority
-              alt="scroll"
-              className="drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
-            />
+          {/* Logo */}
+          <motion.div variants={itemVariants} className="mt-8">
+            <div className="w-[122px] h-[23px] relative">
+              <Image
+                src="/logo-onboarding.png"
+                alt="WAFFLES logo"
+                width={224}
+                height={42}
+                priority
+                className="object-contain"
+              />
+            </div>
           </motion.div>
-        </motion.div>
 
-        {/* Content: Rank & Description */}
-        <motion.div
-          variants={itemVariants}
-          className="flex flex-col items-center text-center w-full pb-4"
-        >
-          <h1 className="font-body font-normal not-italic text-[44px] leading-[92%] tracking-[-0.03em] text-center text-white mb-1">YOU'RE ON <br />THE LIST!</h1>
-
-          {/* Dynamic Rank Message based on Figma design */}
-          <p className={"text-[#99A0AE] font-display font-medium text-[16px] leading-[130%] tracking-[-0.03em] text-center mb-2 text-pretty max-w-[320px] mx-auto"}>
-            {rankMsg(waitlistData.rank)} Move up faster <br />by completing tasks and inviting
-            friends!
-          </p>
-
-          {/* Primary Action: COMPLETE TASKS */}
-          <div className="mt-6 w-full flex flex-col items-center gap-4">
-            <FancyBorderButton
-              onClick={() => router.push("/waitlist/tasks")}
-              className={"mx-auto text-[#191919] text-[26px]"}
-              disabled={pending}
+          {/* Scroll Illustration */}
+          <motion.div
+            variants={itemVariants}
+            className="flex-1 flex items-center justify-center"
+          >
+            <motion.div
+              animate={{ y: [0, -12, 0], rotate: [0, -2, 2, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              whileHover={{ scale: 1.05, rotate: 0 }}
             >
-              COMPLETE TASKS
-            </FancyBorderButton>
+              <Image
+                src="/images/illustrations/waitlist-scroll.svg"
+                width={170}
+                height={189}
+                priority
+                alt="scroll"
+                className="drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
+              />
+            </motion.div>
+          </motion.div>
 
-            {/* Secondary Action: SHARE WAITLIST (Text Link Style) */}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleShare}
-              className="font-body text-[#00CFF2] text-[24px] leading-none tracking-normal hover:opacity-80 transition-opacity uppercase"
-            >
-              SHARE WAITLIST
-            </motion.button>
-          </div>
-        </motion.div>
+          {/* Content: Rank & Description */}
+          <motion.div
+            variants={itemVariants}
+            className="flex flex-col items-center text-center w-full pb-4"
+          >
+            <h1 className="font-body font-normal not-italic text-[44px] leading-[92%] tracking-[-0.03em] text-center text-white mb-1">YOU'RE ON <br />THE LIST!</h1>
 
-        {/* Mutuals Footer */}
-        <motion.div variants={itemVariants}>
-          <WaitlistMutuals mutualsData={mutualsData} />
-        </motion.div>
-      </motion.section>
+            {/* Dynamic Rank Message based on Figma design */}
+            <p className={"text-[#99A0AE] font-display font-medium text-[16px] leading-[130%] tracking-[-0.03em] text-center text-pretty mx-auto"}>
+              {rankMsg(waitlistData.rank)} Move up faster <br />by completing tasks and inviting
+              friends!
+            </p>
+
+            {/* Primary Action: COMPLETE TASKS */}
+            <div className="mt-4 w-full flex flex-col items-center gap-4">
+              <FancyBorderButton
+                onClick={() => router.push("/waitlist/tasks")}
+                className={"mx-auto text-[#191919] text-[26px]"}
+                disabled={pending}
+              >
+                COMPLETE TASKS
+              </FancyBorderButton>
+
+              {/* Secondary Actions: Two Links */}
+              <div className="flex gap-1 w-full max-w-sm justify-center">
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex-1"
+                >
+                  <button
+                    onClick={handleShare}
+                    className="w-full h-[45px] rounded-xl border-2 border-white/40 p-3 bg-white/9 font-body font-normal text-white text-[16px] leading-none tracking-normal uppercase"
+                  >
+                    SHARE WAITLIST
+                  </button>
+                </motion.div>
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex-1"
+                >
+                  <Link
+                    href="/waitlist/leaderboard"
+                    className="flex items-center justify-center w-full h-[45px] rounded-xl border-2 border-white/40 p-3 bg-white/9 font-body font-normal text-white text-[16px] leading-none tracking-normal uppercase"
+                  >
+                    SEE LEADERBOARD
+                  </Link>
+                </motion.div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Mutuals Footer */}
+          <motion.div variants={itemVariants} className="mb-1 mt-[5vh]">
+            <WaitlistMutuals mutualsData={mutualsData} />
+          </motion.div>
+        </motion.section>
+        <WaitlistFooter />
+      </>
     );
   }
 
@@ -327,14 +339,13 @@ export function WaitlistClient() {
 
           <FancyBorderButton
             onClick={() => {
-              console.log("[WaitlistClient] Button clicked, fid:", fid);
               const formData = new FormData();
               if (fid) formData.append("fid", fid.toString());
               if (ref) formData.append("ref", ref.toString());
               handleSubmit(formData);
             }}
             disabled={pending}
-            className={"mx-auto text-[#191919] text-[26px] px-5 w-full max-w-full"}
+            className={"mx-auto text-[#191919] text-[26px] my-2 px-5 w-full max-w-full"}
           >
             {pending ? "JOINING..." : "GET ME ON THE LIST"}
           </FancyBorderButton>

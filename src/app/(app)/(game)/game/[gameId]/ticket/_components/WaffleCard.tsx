@@ -1,10 +1,20 @@
-import { SetStateAction, Dispatch, useState } from "react";
+import {
+  SetStateAction,
+  Dispatch,
+  startTransition,
+  useActionState,
+  useEffect,
+  useState,
+} from "react";
 import Image from "next/image";
-import { createTicketCharge } from "@/actions/commerce";
-import { useAuth } from "@/hooks/useAuth";
+import { purchaseTicketAction } from "@/actions/ticket";
 import { notify } from "@/components/ui/Toaster";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { Ticket } from "@/lib/db";
+import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { parseUnits } from "viem";
+import { env } from "@/lib/env";
+import { USDC_TRANSFER_ABI } from "@/lib/constants";
 
 // --- InfoBox Helper Component ---
 // A small component for the "Spots" and "Prize pool" boxes
@@ -69,68 +79,80 @@ export const WaffleCard = ({
   gameId: number;
   setTicket: Dispatch<SetStateAction<Ticket | null>>;
 }) => {
-  const { signIn } = useAuth();
-  const [pending, setPending] = useState(false);
+  const [txHash, setTxHash] = useState<`0x${string}` | undefined>(undefined);
 
-  // --- Handlers ---
-  const handlePurchase = async () => {
-    if (pending) return; // Prevent double clicks
+  const [state, buyWaffleAction, pending] = useActionState(
+    purchaseTicketAction,
+    null
+  );
 
-    try {
-      setPending(true);
-      // 1. Authenticate user
-      const token = await signIn();
-      if (!token) {
-        notify.error("Authentication required to purchase tickets.");
-        return;
-      }
+  // Basic wagmi hooks for direct transaction
+  const { writeContract, isPending: isWritePending } = useWriteContract();
 
-      notify.info("Creating payment...");
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash: txHash,
+  });
 
-      // 2. Create Coinbase Commerce charge
-      const result = await createTicketCharge({
-        fid,
-        gameId,
-        amount: price,
-        authToken: token,
+  // Watch for transaction confirmation
+  useEffect(() => {
+    if (isConfirmed && txHash) {
+      const formData = new FormData();
+      formData.append("fid", String(fid));
+      formData.append("gameId", String(gameId));
+      formData.append("txHash", txHash);
+
+      startTransition(() => {
+        buyWaffleAction(formData);
       });
+    }
+  }, [isConfirmed, txHash, fid, gameId, buyWaffleAction]);
 
-      if (!result.success) {
-        notify.error(result.error || "Failed to create payment");
-        return;
-      }
+  // Watch for server action response
+  useEffect(() => {
+    if (state?.status === "success") {
+      setTicket(state.ticket ?? null);
+      notify.success("Ticket purchased successfully!");
+    } else if (state?.status === "error") {
+      notify.error(state.error || "Failed to purchase ticket.");
+    }
+  }, [state, setTicket]);
 
-      // 3. Redirect to Coinbase Commerce checkout
-      // The user will complete payment there and be redirected back
-      notify.success("Redirecting to checkout...");
-      window.location.href = result.chargeUrl;
+  const handlePurchase = () => {
+    try {
+      notify.info("Initiating transaction...");
 
+      writeContract(
+        {
+          address: env.nextPublicUsdcAddress as `0x${string}`,
+          abi: USDC_TRANSFER_ABI,
+          functionName: "transfer",
+          args: [
+            env.nextPublicTreasuryWallet as `0x${string}`,
+            parseUnits(price.toString(), 6),
+          ],
+        },
+        {
+          onSuccess: (hash) => {
+            setTxHash(hash);
+            notify.info("Transaction submitted. Waiting for confirmation...");
+          },
+          onError: (error) => {
+            console.error("Transaction failed:", error);
+            notify.error("Transaction failed. Please try again.");
+          },
+        }
+      );
     } catch (err) {
-      console.error("Ticket purchase failed:", err);
-      const message =
-        err instanceof Error ? err.message : "An unknown error occurred.";
-
-      // Refine error messages
-      let displayError = "Ticket purchase failed. Please try again.";
-      if (message.toLowerCase().includes("user rejected")) {
-        displayError = "Transaction cancelled.";
-      } else if (message.includes("Invite required")) {
-        displayError = "Redeem an invite code before buying a ticket.";
-      } else if (message.includes("already purchased") ||
-        message.includes("already have a ticket")) {
-        displayError = "You already have a ticket for this game.";
-      } else if (message.includes("Authentication required")) {
-        displayError = message;
-      } else if (message) {
-        displayError = message;
-      }
-
-      notify.error(displayError);
+      console.error("Failed to initiate purchase:", err);
+      notify.error("An unexpected error occurred.");
     }
   };
+
+  const isProcessing = isWritePending || isConfirming || pending;
+
   return (
     <div
-      className="box-border flex flex-col justify-center items-center gap-6 p-5 px-3 border border-white/10 rounded-2xl w-full max-w-[361px] h-auto min-h-[207px]"
+      className="box-border flex flex-col justify-center items-center gap-6 p-5 px-3 border border-white/10 rounded-2xl w-full max-w-lg h-auto min-h-[207px]"
     >
       {/* Top section with Spots and Prize pool (in a new row wrapper) */}
       <div className="flex flex-row justify-center items-center gap-4 sm:gap-6 w-full">
@@ -151,13 +173,15 @@ export const WaffleCard = ({
       </div>
 
       {/* Button */}
-      <div className="w-full max-w-[337px]">
+      <div className="w-full max-w-lg">
+
         <FancyBorderButton
-          fullWidth
-          disabled={pending}
+          disabled={isProcessing}
           onClick={handlePurchase}
         >
-          {pending ? "BUYING..." : `BUY WAFFLE $${price}`}
+          {isProcessing
+            ? "PROCESSING..."
+            : `BUY WAFFLE $${price}`}
         </FancyBorderButton>
       </div>
     </div>

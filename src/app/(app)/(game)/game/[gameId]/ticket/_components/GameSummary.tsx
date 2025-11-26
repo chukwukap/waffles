@@ -22,7 +22,7 @@ export function GameSummaryCard({
     <div
       className="
         relative flex flex-col box-border
-        w-full max-w-[361px] h-[151px]
+        w-full max-w-lg h-[151px]
         border border-[#FFC931] rounded-[16px]
         mx-auto
         mt-8

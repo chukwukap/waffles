@@ -29,7 +29,7 @@ export const CountdownTimer = ({
   return (
     // Main container with exact dimensions and layout
     <div
-      className="flex flex-col items-center justify-start w-full max-w-[361px] h-auto min-h-[388px]"
+      className="flex flex-col items-center justify-start w-full max-w-lg h-auto min-h-[388px]"
     >
       <div
         className="font-body text-white text-center uppercase mb-15"

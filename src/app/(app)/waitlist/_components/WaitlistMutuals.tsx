@@ -22,7 +22,7 @@ export function WaitlistMutuals({ mutualsData }: WaitlistMutualsProps) {
             whileHover={{ scale: 1.05 }}
         >
             <CardStack
-                size="clamp(25px, 9vw, 42px)"
+                size={21.05}
                 borderColor="#FFFFFF"
                 rotations={[-8, 5, -5, 7]}
                 imageUrls={
@@ -33,9 +33,9 @@ export function WaitlistMutuals({ mutualsData }: WaitlistMutualsProps) {
             />
             <p className="font-medium font-display text-[#99A0AE] text-[16px] leading-[130%] tracking-[-0.03em] text-center">
                 {mutualsData?.mutualCount === 0
-                    ? "You and others are on the list"
-                    : `You and ${mutualsData?.mutualCount ?? 0} friend${(mutualsData?.mutualCount ?? 0) === 1 ? "" : "s"
-                    } are on the list`}
+                    ? "No friends are on the list yet"
+                    : `${mutualsData?.mutualCount ?? 0} friend${(mutualsData?.mutualCount ?? 0) === 1 ? "" : "s"
+                    } ${(mutualsData?.mutualCount ?? 0) === 1 ? "is" : "are"} on the list`}
             </p>
         </motion.div>
     );

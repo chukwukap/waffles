@@ -46,3 +46,16 @@ export const SOUNDS = {
 } as const;
 
 export type SoundName = keyof typeof SOUNDS;
+
+export const USDC_TRANSFER_ABI = [
+  {
+    name: "transfer",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "to", type: "address" },
+      { name: "amount", type: "uint256" },
+    ],
+    outputs: [{ name: "", type: "bool" }],
+  },
+] as const;

@@ -4,7 +4,6 @@ import { prisma } from "@/lib/db";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { verifyAuthenticatedUser } from "@/lib/auth";
-import { sendPrizePayout } from "@/lib/payoutService";
 
 const claimPrizeSchema = z.object({
   fid: z.coerce.number().int().positive("Invalid FID format."),
@@ -68,7 +67,6 @@ export async function claimPrizeAction(
     const gamePlayer = await prisma.gamePlayer.findUnique({
       where: { gameId_userId: { gameId, userId: user.id } },
       select: {
-        id: true,
         claimedAt: true,
         rank: true,
         score: true,
@@ -97,59 +95,31 @@ export async function claimPrizeAction(
     // Assuming Rank 1 is the only winner for now, OR if winnings > 0
     const isEligible = gamePlayer.rank === 1 || winnings > 0;
 
-    if (!isEligible || winnings === 0) {
-      return { success: false, error: "No prize to claim." };
+    if (!isEligible) {
+      return { success: false, error: "Not eligible for a prize." };
     }
 
-    // Verify user has wallet address
-    if (!user.wallet) {
-      return {
-        success: false,
-        error: "Please connect a wallet to your profile to claim prizes.",
-      };
-    }
+    // 4. Simulate/Execute Payout (Mocked for now)
+    // In production, you'd trigger a payout via OnchainKit or a backend wallet here.
+    // await sendUSDC(user.wallet, winnings);
 
-    // 4. Execute Payout
-    const payoutResult = await sendPrizePayout(
-      user.wallet,
-      winnings,
-      gamePlayer.id
-    );
+    // 5. Update Database
+    const claimedAt = new Date();
+    await prisma.gamePlayer.update({
+      where: { gameId_userId: { gameId, userId: user.id } },
+      data: {
+        claimedAt: claimedAt,
+      },
+    });
 
-    if (!payoutResult.success) {
-      // Log failed payout for admin review
-      await prisma.auditLog.create({
-        data: {
-          adminId: 1, // System user - you may need to create this or use a different ID
-          action: "PAYOUT_FAILED",
-          entityType: "GamePlayer",
-          entityId: gamePlayer.id,
-          details: {
-            error: payoutResult.error,
-            wallet: user.wallet,
-            amount: winnings,
-            fid: fid,
-          },
-          ip: null,
-        },
-      });
-
-      return {
-        success: false,
-        error:
-          payoutResult.error ||
-          "Failed to send prize payment. Please contact support.",
-      };
-    }
-
-    // 5. Revalidate UI
+    // 6. Revalidate UI
     revalidatePath(`/profile/${gameId}`);
     revalidatePath(`/profile`);
 
     return {
       success: true,
-      message: `Prize of $${winnings} USDC sent successfully! Transaction: ${payoutResult.txHash}`,
-      claimedAt: new Date(),
+      message: "Prize claimed successfully!",
+      claimedAt: claimedAt,
     };
   } catch (error) {
     console.error("ClaimPrizeAction Error:", error);

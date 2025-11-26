@@ -2,6 +2,13 @@
 
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { TASKS } from "@/app/(app)/waitlist/tasks/client";
+
+// Derive task points from the source of truth
+const TASK_POINTS = TASKS.reduce((acc: Record<string, number>, task) => {
+  acc[task.id] = task.points;
+  return acc;
+}, {} as Record<string, number>);
 import { z } from "zod";
 import { Prisma } from "../../prisma/generated/client";
 import { trackServer } from "@/lib/analytics-server";
@@ -189,8 +196,8 @@ export async function completeWaitlistTask(
       return { success: false, error: "User not found" };
     }
 
-    // Verify "invite_friends" task
-    if (taskId === "invite_friends") {
+    // Verify "invite_three_friends" task
+    if (taskId === "invite_three_friends") {
       if (user._count.invites < 3) {
         return {
           success: false,
@@ -204,20 +211,30 @@ export async function completeWaitlistTask(
       return { success: true, message: "Task already completed" };
     }
 
-    // Add task to completed list
+    // Get points for this task
+    const pointsToAward = TASK_POINTS[taskId] || 0;
+
+    // Add task to completed list and award points
     await prisma.user.update({
       where: { id: user.id },
       data: {
         completedTasks: {
           push: taskId,
         },
+        waitlistPoints: {
+          increment: pointsToAward,
+        },
       },
     });
 
     revalidatePath("/waitlist");
     revalidatePath("/waitlist/tasks");
+    revalidatePath("/waitlist/leaderboard");
 
-    return { success: true, message: "Task completed successfully" };
+    return {
+      success: true,
+      message: `Task completed! +${pointsToAward} points`,
+    };
   } catch (error) {
     console.error("Error completing task:", error);
     return { success: false, error: "Failed to complete task" };

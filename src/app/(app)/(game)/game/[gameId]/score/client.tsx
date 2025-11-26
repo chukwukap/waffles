@@ -58,7 +58,7 @@ export default function ScorePageClient({
         You finished faster than {percentile}% of your friends
       </p>
 
-      <div className="w-full max-w-[360px] mt-6 flex flex-col gap-3">
+      <div className="w-full max-w-lg mt-6 flex flex-col gap-3">
         <FancyBorderButton className="text-[#14B985] border-[#14B985]">
           SHARE SCORE
         </FancyBorderButton>

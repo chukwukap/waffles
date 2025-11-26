@@ -162,7 +162,7 @@ export default function WinningsCard({
   return (
     <div
       className={cn(
-        "relative flex flex-col w-full max-w-[361px] h-auto",
+        "relative flex flex-col w-full max-w-lg h-auto",
         "rounded-[32px] border border-white/20",
         "bg-[#D8FFF1]/10", // Subtle green tint matching the mock
         "p-6 gap-6",

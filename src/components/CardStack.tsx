@@ -64,12 +64,10 @@ export function CardStack({
     [spotsAvatars, maxCards]
   );
 
-  const styleVariables = {
-    "--card-size": typeof size === "number" ? `${size}px` : size,
-    "--card-border": `calc(var(--card-size) * 0.07)`,
-    "--card-radius": `calc(var(--card-size) * 0.14)`,
-    "--card-overlap": `calc(var(--card-size) * 0.52)`,
-  } as React.CSSProperties;
+
+  const cardSize = typeof size === "number" ? size : null;
+  const cardSizeStr = typeof size === "number" ? `${size}px` : size;
+  const overlapStr = cardSize ? `${cardSize * 0.52}px` : `clamp(10.92px, 4.68vw, 24.96px)`;
 
   return (
     <motion.div
@@ -78,7 +76,6 @@ export function CardStack({
       onPointerLeave={handleLeave}
       aria-label={ariaLabel}
       className={cn("relative flex items-center justify-center", className)}
-      style={styleVariables}
     >
       {cardsToDisplay.map((img, i) => {
         const staticRotation = rotations[i % rotations.length] ?? 0;
@@ -88,12 +85,12 @@ export function CardStack({
           <motion.div
             key={`${imageUrl}-${i}`}
             style={{
-              width: "var(--card-size)",
-              height: "var(--card-size)",
-              marginLeft: i === 0 ? 0 : `calc(-1 * var(--card-overlap))`,
+              width: cardSizeStr,
+              height: cardSizeStr,
+              marginLeft: i === 0 ? 0 : `-${overlapStr}`,
               borderColor: borderColor,
-              borderWidth: "var(--card-border)",
-              borderRadius: "var(--card-radius)",
+              borderWidth: "1.5px",
+              borderRadius: "3.01px",
               rotate: interactive ? 0 : `${staticRotation}deg`,
               zIndex: 10 + i,
             }}
@@ -113,7 +110,7 @@ export function CardStack({
                 src={imageUrl}
                 alt={`Card ${i + 1}`}
                 fill
-                sizes="var(--card-size)"
+                sizes={cardSizeStr}
                 className="object-cover"
                 priority={i < 2}
               />

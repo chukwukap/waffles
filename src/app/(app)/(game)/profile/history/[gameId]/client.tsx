@@ -106,7 +106,7 @@ export default function GameDetailsClient({
             />
 
             {/* ─────────── 3. Interaction Area (Button or Status) ─────────── */}
-            <div className="w-full max-w-[361px] flex flex-col items-center gap-4">
+            <div className="w-full max-w-lg flex flex-col items-center gap-4">
 
                 {isClaimed ? (
                     /* STATE: CLAIMED */

@@ -57,7 +57,7 @@ export const InviteDrawer = ({ isOpen, onClose, inviteLink }: { isOpen: boolean;
       >
         <div
           className={cn(
-            "relative w-full max-w-[393px] mx-auto bg-white shadow-2xl overflow-hidden",
+            "relative w-full max-w-lg mx-auto bg-white shadow-2xl overflow-hidden",
             "transition-transform duration-500 cubic-bezier(0.32, 0.72, 0, 1)", // Custom 'ease-out-expo' feel
             "border-t-2 border-white/20", // Subtle highlight
             isOpen ? "translate-y-0 pointer-events-auto" : "translate-y-full pointer-events-none"

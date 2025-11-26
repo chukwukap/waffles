@@ -23,6 +23,10 @@ const envSchema = z.object({
     .int()
     .positive()
     .default(25),
+  NEXT_PUBLIC_TREASURY_WALLET: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Treasury Wallet address")
+    .optional(), // Optional because we provide a default in getEnv
 
   // Account Association (optional for development)
   NEXT_PUBLIC_ACCOUNT_ASSOCIATION_HEADER: z.string().optional(),
@@ -31,22 +35,10 @@ const envSchema = z.object({
 
   // URLs
   NEXT_PUBLIC_URL: z.string().url().optional(),
+  NEXT_PUBLIC_APP_URL: z.string().url().optional(),
   VERCEL_PROJECT_PRODUCTION_URL: z.string().optional(),
   VERCEL_URL: z.string().optional(),
   VERCEL_ENV: z.enum(["production", "preview", "development"]).optional(),
-
-  // Coinbase Commerce (server-only)
-  COINBASE_COMMERCE_API_KEY: isServer
-    ? z.string().min(1, "COINBASE_COMMERCE_API_KEY is required")
-    : z.string().optional(),
-  COINBASE_COMMERCE_WEBHOOK_SECRET: isServer
-    ? z.string().min(1, "COINBASE_COMMERCE_WEBHOOK_SECRET is required")
-    : z.string().optional(),
-
-  // Payout Wallet (server-only)
-  PAYOUT_WALLET_PRIVATE_KEY: isServer
-    ? z.string().regex(/^0x[a-fA-F0-9]{64}$/, "Invalid private key format")
-    : z.string().optional(),
 });
 
 const getEnv = () => {
@@ -65,13 +57,10 @@ const getEnv = () => {
     NEXT_PUBLIC_ACCOUNT_ASSOCIATION_SIGNATURE:
       process.env.NEXT_PUBLIC_ACCOUNT_ASSOCIATION_SIGNATURE,
     NEXT_PUBLIC_URL: process.env.NEXT_PUBLIC_URL,
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL,
     VERCEL_URL: process.env.VERCEL_URL,
     VERCEL_ENV: process.env.VERCEL_ENV,
-    COINBASE_COMMERCE_API_KEY: process.env.COINBASE_COMMERCE_API_KEY,
-    COINBASE_COMMERCE_WEBHOOK_SECRET:
-      process.env.COINBASE_COMMERCE_WEBHOOK_SECRET,
-    PAYOUT_WALLET_PRIVATE_KEY: process.env.PAYOUT_WALLET_PRIVATE_KEY,
   });
 
   if (!parsed.success) {
@@ -94,19 +83,16 @@ const getEnv = () => {
         neynarApiKey: "",
         nextPublicOnchainkitApiKey:
           process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY || "",
-        waffleMainAddress: (process.env.NEXT_PUBLIC_WAFFLE_MAIN_ADDRESS ||
-          "") as `0x${string}`,
         nextPublicUsdcAddress: (process.env.NEXT_PUBLIC_USDC_ADDRESS ||
           "") as `0x${string}`,
         nextPublicLeaderboardPageSize: 25,
+        nextPublicTreasuryWallet: (process.env.NEXT_PUBLIC_TREASURY_WALLET ||
+          "0xd584F8079192E078F0f3237622345E19360384A2") as `0x${string}`,
         accountAssociation: {
           header: undefined,
           payload: undefined,
           signature: undefined,
         },
-        coinbaseCommerceApiKey: "",
-        coinbaseCommerceWebhookSecret: "",
-        payoutWalletPrivateKey: undefined,
       };
     }
   }
@@ -115,6 +101,7 @@ const getEnv = () => {
 
   const resolveRootUrl = () => {
     if (data.NEXT_PUBLIC_URL) return data.NEXT_PUBLIC_URL;
+    if (data.NEXT_PUBLIC_APP_URL) return data.NEXT_PUBLIC_APP_URL;
     if (
       data.VERCEL_ENV === "production" &&
       data.VERCEL_PROJECT_PRODUCTION_URL
@@ -129,17 +116,15 @@ const getEnv = () => {
     rootUrl: resolveRootUrl().replace(/\/$/, ""),
     neynarApiKey: data.NEYNAR_API_KEY!,
     nextPublicOnchainkitApiKey: data.NEXT_PUBLIC_ONCHAINKIT_API_KEY,
-    waffleMainAddress: data.NEXT_PUBLIC_WAFFLE_MAIN_ADDRESS as `0x${string}`,
     nextPublicUsdcAddress: data.NEXT_PUBLIC_USDC_ADDRESS as `0x${string}`,
     nextPublicLeaderboardPageSize: data.NEXT_PUBLIC_LEADERBOARD_PAGE_SIZE,
+    nextPublicTreasuryWallet: (process.env.NEXT_PUBLIC_TREASURY_WALLET ||
+      "0xd584F8079192E078F0f3237622345E19360384A2") as `0x${string}`, // Default to demo wallet if missing
     accountAssociation: {
       header: data.NEXT_PUBLIC_ACCOUNT_ASSOCIATION_HEADER,
       payload: data.NEXT_PUBLIC_ACCOUNT_ASSOCIATION_PAYLOAD,
       signature: data.NEXT_PUBLIC_ACCOUNT_ASSOCIATION_SIGNATURE,
     },
-    coinbaseCommerceApiKey: data.COINBASE_COMMERCE_API_KEY || "",
-    coinbaseCommerceWebhookSecret: data.COINBASE_COMMERCE_WEBHOOK_SECRET || "",
-    payoutWalletPrivateKey: data.PAYOUT_WALLET_PRIVATE_KEY,
   };
 };
 

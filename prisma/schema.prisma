@@ -27,6 +27,7 @@ model User {
   inviteQuota    Int        @default(3)
   status         UserStatus @default(NONE)
   completedTasks String[]   @default([])
+  waitlistPoints Int        @default(0)
 
   // -- RELATIONSHIPS --
   invitedBy   User?            @relation("ReferralTree", fields: [invitedById], references: [id])

@@ -95,7 +95,7 @@ export function QuestionCard({
 
   // Handler for user selecting an option
   const handleSelect = (index: number) => {
-    if (hasSubmitted || pending) return;
+    if (pending) return; // Only prevent during active submission
 
     // 1. Update UI immediately
     setSelectedOptionIndex(index);
@@ -105,7 +105,7 @@ export function QuestionCard({
     const now = Date.now();
     const timeTakenMs = Math.min(now - startTimeRef.current, duration * 1000);
 
-    // 3. Submit immediately (Security: prevents looking up answer then submitting)
+    // 3. Submit immediately (allows changing answer - last submission wins)
     submitAnswer(index, timeTakenMs);
   };
 
@@ -147,7 +147,7 @@ export function QuestionCard({
 
   // ───────────────────────── UI ─────────────────────────
   return (
-    <div className="w-full max-w-md sm:max-w-lg mx-auto mt-2">
+    <div className="w-full max-w-lg mx-auto mt-2">
       <QuestionCardHeader
         questionNumber={questionNumber}
         totalQuestions={totalQuestions}
@@ -157,7 +157,7 @@ export function QuestionCard({
 
       {/* Question Card Content */}
       <section
-        className="mx-auto w-full max-w-screen-sm px-4  animate-up"
+        className="mx-auto w-full max-w-lg px-4  animate-up"
         aria-live="polite"
       >
         {/* Game Title - Use new `content` field */}
@@ -189,7 +189,7 @@ export function QuestionCard({
         {/* Image Section - Use new `mediaUrl` field and check if it exists */}
         {question.mediaUrl && (
           <figure className="mx-auto mb-4 flex justify-center w-full">
-            <div className="relative w-full max-w-[299px] h-[158px] rounded-[10px] overflow-hidden bg-[#17171a] border border-[#313136] shadow-[0_8px_0_#000]">
+            <div className="relative w-full max-w-lg h-[158px] rounded-[10px] overflow-hidden bg-[#17171a] border border-[#313136] shadow-[0_8px_0_#000]">
               <Image
                 src={question.mediaUrl}
                 alt={question.content || "Question media"}
@@ -215,7 +215,7 @@ export function QuestionCard({
                 palette={palette}
                 selectedOptionIndex={selectedOptionIndex}
                 onSelect={handleSelect}
-                disabled={pending || hasSubmitted}
+                disabled={pending}
               />
             );
           })}

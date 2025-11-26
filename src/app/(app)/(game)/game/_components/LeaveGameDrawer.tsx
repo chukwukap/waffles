@@ -130,7 +130,7 @@ export default function LeaveGameDrawer({
                   overflowY: "auto",
                 }}
               >
-                <div className="mx-auto w-full max-w-[393px] pt-8 pb-6 text-center">
+                <div className="mx-auto w-full max-w-lg pt-8 pb-6 text-center">
                   <div className="mb-3 inline-block">
                     <Image
                       src="/images/illustrations/leave-door.svg"
