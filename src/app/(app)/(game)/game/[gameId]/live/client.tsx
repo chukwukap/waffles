@@ -40,17 +40,16 @@ function shouldShowRoundCountdown(
 }
 
 export default function LiveGameClient({
-  gameInfoPromise,
-  userInfoPromise,
+  gameInfo,
+  userInfo,
   initialQuestionIndex = 0, // New prop for resuming game
 }: {
-  gameInfoPromise: Promise<LiveGameInfoPayload | null>;
-  userInfoPromise: Promise<LiveGameUserInfoPayload | null>;
+  gameInfo: LiveGameInfoPayload | null;
+  userInfo: LiveGameUserInfoPayload | null;
   initialQuestionIndex?: number;
 }) {
   const router = useRouter();
-  const gameInfo = React.use(gameInfoPromise);
-  const userInfo = React.use(userInfoPromise);
+
   const { playSound } = useSound();
 
   // Initialize state with the calculated index from the server

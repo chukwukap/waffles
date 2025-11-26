@@ -4,7 +4,7 @@ import { MinikitProvider } from "./MinikitProvider";
 import GlobalToaster from "../ui/Toaster";
 import { OnboardingGate } from "../onboarding/onboarding-gate";
 import { SoundProvider } from "./SoundContext";
-import { AnalyticsProvider } from "./AnalyticsProvider";
+
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -12,7 +12,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <SoundProvider>
         <OnboardingGate>
           {children}
-          <AnalyticsProvider />
+
           <GlobalToaster />
         </OnboardingGate>
       </SoundProvider>

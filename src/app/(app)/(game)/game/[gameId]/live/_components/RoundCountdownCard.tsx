@@ -4,11 +4,10 @@
 import { CountdownTimer } from "./CountDownTimer";
 
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useSound } from "@/components/providers/SoundContext";
 import LiveEventFeed from "../../../_components/LiveEventFeed";
 import { Chat } from "../../../_components/chat/Chat";
-import { ChatInput } from "../../../_components/chat/ChatTrigger";
 
 export default function RoundCountdownCard({
   duration,
@@ -21,7 +20,6 @@ export default function RoundCountdownCard({
   gameId: number | null;
   nextRoundNumber: number;
 }) {
-  const [chatOpen, setChatOpen] = useState(false);
   const { playSound } = useSound();
 
   useEffect(() => {
@@ -38,12 +36,7 @@ export default function RoundCountdownCard({
         />
         <LiveEventFeed maxEvents={5} gameId={gameId} />
       </div>
-      <Chat
-        isOpen={chatOpen}
-        onClose={() => setChatOpen(false)}
-        gameId={gameId}
-      />
-      <ChatInput onOpenChat={() => setChatOpen(true)} />
+      <Chat gameId={gameId} />
     </>
   );
 }

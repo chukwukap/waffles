@@ -17,6 +17,14 @@ export function calculatePrizePool({
   return ticketsNum * ticketPrice + additionPrizePool;
 }
 
+export function formatTime(remainingSeconds: number): string {
+  const seconds = Math.max(0, remainingSeconds);
+  const minutes = Math.floor(seconds / 60);
+  const secondsPart = Math.floor(seconds % 60);
+  const paddedSeconds = String(secondsPart).padStart(2, "0");
+  return `${minutes}M ${paddedSeconds}S`;
+}
+
 /**
  * Formats remaining seconds into "MM:SS" string.
  * @param remainingSeconds Total remaining seconds.

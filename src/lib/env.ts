@@ -8,13 +8,18 @@ const envSchema = z.object({
     ? z.string().min(1, "NEYNAR_API_KEY is required")
     : z.string().optional(),
 
+  // Redis
+  UPSTASH_REDIS_REST_URL: isServer
+    ? z.string().min(1, "UPSTASH_REDIS_REST_URL is required")
+    : z.string().optional(),
+  UPSTASH_REDIS_REST_TOKEN: isServer
+    ? z.string().min(1, "UPSTASH_REDIS_REST_TOKEN is required")
+    : z.string().optional(),
+
   // Client
   NEXT_PUBLIC_ONCHAINKIT_API_KEY: z
     .string()
     .min(1, "NEXT_PUBLIC_ONCHAINKIT_API_KEY is required"),
-  NEXT_PUBLIC_WAFFLE_MAIN_ADDRESS: z
-    .string()
-    .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid contract address"),
   NEXT_PUBLIC_USDC_ADDRESS: z
     .string()
     .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid USDC address"),
@@ -44,9 +49,9 @@ const envSchema = z.object({
 const getEnv = () => {
   const parsed = envSchema.safeParse({
     NEYNAR_API_KEY: process.env.NEYNAR_API_KEY,
+    UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
+    UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
     NEXT_PUBLIC_ONCHAINKIT_API_KEY: process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY,
-    NEXT_PUBLIC_WAFFLE_MAIN_ADDRESS:
-      process.env.NEXT_PUBLIC_WAFFLE_MAIN_ADDRESS,
     NEXT_PUBLIC_USDC_ADDRESS: process.env.NEXT_PUBLIC_USDC_ADDRESS,
     NEXT_PUBLIC_LEADERBOARD_PAGE_SIZE:
       process.env.NEXT_PUBLIC_LEADERBOARD_PAGE_SIZE,
@@ -115,6 +120,8 @@ const getEnv = () => {
   return {
     rootUrl: resolveRootUrl().replace(/\/$/, ""),
     neynarApiKey: data.NEYNAR_API_KEY!,
+    upstashRedisRestUrl: data.UPSTASH_REDIS_REST_URL!,
+    upstashRedisRestToken: data.UPSTASH_REDIS_REST_TOKEN!,
     nextPublicOnchainkitApiKey: data.NEXT_PUBLIC_ONCHAINKIT_API_KEY,
     nextPublicUsdcAddress: data.NEXT_PUBLIC_USDC_ADDRESS as `0x${string}`,
     nextPublicLeaderboardPageSize: data.NEXT_PUBLIC_LEADERBOARD_PAGE_SIZE,

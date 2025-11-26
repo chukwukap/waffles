@@ -92,7 +92,7 @@ model Game {
   title       String
   description String?
   theme       GameTheme
-  coverUrl    String?
+  coverUrl    String
   status      GameStatus @default(SCHEDULED)
 
   // -- TIMING --
@@ -103,7 +103,6 @@ model Game {
   entryFee         Int @default(50)
   prizePool        Int @default(0)
   roundDurationSec Int @default(15)
-  questionCount    Int @default(9)
   maxPlayers       Int @default(200)
 
   // -- DATA --
@@ -144,8 +143,8 @@ model Question {
 
   // -- CONTENT --
   content      String
-  mediaUrl     String? // Optional image/video for the question
-  soundUrl     String? // Optional audio for the question
+  mediaUrl     String // Optional image/video for the question
+  soundUrl     String // Optional audio for the question
   options      String[]
   correctIndex Int
 
@@ -190,7 +189,6 @@ enum TicketStatus {
   REDEEMED // They have entered the lobby
 }
 
-// RENAMED: GameParticipant -> GamePlayer
 // This is the "Live State" of a user in a specific game.
 model GamePlayer {
   id     Int  @id @default(autoincrement())
@@ -202,10 +200,9 @@ model GamePlayer {
   claimedAt DateTime? // Timestamp when the prize was claimed
 
   // -- LEADERBOARD DATA --
-  score        Int      @default(0)
-  rank         Int? // Null until game ends
-  isEliminated Boolean  @default(false)
-  joinedAt     DateTime @default(now())
+  score    Int      @default(0)
+  rank     Int? // Null until game ends
+  joinedAt DateTime @default(now())
 
   // Faster Lookups: We want to find the top scorers of a specific game quickly
   @@unique([gameId, userId])
@@ -222,10 +219,10 @@ model Answer {
   question   Question @relation(fields: [questionId], references: [id])
   questionId Int
 
-  selectedIndex Int // CHANGED: Stores the index of the selected option (or -1 for no answer)
+  selectedIndex Int // Stores the index of the selected option (or -1 for no answer)
   isCorrect     Boolean
   pointsEarned  Int     @default(0)
-  latencyMs     Int // CHANGED: Time taken in milliseconds
+  latencyMs     Int // Time taken in milliseconds
 
   createdAt DateTime @default(now())
 
@@ -245,7 +242,7 @@ model Chat {
   gameId    Int
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
-  text      String // 'message' -> 'text' (Shorter)
+  text      String
   createdAt DateTime @default(now())
 
   @@index([gameId, createdAt]) // For loading chat history fast
@@ -257,7 +254,7 @@ model NotificationToken {
   userId    Int
   appFid    Int
   token     String
-  url       String // Added this back from your original schema
+  url       String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -279,8 +276,7 @@ model AuditLog {
   entityId   Int? // ID of affected entity
   details    Json? // Additional context (before/after values, etc.)
   ip         String? // Admin's IP address
-
-  createdAt DateTime @default(now())
+  createdAt  DateTime @default(now())
 
   @@index([adminId, createdAt])
   @@index([entityType, entityId])

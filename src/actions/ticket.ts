@@ -4,17 +4,16 @@ import { prisma } from "@/lib/db";
 import { randomBytes } from "crypto";
 import { z } from "zod";
 import type { Ticket } from "../../prisma/generated/client";
-import { createPublicClient, http, parseUnits, decodeFunctionData } from "viem";
+import { createPublicClient, http, decodeFunctionData } from "viem";
 import { base } from "viem/chains";
-import { env } from "@/lib/env";
 import { USDC_TRANSFER_ABI } from "@/lib/constants";
+import { revalidatePath } from "next/cache";
 
 // Schema for input validation
 const purchaseSchema = z.object({
   fid: z.number().int().positive("Invalid FID format."),
   gameId: z.number().int().positive("Invalid Game ID."),
   txHash: z.string().optional().nullable(),
-  authToken: z.string().optional().nullable(),
 });
 
 export type PurchaseResult = {
@@ -29,9 +28,9 @@ const publicClient = createPublicClient({
 });
 
 /**
- * Server Action to create or confirm a ticket purchase for a user and game.
+ * Server Action to buy a waffle (ticket) for a game.
  */
-export async function purchaseTicketAction(
+export async function buyWaffleAction(
   prevState: PurchaseResult | null,
   formData: FormData
 ): Promise<PurchaseResult> {
@@ -39,7 +38,6 @@ export async function purchaseTicketAction(
     fid: Number(formData.get("fid")),
     gameId: Number(formData.get("gameId")),
     txHash: formData.get("txHash"),
-    authToken: formData.get("authToken"),
   };
 
   const validation = purchaseSchema.safeParse(rawData);
@@ -49,7 +47,7 @@ export async function purchaseTicketAction(
     return { status: "error", error: firstError };
   }
 
-  const { fid, gameId, txHash, authToken } = validation.data;
+  const { fid, gameId, txHash } = validation.data;
 
   try {
     // 1. Find User
@@ -74,7 +72,7 @@ export async function purchaseTicketAction(
 
     const userId = user.id;
 
-    // 2. Find Game & Config
+    // 2. Find Game
     const game = await prisma.game.findUnique({
       where: { id: gameId },
       select: { id: true, entryFee: true },
@@ -196,6 +194,28 @@ export async function purchaseTicketAction(
         status: status,
       },
     });
+
+    // 8. Create GamePlayer (Join the Lobby)
+    // Idempotent creation: if they already exist, do nothing
+    await prisma.gamePlayer.upsert({
+      where: {
+        gameId_userId: {
+          gameId: gameId,
+          userId: userId,
+        },
+      },
+      update: {}, // No updates needed if exists
+      create: {
+        gameId: gameId,
+        userId: userId,
+        score: 0,
+        // joinedAt defaults to now()
+      },
+    });
+
+    // Revalidate ticket page paths
+    revalidatePath(`/game/${gameId}/ticket`);
+    revalidatePath(`/game`);
 
     return { status: "success", ticket: newTicket };
   } catch (e) {

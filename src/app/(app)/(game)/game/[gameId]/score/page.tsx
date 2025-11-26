@@ -4,11 +4,10 @@ import ScorePageClient from "./client";
 
 import { redirect } from "next/navigation";
 
-// type for the cached score payload
 export type ScorePagePayload = {
   userInfo: {
     username: string;
-    pfpUrl: string; // Changed from avatarUrl
+    pfpUrl: string;
   };
   category: string;
   winnings: number;
@@ -17,7 +16,7 @@ export type ScorePagePayload = {
   percentile: number;
   leaderboard: Array<{
     username: string;
-    pfpUrl: string; // Changed from avatarUrl
+    pfpUrl: string;
     score: number;
   }>;
 };
@@ -41,7 +40,7 @@ const getScorePagePayload = cache(
             },
           },
           user: {
-            select: { id: true, pfpUrl: true, username: true, status: true }, // Get new fields + status
+            select: { id: true, pfpUrl: true, username: true, status: true },
           },
         },
       }),
@@ -51,7 +50,7 @@ const getScorePagePayload = cache(
         orderBy: { score: "desc" },
         include: {
           user: {
-            select: { username: true, pfpUrl: true }, // Get new fields
+            select: { username: true, pfpUrl: true },
           },
         },
       }),

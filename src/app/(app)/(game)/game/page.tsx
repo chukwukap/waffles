@@ -16,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
         version: minikitConfig.miniapp.version,
         imageUrl: minikitConfig.miniapp.heroImageUrl,
         button: {
-          title: `Play now`,
+          title: `Waffles`,
           action: {
             name: `Play now`,
             type: "launch_frame",
@@ -31,7 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 // Define the type for the payload, based on the *new* schema
-export type UpcomingGamePayload = Prisma.GameGetPayload<{
+export type Game = Prisma.GameGetPayload<{
   select: {
     id: true;
     startsAt: true;
@@ -43,7 +43,7 @@ export type UpcomingGamePayload = Prisma.GameGetPayload<{
 }>;
 
 const getGame = cache(
-  async (): Promise<UpcomingGamePayload | null> => {
+  async (): Promise<Game | null> => {
     // Priority order: LIVE → SCHEDULED → ENDED
     // Return the most recently created game from the highest priority status
     const selectFields = {
@@ -102,4 +102,4 @@ export default async function GameHomePage() {
   );
 }
 
-export const dynamic = "force-dynamic";
+// export const dynamic = "force-dynamic";

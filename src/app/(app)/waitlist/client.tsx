@@ -23,7 +23,7 @@ import { WaitlistFooter } from "./_components/Footer";
 import { WaitlistMutuals } from "./_components/WaitlistMutuals";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 
-import { useWaitlistData } from "@/hooks/useWaitlistData";
+import { useUser } from "@/hooks/useUser";
 import { useMutuals } from "@/hooks/useMutuals";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
 
@@ -64,7 +64,7 @@ export function WaitlistClient() {
   const ref = searchParams.get("ref") || null;
 
   // 1. Data Fetching
-  const { data: waitlistData, isLoading, error, refetch } = useWaitlistData();
+  const { user, isLoading, error, refetch } = useUser();
   const mutualsData = useMutuals();
 
   // 2. Form Action
@@ -137,7 +137,7 @@ export function WaitlistClient() {
   );
 
   const handleShare = useCallback(async () => {
-    const rank = waitlistData?.rank;
+    const rank = user?.rank;
     const message = `i just joined the /waffles waitlist now!! join me on the biggest game rn🤪🤪🤪🤪`;
     try {
       const result = await composeCastAsync({
@@ -150,7 +150,7 @@ export function WaitlistClient() {
       console.error(err);
       notify.error("Failed to share waitlist.");
     }
-  }, [composeCastAsync, fid, waitlistData?.rank]);
+  }, [composeCastAsync, fid, user?.rank]);
 
   // Helper for rank message
   const rankMsg = (n: number | null) => {
@@ -180,7 +180,7 @@ export function WaitlistClient() {
     );
   }
 
-  if (waitlistData?.onList) {
+  if (user?.status === "WAITLIST" || user?.status === "ACTIVE") {
     return (
       <>
         <motion.section
@@ -233,7 +233,7 @@ export function WaitlistClient() {
 
             {/* Dynamic Rank Message based on Figma design */}
             <p className={"text-[#99A0AE] font-display font-medium text-[16px] leading-[130%] tracking-[-0.03em] text-center text-pretty mx-auto"}>
-              {rankMsg(waitlistData.rank)} Move up faster <br />by completing tasks and inviting
+              {rankMsg(user.rank)} Move up faster <br />by completing tasks and inviting
               friends!
             </p>
 

@@ -19,7 +19,8 @@ const InviteInput = React.forwardRef<HTMLInputElement, InviteInputProps>(
       <div
         className={cn(
           "flex h-[56px] w-[361px] max-w-full items-center justify-center",
-          "rounded-xl  bg-[#FFFFFF1A] px-3 ", // Container styles
+          "rounded-xl bg-[#FFFFFF1A] px-3", // Container styles
+          "transition-all duration-200", // Smooth transitions
           "focus-within:border-white focus-within:ring-2 focus-within:ring-white/50", // Focus state
           className // Allow merging custom classes
         )}
@@ -31,7 +32,8 @@ const InviteInput = React.forwardRef<HTMLInputElement, InviteInputProps>(
           className={cn(
             "h-full w-full border-none bg-transparent p-0 text-center outline-none",
             "text-[33px] font-body leading-[1.3] tracking-[-0.03em] text-white",
-            "placeholder:text-[14px] placeholder:font-body placeholder:leading-[1.3] placeholder:tracking-[-0.03em] placeholder:text-center"
+            "placeholder:text-[14px] placeholder:font-body placeholder:leading-[1.3] placeholder:tracking-[-0.03em] placeholder:text-center",
+            "transition-all duration-150" // Smooth text transitions
           )}
         />
       </div>

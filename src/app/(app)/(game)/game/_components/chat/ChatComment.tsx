@@ -36,16 +36,21 @@ function AvatarWithFallback({ src, name }: { src: string; name: string }) {
 }
 
 // Single Comment component
+// Single Comment component
 export const ChatComment = ({
   name,
   time,
   message,
   avatarUrl,
+  isCurrentUser,
+  status = "sent",
 }: {
   name: string;
   time: string;
   message: string;
   avatarUrl: string | null;
+  isCurrentUser?: boolean;
+  status?: "pending" | "sent" | "error";
 }) => (
   <div className="flex w-full flex-col items-start gap-2">
     {/* User + Time */}
@@ -77,13 +82,20 @@ export const ChatComment = ({
       </span>
     </div>
     {/* Comment Body */}
-    <div className="flex font-display w-full flex-col justify-center rounded-r-lg rounded-bl-lg border border-white/5 bg-white/10 p-3">
+    <div
+      className={`flex font-display w-full flex-col justify-center rounded-r-lg rounded-bl-lg border border-white/5 bg-white/10 p-3 transition-opacity duration-200
+        ${status === "pending" ? "opacity-70" : "opacity-100"}
+      `}
+    >
       <p
         className="text-sm font-medium text-white break-all"
         style={{ letterSpacing: "-0.03em" }}
       >
         {message}
       </p>
+      {status === "error" && (
+        <span className="text-[10px] text-red-300 mt-1">Failed to send</span>
+      )}
     </div>
   </div>
 );

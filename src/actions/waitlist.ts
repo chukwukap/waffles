@@ -11,7 +11,6 @@ const TASK_POINTS = TASKS.reduce((acc: Record<string, number>, task) => {
 }, {} as Record<string, number>);
 import { z } from "zod";
 import { Prisma } from "../../prisma/generated/client";
-import { trackServer } from "@/lib/analytics-server";
 
 export type JoinWaitlistState = {
   ok: boolean;
@@ -107,18 +106,6 @@ export async function joinWaitlistAction(
     });
 
     // Track analytics
-    await trackServer("waitlist_joined", {
-      fid,
-      hasReferrer: !!referrerUser,
-      referrerFid: ref || undefined,
-    });
-
-    if (referrerUser) {
-      await trackServer("waitlist_referral", {
-        inviterFid: ref!,
-        inviteeFid: fid,
-      });
-    }
 
     revalidatePath("/waitlist");
     return { ok: true, already: false };

@@ -17,7 +17,6 @@ interface GameFormProps {
         endsAt: Date;
         entryFee: number;
         prizePool: number;
-        questionCount: number;
         roundDurationSec: number;
         maxPlayers: number;
     };
@@ -89,11 +88,12 @@ export function GameForm({ action, initialData, isEdit = false }: GameFormProps)
 
                             <div className="pt-2">
                                 <MediaUpload
-                                    label="Cover Image"
+                                    label="Cover Image *"
                                     name="coverUrl"
                                     defaultValue={initialData?.coverUrl}
                                     maxSizeMB={4}
                                     accept="image/*"
+                                    required
                                 />
                             </div>
                         </div>
@@ -221,20 +221,6 @@ export function GameForm({ action, initialData, isEdit = false }: GameFormProps)
                         <h3 className="font-semibold text-slate-100">Gameplay</h3>
                     </div>
                     <div className="p-6 space-y-4">
-                        <div>
-                            <label htmlFor="questionCount" className="block text-sm font-medium text-slate-300 mb-1">
-                                Number of Questions *
-                            </label>
-                            <input
-                                type="number"
-                                id="questionCount"
-                                name="questionCount"
-                                required
-                                defaultValue={initialData?.questionCount ?? 9}
-                                min={1}
-                                className="w-full px-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                            />
-                        </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label htmlFor="roundDurationSec" className="block text-sm font-medium text-slate-300 mb-1">

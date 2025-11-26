@@ -2,7 +2,6 @@ import Image from "next/image";
 import { GameSummaryCard } from "./GameSummary";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { notify } from "@/components/ui/Toaster";
 import { useCallback } from "react";
 import { env } from "@/lib/env";
 import { useComposeCast } from "@coinbase/onchainkit/minikit";
@@ -19,7 +18,7 @@ export const SuccessCard = ({
   prizePool: number;
   fid: number;
   gameId: number;
-  ticket: Ticket | null;
+  ticket: Ticket
 }) => {
   const { composeCastAsync } = useComposeCast();
 
@@ -35,15 +34,12 @@ export const SuccessCard = ({
       });
 
       if (result?.cast) {
-        notify.success("Shared successfully!");
         console.log("Cast created successfully:", result.cast.hash);
       } else {
-        notify.info("Cast cancelled.");
         console.log("User cancelled the cast");
       }
     } catch (error) {
       console.error("Error sharing cast:", error);
-      notify.error("Unable to share your ticket right now.");
     }
   }, [composeCastAsync, fid, gameId, ticket]);
 

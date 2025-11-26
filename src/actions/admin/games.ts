@@ -16,7 +16,6 @@ const gameSchema = z.object({
   endsAt: z.string().transform((str) => new Date(str)),
   entryFee: z.coerce.number().min(0, "Entry fee must be non-negative"),
   prizePool: z.coerce.number().min(0, "Prize pool must be non-negative"),
-  questionCount: z.coerce.number().min(1, "Must have at least 1 question"),
   roundDurationSec: z.coerce
     .number()
     .min(5, "Duration must be at least 5 seconds"),
@@ -48,7 +47,6 @@ export async function createGameAction(
     endsAt: formData.get("endsAt"),
     entryFee: formData.get("entryFee"),
     prizePool: formData.get("prizePool"),
-    questionCount: formData.get("questionCount"),
     roundDurationSec: formData.get("roundDurationSec"),
     maxPlayers: formData.get("maxPlayers"),
   };
@@ -74,7 +72,6 @@ export async function createGameAction(
         endsAt: new Date(data.endsAt),
         entryFee: data.entryFee,
         prizePool: data.prizePool,
-        questionCount: data.questionCount,
         roundDurationSec: data.roundDurationSec,
         maxPlayers: data.maxPlayers,
         status: "SCHEDULED",
@@ -123,7 +120,6 @@ export async function updateGameAction(
     endsAt: formData.get("endsAt"),
     entryFee: formData.get("entryFee"),
     prizePool: formData.get("prizePool"),
-    questionCount: formData.get("questionCount"),
     roundDurationSec: formData.get("roundDurationSec"),
     maxPlayers: formData.get("maxPlayers"),
   };
@@ -150,7 +146,6 @@ export async function updateGameAction(
         endsAt: new Date(data.endsAt),
         entryFee: data.entryFee,
         prizePool: data.prizePool,
-        questionCount: data.questionCount,
         roundDurationSec: data.roundDurationSec,
         maxPlayers: data.maxPlayers,
       },
@@ -327,17 +322,44 @@ export async function endGameAction(gameId: number): Promise<GameActionResult> {
       return { success: false, error: "Cannot end cancelled game" };
     }
 
+    // 1. Update Game Status
     await prisma.game.update({
       where: { id: gameId },
       data: { status: "ENDED" },
     });
+
+    // 2. Calculate Ranks
+    // Fetch all players sorted by score (desc) and joinedAt (asc)
+    const players = await prisma.gamePlayer.findMany({
+      where: { gameId },
+      orderBy: [
+        { score: "desc" },
+        { joinedAt: "asc" }, // Tie-breaker: earlier joiner wins
+      ],
+      select: { id: true },
+    });
+
+    // 3. Persist Ranks
+    // We use a transaction to ensure all ranks are updated atomically
+    await prisma.$transaction(
+      players.map((player, index) =>
+        prisma.gamePlayer.update({
+          where: { id: player.id },
+          data: { rank: index + 1 },
+        })
+      )
+    );
 
     await logAdminAction({
       adminId: authResult.session.userId,
       action: AdminAction.UPDATE_GAME, // Changed from AdminAction.UPDATE
       entityType: EntityType.GAME,
       entityId: gameId, // Changed from gameId.toString()
-      details: { status: "ENDED", title: game.title }, // Changed from metadata
+      details: {
+        status: "ENDED",
+        title: game.title,
+        playerCount: players.length,
+      }, // Changed from metadata
     });
 
     revalidatePath("/admin/games");

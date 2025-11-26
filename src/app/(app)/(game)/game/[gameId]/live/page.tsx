@@ -1,6 +1,6 @@
 import LiveGameClient from "./client";
 import { Prisma, prisma } from "@/lib/db";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 export const revalidate = 0;
 
@@ -44,7 +44,7 @@ export default async function LiveGamePage({
   const fidNum = Number(fid);
 
   if (isNaN(gameIdNum) || isNaN(fidNum)) {
-    redirect("/game");
+    throw new Error("Invalid game ID or FID");
   }
 
   // 1. Get User Data (we need the internal ID to check answers)
@@ -54,7 +54,7 @@ export default async function LiveGamePage({
   });
 
   if (!user) {
-    redirect("/game");
+    throw new Error("User not found");
   }
 
   // Enforce access control
@@ -89,7 +89,7 @@ export default async function LiveGamePage({
   });
 
   if (!game) {
-    redirect("/game");
+    notFound();
   }
 
   // 3. Check Progress: Count how many questions this user has already answered
@@ -106,19 +106,13 @@ export default async function LiveGamePage({
     redirect(`/game/${gameId}/score?fid=${fid}`);
   }
 
-  // 5. Pass data to client
-  // Since we already fetched the data, we wrap it in a resolved promise
-  // to match the client component's interface which expects promises.
-  const gameInfoPromise = Promise.resolve(game);
-  const userInfoPromise = Promise.resolve(user);
-
   // 6. Resume Game
   // We pass 'answersCount' as the initial index.
   // If they answered 0, index is 0. If they answered 3, index is 3 (the 4th question).
   return (
     <LiveGameClient
-      gameInfoPromise={gameInfoPromise}
-      userInfoPromise={userInfoPromise}
+      gameInfo={game}
+      userInfo={user}
       initialQuestionIndex={answersCount}
     />
   );

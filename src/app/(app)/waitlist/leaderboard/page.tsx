@@ -1,5 +1,5 @@
 import { LeaderboardClient } from "./client";
-import { LeaderboardData } from "@/app/api/waitlist/leaderboard/route";
+import { LeaderboardData } from "@/app/api/leaderboard/route";
 import { env } from "@/lib/env";
 
 async function getLeaderboardData(fid: string): Promise<LeaderboardData> {

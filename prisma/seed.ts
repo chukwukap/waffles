@@ -35,10 +35,8 @@ async function main() {
       status: "SCHEDULED",
       startsAt: new Date(Date.now() + 1 * 60 * 1000), // 1 minute from now
       endsAt: new Date(Date.now() + 1 * 60 * 60 * 1000), // 1 hour from now
-      entryFee: defaultGameConfig.entryFee,
       prizePool: defaultGameConfig.prizePool,
       roundDurationSec: defaultGameConfig.roundDurationSec,
-      questionCount: defaultGameConfig.questionCount,
       maxPlayers: defaultGameConfig.maxPlayers,
     },
   });

@@ -1,23 +1,18 @@
 import {
-  SetStateAction,
-  Dispatch,
   startTransition,
   useActionState,
   useEffect,
   useState,
 } from "react";
 import Image from "next/image";
-import { purchaseTicketAction } from "@/actions/ticket";
+import { buyWaffleAction } from "@/actions/ticket";
 import { notify } from "@/components/ui/Toaster";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
-import { Ticket } from "@/lib/db";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { parseUnits } from "viem";
 import { env } from "@/lib/env";
 import { USDC_TRANSFER_ABI } from "@/lib/constants";
 
-// --- InfoBox Helper Component ---
-// A small component for the "Spots" and "Prize pool" boxes
 const InfoBox = ({
   iconUrl,
   label,
@@ -60,8 +55,6 @@ const InfoBox = ({
   </div>
 );
 
-// --- Waffle Card Component ---
-// This is the main component you requested
 export const WaffleCard = ({
   spots,
   prizePool,
@@ -69,7 +62,6 @@ export const WaffleCard = ({
   maxPlayers,
   fid,
   gameId,
-  setTicket,
 }: {
   spots: number;
   prizePool: number;
@@ -77,12 +69,11 @@ export const WaffleCard = ({
   maxPlayers: number;
   fid: number;
   gameId: number;
-  setTicket: Dispatch<SetStateAction<Ticket | null>>;
 }) => {
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>(undefined);
 
-  const [state, buyWaffleAction, pending] = useActionState(
-    purchaseTicketAction,
+  const [state, submitWaffleAction, pending] = useActionState(
+    buyWaffleAction,
     null
   );
 
@@ -102,25 +93,14 @@ export const WaffleCard = ({
       formData.append("txHash", txHash);
 
       startTransition(() => {
-        buyWaffleAction(formData);
+        submitWaffleAction(formData);
       });
     }
-  }, [isConfirmed, txHash, fid, gameId, buyWaffleAction]);
-
-  // Watch for server action response
-  useEffect(() => {
-    if (state?.status === "success") {
-      setTicket(state.ticket ?? null);
-      notify.success("Ticket purchased successfully!");
-    } else if (state?.status === "error") {
-      notify.error(state.error || "Failed to purchase ticket.");
-    }
-  }, [state, setTicket]);
+  }, [isConfirmed, txHash, fid, gameId, submitWaffleAction]);
 
   const handlePurchase = () => {
     try {
       notify.info("Initiating transaction...");
-
       writeContract(
         {
           address: env.nextPublicUsdcAddress as `0x${string}`,
@@ -174,7 +154,6 @@ export const WaffleCard = ({
 
       {/* Button */}
       <div className="w-full max-w-lg">
-
         <FancyBorderButton
           disabled={isProcessing}
           onClick={handlePurchase}

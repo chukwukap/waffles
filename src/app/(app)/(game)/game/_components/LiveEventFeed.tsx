@@ -116,6 +116,35 @@ export default function LiveEventFeed({
     onJoin: handleJoin,
   });
 
+  // Fetch initial events on mount
+  React.useEffect(() => {
+    if (!gameId) return;
+
+    const fetchInitialEvents = async () => {
+      try {
+        const response = await fetch(`/api/chat?gameId=${gameId}&limit=${maxEvents}`);
+        if (!response.ok) return;
+
+        const data = await response.json();
+
+        // Transform chat messages into events
+        const initialEvents: Event[] = data.messages?.map((msg: any) => ({
+          id: msg.id,
+          avatar: msg.user?.pfpUrl || null,
+          content: msg.text,
+          type: "chat" as EventType,
+          username: msg.user?.username || `User ${msg.userId}`,
+        })) || [];
+
+        setEvents(initialEvents);
+      } catch (error) {
+        console.error("Failed to fetch initial events:", error);
+      }
+    };
+
+    fetchInitialEvents();
+  }, [gameId, maxEvents]);
+
   // Calculate opacity based on index.
   // The newest event (last in the array) has the highest opacity.
   const getOpacity = (index: number) => {
@@ -132,7 +161,7 @@ export default function LiveEventFeed({
     // Main container.
     // No background, inherits from parent.
     // Set width and height as requested, but max-w-full makes it responsive.
-    <div className="w-full max-w-[377px] h-[130px] p-2 px-4 flex flex-col justify-end overflow-hidden">
+    <div className="w-full max-w-[377px] h-[130px] p-2 px-4 flex flex-col justify-end overflow-hidden border-red-500 border">
       <div className="flex flex-col gap-2 pt-4">
         <AnimatePresence initial={false}>
           {events.map((event, index) => (

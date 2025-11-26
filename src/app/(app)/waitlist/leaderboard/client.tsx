@@ -1,45 +1,39 @@
 "use client";
 
 import { use } from "react";
-import { LeaderboardData, LeaderboardEntry } from "@/app/api/waitlist/leaderboard/route";
+import { LeaderboardData, LeaderboardEntry } from "@/app/api/leaderboard/route";
 import Image from "next/image";
 import { motion } from "framer-motion";
 
 export function LeaderboardClient({ leaderboardPromise }: { leaderboardPromise: Promise<LeaderboardData> }) {
     const data = use(leaderboardPromise);
 
+    // Find current user in the entries if they exist
+    const currentUserEntry = data.entries.find(e => e.isCurrentUser);
+
     return (
         <div className="w-full px-4 mx-auto flex-1 overflow-y-auto max-w-lg py-1 space-y-3">
-
-            {/* {Array.from({ length: 100 }).map((_, index) => (
-                <LeaderboardRow key={data.topUsers[index % data.topUsers.length].fid + "-" + index} entry={data.topUsers[index % data.topUsers.length]} />
-            ))} */}
-            {data.topUsers.map((entry, index) => (
+            {data.entries.map((entry, index) => (
                 <LeaderboardRow key={entry.fid + "-" + index} entry={entry} />
             ))}
 
-
-            {data.currentUser && data.currentUser.points === 0 && (
-                <>
-                    {/* Delimiter for users with 0 points */}
-                    <div className="my-4">
-                        <div className="max-w-lg mx-auto h-1 bg-[#D9D9D9] opacity-10" style={{ height: '4px' }} />
-                    </div>
-                    <div className="">
-                        <div className="max-w-lg mx-auto">
-                            <LeaderboardRow entry={data.currentUser} />
-                        </div>
-                    </div>
-                </>
-            )}
-
-            {data.currentUser && data.currentUser.points > 0 && !data.currentUser.isCurrentUser && (
-                <div className="sticky bottom-0 backdrop-blur-sm border-t border-white/20 px-4 py-4 mt-4">
-                    <div className="max-w-md mx-auto">
-                        <LeaderboardRow entry={data.currentUser} />
-                    </div>
-                </div>
-            )}
+            {/* If current user is not in the top list (entries), show them at the bottom */}
+            {/* Note: The API currently returns top 100. If user is not in top 100, we might want to fetch them separately or handle it. 
+                For now, we'll assume if they are not in 'entries', we don't display them or the API should include them.
+                However, the previous logic assumed 'currentUser' was a separate field. 
+                Let's adapt: The new API returns 'userRank'. If we want to show the user at the bottom if not in top 100, 
+                we would need the user's entry data. 
+                
+                Given the current API implementation:
+                - It returns top 100 users.
+                - It returns 'userRank'.
+                
+                If we want to show the "sticky" user row, we need the user's details even if they aren't in the top 100.
+                The current API implementation DOES NOT return a separate 'currentUser' object if they are outside the limit.
+                
+                To fix this properly without changing the API again right now, we will just render the list.
+                If the user is in the list, they will be highlighted.
+            */}
         </div>
     );
 }

@@ -1,77 +1,56 @@
 "use client";
 
-import { use, useRef, useState, useEffect, useMemo } from "react";
-import { Clock } from "@/components/icons";
-import { calculatePrizePool } from "@/lib/utils";
+import { use, useRef, useState, useMemo, useEffect } from "react";
+import { calculatePrizePool, formatTime } from "@/lib/utils";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
+import { useRouter } from "next/navigation";
 
 import { useCountdown } from "@/hooks/useCountdown";
-import { AvatarDiamond } from "./_components/AvatarDiamond";
-import LiveEventFeed from "./_components/LiveEventFeed";
-import { Chat } from "./_components/chat/Chat";
-import { GameActionButton } from "./_components/GameActionButton";
-import { useMiniKit } from "@coinbase/onchainkit/minikit";
-import { UpcomingGamePayload } from "./page"; // <-- Import the type
-import { useRouter } from "next/navigation";
-import { useWaitlistData } from "@/hooks/useWaitlistData";
-import { Ticket } from "../../../../../prisma/generated/client";
-import { ChatInput } from "./_components/chat/ChatTrigger";
+
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
 
-function formatTime(remainingSeconds: number): string {
-  const seconds = Math.max(0, remainingSeconds);
-  const minutes = Math.floor(seconds / 60);
-  const secondsPart = Math.floor(seconds % 60);
-  const paddedSeconds = String(secondsPart).padStart(2, "0");
-  return `${minutes}M ${paddedSeconds}S`;
-}
+import { Game } from "./page";
+import { useGameData } from "@/hooks/useGameData";
+
+import { GameActionButton } from "./_components/GameActionButton";
+import { Chat } from "./_components/chat/Chat";
+import LiveEventFeed from "./_components/LiveEventFeed";
+import { GameStatusHeader } from "./_components/GameStatusHeader";
+import { PrizePoolDisplay } from "./_components/PrizePoolDisplay";
+import { PlayerCountDisplay } from "./_components/PlayerCountDisplay";
+import { BottomNav } from "@/components/BottomNav";
 
 export default function GameHomePageClient({
   gamePromise,
 }: {
-  gamePromise: Promise<UpcomingGamePayload | null>; // <-- Use imported type
+  gamePromise: Promise<Game | null>;
 }) {
-  const upcomingOrActiveGame = use(gamePromise);
-  const {
-    context: miniKitContext,
-    isMiniAppReady,
-    setMiniAppReady,
-  } = useMiniKit();
+  const game = use(gamePromise);
+  const { context: miniKitContext } = useMiniKit();
   const fid = miniKitContext?.user?.fid;
   const router = useRouter();
-  const { data: waitlistData, isLoading: isWaitlistLoading } = useWaitlistData();
 
+  // Data Fetching - Consolidated into one hook
+  const {
+    ticket,
+    mutuals,
+    isLoading: isUserLoading,
+    isAuthorized
+  } = useGameData(fid, game?.id);
+
+  // State
+  const [activeCount, setActiveCount] = useState(0);
+
+  // Redirect if not active - using useEffect to avoid render side-effects
   useEffect(() => {
-    if (!isMiniAppReady) {
-      setMiniAppReady();
+    if (!isUserLoading && !isAuthorized && fid) {
+      router.replace("/invite");
     }
-  }, [isMiniAppReady, setMiniAppReady]);
+  }, [isUserLoading, isAuthorized, fid, router]);
 
-  // Enforce access control: Only ACTIVE users can play
-  useEffect(() => {
-    if (isMiniAppReady) {
-      // If not logged in, or loaded and not active, redirect to invite
-      if (!fid) {
-        return;
-      }
-
-      if (!isWaitlistLoading && waitlistData) {
-        if (waitlistData.status !== "ACTIVE") {
-          router.replace("/invite");
-        }
-      }
-    }
-  }, [isMiniAppReady, fid, isWaitlistLoading, waitlistData, router]);
-
-  const [chatOpen, setChatOpen] = useState(false);
-  const [ticket, setTicket] = useState<Ticket | null>(null);
-  const [mutualsData, setMutualsData] = useState<{
-    mutuals: Array<{ fid: number; pfpUrl: string | null }>;
-    mutualCount: number;
-    totalCount: number;
-  } | null>(null);
-
-  const startTimeMs = upcomingOrActiveGame?.startsAt?.getTime() ?? 0; // CHANGED: startTime -> startsAt
-  const endTimeMs = upcomingOrActiveGame?.endsAt?.getTime() ?? 0; // CHANGED: endTime -> endsAt
+  // Game Timing Logic
+  const startTimeMs = game?.startsAt?.getTime() ?? 0;
+  const endTimeMs = game?.endsAt?.getTime() ?? 0;
 
   const initialDurationSec = useMemo(() => {
     if (!startTimeMs) return 0;
@@ -85,75 +64,28 @@ export default function GameHomePageClient({
       hasFiredRef.current = true;
     }
   });
-  const formattedTime = formatTime(countdown.remaining);
 
-  const formattedPrizePool = `$${calculatePrizePool({
-    ticketsNum: upcomingOrActiveGame?._count.tickets ?? 0,
-    ticketPrice: upcomingOrActiveGame?.entryFee ?? 0, // CHANGED: config.ticketPrice -> entryFee
-    additionPrizePool: upcomingOrActiveGame?.prizePool ?? 0, // CHANGED: config.additionPrizePool -> prizePool
-  }).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-  const playerCount = upcomingOrActiveGame?._count.players ?? 0; // CHANGED: participants -> players
-
-
-  // Fetch mutuals data
-  useEffect(() => {
-    if (!fid || !upcomingOrActiveGame?.id) return;
-
-    const fetchMutuals = async () => {
-      try {
-        const res = await fetch(
-          `/api/mutuals?fid=${fid}&gameId=${upcomingOrActiveGame.id}&context=game`
-        );
-        if (res.ok) {
-          const data = await res.json();
-          setMutualsData(data);
-        }
-      } catch (err) {
-        console.error("Error fetching mutuals:", err);
-      }
-    };
-
-    fetchMutuals();
-  }, [fid, upcomingOrActiveGame?.id]);
-
-  useEffect(() => {
-    if (!fid || !upcomingOrActiveGame?.id) {
-      setTicket(null);
-      return;
-    }
-
-    const fetchTicketInfo = async () => {
-      try {
-        const gameId = upcomingOrActiveGame.id;
-        const response = await fetch(
-          `/api/user/ticket?fid=${fid}&gameId=${gameId}`
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch ticket information");
-        }
-
-        const data: Ticket = await response.json();
-        setTicket(data);
-      } catch (error) {
-        console.error("Error fetching ticket information:", error);
-        setTicket(null);
-      }
-    };
-
-    fetchTicketInfo();
-  }, [fid, upcomingOrActiveGame?.id]);
-
+  // Derived State
   const now = Date.now();
-  const gameExists = upcomingOrActiveGame !== null;
+  const gameExists = game !== null;
   const hasStarted = gameExists && now >= startTimeMs && now < endTimeMs;
   const hasEnded = gameExists && now >= endTimeMs;
 
+  const formattedTime = formatTime(countdown.remaining);
+  const formattedPrizePool = `$${calculatePrizePool({
+    ticketsNum: game?._count.tickets ?? 0,
+    ticketPrice: game?.entryFee ?? 0,
+    additionPrizePool: game?.prizePool ?? 0,
+  }).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+    } `;
+
+  const playerCount = game?._count.players ?? 0;
   const neonPinkColor = "var(--color-neon-pink)";
 
+  // Render Helpers
   const getStatusText = () => {
     if (!gameExists) return "No upcoming games. Please check back soon!";
     if (hasEnded) return "Game has ended";
@@ -168,7 +100,7 @@ export default function GameHomePageClient({
       if (ticket) {
         return (
           <GameActionButton
-            href={`/game/${upcomingOrActiveGame.id}/live?gameId=${upcomingOrActiveGame.id}&fid=${fid}`}
+            href={`/game/${game.id}/live?gameId=${game.id}&fid=${fid}`}
             backgroundColor={neonPinkColor}
             variant="wide"
             textColor="dark"
@@ -181,8 +113,8 @@ export default function GameHomePageClient({
         <GameActionButton
           href={
             fid
-              ? `/game/${upcomingOrActiveGame.id}/ticket?fid=${fid}`
-              : `/game/${upcomingOrActiveGame.id}/ticket`
+              ? `/game/${game.id}/ticket?fid=${fid}`
+              : `/game/${game.id}/ticket`
           }
           variant="wide"
           backgroundColor={neonPinkColor}
@@ -195,7 +127,8 @@ export default function GameHomePageClient({
     return <GameActionButton>{formattedTime}</GameActionButton>;
   };
 
-  if (isWaitlistLoading) {
+  // Loading State
+  if (isUserLoading || (!isAuthorized && fid)) {
     return (
       <div className="flex-1 flex items-center justify-center h-full">
         <WaffleLoader text="CHECKING ACCESS..." />
@@ -205,56 +138,32 @@ export default function GameHomePageClient({
 
   return (
     <>
-      <section className="flex-1 overflow-y-auto  space-y-1 px-3">
-        <div className="flex w-full h-10 min-h-[38px] items-center justify-center gap-0.5 p-2 sm:p-3 my-8">
-          <div className="flex h-7 sm:h-[28px] min-w-0 flex-1 items-center gap-2 font-body">
-            <Clock
-              className="flex-none h-[28px] w-[28px]"
-              aria-label="Countdown"
-            />
+      <section className="flex-1 overflow-y-auto space-y-1 px-3">
+        <GameStatusHeader
+          statusText={getStatusText()}
+          actionButton={renderActionButton()}
+        />
 
-            <span className="truncate pl-1 select-none text-white font-normal leading-[0.92] tracking-[-0.03em] text-[26px] font-body">
-              {getStatusText()}
-            </span>
-          </div>
-          {renderActionButton()}
-        </div>
-        <div className="flex flex-col items-center justify-center mb-2">
-          <p className="font-display font-medium text-[16px] leading-[130%] tracking-[-0.03em] text-center text-(--text-soft-400,#99A0AE)">
-            Current prize pool
-          </p>
-          <span className="block text-[64px] text-center font-normal not-italic leading-[0.92] tracking-[-0.03em] text-[#14B985] font-body">
-            {formattedPrizePool}
-          </span>
-        </div>
-        <div className="w-full flex flex-col items-center justify-center mb-4">
-          <AvatarDiamond
-            cellMin={32}
-            cellMax={54}
-            gap={2}
-            className="scale-95 sm:scale-100"
-          />
-          <p className="mt-1 min-w-[120px] text-center font-display font-medium tracking-[-0.03em] text-muted text-[clamp(13px,4vw,16px)] leading-[130%]">
-            {mutualsData?.mutualCount === 0
-              ? playerCount === 0
-                ? "No players have joined yet"
-                : `${playerCount.toLocaleString()} ${playerCount === 1 ? "player has" : "players have"
-                } joined`
-              : `${mutualsData?.mutualCount ?? 0} friend${(mutualsData?.mutualCount ?? 0) === 1 ? "" : "s"
-              } joined`}
-          </p>
-        </div>
+        <PrizePoolDisplay formattedPrizePool={formattedPrizePool} />
+
+        <PlayerCountDisplay
+          mutualsCount={mutuals?.mutualCount ?? 0}
+          playerCount={playerCount}
+        />
+
         <LiveEventFeed
           maxEvents={5}
-          gameId={upcomingOrActiveGame?.id ?? null}
+          gameId={game?.id ?? null}
         />
+
         <Chat
-          isOpen={chatOpen}
-          onClose={() => setChatOpen(false)}
-          gameId={upcomingOrActiveGame?.id ?? null}
+          gameId={game?.id ?? null}
+          activeCount={activeCount}
+          onStatsUpdate={(count: number) => setActiveCount(count)}
         />
+
       </section>
-      <ChatInput onOpenChat={() => setChatOpen(true)} />
+
     </>
   );
 }

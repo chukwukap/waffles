@@ -38,7 +38,7 @@ export async function sendMessageAction(
   try {
     const user = await prisma.user.findUnique({
       where: { fid },
-      select: { id: true },
+      select: { id: true, username: true, pfpUrl: true },
     });
     if (!user) {
       return { success: false, error: "User not found." };
@@ -61,8 +61,37 @@ export async function sendMessageAction(
         gameId,
         text: sanitizedMessage,
       },
-      select: { id: true },
+      select: { id: true, createdAt: true },
     });
+
+    // Publish to Redis Stream
+    try {
+      const { redis } = await import("@/lib/redis");
+      const streamKey = `game:stream:${gameId}`;
+
+      const eventData = JSON.stringify({
+        type: "chat",
+        data: {
+          id: chat.id,
+          userId: user.id,
+          gameId,
+          message: sanitizedMessage,
+          createdAt: chat.createdAt.toISOString(),
+          user: {
+            id: user.id,
+            fid,
+            username: user.username || `User ${fid}`,
+            pfpUrl: user.pfpUrl,
+          },
+        },
+      });
+
+      await redis.xadd(streamKey, "*", { data: eventData });
+      console.log("✅ Published chat event to Redis:", streamKey);
+    } catch (err) {
+      console.error("❌ Failed to publish to Redis:", err);
+      // Don't fail the request if Redis fails
+    }
 
     return { success: true, messageId: chat.id };
   } catch (error) {

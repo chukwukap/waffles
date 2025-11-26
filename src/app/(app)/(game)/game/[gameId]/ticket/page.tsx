@@ -6,13 +6,13 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { Prisma } from "../../../../../../../prisma/generated/client";
 
-// This type is still correct
+
 export type TicketPageUserInfo = Prisma.UserGetPayload<{
   select: {
     fid: true;
-    username: true; // Use new 'username' field
-    pfpUrl: true; // Use new 'pfpUrl' field
-    status: true; // Added status
+    username: true;
+    pfpUrl: true;
+    status: true;
     tickets: {
       where: {
         gameId: number;
@@ -21,12 +21,12 @@ export type TicketPageUserInfo = Prisma.UserGetPayload<{
   };
 }>;
 
-// This type is UPDATED to reflect the new schema
 export type TicketPageGameInfo = Prisma.GameGetPayload<{
   select: {
     id: true;
     title: true;
     description: true;
+    coverUrl: true;
     startsAt: true;
     endsAt: true;
     theme: true;
@@ -45,19 +45,18 @@ export type TicketPageGameInfo = Prisma.GameGetPayload<{
   };
 }>;
 
-// This is the server component
 export default async function TicketPage({
   params,
   searchParams,
 }: {
   params: Promise<{ gameId: string }>;
-  searchParams: Promise<{ fid: string; ticketCode?: string }>; // Added ticketCode
+  searchParams: Promise<{ fid: string; ticketCode?: string }>;
 }) {
   const { gameId } = await params;
-  const { fid, ticketCode } = await searchParams; // Added ticketCode
+  const { fid, ticketCode } = await searchParams;
 
   if (!fid) {
-    redirect("/invite");
+    throw new Error("Missing fid");
   }
 
   const gameIdNum = Number(gameId);
@@ -65,7 +64,6 @@ export default async function TicketPage({
     throw new Error("Invalid game ID");
   }
 
-  // UPDATED getGameInfo to use new schema
   const getGameInfo = cache(async () => {
     return prisma.game
       .findUnique({
@@ -74,6 +72,7 @@ export default async function TicketPage({
           id: true,
           title: true,
           description: true,
+          coverUrl: true,
           startsAt: true,
           endsAt: true,
           theme: true,
@@ -99,7 +98,6 @@ export default async function TicketPage({
       });
   });
 
-  // UPDATED getUserInfo to use new field names
   const getUserInfo = cache(async (fid: number | null) => {
     if (fid === null || isNaN(Number(fid))) {
       return null;
@@ -108,23 +106,27 @@ export default async function TicketPage({
       where: { fid },
       select: {
         fid: true,
-        username: true, // Use new 'username' field
-        pfpUrl: true, // Use new 'pfpUrl' field
-        status: true, // Added status
+        username: true,
+        pfpUrl: true,
+        status: true,
         tickets: {
           where: {
             gameId: gameIdNum,
+            user: {
+              fid,
+            }
           },
         },
       },
     });
   });
 
-  const gameInfoPromise = getGameInfo();
-  const userInfoPromise = getUserInfo(Number(fid));
+  // Await data in server component
+  const [gameInfo, userInfo] = await Promise.all([
+    getGameInfo(),
+    getUserInfo(Number(fid)),
+  ]);
 
-  // Enforce access control
-  const userInfo = await userInfoPromise;
   if (!userInfo || userInfo.status !== "ACTIVE") {
     redirect("/invite");
   }
@@ -132,8 +134,8 @@ export default async function TicketPage({
   return (
     <>
       <TicketPageClientImpl
-        gameInfoPromise={gameInfoPromise}
-        userInfoPromise={userInfoPromise}
+        gameInfo={gameInfo}
+        userInfo={userInfo}
       />
 
       <BottomNav />
