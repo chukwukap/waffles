@@ -125,7 +125,6 @@ export const GameScalarFieldEnum = {
   entryFee: 'entryFee',
   prizePool: 'prizePool',
   roundDurationSec: 'roundDurationSec',
-  questionCount: 'questionCount',
   maxPlayers: 'maxPlayers',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -175,7 +174,6 @@ export const GamePlayerScalarFieldEnum = {
   claimedAt: 'claimedAt',
   score: 'score',
   rank: 'rank',
-  isEliminated: 'isEliminated',
   joinedAt: 'joinedAt'
 } as const
 

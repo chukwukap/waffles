@@ -49,7 +49,6 @@ export type GamePlayerMinAggregateOutputType = {
   claimedAt: Date | null
   score: number | null
   rank: number | null
-  isEliminated: boolean | null
   joinedAt: Date | null
 }
 
@@ -60,7 +59,6 @@ export type GamePlayerMaxAggregateOutputType = {
   claimedAt: Date | null
   score: number | null
   rank: number | null
-  isEliminated: boolean | null
   joinedAt: Date | null
 }
 
@@ -71,7 +69,6 @@ export type GamePlayerCountAggregateOutputType = {
   claimedAt: number
   score: number
   rank: number
-  isEliminated: number
   joinedAt: number
   _all: number
 }
@@ -100,7 +97,6 @@ export type GamePlayerMinAggregateInputType = {
   claimedAt?: true
   score?: true
   rank?: true
-  isEliminated?: true
   joinedAt?: true
 }
 
@@ -111,7 +107,6 @@ export type GamePlayerMaxAggregateInputType = {
   claimedAt?: true
   score?: true
   rank?: true
-  isEliminated?: true
   joinedAt?: true
 }
 
@@ -122,7 +117,6 @@ export type GamePlayerCountAggregateInputType = {
   claimedAt?: true
   score?: true
   rank?: true
-  isEliminated?: true
   joinedAt?: true
   _all?: true
 }
@@ -220,7 +214,6 @@ export type GamePlayerGroupByOutputType = {
   claimedAt: Date | null
   score: number
   rank: number | null
-  isEliminated: boolean
   joinedAt: Date
   _count: GamePlayerCountAggregateOutputType | null
   _avg: GamePlayerAvgAggregateOutputType | null
@@ -254,7 +247,6 @@ export type GamePlayerWhereInput = {
   claimedAt?: Prisma.DateTimeNullableFilter<"GamePlayer"> | Date | string | null
   score?: Prisma.IntFilter<"GamePlayer"> | number
   rank?: Prisma.IntNullableFilter<"GamePlayer"> | number | null
-  isEliminated?: Prisma.BoolFilter<"GamePlayer"> | boolean
   joinedAt?: Prisma.DateTimeFilter<"GamePlayer"> | Date | string
   game?: Prisma.XOR<Prisma.GameScalarRelationFilter, Prisma.GameWhereInput>
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -267,7 +259,6 @@ export type GamePlayerOrderByWithRelationInput = {
   claimedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   score?: Prisma.SortOrder
   rank?: Prisma.SortOrderInput | Prisma.SortOrder
-  isEliminated?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
   game?: Prisma.GameOrderByWithRelationInput
   user?: Prisma.UserOrderByWithRelationInput
@@ -284,7 +275,6 @@ export type GamePlayerWhereUniqueInput = Prisma.AtLeast<{
   claimedAt?: Prisma.DateTimeNullableFilter<"GamePlayer"> | Date | string | null
   score?: Prisma.IntFilter<"GamePlayer"> | number
   rank?: Prisma.IntNullableFilter<"GamePlayer"> | number | null
-  isEliminated?: Prisma.BoolFilter<"GamePlayer"> | boolean
   joinedAt?: Prisma.DateTimeFilter<"GamePlayer"> | Date | string
   game?: Prisma.XOR<Prisma.GameScalarRelationFilter, Prisma.GameWhereInput>
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -297,7 +287,6 @@ export type GamePlayerOrderByWithAggregationInput = {
   claimedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   score?: Prisma.SortOrder
   rank?: Prisma.SortOrderInput | Prisma.SortOrder
-  isEliminated?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
   _count?: Prisma.GamePlayerCountOrderByAggregateInput
   _avg?: Prisma.GamePlayerAvgOrderByAggregateInput
@@ -316,7 +305,6 @@ export type GamePlayerScalarWhereWithAggregatesInput = {
   claimedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"GamePlayer"> | Date | string | null
   score?: Prisma.IntWithAggregatesFilter<"GamePlayer"> | number
   rank?: Prisma.IntNullableWithAggregatesFilter<"GamePlayer"> | number | null
-  isEliminated?: Prisma.BoolWithAggregatesFilter<"GamePlayer"> | boolean
   joinedAt?: Prisma.DateTimeWithAggregatesFilter<"GamePlayer"> | Date | string
 }
 
@@ -324,7 +312,6 @@ export type GamePlayerCreateInput = {
   claimedAt?: Date | string | null
   score?: number
   rank?: number | null
-  isEliminated?: boolean
   joinedAt?: Date | string
   game: Prisma.GameCreateNestedOneWithoutPlayersInput
   user: Prisma.UserCreateNestedOneWithoutGamesInput
@@ -337,7 +324,6 @@ export type GamePlayerUncheckedCreateInput = {
   claimedAt?: Date | string | null
   score?: number
   rank?: number | null
-  isEliminated?: boolean
   joinedAt?: Date | string
 }
 
@@ -345,7 +331,6 @@ export type GamePlayerUpdateInput = {
   claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   score?: Prisma.IntFieldUpdateOperationsInput | number
   rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isEliminated?: Prisma.BoolFieldUpdateOperationsInput | boolean
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   game?: Prisma.GameUpdateOneRequiredWithoutPlayersNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutGamesNestedInput
@@ -358,7 +343,6 @@ export type GamePlayerUncheckedUpdateInput = {
   claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   score?: Prisma.IntFieldUpdateOperationsInput | number
   rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isEliminated?: Prisma.BoolFieldUpdateOperationsInput | boolean
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -369,7 +353,6 @@ export type GamePlayerCreateManyInput = {
   claimedAt?: Date | string | null
   score?: number
   rank?: number | null
-  isEliminated?: boolean
   joinedAt?: Date | string
 }
 
@@ -377,7 +360,6 @@ export type GamePlayerUpdateManyMutationInput = {
   claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   score?: Prisma.IntFieldUpdateOperationsInput | number
   rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isEliminated?: Prisma.BoolFieldUpdateOperationsInput | boolean
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -388,7 +370,6 @@ export type GamePlayerUncheckedUpdateManyInput = {
   claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   score?: Prisma.IntFieldUpdateOperationsInput | number
   rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isEliminated?: Prisma.BoolFieldUpdateOperationsInput | boolean
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -414,7 +395,6 @@ export type GamePlayerCountOrderByAggregateInput = {
   claimedAt?: Prisma.SortOrder
   score?: Prisma.SortOrder
   rank?: Prisma.SortOrder
-  isEliminated?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
 }
 
@@ -433,7 +413,6 @@ export type GamePlayerMaxOrderByAggregateInput = {
   claimedAt?: Prisma.SortOrder
   score?: Prisma.SortOrder
   rank?: Prisma.SortOrder
-  isEliminated?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
 }
 
@@ -444,7 +423,6 @@ export type GamePlayerMinOrderByAggregateInput = {
   claimedAt?: Prisma.SortOrder
   score?: Prisma.SortOrder
   rank?: Prisma.SortOrder
-  isEliminated?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
 }
 
@@ -540,15 +518,10 @@ export type GamePlayerUncheckedUpdateManyWithoutGameNestedInput = {
   deleteMany?: Prisma.GamePlayerScalarWhereInput | Prisma.GamePlayerScalarWhereInput[]
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
-}
-
 export type GamePlayerCreateWithoutUserInput = {
   claimedAt?: Date | string | null
   score?: number
   rank?: number | null
-  isEliminated?: boolean
   joinedAt?: Date | string
   game: Prisma.GameCreateNestedOneWithoutPlayersInput
 }
@@ -559,7 +532,6 @@ export type GamePlayerUncheckedCreateWithoutUserInput = {
   claimedAt?: Date | string | null
   score?: number
   rank?: number | null
-  isEliminated?: boolean
   joinedAt?: Date | string
 }
 
@@ -599,7 +571,6 @@ export type GamePlayerScalarWhereInput = {
   claimedAt?: Prisma.DateTimeNullableFilter<"GamePlayer"> | Date | string | null
   score?: Prisma.IntFilter<"GamePlayer"> | number
   rank?: Prisma.IntNullableFilter<"GamePlayer"> | number | null
-  isEliminated?: Prisma.BoolFilter<"GamePlayer"> | boolean
   joinedAt?: Prisma.DateTimeFilter<"GamePlayer"> | Date | string
 }
 
@@ -607,7 +578,6 @@ export type GamePlayerCreateWithoutGameInput = {
   claimedAt?: Date | string | null
   score?: number
   rank?: number | null
-  isEliminated?: boolean
   joinedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutGamesInput
 }
@@ -618,7 +588,6 @@ export type GamePlayerUncheckedCreateWithoutGameInput = {
   claimedAt?: Date | string | null
   score?: number
   rank?: number | null
-  isEliminated?: boolean
   joinedAt?: Date | string
 }
 
@@ -654,7 +623,6 @@ export type GamePlayerCreateManyUserInput = {
   claimedAt?: Date | string | null
   score?: number
   rank?: number | null
-  isEliminated?: boolean
   joinedAt?: Date | string
 }
 
@@ -662,7 +630,6 @@ export type GamePlayerUpdateWithoutUserInput = {
   claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   score?: Prisma.IntFieldUpdateOperationsInput | number
   rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isEliminated?: Prisma.BoolFieldUpdateOperationsInput | boolean
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   game?: Prisma.GameUpdateOneRequiredWithoutPlayersNestedInput
 }
@@ -673,7 +640,6 @@ export type GamePlayerUncheckedUpdateWithoutUserInput = {
   claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   score?: Prisma.IntFieldUpdateOperationsInput | number
   rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isEliminated?: Prisma.BoolFieldUpdateOperationsInput | boolean
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -683,7 +649,6 @@ export type GamePlayerUncheckedUpdateManyWithoutUserInput = {
   claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   score?: Prisma.IntFieldUpdateOperationsInput | number
   rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isEliminated?: Prisma.BoolFieldUpdateOperationsInput | boolean
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -693,7 +658,6 @@ export type GamePlayerCreateManyGameInput = {
   claimedAt?: Date | string | null
   score?: number
   rank?: number | null
-  isEliminated?: boolean
   joinedAt?: Date | string
 }
 
@@ -701,7 +665,6 @@ export type GamePlayerUpdateWithoutGameInput = {
   claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   score?: Prisma.IntFieldUpdateOperationsInput | number
   rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isEliminated?: Prisma.BoolFieldUpdateOperationsInput | boolean
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutGamesNestedInput
 }
@@ -712,7 +675,6 @@ export type GamePlayerUncheckedUpdateWithoutGameInput = {
   claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   score?: Prisma.IntFieldUpdateOperationsInput | number
   rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isEliminated?: Prisma.BoolFieldUpdateOperationsInput | boolean
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -722,7 +684,6 @@ export type GamePlayerUncheckedUpdateManyWithoutGameInput = {
   claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   score?: Prisma.IntFieldUpdateOperationsInput | number
   rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isEliminated?: Prisma.BoolFieldUpdateOperationsInput | boolean
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -735,7 +696,6 @@ export type GamePlayerSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   claimedAt?: boolean
   score?: boolean
   rank?: boolean
-  isEliminated?: boolean
   joinedAt?: boolean
   game?: boolean | Prisma.GameDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -748,7 +708,6 @@ export type GamePlayerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   claimedAt?: boolean
   score?: boolean
   rank?: boolean
-  isEliminated?: boolean
   joinedAt?: boolean
   game?: boolean | Prisma.GameDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -761,7 +720,6 @@ export type GamePlayerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   claimedAt?: boolean
   score?: boolean
   rank?: boolean
-  isEliminated?: boolean
   joinedAt?: boolean
   game?: boolean | Prisma.GameDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -774,11 +732,10 @@ export type GamePlayerSelectScalar = {
   claimedAt?: boolean
   score?: boolean
   rank?: boolean
-  isEliminated?: boolean
   joinedAt?: boolean
 }
 
-export type GamePlayerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "gameId" | "userId" | "claimedAt" | "score" | "rank" | "isEliminated" | "joinedAt", ExtArgs["result"]["gamePlayer"]>
+export type GamePlayerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "gameId" | "userId" | "claimedAt" | "score" | "rank" | "joinedAt", ExtArgs["result"]["gamePlayer"]>
 export type GamePlayerInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   game?: boolean | Prisma.GameDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -805,7 +762,6 @@ export type $GamePlayerPayload<ExtArgs extends runtime.Types.Extensions.Internal
     claimedAt: Date | null
     score: number
     rank: number | null
-    isEliminated: boolean
     joinedAt: Date
   }, ExtArgs["result"]["gamePlayer"]>
   composites: {}
@@ -1238,7 +1194,6 @@ export interface GamePlayerFieldRefs {
   readonly claimedAt: Prisma.FieldRef<"GamePlayer", 'DateTime'>
   readonly score: Prisma.FieldRef<"GamePlayer", 'Int'>
   readonly rank: Prisma.FieldRef<"GamePlayer", 'Int'>
-  readonly isEliminated: Prisma.FieldRef<"GamePlayer", 'Boolean'>
   readonly joinedAt: Prisma.FieldRef<"GamePlayer", 'DateTime'>
 }
     

@@ -243,8 +243,8 @@ export type QuestionGroupByOutputType = {
   roundIndex: number
   order: number
   content: string
-  mediaUrl: string | null
-  soundUrl: string | null
+  mediaUrl: string
+  soundUrl: string
   options: string[]
   correctIndex: number
   durationSec: number
@@ -281,8 +281,8 @@ export type QuestionWhereInput = {
   roundIndex?: Prisma.IntFilter<"Question"> | number
   order?: Prisma.IntFilter<"Question"> | number
   content?: Prisma.StringFilter<"Question"> | string
-  mediaUrl?: Prisma.StringNullableFilter<"Question"> | string | null
-  soundUrl?: Prisma.StringNullableFilter<"Question"> | string | null
+  mediaUrl?: Prisma.StringFilter<"Question"> | string
+  soundUrl?: Prisma.StringFilter<"Question"> | string
   options?: Prisma.StringNullableListFilter<"Question">
   correctIndex?: Prisma.IntFilter<"Question"> | number
   durationSec?: Prisma.IntFilter<"Question"> | number
@@ -298,8 +298,8 @@ export type QuestionOrderByWithRelationInput = {
   roundIndex?: Prisma.SortOrder
   order?: Prisma.SortOrder
   content?: Prisma.SortOrder
-  mediaUrl?: Prisma.SortOrderInput | Prisma.SortOrder
-  soundUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  mediaUrl?: Prisma.SortOrder
+  soundUrl?: Prisma.SortOrder
   options?: Prisma.SortOrder
   correctIndex?: Prisma.SortOrder
   durationSec?: Prisma.SortOrder
@@ -318,8 +318,8 @@ export type QuestionWhereUniqueInput = Prisma.AtLeast<{
   roundIndex?: Prisma.IntFilter<"Question"> | number
   order?: Prisma.IntFilter<"Question"> | number
   content?: Prisma.StringFilter<"Question"> | string
-  mediaUrl?: Prisma.StringNullableFilter<"Question"> | string | null
-  soundUrl?: Prisma.StringNullableFilter<"Question"> | string | null
+  mediaUrl?: Prisma.StringFilter<"Question"> | string
+  soundUrl?: Prisma.StringFilter<"Question"> | string
   options?: Prisma.StringNullableListFilter<"Question">
   correctIndex?: Prisma.IntFilter<"Question"> | number
   durationSec?: Prisma.IntFilter<"Question"> | number
@@ -335,8 +335,8 @@ export type QuestionOrderByWithAggregationInput = {
   roundIndex?: Prisma.SortOrder
   order?: Prisma.SortOrder
   content?: Prisma.SortOrder
-  mediaUrl?: Prisma.SortOrderInput | Prisma.SortOrder
-  soundUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  mediaUrl?: Prisma.SortOrder
+  soundUrl?: Prisma.SortOrder
   options?: Prisma.SortOrder
   correctIndex?: Prisma.SortOrder
   durationSec?: Prisma.SortOrder
@@ -358,8 +358,8 @@ export type QuestionScalarWhereWithAggregatesInput = {
   roundIndex?: Prisma.IntWithAggregatesFilter<"Question"> | number
   order?: Prisma.IntWithAggregatesFilter<"Question"> | number
   content?: Prisma.StringWithAggregatesFilter<"Question"> | string
-  mediaUrl?: Prisma.StringNullableWithAggregatesFilter<"Question"> | string | null
-  soundUrl?: Prisma.StringNullableWithAggregatesFilter<"Question"> | string | null
+  mediaUrl?: Prisma.StringWithAggregatesFilter<"Question"> | string
+  soundUrl?: Prisma.StringWithAggregatesFilter<"Question"> | string
   options?: Prisma.StringNullableListFilter<"Question">
   correctIndex?: Prisma.IntWithAggregatesFilter<"Question"> | number
   durationSec?: Prisma.IntWithAggregatesFilter<"Question"> | number
@@ -371,8 +371,8 @@ export type QuestionCreateInput = {
   roundIndex?: number
   order?: number
   content: string
-  mediaUrl?: string | null
-  soundUrl?: string | null
+  mediaUrl: string
+  soundUrl: string
   options?: Prisma.QuestionCreateoptionsInput | string[]
   correctIndex: number
   durationSec?: number
@@ -388,8 +388,8 @@ export type QuestionUncheckedCreateInput = {
   roundIndex?: number
   order?: number
   content: string
-  mediaUrl?: string | null
-  soundUrl?: string | null
+  mediaUrl: string
+  soundUrl: string
   options?: Prisma.QuestionCreateoptionsInput | string[]
   correctIndex: number
   durationSec?: number
@@ -402,8 +402,8 @@ export type QuestionUpdateInput = {
   roundIndex?: Prisma.IntFieldUpdateOperationsInput | number
   order?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  soundUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  soundUrl?: Prisma.StringFieldUpdateOperationsInput | string
   options?: Prisma.QuestionUpdateoptionsInput | string[]
   correctIndex?: Prisma.IntFieldUpdateOperationsInput | number
   durationSec?: Prisma.IntFieldUpdateOperationsInput | number
@@ -419,8 +419,8 @@ export type QuestionUncheckedUpdateInput = {
   roundIndex?: Prisma.IntFieldUpdateOperationsInput | number
   order?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  soundUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  soundUrl?: Prisma.StringFieldUpdateOperationsInput | string
   options?: Prisma.QuestionUpdateoptionsInput | string[]
   correctIndex?: Prisma.IntFieldUpdateOperationsInput | number
   durationSec?: Prisma.IntFieldUpdateOperationsInput | number
@@ -435,8 +435,8 @@ export type QuestionCreateManyInput = {
   roundIndex?: number
   order?: number
   content: string
-  mediaUrl?: string | null
-  soundUrl?: string | null
+  mediaUrl: string
+  soundUrl: string
   options?: Prisma.QuestionCreateoptionsInput | string[]
   correctIndex: number
   durationSec?: number
@@ -448,8 +448,8 @@ export type QuestionUpdateManyMutationInput = {
   roundIndex?: Prisma.IntFieldUpdateOperationsInput | number
   order?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  soundUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  soundUrl?: Prisma.StringFieldUpdateOperationsInput | string
   options?: Prisma.QuestionUpdateoptionsInput | string[]
   correctIndex?: Prisma.IntFieldUpdateOperationsInput | number
   durationSec?: Prisma.IntFieldUpdateOperationsInput | number
@@ -463,8 +463,8 @@ export type QuestionUncheckedUpdateManyInput = {
   roundIndex?: Prisma.IntFieldUpdateOperationsInput | number
   order?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  soundUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  soundUrl?: Prisma.StringFieldUpdateOperationsInput | string
   options?: Prisma.QuestionUpdateoptionsInput | string[]
   correctIndex?: Prisma.IntFieldUpdateOperationsInput | number
   durationSec?: Prisma.IntFieldUpdateOperationsInput | number
@@ -617,8 +617,8 @@ export type QuestionCreateWithoutGameInput = {
   roundIndex?: number
   order?: number
   content: string
-  mediaUrl?: string | null
-  soundUrl?: string | null
+  mediaUrl: string
+  soundUrl: string
   options?: Prisma.QuestionCreateoptionsInput | string[]
   correctIndex: number
   durationSec?: number
@@ -632,8 +632,8 @@ export type QuestionUncheckedCreateWithoutGameInput = {
   roundIndex?: number
   order?: number
   content: string
-  mediaUrl?: string | null
-  soundUrl?: string | null
+  mediaUrl: string
+  soundUrl: string
   options?: Prisma.QuestionCreateoptionsInput | string[]
   correctIndex: number
   durationSec?: number
@@ -677,8 +677,8 @@ export type QuestionScalarWhereInput = {
   roundIndex?: Prisma.IntFilter<"Question"> | number
   order?: Prisma.IntFilter<"Question"> | number
   content?: Prisma.StringFilter<"Question"> | string
-  mediaUrl?: Prisma.StringNullableFilter<"Question"> | string | null
-  soundUrl?: Prisma.StringNullableFilter<"Question"> | string | null
+  mediaUrl?: Prisma.StringFilter<"Question"> | string
+  soundUrl?: Prisma.StringFilter<"Question"> | string
   options?: Prisma.StringNullableListFilter<"Question">
   correctIndex?: Prisma.IntFilter<"Question"> | number
   durationSec?: Prisma.IntFilter<"Question"> | number
@@ -690,8 +690,8 @@ export type QuestionCreateWithoutAnswersInput = {
   roundIndex?: number
   order?: number
   content: string
-  mediaUrl?: string | null
-  soundUrl?: string | null
+  mediaUrl: string
+  soundUrl: string
   options?: Prisma.QuestionCreateoptionsInput | string[]
   correctIndex: number
   durationSec?: number
@@ -706,8 +706,8 @@ export type QuestionUncheckedCreateWithoutAnswersInput = {
   roundIndex?: number
   order?: number
   content: string
-  mediaUrl?: string | null
-  soundUrl?: string | null
+  mediaUrl: string
+  soundUrl: string
   options?: Prisma.QuestionCreateoptionsInput | string[]
   correctIndex: number
   durationSec?: number
@@ -735,8 +735,8 @@ export type QuestionUpdateWithoutAnswersInput = {
   roundIndex?: Prisma.IntFieldUpdateOperationsInput | number
   order?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  soundUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  soundUrl?: Prisma.StringFieldUpdateOperationsInput | string
   options?: Prisma.QuestionUpdateoptionsInput | string[]
   correctIndex?: Prisma.IntFieldUpdateOperationsInput | number
   durationSec?: Prisma.IntFieldUpdateOperationsInput | number
@@ -751,8 +751,8 @@ export type QuestionUncheckedUpdateWithoutAnswersInput = {
   roundIndex?: Prisma.IntFieldUpdateOperationsInput | number
   order?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  soundUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  soundUrl?: Prisma.StringFieldUpdateOperationsInput | string
   options?: Prisma.QuestionUpdateoptionsInput | string[]
   correctIndex?: Prisma.IntFieldUpdateOperationsInput | number
   durationSec?: Prisma.IntFieldUpdateOperationsInput | number
@@ -765,8 +765,8 @@ export type QuestionCreateManyGameInput = {
   roundIndex?: number
   order?: number
   content: string
-  mediaUrl?: string | null
-  soundUrl?: string | null
+  mediaUrl: string
+  soundUrl: string
   options?: Prisma.QuestionCreateoptionsInput | string[]
   correctIndex: number
   durationSec?: number
@@ -778,8 +778,8 @@ export type QuestionUpdateWithoutGameInput = {
   roundIndex?: Prisma.IntFieldUpdateOperationsInput | number
   order?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  soundUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  soundUrl?: Prisma.StringFieldUpdateOperationsInput | string
   options?: Prisma.QuestionUpdateoptionsInput | string[]
   correctIndex?: Prisma.IntFieldUpdateOperationsInput | number
   durationSec?: Prisma.IntFieldUpdateOperationsInput | number
@@ -793,8 +793,8 @@ export type QuestionUncheckedUpdateWithoutGameInput = {
   roundIndex?: Prisma.IntFieldUpdateOperationsInput | number
   order?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  soundUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  soundUrl?: Prisma.StringFieldUpdateOperationsInput | string
   options?: Prisma.QuestionUpdateoptionsInput | string[]
   correctIndex?: Prisma.IntFieldUpdateOperationsInput | number
   durationSec?: Prisma.IntFieldUpdateOperationsInput | number
@@ -808,8 +808,8 @@ export type QuestionUncheckedUpdateManyWithoutGameInput = {
   roundIndex?: Prisma.IntFieldUpdateOperationsInput | number
   order?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
-  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  soundUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  soundUrl?: Prisma.StringFieldUpdateOperationsInput | string
   options?: Prisma.QuestionUpdateoptionsInput | string[]
   correctIndex?: Prisma.IntFieldUpdateOperationsInput | number
   durationSec?: Prisma.IntFieldUpdateOperationsInput | number
@@ -938,8 +938,8 @@ export type $QuestionPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     roundIndex: number
     order: number
     content: string
-    mediaUrl: string | null
-    soundUrl: string | null
+    mediaUrl: string
+    soundUrl: string
     options: string[]
     correctIndex: number
     durationSec: number
