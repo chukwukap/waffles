@@ -9,30 +9,27 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { notify } from "@/components/ui/Toaster";
 import { WaitlistTask, WaitlistTaskId, TaskStatus } from "../client";
 import { completeWaitlistTask, CompleteTaskState } from "@/actions/waitlist";
-import { useComposeCast, useOpenUrl } from "@coinbase/onchainkit/minikit";
+import {
+  useComposeCast,
+  useMiniKit,
+  useOpenUrl,
+} from "@coinbase/onchainkit/minikit";
 import { env } from "@/lib/env";
+import { WaitlistData } from "@/app/(app)/(game)/api/waitlist/route";
 
 interface UseTaskActionsProps {
-  fid: number | undefined;
-  completedTasks: string[];
-  invitesCount: number;
-  onTaskCompleted: () => void;
-  waitlistData: { rank?: number | null } | null;
+  waitlistData: WaitlistData;
 }
 
-export function useTaskActions({
-  fid,
-  completedTasks,
-  invitesCount,
-  onTaskCompleted,
-  waitlistData,
-}: UseTaskActionsProps) {
+export function useTaskActions({ waitlistData }: UseTaskActionsProps) {
+  const { context } = useMiniKit();
+  const fid = context?.user?.fid;
   const { composeCastAsync } = useComposeCast();
   const openUrl = useOpenUrl();
 
   // Share function for invite task
   const share = useCallback(async () => {
-    const rank = waitlistData?.rank ?? null;
+    const rank = waitlistData.rank ?? null;
     const message = `I'm on the Waffles waitlist! Join me!`;
     try {
       const result = await composeCastAsync({
@@ -44,7 +41,7 @@ export function useTaskActions({
     } catch {
       notify.error("Failed to share waitlist.");
     }
-  }, [composeCastAsync, fid, waitlistData?.rank]);
+  }, [composeCastAsync, fid, waitlistData.rank]);
 
   // Track which tasks have been "started" (clicked GO) -> Pending State
   const [pendingTasks, setPendingTasks] = useLocalStorage<WaitlistTaskId[]>(
@@ -59,17 +56,6 @@ export function useTaskActions({
     completeWaitlistTask,
     { success: false }
   );
-
-  useEffect(() => {
-    if (state.success && state.message) {
-      notify.success(state.message);
-      onTaskCompleted();
-    } else if (state.error) {
-      notify.error(state.error);
-      // Revert optimistic update on error
-      setOptimisticCompleted([]);
-    }
-  }, [state, onTaskCompleted]);
 
   const handleGo = async (task: WaitlistTask) => {
     // 1. Handle specific actions
@@ -88,7 +74,6 @@ export function useTaskActions({
         console.error("Compose cast failed", error);
       }
     } else if (task.actionUrl) {
-      // Link tasks - use openUrl for better Farcaster integration
       openUrl(task.actionUrl);
     }
 
@@ -122,7 +107,7 @@ export function useTaskActions({
   const getTaskStatus = (task: WaitlistTask): TaskStatus => {
     // 1. Completed?
     if (
-      completedTasks.includes(task.id) ||
+      waitlistData?.completedTasks.includes(task.id) ||
       optimisticCompleted.includes(task.id)
     ) {
       return "completed";
@@ -130,7 +115,7 @@ export function useTaskActions({
 
     // 2. Pending?
     if (task.type === "invite") {
-      if (invitesCount >= 3) return "pending";
+      if (waitlistData.invites >= 3) return "pending";
       return "initial";
     }
 

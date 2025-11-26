@@ -40,4 +40,8 @@ export const minikitConfig: MiniAppManifest = {
     ogImageUrl: `${env.rootUrl}/og.png`,
     noindex: true,
   },
+  // @ts-ignore
+  baseBuilder: {
+    allowedAddresses: ["0xd584F8079192E078F0f3237622345E19360384A2"],
+  },
 };

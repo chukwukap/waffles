@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { TASKS } from "@/app/(app)/waitlist/tasks/client";
+import { TASKS } from "@/lib/tasks";
 
 // Derive task points from the source of truth
 const TASK_POINTS = TASKS.reduce((acc: Record<string, number>, task) => {
@@ -12,7 +12,6 @@ const TASK_POINTS = TASKS.reduce((acc: Record<string, number>, task) => {
 import { z } from "zod";
 import { Prisma } from "../../prisma/generated/client";
 import { trackServer } from "@/lib/analytics-server";
-import { checkRateLimit, waitlistRateLimit } from "@/lib/ratelimit";
 
 export type JoinWaitlistState = {
   ok: boolean;
@@ -46,25 +45,6 @@ export async function joinWaitlistAction(
   }
 
   const { fid, ref } = validation.data;
-
-  // Rate limiting: 5 waitlist joins per hour per FID
-  const rateLimitResult = await checkRateLimit(
-    waitlistRateLimit,
-    `waitlist:${fid}`
-  );
-
-  if (!rateLimitResult.success) {
-    const resetTime =
-      typeof rateLimitResult.reset === "number"
-        ? rateLimitResult.reset
-        : rateLimitResult.reset.getTime();
-    const minutesUntilReset = Math.ceil((resetTime - Date.now()) / 60000);
-
-    return {
-      ok: false,
-      error: `Too many attempts. Please try again in ${minutesUntilReset} minutes.`,
-    };
-  }
 
   try {
     // 1. Find the user joining

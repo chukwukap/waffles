@@ -13,7 +13,7 @@ export function SubHeader({ title, className, backButtonClassName }: SubHeaderPr
   const router = useRouter();
 
   return (
-    <div className={cn("mx-auto flex w-full max-w-lg items-center justify-between px-4 pt-4", className)}>
+    <div className={cn("mx-auto flex w-full max-w-lg items-center justify-between px-4 py-3", className)}>
       <button
         onClick={() => router.back()}
         className={cn(

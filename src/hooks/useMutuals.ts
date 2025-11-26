@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
-export function useMutuals(fid?: number) {
+export function useMutuals() {
+  const { context } = useMiniKit();
+  const fid = context?.user?.fid;
   const [data, setData] = useState<{
     mutuals: Array<{ fid: number; pfpUrl: string | null }>;
     mutualCount: number;

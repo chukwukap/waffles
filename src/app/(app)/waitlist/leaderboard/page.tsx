@@ -1,12 +1,33 @@
-import { LeaderboardClient, LeaderboardHeader } from "./client";
+import { LeaderboardClient } from "./client";
+import { LeaderboardData } from "@/app/api/waitlist/leaderboard/route";
+import { env } from "@/lib/env";
 
-export default function LeaderboardPage() {
-    return (
-        <section className="flex-1 overflow-y-auto pb-8 min-h-screen bg-linear-to-b from-[#191919] to-[#0A0A0A]">
-            <div className="sticky top-0 z-50 w-full backdrop-blur-md mb-2">
-                <LeaderboardHeader />
+async function getLeaderboardData(fid: string): Promise<LeaderboardData> {
+    const response = await fetch(`${env.rootUrl}/api/waitlist/leaderboard?fid=${fid}&limit=50`, {
+        cache: 'no-store'
+    });
+
+    if (!response.ok) {
+        throw new Error("Failed to fetch leaderboard data");
+    }
+
+    return response.json();
+}
+
+export default async function LeaderboardPage({ searchParams }: { searchParams: Promise<{ fid: string }> }) {
+    const params = await searchParams;
+
+    // Validate fid parameter
+    if (!params.fid) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <p className="text-white">Missing FID parameter</p>
             </div>
-            <LeaderboardClient />
-        </section>
+        );
+    }
+
+    const leaderboardPromise = getLeaderboardData(params.fid);
+    return (
+        <LeaderboardClient leaderboardPromise={leaderboardPromise} />
     );
 }

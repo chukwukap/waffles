@@ -5,7 +5,6 @@ import { z } from "zod";
 
 import { validateReferralSchema } from "@/lib/schemas";
 import { trackServer } from "@/lib/analytics-server";
-import { checkRateLimit, inviteRateLimit } from "@/lib/ratelimit";
 
 interface ValidationSuccess {
   valid: true;
@@ -40,30 +39,6 @@ export async function validateReferralAction(
   }
 
   const { code, fid } = validation.data;
-
-  // Rate limiting: 10 invite attempts per hour per FID
-  const rateLimitResult = await checkRateLimit(
-    inviteRateLimit,
-    `invite:${fid}`
-  );
-
-  if (!rateLimitResult.success) {
-    const resetTime =
-      typeof rateLimitResult.reset === "number"
-        ? rateLimitResult.reset
-        : rateLimitResult.reset.getTime();
-    const minutesUntilReset = Math.ceil((resetTime - Date.now()) / 60000);
-
-    await trackServer("invite_failed", {
-      fid,
-      reason: "rate_limited",
-      code,
-    });
-    return {
-      valid: false,
-      error: `Too many attempts. Please try again in ${minutesUntilReset} minutes.`,
-    };
-  }
 
   try {
     // 1. Find the inviter (by their share code) and invitee (by their FID)

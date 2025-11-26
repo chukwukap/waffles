@@ -1,3 +1,4 @@
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useState, useCallback, useEffect, useRef } from "react";
 
 export interface WaitlistData {
@@ -7,7 +8,9 @@ export interface WaitlistData {
   status: string;
 }
 
-export function useWaitlistData(fid?: number) {
+export function useWaitlistData() {
+  const { context } = useMiniKit();
+  const fid = context?.user?.fid;
   const [data, setData] = useState<WaitlistData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

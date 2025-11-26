@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { prisma, UserStatus } from "@/lib/db";
 import { z } from "zod";
 
 // Query parameter validation schema (still valid)
@@ -10,53 +10,12 @@ const querySchema = z.object({
     .transform(Number),
 });
 
-/**
- * Calculates fair waitlist rank, considering both invites and creation time.
- * A user's rank is determined by their "score".
- * - Score = inviteQuota * 1_000_000_000 - createdAt timestamp (higher score is better)
- * - Higher invite quota always ranks above, earlier join time breaks ties.
- * Returns 1-based rank (1 = best). Returns null if not on waitlist.
- */
-async function getWaitlistRank(fid: number): Promise<number | null> {
-  const user = await prisma.user.findUnique({
-    where: { fid },
-    select: { id: true, status: true, inviteQuota: true, createdAt: true },
-  });
-
-  // Not on waitlist or not a user
-  if (!user || (user.status !== "WAITLIST" && user.status !== "ACTIVE")) {
-    return null;
-  }
-
-  // Calculate the user's score
-  const userScore =
-    user.inviteQuota * 1_000_000_000 - new Date(user.createdAt).getTime();
-
-  // Find how many waitlist entries have a better (higher) score
-  const allEntries = await prisma.user.findMany({
-    where: { status: { in: ["WAITLIST", "ACTIVE"] } },
-    select: { inviteQuota: true, createdAt: true },
-  });
-
-  let betterCount = 0;
-  for (const entry of allEntries) {
-    const entryScore =
-      entry.inviteQuota * 1_000_000_000 - new Date(entry.createdAt).getTime();
-
-    if (entryScore > userScore) {
-      betterCount++;
-    }
-  }
-
-  return betterCount + 1; // 1-based rank
-}
-
 export interface WaitlistData {
   onList: boolean;
   rank: number | null;
   invites: number;
   completedTasks: string[];
-  status: string;
+  status: UserStatus;
 }
 
 /**
@@ -78,10 +37,16 @@ export async function GET(request: NextRequest) {
 
     const { fid } = validationResult.data;
 
-    // Fetch user data
+    // Fetch all user data in one query
     const user = await prisma.user.findUnique({
       where: { fid },
-      select: { id: true, fid: true, status: true, completedTasks: true },
+      select: {
+        id: true,
+        fid: true,
+        status: true,
+        completedTasks: true,
+        waitlistPoints: true,
+      },
     });
 
     if (!user) {
@@ -95,9 +60,20 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Calculate rank and invites in parallel
+    const onList = user.status === "WAITLIST" || user.status === "ACTIVE";
+
+    // Calculate rank and invites in parallel (only if on waitlist)
     const [rank, invites] = await Promise.all([
-      getWaitlistRank(user.fid),
+      onList
+        ? prisma.user
+            .count({
+              where: {
+                status: { in: ["WAITLIST", "ACTIVE"] },
+                waitlistPoints: { gt: user.waitlistPoints },
+              },
+            })
+            .then((count) => count + 1) // Convert to 1-based rank
+        : Promise.resolve(null),
       prisma.referralReward.count({
         where: { inviterId: user.id },
       }),
@@ -105,7 +81,7 @@ export async function GET(request: NextRequest) {
 
     // Return waitlist data
     const waitlistData: WaitlistData = {
-      onList: user.status === "WAITLIST" || user.status === "ACTIVE",
+      onList,
       rank,
       invites,
       completedTasks: user.completedTasks,

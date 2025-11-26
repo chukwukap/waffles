@@ -38,7 +38,7 @@ export default function GameHomePageClient({
   } = useMiniKit();
   const fid = miniKitContext?.user?.fid;
   const router = useRouter();
-  const { data: waitlistData, isLoading: isWaitlistLoading } = useWaitlistData(fid);
+  const { data: waitlistData, isLoading: isWaitlistLoading } = useWaitlistData();
 
   useEffect(() => {
     if (!isMiniAppReady) {
