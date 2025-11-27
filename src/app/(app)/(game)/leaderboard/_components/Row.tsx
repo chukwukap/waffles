@@ -21,7 +21,7 @@ export function Row({ entry, isCurrentUser = false }: RowProps) {
       className={cn(
         "panel flex h-12 items-center justify-between rounded-xl px-4",
         isCurrentUser &&
-        "bg-blue-900/30 border-blue-500/50 ring-1 ring-blue-500/60"
+        "bg-blue-900/30 ring-1 ring-blue-500/60"
       )}
     >
       <div className="flex items-center gap-2">

@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useMemo } from "react";
 
@@ -131,7 +130,7 @@ function Tile({ avatar }: { avatar?: Avatar }) {
         alt={avatar.alt ?? `Avatar ${avatar.id}`}
         className={cn(
           "absolute left-[2px] top-[2px] size-(--tile) border border-[#464646] object-cover bg-[#F0F3F4]",
-          avatar.isPlaceholder && "grayscale opacity-30"
+          avatar.isPlaceholder && "grayscale opacity-80"
         )}
         draggable={false}
       />
