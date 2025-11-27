@@ -21,41 +21,41 @@ import {
  */
 
 async function main() {
-  // Reuse shared game data with full URLs
-  const rounds = getGameQuestions();
-
-  // Create the game
-  const game = await prisma.game.upsert({
-    where: { id: 1 },
-    update: {},
-    create: {
-      title: "Movie & TV Scene Quiz",
-      description: "Guess the movie or TV show a famous scene is from.",
-      theme: defaultGameConfig.theme,
-      status: "SCHEDULED",
-      startsAt: new Date(Date.now() + 1 * 60 * 1000), // 1 minute from now
-      endsAt: new Date(Date.now() + 1 * 60 * 60 * 1000), // 1 hour from now
-      prizePool: defaultGameConfig.prizePool,
-      roundDurationSec: defaultGameConfig.roundDurationSec,
-      maxPlayers: defaultGameConfig.maxPlayers,
-    },
-  });
-
-  // Create questions for each round
-  for (const round of rounds) {
-    // Create questions for this round
-    await prisma.question.createMany({
-      data: round.questions.map((q) => ({
-        gameId: game.id,
-        roundIndex: round.roundIndex,
-        content: q.content,
-        mediaUrl: q.mediaUrl,
-        options: q.options,
-        correctIndex: getCorrectIndex(q.correctAnswer, q.options),
-        durationSec: defaultGameConfig.roundDurationSec,
-      })),
-    });
-  }
+  // // Reuse shared game data with full URLs
+  // const rounds = getGameQuestions();
+  // // Create the game
+  // const game = await prisma.game.upsert({
+  //   where: { id: 1 },
+  //   update: {},
+  //   create: {
+  //     title: "Movie & TV Scene Quiz",
+  //     description: "Guess the movie or TV show a famous scene is from.",
+  //     theme: defaultGameConfig.theme,
+  //     coverUrl: "/images/covers/movie-quiz.jpg",
+  //     status: "SCHEDULED",
+  //     startsAt: new Date(Date.now() + 1 * 60 * 1000), // 1 minute from now
+  //     endsAt: new Date(Date.now() + 1 * 60 * 60 * 1000), // 1 hour from now
+  //     prizePool: defaultGameConfig.prizePool,
+  //     roundDurationSec: defaultGameConfig.roundDurationSec,
+  //     maxPlayers: defaultGameConfig.maxPlayers,
+  //   },
+  // });
+  // // Create questions for each round
+  // for (const round of rounds) {
+  //   // Create questions for this round
+  //   await prisma.question.createMany({
+  //     data: round.questions.map((q) => ({
+  //       gameId: game.id,
+  //       roundIndex: round.roundIndex,
+  //       content: q.content,
+  //       mediaUrl: q.mediaUrl,
+  //       soundUrl: q.soundUrl || "",
+  //       options: q.options,
+  //       correctIndex: getCorrectIndex(q.correctAnswer, q.options),
+  //       durationSec: defaultGameConfig.roundDurationSec,
+  //     })),
+  //   });
+  // }
 }
 
 main()
