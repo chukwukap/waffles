@@ -97,7 +97,6 @@ export default async function GameHomePage() {
       <GameHomePageClient
         gamePromise={gamePromise}
       />
-      <BottomNav />
     </>
   );
 }
