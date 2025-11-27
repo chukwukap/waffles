@@ -134,7 +134,14 @@ export const Chat = ({
           fid: msg.user.fid,
         }));
 
-        setComments(formattedComments);
+        setComments((prev) => {
+          const combined = [...formattedComments, ...prev];
+          // Deduplicate by ID
+          const unique = combined.filter((c, index, self) =>
+            index === self.findIndex((t) => t.id === c.id)
+          );
+          return unique;
+        });
         // Force scroll to bottom on initial load
         setTimeout(() => {
           if (chatListRef.current) {
