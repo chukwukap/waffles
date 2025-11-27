@@ -8,14 +8,6 @@ const envSchema = z.object({
     ? z.string().min(1, "NEYNAR_API_KEY is required")
     : z.string().optional(),
 
-  // Redis
-  UPSTASH_REDIS_REST_URL: isServer
-    ? z.string().min(1, "UPSTASH_REDIS_REST_URL is required")
-    : z.string().optional(),
-  UPSTASH_REDIS_REST_TOKEN: isServer
-    ? z.string().min(1, "UPSTASH_REDIS_REST_TOKEN is required")
-    : z.string().optional(),
-
   // Client
   NEXT_PUBLIC_ONCHAINKIT_API_KEY: z
     .string()
@@ -38,6 +30,10 @@ const envSchema = z.object({
   NEXT_PUBLIC_ACCOUNT_ASSOCIATION_PAYLOAD: z.string().optional(),
   NEXT_PUBLIC_ACCOUNT_ASSOCIATION_SIGNATURE: z.string().optional(),
 
+  // Supabase
+  NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
+
   // URLs
   NEXT_PUBLIC_URL: z.string().url().optional(),
   NEXT_PUBLIC_APP_URL: z.string().url().optional(),
@@ -49,8 +45,6 @@ const envSchema = z.object({
 const getEnv = () => {
   const parsed = envSchema.safeParse({
     NEYNAR_API_KEY: process.env.NEYNAR_API_KEY,
-    UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
-    UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
     NEXT_PUBLIC_ONCHAINKIT_API_KEY: process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY,
     NEXT_PUBLIC_USDC_ADDRESS: process.env.NEXT_PUBLIC_USDC_ADDRESS,
     NEXT_PUBLIC_LEADERBOARD_PAGE_SIZE:
@@ -61,6 +55,8 @@ const getEnv = () => {
       process.env.NEXT_PUBLIC_ACCOUNT_ASSOCIATION_PAYLOAD,
     NEXT_PUBLIC_ACCOUNT_ASSOCIATION_SIGNATURE:
       process.env.NEXT_PUBLIC_ACCOUNT_ASSOCIATION_SIGNATURE,
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     NEXT_PUBLIC_URL: process.env.NEXT_PUBLIC_URL,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL,
@@ -98,6 +94,8 @@ const getEnv = () => {
           payload: undefined,
           signature: undefined,
         },
+        nextPublicSupabaseUrl: "",
+        nextPublicSupabaseAnonKey: "",
       };
     }
   }
@@ -120,8 +118,6 @@ const getEnv = () => {
   return {
     rootUrl: resolveRootUrl().replace(/\/$/, ""),
     neynarApiKey: data.NEYNAR_API_KEY!,
-    upstashRedisRestUrl: data.UPSTASH_REDIS_REST_URL!,
-    upstashRedisRestToken: data.UPSTASH_REDIS_REST_TOKEN!,
     nextPublicOnchainkitApiKey: data.NEXT_PUBLIC_ONCHAINKIT_API_KEY,
     nextPublicUsdcAddress: data.NEXT_PUBLIC_USDC_ADDRESS as `0x${string}`,
     nextPublicLeaderboardPageSize: data.NEXT_PUBLIC_LEADERBOARD_PAGE_SIZE,
@@ -132,6 +128,8 @@ const getEnv = () => {
       payload: data.NEXT_PUBLIC_ACCOUNT_ASSOCIATION_PAYLOAD,
       signature: data.NEXT_PUBLIC_ACCOUNT_ASSOCIATION_SIGNATURE,
     },
+    nextPublicSupabaseUrl: data.NEXT_PUBLIC_SUPABASE_URL,
+    nextPublicSupabaseAnonKey: data.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   };
 };
 

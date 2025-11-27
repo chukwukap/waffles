@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { z } from "zod";
 
 import { sendMessageSchema } from "@/lib/schemas";
+import { supabase } from "@/lib/supabase";
 
 // Utility function: Remove or redact URLs from a string.
 function sanitizeMessage(input: string): string {
@@ -64,33 +65,31 @@ export async function sendMessageAction(
       select: { id: true, createdAt: true },
     });
 
-    // Publish to Redis Stream
+    // Publish to Supabase Realtime (Broadcast)
     try {
-      const { redis } = await import("@/lib/redis");
-      const streamKey = `game:stream:${gameId}`;
-
-      const eventData = JSON.stringify({
-        type: "chat",
-        data: {
-          id: chat.id,
-          userId: user.id,
-          gameId,
-          message: sanitizedMessage,
-          createdAt: chat.createdAt.toISOString(),
-          user: {
-            id: user.id,
-            fid,
-            username: user.username || `User ${fid}`,
-            pfpUrl: user.pfpUrl,
-          },
+      const eventData = {
+        id: chat.id,
+        userId: user.id,
+        gameId,
+        message: sanitizedMessage,
+        createdAt: chat.createdAt.toISOString(),
+        user: {
+          id: user.id,
+          fid,
+          username: user.username || `User ${fid}`,
+          pfpUrl: user.pfpUrl,
         },
-      });
+      };
 
-      await redis.xadd(streamKey, "*", { data: eventData });
-      console.log("✅ Published chat event to Redis:", streamKey);
+      await supabase.channel(`game-${gameId}`).send({
+        type: "broadcast",
+        event: "chat-event",
+        payload: eventData,
+      });
+      console.log("✅ Published chat event to Supabase:", `game-${gameId}`);
     } catch (err) {
-      console.error("❌ Failed to publish to Redis:", err);
-      // Don't fail the request if Redis fails
+      console.error("❌ Failed to publish to Supabase:", err);
+      // Don't fail the request if Realtime fails
     }
 
     return { success: true, messageId: chat.id };

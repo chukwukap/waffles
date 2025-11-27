@@ -117,7 +117,8 @@ export const Chat = ({
         const response = await fetch(`/api/chat?gameId=${gameId}`);
         if (!response.ok) throw new Error("Failed to fetch messages");
 
-        const messages: ChatWithUser[] = await response.json();
+        const data = await response.json();
+        const messages: ChatWithUser[] = data.messages || [];
         const formattedComments: ChatCommentType[] = messages.map((msg) => ({
           id: msg.id,
           name: msg.user.username ?? "anon",

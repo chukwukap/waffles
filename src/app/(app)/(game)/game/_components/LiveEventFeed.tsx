@@ -1,8 +1,7 @@
 "use client";
-import React, { useState, useCallback } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
-import { useGameEvents } from "@/hooks/useGameEvents";
+import { useLiveFeed } from "@/hooks/useLiveFeed";
 
 // Helper function to get first letter of username
 const getInitial = (username: string): string => {
@@ -44,16 +43,6 @@ function AvatarWithFallback({
   );
 }
 
-type EventType = "join" | "chat";
-
-interface Event {
-  id: number;
-  avatar: string | null;
-  content: string;
-  type: EventType;
-  username: string;
-}
-
 // --- LiveEventFeed Component ---
 // Shows real-time game events (chat messages and player joins)
 export default function LiveEventFeed({
@@ -63,87 +52,7 @@ export default function LiveEventFeed({
   maxEvents: number;
   gameId: number | null;
 }) {
-  const [events, setEvents] = useState<Event[]>([]);
-
-  // Handle chat events
-  const handleChat = useCallback(
-    (chatEvent: {
-      id: number;
-      user: { username: string; pfpUrl: string | null };
-      message: string;
-    }) => {
-      const newEvent: Event = {
-        id: chatEvent.id,
-        avatar: chatEvent.user.pfpUrl,
-        content: chatEvent.message,
-        type: "chat",
-        username: chatEvent.user.username,
-      };
-
-      setEvents((currentEvents) => {
-        return [...currentEvents, newEvent].slice(-maxEvents);
-      });
-    },
-    [maxEvents]
-  );
-
-  // Handle join events
-  const handleJoin = useCallback(
-    (joinEvent: {
-      id: number;
-      user: { username: string; pfpUrl: string | null };
-    }) => {
-      const newEvent: Event = {
-        id: joinEvent.id,
-        avatar: joinEvent.user.pfpUrl,
-        content: `${joinEvent.user.username} joined the lobby`,
-        type: "join",
-        username: joinEvent.user.username,
-      };
-
-      setEvents((currentEvents) => {
-        return [...currentEvents, newEvent].slice(-maxEvents);
-      });
-    },
-    [maxEvents]
-  );
-
-  // Subscribe to real-time events
-  useGameEvents({
-    gameId,
-    enabled: !!gameId,
-    onChat: handleChat,
-    onJoin: handleJoin,
-  });
-
-  // Fetch initial events on mount
-  React.useEffect(() => {
-    if (!gameId) return;
-
-    const fetchInitialEvents = async () => {
-      try {
-        const response = await fetch(`/api/chat?gameId=${gameId}&limit=${maxEvents}`);
-        if (!response.ok) return;
-
-        const data = await response.json();
-
-        // Transform chat messages into events
-        const initialEvents: Event[] = data.messages?.map((msg: any) => ({
-          id: msg.id,
-          avatar: msg.user?.pfpUrl || null,
-          content: msg.text,
-          type: "chat" as EventType,
-          username: msg.user?.username || `User ${msg.userId}`,
-        })) || [];
-
-        setEvents(initialEvents);
-      } catch (error) {
-        console.error("Failed to fetch initial events:", error);
-      }
-    };
-
-    fetchInitialEvents();
-  }, [gameId, maxEvents]);
+  const { events } = useLiveFeed({ gameId, maxEvents });
 
   // Calculate opacity based on index.
   // The newest event (last in the array) has the highest opacity.
