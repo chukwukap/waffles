@@ -5,21 +5,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "**",
-        port: "",
-        pathname: "**",
-      },
-      {
-        protocol: "https",
-        hostname: "res.cloudinary.com",
-      },
-      {
-        protocol: "https",
-        hostname: "**.supabase.co", // For Supabase storage
-      },
-      {
-        protocol: "https",
-        hostname: "**.public.blob.vercel-storage.com", // For Vercel Blob
+        hostname: "**.blob.vercel-storage.com",
       },
     ],
   },

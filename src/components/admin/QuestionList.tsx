@@ -20,6 +20,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { reorderQuestionsAction, deleteQuestionAction } from "@/actions/admin/questions";
 import { TrashIcon, Bars3Icon, MusicalNoteIcon, PhotoIcon } from "@heroicons/react/24/outline";
+import Image from "next/image";
 
 interface Question {
     id: number;
@@ -108,10 +109,12 @@ function SortableQuestionItem({ question, gameId }: { question: Question; gameId
                     <div className="mt-3 flex gap-4">
                         {question.mediaUrl && (
                             <div className="relative h-20 w-32 rounded-lg overflow-hidden border border-slate-700 bg-slate-900">
-                                <img
+                                <Image
                                     src={question.mediaUrl}
                                     alt="Question media"
-                                    className="h-full w-full object-cover"
+                                    fill
+                                    className="object-cover"
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                 />
                             </div>
                         )}

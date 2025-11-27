@@ -59,7 +59,6 @@ export default function Leaderboard({ entries, className }: Props) {
               height={49}
               alt=""
               priority
-              unoptimized
             />
           </span>
           {/* User info (avatar and username) */}

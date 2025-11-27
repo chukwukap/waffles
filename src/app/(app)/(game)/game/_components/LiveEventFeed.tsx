@@ -161,7 +161,7 @@ export default function LiveEventFeed({
     // Main container.
     // No background, inherits from parent.
     // Set width and height as requested, but max-w-full makes it responsive.
-    <div className="w-full max-w-[377px] h-[130px] p-2 px-4 flex flex-col justify-end overflow-hidden border-red-500 border">
+    <div className="w-full max-w-[377px] h-[130px] p-2 px-4 flex flex-col justify-end overflow-hidden">
       <div className="flex flex-col gap-2 pt-4">
         <AnimatePresence initial={false}>
           {events.map((event, index) => (
