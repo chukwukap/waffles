@@ -71,8 +71,8 @@ export async function createQuestionAction(
         content: data.content,
         options: [data.optionA, data.optionB, data.optionC, data.optionD],
         correctIndex,
-        mediaUrl: data.mediaUrl || null,
-        soundUrl: data.soundUrl || null,
+        mediaUrl: data.mediaUrl || "",
+        soundUrl: data.soundUrl || "",
         durationSec: data.durationSec,
       },
     });

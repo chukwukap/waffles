@@ -72,8 +72,8 @@ export async function bulkImportQuestionsAction(
             content: validated.content,
             options: validated.options,
             correctIndex: validated.correctIndex,
-            mediaUrl: validated.mediaUrl || null,
-            soundUrl: validated.soundUrl || null,
+            mediaUrl: validated.mediaUrl || "",
+            soundUrl: validated.soundUrl || "",
             durationSec: validated.durationSec,
           },
         });
