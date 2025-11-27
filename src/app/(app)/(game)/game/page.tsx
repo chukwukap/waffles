@@ -102,4 +102,4 @@ export default async function GameHomePage() {
   );
 }
 
-// export const dynamic = "force-dynamic";
+export const revalidate = 3 // 3 seconds
