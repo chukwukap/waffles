@@ -33,7 +33,7 @@ function AvatarWithFallback({
   }
 
   return (
-    <Image
+    <img
       src={src}
       alt="avatar"
       width={24}

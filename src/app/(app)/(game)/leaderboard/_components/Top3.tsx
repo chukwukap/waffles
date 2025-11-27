@@ -70,7 +70,7 @@ export function Top3({ entries, currentUserId }: Top3Props) {
               styles.bg,
               styles.border,
               isCurrentUser &&
-                "ring-2 ring-offset-2 ring-offset-black ring-blue-400"
+              "ring-2 ring-offset-2 ring-offset-black ring-blue-400"
             )}
           >
             <TrophyIcon
@@ -92,12 +92,10 @@ export function Top3({ entries, currentUserId }: Top3Props) {
                 }}
               >
                 {entry.pfpUrl ? (
-                  <Image
+                  <img
                     src={entry.pfpUrl}
                     alt={entry.username || "Unknown User"}
-                    fill
-                    sizes="24px"
-                    className="object-cover"
+                    className="object-cover w-full h-full"
                     draggable={false}
                   />
                 ) : (

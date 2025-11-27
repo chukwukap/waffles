@@ -40,12 +40,10 @@ export function ProfileCard({
 
       {/* Background PFP Effect - Ghost Image */}
       <div className="absolute right-[-20px] top-[-20px] w-[200px] h-[200px] z-0 opacity-[0.07] pointer-events-none grayscale contrast-150">
-        <Image
+        <img
           src={avatarUrl}
           alt={`${username} avatar`}
           className="w-full h-full object-cover rounded-full blur-xs"
-          fill
-          sizes="200px"
         />
       </div>
 
@@ -63,12 +61,10 @@ export function ProfileCard({
         <div className="flex items-center justify-center gap-3 w-full">
           {/* Avatar Circle */}
           <div className="relative w-10 h-10 rounded-full bg-[#4AD2FF] overflow-hidden border border-white/10 shadow-sm shrink-0">
-            <Image
+            <img
               src={avatarUrl}
               alt={`${username} avatar`}
               className="w-full h-full object-cover"
-              fill
-              sizes="40px"
             />
           </div>
 

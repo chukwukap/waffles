@@ -21,7 +21,7 @@ export function Row({ entry, isCurrentUser = false }: RowProps) {
       className={cn(
         "panel flex h-12 items-center justify-between rounded-xl px-4",
         isCurrentUser &&
-          "bg-blue-900/30 border-blue-500/50 ring-1 ring-blue-500/60"
+        "bg-blue-900/30 border-blue-500/50 ring-1 ring-blue-500/60"
       )}
     >
       <div className="flex items-center gap-2">
@@ -31,7 +31,7 @@ export function Row({ entry, isCurrentUser = false }: RowProps) {
         <div className="flex items-center gap-2 min-w-0">
           <div className="relative h-7 w-7 rounded-full bg-white/10 shrink-0">
             {entry.pfpUrl ? (
-              <Image
+              <img
                 src={entry.pfpUrl}
                 alt={entry.username || "Unknown User"}
                 width={28}

@@ -15,6 +15,9 @@ export async function GET(req: NextRequest) {
   const fid = Number(fidStr);
   const gameId = gameIdStr ? Number(gameIdStr) : null;
   const safeContext = context || "waitlist";
+  const limit = searchParams.get("limit")
+    ? Number(searchParams.get("limit"))
+    : 4;
 
   try {
     // 1. Fetch reciprocal followers (mutuals) from Neynar
@@ -76,17 +79,19 @@ export async function GET(req: NextRequest) {
       totalCount = await prisma.gamePlayer.count({ where: { gameId } });
     }
 
-    // 4. Return if we have enough mutuals (4+)
-    if (joinedMutuals.length >= 4) {
+    // 4. Return if we have enough mutuals (limit)
+    if (joinedMutuals.length >= limit) {
       return NextResponse.json({
-        mutuals: joinedMutuals.slice(0, 4),
+        mutuals: joinedMutuals.slice(0, limit),
         mutualCount: joinedMutuals.length,
         totalCount,
       });
     }
 
     // 5. Fallback: Fill with top players
-    const limit = 10;
+    // We need to fetch enough top players to fill the remaining slots up to 'limit'
+    // But we fetch a bit more (limit * 2) to account for duplicates we might filter out
+    const fetchLimit = limit * 2;
     let topPlayers: Array<{ fid: number; pfpUrl: string | null }> = [];
 
     if (safeContext === "waitlist") {
@@ -96,7 +101,7 @@ export async function GET(req: NextRequest) {
           pfpUrl: { not: null },
         },
         orderBy: [{ inviteQuota: "desc" }, { createdAt: "asc" }],
-        take: limit,
+        take: fetchLimit,
         select: { fid: true, pfpUrl: true },
       });
       topPlayers = entries.map((e) => ({ fid: e.fid, pfpUrl: e.pfpUrl }));
@@ -107,7 +112,7 @@ export async function GET(req: NextRequest) {
           user: { pfpUrl: { not: null } },
         },
         orderBy: { score: "desc" },
-        take: limit,
+        take: fetchLimit,
         include: { user: { select: { fid: true, pfpUrl: true } } },
       });
       topPlayers = scores.map((s) => ({
@@ -124,11 +129,11 @@ export async function GET(req: NextRequest) {
 
     const combined = [
       ...joinedMutuals,
-      ...additionalPlayers.slice(0, 4 - joinedMutuals.length),
+      ...additionalPlayers.slice(0, limit - joinedMutuals.length),
     ];
 
     return NextResponse.json({
-      mutuals: combined.slice(0, 4),
+      mutuals: combined.slice(0, limit),
       mutualCount: joinedMutuals.length,
       totalCount,
     });

@@ -32,12 +32,12 @@ export function GameSummaryCard({
       <div className="absolute top-[16px] left-[14px] flex flex-row items-center gap-[10px] w-full max-w-[295px] h-[54px]">
         <div className="w-[54px] h-[54px] rounded-full overflow-hidden bg-[#D9D9D9] shrink-0">
           {avatarUrl ? (
-            <Image
+            <img
               src={avatarUrl}
               alt="User avatar"
               width={54}
               height={54}
-              className="object-cover"
+              className="object-cover w-full h-full"
             />
           ) : (
             <div className="w-[54px] h-[54px] rounded-full overflow-hidden bg-[#D9D9D9] flex items-center justify-center">

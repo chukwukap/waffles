@@ -178,11 +178,10 @@ export default function WinningsCard({
 
         <div className="flex items-center gap-2 bg-black/20 pr-3 pl-1 py-1 rounded-full">
           <div className="relative w-6 h-6 rounded-full overflow-hidden border border-white/20">
-            <Image
+            <img
               src={pfpUrl || "/images/avatars/a.png"}
               alt={username}
-              fill
-              className="object-cover"
+              className="object-cover w-full h-full"
             />
           </div>
           <span className="font-body text-[14px] text-white uppercase tracking-wide leading-none pt-0.5">

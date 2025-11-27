@@ -63,7 +63,7 @@ export default function Leaderboard({ entries, className }: Props) {
           </span>
           {/* User info (avatar and username) */}
           <span className="flex items-center gap-3 flex-1 min-w-0">
-            <Image
+            <img
               src={e.pfpUrl ?? "/images/avatar-default.png"} // CHANGED: from avatarUrl
               width={36}
               height={36}

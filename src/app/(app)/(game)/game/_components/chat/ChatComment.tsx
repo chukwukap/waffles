@@ -24,7 +24,7 @@ function AvatarWithFallback({ src, name }: { src: string; name: string }) {
   }
 
   return (
-    <Image
+    <img
       src={src}
       alt={`${name} avatar`}
       width={20}

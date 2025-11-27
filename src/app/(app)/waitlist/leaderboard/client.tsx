@@ -64,11 +64,10 @@ function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
             {/* Avatar */}
             <div className="relative w-[20px] h-[20px] rounded-full overflow-hidden bg-white/10 shrink-0">
                 {entry.pfpUrl ? (
-                    <Image
+                    <img
                         src={entry.pfpUrl}
                         alt={entry.username || `User ${entry.fid}`}
-                        fill
-                        className="object-cover"
+                        className="object-cover w-full h-full"
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-white/40 text-xs">

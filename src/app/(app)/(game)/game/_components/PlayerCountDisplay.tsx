@@ -3,9 +3,10 @@ import { AvatarDiamond } from "./AvatarDiamond";
 interface PlayerCountDisplayProps {
     mutualsCount: number;
     playerCount: number;
+    avatars: Array<{ fid: number; pfpUrl: string | null }>;
 }
 
-export function PlayerCountDisplay({ mutualsCount, playerCount }: PlayerCountDisplayProps) {
+export function PlayerCountDisplay({ mutualsCount, playerCount, avatars }: PlayerCountDisplayProps) {
     return (
         <div className="w-full flex flex-col items-center justify-center mb-4">
             <AvatarDiamond
@@ -13,6 +14,7 @@ export function PlayerCountDisplay({ mutualsCount, playerCount }: PlayerCountDis
                 cellMax={54}
                 gap={2}
                 className="scale-95 sm:scale-100"
+                avatars={avatars}
             />
             <p className="mt-1 min-w-[120px] text-center font-display font-medium tracking-[-0.03em] text-muted text-[clamp(13px,4vw,16px)] leading-[130%]">
                 {mutualsCount === 0

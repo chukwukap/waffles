@@ -149,6 +149,7 @@ export default function GameHomePageClient({
         <PlayerCountDisplay
           mutualsCount={mutuals?.mutualCount ?? 0}
           playerCount={playerCount}
+          avatars={mutuals?.mutuals ?? []}
         />
 
         <LiveEventFeed

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Ticket } from "../../prisma/generated/client";
 import { useUser } from "@/hooks/useUser";
+import { useMutuals } from "@/hooks/useMutuals";
 
 interface MutualsData {
   mutuals: Array<{ fid: number; pfpUrl: string | null }>;
@@ -22,8 +23,14 @@ export function useGameData(
   const { user, isLoading: isUserLoading } = useUser();
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
-  const [mutuals, setMutuals] = useState<MutualsData | null>(null);
   const [isFetchingGameData, setIsFetchingGameData] = useState(true);
+
+  // Use the hook for mutuals, requesting enough for the avatar diamond (25)
+  const mutuals = useMutuals({
+    context: "game",
+    gameId,
+    limit: 25,
+  });
 
   const fetchGameSpecificData = useCallback(async () => {
     if (!fid || !gameId) {
@@ -34,16 +41,9 @@ export function useGameData(
     setIsFetchingGameData(true);
 
     try {
-      // Fetch both in parallel for better performance
-      const [mutualsRes, ticketRes] = await Promise.all([
-        fetch(`/api/mutuals?fid=${fid}&gameId=${gameId}&context=game`),
-        fetch(`/api/user/ticket?fid=${fid}&gameId=${gameId}`),
-      ]);
-
-      if (mutualsRes.ok) {
-        const mutualsData = await mutualsRes.json();
-        setMutuals(mutualsData);
-      }
+      const ticketRes = await fetch(
+        `/api/user/ticket?fid=${fid}&gameId=${gameId}`
+      );
 
       if (ticketRes.ok) {
         const ticketData = await ticketRes.json();
