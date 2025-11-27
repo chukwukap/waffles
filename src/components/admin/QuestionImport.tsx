@@ -207,6 +207,7 @@ export function QuestionImport({ gameId, onSuccess }: QuestionImportProps) {
                                     <th className="px-4 py-2 text-left text-xs font-medium text-slate-400">Question</th>
                                     <th className="px-4 py-2 text-left text-xs font-medium text-slate-400">Options</th>
                                     <th className="px-4 py-2 text-left text-xs font-medium text-slate-400">Answer</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-400">Round</th>
                                     <th className="px-4 py-2 text-left text-xs font-medium text-slate-400">Duration</th>
                                 </tr>
                             </thead>
@@ -231,6 +232,7 @@ export function QuestionImport({ gameId, onSuccess }: QuestionImportProps) {
                                                 #{question.correctIndex}
                                             </span>
                                         </td>
+                                        <td className="px-4 py-2 text-slate-400">{question.roundIndex || "-"}</td>
                                         <td className="px-4 py-2 text-slate-400">{question.durationSec}s</td>
                                     </tr>
                                 ))}

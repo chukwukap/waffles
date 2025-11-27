@@ -18,19 +18,19 @@ export function WalletBalance() {
         chainId: base.id,
     });
 
-    if (!isConnected || !address) {
-        return (
-            <button
-                onClick={() => connect({ connector: connectors[0] })}
-                className="flex items-center px-3 py-1.5 rounded-full bg-[#F9F9F91A] font-body hover:bg-[#F9F9F92A] transition-colors"
-            >
-                <WalletIcon className="w-[12px] h-[10.8px] opacity-100 text-white mr-1" />
-                <span className="text-center font-normal not-italic text-[16px] leading-[100%] tracking-[0px] text-white">
-                    Connect
-                </span>
-            </button>
-        );
-    }
+    // if (!isConnected || !address) {
+    //     return (
+    //         <button
+    //             onClick={() => connect({ connector: connectors[0] })}
+    //             className="flex items-center px-3 py-1.5 rounded-full bg-[#F9F9F91A] font-body hover:bg-[#F9F9F92A] transition-colors"
+    //         >
+    //             <WalletIcon className="w-[12px] h-[10.8px] opacity-100 text-white mr-1" />
+    //             <span className="text-center font-normal not-italic text-[16px] leading-[100%] tracking-[0px] text-white">
+    //                 Connect
+    //             </span>
+    //         </button>
+    //     );
+    // }
 
     return (
         <div className="flex items-center px-3 py-1.5 rounded-full bg-[#F9F9F91A] font-body">

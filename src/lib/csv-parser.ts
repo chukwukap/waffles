@@ -13,6 +13,7 @@ export interface QuestionCSVRow {
   durationSec: string;
   mediaUrl?: string;
   soundUrl?: string;
+  roundIndex?: string;
 }
 
 export interface ParseResult {
@@ -104,6 +105,9 @@ export async function parseQuestionCSV(file: File): Promise<ParseResult> {
               durationSec: duration,
               mediaUrl: row.mediaUrl || undefined,
               soundUrl: row.soundUrl || undefined,
+              roundIndex: row.roundIndex
+                ? parseInt(row.roundIndex, 10)
+                : undefined,
             });
           }
         });
@@ -138,6 +142,7 @@ export function generateCSVTemplate(): string {
     "durationSec",
     "mediaUrl",
     "soundUrl",
+    "roundIndex",
   ];
 
   const exampleRows = [
@@ -151,6 +156,7 @@ export function generateCSVTemplate(): string {
       "10",
       "",
       "",
+      "1",
     ],
     [
       "What is the capital of France?",
@@ -162,6 +168,7 @@ export function generateCSVTemplate(): string {
       "10",
       "https://example.com/paris.jpg",
       "",
+      "1",
     ],
     [
       "True or False: The Earth is flat",
@@ -173,6 +180,7 @@ export function generateCSVTemplate(): string {
       "8",
       "",
       "https://example.com/whistle.mp3",
+      "1",
     ],
   ];
 

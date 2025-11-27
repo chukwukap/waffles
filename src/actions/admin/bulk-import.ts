@@ -16,6 +16,7 @@ const BulkQuestionSchema = z.object({
   durationSec: z.number().min(5).default(10),
   mediaUrl: z.string().optional(),
   soundUrl: z.string().optional(),
+  roundIndex: z.number().min(1).optional(),
 });
 
 export interface BulkImportQuestion {
@@ -25,6 +26,7 @@ export interface BulkImportQuestion {
   durationSec: number;
   mediaUrl?: string;
   soundUrl?: string;
+  roundIndex?: number;
 }
 
 export type BulkImportResult =
@@ -68,7 +70,7 @@ export async function bulkImportQuestionsAction(
         await prisma.question.create({
           data: {
             gameId,
-            roundIndex: currentRoundIndex,
+            roundIndex: validated.roundIndex ?? currentRoundIndex,
             content: validated.content,
             options: validated.options,
             correctIndex: validated.correctIndex,
