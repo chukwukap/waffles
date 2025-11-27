@@ -39,6 +39,7 @@ export default function TicketPageClientImpl({
   if (ticket !== null) {
     return (
       <SuccessCard
+        coverUrl={gameInfo.coverUrl}
         theme={gameInfo.theme}
         prizePool={prizePool}
         fid={userInfo.fid}

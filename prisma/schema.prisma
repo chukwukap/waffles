@@ -100,10 +100,10 @@ model Game {
   endsAt   DateTime
 
   // -- CONFIGURATION --
-  entryFee         Int @default(50)
-  prizePool        Int @default(0)
-  roundDurationSec Int @default(15)
-  maxPlayers       Int @default(200)
+  entryFee         Float @default(50)
+  prizePool        Int   @default(0)
+  roundDurationSec Int   @default(15)
+  maxPlayers       Int   @default(200)
 
   // -- DATA --
   questions Question[]

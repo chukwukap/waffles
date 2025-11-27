@@ -9,6 +9,7 @@ import { Ticket } from "@/lib/db";
 
 export const SuccessCard = ({
   theme,
+  coverUrl,
   prizePool,
   fid,
   gameId,
@@ -16,6 +17,7 @@ export const SuccessCard = ({
 }: {
   theme: string;
   prizePool: number;
+  coverUrl: string;
   fid: number;
   gameId: number;
   ticket: Ticket
@@ -67,7 +69,7 @@ export const SuccessCard = ({
         <p className="mt-3 text-center text-base font-display text-[#99A0AE]">
           You&apos;re in. See you Friday.
         </p>
-        <GameSummaryCard theme={theme} prizePool={prizePool} />
+        <GameSummaryCard theme={theme} coverUrl={coverUrl} prizePool={prizePool} />
         <button
           onClick={shareTicket}
           className={cn(

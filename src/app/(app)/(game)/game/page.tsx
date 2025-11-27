@@ -16,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
         version: minikitConfig.miniapp.version,
         imageUrl: minikitConfig.miniapp.heroImageUrl,
         button: {
-          title: `Waffles`,
+          title: `Play Waffles`,
           action: {
             name: `Play now`,
             type: "launch_frame",

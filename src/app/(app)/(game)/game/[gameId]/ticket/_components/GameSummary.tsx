@@ -6,9 +6,11 @@ import Image from "next/image";
 export function GameSummaryCard({
   theme,
   prizePool,
+  coverUrl,
 }: {
   theme: string;
   prizePool: number;
+  coverUrl: string;
 }) {
   const { context: miniKitContext } = useMiniKit();
   const username = miniKitContext?.user?.username;
@@ -82,7 +84,7 @@ export function GameSummaryCard({
         {/* Theme */}
         <div className="flex flex-row items-center justify-center gap-[8.5px] h-[32px]">
           <Image
-            src={`/images/themes/${theme}.svg`}
+            src={coverUrl}
             alt="Football icon"
             width={29.11}
             height={28.43}

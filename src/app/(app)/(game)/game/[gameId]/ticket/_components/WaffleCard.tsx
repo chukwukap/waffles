@@ -70,6 +70,8 @@ export const WaffleCard = ({
   fid: number;
   gameId: number;
 }) => {
+  console.log("[WaffleCard] Component rendered", { fid, gameId, price });
+
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>(undefined);
 
   const [state, submitWaffleAction, pending] = useActionState(
@@ -84,9 +86,11 @@ export const WaffleCard = ({
     hash: txHash,
   });
 
-  // Watch for transaction confirmation
+  // Submit to server as soon as we have the tx hash
   useEffect(() => {
-    if (isConfirmed && txHash) {
+    if (txHash) {
+      console.log("[WaffleCard] Got transaction hash, submitting to server", { txHash });
+
       const formData = new FormData();
       formData.append("fid", String(fid));
       formData.append("gameId", String(gameId));
@@ -96,11 +100,21 @@ export const WaffleCard = ({
         submitWaffleAction(formData);
       });
     }
-  }, [isConfirmed, txHash, fid, gameId, submitWaffleAction]);
+  }, [txHash, fid, gameId, submitWaffleAction]);
+
+  // Log state changes
+  useEffect(() => {
+    if (state?.status === "success") {
+      console.log("[WaffleCard] ✅ Server action succeeded", { ticket: state.ticket });
+    } else if (state?.status === "error") {
+      console.error("[WaffleCard] ❌ Server action failed", { error: state.error });
+    }
+  }, [state]);
 
   const handlePurchase = () => {
+    console.log("[WaffleCard] User clicked BUY WAFFLE", { price, gameId });
+
     try {
-      notify.info("Initiating transaction...");
       writeContract(
         {
           address: env.nextPublicUsdcAddress as `0x${string}`,
@@ -113,22 +127,32 @@ export const WaffleCard = ({
         },
         {
           onSuccess: (hash) => {
+            console.log("[WaffleCard] ✅ Transaction submitted", { txHash: hash });
             setTxHash(hash);
             notify.info("Transaction submitted. Waiting for confirmation...");
           },
           onError: (error) => {
-            console.error("Transaction failed:", error);
+            console.error("[WaffleCard] ❌ Transaction failed", { error: error.message || error });
             notify.error("Transaction failed. Please try again.");
           },
         }
       );
     } catch (err) {
-      console.error("Failed to initiate purchase:", err);
+      console.error("[WaffleCard] ❌ Failed to initiate purchase", { error: err });
       notify.error("An unexpected error occurred.");
     }
   };
 
-  const isProcessing = isWritePending || isConfirming || pending;
+  const isProcessing = isWritePending || pending;
+
+  console.log("[WaffleCard] State:", {
+    isWritePending,
+    isConfirming,
+    isConfirmed,
+    pending,
+    hasTxHash: !!txHash,
+    serverActionStatus: state?.status
+  });
 
   return (
     <div

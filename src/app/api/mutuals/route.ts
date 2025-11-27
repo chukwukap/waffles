@@ -22,15 +22,23 @@ export async function GET(req: NextRequest) {
   try {
     // 1. Fetch reciprocal followers (mutuals) from Neynar
     // This finds users who follow the target AND the target follows them.
-    const reciprocalResponse = await neynar.fetchUserReciprocalFollowers({
-      fid: fid,
-      viewerFid: fid,
-    });
+    let mutualFids: number[] = [];
+    try {
+      const reciprocalResponse = await neynar.fetchUserReciprocalFollowers({
+        fid: fid,
+        viewerFid: fid,
+      });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mutualFids = (reciprocalResponse as any).users
-      .map((u: { fid: number }) => u.fid)
-      .filter((fid: number | undefined) => fid !== undefined && fid !== null);
+      mutualFids = (reciprocalResponse as any).users
+        .map((u: { fid: number }) => u.fid)
+        .filter((fid: number | undefined) => fid !== undefined && fid !== null);
+    } catch (err) {
+      console.warn(
+        "[API_MUTUALS_WARNING] Failed to fetch mutuals from Neynar (likely 402 Payment Required or Rate Limit). Falling back to top players.",
+        err
+      );
+      // Proceed with empty mutualFids -> will trigger fallback to top players
+    }
 
     // 2. Get user details from our DB
     let joinedMutuals: Array<{ fid: number; pfpUrl: string | null }> = [];

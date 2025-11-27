@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useRef, type PointerEventHandler } from "react";
-import Image from "next/image";
 import { motion, useMotionValue, useTransform } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +15,7 @@ interface CardStackProps {
   imageUrls?: string[];
 }
 
-const DEFAULT_ROTATIONS = [-9, 6, -4, 7];
+const DEFAULT_ROTATIONS = [-8.71, 5.85, -3.57, 7.56];
 
 export function CardStack({
   size = "clamp(21px, 6vw, 48px)",
@@ -67,57 +66,62 @@ export function CardStack({
 
   const cardSize = typeof size === "number" ? size : null;
   const cardSizeStr = typeof size === "number" ? `${size}px` : size;
-  const overlapStr = cardSize ? `${cardSize * 0.52}px` : `clamp(10.92px, 4.68vw, 24.96px)`;
+  const offsetFactor = 0.4;
 
   return (
-    <motion.div
-      ref={containerRef}
-      onPointerMove={handleMove}
-      onPointerLeave={handleLeave}
-      aria-label={ariaLabel}
-      className={cn("relative flex items-center justify-center", className)}
-    >
-      {cardsToDisplay.map((img, i) => {
-        const staticRotation = rotations[i % rotations.length] ?? 0;
-        const imageUrl = spotsAvatars[i];
+    <div className={cn("flex items-center justify-center", className)}>
+      <motion.div
+        ref={containerRef}
+        onPointerMove={handleMove}
+        onPointerLeave={handleLeave}
+        aria-label={ariaLabel}
+        className="relative"
+        style={{
+          height: cardSizeStr,
+          width: `calc(${cardSizeStr} + (${cardsToDisplay.length - 1} * ${cardSizeStr} * ${offsetFactor}))`,
+        }}
+      >
+        {cardsToDisplay.map((img, i) => {
+          const staticRotation = rotations[i % rotations.length] ?? 0;
+          const imageUrl = spotsAvatars[i];
 
-        return (
-          <motion.div
-            key={`${imageUrl}-${i}`}
-            style={{
-              width: cardSizeStr,
-              height: cardSizeStr,
-              marginLeft: i === 0 ? 0 : `-${overlapStr}`,
-              borderColor: borderColor,
-              borderWidth: "1.5px",
-              borderRadius: "3.01px",
-              rotate: interactive ? 0 : `${staticRotation}deg`,
-              zIndex: 10 + i,
-            }}
-            className="shrink-0 border bg-muted overflow-hidden relative"
-            whileHover={interactive ? { y: -3, scale: 1.02 } : undefined}
-            transition={{ type: "spring", stiffness: 320, damping: 22 }}
-          >
+          return (
             <motion.div
+              key={`${imageUrl}-${i}`}
               style={{
-                width: "100%",
-                height: "100%",
-                rotate: interactive ? tilt : 0,
+                position: "absolute",
+                top: 0,
+                left: `calc(${i} * ${cardSizeStr} * ${offsetFactor})`,
+                width: cardSizeStr,
+                height: cardSizeStr,
+                borderColor: borderColor,
+                borderWidth: "3.01px",
+                borderRadius: "6.02px",
+                rotate: interactive ? 0 : `${staticRotation}deg`,
+                zIndex: 10 + i,
               }}
-              className="w-full h-full"
+              className="shrink-0 bg-muted overflow-hidden"
+              whileHover={interactive ? { y: -3, scale: 1.02 } : undefined}
+              transition={{ type: "spring", stiffness: 320, damping: 22 }}
             >
-              <Image
-                src={imageUrl}
-                alt={`Card ${i + 1}`}
-                fill
-                sizes={cardSizeStr}
-                className="object-cover"
-                priority={i < 2}
-              />
+              <motion.div
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  rotate: interactive ? tilt : 0,
+                }}
+                className="w-full h-full"
+              >
+                <img
+                  src={imageUrl}
+                  alt={`Card ${i + 1}`}
+                  className="w-full h-full object-cover"
+                />
+              </motion.div>
             </motion.div>
-          </motion.div>
-        );
-      })}
-    </motion.div>
+          );
+        })}
+      </motion.div>
+    </div>
   );
 }
