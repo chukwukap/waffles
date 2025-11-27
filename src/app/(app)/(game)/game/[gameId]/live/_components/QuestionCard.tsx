@@ -189,7 +189,7 @@ export function QuestionCard({
         {/* Image Section - Use new `mediaUrl` field and check if it exists */}
         {question.mediaUrl && (
           <figure className="mx-auto mb-4 flex justify-center w-full">
-            <div className="relative w-full max-w-lg h-[158px] rounded-[10px] overflow-hidden bg-[#17171a] border border-[#313136] shadow-[0_8px_0_#000]">
+            <div className="relative w-full max-w-[299px] h-[158px] rounded-[10px] overflow-hidden bg-[#17171a] border border-[#313136] shadow-[0_8px_0_#000]">
               <Image
                 src={question.mediaUrl}
                 alt={question.content || "Question media"}
