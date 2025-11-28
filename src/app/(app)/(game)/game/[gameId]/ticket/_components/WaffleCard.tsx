@@ -11,7 +11,7 @@ import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { parseUnits } from "viem";
 import { env } from "@/lib/env";
-import { USDC_TRANSFER_ABI } from "@/lib/constants";
+import { USDC_ADDRESS_BASE_MAINNET, USDC_TRANSFER_ABI } from "@/lib/constants";
 
 const InfoBox = ({
   iconUrl,
@@ -117,7 +117,7 @@ export const WaffleCard = ({
     try {
       writeContract(
         {
-          address: env.nextPublicUsdcAddress as `0x${string}`,
+          address: USDC_ADDRESS_BASE_MAINNET as `0x${string}`,
           abi: USDC_TRANSFER_ABI,
           functionName: "transfer",
           args: [
