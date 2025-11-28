@@ -12,9 +12,6 @@ const envSchema = z.object({
   NEXT_PUBLIC_ONCHAINKIT_API_KEY: z
     .string()
     .min(1, "NEXT_PUBLIC_ONCHAINKIT_API_KEY is required"),
-  NEXT_PUBLIC_USDC_ADDRESS: z
-    .string()
-    .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid USDC address"),
   NEXT_PUBLIC_LEADERBOARD_PAGE_SIZE: z.coerce
     .number()
     .int()
@@ -46,7 +43,6 @@ const getEnv = () => {
   const parsed = envSchema.safeParse({
     NEYNAR_API_KEY: process.env.NEYNAR_API_KEY,
     NEXT_PUBLIC_ONCHAINKIT_API_KEY: process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY,
-    NEXT_PUBLIC_USDC_ADDRESS: process.env.NEXT_PUBLIC_USDC_ADDRESS,
     NEXT_PUBLIC_LEADERBOARD_PAGE_SIZE:
       process.env.NEXT_PUBLIC_LEADERBOARD_PAGE_SIZE,
     NEXT_PUBLIC_ACCOUNT_ASSOCIATION_HEADER:
@@ -84,8 +80,6 @@ const getEnv = () => {
         neynarApiKey: "",
         nextPublicOnchainkitApiKey:
           process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY || "",
-        nextPublicUsdcAddress: (process.env.NEXT_PUBLIC_USDC_ADDRESS ||
-          "") as `0x${string}`,
         nextPublicLeaderboardPageSize: 25,
         nextPublicTreasuryWallet: (process.env.NEXT_PUBLIC_TREASURY_WALLET ||
           "0xd584F8079192E078F0f3237622345E19360384A2") as `0x${string}`,
@@ -119,7 +113,6 @@ const getEnv = () => {
     rootUrl: resolveRootUrl().replace(/\/$/, ""),
     neynarApiKey: data.NEYNAR_API_KEY!,
     nextPublicOnchainkitApiKey: data.NEXT_PUBLIC_ONCHAINKIT_API_KEY,
-    nextPublicUsdcAddress: data.NEXT_PUBLIC_USDC_ADDRESS as `0x${string}`,
     nextPublicLeaderboardPageSize: data.NEXT_PUBLIC_LEADERBOARD_PAGE_SIZE,
     nextPublicTreasuryWallet: (process.env.NEXT_PUBLIC_TREASURY_WALLET ||
       "0xd584F8079192E078F0f3237622345E19360384A2") as `0x${string}`, // Default to demo wallet if missing

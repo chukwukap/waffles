@@ -29,7 +29,7 @@ export const minikitConfig: MiniAppManifest = {
     iconUrl: `${env.rootUrl}/icon.png`,
     splashImageUrl: `${env.rootUrl}/icon.png`,
     splashBackgroundColor: "#1E1E1E",
-    homeUrl: `${env.rootUrl}/game`,
+    homeUrl: `${env.rootUrl}/waitlist`,
     webhookUrl: `${env.rootUrl}/api/webhook`,
     primaryCategory: "games",
     tags: ["waffles", "games", "social", "fun"],

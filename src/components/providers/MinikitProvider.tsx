@@ -1,7 +1,7 @@
 "use client";
 
 import { OnchainKitProvider } from "@coinbase/onchainkit";
-import { base } from "wagmi/chains";
+import { base } from "viem/chains";
 import { env } from "@/lib/env";
 import { useMiniKitInit } from "@/hooks/useMiniKitInit";
 
