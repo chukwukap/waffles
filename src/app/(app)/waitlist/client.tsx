@@ -142,7 +142,7 @@ export function WaitlistClient() {
     try {
       const result = await composeCastAsync({
         text: message,
-        embeds: [`${env.rootUrl}/waitlist?ref=${fid}&rank=${rank}&fid=${fid}`],
+        embeds: [`${env.rootUrl}/waitlist?ref=${fid}&rank=${rank}`],
       });
       if (result?.cast) notify.success("Shared successfully!");
       else notify.info("Share cancelled.");

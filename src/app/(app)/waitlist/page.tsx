@@ -4,8 +4,6 @@ import { Metadata } from "next";
 
 import { env } from "@/lib/env";
 
-import { prisma } from "@/lib/db";
-
 export async function generateMetadata({
   searchParams,
 }: {
@@ -13,37 +11,17 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const sParams = await searchParams;
   const rank = sParams.rank ? parseInt(sParams.rank as string) : null;
-  const fid = sParams.fid ? parseInt(sParams.fid as string) : null;
+  const ref = sParams.ref ? parseInt(sParams.ref as string) : null;
 
-  // Fetch user's pfpUrl from database if fid is provided
-  let pfpUrl: string | null = null;
-  if (fid) {
-    try {
-      const user = await prisma.user.findUnique({
-        where: { fid },
-        select: { pfpUrl: true },
-      });
-      console.log("[API_WAITLIST_DEBUG] user:", user);
-
-      pfpUrl = user?.pfpUrl || null;
-    } catch (error) {
-      console.error("Failed to fetch user pfpUrl:", error);
-    }
-  }
-
-  console.log("[API_WAITLIST_DEBUG] rank:", rank);
-  console.log("[API_WAITLIST_DEBUG] fid:", fid);
-  console.log("[API_WAITLIST_DEBUG] pfpUrl:", pfpUrl);
-
-  // Build OG image URL with rank and pfpUrl
+  // Build OG image URL with rank and ref (referrer's fid)
+  // The ref is the person who shared the link, so their avatar should appear
   let IMAGE_URL = `${env.rootUrl}/images/share/waitlist-default.png`;
-  if (rank) {
+  if (rank && ref) {
+    IMAGE_URL = `${env.rootUrl}/api/og/waitlist?rank=${rank}&fid=${ref}`;
+  } else if (rank) {
+    // Fallback for rank without ref
     IMAGE_URL = `${env.rootUrl}/api/og/waitlist?rank=${rank}`;
-    if (pfpUrl) {
-      IMAGE_URL += `&pfpUrl=${encodeURIComponent(pfpUrl)}`;
-    }
   }
-  console.log("[API_WAITLIST_DEBUG] IMAGE_URL:", IMAGE_URL);
 
   return {
     title: minikitConfig.miniapp.name,

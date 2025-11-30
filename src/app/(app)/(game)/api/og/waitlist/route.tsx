@@ -1,8 +1,8 @@
-import { env } from "@/lib/env";
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { prisma } from "@/lib/db";
 
 // Use Node.js runtime to allow file system access
 export const runtime = "nodejs";
@@ -17,10 +17,10 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
 
-    // Get the 'rank' and 'pfpUrl' query parameters
+    // Get the 'rank' and 'fid' query parameters
     const hasRank = searchParams.has("rank");
     const waitlistRank = hasRank ? searchParams.get("rank") : null;
-    const pfpUrl = searchParams.get("pfpUrl");
+    const fidParam = searchParams.get("fid");
 
     // If rank is not passed in, return the default waitlist image immediately
     if (!waitlistRank) {
@@ -47,6 +47,21 @@ export async function GET(request: NextRequest) {
       const match = waitlistRank.match(/^[0-9]{1,6}$/);
       if (match) {
         validatedRank = `#${match}`;
+      }
+    }
+
+    // Fetch user's pfpUrl from database if fid is provided
+    let pfpUrl: string | null = null;
+    if (fidParam) {
+      try {
+        const fid = parseInt(fidParam);
+        const user = await prisma.user.findUnique({
+          where: { fid },
+          select: { pfpUrl: true },
+        });
+        pfpUrl = user?.pfpUrl || null;
+      } catch (error) {
+        console.error("Failed to fetch user pfpUrl:", error);
       }
     }
 

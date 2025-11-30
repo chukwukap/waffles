@@ -32,7 +32,7 @@ export function MinikitProvider({ children }: Props) {
       miniKit={{
         enabled: true,
         autoConnect: true,
-        notificationProxyUrl: env.rootUrl + "/api/webhook",
+        notificationProxyUrl: env.rootUrl + "/api/webhook/notify",
       }}
     >
       <MiniKitInitializer>{children}</MiniKitInitializer>
