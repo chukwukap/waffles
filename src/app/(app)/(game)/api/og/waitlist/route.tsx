@@ -17,9 +17,10 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
 
-    // Get the 'rank' query parameter
+    // Get the 'rank' and 'pfpUrl' query parameters
     const hasRank = searchParams.has("rank");
     const waitlistRank = hasRank ? searchParams.get("rank") : null;
+    const pfpUrl = searchParams.get("pfpUrl");
 
     // If rank is not passed in, return the default waitlist image immediately
     if (!waitlistRank) {
@@ -98,14 +99,27 @@ export async function GET(request: NextRequest) {
             gap: 20,
           }}
         >
-          {/* Dynamic Text: "I'M #4 ON THE" */}
+          {/* User Avatar (if provided) */}
+          {pfpUrl && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={pfpUrl}
+              width="120"
+              height="120"
+              alt="User Avatar"
+              style={{
+                borderRadius: "50%",
+                border: "4px solid #5DD9C1",
+              }}
+            />
+          )}
+          {/* Dynamic Text: "#4 ON THE" */}
           <div
             style={{
               display: "flex",
               fontSize: 50,
             }}
           >
-            I&apos;M&nbsp;
             {/* The dynamic rank is yellow */}
             <span style={{ color: "#FCD34D" }}>{validatedRank}</span>
             &nbsp;ON THE
@@ -128,13 +142,13 @@ export async function GET(request: NextRequest) {
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            backgroundColor: "#FCD34D",
-            color: "#1F2937",
+            backgroundColor: "transparent",
+            color: "#FCD34D",
             fontSize: 24,
             width: 300,
             height: 50,
             borderRadius: 25,
-            border: "3px solid #000",
+            border: "3px solid #FCD34D",
             letterSpacing: "0.5px",
           }}
         >

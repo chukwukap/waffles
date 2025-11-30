@@ -2,6 +2,7 @@ import "./globals.css";
 import { fontBody, fontDisplay, fontInput } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   title: "Waffles",
@@ -51,6 +52,7 @@ export default function RootLayout({
     >
       <body className="antialiased" suppressHydrationWarning>
         {children}
+        <SpeedInsights />
       </body>
     </html>
   );

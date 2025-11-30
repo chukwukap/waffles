@@ -6,7 +6,7 @@ export const TASKS = [
     title: "Join Discord Community",
     text: "Join our Discord server and say hi in #general",
     points: 100,
-    actionUrl: "https://discord.gg/playwaffles",
+    actionUrl: "https://discord.com/invite/F69CaAqVN",
     type: "link",
   },
   {

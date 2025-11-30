@@ -28,7 +28,7 @@ export const minikitConfig: MiniAppManifest = {
     ],
     iconUrl: `${env.rootUrl}/icon.png`,
     splashImageUrl: `${env.rootUrl}/icon.png`,
-    splashBackgroundColor: "#1e1e1e",
+    splashBackgroundColor: "#000000",
     homeUrl: `${env.rootUrl}/waitlist`,
     webhookUrl: `${env.rootUrl}/api/webhook`,
     primaryCategory: "games",
@@ -38,7 +38,7 @@ export const minikitConfig: MiniAppManifest = {
     ogTitle: "Waffles",
     ogDescription: "Play daily social games",
     ogImageUrl: `${env.rootUrl}/og.png`,
-    noindex: true,
+    // noindex: true,
   },
   // @ts-ignore
   baseBuilder: {
