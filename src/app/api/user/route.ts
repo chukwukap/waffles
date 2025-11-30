@@ -36,6 +36,8 @@ export async function GET(req: NextRequest) {
       },
     });
 
+    console.log("user : ", user);
+
     return NextResponse.json({
       ...user,
       rank: rank + 1,

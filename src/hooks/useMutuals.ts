@@ -31,5 +31,7 @@ export function useMutuals(options?: {
       .catch(console.error);
   }, [fid, context, gameId, limit]);
 
+  console.log("data : ", data);
+
   return data;
 }

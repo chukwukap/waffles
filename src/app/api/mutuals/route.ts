@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
         const waitlistEntries = await prisma.user.findMany({
           where: {
             id: { in: mutualUserIds },
-            status: "WAITLIST",
+            status: { in: ["WAITLIST", "ACTIVE"] },
           },
           select: { fid: true, pfpUrl: true },
         });
@@ -82,7 +82,9 @@ export async function GET(req: NextRequest) {
     // 3. Get Total Count
     let totalCount = 0;
     if (safeContext === "waitlist") {
-      totalCount = await prisma.user.count({ where: { status: "WAITLIST" } });
+      totalCount = await prisma.user.count({
+        where: { status: { in: ["WAITLIST", "ACTIVE"] } },
+      });
     } else if (safeContext === "game" && gameId) {
       totalCount = await prisma.gamePlayer.count({ where: { gameId } });
     }
@@ -105,7 +107,7 @@ export async function GET(req: NextRequest) {
     if (safeContext === "waitlist") {
       const entries = await prisma.user.findMany({
         where: {
-          status: "WAITLIST",
+          status: { in: ["WAITLIST", "ACTIVE"] },
           pfpUrl: { not: null },
         },
         orderBy: [{ inviteQuota: "desc" }, { createdAt: "asc" }],

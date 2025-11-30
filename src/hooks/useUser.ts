@@ -32,6 +32,7 @@ export function useUser() {
       if (!response.ok) throw new Error("Failed to fetch user");
 
       const json: UserData = await response.json();
+      console.log(json);
       setUser(json);
       hasLoaded.current = true;
     } catch (err) {
