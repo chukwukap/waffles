@@ -104,9 +104,9 @@ export default function TicketPageClientImpl({
           }
         />
         <p className="font-display text-[#99A0AE] text-sm mt-2">
-          {mutualsData?.mutualCount === 0
+          {mutualsData?.totalCount === 0
             ? "and others have joined the game"
-            : `and ${mutualsData?.mutualCount ?? 0} other${(mutualsData?.mutualCount ?? 0) === 1 ? "" : "s"
+            : `and ${mutualsData?.totalCount ?? 0} other${(mutualsData?.totalCount ?? 0) === 1 ? "" : "s"
             } have joined the game`}
         </p>
       </div>

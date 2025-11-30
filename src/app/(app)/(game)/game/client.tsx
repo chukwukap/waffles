@@ -147,7 +147,7 @@ export default function GameHomePageClient({
         <PrizePoolDisplay formattedPrizePool={formattedPrizePool} />
 
         <PlayerCountDisplay
-          mutualsCount={mutuals?.mutualCount ?? 0}
+          mutualsCount={mutuals?.totalCount ?? 0}
           playerCount={playerCount}
           avatars={mutuals?.mutuals ?? []}
         />
