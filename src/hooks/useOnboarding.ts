@@ -4,9 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { syncUserAction } from "@/actions/onboarding";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useAccount } from "wagmi";
-import { useLocalStorage } from "./useLocalStorage";
-
-const ONBOARDING_STORAGE_KEY = "waffles:onboarded:v17.2";
 
 export function useOnboarding() {
   const { address } = useAccount();
@@ -15,72 +12,90 @@ export function useOnboarding() {
   const pfpUrl = miniKitContext?.user?.pfpUrl;
   const username = miniKitContext?.user?.username;
 
-  // --- use useLocalStorage instead of hand-rolled state/effect ---
-  const [isOnboarded, setIsOnboarded] = useLocalStorage<boolean>(
-    ONBOARDING_STORAGE_KEY,
-    false
-  );
-
-  // The useLocalStorage hook isReady if it can access window (on client)
-  // We assume useLocalStorage always returns a value after hydration, no explicit isReady is exposed,
-  // but for SplashScreen UX, we can consider it "ready" after hydration, which matches useLocalStorage load timing.
-  // If you want to add further suspense for SSR hydration, adapt here if needed. For this rewrite, just always set true.
   const [isReady, setIsReady] = useState(false);
+  const [isOnboarded, setIsOnboarded] = useState(false);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(true);
 
+  // Check onboarding status from database
   useEffect(() => {
-    setIsReady(true);
-  }, []);
+    async function checkOnboardingStatus() {
+      if (!fid) {
+        // Wait for fid to be available
+        return;
+      }
 
-  const completeOnboarding = useCallback(async () => {
-    try {
-      setIsOnboarded(true);
-    } catch (err) {
-      console.warn(
-        "Failed to save onboarding status to localStorage via hook:",
-        err
-      );
-    }
-
-    if (fid) {
-      console.log("Syncing user profile after onboarding:", {
-        fid,
-        username,
-        pfpUrl,
-        wallet: address,
-      });
       try {
-        const result = await syncUserAction({
-          fid: fid,
-          username: username,
-          pfpUrl: pfpUrl,
-          wallet: address,
+        const response = await fetch(`/api/user?fid=${fid}`, {
+          cache: "no-store",
         });
 
-        if (!result.success) {
-          console.error("User sync failed during onboarding:", result.error);
+        if (response.ok) {
+          // User exists in database - they are onboarded
+          setIsOnboarded(true);
+        } else if (response.status === 404) {
+          // User doesn't exist - needs onboarding
+          setIsOnboarded(false);
         } else {
-          console.log(
-            "User sync successful:",
-            result.user,
-            "Referral:",
-            result.user.inviteCode
-          );
+          console.error("Failed to check onboarding status:", response.status);
+          setIsOnboarded(false);
         }
-      } catch (err) {
-        console.error("Unexpected error during user sync:", err);
-        throw err;
+      } catch (error) {
+        console.error("Error checking onboarding status:", error);
+        setIsOnboarded(false);
+      } finally {
+        setIsCheckingStatus(false);
+        setIsReady(true);
       }
-    } else {
-      console.warn("Cannot sync user profile: Missing FID.");
     }
 
-    // No need to setIsOnboarded(true) here again, as above already does it.
-  }, [fid, username, pfpUrl, address, setIsOnboarded]);
+    checkOnboardingStatus();
+  }, [fid]);
+
+  const completeOnboarding = useCallback(async () => {
+    if (!fid) {
+      console.warn("Cannot sync user profile: Missing FID.");
+      return;
+    }
+
+    console.log("Syncing user profile after onboarding:", {
+      fid,
+      username,
+      pfpUrl,
+      wallet: address,
+    });
+
+    try {
+      const result = await syncUserAction({
+        fid: fid,
+        username: username,
+        pfpUrl: pfpUrl,
+        wallet: address,
+      });
+
+      if (!result.success) {
+        console.error("User sync failed during onboarding:", result.error);
+        throw new Error(result.error || "User sync failed");
+      }
+
+      console.log(
+        "User sync successful:",
+        result.user,
+        "Referral:",
+        result.user.inviteCode
+      );
+
+      // Mark as onboarded after successful database sync
+      setIsOnboarded(true);
+    } catch (err) {
+      console.error("Unexpected error during user sync:", err);
+      throw err;
+    }
+  }, [fid, username, pfpUrl, address]);
 
   return {
-    isReady,
+    isReady: isReady && !isCheckingStatus,
     isOnboarded,
-    shouldShowOnboarding: isReady && !isOnboarded,
+    shouldShowOnboarding: isReady && !isCheckingStatus && !isOnboarded,
     completeOnboarding,
   };
 }
