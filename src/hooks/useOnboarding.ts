@@ -6,7 +6,7 @@ import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useAccount } from "wagmi";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
-const ONBOARDING_STORAGE_KEY = "waffles:onboarded:v1";
+const ONBOARDING_STORAGE_KEY = "waffles:onboarded:v2";
 
 export function useOnboarding() {
   const { address } = useAccount();
