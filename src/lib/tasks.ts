@@ -1,5 +1,7 @@
 // Shared task definitions used by both client and server
 
+import { WAFFLE_FID } from "./constants";
+
 // Define base types first to avoid circular dependencies
 export type TaskActionType = "link" | "farcaster_share" | "invite";
 export type TaskStatus = "initial" | "pending" | "completed";
@@ -54,15 +56,17 @@ export const TASKS: readonly WaitlistTask[] = [
     actionUrl: "https://warpcast.com/wafflesdotfun",
     type: "link",
     verifiable: true,
-    targetFid: 1386922,
+    targetFid: WAFFLE_FID,
   },
   {
     id: "share_waitlist_farcaster",
     iconPath: "/images/icons/farcaster.png",
     title: "cast about waffles",
-    text: "Share Waffles on Farcaster with #Waffles",
+    text: "Share something about waffles on farcaster and tag @wafflesdotfun",
     points: 100,
     type: "farcaster_share",
+    verifiable: true,
+    targetFid: WAFFLE_FID,
   },
   {
     id: "invite_three_friends",

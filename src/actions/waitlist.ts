@@ -12,6 +12,7 @@ const TASK_POINTS = TASKS.reduce((acc: Record<string, number>, task) => {
 import { z } from "zod";
 import { Prisma } from "../../prisma/generated/client";
 import { verifyFarcasterFollow } from "@/lib/verifyFarcasterFollow";
+import { verifyFarcasterMention } from "@/lib/verifyFarcasterMention";
 
 export type JoinWaitlistState = {
   ok: boolean;
@@ -167,16 +168,34 @@ export async function completeWaitlistTask(
     // Find the task definition
     const task = TASKS.find((t) => t.id === taskId);
 
-    // Verify Farcaster follow if task is verifiable
+    // Verify Farcaster tasks if verifiable
     if (task?.verifiable && task.targetFid) {
       try {
-        const isFollowing = await verifyFarcasterFollow(fid, task.targetFid);
+        let isVerified = false;
 
-        if (!isFollowing) {
-          return {
-            success: false,
-            error: "Please follow @wafflesdotfun first, then try again",
-          };
+        if (taskId === "share_waitlist_farcaster") {
+          // For share tasks, verify they mentioned @wafflesdotfun
+
+          isVerified = await verifyFarcasterMention(fid, task.targetFid);
+
+          if (!isVerified) {
+            return {
+              success: false,
+              error:
+                "Please tag @wafflesdotfun in a cast first, then try again",
+            };
+          }
+        } else {
+          // For follow tasks, verify they follow
+
+          isVerified = await verifyFarcasterFollow(fid, task.targetFid);
+
+          if (!isVerified) {
+            return {
+              success: false,
+              error: "Please follow @wafflesdotfun first, then try again",
+            };
+          }
         }
       } catch (error) {
         // Graceful fallback: If Neynar API fails, allow completion anyway

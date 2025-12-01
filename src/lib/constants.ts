@@ -64,3 +64,5 @@ export const USDC_ADDRESS_BASE_MAINNET =
   "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 
 export const HOME_URL_PATH = "/waitlist";
+
+export const WAFFLE_FID = 1386922;
