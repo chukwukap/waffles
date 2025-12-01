@@ -95,6 +95,8 @@ export async function GET(request: NextRequest) {
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
+              justifyContent: "center",
+              flex: 1,
               gap: 20,
             }}
           >
@@ -108,18 +110,19 @@ export async function GET(request: NextRequest) {
                 style={{
                   borderRadius: "50%",
                   border: "4px solid #5DD9C1",
+                  marginBottom: 20,
                 }}
               />
             )}
 
             {/* Rank Text */}
-            <div style={{ display: "flex", fontSize: 50 }}>
+            <div style={{ display: "flex", fontSize: 80 }}>
               <span style={{ color: "#FCD34D" }}>{validatedRank}</span>
               &nbsp;ON THE
             </div>
 
             {/* Waitlist Text */}
-            <div style={{ fontSize: 50 }}>WAITLIST</div>
+            <div style={{ fontSize: 80 }}>WAITLIST</div>
 
             {/* Scroll Image */}
             <img
@@ -127,27 +130,8 @@ export async function GET(request: NextRequest) {
               width="250"
               height="277"
               alt="Waitlist Scroll"
-              style={{ marginTop: 30 }}
+              style={{ marginTop: 40 }}
             />
-          </div>
-
-          {/* Button */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              backgroundColor: "transparent",
-              color: "#FCD34D",
-              fontSize: 24,
-              width: 300,
-              height: 50,
-              borderRadius: 25,
-              border: "3px solid #FCD34D",
-              letterSpacing: "0.5px",
-            }}
-          >
-            PLAYWAFFLES.FUN
           </div>
         </div>
       ),
