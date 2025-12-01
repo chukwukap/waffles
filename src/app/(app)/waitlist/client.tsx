@@ -138,7 +138,10 @@ export function WaitlistClient() {
 
   const handleShare = useCallback(async () => {
     const rank = user?.rank;
-    const message = `i just joined the /waffles waitlist now!! join me on the biggest game rn🤪🤪🤪🤪`;
+    const message = `Just got in to waffles
+if you need me i'd be knead deep in trivia
+
+think you can beat me? you're on😏`;
     try {
       const result = await composeCastAsync({
         text: message,

@@ -31,20 +31,6 @@ export async function generateMetadata({
     description: rank
       ? `You're #${rank} on the waitlist.`
       : "Join the Waffles waitlist.",
-    openGraph: {
-      title: minikitConfig.miniapp.name,
-      description: rank
-        ? `You're #${rank} on the waitlist.`
-        : "Join the Waffles waitlist.",
-      images: [
-        {
-          url: IMAGE_URL_PATH,
-          width: 1200,
-          height: 800,
-          alt: "Waffles Waitlist",
-        },
-      ],
-    },
     other: {
       "fc:frame": JSON.stringify({
         version: minikitConfig.miniapp.version,
