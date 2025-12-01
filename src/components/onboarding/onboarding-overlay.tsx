@@ -72,13 +72,20 @@ const slideVariants: Variants = {
 export function OnboardingOverlay({ onComplete }: OnboardingOverlayProps) {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [direction, setDirection] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleNext = () => {
+  const handleNext = async () => {
     setDirection(1);
     if (currentSlideIndex < slides.length - 1) {
       setCurrentSlideIndex(currentSlideIndex + 1);
     } else {
-      onComplete();
+      setIsLoading(true);
+      try {
+        await onComplete();
+      } catch (error) {
+        console.error("Onboarding failed:", error);
+        setIsLoading(false);
+      }
     }
   };
 
@@ -141,9 +148,14 @@ export function OnboardingOverlay({ onComplete }: OnboardingOverlayProps) {
 
                 <FancyBorderButton
                   onClick={handleNext}
+                  disabled={isLoading}
                   className="text-[26px] text-[#1E1E1E] w-full max-w-full"
                 >
-                  {currentSlideIndex === 0 ? "Next" : "Let's Go"}
+                  {isLoading
+                    ? "Loading..."
+                    : currentSlideIndex === 0
+                      ? "Next"
+                      : "Let's Go"}
                 </FancyBorderButton>
               </div>
             </div>
