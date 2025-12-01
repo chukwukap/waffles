@@ -65,8 +65,6 @@ export const TASKS: readonly WaitlistTask[] = [
     text: "Share something about waffles on farcaster and tag @wafflesdotfun",
     points: 100,
     type: "farcaster_share",
-    verifiable: true,
-    targetFid: WAFFLE_FID,
   },
   {
     id: "invite_three_friends",
