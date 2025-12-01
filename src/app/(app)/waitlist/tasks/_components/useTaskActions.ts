@@ -30,7 +30,10 @@ export function useTaskActions({ waitlistData }: UseTaskActionsProps) {
   // Share function for invite task
   const share = useCallback(async () => {
     const rank = waitlistData.rank ?? null;
-    const message = `I'm on the Waffles waitlist! Join me!`;
+    const message = `just got in to waffles
+if you need me i'd be knead deep in trivia
+
+think you can beat me? you're on😏`;
     try {
       const result = await composeCastAsync({
         text: message,
@@ -67,7 +70,10 @@ export function useTaskActions({ waitlistData }: UseTaskActionsProps) {
     if (task.type === "farcaster_share") {
       try {
         await composeCastAsync({
-          text: "I'm joining Waffles! 🧇\n\nJoin the waitlist:",
+          text: `just got in to waffles
+if you need me i'd be knead deep in trivia
+
+think you can beat me? you're on😏`,
           embeds: [env.rootUrl + "/waitlist?ref=" + fid],
         });
       } catch (error) {

@@ -39,7 +39,7 @@ export const minikitConfig: MiniAppManifest = {
     ogTitle: "Waffles",
     ogDescription: "Play daily social games",
     ogImageUrl: `${env.rootUrl}/og.png`,
-    // noindex: true,
+    noindex: false,
   },
   // @ts-ignore
   baseBuilder: {
