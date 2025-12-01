@@ -11,6 +11,7 @@ const TASK_POINTS = TASKS.reduce((acc: Record<string, number>, task) => {
 }, {} as Record<string, number>);
 import { z } from "zod";
 import { Prisma } from "../../prisma/generated/client";
+import { verifyFarcasterFollow } from "@/lib/verifyFarcasterFollow";
 
 export type JoinWaitlistState = {
   ok: boolean;
@@ -169,9 +170,6 @@ export async function completeWaitlistTask(
     // Verify Farcaster follow if task is verifiable
     if (task?.verifiable && task.targetFid) {
       try {
-        const { verifyFarcasterFollow } = await import(
-          "@/lib/verifyFarcasterFollow"
-        );
         const isFollowing = await verifyFarcasterFollow(fid, task.targetFid);
 
         if (!isFollowing) {
