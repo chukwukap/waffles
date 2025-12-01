@@ -61,10 +61,10 @@ export const TASKS: readonly WaitlistTask[] = [
   {
     id: "recast_waitlist_launch",
     iconPath: "/images/icons/farcaster.png",
-    title: "Recast Launch Post",
+    title: "Recast Waitlist Launch Post",
     text: "Recast our waitlist launch post",
     points: 75,
-    actionUrl: "https://farcaster.xyz/miniapps/sbpPNle-R2-V/waffles",
+    actionUrl: "https://farcaster.xyz/thecyberverse/0x977440e4",
     type: "link",
   },
   {
