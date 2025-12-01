@@ -13,6 +13,7 @@ import {
   useComposeCast,
   useMiniKit,
   useOpenUrl,
+  useViewCast,
 } from "@coinbase/onchainkit/minikit";
 import { env } from "@/lib/env";
 import { WaitlistData } from "@/app/(app)/(game)/api/waitlist/route";
@@ -26,6 +27,7 @@ export function useTaskActions({ waitlistData }: UseTaskActionsProps) {
   const fid = context?.user?.fid;
   const { composeCastAsync } = useComposeCast();
   const openUrl = useOpenUrl();
+  const { viewCast } = useViewCast();
 
   // Share function for invite task
   const share = useCallback(async () => {
@@ -67,7 +69,10 @@ think you can beat me? you're on😏`;
       return;
     }
 
-    if (task.type === "farcaster_share") {
+    if (task.type === "view_cast" && task.castHash) {
+      // Use MiniKit's viewCast to open the cast in Farcaster
+      viewCast({ hash: task.castHash, close: false });
+    } else if (task.type === "farcaster_share") {
       try {
         await composeCastAsync({
           text: `just got in to waffles

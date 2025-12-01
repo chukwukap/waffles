@@ -3,7 +3,11 @@
 import { WAFFLE_FID } from "./constants";
 
 // Define base types first to avoid circular dependencies
-export type TaskActionType = "link" | "farcaster_share" | "invite";
+export type TaskActionType =
+  | "link"
+  | "farcaster_share"
+  | "invite"
+  | "view_cast";
 export type TaskStatus = "initial" | "pending" | "completed";
 
 export interface WaitlistTask {
@@ -16,6 +20,7 @@ export interface WaitlistTask {
   type: TaskActionType;
   verifiable?: boolean;
   targetFid?: number;
+  castHash?: string; // For view_cast type tasks
 }
 
 // Now define the tasks array with explicit type
@@ -64,8 +69,8 @@ export const TASKS: readonly WaitlistTask[] = [
     title: "Recast Waitlist Launch Post",
     text: "Recast our waitlist launch post",
     points: 75,
-    actionUrl: "https://farcaster.xyz/thecyberverse/0x977440e4",
-    type: "link",
+    type: "view_cast",
+    castHash: "0x977440e4a6342d22b39c51ae307fdf9dfbd7d2a0",
   },
   {
     id: "share_waitlist_farcaster",
