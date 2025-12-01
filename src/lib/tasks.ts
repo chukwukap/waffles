@@ -53,6 +53,8 @@ export const TASKS: readonly WaitlistTask[] = [
     points: 50,
     actionUrl: "https://warpcast.com/wafflesdotfun",
     type: "link",
+    verifiable: true,
+    targetFid: 1386922,
   },
   {
     id: "share_waitlist_farcaster",
