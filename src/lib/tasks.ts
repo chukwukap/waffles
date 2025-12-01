@@ -59,6 +59,15 @@ export const TASKS: readonly WaitlistTask[] = [
     targetFid: WAFFLE_FID,
   },
   {
+    id: "recast_waitlist_launch",
+    iconPath: "/images/icons/farcaster.png",
+    title: "Recast Launch Post",
+    text: "Recast our waitlist launch post",
+    points: 75,
+    actionUrl: "https://warpcast.com/thecyberverse/0x4a9c92c2",
+    type: "link",
+  },
+  {
     id: "share_waitlist_farcaster",
     iconPath: "/images/icons/farcaster.png",
     title: "cast about waffles",
