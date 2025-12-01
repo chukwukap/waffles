@@ -34,7 +34,7 @@ export async function generateMetadata({
     other: {
       "fc:frame": JSON.stringify({
         version: minikitConfig.miniapp.version,
-        imageUrl: IMAGE_URL_PATH,
+        imageUrl: `${env.rootUrl}/images/hero-image.png`,
         button: {
           title: `Join the waitlist ➡️📋`,
           action: {
