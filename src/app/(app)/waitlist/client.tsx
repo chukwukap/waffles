@@ -21,6 +21,7 @@ import { env } from "@/lib/env";
 
 import { WaitlistFooter } from "./_components/Footer";
 import { WaitlistMutuals } from "./_components/WaitlistMutuals";
+import { WaitlistSoundToggle } from "./_components/WaitlistSoundToggle";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 
 import { useUser } from "@/hooks/useUser";
@@ -186,6 +187,7 @@ think you can beat me? you're on😏`;
   if (user?.status === "WAITLIST" || user?.status === "ACTIVE") {
     return (
       <>
+        <WaitlistSoundToggle />
         <motion.section
           variants={containerVariants}
           initial="hidden"
@@ -292,6 +294,7 @@ think you can beat me? you're on😏`;
 
   return (
     <>
+      <WaitlistSoundToggle />
       <motion.section
         variants={containerVariants}
         initial="hidden"

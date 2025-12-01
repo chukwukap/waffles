@@ -24,7 +24,6 @@ export async function generateMetadata({
     IMAGE_URL_PATH = `${env.rootUrl}/api/og/waitlist?rank=${rank}`;
   }
 
-  console.log("FINAL IMAGE_URL", IMAGE_URL_PATH);
 
   return {
     title: minikitConfig.miniapp.name,
