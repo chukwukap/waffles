@@ -98,6 +98,7 @@ export async function GET(request: NextRequest) {
               justifyContent: "center",
               flex: 1,
               gap: 20,
+              marginTop: 60,
             }}
           >
             {/* User Avatar */}
