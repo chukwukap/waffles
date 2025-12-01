@@ -153,7 +153,7 @@ export function OnboardingOverlay({ onComplete }: OnboardingOverlayProps) {
                 >
                   {isLoading
                     ? "Loading..."
-                    : currentSlideIndex === 0
+                    : currentSlideIndex !== slides.length - 1
                       ? "Next"
                       : "Let's Go"}
                 </FancyBorderButton>
