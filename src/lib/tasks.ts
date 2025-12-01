@@ -64,7 +64,7 @@ export const TASKS: readonly WaitlistTask[] = [
     title: "Recast Launch Post",
     text: "Recast our waitlist launch post",
     points: 75,
-    actionUrl: "https://warpcast.com/thecyberverse/0x4a9c92c2",
+    actionUrl: "https://farcaster.xyz/miniapps/sbpPNle-R2-V/waffles",
     type: "link",
   },
   {
