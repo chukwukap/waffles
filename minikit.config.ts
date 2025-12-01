@@ -21,7 +21,7 @@ export const minikitConfig: MiniAppManifest = {
     version: "1",
     name: "Waffles",
     subtitle: "Waffles",
-    description: "Pattern-matching tournaments built for Farcaster.",
+    description: "Pattern-matching tournaments built for everyone.",
     screenshotUrls: [
       `${env.rootUrl}/images/screenshots/1.png`,
       `${env.rootUrl}/images/screenshots/2.png`,

@@ -6,16 +6,16 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   title: "Waffles",
-  description: "Pattern-matching tournaments built for Farcaster.",
+  description: "Pattern-matching tournaments built for everyone.",
   keywords: ["waffles", "games", "farcaster", "social", "tournaments", "fun"],
   openGraph: {
     title: "Waffles",
     description: "Play daily social games",
-    url: "https://demo.playwaffles.fun",
+    url: "https://miniapp.playwaffles.fun",
     type: "website",
     images: [
       {
-        url: "/og.png",
+        url: "/images/hero-image.png",
         width: 1200,
         height: 630,
         alt: "Waffles OG Image",
@@ -26,12 +26,12 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Waffles",
     description: "Play daily social games",
-    images: ["/og.png"],
+    images: ["/images/hero-image.png"],
   },
   icons: {
     icon: "/favicon.ico",
   },
-  metadataBase: new URL("https://demo.playwaffles.fun"),
+  metadataBase: new URL("https://miniapp.playwaffles.fun"),
 };
 
 export default function RootLayout({
