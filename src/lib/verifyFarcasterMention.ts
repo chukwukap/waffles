@@ -12,21 +12,30 @@ export async function verifyFarcasterMention(
   targetFid: number
 ): Promise<boolean> {
   try {
-    // Get user's recent casts (last 25)
+    // Get user's recent casts (last 50 to be safe)
     const response = await neynar.fetchCastsForUser({
       fid: userFid,
-      limit: 25,
+      limit: 50,
     });
 
-    // Check if any cast mentions the target FID
-    const hasMention = response.casts.some((cast: any) =>
-      cast.mentioned_profiles?.some((profile: any) => profile.fid === targetFid)
-    );
+    // Check if any cast mentions the target FID (via protocol mention OR text)
+    const hasMention = response.casts.some((cast: any) => {
+      // 1. Check protocol mentions (reliable)
+      const hasProtocolMention = cast.mentioned_profiles?.some(
+        (profile: any) => profile.fid === targetFid
+      );
+
+      // 2. Check text content (fallback for clients that don't create protocol mentions)
+      // We look for @wafflesdotfun (case-insensitive)
+      const hasTextMention = cast.text.toLowerCase().includes("@wafflesdotfun");
+
+      return hasProtocolMention || hasTextMention;
+    });
 
     console.log(
       `[VERIFY_MENTION] FID ${userFid} ${
         hasMention ? "HAS" : "HAS NOT"
-      } mentioned FID ${targetFid}`
+      } mentioned FID ${targetFid} (checked ${response.casts.length} casts)`
     );
 
     return hasMention;
