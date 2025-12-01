@@ -14,13 +14,14 @@ export async function generateMetadata({
   const ref = sParams.ref ? parseInt(sParams.ref as string) : null;
 
   // Build OG image URL with rank and ref (referrer's fid)
+  // Build OG image URL with rank and ref (referrer's fid)
   // The ref is the person who shared the link, so their avatar should appear
-  let IMAGE_URL_PATH = `/images/hero-image.png`;
+  let IMAGE_URL_PATH = `${env.rootUrl}/images/hero-image.png`;
   if (rank && ref) {
-    IMAGE_URL_PATH = `/api/og/waitlist?rank=${rank}&fid=${ref}`;
+    IMAGE_URL_PATH = `${env.rootUrl}/api/og/waitlist?rank=${rank}&fid=${ref}`;
   } else if (rank) {
     // Fallback for rank without ref
-    IMAGE_URL_PATH = `/api/og/waitlist?rank=${rank}`;
+    IMAGE_URL_PATH = `${env.rootUrl}/api/og/waitlist?rank=${rank}`;
   }
 
   console.log("FINAL IMAGE_URL", IMAGE_URL_PATH);
