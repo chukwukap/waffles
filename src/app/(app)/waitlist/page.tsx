@@ -15,13 +15,15 @@ export async function generateMetadata({
 
   // Build OG image URL with rank and ref (referrer's fid)
   // The ref is the person who shared the link, so their avatar should appear
-  let IMAGE_URL = `${env.rootUrl}/images/share/waitlist-default.png`;
+  let IMAGE_URL_PATH = `/images/hero-image.png`;
   if (rank && ref) {
-    IMAGE_URL = `${env.rootUrl}/api/og/waitlist?rank=${rank}&fid=${ref}`;
+    IMAGE_URL_PATH = `/api/og/waitlist?rank=${rank}&fid=${ref}`;
   } else if (rank) {
     // Fallback for rank without ref
-    IMAGE_URL = `${env.rootUrl}/api/og/waitlist?rank=${rank}`;
+    IMAGE_URL_PATH = `/api/og/waitlist?rank=${rank}`;
   }
+
+  console.log("FINAL IMAGE_URL", IMAGE_URL_PATH);
 
   return {
     title: minikitConfig.miniapp.name,
@@ -31,7 +33,7 @@ export async function generateMetadata({
     other: {
       "fc:frame": JSON.stringify({
         version: minikitConfig.miniapp.version,
-        imageUrl: IMAGE_URL,
+        imageUrl: IMAGE_URL_PATH,
         button: {
           title: `Join the waitlist ➡️📋`,
           action: {
@@ -47,13 +49,7 @@ export async function generateMetadata({
   };
 }
 
-// export async function generateStaticParams() {
-//   const params = [];
-//   for (let i = 1; i <= 1000; i++) {
-//     params.push({ rank: i.toString() });
-//   }
-//   return params;
-// }
+
 
 export default async function WaitlistPage() {
   return <WaitlistClient />;

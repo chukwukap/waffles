@@ -1,5 +1,23 @@
 // Shared task definitions used by both client and server
-export const TASKS = [
+
+// Define base types first to avoid circular dependencies
+export type TaskActionType = "link" | "farcaster_share" | "invite";
+export type TaskStatus = "initial" | "pending" | "completed";
+
+export interface WaitlistTask {
+  id: string;
+  iconPath: string;
+  title: string;
+  text: string;
+  points: number;
+  actionUrl?: string;
+  type: TaskActionType;
+  verifiable?: boolean;
+  targetFid?: number;
+}
+
+// Now define the tasks array with explicit type
+export const TASKS: readonly WaitlistTask[] = [
   {
     id: "join_discord_general",
     iconPath: "/images/icons/discord.png",
@@ -33,8 +51,10 @@ export const TASKS = [
     title: "Follow on Farcaster",
     text: "Follow @wafflesdotfun on Farcaster",
     points: 50,
-    actionUrl: "https://farcaster.xyz/wafflesdotfun",
+    actionUrl: "https://warpcast.com/wafflesdotfun",
     type: "link",
+    verifiable: true,
+    targetFid: 892387, // @wafflesdotfun FID
   },
   {
     id: "share_waitlist_farcaster",
@@ -54,17 +74,5 @@ export const TASKS = [
   },
 ] as const;
 
-// Types derived from TASKS
+// Export ID type derived from actual task IDs
 export type WaitlistTaskId = (typeof TASKS)[number]["id"];
-export type TaskActionType = (typeof TASKS)[number]["type"];
-export type TaskStatus = "initial" | "pending" | "completed";
-
-export interface WaitlistTask {
-  id: WaitlistTaskId;
-  iconPath: string;
-  title: string;
-  text: string;
-  points: number;
-  actionUrl?: string;
-  type: TaskActionType;
-}

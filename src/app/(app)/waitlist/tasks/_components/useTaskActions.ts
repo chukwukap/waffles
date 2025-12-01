@@ -104,6 +104,19 @@ export function useTaskActions({ waitlistData }: UseTaskActionsProps) {
     });
   };
 
+  // Handle verification errors and revert optimistic updates
+  useEffect(() => {
+    if (state.error) {
+      // Show user-friendly error message
+      notify.error(state.error);
+      // Note: We can't easily identify which task failed here,
+      // so we revert all optimistic updates
+      setOptimisticCompleted([]);
+    } else if (state.success && state.message) {
+      notify.success(state.message);
+    }
+  }, [state]);
+
   const getTaskStatus = (task: WaitlistTask): TaskStatus => {
     // 1. Completed?
     if (

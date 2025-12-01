@@ -163,6 +163,32 @@ export async function completeWaitlistTask(
       return { success: false, error: "User not found" };
     }
 
+    // Find the task definition
+    const task = TASKS.find((t) => t.id === taskId);
+
+    // Verify Farcaster follow if task is verifiable
+    if (task?.verifiable && task.targetFid) {
+      try {
+        const { verifyFarcasterFollow } = await import(
+          "@/lib/verifyFarcasterFollow"
+        );
+        const isFollowing = await verifyFarcasterFollow(fid, task.targetFid);
+
+        if (!isFollowing) {
+          return {
+            success: false,
+            error: "Please follow @wafflesdotfun first, then try again",
+          };
+        }
+      } catch (error) {
+        // Graceful fallback: If Neynar API fails, allow completion anyway
+        console.error(
+          `[TASK_VERIFY] Neynar API failed for FID ${fid}, task ${taskId}, allowing completion:`,
+          error
+        );
+      }
+    }
+
     // Verify "invite_three_friends" task
     if (taskId === "invite_three_friends") {
       if (user._count.invites < 3) {
