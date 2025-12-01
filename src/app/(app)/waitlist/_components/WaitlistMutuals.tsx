@@ -22,7 +22,7 @@ export function WaitlistMutuals({ mutualsData }: WaitlistMutualsProps) {
             whileHover={{ scale: 1.05 }}
         >
             <CardStack
-                size={21.05}
+                size={30}
                 borderColor="#FFFFFF"
                 rotations={[-8, 5, -5, 7]}
                 imageUrls={

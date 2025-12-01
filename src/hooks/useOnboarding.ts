@@ -1,12 +1,9 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { syncUserAction } from "@/actions/onboarding";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useAccount } from "wagmi";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
-
-const ONBOARDING_STORAGE_KEY = "waffles:onboarded:v2";
 
 export function useOnboarding() {
   const { address } = useAccount();
@@ -15,16 +12,44 @@ export function useOnboarding() {
   const pfpUrl = miniKitContext?.user?.pfpUrl;
   const username = miniKitContext?.user?.username;
 
-  // Use localStorage for instant check
-  const [isOnboarded, setIsOnboarded] = useLocalStorage<boolean>(
-    ONBOARDING_STORAGE_KEY,
-    false
-  );
+  const [isReady, setIsReady] = useState(false);
+  const [isOnboarded, setIsOnboarded] = useState(false);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(true);
 
-  // We are "ready" as soon as we've read from localStorage (which happens on mount)
-  // Since useLocalStorage initializes synchronously if possible, we can consider it ready immediately
-  // or just use a simple true here since we don't have async checks anymore.
-  const isReady = true;
+  // Check onboarding status from database
+  useEffect(() => {
+    async function checkOnboardingStatus() {
+      if (!fid) {
+        // Wait for fid to be available
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/user?fid=${fid}`, {
+          cache: "no-store",
+        });
+
+        if (response.ok) {
+          // User exists in database - they are onboarded
+          setIsOnboarded(true);
+        } else if (response.status === 404) {
+          // User doesn't exist - needs onboarding
+          setIsOnboarded(false);
+        } else {
+          console.error("Failed to check onboarding status:", response.status);
+          setIsOnboarded(false);
+        }
+      } catch (error) {
+        console.error("Error checking onboarding status:", error);
+        setIsOnboarded(false);
+      } finally {
+        setIsCheckingStatus(false);
+        setIsReady(true);
+      }
+    }
+
+    checkOnboardingStatus();
+  }, [fid]);
 
   const completeOnboarding = useCallback(async () => {
     if (!fid) {
@@ -39,9 +64,6 @@ export function useOnboarding() {
       wallet: address,
     });
 
-    // Optimistically mark as onboarded
-    setIsOnboarded(true);
-
     try {
       const result = await syncUserAction({
         fid: fid,
@@ -52,9 +74,6 @@ export function useOnboarding() {
 
       if (!result.success) {
         console.error("User sync failed during onboarding:", result.error);
-        // If sync fails, we might want to revert, but for now let's keep it optimistic
-        // to avoid jarring UI flips. The user can try again if they reload.
-        // Or we could revert: setIsOnboarded(false);
         throw new Error(result.error || "User sync failed");
       }
 
@@ -64,18 +83,19 @@ export function useOnboarding() {
         "Referral:",
         result.user.inviteCode
       );
+
+      // Mark as onboarded after successful database sync
+      setIsOnboarded(true);
     } catch (err) {
       console.error("Unexpected error during user sync:", err);
-      // Revert optimistic update on error so user can try again
-      setIsOnboarded(false);
       throw err;
     }
-  }, [fid, username, pfpUrl, address, setIsOnboarded]);
+  }, [fid, username, pfpUrl, address]);
 
   return {
-    isReady,
+    isReady: isReady && !isCheckingStatus,
     isOnboarded,
-    shouldShowOnboarding: isReady && !isOnboarded,
+    shouldShowOnboarding: isReady && !isCheckingStatus && !isOnboarded,
     completeOnboarding,
   };
 }
