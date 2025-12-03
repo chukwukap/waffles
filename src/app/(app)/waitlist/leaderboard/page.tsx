@@ -2,8 +2,8 @@ import { LeaderboardClient } from "./client";
 import { LeaderboardData } from "@/app/api/leaderboard/route";
 import { env } from "@/lib/env";
 
-async function getLeaderboardData(fid: string): Promise<LeaderboardData> {
-    const response = await fetch(`${env.rootUrl}/api/waitlist/leaderboard?fid=${fid}&limit=50`, {
+async function getLeaderboardData(fid: string, limit: number = 100): Promise<LeaderboardData> {
+    const response = await fetch(`${env.rootUrl}/api/waitlist/leaderboard?fid=${fid}&limit=${limit}`, {
         cache: 'no-store'
     });
 

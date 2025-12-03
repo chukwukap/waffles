@@ -1,39 +1,106 @@
 "use client";
 
-import { use } from "react";
+import { use, useEffect, useRef, useState, useCallback } from "react";
 import { LeaderboardData, LeaderboardEntry } from "@/app/api/leaderboard/route";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { env } from "@/lib/env";
 
 export function LeaderboardClient({ leaderboardPromise }: { leaderboardPromise: Promise<LeaderboardData> }) {
-    const data = use(leaderboardPromise);
+    const initialData = use(leaderboardPromise);
+    const [entries, setEntries] = useState<LeaderboardEntry[]>(initialData.entries);
+    const [hasMore, setHasMore] = useState(initialData.entries.length === 100); // Assuming 100 is the limit per load
+    const [isLoading, setIsLoading] = useState(false);
+    const [offset, setOffset] = useState(100); // Start from the next batch
+    const observerTarget = useRef<HTMLDivElement>(null);
 
-    // Find current user in the entries if they exist
-    const currentUserEntry = data.entries.find(e => e.isCurrentUser);
+    // Extract FID from the entries (current user's FID)
+    const currentUserFid = initialData.entries.find(e => e.isCurrentUser)?.fid;
+
+    const loadMore = useCallback(async () => {
+        if (isLoading || !hasMore) return;
+
+        setIsLoading(true);
+        try {
+            const response = await fetch(
+                `${env.rootUrl}/api/waitlist/leaderboard?fid=${currentUserFid || ''}&limit=100&offset=${offset}`,
+                { cache: 'no-store' }
+            );
+
+            if (!response.ok) throw new Error("Failed to fetch more data");
+
+            const data: LeaderboardData = await response.json();
+
+            if (data.entries.length === 0) {
+                setHasMore(false);
+            } else {
+                setEntries(prev => [...prev, ...data.entries]);
+                setOffset(prev => prev + data.entries.length);
+                setHasMore(data.entries.length === 100);
+            }
+        } catch (error) {
+            console.error("Error loading more leaderboard entries:", error);
+            setHasMore(false);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [isLoading, hasMore, offset, currentUserFid]);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMore && !isLoading) {
+                    loadMore();
+                }
+            },
+            { threshold: 0.1 }
+        );
+
+        const currentTarget = observerTarget.current;
+        if (currentTarget) {
+            observer.observe(currentTarget);
+        }
+
+        return () => {
+            if (currentTarget) {
+                observer.unobserve(currentTarget);
+            }
+        };
+    }, [hasMore, isLoading, loadMore]);
 
     return (
         <div className="w-full px-4 mx-auto flex-1 overflow-y-auto max-w-lg py-1 space-y-3">
-            {data.entries.map((entry, index) => (
+            {/* User's rank display at the top if they exist */}
+            {initialData.userRank && (
+                <div className="sticky top-0 z-10 pb-2 pt-1">
+                    <div className="bg-[#1B8FF514] border border-[#1B8FF599] rounded-[12px] px-3 py-2 backdrop-blur-sm">
+                        <p className="text-white/60 text-[12px] font-body">
+                            Your rank: <span className="text-[#1B8FF5] font-medium">#{initialData.userRank}</span> of {initialData.totalParticipants}
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            {/* Leaderboard entries */}
+            {entries.map((entry, index) => (
                 <LeaderboardRow key={entry.fid + "-" + index} entry={entry} />
             ))}
 
-            {/* If current user is not in the top list (entries), show them at the bottom */}
-            {/* Note: The API currently returns top 100. If user is not in top 100, we might want to fetch them separately or handle it. 
-                For now, we'll assume if they are not in 'entries', we don't display them or the API should include them.
-                However, the previous logic assumed 'currentUser' was a separate field. 
-                Let's adapt: The new API returns 'userRank'. If we want to show the user at the bottom if not in top 100, 
-                we would need the user's entry data. 
-                
-                Given the current API implementation:
-                - It returns top 100 users.
-                - It returns 'userRank'.
-                
-                If we want to show the "sticky" user row, we need the user's details even if they aren't in the top 100.
-                The current API implementation DOES NOT return a separate 'currentUser' object if they are outside the limit.
-                
-                To fix this properly without changing the API again right now, we will just render the list.
-                If the user is in the list, they will be highlighted.
-            */}
+            {/* Loading indicator and intersection observer target */}
+            {hasMore && (
+                <div ref={observerTarget} className="py-4 flex justify-center">
+                    {isLoading && (
+                        <div className="text-white/40 text-sm font-body">Loading more...</div>
+                    )}
+                </div>
+            )}
+
+            {/* End of list indicator */}
+            {!hasMore && entries.length > 0 && (
+                <div className="py-4 text-center text-white/40 text-sm font-body">
+                    You've reached the end
+                </div>
+            )}
         </div>
     );
 }

@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const fid = searchParams.get("fid");
     const limit = parseInt(searchParams.get("limit") || "100");
+    const offset = parseInt(searchParams.get("offset") || "0");
 
     const users = await prisma.user.findMany({
       where: {
@@ -34,6 +35,7 @@ export async function GET(req: NextRequest) {
         { waitlistPoints: "desc" },
         { createdAt: "asc" }, // Tie-breaker: earlier joiners rank higher
       ],
+      skip: offset,
       take: limit,
       select: {
         fid: true,
@@ -74,7 +76,7 @@ export async function GET(req: NextRequest) {
     }
 
     const entries: LeaderboardEntry[] = users.map((user, index) => ({
-      rank: index + 1,
+      rank: offset + index + 1, // Account for offset to show true global rank
       fid: user.fid,
       username: user.username || `User ${user.fid}`,
       pfpUrl: user.pfpUrl || "",
