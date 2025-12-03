@@ -49,7 +49,7 @@ export const TASKS: readonly WaitlistTask[] = [
     title: "Retweet Launch Post",
     text: "RT our pinned tweet about Waffles",
     points: 75,
-    actionUrl: "https://x.com/playwaffles",
+    actionUrl: "https://x.com/thecyberverse1/status/1995546518887989641?s=20",
     type: "link",
   },
   {
