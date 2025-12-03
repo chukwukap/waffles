@@ -21,7 +21,9 @@ const envSchema = z.object({
     .string()
     .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Treasury Wallet address")
     .optional(), // Optional because we provide a default in getEnv
-  NEXT_PUBLIC_HOME_URL_PATH: z.string().default("/waitlist"),
+  NEXT_PUBLIC_HOME_URL_PATH: z
+    .string()
+    .min(1, "NEXT_PUBLIC_HOME_URL_PATH is required"),
 
   // Account Association (optional for development)
   NEXT_PUBLIC_ACCOUNT_ASSOCIATION_HEADER: z.string().optional(),
@@ -83,7 +85,7 @@ const getEnv = () => {
         nextPublicOnchainkitApiKey:
           process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY || "",
         nextPublicLeaderboardPageSize: 25,
-        homeUrlPath: "/waitlist",
+        homeUrlPath: process.env.NEXT_PUBLIC_HOME_URL_PATH || "",
         nextPublicTreasuryWallet: (process.env.NEXT_PUBLIC_TREASURY_WALLET ||
           "0xd584F8079192E078F0f3237622345E19360384A2") as `0x${string}`,
         accountAssociation: {
