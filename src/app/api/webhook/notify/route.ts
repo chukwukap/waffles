@@ -9,7 +9,6 @@ import {
   sendMiniAppNotification,
 } from "@/lib/notifications";
 import { env } from "@/lib/env";
-import { HOME_URL_PATH } from "@/lib/constants";
 
 export async function POST(request: NextRequest) {
   const requestJson = await request.json();
@@ -57,7 +56,7 @@ export async function POST(request: NextRequest) {
             appFid,
             title: "Welcome to Waffles!",
             body: "Thanks for adding the app. You will now receive notifications.",
-            targetUrl: `${env.rootUrl}${HOME_URL_PATH}`,
+            targetUrl: `${env.rootUrl}${env.homeUrlPath}`,
           });
           console.log(
             `[WEBHOOK_NOTIFY] Welcome notification sent to FID ${fid}`
@@ -97,7 +96,7 @@ export async function POST(request: NextRequest) {
           appFid,
           title: "Notifications Enabled",
           body: "You will now receive updates about your games.",
-          targetUrl: `${env.rootUrl}${HOME_URL_PATH}`,
+          targetUrl: `${env.rootUrl}${env.homeUrlPath}`,
         });
         console.log(
           `[WEBHOOK_NOTIFY] Notification enabled message sent to FID ${fid}`

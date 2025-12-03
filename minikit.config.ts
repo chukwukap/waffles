@@ -1,6 +1,5 @@
 import { MiniAppManifest } from "@coinbase/onchainkit/minikit";
 import { env } from "@/lib/env";
-import { HOME_URL_PATH } from "@/lib/constants";
 
 /**
  * MiniApp configuration object. Must follow the Farcaster MiniApp specification.
@@ -30,7 +29,7 @@ export const minikitConfig: MiniAppManifest = {
     iconUrl: `${env.rootUrl}/icon.png`,
     splashImageUrl: `${env.rootUrl}/icon.png`,
     splashBackgroundColor: "#000000",
-    homeUrl: `${env.rootUrl}${HOME_URL_PATH}`,
+    homeUrl: `${env.rootUrl}${env.homeUrlPath}`,
     webhookUrl: `${env.rootUrl}/api/webhook/notify`,
     primaryCategory: "games",
     tags: ["waffles", "games", "social", "fun"],

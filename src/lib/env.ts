@@ -21,6 +21,7 @@ const envSchema = z.object({
     .string()
     .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Treasury Wallet address")
     .optional(), // Optional because we provide a default in getEnv
+  NEXT_PUBLIC_HOME_URL_PATH: z.string().default("/waitlist"),
 
   // Account Association (optional for development)
   NEXT_PUBLIC_ACCOUNT_ASSOCIATION_HEADER: z.string().optional(),
@@ -45,6 +46,7 @@ const getEnv = () => {
     NEXT_PUBLIC_ONCHAINKIT_API_KEY: process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY,
     NEXT_PUBLIC_LEADERBOARD_PAGE_SIZE:
       process.env.NEXT_PUBLIC_LEADERBOARD_PAGE_SIZE,
+    NEXT_PUBLIC_HOME_URL_PATH: process.env.NEXT_PUBLIC_HOME_URL_PATH,
     NEXT_PUBLIC_ACCOUNT_ASSOCIATION_HEADER:
       process.env.NEXT_PUBLIC_ACCOUNT_ASSOCIATION_HEADER,
     NEXT_PUBLIC_ACCOUNT_ASSOCIATION_PAYLOAD:
@@ -81,6 +83,7 @@ const getEnv = () => {
         nextPublicOnchainkitApiKey:
           process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY || "",
         nextPublicLeaderboardPageSize: 25,
+        homeUrlPath: "/waitlist",
         nextPublicTreasuryWallet: (process.env.NEXT_PUBLIC_TREASURY_WALLET ||
           "0xd584F8079192E078F0f3237622345E19360384A2") as `0x${string}`,
         accountAssociation: {
@@ -114,6 +117,7 @@ const getEnv = () => {
     neynarApiKey: data.NEYNAR_API_KEY!,
     nextPublicOnchainkitApiKey: data.NEXT_PUBLIC_ONCHAINKIT_API_KEY,
     nextPublicLeaderboardPageSize: data.NEXT_PUBLIC_LEADERBOARD_PAGE_SIZE,
+    homeUrlPath: data.NEXT_PUBLIC_HOME_URL_PATH,
     nextPublicTreasuryWallet: (process.env.NEXT_PUBLIC_TREASURY_WALLET ||
       "0xd584F8079192E078F0f3237622345E19360384A2") as `0x${string}`, // Default to demo wallet if missing
     accountAssociation: {
