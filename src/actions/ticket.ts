@@ -8,6 +8,19 @@ import { createPublicClient, http, isHash } from "viem";
 import { base } from "viem/chains";
 import { revalidatePath } from "next/cache";
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🎟️ FREE TICKETS MODE - For Testing Only
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//
+// Set to `true` to let users buy tickets WITHOUT paying
+// Set to `false` to require real payment (production mode)
+//
+// When TRUE:  Tickets instantly marked as PAID, no wallet charge
+// When FALSE: Requires blockchain transaction verification
+//
+const FREE_TICKETS_MODE = true;
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 const purchaseSchema = z.object({
   fid: z.number().int().positive("Invalid FID format."),
   gameId: z.number().int().positive("Invalid Game ID."),
@@ -111,7 +124,13 @@ export async function buyWaffleAction(
 
     // 3. Verify Transaction (if txHash provided)
     let isVerified = false;
-    if (txHash) {
+
+    if (FREE_TICKETS_MODE) {
+      console.log(
+        "[BuyWaffle] 🎟️ FREE_TICKETS_MODE enabled - skipping payment verification"
+      );
+      isVerified = true;
+    } else if (txHash) {
       console.log("[BuyWaffle] Step 3: Verifying transaction", { txHash });
       // Validate hash format
       if (!isHash(txHash)) {
