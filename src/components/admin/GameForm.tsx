@@ -190,6 +190,7 @@ export function GameForm({ action, initialData, isEdit = false }: GameFormProps)
                                     required
                                     defaultValue={initialData?.entryFee ?? 50}
                                     min={0}
+                                    step="0.01"
                                     className="w-full pl-8 pr-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                 />
                             </div>
