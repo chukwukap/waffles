@@ -114,6 +114,30 @@ export const WaffleCard = ({
   const handlePurchase = () => {
     console.log("[WaffleCard] User clicked BUY WAFFLE", { price, gameId });
 
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 🎟️ FREE TICKETS MODE: Skip wallet transaction for testing
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    const FREE_TICKETS_MODE = true; // Set to false to require payment
+
+    if (FREE_TICKETS_MODE) {
+      console.log("[WaffleCard] 🎟️ FREE_TICKETS_MODE - skipping wallet transaction");
+
+      // Submit directly to server without transaction
+      const formData = new FormData();
+      formData.append("fid", String(fid));
+      formData.append("gameId", String(gameId));
+      // No txHash - server will auto-approve
+
+      startTransition(() => {
+        submitWaffleAction(formData);
+      });
+
+      notify.info("Creating your free ticket...");
+      return;
+    }
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    // Normal payment flow
     try {
       writeContract(
         {
