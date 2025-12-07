@@ -40,6 +40,10 @@ const envSchema = z.object({
   VERCEL_PROJECT_PRODUCTION_URL: z.string().optional(),
   VERCEL_URL: z.string().optional(),
   VERCEL_ENV: z.enum(["production", "preview", "development"]).optional(),
+
+  // PostHog
+  NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
+  NEXT_PUBLIC_POSTHOG_HOST: z.string().optional(),
 });
 
 const getEnv = () => {
@@ -62,6 +66,8 @@ const getEnv = () => {
     VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL,
     VERCEL_URL: process.env.VERCEL_URL,
     VERCEL_ENV: process.env.VERCEL_ENV,
+    NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
+    NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
   });
 
   if (!parsed.success) {
@@ -95,6 +101,9 @@ const getEnv = () => {
         },
         nextPublicSupabaseUrl: "",
         nextPublicSupabaseAnonKey: "",
+        nextPublicPosthogKey: process.env.NEXT_PUBLIC_POSTHOG_KEY || "",
+        nextPublicPosthogHost:
+          process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com",
       };
     }
   }
@@ -129,6 +138,9 @@ const getEnv = () => {
     },
     nextPublicSupabaseUrl: data.NEXT_PUBLIC_SUPABASE_URL,
     nextPublicSupabaseAnonKey: data.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    nextPublicPosthogKey: data.NEXT_PUBLIC_POSTHOG_KEY,
+    nextPublicPosthogHost:
+      data.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com",
   };
 };
 
