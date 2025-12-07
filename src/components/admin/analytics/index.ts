@@ -7,3 +7,12 @@ export { GamePerformanceTable } from "./GamePerformanceTable";
 export { ReferralFunnel } from "./ReferralFunnel";
 export { ThemeAnalytics } from "./ThemeAnalytics";
 export { ActivityFeed } from "./ActivityFeed";
+
+// Extended analytics components
+export { WaitlistAnalytics } from "./WaitlistAnalytics";
+export { GameInsights } from "./GameInsights";
+export { QuestionDifficulty } from "./QuestionDifficulty";
+export { PlayerEngagement } from "./PlayerEngagement";
+export { ChatAnalytics } from "./ChatAnalytics";
+export { AnalyticsTabs } from "./AnalyticsTabs";
+export type { AnalyticsTab } from "./AnalyticsTabs";
