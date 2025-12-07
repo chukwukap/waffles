@@ -20,12 +20,9 @@ export default function MediaLibraryClient({ initialFiles }: MediaLibraryClientP
     const [deletingUrl, setDeletingUrl] = useState<string | null>(null);
 
     const inferContentType = (pathname: string, storedContentType: string): string => {
-        // If we have a proper content type, use it
         if (storedContentType && storedContentType !== 'application/octet-stream') {
             return storedContentType;
         }
-
-        // Otherwise, infer from file extension
         const ext = pathname.split('.').pop()?.toLowerCase();
         const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'avif'];
         const audioExts = ['mp3', 'wav', 'ogg', 'aac', 'webm', 'm4a'];
@@ -34,24 +31,18 @@ export default function MediaLibraryClient({ initialFiles }: MediaLibraryClientP
         if (ext && imageExts.includes(ext)) return `image/${ext}`;
         if (ext && audioExts.includes(ext)) return `audio/${ext}`;
         if (ext && videoExts.includes(ext)) return `video/${ext}`;
-
         return storedContentType;
     };
 
     const filteredFiles = useMemo(() => {
         return files.filter((file) => {
             const actualContentType = inferContentType(file.pathname, file.contentType);
-
-            // Filter by type
             if (filter !== "all") {
                 if (!actualContentType.startsWith(filter)) return false;
             }
-
-            // Filter by search
             if (search && !file.pathname.toLowerCase().includes(search.toLowerCase())) {
                 return false;
             }
-
             return true;
         });
     }, [files, filter, search]);
@@ -64,10 +55,8 @@ export default function MediaLibraryClient({ initialFiles }: MediaLibraryClientP
 
     const handleDelete = async (url: string) => {
         if (!confirm("Are you sure you want to delete this file?")) return;
-
         setDeletingUrl(url);
         const result = await deleteMediaAction(url);
-
         if (result.success) {
             setFiles((prev) => prev.filter((f) => f.url !== url));
         } else {
@@ -99,61 +88,61 @@ export default function MediaLibraryClient({ initialFiles }: MediaLibraryClientP
     return (
         <div className="space-y-6">
             {/* Stats */}
-            <div className="grid grid-cols-4 gap-4">
-                <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-4">
-                    <div className="text-sm text-slate-400">Total Files</div>
-                    <div className="text-2xl font-bold text-slate-100 mt-1">{stats.total}</div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="admin-panel p-4">
+                    <div className="text-sm text-white/50 font-display">Total Files</div>
+                    <div className="text-2xl font-bold text-white mt-1 font-body">{stats.total}</div>
                 </div>
-                <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-4">
-                    <div className="text-sm text-slate-400">Images</div>
-                    <div className="text-2xl font-bold text-purple-600 mt-1">{stats.images}</div>
+                <div className="admin-panel p-4">
+                    <div className="text-sm text-white/50 font-display">Images</div>
+                    <div className="text-2xl font-bold text-[#FFC931] mt-1 font-body admin-stat-glow">{stats.images}</div>
                 </div>
-                <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-4">
-                    <div className="text-sm text-slate-400">Audio</div>
-                    <div className="text-2xl font-bold text-blue-600 mt-1">{stats.audio}</div>
+                <div className="admin-panel p-4">
+                    <div className="text-sm text-white/50 font-display">Audio</div>
+                    <div className="text-2xl font-bold text-[#00CFF2] mt-1 font-body admin-stat-glow-cyan">{stats.audio}</div>
                 </div>
-                <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-4">
-                    <div className="text-sm text-slate-400">Videos</div>
-                    <div className="text-2xl font-bold text-pink-600 mt-1">{stats.videos}</div>
+                <div className="admin-panel p-4">
+                    <div className="text-sm text-white/50 font-display">Videos</div>
+                    <div className="text-2xl font-bold text-[#FB72FF] mt-1 font-body admin-stat-glow-pink">{stats.videos}</div>
                 </div>
             </div>
 
             {/* Filters */}
-            <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-4">
+            <div className="admin-panel p-4">
                 <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                     <div className="flex gap-2">
                         <button
                             onClick={() => setFilter("all")}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "all"
-                                ? "bg-purple-100 text-purple-700"
-                                : "bg-slate-700 text-slate-400 hover:bg-slate-200"
+                            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${filter === "all"
+                                ? "bg-[#FFC931] text-black font-bold"
+                                : "bg-white/5 text-white/60 hover:bg-white/10"
                                 }`}
                         >
                             All
                         </button>
                         <button
                             onClick={() => setFilter("image")}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "image"
-                                ? "bg-purple-100 text-purple-700"
-                                : "bg-slate-700 text-slate-400 hover:bg-slate-200"
+                            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${filter === "image"
+                                ? "bg-[#FFC931] text-black font-bold"
+                                : "bg-white/5 text-white/60 hover:bg-white/10"
                                 }`}
                         >
                             Images
                         </button>
                         <button
                             onClick={() => setFilter("audio")}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "audio"
-                                ? "bg-purple-100 text-purple-700"
-                                : "bg-slate-700 text-slate-400 hover:bg-slate-200"
+                            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${filter === "audio"
+                                ? "bg-[#FFC931] text-black font-bold"
+                                : "bg-white/5 text-white/60 hover:bg-white/10"
                                 }`}
                         >
                             Audio
                         </button>
                         <button
                             onClick={() => setFilter("video")}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "video"
-                                ? "bg-purple-100 text-purple-700"
-                                : "bg-slate-700 text-slate-400 hover:bg-slate-200"
+                            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${filter === "video"
+                                ? "bg-[#FFC931] text-black font-bold"
+                                : "bg-white/5 text-white/60 hover:bg-white/10"
                                 }`}
                         >
                             Videos
@@ -164,15 +153,18 @@ export default function MediaLibraryClient({ initialFiles }: MediaLibraryClientP
                         placeholder="Search files..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="px-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
                     />
                 </div>
             </div>
 
             {/* Files Grid */}
             {filteredFiles.length === 0 ? (
-                <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-12 text-center">
-                    <p className="text-slate-400">No files found</p>
+                <div className="admin-panel p-12 text-center">
+                    <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <PhotoIcon className="h-8 w-8 text-white/30" />
+                    </div>
+                    <p className="text-white/50 font-display">No files found</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -181,10 +173,10 @@ export default function MediaLibraryClient({ initialFiles }: MediaLibraryClientP
                         return (
                             <div
                                 key={file.url}
-                                className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 overflow-hidden group"
+                                className="admin-panel overflow-hidden group hover:border-[#FFC931]/30 transition-colors"
                             >
                                 {/* Preview */}
-                                <div className="aspect-video bg-slate-700 relative">
+                                <div className="aspect-video bg-white/5 relative">
                                     {actualContentType.startsWith("image") ? (
                                         <Image
                                             src={file.url}
@@ -197,11 +189,11 @@ export default function MediaLibraryClient({ initialFiles }: MediaLibraryClientP
                                         <video src={file.url} controls className="w-full h-full object-cover" />
                                     ) : actualContentType.startsWith("audio") ? (
                                         <div className="w-full h-full flex flex-col items-center justify-center p-4 gap-4">
-                                            <MusicalNoteIcon className="h-12 w-12 text-purple-400" />
+                                            <MusicalNoteIcon className="h-12 w-12 text-[#00CFF2]" />
                                             <audio controls src={file.url} className="w-full" />
                                         </div>
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                        <div className="w-full h-full flex items-center justify-center text-white/40">
                                             {getFileIcon(actualContentType)}
                                         </div>
                                     )}
@@ -210,10 +202,10 @@ export default function MediaLibraryClient({ initialFiles }: MediaLibraryClientP
                                 {/* Details */}
                                 <div className="p-4 space-y-3">
                                     <div>
-                                        <div className="text-sm font-medium text-slate-100 truncate">
+                                        <div className="text-sm font-medium text-white truncate">
                                             {file.pathname.split("/").pop()}
                                         </div>
-                                        <div className="text-xs text-slate-400 mt-1">
+                                        <div className="text-xs text-white/50 mt-1">
                                             {formatFileSize(file.size)} • {new Date(file.uploadedAt).toISOString().split('T')[0]}
                                         </div>
                                     </div>
@@ -222,12 +214,12 @@ export default function MediaLibraryClient({ initialFiles }: MediaLibraryClientP
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => copyToClipboard(file.url)}
-                                            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-slate-700 hover:bg-slate-200 rounded-lg text-sm font-medium text-slate-300 transition-colors"
+                                            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-sm font-medium text-white/70 transition-colors"
                                         >
                                             {copiedUrl === file.url ? (
                                                 <>
-                                                    <CheckIcon className="h-4 w-4 text-green-600" />
-                                                    <span>Copied!</span>
+                                                    <CheckIcon className="h-4 w-4 text-[#14B985]" />
+                                                    <span className="text-[#14B985]">Copied!</span>
                                                 </>
                                             ) : (
                                                 <>
@@ -239,7 +231,7 @@ export default function MediaLibraryClient({ initialFiles }: MediaLibraryClientP
                                         <button
                                             onClick={() => handleDelete(file.url)}
                                             disabled={deletingUrl === file.url}
-                                            className="px-3 py-2 bg-red-950 hover:bg-red-100 rounded-lg text-red-600 transition-colors disabled:opacity-50"
+                                            className="px-3 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-xl text-red-400 transition-colors disabled:opacity-50"
                                         >
                                             <TrashIcon className="h-4 w-4" />
                                         </button>

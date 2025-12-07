@@ -15,7 +15,7 @@ export function GameFilters() {
         } else {
             params.delete("search");
         }
-        params.set("page", "1"); // Reset to first page on search
+        params.set("page", "1");
         router.replace(`?${params.toString()}`);
     }, 300);
 
@@ -31,31 +31,34 @@ export function GameFilters() {
     };
 
     return (
-        <div className="flex flex-col sm:flex-row gap-4 bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-sm">
-            <div className="relative flex-1">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-                <input
-                    type="text"
-                    placeholder="Search games by title..."
-                    className="w-full pl-10 pr-4 py-2 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    defaultValue={searchParams.get("search")?.toString()}
-                    onChange={(e) => handleSearch(e.target.value)}
-                />
-            </div>
-            <div className="flex items-center gap-2">
-                <FunnelIcon className="h-5 w-5 text-slate-400" />
-                <select
-                    className="px-4 py-2 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-slate-800"
-                    defaultValue={searchParams.get("status")?.toString() || ""}
-                    onChange={(e) => handleStatusChange(e.target.value)}
-                >
-                    <option value="">All Statuses</option>
-                    <option value="SCHEDULED">Scheduled</option>
-                    <option value="LIVE">Live</option>
-                    <option value="ENDED">Ended</option>
-                    <option value="CANCELLED">Cancelled</option>
-                </select>
+        <div className="admin-panel p-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+                <div className="relative flex-1">
+                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-white/40" />
+                    <input
+                        type="text"
+                        placeholder="Search games by title..."
+                        className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
+                        defaultValue={searchParams.get("search")?.toString()}
+                        onChange={(e) => handleSearch(e.target.value)}
+                    />
+                </div>
+                <div className="flex items-center gap-3">
+                    <FunnelIcon className="h-5 w-5 text-white/40" />
+                    <select
+                        className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
+                        defaultValue={searchParams.get("status")?.toString() || ""}
+                        onChange={(e) => handleStatusChange(e.target.value)}
+                    >
+                        <option value="" className="bg-[#0a0a0b]">All Statuses</option>
+                        <option value="SCHEDULED" className="bg-[#0a0a0b]">Scheduled</option>
+                        <option value="LIVE" className="bg-[#0a0a0b]">Live</option>
+                        <option value="ENDED" className="bg-[#0a0a0b]">Ended</option>
+                        <option value="CANCELLED" className="bg-[#0a0a0b]">Cancelled</option>
+                    </select>
+                </div>
             </div>
         </div>
     );
 }
+

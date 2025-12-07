@@ -50,16 +50,16 @@ export function GameForm({ action, initialData, isEdit = false }: GameFormProps)
     return (
         <form action={formAction} className="space-y-8">
             {/* Basic Info Section */}
-            <div className="bg-slate-800 shadow-sm rounded-xl border border-slate-700 overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-700 bg-slate-900 flex items-center gap-2">
-                    <PhotoIcon className="h-5 w-5 text-slate-400" />
-                    <h3 className="font-semibold text-slate-100">Game Details</h3>
+            <div className="admin-panel overflow-hidden">
+                <div className="px-6 py-4 border-b border-white/10 bg-white/3 flex items-center gap-2">
+                    <PhotoIcon className="h-5 w-5 text-[#FFC931]" />
+                    <h3 className="font-semibold text-white font-display">Game Details</h3>
                 </div>
                 <div className="p-6 space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="md:col-span-2 space-y-4">
                             <div>
-                                <label htmlFor="title" className="block text-sm font-medium text-slate-300 mb-1">
+                                <label htmlFor="title" className="block text-sm font-medium text-white/70 mb-2">
                                     Game Title *
                                 </label>
                                 <input
@@ -68,12 +68,12 @@ export function GameForm({ action, initialData, isEdit = false }: GameFormProps)
                                     name="title"
                                     required
                                     defaultValue={initialData?.title}
-                                    className="w-full px-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
                                     placeholder="e.g., Friday Night Football Trivia"
                                 />
                             </div>
                             <div>
-                                <label htmlFor="description" className="block text-sm font-medium text-slate-300 mb-1">
+                                <label htmlFor="description" className="block text-sm font-medium text-white/70 mb-2">
                                     Description
                                 </label>
                                 <textarea
@@ -81,7 +81,7 @@ export function GameForm({ action, initialData, isEdit = false }: GameFormProps)
                                     name="description"
                                     rows={3}
                                     defaultValue={initialData?.description || ""}
-                                    className="w-full px-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
                                     placeholder="Brief description of the game..."
                                 />
                             </div>
@@ -100,7 +100,7 @@ export function GameForm({ action, initialData, isEdit = false }: GameFormProps)
 
                         {/* Theme Selection with Preview */}
                         <div className="space-y-4">
-                            <label htmlFor="theme" className="block text-sm font-medium text-slate-300 mb-1">
+                            <label htmlFor="theme" className="block text-sm font-medium text-white/70 mb-2">
                                 Theme *
                             </label>
                             <select
@@ -109,10 +109,10 @@ export function GameForm({ action, initialData, isEdit = false }: GameFormProps)
                                 required
                                 value={selectedTheme}
                                 onChange={(e) => setSelectedTheme(e.target.value)}
-                                className="w-full px-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent mb-4"
+                                className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all mb-4"
                             >
                                 {THEMES.map((theme) => (
-                                    <option key={theme.id} value={theme.id}>
+                                    <option key={theme.id} value={theme.id} className="bg-[#0a0a0b]">
                                         {theme.label}
                                     </option>
                                 ))}
@@ -122,9 +122,9 @@ export function GameForm({ action, initialData, isEdit = false }: GameFormProps)
                             <div className={`rounded-xl p-4 text-white ${currentTheme.color} shadow-lg transition-colors duration-300`}>
                                 <div className="flex items-center justify-between mb-2">
                                     <span className="text-2xl">{currentTheme.icon}</span>
-                                    <span className="text-xs font-bold bg-slate-800/20 px-2 py-1 rounded-full">PREVIEW</span>
+                                    <span className="text-xs font-bold bg-black/20 px-2 py-1 rounded-full">PREVIEW</span>
                                 </div>
-                                <div className="font-bold text-lg mb-1">Game Title</div>
+                                <div className="font-bold text-lg mb-1 font-display">Game Title</div>
                                 <div className="text-white/80 text-xs">50 USDC Prize Pool</div>
                             </div>
                         </div>
@@ -133,14 +133,14 @@ export function GameForm({ action, initialData, isEdit = false }: GameFormProps)
             </div>
 
             {/* Schedule Section */}
-            <div className="bg-slate-800 shadow-sm rounded-xl border border-slate-700 overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-700 bg-slate-900 flex items-center gap-2">
-                    <CalendarIcon className="h-5 w-5 text-slate-400" />
-                    <h3 className="font-semibold text-slate-100">Schedule</h3>
+            <div className="admin-panel overflow-hidden">
+                <div className="px-6 py-4 border-b border-white/10 bg-white/3 flex items-center gap-2">
+                    <CalendarIcon className="h-5 w-5 text-[#00CFF2]" />
+                    <h3 className="font-semibold text-white font-display">Schedule</h3>
                 </div>
                 <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label htmlFor="startsAt" className="block text-sm font-medium text-slate-300 mb-1">
+                        <label htmlFor="startsAt" className="block text-sm font-medium text-white/70 mb-2">
                             Start Time *
                         </label>
                         <input
@@ -149,11 +149,11 @@ export function GameForm({ action, initialData, isEdit = false }: GameFormProps)
                             name="startsAt"
                             required
                             defaultValue={defaultStart}
-                            className="w-full px-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all scheme-dark"
                         />
                     </div>
                     <div>
-                        <label htmlFor="endsAt" className="block text-sm font-medium text-slate-300 mb-1">
+                        <label htmlFor="endsAt" className="block text-sm font-medium text-white/70 mb-2">
                             End Time *
                         </label>
                         <input
@@ -162,7 +162,7 @@ export function GameForm({ action, initialData, isEdit = false }: GameFormProps)
                             name="endsAt"
                             required
                             defaultValue={defaultEnd}
-                            className="w-full px-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all scheme-dark"
                         />
                     </div>
                 </div>
@@ -171,18 +171,18 @@ export function GameForm({ action, initialData, isEdit = false }: GameFormProps)
             {/* Configuration Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Economics */}
-                <div className="bg-slate-800 shadow-sm rounded-xl border border-slate-700 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-slate-700 bg-slate-900 flex items-center gap-2">
-                        <CurrencyDollarIcon className="h-5 w-5 text-slate-400" />
-                        <h3 className="font-semibold text-slate-100">Economics</h3>
+                <div className="admin-panel overflow-hidden">
+                    <div className="px-6 py-4 border-b border-white/10 bg-white/3 flex items-center gap-2">
+                        <CurrencyDollarIcon className="h-5 w-5 text-[#14B985]" />
+                        <h3 className="font-semibold text-white font-display">Economics</h3>
                     </div>
                     <div className="p-6 space-y-4">
                         <div>
-                            <label htmlFor="entryFee" className="block text-sm font-medium text-slate-300 mb-1">
+                            <label htmlFor="entryFee" className="block text-sm font-medium text-white/70 mb-2">
                                 Entry Fee (USDC) *
                             </label>
                             <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#FFC931] font-bold">$</span>
                                 <input
                                     type="number"
                                     id="entryFee"
@@ -191,16 +191,16 @@ export function GameForm({ action, initialData, isEdit = false }: GameFormProps)
                                     defaultValue={initialData?.entryFee ?? 50}
                                     min={0}
                                     step="0.01"
-                                    className="w-full pl-8 pr-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    className="w-full pl-8 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
                                 />
                             </div>
                         </div>
                         <div>
-                            <label htmlFor="prizePool" className="block text-sm font-medium text-slate-300 mb-1">
+                            <label htmlFor="prizePool" className="block text-sm font-medium text-white/70 mb-2">
                                 Prize Pool (USDC) *
                             </label>
                             <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#FFC931] font-bold">$</span>
                                 <input
                                     type="number"
                                     id="prizePool"
@@ -208,7 +208,7 @@ export function GameForm({ action, initialData, isEdit = false }: GameFormProps)
                                     required
                                     defaultValue={initialData?.prizePool ?? 0}
                                     min={0}
-                                    className="w-full pl-8 pr-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    className="w-full pl-8 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
                                 />
                             </div>
                         </div>
@@ -216,15 +216,15 @@ export function GameForm({ action, initialData, isEdit = false }: GameFormProps)
                 </div>
 
                 {/* Gameplay */}
-                <div className="bg-slate-800 shadow-sm rounded-xl border border-slate-700 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-slate-700 bg-slate-900 flex items-center gap-2">
-                        <PuzzlePieceIcon className="h-5 w-5 text-slate-400" />
-                        <h3 className="font-semibold text-slate-100">Gameplay</h3>
+                <div className="admin-panel overflow-hidden">
+                    <div className="px-6 py-4 border-b border-white/10 bg-white/3 flex items-center gap-2">
+                        <PuzzlePieceIcon className="h-5 w-5 text-[#FB72FF]" />
+                        <h3 className="font-semibold text-white font-display">Gameplay</h3>
                     </div>
                     <div className="p-6 space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label htmlFor="roundDurationSec" className="block text-sm font-medium text-slate-300 mb-1">
+                                <label htmlFor="roundDurationSec" className="block text-sm font-medium text-white/70 mb-2">
                                     Round Duration (s)
                                 </label>
                                 <input
@@ -234,11 +234,11 @@ export function GameForm({ action, initialData, isEdit = false }: GameFormProps)
                                     required
                                     defaultValue={initialData?.roundDurationSec ?? 15}
                                     min={5}
-                                    className="w-full px-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
                                 />
                             </div>
                             <div>
-                                <label htmlFor="maxPlayers" className="block text-sm font-medium text-slate-300 mb-1">
+                                <label htmlFor="maxPlayers" className="block text-sm font-medium text-white/70 mb-2">
                                     Max Players
                                 </label>
                                 <input
@@ -248,7 +248,7 @@ export function GameForm({ action, initialData, isEdit = false }: GameFormProps)
                                     required
                                     defaultValue={initialData?.maxPlayers ?? 200}
                                     min={2}
-                                    className="w-full px-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
                                 />
                             </div>
                         </div>
@@ -257,7 +257,7 @@ export function GameForm({ action, initialData, isEdit = false }: GameFormProps)
             </div>
 
             {state && !state.success && (
-                <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-800">
+                <div className="p-4 bg-red-500/20 border border-red-500/30 rounded-xl flex items-center gap-2 text-red-400">
                     <span className="text-xl">⚠️</span>
                     <p className="text-sm font-medium">{state.error}</p>
                 </div>
@@ -266,13 +266,13 @@ export function GameForm({ action, initialData, isEdit = false }: GameFormProps)
             <div className="flex gap-4 pt-4">
                 <button
                     type="submit"
-                    className="px-8 py-3 bg-linear-to-r from-purple-600 to-pink-600 text-white font-medium rounded-xl hover:from-purple-700 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                    className="px-8 py-3 bg-[#FFC931] text-black font-bold rounded-xl hover:bg-[#FFD966] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FFC931] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#FFC931]/20 transition-all hover:scale-[1.02] active:scale-[0.98] font-display"
                 >
                     {isEdit ? "Save Changes" : "Create Game"}
                 </button>
                 <Link
                     href="/admin/games"
-                    className="px-6 py-3 border border-slate-600 text-slate-300 font-medium rounded-lg hover:bg-slate-700 transition-colors"
+                    className="px-6 py-3 border border-white/20 text-white/70 font-medium rounded-xl hover:bg-white/5 transition-colors"
                 >
                     Cancel
                 </Link>
@@ -280,3 +280,4 @@ export function GameForm({ action, initialData, isEdit = false }: GameFormProps)
         </form>
     );
 }
+
