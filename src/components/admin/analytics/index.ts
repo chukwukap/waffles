@@ -1,4 +1,5 @@
-export { DateRangePicker, getDateRangeFromParam } from "./DateRangePicker";
+export { DateRangePicker } from "./DateRangePicker";
+export { getDateRangeFromParam, DATE_PRESETS } from "./dateUtils";
 export { KPICard } from "./KPICard";
 export { RevenueChart } from "./RevenueChart";
 export { UserGrowthChart } from "./UserGrowthChart";
