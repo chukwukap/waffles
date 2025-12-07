@@ -2,6 +2,8 @@ import { getAdminSession } from "@/lib/admin-auth";
 import { AdminSidebar } from "@/components/admin/Sidebar";
 import { redirect } from "next/navigation";
 import GlobalToaster from "@/components/ui/Toaster";
+import { fontBody, fontDisplay } from "@/lib/fonts";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -21,27 +23,31 @@ export default async function AdminLayout({
 
     return (
         <>
-            <div className="flex h-screen bg-slate-900 text-slate-100">
+            <div className={cn(
+                "flex h-screen admin-background text-white",
+                fontBody.variable,
+                fontDisplay.variable
+            )}>
                 {/* Sidebar */}
-                <aside className="hidden md:flex md:w-64 md:flex-col">
+                <aside className="hidden md:flex md:w-64 md:flex-col relative z-10">
                     <AdminSidebar />
                 </aside>
 
                 {/* Main content */}
-                <div className="flex flex-1 flex-col overflow-hidden">
+                <div className="flex flex-1 flex-col overflow-hidden relative z-10">
                     {/* Header */}
-                    <header className="flex h-16 items-center justify-between border-b border-slate-700 bg-slate-800 px-6">
-                        <h2 className="text-xl font-semibold text-slate-100 font-display">
+                    <header className="admin-header flex h-16 items-center justify-between px-6">
+                        <h2 className="text-xl font-semibold text-white font-display">
                             Admin Dashboard
                         </h2>
                         <div className="flex items-center gap-4">
-                            <div className="text-sm text-slate-400">
+                            <div className="text-sm text-white/60">
                                 Logged in as:{" "}
-                                <span className="font-semibold text-slate-200">
+                                <span className="font-semibold text-[#FFC931]">
                                     {session.username}
                                 </span>
                             </div>
-                            <div className="h-8 w-8 rounded-full bg-linear-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-medium text-sm shadow-sm ring-2 ring-slate-700">
+                            <div className="h-9 w-9 rounded-full bg-linear-to-br from-[#FFC931] to-[#00CFF2] flex items-center justify-center text-black font-bold text-sm shadow-lg ring-2 ring-white/10">
                                 {session.username?.[0]?.toUpperCase() || "A"}
                             </div>
                         </div>
@@ -55,3 +61,4 @@ export default async function AdminLayout({
         </>
     );
 }
+

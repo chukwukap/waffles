@@ -1,41 +1,74 @@
+import { cn } from "@/lib/utils";
+
+type GlowVariant = "gold" | "cyan" | "pink" | "success";
+
+const glowClasses: Record<GlowVariant, string> = {
+    gold: "admin-stat-glow text-[#FFC931]",
+    cyan: "admin-stat-glow-cyan text-[#00CFF2]",
+    pink: "admin-stat-glow-pink text-[#FB72FF]",
+    success: "admin-stat-glow-success text-[#14B985]",
+};
+
+const iconBgClasses: Record<GlowVariant, string> = {
+    gold: "bg-[#FFC931]/15",
+    cyan: "bg-[#00CFF2]/15",
+    pink: "bg-[#FB72FF]/15",
+    success: "bg-[#14B985]/15",
+};
+
 export function StatsCard({
     title,
     value,
     subtitle,
     icon,
     trend,
+    glowVariant = "gold",
 }: {
     title: string;
     value: string | number;
     subtitle?: string;
     icon: React.ReactNode;
     trend?: { value: string; isPositive: boolean };
+    glowVariant?: GlowVariant;
 }) {
     return (
-        <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-6 hover:shadow-md transition-shadow">
+        <div className="admin-panel admin-panel-hover p-6">
             <div className="flex items-start justify-between">
                 <div>
-                    <p className="text-sm font-medium text-slate-400">{title}</p>
-                    <p className="mt-2 text-3xl font-bold text-slate-100">{value}</p>
+                    <p className="text-sm font-medium text-white/60 font-display">{title}</p>
+                    <p className={cn(
+                        "mt-2 text-3xl font-bold font-body",
+                        glowClasses[glowVariant]
+                    )}>
+                        {value}
+                    </p>
                     {subtitle && (
-                        <p className="mt-1 text-sm text-slate-400">{subtitle}</p>
+                        <p className="mt-1 text-sm text-white/50">{subtitle}</p>
                     )}
                     {trend && (
                         <div className="mt-2 flex items-center gap-1">
                             <span
-                                className={`text-sm font-medium ${trend.isPositive ? "text-green-600" : "text-red-600"
-                                    }`}
+                                className={cn(
+                                    "text-sm font-medium font-display",
+                                    trend.isPositive
+                                        ? "text-[#14B985] admin-stat-glow-success"
+                                        : "text-red-400"
+                                )}
                             >
                                 {trend.isPositive ? "↑" : "↓"} {trend.value}
                             </span>
-                            <span className="text-xs text-slate-400">vs last week</span>
+                            <span className="text-xs text-white/40">vs last week</span>
                         </div>
                     )}
                 </div>
-                <div className="p-3 bg-linear-to-br from-purple-50 to-pink-50 rounded-lg">
+                <div className={cn(
+                    "p-3 rounded-xl",
+                    iconBgClasses[glowVariant]
+                )}>
                     {icon}
                 </div>
             </div>
         </div>
     );
 }
+

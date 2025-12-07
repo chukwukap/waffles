@@ -106,8 +106,8 @@ export default async function AnalyticsPage() {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-slate-100">Analytics</h1>
-                <p className="text-slate-400 mt-1">Detailed platform metrics and insights</p>
+                <h1 className="text-2xl font-bold text-white font-display">Analytics</h1>
+                <p className="text-white/60 mt-1 font-display">Detailed platform metrics and insights</p>
             </div>
 
             {/* Stats Grid */}
@@ -115,56 +115,71 @@ export default async function AnalyticsPage() {
                 <StatsCard
                     title="New Users (7d)"
                     value={analytics.usersLast7Days}
-                    icon={<UsersIcon className="h-6 w-6 text-purple-600" />}
+                    icon={<UsersIcon className="h-6 w-6 text-[#00CFF2]" />}
                     trend={{
                         value: `${userGrowth}%`,
                         isPositive: parseInt(userGrowth) >= 0,
                     }}
+                    glowVariant="cyan"
                 />
                 <StatsCard
                     title="Revenue (7d)"
                     value={`$${analytics.revenueLast7Days}`}
-                    icon={<BanknotesIcon className="h-6 w-6 text-green-600" />}
+                    icon={<BanknotesIcon className="h-6 w-6 text-[#FFC931]" />}
                     trend={{
                         value: `${revenueGrowth}%`,
                         isPositive: parseFloat(revenueGrowth) >= 0,
                     }}
+                    glowVariant="gold"
                 />
                 <StatsCard
                     title="Total Referrals"
                     value={analytics.totalReferrals}
-                    icon={<ChartBarIcon className="h-6 w-6 text-blue-600" />}
+                    icon={<ChartBarIcon className="h-6 w-6 text-[#FB72FF]" />}
+                    glowVariant="pink"
                 />
                 <StatsCard
                     title="Avg. Invite Quota"
                     value={analytics.avgReferralsPerUser.toFixed(1)}
-                    icon={<UsersIcon className="h-6 w-6 text-pink-600" />}
+                    icon={<UsersIcon className="h-6 w-6 text-[#14B985]" />}
+                    glowVariant="success"
                 />
             </div>
 
             {/* Top Games */}
-            <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700">
-                <div className="px-6 py-4 border-b border-slate-700">
-                    <h2 className="text-lg font-semibold text-slate-100">Top Games by Participation</h2>
+            <div className="admin-panel overflow-hidden">
+                <div className="px-6 py-4 border-b border-white/6">
+                    <h2 className="text-lg font-semibold text-white font-display">Top Games by Participation</h2>
                 </div>
-                <div className="divide-y divide-slate-700">
+                <div className="divide-y divide-white/6">
                     {analytics.topGames.map((game, index) => (
-                        <div key={game.id} className="px-6 py-4 flex items-center justify-between">
+                        <div key={game.id} className="px-6 py-4 flex items-center justify-between admin-table-row">
                             <div className="flex items-center gap-4">
-                                <span className="text-2xl font-bold text-slate-300">#{index + 1}</span>
+                                <span className={`text-2xl font-bold font-body ${index === 0 ? "text-[#FFC931] admin-stat-glow" :
+                                        index === 1 ? "text-[#00CFF2]" :
+                                            index === 2 ? "text-[#FB72FF]" : "text-white/40"
+                                    }`}>
+                                    #{index + 1}
+                                </span>
                                 <div>
-                                    <h3 className="font-medium text-slate-100">{game.title}</h3>
-                                    <p className="text-sm text-slate-400">{game._count.tickets} tickets sold</p>
+                                    <h3 className="font-medium text-white">{game.title}</h3>
+                                    <p className="text-sm text-white/50">{game._count.tickets} tickets sold</p>
                                 </div>
                             </div>
                             <div className="text-right">
-                                <div className="text-2xl font-bold text-purple-600">{game._count.players}</div>
-                                <div className="text-xs text-slate-400">players</div>
+                                <div className="text-2xl font-bold text-[#FFC931] font-body admin-stat-glow">{game._count.players}</div>
+                                <div className="text-xs text-white/50 font-display">players</div>
                             </div>
                         </div>
                     ))}
+                    {analytics.topGames.length === 0 && (
+                        <div className="px-6 py-8 text-center text-white/50 font-display">
+                            No games yet
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
     );
 }
+

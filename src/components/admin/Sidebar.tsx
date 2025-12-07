@@ -14,6 +14,7 @@ import {
     ArrowRightOnRectangleIcon,
     PhotoIcon,
 } from "@heroicons/react/24/outline";
+import { WaffleIcon } from "@/components/icons";
 
 const navigation = [
     { name: "Dashboard", href: "/admin", icon: HomeIcon },
@@ -30,11 +31,13 @@ export function AdminSidebar() {
     const pathname = usePathname();
 
     return (
-        <div className="flex h-full flex-col bg-linear-to-b from-slate-800 to-slate-900 border-r border-slate-700">
+        <div className="flex h-full flex-col admin-sidebar">
             {/* Logo */}
-            <div className="flex h-16 items-center gap-2 px-6 border-b border-slate-700">
-                <span className="text-2xl">🧇</span>
-                <span className="text-xl font-bold text-white">Waffles Admin</span>
+            <div className="flex h-16 items-center gap-3 px-6 border-b border-white/6">
+                <WaffleIcon className="h-6 w-6" />
+                <span className="text-lg font-bold text-white font-display tracking-wide">
+                    WAFFLES ADMIN
+                </span>
             </div>
 
             {/* Navigation */}
@@ -49,32 +52,36 @@ export function AdminSidebar() {
                             key={item.name}
                             href={item.href}
                             className={`
-                group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200
-                ${isActive
-                                    ? "bg-purple-600 text-white shadow-lg shadow-purple-500/50"
-                                    : "text-gray-300 hover:bg-slate-700/50 hover:text-white"
+                                group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200
+                                ${isActive
+                                    ? "bg-[#FFC931]/15 text-[#FFC931] border-l-3 border-[#FFC931] shadow-[0_0_20px_rgba(255,201,49,0.1)]"
+                                    : "text-white/70 hover:bg-white/5 hover:text-white border-l-3 border-transparent"
                                 }
-              `}
+                            `}
                         >
-                            <item.icon className="mr-3 h-5 w-5 shrink-0" aria-hidden="true" />
-                            {item.name}
+                            <item.icon
+                                className={`h-5 w-5 shrink-0 ${isActive ? "text-[#FFC931]" : ""}`}
+                                aria-hidden="true"
+                            />
+                            <span className="font-display">{item.name}</span>
                         </Link>
                     );
                 })}
             </nav>
 
             {/* Logout */}
-            <div className="border-t border-slate-700 p-3">
+            <div className="border-t border-white/6 p-3">
                 <form action={logoutAdminAction}>
                     <button
                         type="submit"
-                        className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-300 hover:bg-red-600/20 hover:text-red-400 transition-all duration-200"
+                        className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-white/60 hover:bg-red-500/10 hover:text-red-400 transition-all duration-200"
                     >
-                        <ArrowRightOnRectangleIcon className="mr-3 h-5 w-5 shrink-0" aria-hidden="true" />
-                        Logout
+                        <ArrowRightOnRectangleIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                        <span className="font-display">Logout</span>
                     </button>
                 </form>
             </div>
         </div>
     );
 }
+

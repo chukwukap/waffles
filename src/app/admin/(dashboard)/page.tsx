@@ -104,8 +104,8 @@ export default async function AdminDashboard() {
     return (
         <div className="space-y-8">
             <div>
-                <h1 className="text-2xl font-bold text-slate-100">Dashboard</h1>
-                <p className="text-slate-400 mt-1">
+                <h1 className="text-2xl font-bold text-white font-display">Dashboard</h1>
+                <p className="text-white/60 mt-1">
                     Overview of your Waffles trivia platform
                 </p>
             </div>
@@ -116,27 +116,31 @@ export default async function AdminDashboard() {
                     title="Total Users"
                     value={stats.totalUsers.toLocaleString()}
                     subtitle={`${stats.activeUsers} active`}
-                    icon={<UsersIcon className="h-6 w-6 text-purple-600" />}
+                    icon={<UsersIcon className="h-6 w-6 text-[#00CFF2]" />}
                     trend={{ value: "12%", isPositive: true }}
+                    glowVariant="cyan"
                 />
                 <StatsCard
                     title="Total Games"
                     value={stats.totalGames}
                     subtitle={`${stats.liveGames} live now`}
-                    icon={<TrophyIcon className="h-6 w-6 text-blue-600" />}
+                    icon={<TrophyIcon className="h-6 w-6 text-[#FB72FF]" />}
+                    glowVariant="pink"
                 />
                 <StatsCard
                     title="Revenue"
                     value={`$${stats.totalRevenue.toLocaleString()}`}
                     subtitle="USDC"
-                    icon={<BanknotesIcon className="h-6 w-6 text-green-600" />}
+                    icon={<BanknotesIcon className="h-6 w-6 text-[#FFC931]" />}
                     trend={{ value: "5%", isPositive: true }}
+                    glowVariant="gold"
                 />
                 <StatsCard
                     title="Tickets Sold"
                     value={stats.paidTickets.toLocaleString()}
                     subtitle={`${stats.totalTickets} total`}
-                    icon={<TicketIcon className="h-6 w-6 text-pink-600" />}
+                    icon={<TicketIcon className="h-6 w-6 text-[#14B985]" />}
+                    glowVariant="success"
                 />
             </div>
 
@@ -149,23 +153,25 @@ export default async function AdminDashboard() {
             {/* Recent Activity Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Recent Games */}
-                <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700">
-                    <div className="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
-                        <h2 className="text-lg font-semibold text-slate-100">Recent Games</h2>
-                        <Link href="/admin/games" className="text-sm text-purple-600 hover:underline">View all</Link>
+                <div className="admin-panel">
+                    <div className="px-6 py-4 border-b border-white/6 flex items-center justify-between">
+                        <h2 className="text-lg font-semibold text-white font-display">Recent Games</h2>
+                        <Link href="/admin/games" className="text-sm text-[#FFC931] hover:underline font-display">View all</Link>
                     </div>
-                    <div className="divide-y divide-slate-700">
+                    <div className="divide-y divide-white/6">
                         {activity.games.length === 0 ? (
-                            <div className="p-6 text-center text-slate-400">No games yet</div>
+                            <div className="p-6 text-center text-white/50">No games yet</div>
                         ) : (
                             activity.games.map((game) => (
-                                <div key={game.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-900">
+                                <div key={game.id} className="px-6 py-4 flex items-center justify-between admin-table-row">
                                     <div>
-                                        <p className="font-medium text-slate-100">{game.title}</p>
-                                        <p className="text-xs text-slate-400">{new Date(game.startsAt).toLocaleDateString()}</p>
+                                        <p className="font-medium text-white">{game.title}</p>
+                                        <p className="text-xs text-white/50">{new Date(game.startsAt).toLocaleDateString()}</p>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${game.status === "LIVE" ? "bg-green-100 text-green-800" : "bg-slate-700 text-slate-400"
+                                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${game.status === "LIVE"
+                                            ? "bg-[#14B985]/20 text-[#14B985]"
+                                            : "bg-white/10 text-white/60"
                                             }`}>
                                             {game.status}
                                         </span>
@@ -177,27 +183,27 @@ export default async function AdminDashboard() {
                 </div>
 
                 {/* New Users */}
-                <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700">
-                    <div className="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
-                        <h2 className="text-lg font-semibold text-slate-100">New Users</h2>
-                        <Link href="/admin/users" className="text-sm text-purple-600 hover:underline">View all</Link>
+                <div className="admin-panel">
+                    <div className="px-6 py-4 border-b border-white/6 flex items-center justify-between">
+                        <h2 className="text-lg font-semibold text-white font-display">New Users</h2>
+                        <Link href="/admin/users" className="text-sm text-[#FFC931] hover:underline font-display">View all</Link>
                     </div>
-                    <div className="divide-y divide-slate-700">
+                    <div className="divide-y divide-white/6">
                         {activity.users.length === 0 ? (
-                            <div className="p-6 text-center text-slate-400">No users yet</div>
+                            <div className="p-6 text-center text-white/50">No users yet</div>
                         ) : (
                             activity.users.map((user) => (
-                                <div key={user.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-900">
+                                <div key={user.id} className="px-6 py-4 flex items-center justify-between admin-table-row">
                                     <div className="flex items-center gap-3">
-                                        <div className="h-8 w-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold text-xs">
+                                        <div className="h-8 w-8 bg-[#FFC931]/20 rounded-full flex items-center justify-center text-[#FFC931] font-bold text-xs">
                                             {user.username?.[0] || "U"}
                                         </div>
                                         <div>
-                                            <p className="font-medium text-slate-100">{user.username || "Anonymous"}</p>
-                                            <p className="text-xs text-slate-400">@{user.username}</p>
+                                            <p className="font-medium text-white">{user.username || "Anonymous"}</p>
+                                            <p className="text-xs text-white/50">@{user.username}</p>
                                         </div>
                                     </div>
-                                    <span className="text-xs text-slate-400">
+                                    <span className="text-xs text-white/50">
                                         {new Date(user.createdAt).toLocaleDateString()}
                                     </span>
                                 </div>

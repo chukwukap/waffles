@@ -12,6 +12,31 @@ import {
     Bar,
 } from "recharts";
 
+// Brand colors
+const COLORS = {
+    gold: "#FFC931",
+    cyan: "#00CFF2",
+    pink: "#FB72FF",
+    success: "#14B985",
+    gridLine: "rgba(255, 255, 255, 0.06)",
+    axisText: "rgba(255, 255, 255, 0.5)",
+};
+
+// Custom tooltip style matching the admin theme
+const tooltipStyle = {
+    backgroundColor: "rgba(10, 10, 11, 0.95)",
+    border: "1px solid rgba(255, 255, 255, 0.1)",
+    borderRadius: "12px",
+    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4)",
+    padding: "12px 16px",
+};
+
+const tooltipLabelStyle = {
+    color: "rgba(255, 255, 255, 0.6)",
+    fontSize: "12px",
+    marginBottom: "4px",
+};
+
 export function DashboardCharts({
     userGrowth,
     revenueData,
@@ -22,45 +47,47 @@ export function DashboardCharts({
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* User Growth Chart */}
-            <div className="bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-700">
-                <h3 className="text-lg font-semibold text-slate-100 mb-6">User Growth</h3>
+            <div className="admin-chart-container p-6">
+                <h3 className="text-lg font-semibold text-white mb-6 font-display">User Growth</h3>
                 <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={userGrowth}>
                             <defs>
-                                <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#9333ea" stopOpacity={0.1} />
-                                    <stop offset="95%" stopColor="#9333ea" stopOpacity={0} />
+                                <linearGradient id="colorUsersCyan" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={COLORS.cyan} stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor={COLORS.cyan} stopOpacity={0} />
                                 </linearGradient>
                             </defs>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                            <CartesianGrid
+                                strokeDasharray="3 3"
+                                vertical={false}
+                                stroke={COLORS.gridLine}
+                            />
                             <XAxis
                                 dataKey="date"
                                 axisLine={false}
                                 tickLine={false}
-                                tick={{ fill: '#64748b', fontSize: 12 }}
+                                tick={{ fill: COLORS.axisText, fontSize: 12 }}
                                 dy={10}
                             />
                             <YAxis
                                 axisLine={false}
                                 tickLine={false}
-                                tick={{ fill: '#64748b', fontSize: 12 }}
+                                tick={{ fill: COLORS.axisText, fontSize: 12 }}
                             />
                             <Tooltip
-                                contentStyle={{
-                                    backgroundColor: '#fff',
-                                    border: '1px solid #e2e8f0',
-                                    borderRadius: '8px',
-                                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                                }}
+                                contentStyle={tooltipStyle}
+                                labelStyle={tooltipLabelStyle}
+                                itemStyle={{ color: COLORS.cyan, fontWeight: 600 }}
+                                cursor={{ stroke: COLORS.cyan, strokeOpacity: 0.2 }}
                             />
                             <Area
                                 type="monotone"
                                 dataKey="count"
-                                stroke="#9333ea"
+                                stroke={COLORS.cyan}
                                 strokeWidth={2}
                                 fillOpacity={1}
-                                fill="url(#colorUsers)"
+                                fill="url(#colorUsersCyan)"
                             />
                         </AreaChart>
                     </ResponsiveContainer>
@@ -68,39 +95,46 @@ export function DashboardCharts({
             </div>
 
             {/* Revenue Chart */}
-            <div className="bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-700">
-                <h3 className="text-lg font-semibold text-slate-100 mb-6">Revenue (USDC)</h3>
+            <div className="admin-chart-container p-6">
+                <h3 className="text-lg font-semibold text-white mb-6 font-display">Revenue (USDC)</h3>
                 <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={revenueData}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                            <defs>
+                                <linearGradient id="colorRevenueGold" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor={COLORS.gold} stopOpacity={1} />
+                                    <stop offset="100%" stopColor={COLORS.gold} stopOpacity={0.6} />
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid
+                                strokeDasharray="3 3"
+                                vertical={false}
+                                stroke={COLORS.gridLine}
+                            />
                             <XAxis
                                 dataKey="date"
                                 axisLine={false}
                                 tickLine={false}
-                                tick={{ fill: '#64748b', fontSize: 12 }}
+                                tick={{ fill: COLORS.axisText, fontSize: 12 }}
                                 dy={10}
                             />
                             <YAxis
                                 axisLine={false}
                                 tickLine={false}
-                                tick={{ fill: '#64748b', fontSize: 12 }}
+                                tick={{ fill: COLORS.axisText, fontSize: 12 }}
                                 tickFormatter={(value) => `$${value}`}
                             />
                             <Tooltip
-                                cursor={{ fill: '#f1f5f9' }}
-                                contentStyle={{
-                                    backgroundColor: '#fff',
-                                    border: '1px solid #e2e8f0',
-                                    borderRadius: '8px',
-                                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                                }}
+                                cursor={{ fill: 'rgba(255, 201, 49, 0.05)' }}
+                                contentStyle={tooltipStyle}
+                                labelStyle={tooltipLabelStyle}
+                                itemStyle={{ color: COLORS.gold, fontWeight: 600 }}
                                 formatter={(value: number) => [`$${value}`, 'Revenue']}
                             />
                             <Bar
                                 dataKey="amount"
-                                fill="#10b981"
-                                radius={[4, 4, 0, 0]}
+                                fill="url(#colorRevenueGold)"
+                                radius={[6, 6, 0, 0]}
                                 barSize={40}
                             />
                         </BarChart>
@@ -110,3 +144,4 @@ export function DashboardCharts({
         </div>
     );
 }
+
