@@ -56,19 +56,19 @@ function LoginForm() {
             <div className="relative z-10 w-full max-w-md mx-4">
                 <div className="relative">
                     {/* Glow ring */}
-                    <div className="absolute -inset-1 bg-gradient-to-r from-[#FFC931]/20 via-[#00CFF2]/20 to-[#FB72FF]/20 rounded-3xl blur-xl opacity-60" />
+                    <div className="absolute -inset-1 bg-linear-to-r from-[#FFC931]/20 via-[#00CFF2]/20 to-[#FB72FF]/20 rounded-3xl blur-xl opacity-60" />
 
                     {/* Card */}
                     <div className="relative bg-[#0A0A0B]/90 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden">
                         {/* Top accent bar */}
-                        <div className="h-1 bg-gradient-to-r from-[#FFC931] via-[#00CFF2] to-[#FB72FF]" />
+                        <div className="h-1 bg-linear-to-r from-[#FFC931] via-[#00CFF2] to-[#FB72FF]" />
 
                         <div className="p-8">
                             {/* Logo & Header */}
                             <div className="text-center mb-8">
                                 <div className="relative inline-block mb-4">
                                     <div className="absolute -inset-3 bg-[#FFC931]/20 rounded-full blur-xl animate-pulse" />
-                                    <div className="relative w-16 h-16 mx-auto bg-gradient-to-br from-[#FFC931] to-[#FF8C00] rounded-2xl flex items-center justify-center shadow-lg shadow-[#FFC931]/30 rotate-[-8deg] hover:rotate-0 transition-transform duration-300">
+                                    <div className="relative w-16 h-16 mx-auto bg-linear-to-br from-[#FFC931] to-[#FF8C00] rounded-2xl flex items-center justify-center shadow-lg shadow-[#FFC931]/30 rotate-[-8deg] hover:rotate-0 transition-transform duration-300">
                                         <span className="text-3xl">🧇</span>
                                     </div>
                                 </div>
@@ -146,8 +146,8 @@ function LoginForm() {
                                     disabled={isPending}
                                     className="relative w-full group"
                                 >
-                                    <div className="absolute -inset-0.5 bg-gradient-to-r from-[#FFC931] to-[#FF8C00] rounded-xl blur opacity-60 group-hover:opacity-100 transition duration-300" />
-                                    <div className="relative flex items-center justify-center gap-2 py-4 px-6 bg-gradient-to-r from-[#FFC931] to-[#FF8C00] text-black font-bold rounded-xl shadow-lg shadow-[#FFC931]/20 hover:shadow-[#FFC931]/40 transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:transform-none">
+                                    <div className="absolute -inset-0.5 bg-linear-to-r from-[#FFC931] to-[#FF8C00] rounded-xl blur opacity-60 group-hover:opacity-100 transition duration-300" />
+                                    <div className="relative flex items-center justify-center gap-2 py-4 px-6 bg-linear-to-r from-[#FFC931] to-[#FF8C00] text-black font-bold rounded-xl shadow-lg shadow-[#FFC931]/20 hover:shadow-[#FFC931]/40 transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:transform-none">
                                         {isPending ? (
                                             <>
                                                 <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />

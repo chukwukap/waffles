@@ -50,19 +50,19 @@ export default function AdminSignupPage() {
             <div className="relative z-10 w-full max-w-md mx-4">
                 <div className="relative">
                     {/* Glow ring */}
-                    <div className="absolute -inset-1 bg-gradient-to-r from-[#00CFF2]/20 via-[#FB72FF]/20 to-[#FFC931]/20 rounded-3xl blur-xl opacity-60" />
+                    <div className="absolute -inset-1 bg-linear-to-r from-[#00CFF2]/20 via-[#FB72FF]/20 to-[#FFC931]/20 rounded-3xl blur-xl opacity-60" />
 
                     {/* Card */}
                     <div className="relative bg-[#0A0A0B]/90 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden">
                         {/* Top accent bar */}
-                        <div className="h-1 bg-gradient-to-r from-[#00CFF2] via-[#FB72FF] to-[#FFC931]" />
+                        <div className="h-1 bg-linear-to-r from-[#00CFF2] via-[#FB72FF] to-[#FFC931]" />
 
                         <div className="p-8">
                             {/* Logo & Header */}
                             <div className="text-center mb-8">
                                 <div className="relative inline-block mb-4">
                                     <div className="absolute -inset-3 bg-[#00CFF2]/20 rounded-full blur-xl animate-pulse" />
-                                    <div className="relative w-16 h-16 mx-auto bg-gradient-to-br from-[#00CFF2] to-[#0099CC] rounded-2xl flex items-center justify-center shadow-lg shadow-[#00CFF2]/30 rotate-[8deg] hover:rotate-0 transition-transform duration-300">
+                                    <div className="relative w-16 h-16 mx-auto bg-linear-to-br from-[#00CFF2] to-[#0099CC] rounded-2xl flex items-center justify-center shadow-lg shadow-[#00CFF2]/30 rotate-[8deg] hover:rotate-0 transition-transform duration-300">
                                         <ShieldCheckIcon className="h-8 w-8 text-white" />
                                     </div>
                                 </div>
@@ -162,8 +162,8 @@ export default function AdminSignupPage() {
                                     disabled={isPending}
                                     className="relative w-full group"
                                 >
-                                    <div className="absolute -inset-0.5 bg-gradient-to-r from-[#00CFF2] to-[#0099CC] rounded-xl blur opacity-60 group-hover:opacity-100 transition duration-300" />
-                                    <div className="relative flex items-center justify-center gap-2 py-4 px-6 bg-gradient-to-r from-[#00CFF2] to-[#0099CC] text-black font-bold rounded-xl shadow-lg shadow-[#00CFF2]/20 hover:shadow-[#00CFF2]/40 transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:transform-none">
+                                    <div className="absolute -inset-0.5 bg-linear-to-r from-[#00CFF2] to-[#0099CC] rounded-xl blur opacity-60 group-hover:opacity-100 transition duration-300" />
+                                    <div className="relative flex items-center justify-center gap-2 py-4 px-6 bg-linear-to-r from-[#00CFF2] to-[#0099CC] text-black font-bold rounded-xl shadow-lg shadow-[#00CFF2]/20 hover:shadow-[#00CFF2]/40 transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:transform-none">
                                         {isPending ? (
                                             <>
                                                 <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
