@@ -39,7 +39,9 @@ export async function generateMetadata({
           action: {
             name: `Join the waitlist`,
             type: "launch_frame",
-            url: `${env.rootUrl}/waitlist`,
+            url: ref
+              ? `${env.rootUrl}/waitlist?ref=${ref}`
+              : `${env.rootUrl}/waitlist`,
             splashImageUrl: minikitConfig.miniapp.splashImageUrl,
             splashBackgroundColor: minikitConfig.miniapp.splashBackgroundColor,
           },
