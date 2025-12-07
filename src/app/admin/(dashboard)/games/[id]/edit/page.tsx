@@ -18,14 +18,14 @@ export default async function EditGamePage({ params }: { params: Promise<{ id: s
         <div className="max-w-4xl space-y-6">
             <div className="flex items-center gap-4">
                 <Link
-                    href="/admin/games"
-                    className="text-slate-400 hover:text-slate-100 font-medium"
+                    href={`/admin/games/${game.id}`}
+                    className="text-white/50 hover:text-[#FFC931] font-medium transition-colors"
                 >
                     ← Back
                 </Link>
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-100">Edit Game</h1>
-                    <p className="text-slate-400 mt-1">Update game details</p>
+                    <h1 className="text-2xl font-bold text-white font-display">Edit Game</h1>
+                    <p className="text-white/60 mt-1">Update game details for <span className="text-[#FFC931]">{game.title}</span></p>
                 </div>
             </div>
 
@@ -37,3 +37,4 @@ export default async function EditGamePage({ params }: { params: Promise<{ id: s
         </div>
     );
 }
+

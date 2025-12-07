@@ -50,52 +50,52 @@ export function UserActions({ user }: { user: any }) {
     };
 
     return (
-        <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-6">
-            <h3 className="text-lg font-semibold text-slate-100 mb-4">Actions</h3>
-            <div className="space-y-3">
+        <div className="admin-panel p-6">
+            <h3 className="text-lg font-semibold text-white mb-4 font-display">Actions</h3>
+            <div className="space-y-4">
                 <div>
-                    <p className="text-sm font-medium text-slate-300 mb-2">Change Status</p>
+                    <p className="text-sm font-medium text-white/50 mb-3">Change Status</p>
                     <div className="flex flex-wrap gap-2">
                         <button
                             onClick={() => handleStatusChange("ACTIVE")}
                             disabled={loading || user.status === "ACTIVE"}
-                            className="px-3 py-1.5 bg-green-600 disabled:bg-green-300 text-white text-sm rounded-lg hover:bg-green-700"
+                            className="px-3 py-1.5 bg-[#14B985]/20 disabled:opacity-40 text-[#14B985] text-sm rounded-xl hover:bg-[#14B985]/30 border border-[#14B985]/30 transition-colors font-medium"
                         >
                             Activate
                         </button>
                         <button
                             onClick={() => handleStatusChange("WAITLIST")}
                             disabled={loading || user.status === "WAITLIST"}
-                            className="px-3 py-1.5 bg-yellow-600 disabled:bg-yellow-300 text-white text-sm rounded-lg hover:bg-yellow-700"
+                            className="px-3 py-1.5 bg-[#FFC931]/20 disabled:opacity-40 text-[#FFC931] text-sm rounded-xl hover:bg-[#FFC931]/30 border border-[#FFC931]/30 transition-colors font-medium"
                         >
                             Waitlist
                         </button>
                         <button
                             onClick={() => handleStatusChange("BANNED")}
                             disabled={loading || user.status === "BANNED"}
-                            className="px-3 py-1.5 bg-red-600 disabled:bg-red-300 text-white text-sm rounded-lg hover:bg-red-700"
+                            className="px-3 py-1.5 bg-red-500/20 disabled:opacity-40 text-red-400 text-sm rounded-xl hover:bg-red-500/30 border border-red-500/30 transition-colors font-medium"
                         >
                             Ban
                         </button>
                     </div>
                 </div>
 
-                <div className="pt-3 border-t border-slate-700">
+                <div className="pt-4 border-t border-white/10">
                     <button
                         onClick={handleQuotaAdjust}
                         disabled={loading}
-                        className="w-full px-4 py-2 bg-blue-600 disabled:bg-blue-300 text-white text-sm font-medium rounded-lg hover:bg-blue-700"
+                        className="w-full px-4 py-2.5 bg-[#00CFF2]/20 disabled:opacity-40 text-[#00CFF2] text-sm font-medium rounded-xl hover:bg-[#00CFF2]/30 border border-[#00CFF2]/30 transition-colors"
                     >
                         Adjust Invite Quota
                     </button>
                 </div>
 
                 {user.role !== "ADMIN" && (
-                    <div className="pt-3 border-t border-slate-700">
+                    <div className="pt-4 border-t border-white/10">
                         <button
                             onClick={handlePromoteToAdmin}
                             disabled={loading}
-                            className="w-full px-4 py-2 bg-purple-600 disabled:bg-purple-300 text-white text-sm font-medium rounded-lg hover:bg-purple-700"
+                            className="w-full px-4 py-2.5 bg-[#FB72FF]/20 disabled:opacity-40 text-[#FB72FF] text-sm font-medium rounded-xl hover:bg-[#FB72FF]/30 border border-[#FB72FF]/30 transition-colors"
                         >
                             Promote to Admin
                         </button>
@@ -105,3 +105,4 @@ export function UserActions({ user }: { user: any }) {
         </div>
     );
 }
+

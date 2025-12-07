@@ -6,7 +6,7 @@ export default function WaitlistTasksLayout({
 }) {
     return (
         <>
-            <SubHeader title="TASKS" />
+            <SubHeader title="QUESTS" />
             {children}
         </>
     );

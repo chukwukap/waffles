@@ -101,34 +101,34 @@ export default function MediaUploadPage() {
                 <div className="flex items-center gap-4">
                     <Link
                         href="/admin/media"
-                        className="text-slate-400 hover:text-slate-100 font-medium"
+                        className="text-white/50 hover:text-[#FFC931] font-medium transition-colors"
                     >
                         ← Back
                     </Link>
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-100 font-display">Upload Media</h1>
-                        <p className="text-slate-400 mt-1">Upload images, audio, or video files</p>
+                        <h1 className="text-2xl font-bold text-white font-display">Upload Media</h1>
+                        <p className="text-white/60 mt-1">Upload images, audio, or video files</p>
                     </div>
                 </div>
                 {allCompleted && (
                     <button
                         onClick={() => router.push("/admin/media")}
-                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg shadow-sm transition-colors"
+                        className="px-5 py-2.5 bg-[#14B985] hover:bg-[#1ad9a3] text-white font-bold rounded-xl shadow-lg transition-colors"
                     >
-                        Done
+                        ✓ Done
                     </button>
                 )}
             </div>
 
-            <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-6 space-y-6">
+            <div className="admin-panel p-6 space-y-6">
                 {/* Upload Area */}
                 <div
                     onDrop={handleDrop}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
-                    className={`border-2 border-dashed rounded-xl p-12 text-center transition-colors ${isDragging
-                        ? "border-purple-500 bg-purple-50"
-                        : "border-slate-600 hover:border-purple-400 hover:bg-purple-50/50"
+                    className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all ${isDragging
+                        ? "border-[#FFC931] bg-[#FFC931]/10"
+                        : "border-white/20 hover:border-[#FFC931]/50 hover:bg-white/5"
                         }`}
                 >
                     <input
@@ -141,17 +141,17 @@ export default function MediaUploadPage() {
                     />
                     <label htmlFor="file-upload" className="cursor-pointer">
                         <div className="flex flex-col items-center gap-4">
-                            <div className="h-16 w-16 rounded-full bg-purple-100 flex items-center justify-center">
-                                <ArrowUpTrayIcon className="h-8 w-8 text-purple-600" />
+                            <div className="h-16 w-16 rounded-2xl bg-[#FFC931]/20 flex items-center justify-center">
+                                <ArrowUpTrayIcon className="h-8 w-8 text-[#FFC931]" />
                             </div>
                             <div>
-                                <div className="text-lg font-medium text-slate-100">
+                                <div className="text-lg font-medium text-white font-display">
                                     Click to upload or drag and drop
                                 </div>
-                                <div className="text-sm text-slate-400 mt-1">
+                                <div className="text-sm text-white/50 mt-1">
                                     Images, Audio, or Video files
                                 </div>
-                                <div className="text-xs text-slate-400 mt-2">
+                                <div className="text-xs text-white/40 mt-2">
                                     Supported: JPG, PNG, GIF, WebP, SVG, MP3, WAV, OGG, MP4, WebM
                                 </div>
                             </div>
@@ -162,38 +162,38 @@ export default function MediaUploadPage() {
                 {/* Uploading Files List */}
                 {uploadingFiles.length > 0 && (
                     <div className="space-y-3">
-                        <h3 className="text-sm font-medium text-slate-300">
-                            {uploadingFiles.filter(f => f.url).length} of {uploadingFiles.length} uploaded
+                        <h3 className="text-sm font-medium text-white/50 font-display">
+                            <span className="text-[#FFC931]">{uploadingFiles.filter(f => f.url).length}</span> of {uploadingFiles.length} uploaded
                         </h3>
                         {uploadingFiles.map((item, index) => (
                             <div
                                 key={index}
-                                className="flex items-center gap-4 p-4 bg-slate-900 rounded-lg"
+                                className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/10"
                             >
                                 <div className="flex-1 min-w-0">
-                                    <div className="text-sm font-medium text-slate-100 truncate">
+                                    <div className="text-sm font-medium text-white truncate">
                                         {item.file.name}
                                     </div>
-                                    <div className="text-xs text-slate-400">
+                                    <div className="text-xs text-white/50">
                                         {formatFileSize(item.file.size)}
                                     </div>
                                     {item.error && (
-                                        <div className="text-xs text-red-600 mt-1">{item.error}</div>
+                                        <div className="text-xs text-red-400 mt-1">{item.error}</div>
                                     )}
                                 </div>
                                 <div className="flex items-center gap-2">
                                     {item.url ? (
-                                        <CheckCircleIcon className="h-5 w-5 text-green-600" />
+                                        <CheckCircleIcon className="h-5 w-5 text-[#14B985]" />
                                     ) : item.error ? (
-                                        <div className="text-red-600 text-xs">Failed</div>
+                                        <div className="text-red-400 text-xs">Failed</div>
                                     ) : (
-                                        <div className="h-5 w-5 border-2 border-purple-200 border-t-purple-600 rounded-full animate-spin" />
+                                        <div className="h-5 w-5 border-2 border-white/20 border-t-[#FFC931] rounded-full animate-spin" />
                                     )}
                                     <button
                                         onClick={() => removeFile(index)}
-                                        className="p-1 hover:bg-slate-200 rounded transition-colors"
+                                        className="p-1 hover:bg-white/10 rounded-lg transition-colors"
                                     >
-                                        <XMarkIcon className="h-4 w-4 text-slate-400" />
+                                        <XMarkIcon className="h-4 w-4 text-white/50 hover:text-white" />
                                     </button>
                                 </div>
                             </div>
@@ -204,3 +204,4 @@ export default function MediaUploadPage() {
         </div>
     );
 }
+

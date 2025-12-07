@@ -78,72 +78,84 @@ export default async function UserDetailsPage({
         notFound();
     }
 
+    const statusColors: Record<string, string> = {
+        NONE: "bg-white/10 text-white/60",
+        WAITLIST: "bg-[#FFC931]/20 text-[#FFC931]",
+        ACTIVE: "bg-[#14B985]/20 text-[#14B985]",
+        BANNED: "bg-red-500/20 text-red-400",
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-4">
                 <Link
                     href="/admin/users"
-                    className="text-slate-400 hover:text-slate-100"
+                    className="text-white/50 hover:text-[#FFC931] transition-colors"
                 >
                     ← Back
                 </Link>
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-100">
-                        {user.username || "Anonymous"}
-                    </h1>
-                    <p className="text-slate-400">@{user.username}</p>
+                <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 bg-[#FFC931]/20 rounded-full flex items-center justify-center text-[#FFC931] font-bold text-lg">
+                        {user.username?.[0]?.toUpperCase() || "U"}
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold text-white font-display">
+                            {user.username || "Anonymous"}
+                        </h1>
+                        <p className="text-white/50">@{user.username}</p>
+                    </div>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* User Info */}
                 <div className="lg:col-span-2 space-y-6">
-                    <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-6">
-                        <h3 className="text-lg font-semibold text-slate-100 mb-4">
+                    <div className="admin-panel p-6">
+                        <h3 className="text-lg font-semibold text-white mb-4 font-display">
                             User Information
                         </h3>
                         <dl className="grid grid-cols-2 gap-4 text-sm">
                             <div>
-                                <dt className="font-medium text-slate-400">User ID</dt>
-                                <dd className="mt-1 text-slate-100">{user.fid}</dd>
+                                <dt className="font-medium text-white/50">User ID</dt>
+                                <dd className="mt-1 text-white font-mono">{user.fid}</dd>
                             </div>
                             <div>
-                                <dt className="font-medium text-slate-400">Username</dt>
-                                <dd className="mt-1 text-slate-100">{user.username || "—"}</dd>
+                                <dt className="font-medium text-white/50">Username</dt>
+                                <dd className="mt-1 text-white">{user.username || "—"}</dd>
                             </div>
                             <div>
-                                <dt className="font-medium text-slate-400">Wallet</dt>
-                                <dd className="mt-1 text-slate-100 font-mono text-xs truncate">
+                                <dt className="font-medium text-white/50">Wallet</dt>
+                                <dd className="mt-1 text-[#00CFF2] font-mono text-xs truncate">
                                     {user.wallet || "—"}
                                 </dd>
                             </div>
                             <div>
-                                <dt className="font-medium text-slate-400">Status</dt>
+                                <dt className="font-medium text-white/50">Status</dt>
                                 <dd className="mt-1">
-                                    <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[user.status] || statusColors.NONE}`}>
                                         {user.status}
                                     </span>
                                 </dd>
                             </div>
                             <div>
-                                <dt className="font-medium text-slate-400">Role</dt>
+                                <dt className="font-medium text-white/50">Role</dt>
                                 <dd className="mt-1">
-                                    <span className={user.role === "ADMIN" ? "text-purple-600 font-semibold" : "text-slate-100"}>
+                                    <span className={user.role === "ADMIN" ? "text-[#FB72FF] font-semibold" : "text-white"}>
                                         {user.role}
                                     </span>
                                 </dd>
                             </div>
                             <div>
-                                <dt className="font-medium text-slate-400">Invite Code</dt>
-                                <dd className="mt-1 text-slate-100 font-mono">{user.inviteCode}</dd>
+                                <dt className="font-medium text-white/50">Invite Code</dt>
+                                <dd className="mt-1 text-[#FFC931] font-mono">{user.inviteCode}</dd>
                             </div>
                             <div>
-                                <dt className="font-medium text-slate-400">Invite Quota</dt>
-                                <dd className="mt-1 text-slate-100">{user.inviteQuota}</dd>
+                                <dt className="font-medium text-white/50">Invite Quota</dt>
+                                <dd className="mt-1 text-white">{user.inviteQuota}</dd>
                             </div>
                             <div>
-                                <dt className="font-medium text-slate-400">Joined</dt>
-                                <dd className="mt-1 text-slate-100">
+                                <dt className="font-medium text-white/50">Joined</dt>
+                                <dd className="mt-1 text-white">
                                     {new Date(user.createdAt).toLocaleDateString()}
                                 </dd>
                             </div>
@@ -152,38 +164,41 @@ export default async function UserDetailsPage({
 
                     {/* Activity Stats */}
                     <div className="grid grid-cols-3 gap-4">
-                        <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-4">
-                            <div className="text-2xl font-bold text-slate-100">{user._count.invites}</div>
-                            <div className="text-sm text-slate-400">Referrals</div>
+                        <div className="admin-panel p-4">
+                            <div className="text-2xl font-bold text-[#FFC931] font-body admin-stat-glow">{user._count.invites}</div>
+                            <div className="text-sm text-white/50 font-display">Referrals</div>
                         </div>
-                        <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-4">
-                            <div className="text-2xl font-bold text-slate-100">{user._count.games}</div>
-                            <div className="text-sm text-slate-400">Games Played</div>
+                        <div className="admin-panel p-4">
+                            <div className="text-2xl font-bold text-[#00CFF2] font-body admin-stat-glow-cyan">{user._count.games}</div>
+                            <div className="text-sm text-white/50 font-display">Games Played</div>
                         </div>
-                        <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-4">
-                            <div className="text-2xl font-bold text-slate-100">{user._count.tickets}</div>
-                            <div className="text-sm text-slate-400">Tickets</div>
+                        <div className="admin-panel p-4">
+                            <div className="text-2xl font-bold text-[#FB72FF] font-body admin-stat-glow-pink">{user._count.tickets}</div>
+                            <div className="text-sm text-white/50 font-display">Tickets</div>
                         </div>
                     </div>
 
                     {/* Recent Tickets */}
                     {user.tickets.length > 0 && (
-                        <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-6">
-                            <h3 className="text-lg font-semibold text-slate-100 mb-4">
+                        <div className="admin-panel p-6">
+                            <h3 className="text-lg font-semibold text-white mb-4 font-display">
                                 Recent Tickets
                             </h3>
                             <div className="space-y-3">
                                 {user.tickets.map((ticket) => (
-                                    <div key={ticket.id} className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
+                                    <div key={ticket.id} className="flex justify-between items-center py-3 border-b border-white/6 last:border-0">
                                         <div>
-                                            <div className="font-medium text-slate-100">{ticket.game.title}</div>
-                                            <div className="text-sm text-slate-400">
+                                            <div className="font-medium text-white">{ticket.game.title}</div>
+                                            <div className="text-sm text-white/50">
                                                 {new Date(ticket.purchasedAt).toLocaleDateString()}
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <div className="font-medium text-slate-100">${ticket.amountUSDC}</div>
-                                            <div className="text-xs text-slate-400">{ticket.status}</div>
+                                            <div className="font-bold text-[#FFC931]">${ticket.amountUSDC}</div>
+                                            <div className={`text-xs ${ticket.status === "PAID" || ticket.status === "REDEEMED"
+                                                    ? "text-[#14B985]"
+                                                    : "text-white/50"
+                                                }`}>{ticket.status}</div>
                                         </div>
                                     </div>
                                 ))}
@@ -200,3 +215,4 @@ export default async function UserDetailsPage({
         </div>
     );
 }
+

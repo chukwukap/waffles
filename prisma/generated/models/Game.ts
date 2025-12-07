@@ -298,7 +298,7 @@ export type GameWhereInput = {
   status?: Prisma.EnumGameStatusFilter<"Game"> | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFilter<"Game"> | Date | string
   endsAt?: Prisma.DateTimeFilter<"Game"> | Date | string
-  entryFee?: Prisma.IntFilter<"Game"> | number
+  entryFee?: Prisma.FloatFilter<"Game"> | number
   prizePool?: Prisma.IntFilter<"Game"> | number
   roundDurationSec?: Prisma.IntFilter<"Game"> | number
   maxPlayers?: Prisma.IntFilter<"Game"> | number
@@ -345,7 +345,7 @@ export type GameWhereUniqueInput = Prisma.AtLeast<{
   status?: Prisma.EnumGameStatusFilter<"Game"> | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFilter<"Game"> | Date | string
   endsAt?: Prisma.DateTimeFilter<"Game"> | Date | string
-  entryFee?: Prisma.IntFilter<"Game"> | number
+  entryFee?: Prisma.FloatFilter<"Game"> | number
   prizePool?: Prisma.IntFilter<"Game"> | number
   roundDurationSec?: Prisma.IntFilter<"Game"> | number
   maxPlayers?: Prisma.IntFilter<"Game"> | number
@@ -392,7 +392,7 @@ export type GameScalarWhereWithAggregatesInput = {
   status?: Prisma.EnumGameStatusWithAggregatesFilter<"Game"> | $Enums.GameStatus
   startsAt?: Prisma.DateTimeWithAggregatesFilter<"Game"> | Date | string
   endsAt?: Prisma.DateTimeWithAggregatesFilter<"Game"> | Date | string
-  entryFee?: Prisma.IntWithAggregatesFilter<"Game"> | number
+  entryFee?: Prisma.FloatWithAggregatesFilter<"Game"> | number
   prizePool?: Prisma.IntWithAggregatesFilter<"Game"> | number
   roundDurationSec?: Prisma.IntWithAggregatesFilter<"Game"> | number
   maxPlayers?: Prisma.IntWithAggregatesFilter<"Game"> | number
@@ -451,7 +451,7 @@ export type GameUpdateInput = {
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  entryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  entryFee?: Prisma.FloatFieldUpdateOperationsInput | number
   prizePool?: Prisma.IntFieldUpdateOperationsInput | number
   roundDurationSec?: Prisma.IntFieldUpdateOperationsInput | number
   maxPlayers?: Prisma.IntFieldUpdateOperationsInput | number
@@ -473,7 +473,7 @@ export type GameUncheckedUpdateInput = {
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  entryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  entryFee?: Prisma.FloatFieldUpdateOperationsInput | number
   prizePool?: Prisma.IntFieldUpdateOperationsInput | number
   roundDurationSec?: Prisma.IntFieldUpdateOperationsInput | number
   maxPlayers?: Prisma.IntFieldUpdateOperationsInput | number
@@ -511,7 +511,7 @@ export type GameUpdateManyMutationInput = {
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  entryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  entryFee?: Prisma.FloatFieldUpdateOperationsInput | number
   prizePool?: Prisma.IntFieldUpdateOperationsInput | number
   roundDurationSec?: Prisma.IntFieldUpdateOperationsInput | number
   maxPlayers?: Prisma.IntFieldUpdateOperationsInput | number
@@ -528,7 +528,7 @@ export type GameUncheckedUpdateManyInput = {
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  entryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  entryFee?: Prisma.FloatFieldUpdateOperationsInput | number
   prizePool?: Prisma.IntFieldUpdateOperationsInput | number
   roundDurationSec?: Prisma.IntFieldUpdateOperationsInput | number
   maxPlayers?: Prisma.IntFieldUpdateOperationsInput | number
@@ -614,6 +614,14 @@ export type EnumGameThemeFieldUpdateOperationsInput = {
 
 export type EnumGameStatusFieldUpdateOperationsInput = {
   set?: $Enums.GameStatus
+}
+
+export type FloatFieldUpdateOperationsInput = {
+  set?: number
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
 }
 
 export type GameCreateNestedOneWithoutQuestionsInput = {
@@ -751,7 +759,7 @@ export type GameUpdateWithoutQuestionsInput = {
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  entryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  entryFee?: Prisma.FloatFieldUpdateOperationsInput | number
   prizePool?: Prisma.IntFieldUpdateOperationsInput | number
   roundDurationSec?: Prisma.IntFieldUpdateOperationsInput | number
   maxPlayers?: Prisma.IntFieldUpdateOperationsInput | number
@@ -772,7 +780,7 @@ export type GameUncheckedUpdateWithoutQuestionsInput = {
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  entryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  entryFee?: Prisma.FloatFieldUpdateOperationsInput | number
   prizePool?: Prisma.IntFieldUpdateOperationsInput | number
   roundDurationSec?: Prisma.IntFieldUpdateOperationsInput | number
   maxPlayers?: Prisma.IntFieldUpdateOperationsInput | number
@@ -849,7 +857,7 @@ export type GameUpdateWithoutTicketsInput = {
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  entryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  entryFee?: Prisma.FloatFieldUpdateOperationsInput | number
   prizePool?: Prisma.IntFieldUpdateOperationsInput | number
   roundDurationSec?: Prisma.IntFieldUpdateOperationsInput | number
   maxPlayers?: Prisma.IntFieldUpdateOperationsInput | number
@@ -870,7 +878,7 @@ export type GameUncheckedUpdateWithoutTicketsInput = {
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  entryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  entryFee?: Prisma.FloatFieldUpdateOperationsInput | number
   prizePool?: Prisma.IntFieldUpdateOperationsInput | number
   roundDurationSec?: Prisma.IntFieldUpdateOperationsInput | number
   maxPlayers?: Prisma.IntFieldUpdateOperationsInput | number
@@ -947,7 +955,7 @@ export type GameUpdateWithoutPlayersInput = {
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  entryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  entryFee?: Prisma.FloatFieldUpdateOperationsInput | number
   prizePool?: Prisma.IntFieldUpdateOperationsInput | number
   roundDurationSec?: Prisma.IntFieldUpdateOperationsInput | number
   maxPlayers?: Prisma.IntFieldUpdateOperationsInput | number
@@ -968,7 +976,7 @@ export type GameUncheckedUpdateWithoutPlayersInput = {
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  entryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  entryFee?: Prisma.FloatFieldUpdateOperationsInput | number
   prizePool?: Prisma.IntFieldUpdateOperationsInput | number
   roundDurationSec?: Prisma.IntFieldUpdateOperationsInput | number
   maxPlayers?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1045,7 +1053,7 @@ export type GameUpdateWithoutAnswersInput = {
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  entryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  entryFee?: Prisma.FloatFieldUpdateOperationsInput | number
   prizePool?: Prisma.IntFieldUpdateOperationsInput | number
   roundDurationSec?: Prisma.IntFieldUpdateOperationsInput | number
   maxPlayers?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1066,7 +1074,7 @@ export type GameUncheckedUpdateWithoutAnswersInput = {
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  entryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  entryFee?: Prisma.FloatFieldUpdateOperationsInput | number
   prizePool?: Prisma.IntFieldUpdateOperationsInput | number
   roundDurationSec?: Prisma.IntFieldUpdateOperationsInput | number
   maxPlayers?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1143,7 +1151,7 @@ export type GameUpdateWithoutChatsInput = {
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  entryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  entryFee?: Prisma.FloatFieldUpdateOperationsInput | number
   prizePool?: Prisma.IntFieldUpdateOperationsInput | number
   roundDurationSec?: Prisma.IntFieldUpdateOperationsInput | number
   maxPlayers?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1164,7 +1172,7 @@ export type GameUncheckedUpdateWithoutChatsInput = {
   status?: Prisma.EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  entryFee?: Prisma.IntFieldUpdateOperationsInput | number
+  entryFee?: Prisma.FloatFieldUpdateOperationsInput | number
   prizePool?: Prisma.IntFieldUpdateOperationsInput | number
   roundDurationSec?: Prisma.IntFieldUpdateOperationsInput | number
   maxPlayers?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1789,7 +1797,7 @@ export interface GameFieldRefs {
   readonly status: Prisma.FieldRef<"Game", 'GameStatus'>
   readonly startsAt: Prisma.FieldRef<"Game", 'DateTime'>
   readonly endsAt: Prisma.FieldRef<"Game", 'DateTime'>
-  readonly entryFee: Prisma.FieldRef<"Game", 'Int'>
+  readonly entryFee: Prisma.FieldRef<"Game", 'Float'>
   readonly prizePool: Prisma.FieldRef<"Game", 'Int'>
   readonly roundDurationSec: Prisma.FieldRef<"Game", 'Int'>
   readonly maxPlayers: Prisma.FieldRef<"Game", 'Int'>

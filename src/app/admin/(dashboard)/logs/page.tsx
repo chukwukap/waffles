@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import Link from "next/link";
 
 async function getAuditLogs(page: number = 1) {
     const pageSize = 50;
@@ -37,84 +38,103 @@ export default async function AuditLogsPage({
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-slate-100">Audit Logs</h1>
-                <p className="text-slate-400 mt-1">
-                    Track all admin actions - {total.toLocaleString()} total entries
+                <h1 className="text-2xl font-bold text-white font-display">Audit Logs</h1>
+                <p className="text-white/60 mt-1">
+                    Track all admin actions — <span className="text-[#FFC931] font-bold">{total.toLocaleString()}</span> total entries
                 </p>
             </div>
 
-            <div className="bg-slate-800 shadow-sm rounded-xl border border-slate-700 overflow-hidden">
-                <table className="min-w-full divide-y divide-slate-700">
-                    <thead className="bg-slate-900">
+            <div className="admin-panel overflow-hidden">
+                <table className="min-w-full divide-y divide-white/6">
+                    <thead className="bg-white/3">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">
+                            <th className="px-6 py-4 text-left text-xs font-medium text-white/50 uppercase font-display">
                                 Timestamp
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">
+                            <th className="px-6 py-4 text-left text-xs font-medium text-white/50 uppercase font-display">
                                 Admin
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">
+                            <th className="px-6 py-4 text-left text-xs font-medium text-white/50 uppercase font-display">
                                 Action
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">
+                            <th className="px-6 py-4 text-left text-xs font-medium text-white/50 uppercase font-display">
                                 Entity
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">
+                            <th className="px-6 py-4 text-left text-xs font-medium text-white/50 uppercase font-display">
                                 Details
                             </th>
                         </tr>
                     </thead>
-                    <tbody className="bg-slate-800 divide-y divide-slate-700">
+                    <tbody className="divide-y divide-white/6">
                         {logs.map((log) => (
-                            <tr key={log.id} className="hover:bg-slate-900">
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
+                            <tr key={log.id} className="admin-table-row">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-white/60">
                                     {new Date(log.createdAt).toLocaleString()}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-100">
-                                    {log.admin.username}
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-7 w-7 bg-[#FB72FF]/20 rounded-full flex items-center justify-center text-[#FB72FF] font-bold text-xs">
+                                            {log.admin.username?.[0]?.toUpperCase() || "A"}
+                                        </div>
+                                        <span className="text-sm text-white">{log.admin.username}</span>
+                                    </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                    <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-[#00CFF2]/20 text-[#00CFF2]">
                                         {log.action.replace(/_/g, " ")}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
-                                    {log.entityType}
-                                    {log.entityId && ` #${log.entityId}`}
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-white/60">
+                                    <span className="text-white">{log.entityType}</span>
+                                    {log.entityId && <span className="text-[#FFC931] ml-1">#{log.entityId}</span>}
                                 </td>
-                                <td className="px-6 py-4 text-sm text-slate-400 max-w-md truncate">
+                                <td className="px-6 py-4 text-white/50 max-w-md truncate font-mono text-xs">
                                     {log.details ? JSON.stringify(log.details) : "—"}
                                 </td>
                             </tr>
                         ))}
+                        {logs.length === 0 && (
+                            <tr>
+                                <td colSpan={5} className="px-6 py-16 text-center">
+                                    <div className="flex flex-col items-center">
+                                        <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-4">
+                                            <span className="text-3xl">📋</span>
+                                        </div>
+                                        <p className="text-white font-display">No audit logs yet</p>
+                                        <p className="text-sm text-white/50 mt-1">Actions will appear here as admins use the dashboard.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>
 
             {/* Pagination */}
             {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2">
+                <div className="flex items-center justify-center gap-4">
                     {page > 1 && (
-                        <a
+                        <Link
                             href={`?page=${page - 1}`}
-                            className="px-4 py-2 border border-slate-600 rounded-lg hover:bg-slate-900"
+                            className="px-4 py-2 border border-white/10 rounded-xl hover:bg-white/5 text-sm font-medium text-white transition-colors"
                         >
                             Previous
-                        </a>
+                        </Link>
                     )}
-                    <span className="px-4 py-2 text-sm text-slate-400">
-                        Page {page} of {totalPages}
+                    <span className="px-4 py-2 text-sm text-white/50">
+                        Page <span className="text-white font-medium">{page}</span> of <span className="text-white font-medium">{totalPages}</span>
                     </span>
                     {page < totalPages && (
-                        <a
+                        <Link
                             href={`?page=${page + 1}`}
-                            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                            className="px-4 py-2 bg-[#FFC931] text-black rounded-xl hover:bg-[#FFD966] text-sm font-bold transition-colors"
                         >
                             Next
-                        </a>
+                        </Link>
                     )}
                 </div>
             )}
         </div>
     );
 }
+
