@@ -407,13 +407,11 @@ async function OverviewContent({ range }: { range: string }) {
                 <UserGrowthChart dailyData={data.userGrowthData} statusData={data.userStatusData} />
             </div>
             <ThemeAnalytics data={data.themeData} />
-            <div className="grid gap-6 lg:grid-cols-3">
-                <div className="lg:col-span-2">
-                    <GamePerformanceTable games={data.gamePerformance} />
-                </div>
+            <GamePerformanceTable games={data.gamePerformance} />
+            <div className="grid gap-6 lg:grid-cols-2">
+                <ReferralFunnel funnel={data.referralFunnel} kFactor={data.kFactor} topReferrers={data.topReferrers} />
                 <ActivityFeed activities={data.recentActivities} liveGamesCount={data.liveGamesCount} activePlayersCount={data.activePlayersCount} />
             </div>
-            <ReferralFunnel funnel={data.referralFunnel} kFactor={data.kFactor} topReferrers={data.topReferrers} />
         </div>
     );
 }
