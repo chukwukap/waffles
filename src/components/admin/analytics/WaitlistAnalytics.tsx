@@ -92,7 +92,7 @@ export function WaitlistAnalytics({ data }: WaitlistAnalyticsProps) {
                 </div>
             </div>
 
-            {/* Task Completion Chart */}
+            {/* Quest Completion Chart */}
             <div className="admin-panel p-6">
                 <div className="flex items-center justify-between mb-6">
                     <div>
