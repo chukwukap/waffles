@@ -216,7 +216,7 @@ async function getOverviewData(start: Date, end: Date) {
 
 async function getWaitlistData() {
     const totalQuests = QUESTS.length;
-    const [waitlistUsers, activeUsers, usersWithTasks, invitedUsersCount, totalInviters] = await Promise.all([
+    const [waitlistUsers, activeUsers, usersWithQuests, invitedUsersCount, totalInviters] = await Promise.all([
         prisma.user.count({ where: { status: "WAITLIST" } }),
         prisma.user.count({ where: { status: "ACTIVE" } }),
         prisma.user.findMany({ where: { status: { in: ["WAITLIST", "ACTIVE"] } }, select: { completedTasks: true } }),
@@ -225,29 +225,29 @@ async function getWaitlistData() {
         prisma.user.count({ where: { invites: { some: {} } }, distinct: ["id"] }),
     ]);
 
-    // Calculate task completion breakdown
-    const taskCompletion = {
+    // Calculate quest completion breakdown
+    const questCompletion = {
         all: 0,
         most: 0,
         half: 0,
         none: 0,
     };
 
-    usersWithTasks.forEach((user) => {
+    usersWithQuests.forEach((user) => {
         const completed = user.completedTasks.length;
         const percentage = (completed / totalQuests) * 100;
-        if (percentage === 100) taskCompletion.all++;
-        else if (percentage >= 75) taskCompletion.most++;
-        else if (percentage >= 50) taskCompletion.half++;
-        else taskCompletion.none++;
+        if (percentage === 100) questCompletion.all++;
+        else if (percentage >= 75) questCompletion.most++;
+        else if (percentage >= 50) questCompletion.half++;
+        else questCompletion.none++;
     });
 
     return {
         totalWaitlist: waitlistUsers,
         totalActive: activeUsers,
-        taskCompletion,
         avgInvitesPerUser: totalInviters > 0 ? invitedUsersCount / totalInviters : 0,
         totalInvitedUsers: invitedUsersCount,
+        questCompletion,
     };
 }
 
