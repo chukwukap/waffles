@@ -27,10 +27,10 @@ const COMPLETION_COLORS = {
 
 export function WaitlistAnalytics({ data }: WaitlistAnalyticsProps) {
     const pieData = [
-        { name: "All Tasks (100%)", value: data.taskCompletion.all, color: COMPLETION_COLORS.all },
-        { name: "Most Tasks (75%+)", value: data.taskCompletion.most, color: COMPLETION_COLORS.most },
-        { name: "Some Tasks (50%+)", value: data.taskCompletion.half, color: COMPLETION_COLORS.half },
-        { name: "No Tasks (0%)", value: data.taskCompletion.none, color: COMPLETION_COLORS.none },
+        { name: "All Quests (100%)", value: data.taskCompletion.all, color: COMPLETION_COLORS.all },
+        { name: "Most Quests (75%+)", value: data.taskCompletion.most, color: COMPLETION_COLORS.most },
+        { name: "Some Quests (50%+)", value: data.taskCompletion.half, color: COMPLETION_COLORS.half },
+        { name: "No Quests (0%)", value: data.taskCompletion.none, color: COMPLETION_COLORS.none },
     ].filter(d => d.value > 0);
 
     const totalTaskUsers = data.taskCompletion.all + data.taskCompletion.most + data.taskCompletion.half + data.taskCompletion.none;
@@ -96,8 +96,8 @@ export function WaitlistAnalytics({ data }: WaitlistAnalyticsProps) {
             <div className="admin-panel p-6">
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h3 className="text-lg font-semibold text-white font-display">Task Completion Breakdown</h3>
-                        <p className="text-sm text-white/50">How many waitlist tasks users completed</p>
+                        <h3 className="text-lg font-semibold text-white font-display">Quest Completion Breakdown</h3>
+                        <p className="text-sm text-white/50">How many waitlist quests users completed</p>
                     </div>
                 </div>
 
@@ -137,10 +137,10 @@ export function WaitlistAnalytics({ data }: WaitlistAnalyticsProps) {
                     {/* Breakdown Stats */}
                     <div className="space-y-4">
                         {[
-                            { label: "Completed ALL tasks (100%)", value: data.taskCompletion.all, color: COMPLETION_COLORS.all },
-                            { label: "Completed 75%+ tasks", value: data.taskCompletion.most, color: COMPLETION_COLORS.most },
-                            { label: "Completed 50%+ tasks", value: data.taskCompletion.half, color: COMPLETION_COLORS.half },
-                            { label: "Completed NO tasks (0%)", value: data.taskCompletion.none, color: COMPLETION_COLORS.none },
+                            { label: "Completed ALL quests (100%)", value: data.taskCompletion.all, color: COMPLETION_COLORS.all },
+                            { label: "Completed 75%+ quests", value: data.taskCompletion.most, color: COMPLETION_COLORS.most },
+                            { label: "Completed 50%+ quests", value: data.taskCompletion.half, color: COMPLETION_COLORS.half },
+                            { label: "Completed NO quests (0%)", value: data.taskCompletion.none, color: COMPLETION_COLORS.none },
                         ].map((item) => {
                             const percentage = totalTaskUsers > 0 ? (item.value / totalTaskUsers) * 100 : 0;
                             return (

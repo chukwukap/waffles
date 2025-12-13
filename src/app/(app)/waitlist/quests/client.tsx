@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
-import { useTaskActions } from "./_components/useTaskActions";
-import { TASKS, WaitlistTask, WaitlistTaskId, TaskStatus } from "@/lib/tasks";
+import { useQuestActions } from "./_components/useQuestActions";
+import { QUESTS, Quest, QuestId, QuestStatus } from "@/lib/quests";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
 import sdk from "@farcaster/miniapp-sdk";
 
@@ -16,14 +16,14 @@ export interface WaitlistData {
     inviteCode: string | null;
     invitesCount: number;
     status: string;
-    completedTasks: string[];
+    completedTasks: string[]; // Maintaining DB field name
 }
 
 // Re-export types for backwards compatibility
-export type { WaitlistTask, WaitlistTaskId, TaskStatus };
-export { TASKS };
+export type { Quest, QuestId, QuestStatus };
+export { QUESTS };
 
-export function TasksPageClient() {
+export function QuestsPageClient() {
     const [waitlistData, setWaitlistData] = useState<WaitlistData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -40,7 +40,7 @@ export function TasksPageClient() {
                 setWaitlistData(data);
             } catch (err) {
                 console.error("Error fetching waitlist data:", err);
-                setError("Failed to load tasks");
+                setError("Failed to load quests");
             } finally {
                 setIsLoading(false);
             }
@@ -48,8 +48,8 @@ export function TasksPageClient() {
         fetchData();
     }, []);
 
-    // Initialize task actions hook
-    const { handleGo, handleComplete, getTaskStatus, isPending } = useTaskActions({
+    // Initialize quest actions hook
+    const { handleGo, handleComplete, getQuestStatus, isPending } = useQuestActions({
         waitlistData: waitlistData ?? {
             fid: 0,
             rank: 0,
@@ -64,7 +64,7 @@ export function TasksPageClient() {
     if (isLoading) {
         return (
             <div className="flex-1 flex items-center justify-center">
-                <WaffleLoader text="LOADING TASKS..." />
+                <WaffleLoader text="LOADING QUESTS..." />
             </div>
         );
     }
@@ -72,22 +72,22 @@ export function TasksPageClient() {
     if (error || !waitlistData) {
         return (
             <div className="flex-1 flex items-center justify-center">
-                <p className="text-red-400">{error || "Failed to load tasks"}</p>
+                <p className="text-red-400">{error || "Failed to load quests"}</p>
             </div>
         );
     }
 
     return (
         <div className="w-full max-w-lg mx-auto flex flex-col flex-1 overflow-y-auto px-4 py-6 space-y-3">
-            {TASKS.map((task) => {
-                const status = getTaskStatus(task);
+            {QUESTS.map((quest) => {
+                const status = getQuestStatus(quest);
                 const isCompleted = status === "completed";
-                const isPendingTask = status === "pending";
+                const isPendingQuest = status === "pending";
                 const isInitial = status === "initial";
 
                 return (
                     <div
-                        key={task.id}
+                        key={quest.id}
                         className={cn(
                             "relative flex items-center justify-center gap-[12px] px-[12px] py-[8px] rounded-[16px]",
                             "bg-[#FFFFFF08] border border-[#FFFFFF14]",
@@ -101,8 +101,8 @@ export function TasksPageClient() {
                         {/* Icon */}
                         <div className="shrink-0 w-[48px] h-[48px] rounded-full overflow-hidden relative">
                             <Image
-                                src={task.iconPath}
-                                alt={task.title}
+                                src={quest.iconPath}
+                                alt={quest.title}
                                 fill
                                 className="object-contain"
                             />
@@ -114,7 +114,7 @@ export function TasksPageClient() {
                                 "absolute top-2 right-2 font-body font-normal text-[20px] leading-none",
                                 isCompleted ? "text-[#99A0AE]" : "text-[#00CFF2]"
                             )}>
-                                +{task.points}
+                                +{quest.points}
                             </div>
                         )}
 
@@ -129,7 +129,7 @@ export function TasksPageClient() {
                                             : "text-white"
                                     )}
                                 >
-                                    {task.title}
+                                    {quest.title}
                                 </p>
                                 <p
                                     className={cn(
@@ -137,13 +137,13 @@ export function TasksPageClient() {
                                         "text-[14px] text-[#99A0AE]"
                                     )}
                                 >
-                                    {task.text}
+                                    {quest.text}
                                 </p>
                             </div>
 
-                            {isPendingTask && (
+                            {isPendingQuest && (
                                 <button
-                                    onClick={() => handleComplete(task.id)}
+                                    onClick={() => handleComplete(quest.id)}
                                     disabled={isPending}
                                     className={cn(
                                         "w-[96px] h-[29px] rounded-[8px]",
@@ -163,7 +163,7 @@ export function TasksPageClient() {
                         </div>
                         {isInitial && (
                             <button
-                                onClick={() => handleGo(task)}
+                                onClick={() => handleGo(quest)}
                                 disabled={isPending}
                                 className={cn(
                                     "w-fit font-body font-normal text-[24px] leading-[100%] tracking-normal text-[#00CFF2]",

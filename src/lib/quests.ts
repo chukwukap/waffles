@@ -1,30 +1,30 @@
-// Shared task definitions used by both client and server
+// Shared quest definitions used by both client and server
 
 import { WAFFLE_FID } from "./constants";
 
 // Define base types first to avoid circular dependencies
-export type TaskActionType =
+export type QuestActionType =
   | "link"
   | "farcaster_share"
   | "invite"
   | "view_cast";
-export type TaskStatus = "initial" | "pending" | "completed";
+export type QuestStatus = "initial" | "pending" | "completed";
 
-export interface WaitlistTask {
+export interface Quest {
   id: string;
   iconPath: string;
   title: string;
   text: string;
   points: number;
   actionUrl?: string;
-  type: TaskActionType;
+  type: QuestActionType;
   verifiable?: boolean;
   targetFid?: number;
-  castHash?: string; // For view_cast type tasks
+  castHash?: string; // For view_cast type quests
 }
 
-// Now define the tasks array with explicit type
-export const TASKS: readonly WaitlistTask[] = [
+// Now define the quests array with explicit type
+export const QUESTS: readonly Quest[] = [
   {
     id: "join_discord_general",
     iconPath: "/images/icons/discord.png",
@@ -60,8 +60,6 @@ export const TASKS: readonly WaitlistTask[] = [
     points: 50,
     actionUrl: "https://warpcast.com/wafflesdotfun",
     type: "link",
-    verifiable: true,
-    targetFid: WAFFLE_FID,
   },
   {
     id: "recast_waitlist_launch",
@@ -90,5 +88,5 @@ export const TASKS: readonly WaitlistTask[] = [
   },
 ] as const;
 
-// Export ID type derived from actual task IDs
-export type WaitlistTaskId = (typeof TASKS)[number]["id"];
+// Export ID type derived from actual quest IDs
+export type QuestId = (typeof QUESTS)[number]["id"];

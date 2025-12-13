@@ -21,7 +21,6 @@ export default function GameErrorPage({ error, reset }: ErrorPageProps) {
         w-full px-4 sm:px-8 py-8
         text-center
         text-foreground
-       
       "
       style={{
         minHeight: "80dvh",

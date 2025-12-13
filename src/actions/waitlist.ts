@@ -2,11 +2,11 @@
 
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { TASKS } from "@/lib/tasks";
+import { QUESTS } from "@/lib/quests";
 
-// Derive task points from the source of truth
-const TASK_POINTS = TASKS.reduce((acc: Record<string, number>, task) => {
-  acc[task.id] = task.points;
+// Derive quest points from the source of truth
+const QUEST_POINTS = QUESTS.reduce((acc: Record<string, number>, quest) => {
+  acc[quest.id] = quest.points;
   return acc;
 }, {} as Record<string, number>);
 import { z } from "zod";
@@ -19,6 +19,8 @@ export type JoinWaitlistState = {
   already?: boolean;
   error?: string;
 };
+
+// ... (joinWaitlistSchema and joinWaitlistAction remain mostly unchanged, just imports) ...
 
 // Schema to validate the incoming FormData
 const joinWaitlistSchema = z.object({
@@ -132,29 +134,29 @@ export async function joinWaitlistAction(
   }
 }
 
-export type CompleteTaskState = {
+export type CompleteQuestState = {
   success: boolean;
   message?: string;
   error?: string;
 };
 
-export async function completeWaitlistTask(
-  prevState: CompleteTaskState | null,
+export async function completeWaitlistQuest(
+  prevState: CompleteQuestState | null,
   formData: FormData
-): Promise<CompleteTaskState> {
+): Promise<CompleteQuestState> {
   try {
     const fid = Number(formData.get("fid"));
-    const taskId = formData.get("taskId") as string;
+    const questId = formData.get("questId") as string;
 
-    if (!fid || !taskId) {
-      return { success: false, error: "Missing FID or Task ID" };
+    if (!fid || !questId) {
+      return { success: false, error: "Missing FID or Quest ID" };
     }
 
     const user = await prisma.user.findUnique({
       where: { fid },
       select: {
         id: true,
-        completedTasks: true,
+        completedTasks: true, // DB field remains completedTasks
         _count: {
           select: { invites: true },
         },
@@ -165,18 +167,17 @@ export async function completeWaitlistTask(
       return { success: false, error: "User not found" };
     }
 
-    // Find the task definition
-    const task = TASKS.find((t) => t.id === taskId);
+    // Find the quest definition
+    const quest = QUESTS.find((t) => t.id === questId);
 
-    // Verify Farcaster tasks if verifiable
-    if (task?.verifiable && task.targetFid) {
+    // Verify Farcaster quests if verifiable
+    if (quest?.verifiable && quest.targetFid) {
       try {
         let isVerified = false;
 
-        if (taskId === "share_waitlist_farcaster") {
-          // For share tasks, verify they mentioned @wafflesdotfun
-
-          isVerified = await verifyFarcasterMention(fid, task.targetFid);
+        if (questId === "share_waitlist_farcaster") {
+          // For share quests, verify they mentioned @wafflesdotfun
+          isVerified = await verifyFarcasterMention(fid, quest.targetFid);
 
           if (!isVerified) {
             return {
@@ -186,9 +187,8 @@ export async function completeWaitlistTask(
             };
           }
         } else {
-          // For follow tasks, verify they follow
-
-          isVerified = await verifyFarcasterFollow(fid, task.targetFid);
+          // For follow quests, verify they follow
+          isVerified = await verifyFarcasterFollow(fid, quest.targetFid);
 
           if (!isVerified) {
             return {
@@ -200,36 +200,37 @@ export async function completeWaitlistTask(
       } catch (error) {
         // Graceful fallback: If Neynar API fails, allow completion anyway
         console.error(
-          `[TASK_VERIFY] Neynar API failed for FID ${fid}, task ${taskId}, allowing completion:`,
+          `[QUEST_VERIFY] Neynar API failed for FID ${fid}, quest ${questId}, allowing completion:`,
           error
         );
       }
     }
 
-    // Verify "invite_three_friends" task
-    if (taskId === "invite_three_friends") {
+    // Verify "invite_three_friends" quest
+    if (questId === "invite_three_friends") {
       if (user._count.invites < 3) {
         return {
           success: false,
-          error: "You need 3 invites to complete this task.",
+          error: "You need 3 invites to complete this quest.",
         };
       }
     }
 
     // Check if already completed
-    if (user.completedTasks.includes(taskId)) {
-      return { success: true, message: "Task already completed" };
+    if (user.completedTasks.includes(questId)) {
+      return { success: true, message: "Quest already completed" };
     }
 
-    // Get points for this task
-    const pointsToAward = TASK_POINTS[taskId] || 0;
+    // Get points for this quest
+    const pointsToAward = QUEST_POINTS[questId] || 0;
 
-    // Add task to completed list and award points
+    // Add quest to completed list and award points
     await prisma.user.update({
       where: { id: user.id },
       data: {
         completedTasks: {
-          push: taskId,
+          // DB field remains completedTasks
+          push: questId,
         },
         waitlistPoints: {
           increment: pointsToAward,
@@ -238,15 +239,15 @@ export async function completeWaitlistTask(
     });
 
     revalidatePath("/waitlist");
-    revalidatePath("/waitlist/tasks");
+    revalidatePath("/waitlist/quests");
     revalidatePath("/waitlist/leaderboard");
 
     return {
       success: true,
-      message: `Task completed! +${pointsToAward} points`,
+      message: `Quest completed! +${pointsToAward} points`,
     };
   } catch (error) {
-    console.error("Error completing task:", error);
-    return { success: false, error: "Failed to complete task" };
+    console.error("Error completing quest:", error);
+    return { success: false, error: "Failed to complete quest" };
   }
 }

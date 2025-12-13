@@ -1,5 +1,5 @@
 import { SubHeader } from "@/components/ui/SubHeader";
-export default function WaitlistTasksLayout({
+export default function WaitlistQuestsLayout({
     children,
 }: {
     children: React.ReactNode;

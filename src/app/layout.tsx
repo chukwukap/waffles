@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
+import { env } from "@/lib/env";
 
 export const metadata: Metadata = {
   title: "Waffles",
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Waffles",
     description: "Play daily social games",
-    url: "https://miniapp.playwaffles.fun",
+    url: env.rootUrl,
     type: "website",
     images: [
       {
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.ico",
   },
-  metadataBase: new URL("https://miniapp.playwaffles.fun"),
+  metadataBase: new URL(env.rootUrl),
 };
 
 export default function RootLayout({

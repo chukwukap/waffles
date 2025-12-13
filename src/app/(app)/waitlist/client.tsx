@@ -245,7 +245,7 @@ think you can beat me? you're on😏`;
             {/* Primary Action: COMPLETE TASKS */}
             <div className="mt-4 w-full flex flex-col items-center gap-4">
               <FancyBorderButton
-                onClick={() => router.push(`/waitlist/tasks`)}
+                onClick={() => router.push(`/waitlist/quests`)}
                 className={"mx-auto text-[#191919] text-[26px]"}
                 disabled={pending}
               >

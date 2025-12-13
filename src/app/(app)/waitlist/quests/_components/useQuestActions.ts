@@ -7,13 +7,8 @@ import {
 } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { notify } from "@/components/ui/Toaster";
-import {
-  WaitlistTask,
-  WaitlistTaskId,
-  TaskStatus,
-  WaitlistData,
-} from "../client";
-import { completeWaitlistTask, CompleteTaskState } from "@/actions/waitlist";
+import { Quest, QuestId, QuestStatus, WaitlistData } from "../client";
+import { completeWaitlistQuest, CompleteQuestState } from "@/actions/waitlist";
 import {
   useComposeCast,
   useMiniKit,
@@ -22,18 +17,18 @@ import {
 } from "@coinbase/onchainkit/minikit";
 import { env } from "@/lib/env";
 
-interface UseTaskActionsProps {
+interface UseQuestActionsProps {
   waitlistData: WaitlistData;
 }
 
-export function useTaskActions({ waitlistData }: UseTaskActionsProps) {
+export function useQuestActions({ waitlistData }: UseQuestActionsProps) {
   const { context } = useMiniKit();
   const fid = context?.user?.fid;
   const { composeCastAsync } = useComposeCast();
   const openUrl = useOpenUrl();
   const { viewCast } = useViewCast();
 
-  // Share function for invite task
+  // Share function for invite quest
   const share = useCallback(async () => {
     const rank = waitlistData.rank ?? null;
     const message = `just got in to waffles
@@ -52,31 +47,31 @@ think you can beat me? you're on😏`;
     }
   }, [composeCastAsync, fid, waitlistData.rank]);
 
-  // Track which tasks have been "started" (clicked GO) -> Pending State
-  const [pendingTasks, setPendingTasks] = useLocalStorage<WaitlistTaskId[]>(
-    "waffles:tasks:pending",
+  // Track which quests have been "started" (clicked GO) -> Pending State
+  const [pendingQuests, setPendingQuests] = useLocalStorage<QuestId[]>(
+    "waffles:quests:pending",
     []
   );
 
   // Optimistic state for immediate UI update
   const [optimisticCompleted, setOptimisticCompleted] = useState<string[]>([]);
 
-  const [state, action, pending] = useActionState<CompleteTaskState, FormData>(
-    completeWaitlistTask,
+  const [state, action, pending] = useActionState<CompleteQuestState, FormData>(
+    completeWaitlistQuest,
     { success: false }
   );
 
-  const handleGo = async (task: WaitlistTask) => {
+  const handleGo = async (quest: Quest) => {
     // 1. Handle specific actions
-    if (task.type === "invite") {
+    if (quest.type === "invite") {
       share();
       return;
     }
 
-    if (task.type === "view_cast" && task.castHash) {
+    if (quest.type === "view_cast" && quest.castHash) {
       // Use MiniKit's viewCast to open the cast in Farcaster
-      viewCast({ hash: task.castHash, close: false });
-    } else if (task.type === "farcaster_share") {
+      viewCast({ hash: quest.castHash, close: false });
+    } else if (quest.type === "farcaster_share") {
       try {
         await composeCastAsync({
           text: `just got in to waffles
@@ -88,31 +83,31 @@ think you can beat me? you're on😏`,
       } catch (error) {
         console.error("Compose cast failed", error);
       }
-    } else if (task.actionUrl) {
-      openUrl(task.actionUrl);
+    } else if (quest.actionUrl) {
+      openUrl(quest.actionUrl);
     }
 
-    // 2. Set task to pending state (shows COMPLETE button)
-    if (!pendingTasks.includes(task.id)) {
-      setPendingTasks([...pendingTasks, task.id]);
+    // 2. Set quest to pending state (shows COMPLETE button)
+    if (!pendingQuests.includes(quest.id)) {
+      setPendingQuests([...pendingQuests, quest.id]);
     }
   };
 
-  const handleComplete = (taskId: string) => {
+  const handleComplete = (questId: string) => {
     if (!fid) {
       notify.error("User not identified");
       return;
     }
 
     // Optimistically mark as completed
-    setOptimisticCompleted((prev) => [...prev, taskId]);
+    setOptimisticCompleted((prev) => [...prev, questId]);
 
     // Remove from pending since it's now completed (optimistically)
-    setPendingTasks((prev) => prev.filter((id) => id !== taskId));
+    setPendingQuests((prev) => prev.filter((id) => id !== questId));
 
     const formData = new FormData();
     formData.append("fid", fid.toString());
-    formData.append("taskId", taskId);
+    formData.append("questId", questId);
 
     startTransition(() => {
       action(formData);
@@ -124,7 +119,7 @@ think you can beat me? you're on😏`,
     if (state.error) {
       // Show user-friendly error message
       notify.error(state.error);
-      // Note: We can't easily identify which task failed here,
+      // Note: We can't easily identify which quest failed here,
       // so we revert all optimistic updates
       setOptimisticCompleted([]);
     } else if (state.success && state.message) {
@@ -132,22 +127,22 @@ think you can beat me? you're on😏`,
     }
   }, [state]);
 
-  const getTaskStatus = (task: WaitlistTask): TaskStatus => {
+  const getQuestStatus = (quest: Quest): QuestStatus => {
     // 1. Completed?
     if (
-      waitlistData?.completedTasks.includes(task.id) ||
-      optimisticCompleted.includes(task.id)
+      waitlistData?.completedTasks.includes(quest.id) ||
+      optimisticCompleted.includes(quest.id)
     ) {
       return "completed";
     }
 
     // 2. Pending?
-    if (task.type === "invite") {
+    if (quest.type === "invite") {
       if (waitlistData.invitesCount >= 3) return "pending";
       return "initial";
     }
 
-    if (pendingTasks.includes(task.id)) {
+    if (pendingQuests.includes(quest.id)) {
       return "pending";
     }
 
@@ -158,7 +153,7 @@ think you can beat me? you're on😏`,
   return {
     handleGo,
     handleComplete,
-    getTaskStatus,
+    getQuestStatus,
     isPending: pending,
   };
 }
