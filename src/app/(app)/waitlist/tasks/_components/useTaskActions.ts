@@ -7,7 +7,12 @@ import {
 } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { notify } from "@/components/ui/Toaster";
-import { WaitlistTask, WaitlistTaskId, TaskStatus } from "../client";
+import {
+  WaitlistTask,
+  WaitlistTaskId,
+  TaskStatus,
+  WaitlistData,
+} from "../client";
 import { completeWaitlistTask, CompleteTaskState } from "@/actions/waitlist";
 import {
   useComposeCast,
@@ -16,7 +21,6 @@ import {
   useViewCast,
 } from "@coinbase/onchainkit/minikit";
 import { env } from "@/lib/env";
-import { WaitlistData } from "@/app/(app)/(game)/api/waitlist/route";
 
 interface UseTaskActionsProps {
   waitlistData: WaitlistData;
@@ -139,7 +143,7 @@ think you can beat me? you're on😏`,
 
     // 2. Pending?
     if (task.type === "invite") {
-      if (waitlistData.invites >= 3) return "pending";
+      if (waitlistData.invitesCount >= 3) return "pending";
       return "initial";
     }
 

@@ -85,7 +85,7 @@ export function useLiveFeed({ gameId, maxEvents = 5 }: UseLiveFeedProps) {
     const fetchHistory = async () => {
       try {
         const res = await fetch(
-          `/api/chat?gameId=${gameId}&limit=${maxEvents}`
+          `/api/v1/games/${gameId}/chat?limit=${maxEvents}`
         );
         if (!res.ok) throw new Error("Failed to fetch chat history");
         const data = await res.json();

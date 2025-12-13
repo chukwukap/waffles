@@ -1,12 +1,22 @@
 "use client";
 
 import { use } from "react";
-import { WaitlistData } from "../../(game)/api/waitlist/route";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useTaskActions } from "./_components/useTaskActions";
 import { TASKS, WaitlistTask, WaitlistTaskId, TaskStatus } from "@/lib/tasks";
+
+// WaitlistData type matching v1 API response
+export interface WaitlistData {
+    fid: number;
+    rank: number;
+    points: number;
+    inviteCode: string | null;
+    invitesCount: number;
+    status: string;
+    completedTasks: string[];
+}
 
 // Re-export types for backwards compatibility
 export type { WaitlistTask, WaitlistTaskId, TaskStatus };

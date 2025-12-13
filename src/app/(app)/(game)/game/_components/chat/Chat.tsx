@@ -114,7 +114,7 @@ export const Chat = ({
 
     const fetchMessages = async () => {
       try {
-        const response = await fetch(`/api/chat?gameId=${gameId}`);
+        const response = await fetch(`/api/v1/games/${gameId}/chat`);
         if (!response.ok) throw new Error("Failed to fetch messages");
 
         const data = await response.json();

@@ -4,6 +4,7 @@ import { useCallback, useState, useEffect } from "react";
 import { syncUserAction } from "@/actions/onboarding";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useAccount } from "wagmi";
+import sdk from "@farcaster/miniapp-sdk";
 
 export function useOnboarding() {
   const { address } = useAccount();
@@ -25,15 +26,16 @@ export function useOnboarding() {
       }
 
       try {
-        const response = await fetch(`/api/user?fid=${fid}`, {
+        // Use authenticated fetch to check if user exists
+        const response = await sdk.quickAuth.fetch(`/api/v1/me`, {
           cache: "no-store",
         });
 
         if (response.ok) {
           // User exists in database - they are onboarded
           setIsOnboarded(true);
-        } else if (response.status === 404) {
-          // User doesn't exist - needs onboarding
+        } else if (response.status === 404 || response.status === 401) {
+          // User doesn't exist or not authenticated - needs onboarding
           setIsOnboarded(false);
         } else {
           console.error("Failed to check onboarding status:", response.status);

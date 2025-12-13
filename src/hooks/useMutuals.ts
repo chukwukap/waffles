@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
+import sdk from "@farcaster/miniapp-sdk";
 
 export function useMutuals(options?: {
   context?: string;
@@ -21,17 +22,26 @@ export function useMutuals(options?: {
   useEffect(() => {
     if (!fid) return;
 
-    let url = `/api/mutuals?fid=${fid}&context=${context}`;
+    // Build URL for v1 endpoint
+    let url = `/api/v1/users/${fid}/mutuals?context=${context}`;
     if (gameId) url += `&gameId=${gameId}`;
     if (limit) url += `&limit=${limit}`;
 
-    fetch(url)
+    // Use authenticated fetch
+    sdk.quickAuth
+      .fetch(url)
       .then((res) => (res.ok ? res.json() : null))
-      .then(setData)
+      .then((response) => {
+        if (response) {
+          setData({
+            mutuals: response.mutuals || [],
+            mutualCount: response.count || 0,
+            totalCount: response.count || 0,
+          });
+        }
+      })
       .catch(console.error);
   }, [fid, context, gameId, limit]);
-
-  console.log("data : ", data);
 
   return data;
 }

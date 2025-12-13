@@ -1,10 +1,16 @@
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
+import sdk from "@farcaster/miniapp-sdk";
 import { useState, useCallback, useEffect, useRef } from "react";
-import { User } from "../../prisma/generated/client";
 
-export interface UserData extends User {
+export interface UserData {
+  fid: number;
+  username: string | null;
+  pfpUrl: string | null;
+  wallet: string | null;
+  waitlistPoints: number;
   rank: number;
   invitesCount: number;
+  status: string;
 }
 
 export function useUser() {
@@ -25,14 +31,14 @@ export function useUser() {
       // Only set loading if we haven't loaded data yet
       if (!hasLoaded.current) setIsLoading(true);
 
-      const response = await fetch(`/api/user?fid=${fid}`, {
+      // Use authenticated fetch to get current user's data
+      const response = await sdk.quickAuth.fetch(`/api/v1/me`, {
         cache: "no-store",
       });
 
       if (!response.ok) throw new Error("Failed to fetch user");
 
       const json: UserData = await response.json();
-      console.log(json);
       setUser(json);
       hasLoaded.current = true;
     } catch (err) {

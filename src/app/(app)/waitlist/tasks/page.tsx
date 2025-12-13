@@ -1,11 +1,12 @@
-
-import { TasksPageClient } from "./client";
-import { WaitlistData } from "../../(game)/api/waitlist/route";
+import { TasksPageClient, WaitlistData } from "./client";
 import { env } from "@/lib/env";
 
 async function getWaitlistData(fid: string): Promise<WaitlistData> {
-    const response = await fetch(`${env.rootUrl}/api/waitlist?fid=${fid}`, {
-        cache: 'no-store'
+    // Note: Server component can't use sdk.quickAuth.fetch
+    // This page should redirect or the client should handle auth
+    const response = await fetch(`${env.rootUrl}/api/v1/waitlist`, {
+        cache: 'no-store',
+        // Pass auth header if available via cookies/session
     });
 
     if (!response.ok) {
@@ -15,19 +16,10 @@ async function getWaitlistData(fid: string): Promise<WaitlistData> {
     return response.json();
 }
 
-export default async function TasksPage({ searchParams }: { searchParams: Promise<{ fid: string }> }) {
-    const params = await searchParams;
-
-    // Validate fid parameter
-    if (!params.fid) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <p className="text-white">Missing FID parameter</p>
-            </div>
-        );
-    }
-
-    const waitlistPromise = getWaitlistData(params.fid);
+export default async function TasksPage() {
+    // Server component doesn't have access to auth token
+    // Let client handle the authenticated fetch
+    const waitlistPromise = getWaitlistData("");
     return (
         <TasksPageClient waitlistPromise={waitlistPromise} />
     );

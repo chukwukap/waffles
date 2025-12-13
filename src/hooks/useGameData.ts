@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Ticket } from "../../prisma/generated/client";
+import sdk from "@farcaster/miniapp-sdk";
 import { useUser } from "@/hooks/useUser";
 import { useMutuals } from "@/hooks/useMutuals";
 
@@ -9,8 +9,18 @@ interface MutualsData {
   totalCount: number;
 }
 
+interface TicketData {
+  id: number;
+  code: string;
+  status: string;
+  amountUSDC: number;
+  gameId: number;
+  purchasedAt: string;
+  redeemedAt: string | null;
+}
+
 interface GameUserData {
-  ticket: Ticket | null;
+  ticket: TicketData | null;
   mutuals: MutualsData | null;
   isLoading: boolean;
   isAuthorized: boolean;
@@ -22,7 +32,7 @@ export function useGameData(
 ): GameUserData {
   const { user, isLoading: isUserLoading } = useUser();
 
-  const [ticket, setTicket] = useState<Ticket | null>(null);
+  const [ticket, setTicket] = useState<TicketData | null>(null);
   const [isFetchingGameData, setIsFetchingGameData] = useState(true);
 
   // Use the hook for mutuals, requesting enough for the avatar diamond (25)
@@ -41,15 +51,16 @@ export function useGameData(
     setIsFetchingGameData(true);
 
     try {
-      const ticketRes = await fetch(
-        `/api/user/ticket?fid=${fid}&gameId=${gameId}`
+      // Use authenticated fetch to get tickets for this game
+      const ticketRes = await sdk.quickAuth.fetch(
+        `/api/v1/me/tickets?gameId=${gameId}`
       );
 
       if (ticketRes.ok) {
-        const ticketData = await ticketRes.json();
-        setTicket(ticketData);
+        const tickets: TicketData[] = await ticketRes.json();
+        // Get the first ticket for this game (should be only one per user per game)
+        setTicket(tickets[0] || null);
       } else {
-        // If ticket fetch fails (e.g. 404), it just means no ticket
         setTicket(null);
       }
     } catch (err) {
