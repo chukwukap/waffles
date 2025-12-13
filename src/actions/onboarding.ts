@@ -6,7 +6,7 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 
 import { syncUserSchema } from "@/lib/schemas";
-import { Prisma } from "../../prisma/generated/client";
+import { Prisma } from "@/lib/db";
 
 // --- 6-Character Code Generation ---
 const REFERRAL_CODE_LENGTH = 6;

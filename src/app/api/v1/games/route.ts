@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import type {
-  GameStatus,
-  Prisma,
-} from "../../../../../prisma/generated/client";
+import type { GameStatus, Prisma } from "@/lib/db";
 
 /**
  * GET /api/v1/games

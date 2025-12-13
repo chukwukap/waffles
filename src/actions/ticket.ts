@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/db";
 import { randomBytes } from "crypto";
 import { z } from "zod";
-import type { Ticket } from "../../prisma/generated/client";
+import type { Ticket } from "@/lib/db";
 import { createPublicClient, http, isHash } from "viem";
 import { base } from "viem/chains";
 import { revalidatePath } from "next/cache";

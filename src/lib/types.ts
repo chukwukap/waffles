@@ -1,4 +1,4 @@
-import { Prisma } from "../../prisma/generated/client";
+import { Prisma } from "@/lib/db";
 
 export type GameStateType =
   | "WAITING"

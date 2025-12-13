@@ -10,7 +10,7 @@ const QUEST_POINTS = QUESTS.reduce((acc: Record<string, number>, quest) => {
   return acc;
 }, {} as Record<string, number>);
 import { z } from "zod";
-import { Prisma } from "../../prisma/generated/client";
+import { Prisma } from "@/lib/db";
 import { verifyFarcasterFollow } from "@/lib/verifyFarcasterFollow";
 import { verifyFarcasterMention } from "@/lib/verifyFarcasterMention";
 

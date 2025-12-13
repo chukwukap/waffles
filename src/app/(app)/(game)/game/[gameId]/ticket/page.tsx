@@ -1,7 +1,7 @@
 import TicketPageClientImpl from "./client";
 import { prisma } from "@/lib/db";
 import { cache } from "react";
-import { Prisma } from "../../../../../../../prisma/generated/client";
+import { Prisma } from "@/lib/db";
 
 export type TicketPageGameInfo = Prisma.GameGetPayload<{
   select: {

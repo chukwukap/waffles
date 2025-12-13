@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/db";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { User } from "../../prisma/generated/client";
+import { User } from "@/lib/db";
 
 // CHANGED: Use new field names
 const updateProfileSchema = z
