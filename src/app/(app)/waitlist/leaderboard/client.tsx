@@ -1,15 +1,35 @@
 "use client";
 
 import { use, useEffect, useRef, useState, useCallback } from "react";
-import { LeaderboardData, LeaderboardEntry } from "@/app/api/leaderboard/route";
-import Image from "next/image";
 import { motion } from "framer-motion";
 import { env } from "@/lib/env";
+
+// Types matching v1 API response
+export interface LeaderboardEntry {
+    rank: number;
+    fid: number;
+    username: string | null;
+    pfpUrl: string | null;
+    points: number;
+    isCurrentUser: boolean;
+}
+
+export interface LeaderboardData {
+    entries: LeaderboardEntry[];
+    userRank: number | null;
+    totalParticipants: number;
+    pagination: {
+        total: number;
+        limit: number;
+        offset: number;
+        hasMore: boolean;
+    };
+}
 
 export function LeaderboardClient({ leaderboardPromise }: { leaderboardPromise: Promise<LeaderboardData> }) {
     const initialData = use(leaderboardPromise);
     const [entries, setEntries] = useState<LeaderboardEntry[]>(initialData.entries);
-    const [hasMore, setHasMore] = useState(initialData.entries.length === 100); // Assuming 100 is the limit per load
+    const [hasMore, setHasMore] = useState(initialData.pagination?.hasMore ?? false);
     const [isLoading, setIsLoading] = useState(false);
     const [offset, setOffset] = useState(100); // Start from the next batch
     const observerTarget = useRef<HTMLDivElement>(null);
@@ -23,7 +43,7 @@ export function LeaderboardClient({ leaderboardPromise }: { leaderboardPromise: 
         setIsLoading(true);
         try {
             const response = await fetch(
-                `${env.rootUrl}/api/waitlist/leaderboard?fid=${currentUserFid || ''}&limit=100&offset=${offset}`,
+                `${env.rootUrl}/api/v1/waitlist/leaderboard?limit=100&offset=${offset}`,
                 { cache: 'no-store' }
             );
 
@@ -36,7 +56,7 @@ export function LeaderboardClient({ leaderboardPromise }: { leaderboardPromise: 
             } else {
                 setEntries(prev => [...prev, ...data.entries]);
                 setOffset(prev => prev + data.entries.length);
-                setHasMore(data.entries.length === 100);
+                setHasMore(data.pagination?.hasMore ?? false);
             }
         } catch (error) {
             console.error("Error loading more leaderboard entries:", error);
@@ -44,7 +64,7 @@ export function LeaderboardClient({ leaderboardPromise }: { leaderboardPromise: 
         } finally {
             setIsLoading(false);
         }
-    }, [isLoading, hasMore, offset, currentUserFid]);
+    }, [isLoading, hasMore, offset]);
 
     useEffect(() => {
         const observer = new IntersectionObserver(

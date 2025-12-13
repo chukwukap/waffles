@@ -1,9 +1,8 @@
-import { LeaderboardClient } from "./client";
-import { LeaderboardData } from "@/app/api/leaderboard/route";
+import { LeaderboardClient, LeaderboardData } from "./client";
 import { env } from "@/lib/env";
 
-async function getLeaderboardData(fid: string, limit: number = 100): Promise<LeaderboardData> {
-    const response = await fetch(`${env.rootUrl}/api/waitlist/leaderboard?fid=${fid}&limit=${limit}`, {
+async function getLeaderboardData(limit: number = 100): Promise<LeaderboardData> {
+    const response = await fetch(`${env.rootUrl}/api/v1/waitlist/leaderboard?limit=${limit}`, {
         cache: 'no-store'
     });
 
@@ -14,19 +13,8 @@ async function getLeaderboardData(fid: string, limit: number = 100): Promise<Lea
     return response.json();
 }
 
-export default async function LeaderboardPage({ searchParams }: { searchParams: Promise<{ fid: string }> }) {
-    const params = await searchParams;
-
-    // Validate fid parameter
-    if (!params.fid) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <p className="text-white">Missing FID parameter</p>
-            </div>
-        );
-    }
-
-    const leaderboardPromise = getLeaderboardData(params.fid);
+export default async function LeaderboardPage() {
+    const leaderboardPromise = getLeaderboardData();
     return (
         <LeaderboardClient leaderboardPromise={leaderboardPromise} />
     );

@@ -1,11 +1,12 @@
 import { createConfig, http } from "wagmi";
-import { base } from "viem/chains";
+import { base, baseSepolia } from "viem/chains";
 import { injected } from "wagmi/connectors";
 
 export const wagmiConfig = createConfig({
-  chains: [base],
+  chains: [base, baseSepolia],
   transports: {
     [base.id]: http(),
+    [baseSepolia.id]: http(),
   },
   connectors: [injected()],
   ssr: true,

@@ -6,6 +6,7 @@ import { Metadata } from "next";
 import { minikitConfig } from "../../../../../minikit.config";
 
 import { cache } from "react";
+import { env } from "@/lib/env";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -20,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
           action: {
             name: `Play now`,
             type: "launch_frame",
-            url: minikitConfig.miniapp.homeUrl,
+            url: env.rootUrl + "/game",
             splashImageUrl: minikitConfig.miniapp.splashImageUrl,
             splashBackgroundColor: minikitConfig.miniapp.splashBackgroundColor,
           },

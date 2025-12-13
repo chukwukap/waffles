@@ -4,6 +4,7 @@ import { OnchainKitProvider } from "@coinbase/onchainkit";
 import { base } from "viem/chains";
 import { env } from "@/lib/env";
 import { useMiniKitInit } from "@/hooks/useMiniKitInit";
+import { minikitConfig } from "../../../minikit.config";
 
 interface Props {
   children: React.ReactNode;
@@ -32,7 +33,7 @@ export function MinikitProvider({ children }: Props) {
       miniKit={{
         enabled: true,
         autoConnect: true,
-        notificationProxyUrl: env.rootUrl + "/api/webhook/notify",
+        notificationProxyUrl: minikitConfig.miniapp.webhookUrl,
       }}
     >
       <MiniKitInitializer>{children}</MiniKitInitializer>

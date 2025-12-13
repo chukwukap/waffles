@@ -3,10 +3,12 @@
 import { useState, useCallback } from "react";
 import { sdk } from "@farcaster/miniapp-sdk";
 import { env } from "@/lib/env";
+import { useQuickAuth } from "@coinbase/onchainkit/minikit";
 
 export function useAuth() {
   const [token, setToken] = useState<string | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  useQuickAuth;
 
   /**
    * Authenticate the user and get a JWT token
