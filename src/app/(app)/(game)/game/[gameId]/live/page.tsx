@@ -1,6 +1,6 @@
 import LiveGameClient from "./client";
 import { Prisma, prisma } from "@/lib/db";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
 export const revalidate = 0;
 
@@ -26,43 +26,25 @@ export type LiveGameInfoPayload = Prisma.GameGetPayload<{
   };
 }>;
 
-export type LiveGameUserInfoPayload = Prisma.UserGetPayload<{
-  select: {
-    fid: true;
-    status: true; // Added status
-  };
-}>;
+export type LiveGameUserInfoPayload = {
+  fid: number;
+  status: string;
+};
 
-// Server-side data fetching
+// Server-side data fetching - only fetch public game data
 export default async function LiveGamePage({
-  searchParams,
+  params,
 }: {
-  searchParams: Promise<{ gameId: string; fid: string }>;
+  params: Promise<{ gameId: string }>;
 }) {
-  const { gameId, fid } = await searchParams;
+  const { gameId } = await params;
   const gameIdNum = Number(gameId);
-  const fidNum = Number(fid);
 
-  if (isNaN(gameIdNum) || isNaN(fidNum)) {
-    throw new Error("Invalid game ID or FID");
+  if (isNaN(gameIdNum)) {
+    throw new Error("Invalid game ID");
   }
 
-  // 1. Get User Data (we need the internal ID to check answers)
-  const user = await prisma.user.findUnique({
-    where: { fid: fidNum },
-    select: { id: true, fid: true, status: true }, // Added status
-  });
-
-  if (!user) {
-    throw new Error("User not found");
-  }
-
-  // Enforce access control
-  if (user.status !== "ACTIVE") {
-    redirect("/invite");
-  }
-
-  // 2. Fetch Game Data (to get total questions count)
+  // Fetch Game Data (public - includes questions)
   const game = await prisma.game.findUnique({
     where: { id: gameIdNum },
     select: {
@@ -81,7 +63,7 @@ export default async function LiveGamePage({
           roundIndex: true,
         },
         orderBy: [
-          { roundIndex: "asc" }, // Order by round first
+          { roundIndex: "asc" },
           { order: "asc" },
         ],
       },
@@ -92,28 +74,6 @@ export default async function LiveGamePage({
     notFound();
   }
 
-  // 3. Check Progress: Count how many questions this user has already answered
-  const answersCount = await prisma.answer.count({
-    where: {
-      userId: user.id,
-      gameId: gameIdNum,
-    },
-  });
-
-  // 4. Logic Check
-  // If they've answered all questions (or more), they are done.
-  if (answersCount >= game.questions.length) {
-    redirect(`/game/${gameId}/score`);
-  }
-
-  // 6. Resume Game
-  // We pass 'answersCount' as the initial index.
-  // If they answered 0, index is 0. If they answered 3, index is 3 (the 4th question).
-  return (
-    <LiveGameClient
-      gameInfo={game}
-      userInfo={user}
-      initialQuestionIndex={answersCount}
-    />
-  );
+  // User auth and progress tracking is handled client-side
+  return <LiveGameClient gameInfo={game} />;
 }

@@ -1,34 +1,28 @@
 "use client";
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import sdk from "@farcaster/miniapp-sdk";
 
 import QuestionCard from "./_components/QuestionCard";
 import RoundCountdownCard from "./_components/RoundCountdownCard";
-// Import the new payload types from the page
-import { LiveGameInfoPayload, LiveGameUserInfoPayload } from "./page";
+import { LiveGameInfoPayload } from "./page";
 import { useSound } from "@/components/providers/SoundContext";
 import { EXTRA_TIME_SECONDS } from "@/lib/constants";
+import { WaffleLoader } from "@/components/ui/WaffleLoader";
 
 /**
  * Determines if a round countdown should be shown before the next question.
- * Show countdown if the *next* question has a different roundIndex than the current one.
- * @param currentIdx - The index of the current question
- * @param questions - The full, ordered list of questions
- * @returns boolean
  */
 function shouldShowRoundCountdown(
   currentIdx: number,
   questions: LiveGameInfoPayload["questions"]
 ): boolean {
   if (!questions || questions.length === 0) return false;
-
-  // No next question, so no countdown
   if (currentIdx + 1 >= questions.length) return false;
 
   const thisRoundIndex = questions[currentIdx]?.roundIndex;
   const nextRoundIndex = questions[currentIdx + 1]?.roundIndex;
 
-  // Show round countdown if this is the last question in a round
   if (
     typeof thisRoundIndex === "number" &&
     typeof nextRoundIndex === "number" &&
@@ -39,23 +33,78 @@ function shouldShowRoundCountdown(
   return false;
 }
 
+interface UserInfo {
+  fid: number;
+  status: string;
+}
+
 export default function LiveGameClient({
   gameInfo,
-  userInfo,
-  initialQuestionIndex = 0, // New prop for resuming game
 }: {
   gameInfo: LiveGameInfoPayload | null;
-  userInfo: LiveGameUserInfoPayload | null;
-  initialQuestionIndex?: number;
 }) {
   const router = useRouter();
-
   const { playSound } = useSound();
 
-  // Initialize state with the calculated index from the server
-  const [currentQuestionIndex, setCurrentQuestionIndex] =
-    React.useState(initialQuestionIndex);
+  const [userInfo, setUserInfo] = React.useState<UserInfo | null>(null);
+  const [initialQuestionIndex, setInitialQuestionIndex] = React.useState<number | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = React.useState(0);
   const [showRoundCountdown, setShowRoundCountdown] = React.useState(false);
+
+  // Fetch user data and answer progress on mount
+  React.useEffect(() => {
+    async function fetchUserDataAndProgress() {
+      if (!gameInfo) return;
+
+      try {
+        // Fetch user profile
+        const userRes = await sdk.quickAuth.fetch("/api/v1/me");
+        if (!userRes.ok) {
+          if (userRes.status === 401) {
+            router.push("/invite");
+            return;
+          }
+          throw new Error("Failed to fetch user");
+        }
+        const userData = await userRes.json();
+
+        // Check authorization
+        if (userData.status !== "ACTIVE") {
+          router.push("/invite");
+          return;
+        }
+
+        setUserInfo(userData);
+
+        // Fetch user's game history to determine progress
+        const historyRes = await sdk.quickAuth.fetch(`/api/v1/me/games`);
+        if (historyRes.ok) {
+          const games = await historyRes.json();
+          const currentGame = games.find((g: any) => g.gameId === gameInfo.id);
+          const answeredCount = currentGame?.answeredQuestions ?? 0;
+
+          // If user has already completed all questions, redirect to score
+          if (answeredCount >= gameInfo.questions.length) {
+            router.push(`/game/${gameInfo.id}/score`);
+            return;
+          }
+
+          setInitialQuestionIndex(answeredCount);
+          setCurrentQuestionIndex(answeredCount);
+        } else {
+          // No history, start from 0
+          setInitialQuestionIndex(0);
+          setCurrentQuestionIndex(0);
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchUserDataAndProgress();
+  }, [gameInfo, router]);
 
   // Get the duration for the *current* question
   const questionTotalTime =
@@ -84,25 +133,25 @@ export default function LiveGameClient({
     // Decide if round countdown is needed before next question
     if (shouldShowRoundCountdown(currentQuestionIndex, questions)) {
       setShowRoundCountdown(true);
-      // Do NOT increment currentQuestionIndex yet; it increments when countdown ends
       return;
     }
 
     // Otherwise, advance to the next question immediately
     playSound("nextQuestion");
     setCurrentQuestionIndex(nextQuestionIndex);
-  }, [
-    currentQuestionIndex,
-    gameInfo?.questions,
-    gameInfo?.id,
-    router,
-    userInfo?.fid,
-    playSound,
-  ]);
+  }, [currentQuestionIndex, gameInfo?.questions, gameInfo?.id, router, playSound]);
 
-  // Ensure we have game info and questions before rendering
+  // Loading state
+  if (isLoading || initialQuestionIndex === null) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <WaffleLoader text="LOADING GAME..." />
+      </div>
+    );
+  }
+
+  // Ensure we have game info and questions
   if (!gameInfo || !gameInfo.questions || gameInfo.questions.length === 0) {
-    // You could return a loading spinner or an error message here
     return (
       <div className="flex-1 flex items-center justify-center text-white/60">
         Loading game questions...
@@ -113,7 +162,7 @@ export default function LiveGameClient({
   if (!userInfo) {
     return (
       <div className="flex-1 flex items-center justify-center text-white/60">
-        Loading user info...
+        Please sign in to play
       </div>
     );
   }
@@ -122,7 +171,7 @@ export default function LiveGameClient({
     <>
       {showRoundCountdown ? (
         <RoundCountdownCard
-          duration={gameInfo?.roundDurationSec ?? 15} // Use new field
+          duration={gameInfo?.roundDurationSec ?? 15}
           onComplete={handleRoundCountdownComplete}
           gameId={gameInfo?.id ?? null}
           nextRoundNumber={gameInfo?.questions[currentQuestionIndex + 1]?.roundIndex ?? 1}
@@ -132,7 +181,7 @@ export default function LiveGameClient({
           question={gameInfo.questions[currentQuestionIndex]}
           questionNumber={currentQuestionIndex + 1}
           totalQuestions={gameInfo.questions.length}
-          duration={questionTotalTime} // Use the calculated duration
+          duration={questionTotalTime}
           onComplete={handleQuestionCompleted}
         />
       )}

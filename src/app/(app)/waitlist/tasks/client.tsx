@@ -1,11 +1,12 @@
 "use client";
 
-import { use } from "react";
-import { WaffleLoader } from "@/components/ui/WaffleLoader";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useTaskActions } from "./_components/useTaskActions";
 import { TASKS, WaitlistTask, WaitlistTaskId, TaskStatus } from "@/lib/tasks";
+import { WaffleLoader } from "@/components/ui/WaffleLoader";
+import sdk from "@farcaster/miniapp-sdk";
 
 // WaitlistData type matching v1 API response
 export interface WaitlistData {
@@ -22,16 +23,61 @@ export interface WaitlistData {
 export type { WaitlistTask, WaitlistTaskId, TaskStatus };
 export { TASKS };
 
-export function TasksPageClient({ waitlistPromise }: { waitlistPromise: Promise<WaitlistData> }) {
-    const waitlistData = use(waitlistPromise);
+export function TasksPageClient() {
+    const [waitlistData, setWaitlistData] = useState<WaitlistData | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // Fetch waitlist data on mount using authenticated fetch
+    useEffect(() => {
+        async function fetchData() {
+            try {
+                const response = await sdk.quickAuth.fetch("/api/v1/waitlist");
+                if (!response.ok) {
+                    throw new Error("Failed to fetch waitlist data");
+                }
+                const data = await response.json();
+                setWaitlistData(data);
+            } catch (err) {
+                console.error("Error fetching waitlist data:", err);
+                setError("Failed to load tasks");
+            } finally {
+                setIsLoading(false);
+            }
+        }
+        fetchData();
+    }, []);
 
     // Initialize task actions hook
     const { handleGo, handleComplete, getTaskStatus, isPending } = useTaskActions({
-        waitlistData,
+        waitlistData: waitlistData ?? {
+            fid: 0,
+            rank: 0,
+            points: 0,
+            inviteCode: null,
+            invitesCount: 0,
+            status: "",
+            completedTasks: [],
+        },
     });
 
-    return (
+    if (isLoading) {
+        return (
+            <div className="flex-1 flex items-center justify-center">
+                <WaffleLoader text="LOADING TASKS..." />
+            </div>
+        );
+    }
 
+    if (error || !waitlistData) {
+        return (
+            <div className="flex-1 flex items-center justify-center">
+                <p className="text-red-400">{error || "Failed to load tasks"}</p>
+            </div>
+        );
+    }
+
+    return (
         <div className="w-full max-w-lg mx-auto flex flex-col flex-1 overflow-y-auto px-4 py-6 space-y-3">
             {TASKS.map((task) => {
                 const status = getTaskStatus(task);
@@ -133,6 +179,5 @@ export function TasksPageClient({ waitlistPromise }: { waitlistPromise: Promise<
                 );
             })}
         </div>
-
     );
 }

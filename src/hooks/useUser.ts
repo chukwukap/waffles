@@ -1,4 +1,4 @@
-import { useMiniKit } from "@coinbase/onchainkit/minikit";
+import { useMiniKit, useQuickAuth } from "@coinbase/onchainkit/minikit";
 import sdk from "@farcaster/miniapp-sdk";
 import { useState, useCallback, useEffect, useRef } from "react";
 

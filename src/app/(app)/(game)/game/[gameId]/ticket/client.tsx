@@ -1,24 +1,83 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { CardStack } from "@/components/CardStack";
 import { useMutuals } from "@/hooks/useMutuals";
+import { WaffleLoader } from "@/components/ui/WaffleLoader";
+import { BottomNav } from "@/components/BottomNav";
+import sdk from "@farcaster/miniapp-sdk";
 
-import { TicketPageGameInfo, TicketPageUserInfo } from "./page";
+import { TicketPageGameInfo } from "./page";
 import { WaffleCard } from "./_components/WaffleCard";
 import { SuccessCard } from "./_components/SuccessCard";
 
+interface UserInfo {
+  fid: number;
+  username: string | null;
+  pfpUrl: string | null;
+  status: string;
+}
+
+interface TicketInfo {
+  id: number;
+  code: string;
+  status: string;
+  amountUSDC: number;
+  gameId: number;
+}
+
 type TicketPageClientImplProps = {
   gameInfo: TicketPageGameInfo;
-  userInfo: TicketPageUserInfo;
 };
 
 export default function TicketPageClientImpl({
   gameInfo,
-  userInfo,
 }: TicketPageClientImplProps) {
-  const ticket = userInfo && userInfo.tickets.length > 0 ? userInfo.tickets[0] : null
+  const router = useRouter();
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [ticket, setTicket] = useState<TicketInfo | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch user data and ticket on mount
+  useEffect(() => {
+    async function fetchUserData() {
+      try {
+        // Fetch user profile
+        const userRes = await sdk.quickAuth.fetch("/api/v1/me");
+        if (!userRes.ok) {
+          if (userRes.status === 401) {
+            router.push("/invite");
+            return;
+          }
+          throw new Error("Failed to fetch user");
+        }
+        const userData = await userRes.json();
+
+        // Check authorization
+        if (userData.status !== "ACTIVE") {
+          router.push("/invite");
+          return;
+        }
+
+        setUserInfo(userData);
+
+        // Fetch tickets for this game
+        const ticketRes = await sdk.quickAuth.fetch(`/api/v1/me/tickets?gameId=${gameInfo.id}`);
+        if (ticketRes.ok) {
+          const tickets: TicketInfo[] = await ticketRes.json();
+          setTicket(tickets[0] || null);
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchUserData();
+  }, [gameInfo.id, router]);
+
   // Use hook for mutuals
   const mutualsData = useMutuals({
     context: "game",
@@ -34,82 +93,108 @@ export default function TicketPageClientImpl({
     return pool;
   }, [gameInfo]);
 
+  if (isLoading) {
+    return (
+      <>
+        <div className="flex-1 flex items-center justify-center">
+          <WaffleLoader text="LOADING..." />
+        </div>
+        <BottomNav />
+      </>
+    );
+  }
 
+  if (!userInfo) {
+    return (
+      <>
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-white/60">Please sign in to continue</p>
+        </div>
+        <BottomNav />
+      </>
+    );
+  }
 
   if (ticket !== null) {
     return (
-      <SuccessCard
-        coverUrl={gameInfo.coverUrl}
-        theme={gameInfo.theme}
-        prizePool={prizePool}
-        fid={userInfo.fid}
-        gameId={gameInfo.id}
-        ticket={ticket}
-      />
+      <>
+        <SuccessCard
+          coverUrl={gameInfo.coverUrl}
+          theme={gameInfo.theme}
+          prizePool={prizePool}
+          fid={userInfo.fid}
+          gameId={gameInfo.id}
+          ticket={ticket}
+        />
+        <BottomNav />
+      </>
     );
   }
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 space-y-1 w-full overflow-x-hidden">
-      <div className="flex flex-row items-center justify-between w-full max-w-lg h-[50px] mt-4 mx-auto">
-        <div className="flex flex-col justify-center items-start h-full">
-          <p className="font-medium font-display text-[14px] leading-[130%] tracking-[-0.03em] text-center text-[#99A0AE]">
-            Next game theme
-          </p>
-          <h1 className="font-body font-normal text-[32px] leading-[100%] tracking-normal text-white">
-            {gameInfo.theme.toUpperCase()}
-          </h1>
+    <>
+      <div className="flex-1 overflow-y-auto px-4 space-y-1 w-full overflow-x-hidden">
+        <div className="flex flex-row items-center justify-between w-full max-w-lg h-[50px] mt-4 mx-auto">
+          <div className="flex flex-col justify-center items-start h-full">
+            <p className="font-medium font-display text-[14px] leading-[130%] tracking-[-0.03em] text-center text-[#99A0AE]">
+              Next game theme
+            </p>
+            <h1 className="font-body font-normal text-[32px] leading-[100%] tracking-normal text-white">
+              {gameInfo.theme.toUpperCase()}
+            </h1>
+          </div>
+
+          {gameInfo.coverUrl && (
+            <Image
+              src={gameInfo.coverUrl}
+              alt={gameInfo.theme.toUpperCase()}
+              width={40}
+              height={40}
+              className="object-contain"
+            />
+          )}
+        </div>
+        <Image
+          src="/images/illustrations/waffles.svg"
+          alt="Waffle"
+          width={225}
+          height={132}
+          priority
+          className="mx-auto mb-2"
+        />
+        <h2 className="font-body font-normal text-[44px] leading-[92%] tracking-[-0.03em] text-center mb-4">
+          GET YOUR WAFFLE
+        </h2>
+        <div className="mx-auto mb-4">
+          <WaffleCard
+            spots={gameInfo._count?.tickets ?? 0}
+            prizePool={prizePool}
+            price={gameInfo.entryFee}
+            maxPlayers={gameInfo.maxPlayers}
+            fid={userInfo.fid}
+            gameId={gameInfo.id}
+          />
         </div>
 
-        {gameInfo.coverUrl && (
-          <Image
-            src={gameInfo.coverUrl}
-            alt={gameInfo.theme.toUpperCase()}
-            width={40}
-            height={40}
-            className="object-contain"
+        <div className="flex flex-col items-center mb-8">
+          <CardStack
+            size="clamp(32px,7vw,48px)"
+            borderColor="#fff"
+            imageUrls={
+              mutualsData?.mutuals
+                .map((m) => m.pfpUrl)
+                .filter((url): url is string => url !== null) ?? undefined
+            }
           />
-        )}
+          <p className="font-display text-[#99A0AE] text-sm mt-2">
+            {mutualsData?.totalCount === 0
+              ? "and others have joined the game"
+              : `and ${mutualsData?.totalCount ?? 0} other${(mutualsData?.totalCount ?? 0) === 1 ? "" : "s"
+              } have joined the game`}
+          </p>
+        </div>
       </div>
-      <Image
-        src="/images/illustrations/waffles.svg"
-        alt="Waffle"
-        width={225}
-        height={132}
-        priority
-        className="mx-auto mb-2"
-      />
-      <h2 className="font-body font-normal text-[44px] leading-[92%] tracking-[-0.03em] text-center mb-4">
-        GET YOUR WAFFLE
-      </h2>
-      <div className="mx-auto mb-4">
-        <WaffleCard
-          spots={gameInfo._count?.tickets ?? 0}
-          prizePool={prizePool}
-          price={gameInfo.entryFee}
-          maxPlayers={gameInfo.maxPlayers}
-          fid={userInfo.fid}
-          gameId={gameInfo.id}
-        />
-      </div>
-
-      <div className="flex flex-col items-center mb-8">
-        <CardStack
-          size="clamp(32px,7vw,48px)"
-          borderColor="#fff"
-          imageUrls={
-            mutualsData?.mutuals
-              .map((m) => m.pfpUrl)
-              .filter((url): url is string => url !== null) ?? undefined
-          }
-        />
-        <p className="font-display text-[#99A0AE] text-sm mt-2">
-          {mutualsData?.totalCount === 0
-            ? "and others have joined the game"
-            : `and ${mutualsData?.totalCount ?? 0} other${(mutualsData?.totalCount ?? 0) === 1 ? "" : "s"
-            } have joined the game`}
-        </p>
-      </div>
-    </div>
+      <BottomNav />
+    </>
   );
 }

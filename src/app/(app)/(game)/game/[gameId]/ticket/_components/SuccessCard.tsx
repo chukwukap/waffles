@@ -5,7 +5,12 @@ import { cn } from "@/lib/utils";
 import { useCallback } from "react";
 import { env } from "@/lib/env";
 import { useComposeCast } from "@coinbase/onchainkit/minikit";
-import { Ticket } from "@/lib/db";
+
+// Simplified ticket type for client-side usage
+interface TicketInfo {
+  id: number;
+  code: string;
+}
 
 export const SuccessCard = ({
   theme,
@@ -20,7 +25,7 @@ export const SuccessCard = ({
   coverUrl: string;
   fid: number;
   gameId: number;
-  ticket: Ticket
+  ticket: TicketInfo;
 }) => {
   const { composeCastAsync } = useComposeCast();
 
