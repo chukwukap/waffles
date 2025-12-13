@@ -11,7 +11,6 @@ import {
 
 import { LeaderboardApiResponse } from "./page";
 import { LeaderboardTabKey, Tabs } from "./_components/Tabs";
-import { fetchMoreLeaderboardData } from "@/actions/leaderboard";
 import { useInfiniteLoader } from "./_components/useInfiniteLoader";
 import { Top3 } from "./_components/Top3";
 import { Row } from "./_components/Row";
@@ -63,7 +62,9 @@ export default function LeaderboardClientPage({
 
     startTransition(async () => {
       try {
-        const newData = await fetchMoreLeaderboardData(activeTab, page);
+        const res = await fetch(`/api/v1/leaderboard?tab=${activeTab}&page=${page}`);
+        if (!res.ok) throw new Error("Failed to fetch");
+        const newData: LeaderboardApiResponse = await res.json();
         setEntries((prev) => [...prev, ...newData.users]);
         setHasMore(newData.hasMore);
         setPage((prev) => prev + 1);

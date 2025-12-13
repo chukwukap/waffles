@@ -1,30 +1,24 @@
 "use client";
 
-import { claimPrizeAction, ClaimPrizeResult } from "@/actions/prize";
 import { WaffleIcon, FlashIcon, CupIcon } from "@/components/icons";
 import { Spinner } from "@/components/ui/spinner";
 import { notify } from "@/components/ui/Toaster";
 import { GameHistoryEntry } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import sdk from "@farcaster/miniapp-sdk";
-import React, { useActionState, startTransition, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
+import { useRouter } from "next/navigation";
 
 interface GameHistoryItemProps {
   game: GameHistoryEntry;
 }
 
 export default function GameHistoryItem({ game }: GameHistoryItemProps) {
-  const { context: miniKitContext } = useMiniKit();
-  const fid = miniKitContext?.user?.fid;
-
-  // Use ActionState for prize claiming
-  const [claimState, claimAct, isClaiming] = useActionState<
-    ClaimPrizeResult,
-    FormData
-  >(claimPrizeAction, { success: false, error: "" });
+  const router = useRouter();
+  const [isClaiming, setIsClaiming] = useState(false);
+  const [localClaimedAt, setLocalClaimedAt] = useState<Date | null>(null);
 
   const formattedWinnings = `$${game.winnings.toLocaleString(undefined, {
     minimumFractionDigits: 2,
@@ -32,39 +26,37 @@ export default function GameHistoryItem({ game }: GameHistoryItemProps) {
   })}`;
 
   const hasWinnings = game.winnings > 0;
-  // Determine if claimed: either from DB status or successful local action
-  const isClaimed =
-    !!game.claimedAt || (claimState.success && !!claimState.claimedAt);
+  const isClaimed = !!game.claimedAt || !!localClaimedAt;
   const isEligibleToClaim = hasWinnings && !isClaimed;
-
-  useEffect(() => {
-    if (claimState.success) {
-      notify.success("Prize Claimed!");
-    } else if (claimState.error) {
-      notify.error(claimState.error);
-    }
-  }, [claimState]);
 
   const handleClaim = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!fid || isClaiming || !isEligibleToClaim) return;
+    if (isClaiming || !isEligibleToClaim) return;
 
-    // Get auth token using Farcaster Quick Auth
-    const { token } = await sdk.quickAuth.getToken();
-    if (!token) {
-      notify.error("Sign in required to claim.");
-      return;
+    setIsClaiming(true);
+    try {
+      const res = await sdk.quickAuth.fetch("/api/v1/prizes/claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gameId: game.id }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to claim prize");
+      }
+
+      const data = await res.json();
+      setLocalClaimedAt(new Date(data.claimedAt));
+      notify.success("Prize Claimed!");
+      router.refresh();
+    } catch (error) {
+      console.error("Claim error:", error);
+      notify.error(error instanceof Error ? error.message : "Failed to claim prize");
+    } finally {
+      setIsClaiming(false);
     }
-
-    const formData = new FormData();
-    formData.append("fid", String(fid));
-    formData.append("gameId", String(game.id));
-    formData.append("authToken", token);
-
-    startTransition(() => {
-      claimAct(formData);
-    });
   };
 
   return (

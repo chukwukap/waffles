@@ -1,0 +1,100 @@
+import { NextResponse } from "next/server";
+import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { z } from "zod";
+
+const claimSchema = z.object({
+  gameId: z.number().int().positive("Invalid Game ID"),
+});
+
+interface ClaimResponse {
+  success: true;
+  message: string;
+  claimedAt: string;
+}
+
+/**
+ * POST /api/v1/prizes/claim
+ * Claim prize winnings for a game (auth required)
+ */
+export const POST = withAuth(async (request, auth: AuthResult) => {
+  try {
+    const body = await request.json();
+    const validation = claimSchema.safeParse(body);
+
+    if (!validation.success) {
+      return NextResponse.json<ApiError>(
+        {
+          error: validation.error.issues[0]?.message || "Invalid input",
+          code: "VALIDATION_ERROR",
+        },
+        { status: 400 }
+      );
+    }
+
+    const { gameId } = validation.data;
+
+    // Find game player record
+    const gamePlayer = await prisma.gamePlayer.findUnique({
+      where: { gameId_userId: { gameId, userId: auth.userId } },
+      select: {
+        claimedAt: true,
+        rank: true,
+        score: true,
+        game: {
+          select: {
+            tickets: {
+              where: { userId: auth.userId, status: "PAID" },
+              select: { amountUSDC: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!gamePlayer) {
+      return NextResponse.json<ApiError>(
+        { error: "Game record not found", code: "NOT_FOUND" },
+        { status: 404 }
+      );
+    }
+
+    // Check if already claimed
+    if (gamePlayer.claimedAt) {
+      return NextResponse.json<ApiError>(
+        { error: "Prize already claimed", code: "ALREADY_CLAIMED" },
+        { status: 400 }
+      );
+    }
+
+    // Check eligibility
+    const winnings = gamePlayer.game.tickets[0]?.amountUSDC ?? 0;
+    const isEligible = gamePlayer.rank === 1 || winnings > 0;
+
+    if (!isEligible) {
+      return NextResponse.json<ApiError>(
+        { error: "Not eligible for a prize", code: "NOT_ELIGIBLE" },
+        { status: 400 }
+      );
+    }
+
+    // Claim the prize
+    const claimedAt = new Date();
+    await prisma.gamePlayer.update({
+      where: { gameId_userId: { gameId, userId: auth.userId } },
+      data: { claimedAt },
+    });
+
+    return NextResponse.json<ClaimResponse>({
+      success: true,
+      message: "Prize claimed successfully!",
+      claimedAt: claimedAt.toISOString(),
+    });
+  } catch (error) {
+    console.error("POST /api/v1/prizes/claim Error:", error);
+    return NextResponse.json<ApiError>(
+      { error: "Internal server error", code: "INTERNAL_ERROR" },
+      { status: 500 }
+    );
+  }
+});

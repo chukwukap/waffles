@@ -156,3 +156,104 @@ export const GET = withAuth(async (request: NextRequest, auth: AuthResult) => {
     gameHistory,
   });
 });
+
+// ============================================================================
+// PATCH /api/v1/me/profile - Update user profile
+// ============================================================================
+
+import { z } from "zod";
+import { ApiError } from "@/lib/auth";
+
+const updateProfileSchema = z
+  .object({
+    username: z
+      .string()
+      .trim()
+      .min(1, "Name cannot be empty.")
+      .optional()
+      .nullable(),
+    wallet: z.string().trim().optional().nullable(),
+    pfpUrl: z.string().url("Invalid image URL.").optional().nullable(),
+  })
+  .refine(
+    (data) =>
+      data.username !== undefined ||
+      data.wallet !== undefined ||
+      data.pfpUrl !== undefined,
+    { message: "At least one field must be provided for update" }
+  );
+
+interface UpdateProfileResponse {
+  success: true;
+  user: {
+    id: number;
+    fid: number;
+    username: string | null;
+    wallet: string | null;
+    pfpUrl: string | null;
+  };
+}
+
+/**
+ * PATCH /api/v1/me/profile
+ * Update current user's profile (auth required)
+ */
+export const PATCH = withAuth(async (request, auth: AuthResult) => {
+  try {
+    const body = await request.json();
+    const validation = updateProfileSchema.safeParse(body);
+
+    if (!validation.success) {
+      return NextResponse.json<ApiError>(
+        {
+          error: validation.error.issues[0]?.message || "Invalid input",
+          code: "VALIDATION_ERROR",
+        },
+        { status: 400 }
+      );
+    }
+
+    const updateData = validation.data;
+
+    // Filter out undefined values
+    const filteredUpdateData = Object.entries(updateData).reduce(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key as keyof typeof updateData] = value;
+        }
+        return acc;
+      },
+      {} as Partial<typeof updateData>
+    );
+
+    if (Object.keys(filteredUpdateData).length === 0) {
+      return NextResponse.json<ApiError>(
+        { error: "No update data provided", code: "NO_DATA" },
+        { status: 400 }
+      );
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: auth.userId },
+      data: filteredUpdateData,
+      select: {
+        id: true,
+        fid: true,
+        username: true,
+        wallet: true,
+        pfpUrl: true,
+      },
+    });
+
+    return NextResponse.json<UpdateProfileResponse>({
+      success: true,
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("PATCH /api/v1/me/profile Error:", error);
+    return NextResponse.json<ApiError>(
+      { error: "Internal server error", code: "INTERNAL_ERROR" },
+      { status: 500 }
+    );
+  }
+});
