@@ -1,10 +1,10 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+import sdk from "@farcaster/miniapp-sdk";
 import { ChatIcon, SendIcon, UsersIcon } from "@/components/icons";
 import Backdrop from "@/components/ui/Backdrop";
 import { ChatComment } from "./ChatComment";
 import { useGameEvents } from "@/hooks/useGameEvents";
-import { sendMessageAction } from "@/actions/chat";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useSound } from "@/components/providers/SoundContext";
 import { ChatWithUser } from "@/lib/types";
@@ -223,29 +223,21 @@ export const Chat = ({
     // Scroll to the new message
     setTimeout(() => scrollToBottom(), 100);
 
-    const result = await sendMessageAction({
-      gameId,
-      message: currentMessage,
-      fid,
+    const result = await sdk.quickAuth.fetch(`/api/v1/games/${gameId}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: currentMessage }),
     });
 
-    if (!result.success) {
-      console.error("Failed to send message:", result.error);
+    if (!result.ok) {
+      console.error("Failed to send message");
       // Mark as error
       setComments(prev => prev.map(c =>
         c.id === tempId ? { ...c, status: "error" } : c
       ));
       setMessage(currentMessage); // Restore text so user can try again
-    } else {
-      // Update the optimistic message with the real ID (if we want, or wait for SSE)
-      // Ideally, we wait for SSE to replace it, but we can also update status to 'sent' here
-      // to give immediate feedback if SSE is slightly delayed.
-      // However, since we rely on SSE for the "true" state, let's just leave it as pending 
-      // until the SSE event arrives and replaces it. 
-      // BUT, if SSE is fast, it might arrive before this function returns.
-      // Let's just update the ID if we can, but we don't have the full DB object here.
-      // We'll rely on the SSE handler to replace it.
     }
+    // SSE handler will update the optimistic message with the real one
 
     setIsSubmitting(false);
   };

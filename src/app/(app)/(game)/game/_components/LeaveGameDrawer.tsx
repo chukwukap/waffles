@@ -1,20 +1,12 @@
 "use client";
 
-import {
-  SetStateAction,
-  Dispatch,
-  startTransition,
-  useActionState,
-  useCallback,
-  useEffect,
-} from "react";
+import { Dispatch, SetStateAction, useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import sdk from "@farcaster/miniapp-sdk";
 import { cn } from "@/lib/utils";
 import { notify } from "@/components/ui/Toaster";
-import { leaveGameAction } from "@/actions/game";
-import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
 interface LeaveGameDrawerProps {
   open: boolean;
@@ -27,13 +19,9 @@ export default function LeaveGameDrawer({
   setIsLeaveGameDrawerOpen,
   gameId,
 }: LeaveGameDrawerProps) {
-  const { context } = useMiniKit();
   const router = useRouter();
+  const [isLeaving, setIsLeaving] = useState(false);
 
-  const [state, leaveGameAct, pending] = useActionState(leaveGameAction, {
-    success: false,
-    error: "",
-  });
   useEffect(() => {
     if (!open) return;
     const originalOverflow = document.body.style.overflow;
@@ -54,33 +42,34 @@ export default function LeaveGameDrawer({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open, setIsLeaveGameDrawerOpen]);
 
-  // Handle successful leave
-  useEffect(() => {
-    if (state.success && !pending) {
-      notify.success("You've left the game");
-      setIsLeaveGameDrawerOpen(false);
-      router.push("/game");
-    } else if (!state.success && state.error && !pending) {
-      notify.error(state.error);
-    }
-  }, [state, pending, setIsLeaveGameDrawerOpen, router]);
-
-  const handleLeaveGame = useCallback(() => {
-    if (!context?.user.fid) {
-      notify.error("Failed to leave game: No FID found.");
-      return;
-    }
+  const handleLeaveGame = useCallback(async () => {
     if (!gameId) {
       notify.error("Failed to leave game: No game ID found.");
       return;
     }
-    const formData = new FormData();
-    formData.append("fid", String(context.user.fid));
-    formData.append("gameId", String(gameId));
-    startTransition(() => {
-      leaveGameAct(formData);
-    });
-  }, [context?.user.fid, gameId, leaveGameAct]);
+
+    setIsLeaving(true);
+    try {
+      const res = await sdk.quickAuth.fetch(`/api/v1/games/${gameId}/leave`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to leave game");
+      }
+
+      notify.success("You've left the game");
+      setIsLeaveGameDrawerOpen(false);
+      router.push("/game");
+    } catch (error) {
+      console.error("Leave game failed:", error);
+      notify.error(error instanceof Error ? error.message : "Failed to leave game");
+    } finally {
+      setIsLeaving(false);
+    }
+  }, [gameId, setIsLeaveGameDrawerOpen, router]);
 
   return (
     <AnimatePresence>
@@ -107,22 +96,16 @@ export default function LeaveGameDrawer({
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 240, damping: 28 }}
           >
-            {/* Full width background container */}
             <div
               className="w-full rounded-t-2xl overflow-hidden noise bg-linear-to-b from-[#1E1E1E] to-black"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Full width header background */}
               <div className="relative w-full border-b border-white/5 bg-[#191919]">
-                {/* Slug indicator stays centered and max width contained */}
                 <div className="mx-auto w-full max-w-[480px] px-4 pt-3 pb-3 relative">
                   <div className="absolute left-1/2 top-2 -translate-x-1/2 h-[5px] w-9 rounded-[2.5px] bg-white/40" />
-                  <div className="pt-5 text-center">
-                    {/* <p>Optional Timer or Title Here</p> */}
-                  </div>
+                  <div className="pt-5 text-center" />
                 </div>
               </div>
-              {/* Content */}
               <div
                 className="px-4"
                 style={{
@@ -175,11 +158,10 @@ export default function LeaveGameDrawer({
                       STAY
                     </span>
                   </button>
-                  {/* Secondary CTA (YES, LEAVE) */}
                   <div className="mt-3">
                     <button
                       onClick={handleLeaveGame}
-                      disabled={pending}
+                      disabled={isLeaving}
                       className="w-full rounded-xl px-4 py-[12px] text-center transition hover:bg-white/5 active:bg-white/10"
                     >
                       <span
@@ -190,7 +172,7 @@ export default function LeaveGameDrawer({
                           letterSpacing: "-0.02em",
                         }}
                       >
-                        YES, LEAVE
+                        {isLeaving ? "LEAVING..." : "YES, LEAVE"}
                       </span>
                     </button>
                   </div>

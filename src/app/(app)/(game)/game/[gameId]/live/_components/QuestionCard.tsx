@@ -2,17 +2,15 @@
 
 import * as React from "react";
 import Image from "next/image";
+import sdk from "@farcaster/miniapp-sdk";
 import { cn } from "@/lib/utils";
 import { PALETTES } from "@/lib/constants";
 
 import { useCountdown } from "@/hooks/useCountdown";
 import { useSound } from "@/components/providers/SoundContext";
-import { useMiniKit } from "@coinbase/onchainkit/minikit";
-import { useAuth } from "@/hooks/useAuth";
-import { submitAnswerAction } from "@/actions/game";
 import { QuestionCardHeader } from "./QuestionCardHeader";
 import { QuestionOption } from "./QuestionOption";
-import type { LiveGameInfoPayload } from "../page"; // Import the payload type
+import type { LiveGameInfoPayload } from "../page";
 
 // Get the specific type for a single question
 type Question = LiveGameInfoPayload["questions"][number];
@@ -30,20 +28,10 @@ export function QuestionCard({
   duration: number;
   onComplete: () => void;
 }) {
-  const { context } = useMiniKit();
-  const { getToken, signIn } = useAuth();
-  const [selectedOptionIndex, setSelectedOptionIndex] = React.useState<
-    number | null
-  >(null);
+  const [selectedOptionIndex, setSelectedOptionIndex] = React.useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const { playSound } = useSound();
-  const [submissionState, submitAnswerAct, pending] = React.useActionState(
-    submitAnswerAction,
-    {
-      error: "",
-      success: false,
-    }
-  );
 
   // Track submission status to prevent double submits
   const [hasSubmitted, setHasSubmitted] = React.useState(false);
@@ -57,45 +45,37 @@ export function QuestionCard({
     setSelectedOptionIndex(null);
   }, [question.id]);
 
-  // Helper to submit answer
+  // Helper to submit answer via v1 API
   const submitAnswer = React.useCallback(
     async (index: number | null, timeTakenMs: number) => {
-      if (!context) {
-        console.error("context is not available");
-        return;
-      }
+      setIsSubmitting(true);
+      try {
+        const res = await sdk.quickAuth.fetch(`/api/v1/games/${question.gameId}/answers`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            questionId: question.id,
+            selectedIndex: index,
+            timeTakenMs,
+          }),
+        });
 
-      let authToken = getToken();
-
-      if (!authToken) {
-        authToken = await signIn();
-        if (!authToken) {
-          console.error("Authentication required to submit answer");
-          return;
+        if (!res.ok) {
+          const errorData = await res.json();
+          console.error("Answer submission failed:", errorData.error);
         }
+      } catch (error) {
+        console.error("Failed to submit answer:", error);
+      } finally {
+        setIsSubmitting(false);
       }
-
-      const formData = new FormData();
-      formData.append("fid", String(context.user?.fid));
-      formData.append("gameId", String(question.gameId));
-      formData.append("questionId", String(question.id));
-      formData.append("timeTakenMs", String(timeTakenMs));
-      formData.append("authToken", authToken);
-
-      if (index !== null) {
-        formData.append("selectedIndex", String(index));
-      }
-
-      React.startTransition(() => {
-        submitAnswerAct(formData);
-      });
     },
-    [context, getToken, signIn, question.gameId, question.id, submitAnswerAct]
+    [question.gameId, question.id]
   );
 
   // Handler for user selecting an option
   const handleSelect = (index: number) => {
-    if (pending) return; // Only prevent during active submission
+    if (isSubmitting) return;
 
     // 1. Update UI immediately
     setSelectedOptionIndex(index);
@@ -105,7 +85,7 @@ export function QuestionCard({
     const now = Date.now();
     const timeTakenMs = Math.min(now - startTimeRef.current, duration * 1000);
 
-    // 3. Submit immediately (allows changing answer - last submission wins)
+    // 3. Submit immediately
     submitAnswer(index, timeTakenMs);
   };
 
@@ -114,7 +94,6 @@ export function QuestionCard({
     // If timer runs out and we haven't submitted, submit a "timeout" (no answer)
     if (!hasSubmitted) {
       setHasSubmitted(true);
-      // Time taken is full duration
       await submitAnswer(null, duration * 1000);
     }
 
@@ -128,65 +107,42 @@ export function QuestionCard({
     false
   );
 
-  // ───────────────────────── PLAY SOUND ON QUESTION CHANGE ─────────────────────────
+  // Play sound on question change
   React.useEffect(() => {
-    // Use the new soundUrl field
     if (!question || !question.soundUrl) return;
-
     playSound(question.soundUrl, { volume: 0.8 });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playSound, question.id]);
+  }, [playSound, question.id, question.soundUrl]);
 
-  // start the countdown when the component mounts
+  // Start the countdown when the component mounts
   React.useEffect(() => {
     reset();
     start();
-    // Reset start time again just in case reset() takes time
     startTimeRef.current = Date.now();
   }, [reset, start, question.id]);
 
-  // ───────────────────────── UI ─────────────────────────
   return (
     <div className="w-full max-w-lg mx-auto mt-2">
       <QuestionCardHeader
         questionNumber={questionNumber}
         totalQuestions={totalQuestions}
         remaining={remaining}
-        duration={duration - 3} // Keep old duration logic for header
+        duration={duration - 3}
       />
 
-      {/* Question Card Content */}
       <section
-        className="mx-auto w-full max-w-lg px-4  animate-up"
+        className="mx-auto w-full max-w-lg px-4 animate-up"
         aria-live="polite"
       >
-        {/* Game Title - Use new `content` field */}
         <div
           className="
-          mx-auto
-          mb-4
-          flex
-          items-center
-          justify-center
-          select-none
-          w-full
-          max-w-[206px]
-          font-normal
-          text-[36px]
-          leading-[0.92]
-          text-center
-          tracking-[-0.03em]
-          text-white
-          font-body
-          flex-none
-          order-0
-          grow-0
+          mx-auto mb-4 flex items-center justify-center select-none
+          w-full max-w-[206px] font-normal text-[36px] leading-[0.92]
+          text-center tracking-[-0.03em] text-white font-body
         "
         >
           {question.content}
         </div>
 
-        {/* Image Section - Use new `mediaUrl` field and check if it exists */}
         {question.mediaUrl && (
           <figure className="mx-auto mb-4 flex justify-center w-full">
             <div className="relative w-full max-w-[299px] h-[158px] rounded-[10px] overflow-hidden bg-[#17171a] border border-[#313136] shadow-[0_8px_0_#000]">
@@ -202,7 +158,6 @@ export function QuestionCard({
           </figure>
         )}
 
-        {/* Options */}
         <ul className={cn("mx-auto mb-2 flex w-full flex-col gap-2")}>
           {question.options.map((opt, idx) => {
             const palette = PALETTES[idx % PALETTES.length];
@@ -215,13 +170,12 @@ export function QuestionCard({
                 palette={palette}
                 selectedOptionIndex={selectedOptionIndex}
                 onSelect={handleSelect}
-                disabled={pending}
+                disabled={isSubmitting}
               />
             );
           })}
         </ul>
 
-        {/* Submitted Footer */}
         {selectedOptionIndex !== null && (
           <div
             className={cn(
@@ -230,7 +184,7 @@ export function QuestionCard({
             )}
             aria-live="polite"
           >
-            {pending
+            {isSubmitting
               ? "Submitting..."
               : "Answer selected! Waiting for time to run out..."}
           </div>
