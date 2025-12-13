@@ -33,7 +33,7 @@ export function WaitlistAnalytics({ data }: WaitlistAnalyticsProps) {
         { name: "No Quests (0%)", value: data.taskCompletion.none, color: COMPLETION_COLORS.none },
     ].filter(d => d.value > 0);
 
-    const totalTaskUsers = data.taskCompletion.all + data.taskCompletion.most + data.taskCompletion.half + data.taskCompletion.none;
+    const totalQuestUsers = data.taskCompletion.all + data.taskCompletion.most + data.taskCompletion.half + data.taskCompletion.none;
 
     return (
         <div className="space-y-6">
@@ -142,7 +142,7 @@ export function WaitlistAnalytics({ data }: WaitlistAnalyticsProps) {
                             { label: "Completed 50%+ quests", value: data.taskCompletion.half, color: COMPLETION_COLORS.half },
                             { label: "Completed NO quests (0%)", value: data.taskCompletion.none, color: COMPLETION_COLORS.none },
                         ].map((item) => {
-                            const percentage = totalTaskUsers > 0 ? (item.value / totalTaskUsers) * 100 : 0;
+                            const percentage = totalQuestUsers > 0 ? (item.value / totalQuestUsers) * 100 : 0;
                             return (
                                 <div key={item.label} className="space-y-2">
                                     <div className="flex items-center justify-between">

@@ -238,18 +238,18 @@ think you can beat me? you're on😏`;
 
             {/* Dynamic Rank Message based on Figma design */}
             <p className={"text-[#99A0AE] font-display font-medium text-[16px] leading-[130%] tracking-[-0.03em] text-center text-pretty mx-auto"}>
-              {rankMsg(user.rank)} Move up faster <br />by completing tasks and inviting
+              {rankMsg(user.rank)} Move up faster <br />by completing quests and inviting
               friends!
             </p>
 
-            {/* Primary Action: COMPLETE TASKS */}
+            {/* Primary Action: COMPLETE QUESTS */}
             <div className="mt-4 w-full flex flex-col items-center gap-4">
               <FancyBorderButton
                 onClick={() => router.push(`/waitlist/quests`)}
                 className={"mx-auto text-[#191919] text-[26px]"}
                 disabled={pending}
               >
-                COMPLETE TASKS
+                COMPLETE QUESTS
               </FancyBorderButton>
 
               {/* Secondary Actions: Two Links */}
