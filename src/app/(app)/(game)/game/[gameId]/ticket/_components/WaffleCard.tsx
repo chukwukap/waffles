@@ -9,7 +9,21 @@ import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { parseUnits } from "viem";
 import { env } from "@/lib/env";
-import { USDC_ADDRESS_BASE_MAINNET, USDC_TRANSFER_ABI } from "@/lib/constants";
+import { USDC_ADDRESS_BASE_MAINNET } from "@/lib/constants";
+
+// ERC20 transfer ABI for USDC payments
+const USDC_TRANSFER_ABI = [
+  {
+    name: "transfer",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "to", type: "address" },
+      { name: "amount", type: "uint256" },
+    ],
+    outputs: [{ name: "", type: "bool" }],
+  },
+] as const;
 
 const InfoBox = ({
   iconUrl,

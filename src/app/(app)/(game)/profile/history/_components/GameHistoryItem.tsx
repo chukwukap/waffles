@@ -7,8 +7,8 @@ import { notify } from "@/components/ui/Toaster";
 import { GameHistoryEntry } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
+import sdk from "@farcaster/miniapp-sdk";
 import React, { useActionState, startTransition, useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 
@@ -19,7 +19,6 @@ interface GameHistoryItemProps {
 export default function GameHistoryItem({ game }: GameHistoryItemProps) {
   const { context: miniKitContext } = useMiniKit();
   const fid = miniKitContext?.user?.fid;
-  const { signIn } = useAuth();
 
   // Use ActionState for prize claiming
   const [claimState, claimAct, isClaiming] = useActionState<
@@ -51,7 +50,8 @@ export default function GameHistoryItem({ game }: GameHistoryItemProps) {
     e.stopPropagation();
     if (!fid || isClaiming || !isEligibleToClaim) return;
 
-    const token = await signIn();
+    // Get auth token using Farcaster Quick Auth
+    const { token } = await sdk.quickAuth.getToken();
     if (!token) {
       notify.error("Sign in required to claim.");
       return;

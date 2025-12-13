@@ -1,4 +1,5 @@
 import { baseSepolia } from "viem/chains";
+import { USDC_ADDRESS_BASE_MAINNET } from "../constants";
 
 // WaffleGame Contract Configuration
 export const WAFFLE_GAME_CONFIG = {
@@ -8,7 +9,7 @@ export const WAFFLE_GAME_CONFIG = {
 
 // Token Configuration (USDC on Base Sepolia)
 export const TOKEN_CONFIG = {
-  address: "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as const,
+  address: USDC_ADDRESS_BASE_MAINNET,
   chainId: baseSepolia.id,
   decimals: 6,
   symbol: "USDC",

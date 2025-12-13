@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { claimPrizeAction, ClaimPrizeResult } from "@/actions/prize";
 import { notify } from "@/components/ui/Toaster";
-import { useAuth } from "@/hooks/useAuth";
 import { Spinner } from "@/components/ui/spinner";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
 import { BottomNav } from "@/components/BottomNav";
@@ -34,7 +33,6 @@ export default function GameDetailsClient({
     gameId: number;
 }) {
     const router = useRouter();
-    const { signIn } = useAuth();
 
     const [payload, setPayload] = useState<GameDetails | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -141,7 +139,7 @@ export default function GameDetailsClient({
 
     // Handler
     const handleClaim = async () => {
-        const token = await signIn();
+        const { token } = await sdk.quickAuth.getToken();
         if (!token) {
             notify.error("Please sign in to claim your prize.");
             return;
