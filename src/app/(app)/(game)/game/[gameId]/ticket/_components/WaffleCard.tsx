@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import sdk from "@farcaster/miniapp-sdk";
@@ -50,14 +50,13 @@ export const WaffleCard = ({
   prizePool,
   price,
   maxPlayers,
-  fid,
   gameId,
 }: {
   spots: number;
   prizePool: number;
   price: number;
   maxPlayers: number;
-  fid: number;
+  fid?: number; // Optional, kept for backwards compat but not used
   gameId: number;
 }) => {
   const router = useRouter();
@@ -67,18 +66,10 @@ export const WaffleCard = ({
   // Basic wagmi hooks for direct transaction
   const { writeContract, isPending: isWritePending } = useWriteContract();
 
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
-    hash: txHash,
-  });
+  // Track transaction confirmation (used for paid tickets flow)
+  useWaitForTransactionReceipt({ hash: txHash });
 
-  // Submit to server when we have the tx hash
-  useEffect(() => {
-    if (txHash && !isPurchasing) {
-      submitTicketPurchase(txHash);
-    }
-  }, [txHash]);
-
-  async function submitTicketPurchase(hash?: string) {
+  const submitTicketPurchase = useCallback(async (hash?: string) => {
     setIsPurchasing(true);
     try {
       const res = await sdk.quickAuth.fetch("/api/v1/tickets", {
@@ -95,7 +86,7 @@ export const WaffleCard = ({
         throw new Error(errorData.error || "Failed to purchase ticket");
       }
 
-      const ticket = await res.json();
+      await res.json(); // Consume response
       notify.success("Ticket purchased successfully!");
 
       // Refresh the page to show success state
@@ -106,7 +97,14 @@ export const WaffleCard = ({
     } finally {
       setIsPurchasing(false);
     }
-  }
+  }, [gameId, router]);
+
+  // Submit to server when we have the tx hash - using the memoized function
+  useEffect(() => {
+    if (txHash && !isPurchasing) {
+      submitTicketPurchase(txHash);
+    }
+  }, [txHash, isPurchasing, submitTicketPurchase]);
 
   const handlePurchase = () => {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

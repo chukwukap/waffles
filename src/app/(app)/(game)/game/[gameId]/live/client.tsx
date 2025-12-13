@@ -81,7 +81,7 @@ export default function LiveGameClient({
         const historyRes = await sdk.quickAuth.fetch(`/api/v1/me/games`);
         if (historyRes.ok) {
           const games = await historyRes.json();
-          const currentGame = games.find((g: any) => g.gameId === gameInfo.id);
+          const currentGame = games.find((g: { gameId: number; answeredQuestions?: number }) => g.gameId === gameInfo.id);
           const answeredCount = currentGame?.answeredQuestions ?? 0;
 
           // If user has already completed all questions, redirect to score

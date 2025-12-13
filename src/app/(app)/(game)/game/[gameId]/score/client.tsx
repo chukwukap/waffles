@@ -32,7 +32,6 @@ interface UserScore {
 }
 
 export default function ScorePageClient({
-  gameId,
   leaderboardPromise,
 }: {
   gameId: number;
