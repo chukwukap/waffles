@@ -17,91 +17,54 @@ import InviteFriendsButton from "./_components/InviteFriendsButton";
 import { InviteDrawer } from "./_components/InviteFriendsDrawer";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
 
-interface ProfileData {
+interface ProfileResponse {
   fid: number;
   username: string | null;
-  wallet: string | null;
   pfpUrl: string | null;
+  wallet: string | null;
+  status: string;
+  inviteCode: string | null;
   waitlistPoints: number;
   rank: number;
   invitesCount: number;
-  status: string;
+  stats: ProfileStatsData;
+  gameHistory: Array<{
+    id: number;
+    name: string;
+    theme: string;
+    score: number;
+    rank: number | null;
+    claimedAt: Date | null;
+    winnings: number;
+  }>;
 }
 
 export default function ProfilePageClient() {
   const router = useRouter();
-  const [profileData, setProfileData] = useState<ProfileData | null>(null);
-  const [stats, setStats] = useState<ProfileStatsData | null>(null);
-  const [gameHistory, setGameHistory] = useState<GameHistoryEntry[]>([]);
-  const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [profileData, setProfileData] = useState<ProfileResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [inviteOpen, setInviteOpen] = useState(false);
 
-  // Fetch profile data on mount
+  // Fetch profile data on mount - single API call
   useEffect(() => {
     async function fetchProfileData() {
       try {
-        // Fetch user profile
-        const userRes = await sdk.quickAuth.fetch("/api/v1/me");
-        if (!userRes.ok) {
-          if (userRes.status === 401) {
+        const res = await sdk.quickAuth.fetch("/api/v1/me/profile");
+        if (!res.ok) {
+          if (res.status === 401) {
             router.push("/invite");
             return;
           }
-          throw new Error("Failed to fetch user");
+          throw new Error("Failed to fetch profile");
         }
-        const userData: ProfileData = await userRes.json();
+        const data: ProfileResponse = await res.json();
 
-        if (userData.status !== "ACTIVE") {
+        if (data.status !== "ACTIVE") {
           router.push("/invite");
           return;
         }
 
-        setProfileData(userData);
-
-        // Fetch game history
-        const gamesRes = await sdk.quickAuth.fetch("/api/v1/me/games");
-        if (gamesRes.ok) {
-          const gamesData = await gamesRes.json();
-          // Transform to GameHistoryEntry format
-          const history: GameHistoryEntry[] = gamesData.map((g: any) => ({
-            id: g.gameId,
-            name: g.game?.title ?? "Game",
-            score: g.score ?? 0,
-            claimedAt: g.claimedAt,
-            winnings: g.winnings ?? 0,
-            winningsColor: g.winnings > 0 ? "green" : "gray",
-          }));
-          setGameHistory(history);
-
-          // Calculate stats from game history
-          const totalGames = gamesData.length;
-          const wins = gamesData.filter((g: any) => g.rank === 1).length;
-          const totalScore = gamesData.reduce((sum: number, g: any) => sum + (g.score ?? 0), 0);
-          const totalWon = gamesData.reduce((sum: number, g: any) => sum + (g.winnings ?? 0), 0);
-          const highestScore = Math.max(...gamesData.map((g: any) => g.score ?? 0), 0);
-          const avgScore = totalGames > 0 ? Math.round(totalScore / totalGames) : 0;
-          const winRate = totalGames > 0 ? (wins / totalGames) * 100 : 0;
-          const bestRank = Math.min(...gamesData.filter((g: any) => g.rank).map((g: any) => g.rank), 999);
-
-          setStats({
-            totalGames,
-            wins,
-            winRate,
-            totalWon,
-            highestScore,
-            avgScore,
-            currentStreak: 0, // Would need streak calculation
-            bestRank: bestRank < 999 ? bestRank : null,
-          });
-        }
-
-        // Fetch waitlist data for invite code
-        const waitlistRes = await sdk.quickAuth.fetch("/api/v1/waitlist");
-        if (waitlistRes.ok) {
-          const waitlistData = await waitlistRes.json();
-          setInviteCode(waitlistData.inviteCode);
-        }
+        setProfileData(data);
       } catch (error) {
         console.error("Error fetching profile:", error);
       } finally {
@@ -137,7 +100,17 @@ export default function ProfilePageClient() {
 
   const safeUsername = profileData.username || "Player";
   const safeAvatarUrl = profileData.pfpUrl || "/images/avatars/a.png";
-  const showReferralButton = inviteCode !== null;
+  const showReferralButton = profileData.inviteCode !== null;
+
+  // Transform game history to expected format
+  const gameHistory: GameHistoryEntry[] = profileData.gameHistory.map((g) => ({
+    id: g.id,
+    name: g.name,
+    score: g.score,
+    claimedAt: g.claimedAt,
+    winnings: g.winnings,
+    winningsColor: g.winnings > 0 ? "green" : "gray",
+  }));
 
   return (
     <>
@@ -171,7 +144,7 @@ export default function ProfilePageClient() {
         <div>
           <ProfileCard
             username={safeUsername}
-            streak={stats?.currentStreak ?? 0}
+            streak={profileData.stats.currentStreak ?? 0}
             avatarUrl={safeAvatarUrl}
             onUpload={() => {
               notify.info("Avatar upload coming soon!");
@@ -184,14 +157,14 @@ export default function ProfilePageClient() {
         <div className="mt-2">
           <Stats
             stats={{
-              totalGames: stats?.totalGames ?? 0,
-              wins: stats?.wins ?? 0,
-              winRate: stats?.winRate ?? 0,
-              totalWon: stats?.totalWon ?? 0,
-              highestScore: stats?.highestScore ?? 0,
-              avgScore: stats?.avgScore ?? 0,
-              currentStreak: stats?.currentStreak ?? 0,
-              bestRank: Number(stats?.bestRank ?? null),
+              totalGames: profileData.stats.totalGames ?? 0,
+              wins: profileData.stats.wins ?? 0,
+              winRate: profileData.stats.winRate ?? 0,
+              totalWon: profileData.stats.totalWon ?? 0,
+              highestScore: profileData.stats.highestScore ?? 0,
+              avgScore: profileData.stats.avgScore ?? 0,
+              currentStreak: profileData.stats.currentStreak ?? 0,
+              bestRank: Number(profileData.stats.bestRank ?? null),
             }}
             fid={profileData.fid}
           />
