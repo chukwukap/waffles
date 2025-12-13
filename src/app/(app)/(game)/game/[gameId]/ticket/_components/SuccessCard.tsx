@@ -31,7 +31,7 @@ export const SuccessCard = ({
       const result = await composeCastAsync({
         text: message,
         embeds: [
-          `${env.rootUrl}/game/${gameId}/ticket?fid=${fid}&ticketCode=${ticket.code}`,
+          `${env.rootUrl}/game/${gameId}/ticket?ticketCode=${ticket.code}`,
         ].filter(Boolean) as [],
       });
 
@@ -80,7 +80,7 @@ export const SuccessCard = ({
           SHARE TICKET
         </button>
         <Link
-          href={`/game?fid=${fid}`}
+          href="/game"
           className="mt-6 text-sm font-body uppercase text-[#00CFF2] transition hover:text-[#33defa]"
         >
           BACK TO HOME

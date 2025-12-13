@@ -100,7 +100,7 @@ export default function GameHomePageClient({
       if (ticket) {
         return (
           <GameActionButton
-            href={`/game/${game.id}/live?gameId=${game.id}&fid=${fid}`}
+            href={`/game/${game.id}/live`}
             backgroundColor={neonPinkColor}
             variant="wide"
             textColor="dark"
@@ -111,11 +111,7 @@ export default function GameHomePageClient({
       }
       return (
         <GameActionButton
-          href={
-            fid
-              ? `/game/${game.id}/ticket?fid=${fid}`
-              : `/game/${game.id}/ticket`
-          }
+          href={`/game/${game.id}/ticket`}
           variant="wide"
           backgroundColor={neonPinkColor}
           textColor="dark"

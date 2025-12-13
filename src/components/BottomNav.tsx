@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { HomeIcon, LeaderboardIcon, ProfileIcon } from "./icons";
-import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
 const navItems = [
   { icon: HomeIcon, label: "Lobby", href: "/game" },
@@ -14,8 +13,6 @@ const navItems = [
 
 export function BottomNav() {
   const pathname = usePathname();
-  const { context: miniKitContext } = useMiniKit();
-  const fid = miniKitContext?.user?.fid;
 
   return (
     <footer
@@ -31,12 +28,11 @@ export function BottomNav() {
           const Icon = item.icon;
           const isActive =
             pathname === item.href || pathname.startsWith(item.href + "/");
-          const hrefWithFid = fid ? `${item.href}?fid=${fid}` : item.href;
 
           return (
             <Link
               key={item.href}
-              href={hrefWithFid}
+              href={item.href}
               className={cn(
                 "flex flex-1 flex-col items-center justify-center gap-1 px-4 py-3",
                 "transition-colors duration-150 ease-in-out",

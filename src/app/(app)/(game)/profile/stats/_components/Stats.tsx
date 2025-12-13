@@ -90,7 +90,7 @@ export function Stats({ stats, fid }: StatsProps) {
           Stats
         </h2>
         <Link
-          href={`/profile/stats?fid=${fid}`}
+          href="/profile/stats"
           className="font-display font-medium text-waffle-gold tracking-[-0.03em] hover:underline"
           style={{
             fontSize: "clamp(0.875rem, 1.5vw, 1rem)",

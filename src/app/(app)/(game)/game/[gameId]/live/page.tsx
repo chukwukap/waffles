@@ -103,7 +103,7 @@ export default async function LiveGamePage({
   // 4. Logic Check
   // If they've answered all questions (or more), they are done.
   if (answersCount >= game.questions.length) {
-    redirect(`/game/${gameId}/score?fid=${fid}`);
+    redirect(`/game/${gameId}/score`);
   }
 
   // 6. Resume Game

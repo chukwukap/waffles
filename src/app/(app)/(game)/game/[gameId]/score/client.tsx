@@ -6,7 +6,6 @@ import Leaderboard from "./_components/Leaderboard";
 import Image from "next/image";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { FlashIcon } from "@/components/icons";
-import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { ScorePagePayload } from "./page";
 import Link from "next/link";
 
@@ -16,9 +15,6 @@ export default function ScorePageClient({
   scorePayloadPromise: Promise<ScorePagePayload | null>;
 }) {
   const scorePayload = use(scorePayloadPromise);
-
-  const { context: miniKitContext } = useMiniKit();
-  const fid = miniKitContext?.user?.fid;
 
   if (!scorePayload) {
     return (
@@ -63,7 +59,7 @@ export default function ScorePageClient({
           SHARE SCORE
         </FancyBorderButton>
         <Link
-          href={`/game?fid=${fid}`}
+          href="/game"
           className="
             flex flex-row justify-center items-center
             font-body

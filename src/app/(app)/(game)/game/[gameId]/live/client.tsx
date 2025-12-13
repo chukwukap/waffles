@@ -77,7 +77,7 @@ export default function LiveGameClient({
     // If we've reached the end of the questions, redirect to the score page
     if (nextQuestionIndex >= questions.length) {
       playSound("gameOver");
-      router.push(`/game/${gameInfo?.id}/score?fid=${userInfo?.fid}`);
+      router.push(`/game/${gameInfo?.id}/score`);
       return;
     }
 

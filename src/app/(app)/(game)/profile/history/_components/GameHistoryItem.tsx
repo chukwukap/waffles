@@ -69,7 +69,7 @@ export default function GameHistoryItem({ game }: GameHistoryItemProps) {
 
   return (
     <Link
-      href={`/profile/history/${game.id}?fid=${fid}`}
+      href={`/profile/history/${game.id}`}
       className={cn(
         "relative flex flex-col justify-between w-full",
         "bg-[#FFFFFF08] border border-[#FFFFFF14] rounded-[16px] p-[12px]",

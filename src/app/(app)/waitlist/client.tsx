@@ -245,7 +245,7 @@ think you can beat me? you're on😏`;
             {/* Primary Action: COMPLETE TASKS */}
             <div className="mt-4 w-full flex flex-col items-center gap-4">
               <FancyBorderButton
-                onClick={() => router.push(`/waitlist/tasks?fid=${fid}`)}
+                onClick={() => router.push(`/waitlist/tasks`)}
                 className={"mx-auto text-[#191919] text-[26px]"}
                 disabled={pending}
               >
@@ -272,7 +272,7 @@ think you can beat me? you're on😏`;
                   className="flex-1"
                 >
                   <Link
-                    href={`/waitlist/leaderboard?fid=${fid}`}
+                    href={`/waitlist/leaderboard`}
                     className="flex items-center justify-center w-full h-[45px] rounded-xl border-2 border-white/40 p-3 bg-white/9 font-body font-normal text-white text-[16px] leading-none tracking-normal uppercase"
                   >
                     SEE LEADERBOARD
