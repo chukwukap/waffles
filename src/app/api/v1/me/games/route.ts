@@ -2,24 +2,6 @@ import { NextResponse } from "next/server";
 import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
-interface GameHistoryResponse {
-  id: number;
-  gameId: number;
-  score: number;
-  rank: number | null;
-  joinedAt: Date;
-  game: {
-    id: number;
-    startsAt: Date;
-    endsAt: Date;
-    status: string;
-    prizePool: number;
-    _count: {
-      players: number;
-    };
-  };
-}
-
 /**
  * GET /api/v1/me/games
  * Get game history for the authenticated user
@@ -32,6 +14,8 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
         game: {
           select: {
             id: true,
+            title: true,
+            theme: true,
             startsAt: true,
             endsAt: true,
             status: true,
@@ -39,6 +23,7 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
             _count: {
               select: {
                 players: true,
+                questions: true,
               },
             },
           },
@@ -47,8 +32,8 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
       orderBy: { joinedAt: "desc" },
     });
 
-    // Calculate rank for each game
-    const response: GameHistoryResponse[] = await Promise.all(
+    // Calculate rank and answered questions for each game
+    const response = await Promise.all(
       gamePlayers.map(async (gp) => {
         // Get rank by counting players with higher scores
         const higherScores = await prisma.gamePlayer.count({
@@ -58,13 +43,33 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
           },
         });
 
+        // Count how many questions the user has answered in this game
+        const answeredCount = await prisma.answer.count({
+          where: {
+            userId: auth.userId,
+            gameId: gp.gameId,
+          },
+        });
+
         return {
           id: gp.id,
           gameId: gp.gameId,
           score: gp.score,
           rank: higherScores + 1,
           joinedAt: gp.joinedAt,
-          game: gp.game,
+          claimedAt: gp.claimedAt,
+          answeredQuestions: answeredCount,
+          game: {
+            id: gp.game.id,
+            title: gp.game.title,
+            theme: gp.game.theme,
+            startsAt: gp.game.startsAt,
+            endsAt: gp.game.endsAt,
+            status: gp.game.status,
+            prizePool: gp.game.prizePool,
+            totalQuestions: gp.game._count.questions,
+            playersCount: gp.game._count.players,
+          },
         };
       })
     );
