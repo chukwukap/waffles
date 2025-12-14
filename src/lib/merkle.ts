@@ -1,16 +1,11 @@
 /**
  * Merkle Tree Utility for WaffleGame Prize Distribution
  *
- * Uses double hashing (keccak256(keccak256(abi.encode(...)))) to match
- * the contract's Merkle proof verification.
+ * Uses @openzeppelin/merkle-tree for standard, audited implementation.
+ * Tree format matches the contract's claimPrize verification.
  */
 
-import {
-  keccak256,
-  encodePacked,
-  encodeAbiParameters,
-  parseAbiParameters,
-} from "viem";
+import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
 
 /**
  * Represents a winner in the Merkle tree
@@ -22,96 +17,36 @@ export interface Winner {
 }
 
 /**
- * Merkle tree node
+ * Merkle tree result with root and tree reference
  */
-interface MerkleNode {
-  hash: `0x${string}`;
-  left?: MerkleNode;
-  right?: MerkleNode;
-  winner?: Winner;
-}
-
-/**
- * Generates a leaf hash matching the contract's format:
- * keccak256(bytes.concat(keccak256(abi.encode(gameId, player, amount))))
- */
-export function generateLeafHash(winner: Winner): `0x${string}` {
-  // First hash: abi.encode(gameId, player, amount)
-  const innerData = encodeAbiParameters(
-    parseAbiParameters("uint256 gameId, address player, uint256 amount"),
-    [BigInt(winner.gameId), winner.address, winner.amount]
-  );
-  const innerHash = keccak256(innerData);
-
-  // Second hash: keccak256(bytes.concat(innerHash))
-  // In Solidity: keccak256(bytes.concat(innerHash))
-  // In viem: keccak256(encodePacked) with bytes32
-  const outerHash = keccak256(encodePacked(["bytes32"], [innerHash]));
-
-  return outerHash;
-}
-
-/**
- * Sorts two hashes for consistent tree building
- */
-function sortPair(
-  a: `0x${string}`,
-  b: `0x${string}`
-): [`0x${string}`, `0x${string}`] {
-  return a.toLowerCase() < b.toLowerCase() ? [a, b] : [b, a];
-}
-
-/**
- * Combines two hashes into a parent hash
- */
-function hashPair(a: `0x${string}`, b: `0x${string}`): `0x${string}` {
-  const [left, right] = sortPair(a, b);
-  return keccak256(encodePacked(["bytes32", "bytes32"], [left, right]));
+export interface MerkleTreeResult {
+  root: `0x${string}`;
+  tree: StandardMerkleTree<[bigint, string, bigint]>;
 }
 
 /**
  * Builds a Merkle tree from a list of winners
+ *
+ * Leaf format: [gameId, playerAddress, amount]
+ * This matches the contract's verification: keccak256(abi.encode(gameId, player, amount))
  */
-export function buildMerkleTree(winners: Winner[]): {
-  root: `0x${string}`;
-  leaves: Map<`0x${string}`, { index: number; winner: Winner }>;
-} {
+export function buildMerkleTree(winners: Winner[]): MerkleTreeResult {
   if (winners.length === 0) {
     throw new Error("Cannot build Merkle tree with no winners");
   }
 
-  // Generate leaf hashes
-  const leaves = new Map<`0x${string}`, { index: number; winner: Winner }>();
-  const leafHashes = winners.map((winner, index) => {
-    const hash = generateLeafHash(winner);
-    leaves.set(winner.address.toLowerCase() as `0x${string}`, {
-      index,
-      winner,
-    });
-    return hash;
-  });
+  // Convert winners to leaf format: [gameId, address, amount]
+  const leaves = winners.map(
+    (w) => [BigInt(w.gameId), w.address, w.amount] as [bigint, string, bigint]
+  );
 
-  // Build tree layers
-  let currentLayer = leafHashes;
-
-  while (currentLayer.length > 1) {
-    const nextLayer: `0x${string}`[] = [];
-
-    for (let i = 0; i < currentLayer.length; i += 2) {
-      if (i + 1 < currentLayer.length) {
-        nextLayer.push(hashPair(currentLayer[i], currentLayer[i + 1]));
-      } else {
-        // Odd number of nodes: duplicate the last one
-        nextLayer.push(hashPair(currentLayer[i], currentLayer[i]));
-      }
-    }
-
-    currentLayer = nextLayer;
-  }
+  // Build tree with OpenZeppelin library
+  // Uses double hashing internally, matching Solidity's keccak256(bytes.concat(keccak256(...)))
+  const tree = StandardMerkleTree.of(leaves, ["uint256", "address", "uint256"]);
 
   return {
-    root: currentLayer[0],
-    leaves,
+    root: tree.root as `0x${string}`,
+    tree,
   };
 }
 
@@ -128,49 +63,28 @@ export function generateMerkleProof(
   if (winners.length === 0) return null;
 
   // Find the target winner
-  const targetIndex = winners.findIndex(
+  const targetWinner = winners.find(
     (w) => w.address.toLowerCase() === targetAddress.toLowerCase()
   );
 
-  if (targetIndex === -1) return null;
+  if (!targetWinner) return null;
 
-  // Generate all leaf hashes
-  const leafHashes = winners.map((w) => generateLeafHash(w));
+  // Build tree
+  const { tree } = buildMerkleTree(winners);
 
-  // Build proof
-  const proof: `0x${string}`[] = [];
-  let currentIndex = targetIndex;
-  let currentLayer = [...leafHashes];
-
-  while (currentLayer.length > 1) {
-    const siblingIndex =
-      currentIndex % 2 === 0 ? currentIndex + 1 : currentIndex - 1;
-
-    if (siblingIndex < currentLayer.length) {
-      proof.push(currentLayer[siblingIndex]);
-    } else {
-      // Odd number: sibling is self
-      proof.push(currentLayer[currentIndex]);
+  // Find the leaf and get proof
+  for (const [i, leaf] of tree.entries()) {
+    const [, leafAddress] = leaf;
+    if (leafAddress.toLowerCase() === targetAddress.toLowerCase()) {
+      const proof = tree.getProof(i) as `0x${string}`[];
+      return {
+        amount: targetWinner.amount,
+        proof,
+      };
     }
-
-    // Build next layer
-    const nextLayer: `0x${string}`[] = [];
-    for (let i = 0; i < currentLayer.length; i += 2) {
-      if (i + 1 < currentLayer.length) {
-        nextLayer.push(hashPair(currentLayer[i], currentLayer[i + 1]));
-      } else {
-        nextLayer.push(hashPair(currentLayer[i], currentLayer[i]));
-      }
-    }
-
-    currentIndex = Math.floor(currentIndex / 2);
-    currentLayer = nextLayer;
   }
 
-  return {
-    amount: winners[targetIndex].amount,
-    proof,
-  };
+  return null;
 }
 
 /**
@@ -181,11 +95,34 @@ export function verifyMerkleProof(
   winner: Winner,
   proof: `0x${string}`[]
 ): boolean {
-  let currentHash = generateLeafHash(winner);
+  const leaf: [bigint, string, bigint] = [
+    BigInt(winner.gameId),
+    winner.address,
+    winner.amount,
+  ];
 
-  for (const proofElement of proof) {
-    currentHash = hashPair(currentHash, proofElement);
-  }
+  return StandardMerkleTree.verify(
+    root,
+    ["uint256", "address", "uint256"],
+    leaf,
+    proof
+  );
+}
 
-  return currentHash.toLowerCase() === root.toLowerCase();
+/**
+ * Dumps tree to JSON for storage/debugging
+ */
+export function dumpTree(
+  tree: StandardMerkleTree<[bigint, string, bigint]>
+): string {
+  return JSON.stringify(tree.dump());
+}
+
+/**
+ * Loads tree from JSON
+ */
+export function loadTree(
+  json: string
+): StandardMerkleTree<[bigint, string, bigint]> {
+  return StandardMerkleTree.load(JSON.parse(json));
 }

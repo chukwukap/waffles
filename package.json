@@ -20,6 +20,7 @@
     "@farcaster/quick-auth": "^0.0.8",
     "@heroicons/react": "^2.2.0",
     "@neynar/nodejs-sdk": "^3.110.0",
+    "@openzeppelin/merkle-tree": "^1.0.8",
     "@prisma/adapter-pg": "7.0.0",
     "@prisma/client": "7.0.0",
     "@radix-ui/react-dialog": "^1.1.15",
