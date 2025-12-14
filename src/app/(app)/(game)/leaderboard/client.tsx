@@ -54,24 +54,56 @@ export default function LeaderboardClientPage({
   }, [activeTab, initialData]);
 
   // 5. Function to load more entries
+  // Ref to store current abort controller
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   const loadMore = useCallback(async () => {
     if (isLoadingMore || !hasMore || isPending) return;
+
+    // Abort previous request if it exists (though isLoadingMore should prevent this, it's safer)
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     setIsLoadingMore(true);
     setCurrentError(null);
 
     startTransition(async () => {
       try {
-        const res = await fetch(`/api/v1/leaderboard?tab=${activeTab}&page=${page}`);
-        if (!res.ok) throw new Error("Failed to fetch");
+        const url = `/api/v1/leaderboard?tab=${activeTab}&page=${page}`;
+        console.log(`[Leaderboard] Fetching page ${page} for tab ${activeTab}`);
+
+        const res = await fetch(url, {
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          const errorText = await res.text().catch(() => "Unknown error");
+          throw new Error(`Failed to fetch: ${res.status} ${res.statusText} - ${errorText}`);
+        }
+
         const newData: LeaderboardApiResponse = await res.json();
+
+        // Prevent state update if component unmounted or aborted (redundant with signal but safe)
+        if (controller.signal.aborted) return;
+
         setEntries((prev) => [...prev, ...newData.users]);
         setHasMore(newData.hasMore);
         setPage((prev) => prev + 1);
       } catch (err) {
-        console.error("Failed to load more data:", err);
-        setCurrentError("Failed to load more data");
+        if (err instanceof Error && err.name === "AbortError") {
+          console.log("[Leaderboard] Request aborted");
+          return;
+        }
+        console.error("[Leaderboard] Failed to load more data:", err);
+        setCurrentError("Failed to load data. Please try again.");
       } finally {
+        if (abortControllerRef.current === controller) {
+          abortControllerRef.current = null;
+        }
         setIsLoadingMore(false);
       }
     });
