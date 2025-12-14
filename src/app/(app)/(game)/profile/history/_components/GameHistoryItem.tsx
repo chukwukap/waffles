@@ -6,10 +6,12 @@ import { notify } from "@/components/ui/Toaster";
 import { GameHistoryEntry } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import sdk from "@farcaster/miniapp-sdk";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { useRouter } from "next/navigation";
+import { useClaimPrize, useHasClaimed } from "@/hooks/useWaffleGame";
+import { useAccount } from "wagmi";
 
 interface GameHistoryItemProps {
   game: GameHistoryEntry;
@@ -17,8 +19,26 @@ interface GameHistoryItemProps {
 
 export default function GameHistoryItem({ game }: GameHistoryItemProps) {
   const router = useRouter();
+  const { address } = useAccount();
   const [isClaiming, setIsClaiming] = useState(false);
+  const [claimStep, setClaimStep] = useState<"idle" | "fetching_proof" | "claiming">("idle");
   const [localClaimedAt, setLocalClaimedAt] = useState<Date | null>(null);
+
+  // On-chain claim hook
+  const {
+    claimPrize,
+    hash: claimHash,
+    isPending: isClaimPending,
+    isConfirming: isClaimConfirming,
+    isSuccess: isClaimSuccess,
+    error: claimError,
+  } = useClaimPrize();
+
+  // Check if already claimed on-chain
+  const { data: hasClaimedOnChain } = useHasClaimed(
+    BigInt(game.id),
+    address as `0x${string}` | undefined
+  );
 
   const formattedWinnings = `$${game.winnings.toLocaleString(undefined, {
     minimumFractionDigits: 2,
@@ -26,15 +46,28 @@ export default function GameHistoryItem({ game }: GameHistoryItemProps) {
   })}`;
 
   const hasWinnings = game.winnings > 0;
-  const isClaimed = !!game.claimedAt || !!localClaimedAt;
+  const isClaimed = !!game.claimedAt || !!localClaimedAt || !!hasClaimedOnChain;
   const isEligibleToClaim = hasWinnings && !isClaimed;
 
-  const handleClaim = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (isClaiming || !isEligibleToClaim) return;
+  // Handle successful on-chain claim
+  useEffect(() => {
+    if (isClaimSuccess && claimHash && claimStep === "claiming") {
+      // Sync with backend after on-chain success
+      syncWithBackend();
+    }
+  }, [isClaimSuccess, claimHash, claimStep]);
 
-    setIsClaiming(true);
+  // Handle claim error
+  useEffect(() => {
+    if (claimError) {
+      console.error("Claim error:", claimError);
+      notify.error("Failed to claim prize on-chain");
+      setIsClaiming(false);
+      setClaimStep("idle");
+    }
+  }, [claimError]);
+
+  const syncWithBackend = async () => {
     try {
       const res = await sdk.quickAuth.fetch("/api/v1/prizes/claim", {
         method: "POST",
@@ -43,20 +76,79 @@ export default function GameHistoryItem({ game }: GameHistoryItemProps) {
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to claim prize");
+        // Backend sync failed but on-chain succeeded - still show as claimed
+        console.warn("Backend sync failed, but on-chain claim succeeded");
       }
 
       const data = await res.json();
-      setLocalClaimedAt(new Date(data.claimedAt));
+      setLocalClaimedAt(new Date(data.claimedAt || Date.now()));
       notify.success("Prize Claimed!");
       router.refresh();
     } catch (error) {
-      console.error("Claim error:", error);
-      notify.error(error instanceof Error ? error.message : "Failed to claim prize");
+      console.error("Sync error:", error);
+      // Still mark as claimed since on-chain succeeded
+      setLocalClaimedAt(new Date());
+      notify.success("Prize Claimed!");
     } finally {
       setIsClaiming(false);
+      setClaimStep("idle");
     }
+  };
+
+  const handleClaim = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isClaiming || !isEligibleToClaim) return;
+
+    // For on-chain claiming, we need a wallet
+    if (!address) {
+      // Fallback to API-only claim if no wallet
+      setIsClaiming(true);
+      await syncWithBackend();
+      return;
+    }
+
+    setIsClaiming(true);
+    setClaimStep("fetching_proof");
+
+    try {
+      // Fetch Merkle proof from API
+      const res = await sdk.quickAuth.fetch(`/api/v1/games/${game.id}/merkle-proof`);
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        // If not a winner on-chain, fall back to API-only claim
+        if (errorData.code === "NOT_WINNER" || errorData.code === "GAME_NOT_ENDED") {
+          await syncWithBackend();
+          return;
+        }
+        throw new Error(errorData.error || "Failed to get Merkle proof");
+      }
+
+      const proofData = await res.json();
+
+      // Call on-chain claimPrize
+      setClaimStep("claiming");
+      notify.info("Claiming prize on-chain...");
+      claimPrize(
+        BigInt(game.id),
+        BigInt(proofData.amount),
+        proofData.proof as `0x${string}`[]
+      );
+    } catch (error) {
+      console.error("Claim error:", error);
+      notify.error(error instanceof Error ? error.message : "Failed to claim prize");
+      setIsClaiming(false);
+      setClaimStep("idle");
+    }
+  };
+
+  const isLoading = isClaiming || isClaimPending || isClaimConfirming;
+
+  const getButtonText = () => {
+    if (claimStep === "fetching_proof") return "...";
+    if (isClaimPending || isClaimConfirming) return "...";
+    return "CLAIM";
   };
 
   return (
@@ -90,7 +182,7 @@ export default function GameHistoryItem({ game }: GameHistoryItemProps) {
           </div>
         </div>
 
-        {/* Right: Amount (always visible here for non-claim state, or if we want it top right) */}
+        {/* Right: Amount */}
         {!isEligibleToClaim && (
           <span
             className={cn(
@@ -102,7 +194,6 @@ export default function GameHistoryItem({ game }: GameHistoryItemProps) {
           </span>
         )}
 
-        {/* For eligible state, maybe show amount on top right too? Image 1 shows amount on right. */}
         {isEligibleToClaim && (
           <span className="font-body text-[20px] leading-none tracking-[-0.02em] text-[#14B985]">
             {formattedWinnings}
@@ -113,19 +204,19 @@ export default function GameHistoryItem({ game }: GameHistoryItemProps) {
       {/* Bottom: Claim Button if eligible */}
       {isEligibleToClaim && (
         <div className="w-full mt-auto">
-          {isClaiming ? (
+          {isLoading ? (
             <div className="flex items-center justify-center w-full h-[34px] bg-white/5 rounded-full">
               <Spinner className="w-4 h-4 text-white/60" />
             </div>
           ) : (
             <FancyBorderButton
               onClick={handleClaim}
-              disabled={isClaiming}
+              disabled={isLoading}
               className="w-[92px] h-[29px] text-[12px] border-[#14B985] text-[#14B985] ml-12 px-0.5"
               fullWidth={false}
             >
               <CupIcon className="mr-1" />
-              <span>CLAIM</span>
+              <span>{getButtonText()}</span>
             </FancyBorderButton>
           )}
         </div>

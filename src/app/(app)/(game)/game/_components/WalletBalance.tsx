@@ -4,16 +4,16 @@ import { WalletIcon } from "lucide-react";
 import { useAccount, useChainId, } from "wagmi";
 import { useGetTokenBalance } from "@coinbase/onchainkit/wallet";
 
-import { USDC_ADDRESS_BASE_MAINNET } from "@/lib/constants";
+import { TOKEN_CONFIG } from "@/lib/contracts/config";
 
 export function WalletBalance() {
     const { address } = useAccount();
     const chainId = useChainId();
     const { roundedBalance, refetch, status, convertedBalance, error, response } = useGetTokenBalance(address as `0x${string}`, {
-        address: USDC_ADDRESS_BASE_MAINNET as `0x${string}`,
-        decimals: 6,
-        name: "USDC",
-        symbol: "USDC",
+        address: TOKEN_CONFIG.address as `0x${string}`,
+        decimals: TOKEN_CONFIG.decimals,
+        name: TOKEN_CONFIG.symbol,
+        symbol: TOKEN_CONFIG.symbol,
         image: "/images/tokens/usdc.png",
         chainId: chainId,
     });

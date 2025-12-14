@@ -6,24 +6,14 @@ import { useRouter } from "next/navigation";
 import sdk from "@farcaster/miniapp-sdk";
 import { notify } from "@/components/ui/Toaster";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
-import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount } from "wagmi";
 import { parseUnits } from "viem";
-import { env } from "@/lib/env";
-import { USDC_ADDRESS_BASE_MAINNET } from "@/lib/constants";
-
-// ERC20 transfer ABI for USDC payments
-const USDC_TRANSFER_ABI = [
-  {
-    name: "transfer",
-    type: "function",
-    stateMutability: "nonpayable",
-    inputs: [
-      { name: "to", type: "address" },
-      { name: "amount", type: "uint256" },
-    ],
-    outputs: [{ name: "", type: "bool" }],
-  },
-] as const;
+import {
+  useBuyTicket,
+  useApproveToken,
+  useTokenAllowance,
+} from "@/hooks/useWaffleGame";
+import { TOKEN_CONFIG } from "@/lib/contracts/config";
 
 const InfoBox = ({
   iconUrl,
@@ -70,21 +60,46 @@ export const WaffleCard = ({
   prizePool: number;
   price: number;
   maxPlayers: number;
-  fid?: number; // Optional, kept for backwards compat but not used
+  fid?: number;
   gameId: number;
 }) => {
   const router = useRouter();
-  const [txHash, setTxHash] = useState<`0x${string}` | undefined>(undefined);
+  const { address } = useAccount();
   const [isPurchasing, setIsPurchasing] = useState(false);
+  const [purchaseStep, setPurchaseStep] = useState<"idle" | "approving" | "buying">("idle");
 
-  // Basic wagmi hooks for direct transaction
-  const { writeContract, isPending: isWritePending } = useWriteContract();
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 🎟️ FREE TICKETS MODE: Set to false to require on-chain payment
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  const FREE_TICKETS_MODE = true;
 
-  // Track transaction confirmation (used for paid tickets flow)
-  useWaitForTransactionReceipt({ hash: txHash });
+  // Contract hooks
+  const {
+    buyTicket,
+    hash: buyHash,
+    isPending: isBuying,
+    isConfirming: isBuyConfirming,
+    isSuccess: isBuySuccess,
+    error: buyError,
+  } = useBuyTicket();
 
-  const submitTicketPurchase = useCallback(async (hash?: string) => {
-    setIsPurchasing(true);
+  const {
+    approve,
+    isPending: isApproving,
+    isConfirming: isApproveConfirming,
+    isSuccess: isApproveSuccess,
+    error: approveError,
+  } = useApproveToken();
+
+  // Check current allowance
+  const { data: allowance, refetch: refetchAllowance } = useTokenAllowance(address);
+
+  // Calculate required amount
+  const requiredAmount = parseUnits(price.toString(), TOKEN_CONFIG.decimals);
+  const hasEnoughAllowance = allowance && allowance >= requiredAmount;
+
+  // Sync purchase with backend after successful on-chain tx
+  const syncWithBackend = useCallback(async (hash?: string) => {
     try {
       const res = await sdk.quickAuth.fetch("/api/v1/tickets", {
         method: "POST",
@@ -97,104 +112,139 @@ export const WaffleCard = ({
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to purchase ticket");
+        throw new Error(errorData.error || "Failed to sync ticket");
       }
 
-      await res.json(); // Consume response
       notify.success("Ticket purchased successfully!");
-
-      // Refresh the page to show success state
       router.refresh();
     } catch (error) {
-      console.error("[WaffleCard] Purchase failed:", error);
-      notify.error(error instanceof Error ? error.message : "Failed to purchase ticket");
+      console.error("[WaffleCard] Sync failed:", error);
+      notify.error(error instanceof Error ? error.message : "Failed to sync ticket");
     } finally {
       setIsPurchasing(false);
+      setPurchaseStep("idle");
     }
   }, [gameId, router]);
 
-  // Submit to server when we have the tx hash - using the memoized function
+  // Handle approval success - proceed to buy
   useEffect(() => {
-    if (txHash && !isPurchasing) {
-      submitTicketPurchase(txHash);
+    if (isApproveSuccess && purchaseStep === "approving") {
+      refetchAllowance();
+      setPurchaseStep("buying");
+      buyTicket(BigInt(gameId), price.toString());
     }
-  }, [txHash, isPurchasing, submitTicketPurchase]);
+  }, [isApproveSuccess, purchaseStep, buyTicket, gameId, price, refetchAllowance]);
 
-  const handlePurchase = () => {
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 🎟️ FREE TICKETS MODE: Skip wallet transaction for testing
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    const FREE_TICKETS_MODE = true; // Set to false to require payment
+  // Handle buy success - sync with backend
+  useEffect(() => {
+    if (isBuySuccess && buyHash && purchaseStep === "buying") {
+      syncWithBackend(buyHash);
+    }
+  }, [isBuySuccess, buyHash, purchaseStep, syncWithBackend]);
 
+  // Handle errors
+  useEffect(() => {
+    if (approveError) {
+      console.error("Approve error:", approveError);
+      notify.error("Failed to approve tokens");
+      setIsPurchasing(false);
+      setPurchaseStep("idle");
+    }
+  }, [approveError]);
+
+  useEffect(() => {
+    if (buyError) {
+      console.error("Buy error:", buyError);
+      notify.error("Failed to buy ticket");
+      setIsPurchasing(false);
+      setPurchaseStep("idle");
+    }
+  }, [buyError]);
+
+  const handlePurchase = async () => {
+    // Free tickets mode - bypass contract
     if (FREE_TICKETS_MODE) {
+      setIsPurchasing(true);
       notify.info("Creating your free ticket...");
-      submitTicketPurchase();
+      await syncWithBackend();
       return;
     }
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-    // Normal payment flow
-    try {
-      writeContract(
-        {
-          address: USDC_ADDRESS_BASE_MAINNET as `0x${string}`,
-          abi: USDC_TRANSFER_ABI,
-          functionName: "transfer",
-          args: [
-            env.nextPublicTreasuryWallet as `0x${string}`,
-            parseUnits(price.toString(), 6),
-          ],
-        },
-        {
-          onSuccess: (hash) => {
-            setTxHash(hash);
-            notify.info("Transaction submitted. Waiting for confirmation...");
-          },
-          onError: (error) => {
-            console.error("[WaffleCard] Transaction failed:", error);
-            notify.error("Transaction failed. Please try again.");
-          },
-        }
-      );
-    } catch (err) {
-      console.error("[WaffleCard] Failed to initiate purchase:", err);
-      notify.error("An unexpected error occurred.");
+    // Production flow: Check wallet connection
+    if (!address) {
+      notify.error("Please connect your wallet");
+      return;
+    }
+
+    setIsPurchasing(true);
+
+    // Check if we need to approve first
+    if (!hasEnoughAllowance) {
+      setPurchaseStep("approving");
+      notify.info("Approving USDC...");
+      approve(price.toString());
+    } else {
+      setPurchaseStep("buying");
+      notify.info("Purchasing ticket...");
+      buyTicket(BigInt(gameId), price.toString());
     }
   };
 
-  const isProcessing = isWritePending || isPurchasing;
+  const isLoading = isPurchasing || isApproving || isApproveConfirming || isBuying || isBuyConfirming;
+
+  const getButtonText = () => {
+    if (isApproving || isApproveConfirming) return "Approving...";
+    if (isBuying || isBuyConfirming) return "Purchasing...";
+    if (isPurchasing) return "Processing...";
+    return "BUY WAFFLE";
+  };
 
   return (
     <div
-      className="box-border flex flex-col justify-center items-center gap-6 p-5 px-3 border border-white/10 rounded-2xl w-full max-w-lg h-auto min-h-[207px]"
+      className="flex flex-col items-center gap-6 px-3 py-4 rounded-[24px] border border-[#FFFFFF14] bg-[#FFFFFF08]"
+      style={{ width: "100%", maxWidth: "361px" }}
     >
-      <div className="flex flex-row justify-center items-center gap-4 sm:gap-6 w-full">
-        <div className="flex-1 flex justify-center">
-          <InfoBox
-            iconUrl="/images/illustrations/seats.svg"
-            label="Spots"
-            value={`${spots}/${maxPlayers}`}
-          />
-        </div>
-        <div className="flex-1 flex justify-center">
-          <InfoBox
-            iconUrl="/images/illustrations/money-stack.svg"
-            label="Prize pool"
-            value={`$${prizePool}`}
-          />
-        </div>
+      {/* Waffle Image */}
+      <div className="relative w-[200px] h-[116px] drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)]">
+        <Image
+          src="/images/illustrations/waffles.svg"
+          alt="Waffle"
+          fill
+          priority
+          className="object-contain"
+        />
       </div>
 
-      <div className="w-full max-w-lg">
-        <FancyBorderButton
-          disabled={isProcessing}
-          onClick={handlePurchase}
-        >
-          {isProcessing
-            ? "PROCESSING..."
-            : `BUY WAFFLE $${price}`}
-        </FancyBorderButton>
+      {/* Info Row */}
+      <div className="flex justify-center gap-3 w-full">
+        <InfoBox
+          iconUrl="/images/icons/users.svg"
+          label="Spots Left"
+          value={`${Math.max(0, spots)}/${maxPlayers}`}
+        />
+        <InfoBox
+          iconUrl="/images/icons/prize.svg"
+          label="Prize Pool"
+          value={`$${prizePool.toLocaleString()}`}
+        />
       </div>
+
+      {/* Purchase Button */}
+      <FancyBorderButton
+        onClick={handlePurchase}
+        disabled={isLoading || spots <= 0}
+        fullWidth
+        className="h-[52px]"
+      >
+        <span className="font-body text-[18px]">
+          {spots <= 0 ? "SOLD OUT" : getButtonText()}
+        </span>
+        {spots > 0 && !isLoading && (
+          <span className="ml-2 font-display text-[14px] opacity-70">
+            ${price}
+          </span>
+        )}
+      </FancyBorderButton>
     </div>
   );
 };
