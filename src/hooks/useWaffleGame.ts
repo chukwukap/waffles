@@ -237,11 +237,12 @@ export function usePermitNonce(address: `0x${string}` | undefined) {
 
 /**
  * USDC Permit domain for EIP-712 signing
- * Note: Base USDC uses version "2"
+ * Base USDC uses name="USDC" and version="1"
+ * Reference: https://developers.circle.com/stablecoins/docs/eip-2612-permit
  */
 export const USDC_PERMIT_DOMAIN = {
-  name: "USD Coin",
-  version: "2",
+  name: "USDC",
+  version: "1",
   chainId: TOKEN_CONFIG.chainId,
   verifyingContract: TOKEN_CONFIG.address,
 } as const;
