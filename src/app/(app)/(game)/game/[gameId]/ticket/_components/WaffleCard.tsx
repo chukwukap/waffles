@@ -6,14 +6,16 @@ import { useRouter } from "next/navigation";
 import sdk from "@farcaster/miniapp-sdk";
 import { notify } from "@/components/ui/Toaster";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
-import { useAccount } from "wagmi";
+import { useAccount, useSignTypedData } from "wagmi";
 import { parseUnits } from "viem";
 import {
-  useBuyTicket,
-  useApproveToken,
-  useTokenAllowance,
+  useBuyTicketWithPermit,
+  usePermitNonce,
+  USDC_PERMIT_DOMAIN,
+  PERMIT_TYPES,
+  splitSignature,
 } from "@/hooks/useWaffleGame";
-import { TOKEN_CONFIG } from "@/lib/contracts/config";
+import { WAFFLE_GAME_CONFIG, TOKEN_CONFIG } from "@/lib/contracts/config";
 
 const InfoBox = ({
   iconUrl,
@@ -66,111 +68,73 @@ export const WaffleCard = ({
   const router = useRouter();
   const { address } = useAccount();
   const [isPurchasing, setIsPurchasing] = useState(false);
-  const [purchaseStep, setPurchaseStep] = useState<"idle" | "approving" | "buying">("idle");
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // 🎟️ FREE TICKETS MODE: Set to false to require on-chain payment
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  const FREE_TICKETS_MODE = true;
-
-  // Contract hooks
+  // Permit hooks
+  const { signTypedDataAsync } = useSignTypedData();
+  const { data: nonce, refetch: refetchNonce } = usePermitNonce(address);
   const {
-    buyTicket,
+    buyWithPermit,
     hash: buyHash,
     isPending: isBuying,
     isConfirming: isBuyConfirming,
     isSuccess: isBuySuccess,
     error: buyError,
-  } = useBuyTicket();
+  } = useBuyTicketWithPermit();
 
-  const {
-    approve,
-    isPending: isApproving,
-    isConfirming: isApproveConfirming,
-    isSuccess: isApproveSuccess,
-    error: approveError,
-  } = useApproveToken();
+  // Sync with backend after successful purchase
+  const syncWithBackend = useCallback(
+    async (hash: string) => {
+      try {
+        const res = await sdk.quickAuth.fetch("/api/v1/tickets", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            gameId,
+            txHash: hash,
+          }),
+        });
 
-  // Check current allowance
-  const { data: allowance, refetch: refetchAllowance } = useTokenAllowance(address);
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || "Failed to sync ticket");
+        }
 
-  // Calculate required amount
-  const requiredAmount = parseUnits(price.toString(), TOKEN_CONFIG.decimals);
-  const hasEnoughAllowance = allowance && allowance >= requiredAmount;
-
-  // Sync purchase with backend after successful on-chain tx
-  const syncWithBackend = useCallback(async (hash?: string) => {
-    try {
-      const res = await sdk.quickAuth.fetch("/api/v1/tickets", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          gameId,
-          txHash: hash || null,
-        }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to sync ticket");
+        notify.success("Ticket purchased successfully!");
+        router.refresh();
+      } catch (error) {
+        console.error("[WaffleCard] Sync failed:", error);
+        notify.error(
+          error instanceof Error ? error.message : "Failed to sync ticket"
+        );
+      } finally {
+        setIsPurchasing(false);
       }
+    },
+    [gameId, router]
+  );
 
-      notify.success("Ticket purchased successfully!");
-      router.refresh();
-    } catch (error) {
-      console.error("[WaffleCard] Sync failed:", error);
-      notify.error(error instanceof Error ? error.message : "Failed to sync ticket");
-    } finally {
-      setIsPurchasing(false);
-      setPurchaseStep("idle");
-    }
-  }, [gameId, router]);
-
-  // Handle approval success - proceed to buy
+  // Handle successful on-chain purchase
   useEffect(() => {
-    if (isApproveSuccess && purchaseStep === "approving") {
-      refetchAllowance();
-      setPurchaseStep("buying");
-      buyTicket(BigInt(gameId), price.toString());
-    }
-  }, [isApproveSuccess, purchaseStep, buyTicket, gameId, price, refetchAllowance]);
-
-  // Handle buy success - sync with backend
-  useEffect(() => {
-    if (isBuySuccess && buyHash && purchaseStep === "buying") {
+    if (isBuySuccess && buyHash) {
       syncWithBackend(buyHash);
     }
-  }, [isBuySuccess, buyHash, purchaseStep, syncWithBackend]);
+  }, [isBuySuccess, buyHash, syncWithBackend]);
 
-  // Handle errors
-  useEffect(() => {
-    if (approveError) {
-      console.error("Approve error:", approveError);
-      notify.error("Failed to approve tokens");
-      setIsPurchasing(false);
-      setPurchaseStep("idle");
-    }
-  }, [approveError]);
-
+  // Handle purchase error
   useEffect(() => {
     if (buyError) {
-      console.error("Buy error:", buyError);
-      notify.error("Failed to buy ticket");
+      console.error("Purchase error:", buyError);
+      notify.error("Failed to purchase ticket");
       setIsPurchasing(false);
-      setPurchaseStep("idle");
     }
   }, [buyError]);
 
+  /**
+   * Purchase flow using ERC20 Permit:
+   * 1. Sign permit off-chain (no gas)
+   * 2. Submit buyTicketWithPermit transaction (one tx)
+   */
   const handlePurchase = async () => {
-    // Free tickets mode - bypass contract
-    if (FREE_TICKETS_MODE) {
-      setIsPurchasing(true);
-      notify.info("Creating your free ticket...");
-      await syncWithBackend();
-      return;
-    }
-
-    // Production flow: Check wallet connection
     if (!address) {
       notify.error("Please connect your wallet");
       return;
@@ -178,22 +142,54 @@ export const WaffleCard = ({
 
     setIsPurchasing(true);
 
-    // Check if we need to approve first
-    if (!hasEnoughAllowance) {
-      setPurchaseStep("approving");
-      notify.info("Approving USDC...");
-      approve(price.toString());
-    } else {
-      setPurchaseStep("buying");
+    // Refetch nonce to ensure it's current
+    const { data: currentNonce } = await refetchNonce();
+    if (currentNonce === undefined) {
+      notify.error("Failed to get permit nonce");
+      setIsPurchasing(false);
+      return;
+    }
+
+    try {
+      // Set permit deadline to 10 minutes from now
+      const deadline = BigInt(Math.floor(Date.now() / 1000) + 600);
+      const amountInUnits = parseUnits(price.toString(), TOKEN_CONFIG.decimals);
+
+      // Sign the permit
+      notify.info("Please sign the permit...");
+      const signature = await signTypedDataAsync({
+        domain: USDC_PERMIT_DOMAIN,
+        types: PERMIT_TYPES,
+        primaryType: "Permit",
+        message: {
+          owner: address,
+          spender: WAFFLE_GAME_CONFIG.address,
+          value: amountInUnits,
+          nonce: currentNonce,
+          deadline,
+        },
+      });
+
+      // Split signature into v, r, s
+      const { v, r, s } = splitSignature(signature);
+
+      // Submit buyTicketWithPermit transaction
       notify.info("Purchasing ticket...");
-      buyTicket(BigInt(gameId), price.toString());
+      buyWithPermit(BigInt(gameId), price.toString(), deadline, v, r, s);
+    } catch (error) {
+      console.error("Permit signing failed:", error);
+      if ((error as Error).message?.includes("rejected")) {
+        notify.error("Signature rejected");
+      } else {
+        notify.error("Failed to sign permit");
+      }
+      setIsPurchasing(false);
     }
   };
 
-  const isLoading = isPurchasing || isApproving || isApproveConfirming || isBuying || isBuyConfirming;
+  const isLoading = isPurchasing || isBuying || isBuyConfirming;
 
   const getButtonText = () => {
-    if (isApproving || isApproveConfirming) return "Approving...";
     if (isBuying || isBuyConfirming) return "Purchasing...";
     if (isPurchasing) return "Processing...";
     return "BUY WAFFLE";

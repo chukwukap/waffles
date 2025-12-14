@@ -195,3 +195,123 @@ export function useClaimPrize() {
 
   return { claimPrize, hash, isPending, isConfirming, isSuccess, error };
 }
+
+// ============================================================================
+// ERC20 Permit Flow (One-Click Ticket Purchase)
+// ============================================================================
+
+// ERC20 Permit ABI for nonces
+const erc20PermitAbi = [
+  ...erc20Abi,
+  {
+    type: "function",
+    name: "nonces",
+    inputs: [{ name: "owner", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "name",
+    inputs: [],
+    outputs: [{ name: "", type: "string" }],
+    stateMutability: "view",
+  },
+] as const;
+
+/**
+ * Hook to get the user's permit nonce for USDC
+ */
+export function usePermitNonce(address: `0x${string}` | undefined) {
+  return useReadContract({
+    address: TOKEN_CONFIG.address,
+    abi: erc20PermitAbi,
+    functionName: "nonces",
+    args: address ? [address] : undefined,
+    chainId: TOKEN_CONFIG.chainId,
+    query: {
+      enabled: !!address,
+    },
+  });
+}
+
+/**
+ * USDC Permit domain for EIP-712 signing
+ * Note: Base USDC uses version "2"
+ */
+export const USDC_PERMIT_DOMAIN = {
+  name: "USD Coin",
+  version: "2",
+  chainId: TOKEN_CONFIG.chainId,
+  verifyingContract: TOKEN_CONFIG.address,
+} as const;
+
+/**
+ * EIP-712 types for ERC20 Permit
+ */
+export const PERMIT_TYPES = {
+  Permit: [
+    { name: "owner", type: "address" },
+    { name: "spender", type: "address" },
+    { name: "value", type: "uint256" },
+    { name: "nonce", type: "uint256" },
+    { name: "deadline", type: "uint256" },
+  ],
+} as const;
+
+/**
+ * Hook to buy a ticket using ERC20 Permit (one-click purchase)
+ *
+ * Flow:
+ * 1. Sign permit off-chain (no gas)
+ * 2. Submit buyTicketWithPermit transaction (permit + buy in one tx)
+ */
+export function useBuyTicketWithPermit() {
+  const { writeContract, data: hash, isPending, error } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  /**
+   * Buy ticket with permit signature
+   * @param gameId - Game ID to join
+   * @param amount - Amount in human-readable format (e.g., "5" for $5)
+   * @param deadline - Permit deadline (timestamp)
+   * @param signature - Signed permit (v, r, s from signTypedData)
+   */
+  const buyWithPermit = (
+    gameId: bigint,
+    amount: string,
+    deadline: bigint,
+    v: number,
+    r: `0x${string}`,
+    s: `0x${string}`
+  ) => {
+    const amountInUnits = parseUnits(amount, TOKEN_CONFIG.decimals);
+    writeContract({
+      address: WAFFLE_GAME_CONFIG.address,
+      abi: waffleGameAbi,
+      functionName: "buyTicketWithPermit",
+      args: [gameId, amountInUnits, deadline, v, r, s],
+      chainId: WAFFLE_GAME_CONFIG.chainId,
+    });
+  };
+
+  return { buyWithPermit, hash, isPending, isConfirming, isSuccess, error };
+}
+
+/**
+ * Helper to split an EIP-712 signature into v, r, s components
+ */
+export function splitSignature(signature: `0x${string}`): {
+  v: number;
+  r: `0x${string}`;
+  s: `0x${string}`;
+} {
+  const r = `0x${signature.slice(2, 66)}` as `0x${string}`;
+  const s = `0x${signature.slice(66, 130)}` as `0x${string}`;
+  const v = parseInt(signature.slice(130, 132), 16);
+
+  // Handle EIP-155 style recovery id
+  return { r, s, v: v < 27 ? v + 27 : v };
+}
