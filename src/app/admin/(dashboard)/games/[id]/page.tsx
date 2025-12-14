@@ -2,7 +2,13 @@ import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { endGameAction } from "@/actions/admin/games";
-import { PencilIcon, QuestionMarkCircleIcon, StopIcon } from "@heroicons/react/24/outline";
+import {
+    PencilIcon,
+    QuestionMarkCircleIcon,
+    StopIcon,
+} from "@heroicons/react/24/outline";
+import { SettlementPanel } from "./_components/SettlementPanel";
+import { getOnChainGame } from "@/lib/settlement";
 
 export default async function GameDetailPage({
     params,
@@ -32,6 +38,39 @@ export default async function GameDetailPage({
         notFound();
     }
 
+    // Get on-chain status (optional, may fail if not deployed)
+    let onChainStatus = {
+        exists: false,
+        ended: false,
+        settled: false,
+        merkleRoot: undefined as string | undefined,
+    };
+
+    try {
+        const onChainGame = (await getOnChainGame(gameId)) as {
+            entryFee: bigint;
+            ticketCount: bigint;
+            merkleRoot: `0x${string}`;
+            settledAt: bigint;
+            ended: boolean;
+        };
+
+        if (onChainGame && onChainGame.entryFee > BigInt(0)) {
+            onChainStatus = {
+                exists: true,
+                ended: onChainGame.ended,
+                settled: onChainGame.merkleRoot !== "0x0000000000000000000000000000000000000000000000000000000000000000",
+                merkleRoot:
+                    onChainGame.merkleRoot !== "0x0000000000000000000000000000000000000000000000000000000000000000"
+                        ? onChainGame.merkleRoot
+                        : undefined,
+            };
+        }
+    } catch (error) {
+        // On-chain lookup failed - likely not deployed yet
+        console.log("[Admin] On-chain lookup failed:", error);
+    }
+
     const statusColors: Record<string, string> = {
         SCHEDULED: "bg-[#FFC931]/20 text-[#FFC931]",
         LIVE: "bg-[#14B985]/20 text-[#14B985]",
@@ -52,8 +91,13 @@ export default async function GameDetailPage({
 
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-white font-display">{game.title}</h1>
-                    <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium mt-2 ${statusColors[game.status] || statusColors.CANCELLED}`}>
+                    <h1 className="text-2xl font-bold text-white font-display">
+                        {game.title}
+                    </h1>
+                    <span
+                        className={`inline-flex px-3 py-1 rounded-full text-xs font-medium mt-2 ${statusColors[game.status] || statusColors.CANCELLED
+                            }`}
+                    >
                         {game.status}
                     </span>
                 </div>
@@ -75,27 +119,54 @@ export default async function GameDetailPage({
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="admin-panel p-6">
-                    <h3 className="text-white/50 text-sm font-medium mb-2 font-display">Status</h3>
-                    <p className={`text-2xl font-bold font-body ${game.status === "LIVE" ? "text-[#14B985] admin-stat-glow-success" :
-                            game.status === "SCHEDULED" ? "text-[#FFC931] admin-stat-glow" : "text-white"
-                        }`}>{game.status}</p>
+                    <h3 className="text-white/50 text-sm font-medium mb-2 font-display">
+                        Status
+                    </h3>
+                    <p
+                        className={`text-2xl font-bold font-body ${game.status === "LIVE"
+                            ? "text-[#14B985] admin-stat-glow-success"
+                            : game.status === "SCHEDULED"
+                                ? "text-[#FFC931] admin-stat-glow"
+                                : "text-white"
+                            }`}
+                    >
+                        {game.status}
+                    </p>
                 </div>
                 <div className="admin-panel p-6">
-                    <h3 className="text-white/50 text-sm font-medium mb-2 font-display">Players</h3>
-                    <p className="text-2xl font-bold text-[#00CFF2] font-body admin-stat-glow-cyan">{game._count.players}</p>
+                    <h3 className="text-white/50 text-sm font-medium mb-2 font-display">
+                        Players
+                    </h3>
+                    <p className="text-2xl font-bold text-[#00CFF2] font-body admin-stat-glow-cyan">
+                        {game._count.players}
+                    </p>
                 </div>
                 <div className="admin-panel p-6">
-                    <h3 className="text-white/50 text-sm font-medium mb-2 font-display">Questions</h3>
+                    <h3 className="text-white/50 text-sm font-medium mb-2 font-display">
+                        Questions
+                    </h3>
                     <p className="text-2xl font-bold text-[#FB72FF] font-body admin-stat-glow-pink">
                         {game._count.questions}
                     </p>
                 </div>
+                <div className="admin-panel p-6">
+                    <h3 className="text-white/50 text-sm font-medium mb-2 font-display">
+                        Prize Pool
+                    </h3>
+                    <p className="text-2xl font-bold text-[#14B985] font-body">
+                        ${game.prizePool.toLocaleString()}
+                    </p>
+                </div>
             </div>
 
+            {/* Game Actions */}
             <div className="admin-panel p-6 space-y-4">
-                <h2 className="text-xl font-bold text-white font-display">Actions</h2>
+                <h2 className="text-xl font-bold text-white font-display">
+                    Game Actions
+                </h2>
                 <div className="flex flex-wrap gap-4">
                     {game.status === "LIVE" && (
                         <form
@@ -116,15 +187,28 @@ export default async function GameDetailPage({
                     {game.status === "ENDED" && (
                         <div className="flex items-center gap-2 text-[#14B985]">
                             <span className="text-lg">✓</span>
-                            <p className="font-medium">Game has ended. Ranks have been calculated.</p>
+                            <p className="font-medium">
+                                Game has ended. Ranks have been calculated.
+                            </p>
                         </div>
                     )}
                     {game.status === "SCHEDULED" && (
-                        <p className="text-white/50">Game is scheduled. Actions will be available when the game goes live.</p>
+                        <p className="text-white/50">
+                            Game is scheduled. Actions will be available when the game goes
+                            live.
+                        </p>
                     )}
                 </div>
+            </div>
+
+            {/* On-Chain Settlement Panel */}
+            <div className="admin-panel p-6">
+                <SettlementPanel
+                    gameId={game.id}
+                    gameStatus={game.status}
+                    onChainStatus={onChainStatus}
+                />
             </div>
         </div>
     );
 }
-
