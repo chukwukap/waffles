@@ -9,7 +9,6 @@
 
 import { createWalletClient, createPublicClient, http, parseUnits } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { base, baseSepolia } from "viem/chains";
 import {
   WAFFLE_GAME_CONFIG,
   TOKEN_CONFIG,
@@ -23,7 +22,7 @@ import { prisma } from "@/lib/db";
 // Configuration
 // ============================================================================
 
-const chain = CHAIN_CONFIG.isMainnet ? base : baseSepolia;
+const chain = CHAIN_CONFIG.chain;
 
 // Check for admin private key (should be set as env var in production)
 const getAdminWallet = () => {
