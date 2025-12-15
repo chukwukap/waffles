@@ -1,9 +1,9 @@
-import { base } from "viem/chains";
+import { baseSepolia } from "viem/chains";
 
-// Chain configuration - Base mainnet
+// Chain configuration - Base Sepolia testnet
 export const CHAIN_CONFIG = {
-  chain: base,
-  chainId: base.id,
+  chain: baseSepolia,
+  chainId: baseSepolia.id,
 } as const;
 
 // WaffleGame Contract Configuration

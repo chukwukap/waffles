@@ -108,18 +108,6 @@ export default function SettingsClient() {
                     </button>
                 </form>
             </div>
-
-            <div className="admin-panel p-6 border-[#FFC931]/20">
-                <h4 className="font-semibold text-white mb-3 font-display flex items-center gap-2">
-                    <span className="text-[#FFC931]">💡</span> Password Management
-                </h4>
-                <ul className="text-sm text-white/60 space-y-2">
-                    <li>• Passwords are stored securely as bcrypt hashes in the database</li>
-                    <li>• Each admin has their own individual password</li>
-                    <li>• No need to update environment variables anymore</li>
-                    <li>• Sessions last for 7 days before requiring re-login</li>
-                </ul>
-            </div>
         </div>
     );
 }

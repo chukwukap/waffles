@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminSession } from "@/lib/admin-auth";
 import { createPublicClient, http, formatUnits } from "viem";
-import { base } from "viem/chains";
-import { WAFFLE_GAME_CONFIG, TOKEN_CONFIG } from "@/lib/contracts/config";
+import {
+  WAFFLE_GAME_CONFIG,
+  TOKEN_CONFIG,
+  CHAIN_CONFIG,
+} from "@/lib/contracts/config";
 import waffleGameAbi from "@/lib/contracts/WaffleGameAbi.json";
 
 /**
@@ -14,7 +17,7 @@ import waffleGameAbi from "@/lib/contracts/WaffleGameAbi.json";
  */
 
 const publicClient = createPublicClient({
-  chain: base,
+  chain: CHAIN_CONFIG.chain,
   transport: http(),
 });
 
@@ -94,7 +97,7 @@ export async function GET(request: NextRequest) {
 
     const state: ContractState = {
       address: WAFFLE_GAME_CONFIG.address,
-      chain: "Base",
+      chain: CHAIN_CONFIG.chain.name,
       chainId: WAFFLE_GAME_CONFIG.chainId,
       token: {
         address: tokenAddress,

@@ -191,7 +191,7 @@ export function SettlementPanel({
                         <p className="font-medium">{result.message}</p>
                         {result.txHash && (
                             <a
-                                href={`https://basescan.org/tx/${result.txHash}`}
+                                href={`https://sepolia.basescan.org/tx/${result.txHash}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-sm underline opacity-80 hover:opacity-100"
