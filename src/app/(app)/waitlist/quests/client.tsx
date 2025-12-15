@@ -289,19 +289,14 @@ function QuestCard({
             onClick={onGo}
             disabled={isPending}
             className={cn(
-              "font-body font-normal text-xl text-cyan-400 pr-1",
+              "font-body font-normal text-xl text-cyan-400 px-2",
               "transition-all duration-150",
               !isPending && "active:text-cyan-300",
               isPending && "opacity-50 cursor-not-allowed"
             )}
-            whileTap={!isPending ? { scale: 0.9, x: 3 } : undefined}
+            whileTap={!isPending ? { scale: 0.9 } : undefined}
           >
-            <motion.span
-              animate={{ x: [0, 3, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-            >
-              GO →
-            </motion.span>
+            GO
           </motion.button>
         )}
       </AnimatePresence>
@@ -316,6 +311,10 @@ export function QuestsPageClient() {
   const [waitlistData, setWaitlistData] = useState<WaitlistData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Optimistic points - tracks points added before server confirms
+  const [optimisticPoints, setOptimisticPoints] = useState(0);
+  const [optimisticCompleted, setOptimisticCompleted] = useState<string[]>([]);
 
   // Fetch waitlist data on mount
   useEffect(() => {
@@ -327,6 +326,9 @@ export function QuestsPageClient() {
         }
         const data = await response.json();
         setWaitlistData(data);
+        // Reset optimistic state when we get fresh data
+        setOptimisticPoints(0);
+        setOptimisticCompleted([]);
       } catch (err) {
         console.error("Error fetching waitlist data:", err);
         setError("Failed to load quests");
@@ -338,7 +340,7 @@ export function QuestsPageClient() {
   }, []);
 
   // Initialize quest actions hook
-  const { handleGo, handleComplete, getQuestStatus, isPending } = useQuestActions({
+  const { handleGo, handleComplete: originalHandleComplete, getQuestStatus, isPending } = useQuestActions({
     waitlistData: waitlistData ?? {
       fid: 0,
       rank: 0,
@@ -350,13 +352,33 @@ export function QuestsPageClient() {
     },
   });
 
-  // Calculate completion stats
+  // Wrap handleComplete to add optimistic points
+  const handleComplete = (questId: string) => {
+    // Find the quest to get its points
+    const quest = QUESTS.find((q) => q.id === questId);
+    if (quest && !optimisticCompleted.includes(questId)) {
+      setOptimisticPoints((prev) => prev + quest.points);
+      setOptimisticCompleted((prev) => [...prev, questId]);
+    }
+    // Call original handler
+    originalHandleComplete(questId);
+  };
+
+  // Calculate total points (server + optimistic)
+  const displayPoints = (waitlistData?.points ?? 0) + optimisticPoints;
+
+  // Calculate completion stats (including optimistic)
   const completedCount = useMemo(() => {
-    if (!waitlistData) return 0;
-    return QUESTS.filter(
+    if (!waitlistData) return optimisticCompleted.length;
+    const serverCompleted = QUESTS.filter(
       (q) => waitlistData.completedTasks.includes(q.id)
     ).length;
-  }, [waitlistData]);
+    // Add optimistic completions that aren't already in server data
+    const additionalOptimistic = optimisticCompleted.filter(
+      (id) => !waitlistData.completedTasks.includes(id)
+    ).length;
+    return serverCompleted + additionalOptimistic;
+  }, [waitlistData, optimisticCompleted]);
 
   // ============================================
   // LOADING STATE
@@ -403,7 +425,7 @@ export function QuestsPageClient() {
       <div className="relative z-10 flex-1 overflow-y-auto px-4 py-4">
         <div className="w-full max-w-lg mx-auto space-y-3">
           {/* Points & Progress */}
-          <PointsDisplay points={waitlistData.points} />
+          <PointsDisplay points={displayPoints} />
           <QuestProgress completed={completedCount} total={QUESTS.length} />
 
           {/* Quest List */}
