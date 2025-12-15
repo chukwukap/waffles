@@ -204,10 +204,10 @@ function QuestCard({
 
       {/* Icon with bounce */}
       <motion.div
-        className="shrink-0 w-12 h-12 rounded-full overflow-hidden relative bg-white/5"
+        className="shrink-0 w-12 h-12 rounded-xl overflow-hidden relative"
         whileTap={{ scale: 0.9, rotate: -10 }}
       >
-        <Image src={quest.iconPath} alt={quest.title} fill className="object-contain p-1" />
+        <Image src={quest.iconPath} alt={quest.title} fill className="object-cover" />
       </motion.div>
 
       {/* Points Badge - animated */}
