@@ -1,11 +1,9 @@
 import { prisma } from "@/lib/db";
 import Link from "next/link";
-import { QuestionForm } from "@/components/admin/QuestionForm";
-import { createQuestionAction } from "@/actions/admin/questions";
-import { QuestionList } from "@/components/admin/QuestionList";
+import { QuestionsManager } from "@/components/admin/QuestionsManager";
 import { QuestionImport } from "@/components/admin/QuestionImport";
 import { notFound } from "next/navigation";
-import { PlusCircleIcon, ListBulletIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
+import { ChevronLeftIcon, DocumentTextIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
 
 export default async function GameQuestionsPage({ params }: { params: Promise<{ id: string }> }) {
     const resolvedParams = await params;
@@ -25,83 +23,53 @@ export default async function GameQuestionsPage({ params }: { params: Promise<{ 
     }
 
     const totalQuestions = game.questions.length;
-    const uniqueRounds = new Set(game.questions.map(q => q.roundIndex)).size;
-    const withMedia = game.questions.filter(q => q.mediaUrl || q.soundUrl).length;
 
     return (
-        <div className="max-w-7xl space-y-6">
+        <div className="max-w-5xl mx-auto space-y-6">
             {/* Header */}
-            <div className="admin-panel p-6">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                        <Link
-                            href={`/admin/games/${game.id}`}
-                            className="text-white/50 hover:text-[#FFC931] font-medium transition-colors"
-                        >
-                            ← Back
-                        </Link>
-                        <div>
-                            <h1 className="text-2xl font-bold text-white font-display">Manage Questions</h1>
-                            <p className="text-white/60 mt-0.5">
-                                <span className="text-[#FFC931] font-medium">{game.title}</span>
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Stats */}
-                    <div className="flex items-center gap-6">
-                        <div className="text-center">
-                            <div className="text-2xl font-bold text-[#FFC931]">{totalQuestions}</div>
-                            <div className="text-xs text-white/50">Questions</div>
-                        </div>
-                        <div className="w-px h-10 bg-white/10"></div>
-                        <div className="text-center">
-                            <div className="text-2xl font-bold text-[#00CFF2]">{uniqueRounds}</div>
-                            <div className="text-xs text-white/50">Rounds</div>
-                        </div>
-                        <div className="w-px h-10 bg-white/10"></div>
-                        <div className="text-center">
-                            <div className="text-2xl font-bold text-[#FB72FF]">{withMedia}</div>
-                            <div className="text-xs text-white/50">With Media</div>
-                        </div>
-                    </div>
+            <div className="flex items-center gap-4">
+                <Link
+                    href={`/admin/games/${game.id}`}
+                    className="p-2 text-white/50 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                >
+                    <ChevronLeftIcon className="h-5 w-5" />
+                </Link>
+                <div className="flex-1">
+                    <h1 className="text-xl font-bold text-white font-display">Questions</h1>
+                    <p className="text-sm text-white/50">
+                        {game.title} • <span className="text-[#FFC931]">{totalQuestions}</span> questions
+                    </p>
                 </div>
             </div>
 
-            {/* Main Content */}
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                {/* Left: Questions List */}
-                <div className="xl:col-span-2 space-y-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <ListBulletIcon className="h-5 w-5 text-[#FFC931]" />
-                            <h2 className="text-lg font-semibold text-white font-display">Questions</h2>
+            {/* Main Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                {/* Questions List - Main Area */}
+                <div className="lg:col-span-3">
+                    <div className="admin-panel p-4">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                                <DocumentTextIcon className="h-5 w-5 text-[#FFC931]" />
+                                <h2 className="font-semibold text-white">All Questions</h2>
+                            </div>
+                            <span className="text-xs text-white/40 bg-white/5 px-2 py-1 rounded">
+                                Drag to reorder
+                            </span>
                         </div>
+                        <QuestionsManager gameId={game.id} initialQuestions={game.questions} />
                     </div>
-                    <QuestionList gameId={game.id} initialQuestions={game.questions} />
                 </div>
 
-                {/* Right: Add Question + Import */}
-                <div className="space-y-6">
-                    {/* Add Question Form */}
-                    <div className="admin-panel p-5 sticky top-6">
-                        <div className="flex items-center gap-2 mb-5">
-                            <PlusCircleIcon className="h-5 w-5 text-[#14B985]" />
-                            <h2 className="font-semibold text-white font-display">Add Question</h2>
-                        </div>
-                        <QuestionForm
-                            gameId={game.id}
-                            action={createQuestionAction.bind(null, game.id)}
-                            nextRoundIndex={game.questions.length + 1}
-                        />
-                    </div>
-
-                    {/* Bulk Import */}
-                    <div className="admin-panel p-5">
+                {/* Sidebar - Bulk Import */}
+                <div className="lg:col-span-2">
+                    <div className="admin-panel p-4 sticky top-6">
                         <div className="flex items-center gap-2 mb-4">
                             <ArrowUpTrayIcon className="h-5 w-5 text-[#FB72FF]" />
-                            <h2 className="font-semibold text-white font-display">Bulk Import</h2>
+                            <h2 className="font-semibold text-white">Bulk Import</h2>
                         </div>
+                        <p className="text-sm text-white/40 mb-4">
+                            Upload a CSV file to add multiple questions at once.
+                        </p>
                         <QuestionImport gameId={game.id} />
                     </div>
                 </div>
@@ -109,5 +77,6 @@ export default async function GameQuestionsPage({ params }: { params: Promise<{ 
         </div>
     );
 }
+
 
 
