@@ -10,17 +10,19 @@ import { OnboardingOverlay } from "./onboarding-overlay";
 type AuthStatus = "checking" | "new_user" | "authenticated";
 
 /**
- * AuthGate - Protects the app and handles new user onboarding.
+ * AuthGate - Handles auth check and onboarding BEFORE showing app.
  *
  * Flow:
- * 1. Check if user exists in DB
- * 2. New user → show onboarding overlay
- * 3. Existing user → render app
- * 4. After onboarding complete → render app
+ * 1. Farcaster splash is visible (we haven't called ready)
+ * 2. We get context → check if user exists in DB
+ * 3. Call setMiniAppReady() → Farcaster hides splash
+ * 4. Show app or onboarding overlay based on status
+ *
+ * This means: NO loading screens, Farcaster splash handles it.
  */
 export function AuthGate({ children }: { children: ReactNode }) {
   const { address } = useAccount();
-  const { context } = useMiniKit();
+  const { context, setMiniAppReady } = useMiniKit();
   const fid = context?.user?.fid;
   const username = context?.user?.username;
   const pfpUrl = context?.user?.pfpUrl;
@@ -28,7 +30,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>("checking");
   const [mountKey, setMountKey] = useState(0);
 
-  // Check if user exists
+  // Check user status, THEN signal ready
   useEffect(() => {
     if (!fid) return;
 
@@ -40,11 +42,14 @@ export function AuthGate({ children }: { children: ReactNode }) {
         setStatus(res.ok ? "authenticated" : "new_user");
       } catch {
         setStatus("new_user");
+      } finally {
+        // NOW we're ready - hide Farcaster splash
+        setMiniAppReady();
       }
     })();
-  }, [fid]);
+  }, [fid, setMiniAppReady]);
 
-  // Create user and finish onboarding
+  // Complete onboarding
   const handleOnboardingComplete = useCallback(async () => {
     if (!fid) throw new Error("Missing FID");
 
@@ -60,18 +65,19 @@ export function AuthGate({ children }: { children: ReactNode }) {
     }
 
     setStatus("authenticated");
-    setMountKey((k) => k + 1); // Remount children to fetch fresh data
+    setMountKey((k) => k + 1);
   }, [fid, username, pfpUrl, address]);
 
-  // Render
+  // While checking, render nothing (Farcaster splash is visible)
+  if (status === "checking") {
+    return null;
+  }
+
   return (
     <>
-      {/* App renders behind overlay, remounts after onboarding */}
       <div key={mountKey} className="contents">
         {children}
       </div>
-
-      {/* Onboarding overlay for new users */}
       {status === "new_user" && (
         <OnboardingOverlay onComplete={handleOnboardingComplete} />
       )}

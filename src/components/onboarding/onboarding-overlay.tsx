@@ -247,7 +247,10 @@ export function OnboardingOverlay({ onComplete }: OnboardingOverlayProps) {
                   </p>
                 </div>
 
-                <ProgressDots total={slides.length} current={currentSlideIndex} />
+                <ProgressDots
+                  total={slides.length}
+                  current={currentSlideIndex}
+                />
 
                 {/* Button */}
                 <FancyBorderButton

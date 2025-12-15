@@ -542,7 +542,7 @@ think you can beat me? you're on😏`;
   if (isLoading) {
     return (
       <section className="flex-1 flex items-center justify-center">
-        <WaffleLoader text="CHECKING LIST..." />
+        <WaffleLoader text="" />
       </section>
     );
   }
