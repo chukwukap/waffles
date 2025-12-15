@@ -1,24 +1,89 @@
-import { baseSepolia } from "viem/chains";
+import { base, baseSepolia } from "viem/chains";
 
-// Chain configuration - Base Sepolia testnet
-export const CHAIN_CONFIG = {
+// ============================================================================
+// NETWORK CONFIGURATION
+// ============================================================================
+// Set NEXT_PUBLIC_CHAIN_NETWORK in your .env file:
+//   - "testnet" for Base Sepolia (development)
+//   - "mainnet" for Base (production)
+// ============================================================================
+
+type NetworkConfig = {
+  chain: typeof base | typeof baseSepolia;
+  chainId: number;
+  name: string;
+  explorerUrl: string;
+  contracts: {
+    waffleGame: `0x${string}`;
+    usdc: `0x${string}`;
+  };
+};
+
+const TESTNET_CONFIG: NetworkConfig = {
   chain: baseSepolia,
   chainId: baseSepolia.id,
+  name: "Base Sepolia",
+  explorerUrl: "https://sepolia.basescan.org",
+  contracts: {
+    // TODO: Update with your Base Sepolia contract address
+    waffleGame: "0xb4De98e6290142626F00A3371D5Ea2cD5B01A0A3",
+    // Base Sepolia USDC (mock/test token)
+    usdc: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+  },
+};
+
+const MAINNET_CONFIG: NetworkConfig = {
+  chain: base,
+  chainId: base.id,
+  name: "Base",
+  explorerUrl: "https://basescan.org",
+  contracts: {
+    // TODO: Update with your Base mainnet contract address
+    waffleGame: "0x0000000000000000000000000000000000000000",
+    // Official USDC on Base mainnet
+    usdc: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+  },
+};
+
+// Read network from environment variable (default to testnet for safety)
+const network = process.env.NEXT_PUBLIC_CHAIN_NETWORK || "testnet";
+const isMainnet = network === "mainnet";
+
+// Select the appropriate config based on environment
+const NETWORK_CONFIG: NetworkConfig = isMainnet
+  ? MAINNET_CONFIG
+  : TESTNET_CONFIG;
+
+// ============================================================================
+// EXPORTS
+// ============================================================================
+
+export const CHAIN_CONFIG = {
+  chain: NETWORK_CONFIG.chain,
+  chainId: NETWORK_CONFIG.chainId,
+  name: NETWORK_CONFIG.name,
+  explorerUrl: NETWORK_CONFIG.explorerUrl,
+  isMainnet,
+  isTestnet: !isMainnet,
 } as const;
 
-// WaffleGame Contract Configuration
 export const WAFFLE_GAME_CONFIG = {
-  address: "0xb4De98e6290142626F00A3371D5Ea2cD5B01A0A3" as const,
-  chainId: CHAIN_CONFIG.chainId,
+  address: NETWORK_CONFIG.contracts.waffleGame,
+  chainId: NETWORK_CONFIG.chainId,
 } as const;
 
-// Token Configuration (USDC on Base)
 export const TOKEN_CONFIG = {
-  address: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const,
-  chainId: CHAIN_CONFIG.chainId,
+  address: NETWORK_CONFIG.contracts.usdc,
+  chainId: NETWORK_CONFIG.chainId,
   decimals: 6,
   symbol: "USDC",
 } as const;
 
 // Legacy export for backwards compatibility
 export const USDC_ADDRESS = TOKEN_CONFIG.address;
+
+// Helper to get explorer URLs
+export const getExplorerUrl = {
+  address: (addr: string) => `${CHAIN_CONFIG.explorerUrl}/address/${addr}`,
+  tx: (hash: string) => `${CHAIN_CONFIG.explorerUrl}/tx/${hash}`,
+};

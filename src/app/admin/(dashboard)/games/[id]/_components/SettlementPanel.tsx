@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getExplorerUrl } from "@/lib/contracts/config";
 import {
     ChartPieIcon,
     CurrencyDollarIcon,
@@ -191,7 +192,7 @@ export function SettlementPanel({
                         <p className="font-medium">{result.message}</p>
                         {result.txHash && (
                             <a
-                                href={`https://sepolia.basescan.org/tx/${result.txHash}`}
+                                href={getExplorerUrl.tx(result.txHash)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-sm underline opacity-80 hover:opacity-100"
