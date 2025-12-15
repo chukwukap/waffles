@@ -75,8 +75,7 @@ export function ConfirmationModal({
     warning: {
       iconBg: "bg-[#FFC931]/15",
       iconColor: "text-[#FFC931]",
-      buttonBg:
-        "bg-[#FFC931] hover:bg-[#FFD966] shadow-lg shadow-[#FFC931]/20",
+      buttonBg: "bg-[#FFC931] hover:bg-[#FFD966] shadow-lg shadow-[#FFC931]/20",
       buttonText: "text-black",
       glowColor: "rgba(255, 201, 49, 0.1)",
       Icon: ExclamationTriangleIcon,
@@ -84,8 +83,7 @@ export function ConfirmationModal({
     success: {
       iconBg: "bg-[#14B985]/15",
       iconColor: "text-[#14B985]",
-      buttonBg:
-        "bg-[#14B985] hover:bg-[#1BF5B0] shadow-lg shadow-[#14B985]/20",
+      buttonBg: "bg-[#14B985] hover:bg-[#1BF5B0] shadow-lg shadow-[#14B985]/20",
       buttonText: "text-black",
       glowColor: "rgba(20, 185, 133, 0.1)",
       Icon: CheckCircleIcon,

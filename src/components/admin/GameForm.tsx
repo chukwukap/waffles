@@ -131,17 +131,19 @@ export function GameForm({
   const getPreviewItems = () => {
     if (!pendingFormData) return [];
 
-    const title = pendingFormData.get("title")?.toString() || "";
-    const theme =
-      THEMES.find((t) => t.id === pendingFormData.get("theme"))?.label || "";
+    const title = pendingFormData.get("title")?.toString() || "Untitled";
+    const themeData = THEMES.find((t) => t.id === pendingFormData.get("theme"));
+    const themeDisplay = themeData 
+      ? `${themeData.icon} ${themeData.label}` 
+      : "Not selected";
     const entryFee = pendingFormData.get("entryFee")?.toString() || "0";
     const prizePool = pendingFormData.get("prizePool")?.toString() || "0";
     const startsAt = pendingFormData.get("startsAt")?.toString() || "";
-    const maxPlayers = pendingFormData.get("maxPlayers")?.toString() || "";
+    const maxPlayers = pendingFormData.get("maxPlayers")?.toString() || "0";
 
     return [
       { label: "Title", value: title },
-      { label: "Theme", value: theme },
+      { label: "Theme", value: themeDisplay },
       { label: "Entry Fee", value: `$${entryFee} USDC` },
       { label: "Prize Pool", value: `$${prizePool} USDC` },
       {
