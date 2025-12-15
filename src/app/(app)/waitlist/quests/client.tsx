@@ -159,6 +159,7 @@ function QuestCard({
   onGo,
   onComplete,
   isPending,
+  invitesCount,
 }: {
   quest: Quest;
   status: QuestStatus;
@@ -166,10 +167,12 @@ function QuestCard({
   onGo: () => void;
   onComplete: () => void;
   isPending: boolean;
+  invitesCount?: number;
 }) {
   const isCompleted = status === "completed";
   const isPendingQuest = status === "pending";
   const isInitial = status === "initial";
+  const isInviteQuest = quest.type === "invite";
 
   return (
     <motion.div
@@ -184,9 +187,9 @@ function QuestCard({
       whileTap={!isCompleted ? { scale: 0.98 } : undefined}
       className={cn(
         "relative flex items-center gap-3 px-3 py-3 rounded-2xl",
-        "bg-white/[0.03] border border-white/10",
+        "bg-white/3 border border-white/10",
         "transition-colors duration-200",
-        !isCompleted && "active:bg-white/[0.06]",
+        !isCompleted && "active:bg-white/6",
         isCompleted && "opacity-60"
       )}
     >
@@ -207,7 +210,12 @@ function QuestCard({
         className="shrink-0 w-12 h-12 rounded-xl overflow-hidden relative"
         whileTap={{ scale: 0.9, rotate: -10 }}
       >
-        <Image src={quest.iconPath} alt={quest.title} fill className="object-cover" />
+        <Image
+          src={quest.iconPath}
+          alt={quest.title}
+          fill
+          className="object-cover"
+        />
       </motion.div>
 
       {/* Points Badge - animated */}
@@ -244,6 +252,31 @@ function QuestCard({
           {quest.text}
         </p>
 
+        {/* Invite quest progress indicator */}
+        {isInviteQuest && !isCompleted && (
+          <div className="flex items-center gap-2 mt-1">
+            <div className="flex gap-1">
+              {[0, 1, 2].map((i) => (
+                <motion.div
+                  key={i}
+                  className={cn(
+                    "w-2 h-2 rounded-full",
+                    (invitesCount ?? 0) > i
+                      ? "bg-cyan-400"
+                      : "bg-white/20"
+                  )}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.1 * i }}
+                />
+              ))}
+            </div>
+            <span className="text-[12px] font-display text-white/50">
+              {Math.min(invitesCount ?? 0, 3)}/3 friends joined
+            </span>
+          </div>
+        )}
+
         {/* Pending state - Complete button */}
         <AnimatePresence>
           {isPendingQuest && (
@@ -254,9 +287,9 @@ function QuestCard({
               onClick={onComplete}
               disabled={isPending}
               className={cn(
-                "w-24 h-7 rounded-[8px]",
-                "bg-white text-[#191919]",
-                "border-[3px] border-t-0 border-l-0 border-(--brand-cyan)",
+                "w-24 h-7 py-0.5 rounded-[8px]",
+                "bg-white text-[#1B8FF5]",
+                "border-[3px] border-t-0 border-l-0 border-[#1B8FF5]",
                 "font-body font-normal text-base leading-none uppercase",
                 "flex items-center justify-center",
                 "transition-colors",
@@ -278,7 +311,7 @@ function QuestCard({
         </AnimatePresence>
       </div>
 
-      {/* Initial state - GO button */}
+      {/* Initial state - GO/SHARE button */}
       <AnimatePresence>
         {isInitial && (
           <motion.button
@@ -295,7 +328,7 @@ function QuestCard({
             )}
             whileTap={!isPending ? { scale: 0.9 } : undefined}
           >
-            GO
+            {isInviteQuest ? "SHARE" : "GO"}
           </motion.button>
         )}
       </AnimatePresence>
@@ -310,7 +343,7 @@ export function QuestsPageClient() {
   const [waitlistData, setWaitlistData] = useState<WaitlistData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Optimistic points - tracks points added before server confirms
   const [optimisticPoints, setOptimisticPoints] = useState(0);
   const [optimisticCompleted, setOptimisticCompleted] = useState<string[]>([]);
@@ -339,7 +372,12 @@ export function QuestsPageClient() {
   }, []);
 
   // Initialize quest actions hook
-  const { handleGo, handleComplete: originalHandleComplete, getQuestStatus, isPending } = useQuestActions({
+  const {
+    handleGo,
+    handleComplete: originalHandleComplete,
+    getQuestStatus,
+    isPending,
+  } = useQuestActions({
     waitlistData: waitlistData ?? {
       fid: 0,
       rank: 0,
@@ -369,8 +407,8 @@ export function QuestsPageClient() {
   // Calculate completion stats (including optimistic)
   const completedCount = useMemo(() => {
     if (!waitlistData) return optimisticCompleted.length;
-    const serverCompleted = QUESTS.filter(
-      (q) => waitlistData.completedTasks.includes(q.id)
+    const serverCompleted = QUESTS.filter((q) =>
+      waitlistData.completedTasks.includes(q.id)
     ).length;
     // Add optimistic completions that aren't already in server data
     const additionalOptimistic = optimisticCompleted.filter(
@@ -407,7 +445,9 @@ export function QuestsPageClient() {
         >
           😕
         </motion.span>
-        <p className="text-red-400 text-center">{error || "Failed to load quests"}</p>
+        <p className="text-red-400 text-center">
+          {error || "Failed to load quests"}
+        </p>
       </motion.div>
     );
   }
@@ -445,6 +485,7 @@ export function QuestsPageClient() {
                   onGo={() => handleGo(quest)}
                   onComplete={() => handleComplete(quest.id)}
                   isPending={isPending}
+                  invitesCount={waitlistData.invitesCount}
                 />
               );
             })}
@@ -462,7 +503,11 @@ export function QuestsPageClient() {
                 <motion.span
                   className="text-4xl block mb-2"
                   animate={{ scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
-                  transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 2 }}
+                  transition={{
+                    duration: 0.6,
+                    repeat: Infinity,
+                    repeatDelay: 2,
+                  }}
                 >
                   🎉
                 </motion.span>
