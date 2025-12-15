@@ -45,8 +45,8 @@ export function SettlementPanel({
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY || ""}`,
                 },
+                credentials: "include", // Use cookie auth
                 body: JSON.stringify({
                     action,
                     gameId,
@@ -178,8 +178,8 @@ export function SettlementPanel({
             {result && (
                 <div
                     className={`flex items-start gap-3 p-4 rounded-xl border ${result.success
-                            ? "bg-[#14B985]/10 border-[#14B985]/30 text-[#14B985]"
-                            : "bg-red-500/10 border-red-500/30 text-red-400"
+                        ? "bg-[#14B985]/10 border-[#14B985]/30 text-[#14B985]"
+                        : "bg-red-500/10 border-red-500/30 text-red-400"
                         }`}
                 >
                     {result.success ? (
@@ -229,10 +229,10 @@ function StatusBadge({
     return (
         <div
             className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${pending
-                    ? "bg-[#FFC931]/20 text-[#FFC931]"
-                    : active
-                        ? "bg-[#14B985]/20 text-[#14B985]"
-                        : "bg-white/10 text-white/50"
+                ? "bg-[#FFC931]/20 text-[#FFC931]"
+                : active
+                    ? "bg-[#14B985]/20 text-[#14B985]"
+                    : "bg-white/10 text-white/50"
                 }`}
         >
             {pending ? (

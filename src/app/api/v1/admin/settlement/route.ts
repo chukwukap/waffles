@@ -5,26 +5,19 @@ import {
   endGameOnChain,
   settleGame,
 } from "@/lib/settlement";
-import { env } from "@/lib/env";
+import { getAdminSession } from "@/lib/admin-auth";
 
 /**
  * Admin Settlement API
  *
- * Used by admin dashboard and cron jobs to manage games on-chain.
- * Protected by secret API key.
+ * Used by admin dashboard to manage games on-chain.
+ * Protected by cookie-based session auth.
  */
 
-// Simple auth check for admin/cron endpoints
-function isAuthorized(request: NextRequest): boolean {
-  const authHeader = request.headers.get("Authorization");
-  const apiKey = process.env.ADMIN_API_KEY;
-
-  if (!apiKey) {
-    console.error("[Settlement API] ADMIN_API_KEY not configured");
-    return false;
-  }
-
-  return authHeader === `Bearer ${apiKey}`;
+// Auth check using existing session system
+async function isAuthorized(): Promise<boolean> {
+  const session = await getAdminSession();
+  return session !== null;
 }
 
 interface SettlementRequestBody {
@@ -53,7 +46,7 @@ interface SettlementResponse {
  */
 export async function POST(request: NextRequest) {
   // Auth check
-  if (!isAuthorized(request)) {
+  if (!(await isAuthorized())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -133,7 +126,7 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   // Auth check
-  if (!isAuthorized(request)) {
+  if (!(await isAuthorized())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
