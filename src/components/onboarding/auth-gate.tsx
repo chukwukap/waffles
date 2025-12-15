@@ -78,4 +78,3 @@ export function AuthGate({ children }: { children: ReactNode }) {
     </>
   );
 }
-
