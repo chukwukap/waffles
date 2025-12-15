@@ -2,12 +2,7 @@
 
 import { useAddFrame, useComposeCast } from "@coinbase/onchainkit/minikit";
 import { notify } from "@/components/ui/Toaster";
-import {
-  useCallback,
-  startTransition,
-  useEffect,
-  useActionState,
-} from "react";
+import { useCallback, startTransition, useEffect, useActionState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -56,7 +51,7 @@ const itemVariants = {
 // --- Main Component ---
 export function WaitlistClient() {
   const { context } = useMiniKit();
-  const addFrame = useAddFrame()
+  const addFrame = useAddFrame();
   const searchParams = useSearchParams();
   const router = useRouter();
   const { composeCastAsync } = useComposeCast();
@@ -110,20 +105,19 @@ export function WaitlistClient() {
 
   const handleSubmit = useCallback(
     async (formData: FormData) => {
-
-
       if (!fid) return;
 
       // Trigger Add MiniApp and store notification token
       try {
-        const result = await addFrame()
+        const result = await addFrame();
 
         // Store notification token if returned
         if (result && context?.client.clientFid) {
           await saveNotificationTokenAction(
             fid,
             context.client.clientFid,
-            result);
+            result
+          );
         }
       } catch (error) {
         console.error("Failed to add miniapp:", error);
@@ -192,10 +186,10 @@ think you can beat me? you're on😏`;
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="flex-1 overflow-y-auto px-4 space-y-2 flex flex-col items-center"
+          className="flex-1 min-h-0 overflow-hidden px-4 flex flex-col items-center"
         >
-          {/* Logo */}
-          <motion.div variants={itemVariants} className="mt-8">
+          {/* Logo - fixed height, won't shrink */}
+          <motion.div variants={itemVariants} className="shrink-0 pt-6 pb-2">
             <div className="w-[122px] h-[23px] relative">
               <Image
                 src="/logo-onboarding.png"
@@ -208,15 +202,15 @@ think you can beat me? you're on😏`;
             </div>
           </motion.div>
 
-          {/* Scroll Illustration */}
+          {/* Scroll Illustration - flexible, will shrink to fit */}
           <motion.div
             variants={itemVariants}
-            className="flex-1 flex items-center justify-center"
+            className="flex-1 min-h-0 flex items-center justify-center py-2"
           >
             <motion.div
-              animate={{ y: [0, -12, 0], rotate: [0, -2, 2, 0] }}
+              animate={{ y: [0, -8, 0], rotate: [0, -2, 2, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              whileHover={{ scale: 1.05, rotate: 0 }}
+              className="h-full flex items-center"
             >
               <Image
                 src="/images/illustrations/waitlist-scroll.svg"
@@ -224,29 +218,32 @@ think you can beat me? you're on😏`;
                 height={189}
                 priority
                 alt="scroll"
-                className="drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
+                className="drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)] max-h-full w-auto object-contain"
               />
             </motion.div>
           </motion.div>
 
-          {/* Content: Rank & Description */}
+          {/* Content: Rank & Description - fixed height, won't shrink */}
           <motion.div
             variants={itemVariants}
-            className="flex flex-col items-center text-center w-full pb-4"
+            className="shrink-0 flex flex-col items-center text-center w-full pb-2"
           >
-            <h1 className="font-body font-normal not-italic text-[44px] leading-[92%] tracking-[-0.03em] text-center text-white mb-1">YOU&apos;RE ON <br />THE LIST!</h1>
+            <h1 className="font-body font-normal not-italic text-[40px] leading-[92%] tracking-[-0.03em] text-center text-white mb-1">
+              YOU&apos;RE ON <br />
+              THE LIST!
+            </h1>
 
-            {/* Dynamic Rank Message based on Figma design */}
-            <p className={"text-[#99A0AE] font-display font-medium text-[16px] leading-[130%] tracking-[-0.03em] text-center text-pretty mx-auto"}>
-              {rankMsg(user.rank)} Move up faster <br />by completing quests and inviting
-              friends!
+            {/* Dynamic Rank Message */}
+            <p className="text-[#99A0AE] font-display font-medium text-[15px] leading-[130%] tracking-[-0.03em] text-center text-pretty mx-auto">
+              {rankMsg(user.rank)} Move up faster <br />
+              by completing quests and inviting friends!
             </p>
 
             {/* Primary Action: COMPLETE QUESTS */}
-            <div className="mt-4 w-full flex flex-col items-center gap-4">
+            <div className="mt-3 w-full flex flex-col items-center gap-3">
               <FancyBorderButton
                 onClick={() => router.push(`/waitlist/quests`)}
-                className={"mx-auto text-[#191919] text-[26px]"}
+                className="mx-auto text-[#191919] text-[24px]"
                 disabled={pending}
               >
                 COMPLETE QUESTS
@@ -254,26 +251,18 @@ think you can beat me? you're on😏`;
 
               {/* Secondary Actions: Two Links */}
               <div className="flex gap-1 w-full max-w-sm justify-center">
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="flex-1"
-                >
+                <motion.div whileTap={{ scale: 0.98 }} className="flex-1">
                   <button
                     onClick={handleShare}
-                    className="w-full h-[45px] rounded-xl border-2 border-white/40 p-3 bg-white/9 font-body font-normal text-white text-[16px] leading-none tracking-normal uppercase"
+                    className="w-full h-[42px] rounded-xl border-2 border-white/40 px-2 py-2 bg-white/9 font-body font-normal text-white text-[14px] leading-none tracking-normal uppercase"
                   >
                     SHARE WAITLIST
                   </button>
                 </motion.div>
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="flex-1"
-                >
+                <motion.div whileTap={{ scale: 0.98 }} className="flex-1">
                   <Link
-                    href={`/waitlist/leaderboard`}
-                    className="flex items-center justify-center w-full h-[45px] rounded-xl border-2 border-white/40 p-3 bg-white/9 font-body font-normal text-white text-[16px] leading-none tracking-normal uppercase"
+                    href="/waitlist/leaderboard"
+                    className="flex items-center justify-center w-full h-[42px] rounded-xl border-2 border-white/40 px-2 py-2 bg-white/9 font-body font-normal text-white text-[14px] leading-none tracking-normal uppercase"
                   >
                     SEE LEADERBOARD
                   </Link>
@@ -282,8 +271,8 @@ think you can beat me? you're on😏`;
             </div>
           </motion.div>
 
-          {/* Mutuals Footer */}
-          <motion.div variants={itemVariants} className="mb-1 mt-[5vh]">
+          {/* Mutuals - fixed height */}
+          <motion.div variants={itemVariants} className="shrink-0 py-2">
             <WaitlistMutuals mutualsData={mutualsData} />
           </motion.div>
         </motion.section>
@@ -299,10 +288,11 @@ think you can beat me? you're on😏`;
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="flex-1 overflow-y-auto px-3 space-y-3"
+        className="flex-1 min-h-0 overflow-hidden px-4 flex flex-col items-center"
       >
-        <motion.div variants={itemVariants}>
-          <div className="w-[224px] h-[42px] relative mt-14 mx-auto">
+        {/* Logo - fixed height */}
+        <motion.div variants={itemVariants} className="shrink-0 pt-8 pb-2">
+          <div className="w-[200px] h-[38px] relative mx-auto">
             <Image
               src="/logo-onboarding.png"
               alt="WAFFLES logo"
@@ -314,11 +304,15 @@ think you can beat me? you're on😏`;
           </div>
         </motion.div>
 
-        <motion.div variants={itemVariants}>
+        {/* Scroll Illustration - flexible, will shrink to fit */}
+        <motion.div
+          variants={itemVariants}
+          className="flex-1 min-h-0 flex items-center justify-center py-2"
+        >
           <motion.div
-            animate={{ y: [0, -12, 0], rotate: [0, 2, -2, 0] }}
+            animate={{ y: [0, -8, 0], rotate: [0, 2, -2, 0] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            whileHover={{ scale: 1.05, rotate: 0 }}
+            className="h-full flex items-center"
           >
             <Image
               src="/images/illustrations/waitlist-scroll.svg"
@@ -326,22 +320,27 @@ think you can beat me? you're on😏`;
               height={189}
               priority
               alt="scroll"
-              className="mx-auto my-8 drop-shadow-2xl"
+              className="mx-auto drop-shadow-2xl max-h-full w-auto object-contain"
             />
           </motion.div>
         </motion.div>
 
+        {/* Join Form UI - fixed height */}
         <motion.div
           variants={itemVariants}
-          className="mt-[2vh] flex flex-col items-center text-center w-full gap-2"
+          className="shrink-0 flex flex-col items-center text-center w-full gap-2 pb-2"
         >
-          {/* Join Form UI */}
-          <h1 className={"font-body font-normal not-italic text-[44px] leading-[92%] tracking-[-0.03em] text-center text-white mb-1"}>JOIN THE <br />WAITLIST</h1>
+          <h1 className="font-body font-normal not-italic text-[40px] leading-[92%] tracking-[-0.03em] text-center text-white mb-1">
+            JOIN THE <br />
+            WAITLIST
+          </h1>
 
-          <p className={"text-[#99A0AE] font-display font-medium text-[16px] leading-[130%] tracking-[-0.03em] text-center mx-auto"}>
+          <p className="text-[#99A0AE] font-display font-medium text-[15px] leading-[130%] tracking-[-0.03em] text-center mx-auto">
             Join now to be first to play when <br /> Waffles launches
           </p>
-          {state.error && <p className={"text-red-400 text-sm"}>{state.error}</p>}
+          {state.error && (
+            <p className="text-red-400 text-sm">{state.error}</p>
+          )}
 
           <FancyBorderButton
             onClick={() => {
@@ -351,14 +350,14 @@ think you can beat me? you're on😏`;
               handleSubmit(formData);
             }}
             disabled={pending}
-            className={"mx-auto text-[#191919] text-[26px] my-2 px-5 w-full max-w-full"}
+            className="mx-auto text-[#191919] text-[24px] mt-2 px-5 w-full max-w-full"
           >
             {pending ? "JOINING..." : "GET ME ON THE LIST"}
           </FancyBorderButton>
-
         </motion.div>
 
-        <motion.div variants={itemVariants}>
+        {/* Mutuals - fixed height */}
+        <motion.div variants={itemVariants} className="shrink-0 py-2">
           <WaitlistMutuals mutualsData={mutualsData} />
         </motion.div>
       </motion.section>
