@@ -211,16 +211,25 @@ export async function settleGame(gameId: number): Promise<{
 
 /**
  * Check if a game exists on-chain
+ * Returns null if game doesn't exist or contract call fails
  */
 export async function getOnChainGame(gameId: number) {
-  const game = await publicClient.readContract({
-    address: WAFFLE_GAME_CONFIG.address,
-    abi: waffleGameAbi,
-    functionName: "getGame",
-    args: [BigInt(gameId)],
-  });
+  try {
+    const game = await publicClient.readContract({
+      address: WAFFLE_GAME_CONFIG.address,
+      abi: waffleGameAbi,
+      functionName: "getGame",
+      args: [BigInt(gameId)],
+    });
 
-  return game;
+    return game;
+  } catch (error) {
+    // Game doesn't exist on-chain yet (only in database)
+    console.log(
+      `[Settlement] Game ${gameId} not found on-chain (database-only)`
+    );
+    return null;
+  }
 }
 
 /**
