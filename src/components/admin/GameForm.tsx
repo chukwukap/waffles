@@ -17,7 +17,13 @@ import {
   ArrowRightIcon,
   InformationCircleIcon,
 } from "@heroicons/react/24/outline";
-import { useActionState, useState, useRef, useMemo, useTransition } from "react";
+import {
+  useActionState,
+  useState,
+  useRef,
+  useMemo,
+  useTransition,
+} from "react";
 import { MediaPicker } from "@/components/admin/MediaPicker";
 import { ConfirmationModal } from "@/components/admin/ConfirmationModal";
 
@@ -176,7 +182,7 @@ export function GameForm({
   const [validationError, setValidationError] = useState<string | null>(null);
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  
+
   // Use transition for form submission to avoid React warning
   const [isPending, startTransition] = useTransition();
 
