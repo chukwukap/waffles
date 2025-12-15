@@ -1,18 +1,14 @@
 "use client";
 
-import { use, useRef, useState, useMemo, useEffect } from "react";
+import { use, useRef, useMemo, useEffect } from "react";
 import { calculatePrizePool, formatTime } from "@/lib/utils";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useRouter } from "next/navigation";
-
 import { useCountdown } from "@/hooks/useCountdown";
 import { usePartyGame } from "@/hooks/usePartyGame";
-
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
-
 import { Game } from "./page";
 import { useGameData } from "@/hooks/useGameData";
-
 import { GameActionButton } from "./_components/GameActionButton";
 import { Chat } from "./_components/chat/Chat";
 import LiveEventFeed from "./_components/LiveEventFeed";
@@ -36,17 +32,11 @@ export default function GameHomePageClient({
     ticket,
     mutuals,
     isLoading: isUserLoading,
-    isAuthorized
+    isAuthorized,
   } = useGameData(fid, game?.id);
 
   // PartyKit Integration
-  const {
-    isConnected,
-    onlineCount,
-    messages,
-    events,
-    sendChat,
-  } = usePartyGame({
+  const { onlineCount, messages, events, sendChat } = usePartyGame({
     gameId: game?.id?.toString() ?? "",
     enabled: !!game && isAuthorized,
   });
@@ -89,8 +79,7 @@ export default function GameHomePageClient({
   }).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  })
-    } `;
+  })} `;
 
   const playerCount = game?._count.players ?? 0;
   const neonPinkColor = "var(--color-neon-pink)";
@@ -176,4 +165,3 @@ export default function GameHomePageClient({
     </>
   );
 }
-
