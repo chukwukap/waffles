@@ -9,25 +9,24 @@ interface OnboardingGateProps {
 }
 
 /**
- * Client-side gate for the onboarding process.
- * Blocks the main app until onboarding is complete to prevent
- * API calls before the user exists in the database.
+ * Handles onboarding flow without blocking app render.
  * 
- * Note: No custom splash screen - Farcaster already handles that.
+ * The overlay is a fixed full-screen element that covers the app,
+ * so we can safely render both. This avoids blank screens and lets
+ * the app start loading in the background.
  */
 export function OnboardingGate({ children }: OnboardingGateProps) {
-  const { isReady, shouldShowOnboarding, completeOnboarding } = useOnboarding();
+  const { shouldShowOnboarding, completeOnboarding } = useOnboarding();
 
-  // Still checking status - render nothing (Farcaster splash is visible)
-  if (!isReady) {
-    return null;
-  }
-
-  // Show onboarding if needed
-  if (shouldShowOnboarding) {
-    return <OnboardingOverlay onComplete={completeOnboarding} />;
-  }
-
-  // Ready - render the app
-  return <>{children}</>;
+  return (
+    <>
+      {/* Always render children - they handle their own loading states */}
+      {children}
+      
+      {/* Overlay shows on top when onboarding is needed */}
+      {shouldShowOnboarding && (
+        <OnboardingOverlay onComplete={completeOnboarding} />
+      )}
+    </>
+  );
 }
