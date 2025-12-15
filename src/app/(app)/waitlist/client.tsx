@@ -46,7 +46,7 @@ const itemVariants = {
     opacity: 1,
     y: 0,
     transition: {
-      type: "spring" as any,
+      type: "spring" as const,
       stiffness: 300,
       damping: 24,
     },
@@ -86,7 +86,7 @@ export function WaitlistClient() {
       const randomInRange = (min: number, max: number) =>
         Math.random() * (max - min) + min;
 
-      const interval: any = setInterval(function () {
+      const interval = setInterval(function () {
         const timeLeft = animationEnd - Date.now();
 
         if (timeLeft <= 0) {
@@ -134,7 +134,7 @@ export function WaitlistClient() {
         action(formData);
       });
     },
-    [action, fid, context?.client.clientFid]
+    [action, addFrame, fid, context?.client.clientFid]
   );
 
   const handleShare = useCallback(async () => {
@@ -234,7 +234,7 @@ think you can beat me? you're on😏`;
             variants={itemVariants}
             className="flex flex-col items-center text-center w-full pb-4"
           >
-            <h1 className="font-body font-normal not-italic text-[44px] leading-[92%] tracking-[-0.03em] text-center text-white mb-1">YOU'RE ON <br />THE LIST!</h1>
+            <h1 className="font-body font-normal not-italic text-[44px] leading-[92%] tracking-[-0.03em] text-center text-white mb-1">YOU&apos;RE ON <br />THE LIST!</h1>
 
             {/* Dynamic Rank Message based on Figma design */}
             <p className={"text-[#99A0AE] font-display font-medium text-[16px] leading-[130%] tracking-[-0.03em] text-center text-pretty mx-auto"}>
