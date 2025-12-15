@@ -10,10 +10,10 @@ import {
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
+import { motion, useAnimation } from "framer-motion";
 
 import { useUser } from "@/hooks/useUser";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
-import { WaffleLoader } from "@/components/ui/WaffleLoader";
 import {
   validateReferralAction,
   type ValidateReferralResult,
@@ -27,12 +27,12 @@ import { StatusMessage } from "./_components/StatusMessage";
 type ValidationStatus = "idle" | "validating" | "success" | "failed";
 
 export default function InvitePageClient() {
-  const { user, isLoading: userLoading } = useUser();
+  const { user } = useUser();
   const fid = user?.fid;
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const hasAutoValidatedRef = useRef(false);
 
@@ -42,12 +42,15 @@ export default function InvitePageClient() {
   const [inputCode, setInputCode] = useState(initialCode);
   const [error, setError] = useState<string | null>(null);
 
+  // Animation controls for shake effect
+  const inputControls = useAnimation();
+
   const [validationState, validateAction, isPending] = useActionState<
     ValidateReferralResult | null,
     FormData
   >(validateReferralAction, null);
 
-  // Auto-validate initial code from URL (only once when fid is available)
+  // Auto-validate initial code from URL
   useEffect(() => {
     if (
       initialCode &&
@@ -55,9 +58,8 @@ export default function InvitePageClient() {
       initialCode.length === 6 &&
       !hasAutoValidatedRef.current
     ) {
+      setInputCode(initialCode);
       hasAutoValidatedRef.current = true;
-      setInputCode(initialCode.toUpperCase());
-      setStatus("validating");
 
       const formData = new FormData();
       formData.append("code", initialCode.toUpperCase());
@@ -69,29 +71,38 @@ export default function InvitePageClient() {
     }
   }, [initialCode, fid, validateAction]);
 
-  // Handle validation result - only update status when result arrives
+  // Handle validation result
   useEffect(() => {
-    if (!validationState) return;
+    if (validationState) {
+      if (validationState.valid) {
+        setError(null);
+        setStatus("success");
 
-    if (validationState.valid) {
-      setError(null);
-      setStatus("success");
+        // Auto-redirect to game lobby after successful validation
+        const redirectTimer = setTimeout(() => {
+          router.push("/game");
+        }, 1500);
 
-      // Auto-redirect to game lobby after successful validation
-      const redirectTimer = setTimeout(() => {
-        router.push("/game");
-      }, 1500);
-
-      return () => clearTimeout(redirectTimer);
-    } else {
-      setError(validationState.error);
-      setStatus("failed");
+        return () => {
+          clearTimeout(redirectTimer);
+        };
+      } else {
+        setError(validationState.error);
+        setStatus("failed");
+        // Shake input on error
+        inputControls.start({
+          x: [-8, 8, -6, 6, -4, 4, 0],
+          transition: { duration: 0.4 },
+        });
+      }
     }
-  }, [validationState, router]);
+  }, [validationState, router, inputControls]);
 
   const runValidation = useCallback(
     (codeToValidate: string) => {
-      if (!fid) return;
+      if (!fid) {
+        return;
+      }
 
       const formData = new FormData();
       formData.append("code", codeToValidate);
@@ -106,29 +117,26 @@ export default function InvitePageClient() {
 
   // Auto-validate when exactly 6 characters are entered
   useEffect(() => {
-    // Clear any pending debounce
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
-      debounceTimerRef.current = null;
     }
 
     const trimmedCode = inputCode.trim().toUpperCase();
 
-    // Reset error state when user starts typing again
-    if (trimmedCode.length < 6) {
-      if (error || status === "failed") {
-        setError(null);
-        setStatus("idle");
-      }
-      return;
+    // Reset error state when typing
+    if (trimmedCode.length < 6 && error) {
+      setError(null);
+      setStatus("idle");
     }
 
-    // Only auto-validate when exactly 6 characters and not already processing
-    if (trimmedCode.length === 6 && status !== "success" && status !== "validating") {
+    // Only auto-validate when exactly 6 characters
+    if (trimmedCode.length === 6) {
       setStatus("validating");
 
       // Dismiss keyboard so user can see validation result
-      inputRef.current?.blur();
+      if (inputRef.current) {
+        inputRef.current.blur();
+      }
 
       debounceTimerRef.current = setTimeout(() => {
         runValidation(trimmedCode);
@@ -140,14 +148,10 @@ export default function InvitePageClient() {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [inputCode, runValidation, error, status]);
+  }, [inputCode, runValidation, error]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Don't submit if already processing or succeeded
-    if (status === "validating" || status === "success" || isPending) return;
-
     const trimmedCode = inputCode.trim().toUpperCase();
 
     const validation = validateReferralSchema.shape.code.safeParse(trimmedCode);
@@ -155,11 +159,15 @@ export default function InvitePageClient() {
     if (!validation.success) {
       setError(validation.error.issues[0].message);
       setStatus("failed");
+      inputControls.start({
+        x: [-8, 8, -6, 6, -4, 4, 0],
+        transition: { duration: 0.4 },
+      });
       return;
     }
 
     if (!fid) {
-      setError("Please wait, loading user data...");
+      setError("User not identified.");
       setStatus("failed");
       return;
     }
@@ -168,33 +176,41 @@ export default function InvitePageClient() {
     runValidation(trimmedCode);
   };
 
-  // Show loader while user data is loading
-  if (userLoading) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <WaffleLoader text="" />
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col h-full">
       <InvitePageHeader />
 
       <div className="flex-1 overflow-y-auto px-4 space-y-4 pb-safe">
-        <div className="flex justify-center w-[95px] h-[113px] mx-auto my-8">
-          <Image
-            src="/images/illustrations/invite-key.png"
-            alt="Invite Key"
-            width={95}
-            height={113}
-            priority
-          />
-        </div>
+        {/* Key illustration with float animation */}
+        <motion.div
+          className="flex justify-center w-[95px] h-[113px] mx-auto my-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 200, damping: 20 }}
+        >
+          <motion.div
+            animate={{ y: [0, -6, 0] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <Image
+              src="/images/illustrations/invite-key.png"
+              alt="Invite Key"
+              width={95}
+              height={113}
+              priority
+            />
+          </motion.div>
+        </motion.div>
 
-        <h2 className="text-center font-normal font-body text-[44px] not-italic leading-[0.92] tracking-[-0.03em]">
+        {/* Title with fade in */}
+        <motion.h2
+          className="text-center font-normal font-body text-[44px] not-italic leading-[0.92] tracking-[-0.03em]"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, type: "spring", stiffness: 200, damping: 20 }}
+        >
           ENTER YOUR <br /> INVITE CODE
-        </h2>
+        </motion.h2>
 
         <form
           onSubmit={handleSubmit}
@@ -205,27 +221,46 @@ export default function InvitePageClient() {
             Invite Code
           </label>
 
-          <InviteInput
-            ref={inputRef}
-            id="inviteCodeInput"
-            type="text"
-            value={inputCode}
-            onChange={(e) => {
-              setInputCode(e.target.value);
-            }}
-            placeholder="INVITE CODE"
-            maxLength={6}
-            autoFocus={!initialCode}
-            style={{ textTransform: "uppercase" }}
-            inputMode="text"
-            autoCapitalize="characters"
-          />
-
-          <FancyBorderButton
-            disabled={inputCode.trim().length !== 6 || isPending || status === "validating"}
+          {/* Input with shake animation on error */}
+          <motion.div
+            animate={inputControls}
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15, type: "spring", stiffness: 200, damping: 20 }}
           >
-            {isPending || status === "validating" ? "CHECKING..." : "GET IN"}
-          </FancyBorderButton>
+            <InviteInput
+              ref={inputRef}
+              id="inviteCodeInput"
+              type="text"
+              value={inputCode}
+              onChange={(e) => {
+                setInputCode(e.target.value);
+              }}
+              placeholder="INVITE CODE"
+              maxLength={6}
+              autoFocus={!initialCode}
+              style={{ textTransform: "uppercase" }}
+              inputMode="text"
+              autoCapitalize="characters"
+            />
+          </motion.div>
+
+          {/* Button with entrance animation */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 20 }}
+          >
+            <FancyBorderButton
+              disabled={
+                inputCode.trim().length !== 6 ||
+                isPending ||
+                status === "validating"
+              }
+            >
+              {isPending || status === "validating" ? "CHECKING..." : "GET IN"}
+            </FancyBorderButton>
+          </motion.div>
 
           <StatusMessage status={status} error={error} isPending={isPending} />
         </form>

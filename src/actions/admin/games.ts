@@ -87,11 +87,11 @@ export async function createGameAction(
       console.log(`[CreateGame] Game ${game.id} created on-chain. TX: ${txHash}`);
       
       // Log the on-chain creation as part of the game creation
-      await logAdminAction({
-        adminId: authResult.session.userId,
-        action: AdminAction.CREATE_GAME,
-        entityType: EntityType.GAME,
-        entityId: game.id,
+    await logAdminAction({
+      adminId: authResult.session.userId,
+      action: AdminAction.CREATE_GAME,
+      entityType: EntityType.GAME,
+      entityId: game.id,
         details: { 
           title: game.title, 
           theme: game.theme,
@@ -114,7 +114,7 @@ export async function createGameAction(
           theme: game.theme,
           onChainError: onChainError instanceof Error ? onChainError.message : "Unknown error",
         },
-      });
+    });
     }
 
     revalidatePath("/admin/games");

@@ -60,7 +60,7 @@ interface StatusBadgeProps {
 
 export function StatusBadge({ variant, children, className }: StatusBadgeProps) {
   return (
-    <div
+    <motion.div
       style={{ clipPath: TWO_STEP_CLIP_PATH }}
       className={cn(
         "relative flex h-12 w-[272px] items-center justify-center gap-3",
@@ -70,9 +70,13 @@ export function StatusBadge({ variant, children, className }: StatusBadgeProps) 
         variant === "success" && "bg-[#27AE60] text-white",
         className
       )}
+      initial={{ opacity: 0, scale: 0.9, y: 10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.9, y: -10 }}
+      transition={{ type: "spring", stiffness: 300, damping: 25 }}
     >
       {children}
-    </div>
+    </motion.div>
   );
 }
 
@@ -82,68 +86,49 @@ interface StatusMessageProps {
   isPending: boolean;
 }
 
-// Animation variants for smooth transitions
-const variants = {
-  initial: { opacity: 0, y: 10, scale: 0.95 },
-  animate: { opacity: 1, y: 0, scale: 1 },
-  exit: { opacity: 0, y: -10, scale: 0.95 },
-};
-
 export function StatusMessage({ status, error, isPending }: StatusMessageProps) {
-  // Derive the display status - isPending takes precedence
-  const displayStatus = isPending ? "validating" : status;
-
   return (
     <div className="min-h-[60px] flex items-center justify-center">
       <AnimatePresence mode="wait">
-        {displayStatus === "validating" && (
+        {(isPending || status === "validating") && (
           <motion.p
             key="validating"
-            variants={variants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="text-xs text-[#a0a0a0] animate-pulse"
+            className="text-xs text-[#a0a0a0] flex items-center gap-2"
             style={{
               fontFamily: "'Press Start 2P', 'Geist Mono', monospace",
               letterSpacing: "0.04em",
             }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
           >
+            <motion.span
+              className="inline-block w-3 h-3 border-2 border-white/30 border-t-cyan-400 rounded-full"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+            />
             Validating...
           </motion.p>
         )}
 
-        {displayStatus === "failed" && error && (
-          <motion.div
-            key="failed"
-            variants={variants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            transition={{ duration: 0.2, ease: "easeOut" }}
-          >
-            <StatusBadge variant="error">
-              <FailedIcon className="h-[18px] w-[18px]" />
-              <span>Invalid code</span>
-            </StatusBadge>
-          </motion.div>
+        {status === "failed" && error && (
+          <StatusBadge key="failed" variant="error">
+            <FailedIcon className="h-[18px] w-[18px]" />
+            <span>Invalid code</span>
+          </StatusBadge>
         )}
 
-        {displayStatus === "success" && (
-          <motion.div
-            key="success"
-            variants={variants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            transition={{ duration: 0.2, ease: "easeOut" }}
-          >
-            <StatusBadge variant="success">
+        {status === "success" && (
+          <StatusBadge key="success" variant="success">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 400, damping: 15 }}
+            >
               <SuccessIcon className="h-[18px] w-[18px]" />
-              <span>Valid</span>
-            </StatusBadge>
-          </motion.div>
+            </motion.div>
+            <span>Valid</span>
+          </StatusBadge>
         )}
       </AnimatePresence>
     </div>
