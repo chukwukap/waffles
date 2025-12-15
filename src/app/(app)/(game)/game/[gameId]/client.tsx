@@ -30,7 +30,10 @@ export default function GameDetailsClient({ game }: Props) {
   const fid = context?.user?.fid;
 
   // User data
-  const { ticket, mutuals, isLoading, isAuthorized } = useGameData(fid, game.id);
+  const { ticket, mutuals, isLoading, isAuthorized } = useGameData(
+    fid,
+    game.id
+  );
 
   // PartyKit for real-time features
   const { onlineCount, messages, events, sendChat } = usePartyGame({
@@ -111,7 +114,9 @@ export default function GameDetailsClient({ game }: Props) {
       );
     }
 
-    return <GameActionButton>{formatTime(countdown.remaining)}</GameActionButton>;
+    return (
+      <GameActionButton>{formatTime(countdown.remaining)}</GameActionButton>
+    );
   };
 
   // Loading state
@@ -153,4 +158,3 @@ export default function GameDetailsClient({ game }: Props) {
     </>
   );
 }
-

@@ -3,8 +3,6 @@ import { notFound } from "next/navigation";
 import { cache } from "react";
 
 import { Prisma, prisma } from "@/lib/db";
-import { env } from "@/lib/env";
-import { minikitConfig } from "../../../../../../minikit.config";
 
 import GameDetailsClient from "./client";
 
@@ -53,30 +51,11 @@ export async function generateMetadata({
   const { gameId } = await params;
   const game = await getGame(gameId);
 
-  const title = game?.title ?? "Game Lobby";
-  const description = game
-    ? `Join ${game.title} - Prize pool growing!`
-    : minikitConfig.miniapp.description;
-
   return {
-    title,
-    description,
-    other: {
-      "fc:frame": JSON.stringify({
-        version: minikitConfig.miniapp.version,
-        imageUrl: minikitConfig.miniapp.heroImageUrl,
-        button: {
-          title: "Play Now",
-          action: {
-            name: "Play Waffles",
-            type: "launch_frame",
-            url: `${env.rootUrl}/game/${gameId}`,
-            splashImageUrl: minikitConfig.miniapp.splashImageUrl,
-            splashBackgroundColor: minikitConfig.miniapp.splashBackgroundColor,
-          },
-        },
-      }),
-    },
+    title: game?.title ?? "Game Lobby",
+    description: game
+      ? `Join ${game.title} - Prize pool growing!`
+      : "Play trivia games and win prizes!",
   };
 }
 
@@ -94,4 +73,3 @@ export default async function GameDetailsPage({
 }
 
 export const revalidate = 3;
-
