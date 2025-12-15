@@ -3,6 +3,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { motion, HTMLMotionProps } from "framer-motion";
+import { springs, tapBounce, hoverLift } from "@/lib/animations";
 
 interface FancyBorderButtonProps extends Omit<HTMLMotionProps<"button">, "children"> {
   children: React.ReactNode;
@@ -28,8 +29,9 @@ export const FancyBorderButton = React.forwardRef<
       <motion.button
         ref={ref}
         type={type as "button" | "submit" | "reset"}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.95 }}
+        whileHover={disabled ? undefined : hoverLift}
+        whileTap={disabled ? undefined : tapBounce}
+        transition={springs.snappy}
         className={cn(
           "relative flex items-center justify-center h-[54px] px-6",
           "bg-white text-[#191919]",

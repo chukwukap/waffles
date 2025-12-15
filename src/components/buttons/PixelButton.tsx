@@ -2,6 +2,8 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import { springs, tapScale } from "@/lib/animations";
 
 interface PixelButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -39,13 +41,13 @@ const PixelButton = React.forwardRef<HTMLButtonElement, PixelButtonProps>(
     };
 
     return (
-      <div
+      <motion.div
         style={containerStyle}
+        whileTap={disabled ? undefined : tapScale}
+        transition={springs.snappy}
         className={cn(
-          // This is now a full-width block by default to fill its container
-          "pixel-corners w-full transition-transform duration-100 ease-in-out",
-          // Apply hover/active states to the container to move the whole unit
-          "hover:-translate-y-0.5 active:translate-y-0"
+          "pixel-corners w-full",
+          disabled && "opacity-60"
         )}
       >
         <button
@@ -62,7 +64,7 @@ const PixelButton = React.forwardRef<HTMLButtonElement, PixelButtonProps>(
         >
           {children}
         </button>
-      </div>
+      </motion.div>
     );
   }
 );
