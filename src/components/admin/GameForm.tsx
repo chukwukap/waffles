@@ -92,6 +92,9 @@ export function GameForm({
 
   const currentTheme = THEMES.find((t) => t.id === selectedTheme) || THEMES[0];
 
+  // Validation error state
+  const [validationError, setValidationError] = useState<string | null>(null);
+
   /**
    * Handles form submission - shows confirmation for new games
    */
@@ -101,8 +104,16 @@ export function GameForm({
       return; // Let the form action handle it
     }
 
-    // For create mode, show confirmation first
+    // For create mode, validate required fields first
     e.preventDefault();
+    
+    // Validate theme is selected (required field)
+    if (!selectedTheme) {
+      setValidationError("Please select a theme for the game");
+      return;
+    }
+    
+    setValidationError(null);
     const formData = new FormData(e.currentTarget);
     setPendingFormData(formData);
     setShowConfirmation(true);
@@ -133,8 +144,8 @@ export function GameForm({
 
     const title = pendingFormData.get("title")?.toString() || "Untitled";
     const themeData = THEMES.find((t) => t.id === pendingFormData.get("theme"));
-    const themeDisplay = themeData 
-      ? `${themeData.icon} ${themeData.label}` 
+    const themeDisplay = themeData
+      ? `${themeData.icon} ${themeData.label}`
       : "Not selected";
     const entryFee = pendingFormData.get("entryFee")?.toString() || "0";
     const prizePool = pendingFormData.get("prizePool")?.toString() || "0";
@@ -162,11 +173,19 @@ export function GameForm({
         onSubmit={handleFormSubmit}
         className="space-y-8"
       >
-        {/* Error Display */}
+        {/* Error Display - Server errors */}
         {state && !state.success && (
           <div className="p-4 bg-red-500/20 border border-red-500/30 rounded-xl flex items-center gap-3 text-red-400">
             <span className="text-xl">⚠️</span>
             <p className="text-sm font-medium">{state.error}</p>
+          </div>
+        )}
+
+        {/* Validation Error Display - Client-side validation */}
+        {validationError && (
+          <div className="p-4 bg-red-500/20 border border-red-500/30 rounded-xl flex items-center gap-3 text-red-400">
+            <span className="text-xl">⚠️</span>
+            <p className="text-sm font-medium">{validationError}</p>
           </div>
         )}
 
@@ -227,7 +246,10 @@ export function GameForm({
                   <button
                     key={theme.id}
                     type="button"
-                    onClick={() => setSelectedTheme(theme.id)}
+                    onClick={() => {
+                      setSelectedTheme(theme.id);
+                      setValidationError(null); // Clear error when theme is selected
+                    }}
                     className={`aspect - square rounded - xl text - xl sm: text - 2xl transition - all flex items - center justify - center ${
                       selectedTheme === theme.id
                         ? `${theme.color} ring-2 ring-white/50 scale-110 shadow-lg`
