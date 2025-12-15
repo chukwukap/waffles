@@ -261,9 +261,7 @@ function QuestCard({
                   key={i}
                   className={cn(
                     "w-2 h-2 rounded-full",
-                    (invitesCount ?? 0) > i
-                      ? "bg-cyan-400"
-                      : "bg-white/20"
+                    (invitesCount ?? 0) > i ? "bg-cyan-400" : "bg-white/20"
                   )}
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
