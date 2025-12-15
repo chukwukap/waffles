@@ -1,7 +1,5 @@
 // Shared quest definitions used by both client and server
 
-import { WAFFLE_FID } from "./constants";
-
 // Define base types first to avoid circular dependencies
 export type QuestActionType =
   | "link"

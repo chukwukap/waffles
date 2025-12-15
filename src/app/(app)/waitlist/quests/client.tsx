@@ -254,13 +254,12 @@ function QuestCard({
               onClick={onComplete}
               disabled={isPending}
               className={cn(
-                "w-24 h-7 rounded-lg",
+                "w-24 h-7 rounded-full",
                 "bg-white text-[#1B8FF5]",
-                "border-b-2 border-r-2 border-[#1B8FF5]",
+                "border border-[#1B8FF5]/30",
                 "font-body font-normal text-base leading-none",
                 "flex items-center justify-center",
                 "transition-all duration-150",
-                !isPending && "active:border-b-0 active:border-r-0 active:translate-y-0.5",
                 isPending && "opacity-50 cursor-not-allowed"
               )}
               whileTap={!isPending ? { scale: 0.95 } : undefined}
