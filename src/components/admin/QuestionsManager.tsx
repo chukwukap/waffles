@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
     DndContext,
     closestCenter,
@@ -130,8 +131,8 @@ function QuestionRow({
                             <div
                                 key={idx}
                                 className={`px-3 py-2 rounded-lg text-sm flex items-center gap-2 ${idx === question.correctIndex
-                                        ? "bg-[#14B985]/20 border border-[#14B985]/30 text-[#14B985]"
-                                        : "bg-white/5 border border-white/10 text-white/60"
+                                    ? "bg-[#14B985]/20 border border-[#14B985]/30 text-[#14B985]"
+                                    : "bg-white/5 border border-white/10 text-white/60"
                                     }`}
                             >
                                 <span className="font-bold text-white/30">{String.fromCharCode(65 + idx)}</span>
@@ -294,6 +295,7 @@ function InlineAddQuestion({ gameId, nextRoundIndex, onSuccess }: { gameId: numb
 }
 
 export function QuestionsManager({ gameId, initialQuestions }: QuestionsManagerProps) {
+    const router = useRouter();
     const [questions, setQuestions] = useState(initialQuestions);
     const [expandedId, setExpandedId] = useState<number | null>(null);
     const [isSaving, setIsSaving] = useState(false);
@@ -325,8 +327,8 @@ export function QuestionsManager({ gameId, initialQuestions }: QuestionsManagerP
     };
 
     const handleQuestionAdded = () => {
-        // Refresh the page to get the new question
-        window.location.reload();
+        // Refresh server data to get new question
+        router.refresh();
     };
 
     return (

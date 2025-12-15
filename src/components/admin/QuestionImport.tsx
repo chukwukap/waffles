@@ -1,16 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { parseQuestionCSV, generateCSVTemplate } from "@/lib/csv-parser";
 import { bulkImportQuestionsAction, BulkImportQuestion } from "@/actions/admin/bulk-import";
 import { ArrowUpTrayIcon, DocumentArrowDownIcon, CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
 
 interface QuestionImportProps {
     gameId: number;
-    onSuccess?: () => void;
 }
 
-export function QuestionImport({ gameId, onSuccess }: QuestionImportProps) {
+export function QuestionImport({ gameId }: QuestionImportProps) {
+    const router = useRouter();
     const [file, setFile] = useState<File | null>(null);
     const [parsing, setParsing] = useState(false);
     const [importing, setImporting] = useState(false);
@@ -54,7 +55,7 @@ export function QuestionImport({ gameId, onSuccess }: QuestionImportProps) {
                 setResult({ imported: importResult.imported, skipped: importResult.skipped });
                 setPreviewData(null);
                 setFile(null);
-                onSuccess?.();
+                router.refresh(); // Refresh the page to show new questions
             } else {
                 setErrors([{ row: 0, field: "import", message: importResult.error }]);
             }
