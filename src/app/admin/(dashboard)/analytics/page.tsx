@@ -221,8 +221,8 @@ async function getWaitlistData() {
         prisma.user.count({ where: { status: "ACTIVE" } }),
         prisma.user.findMany({ where: { status: { in: ["WAITLIST", "ACTIVE"] } }, select: { completedTasks: true } }),
         prisma.user.count({ where: { invitedById: { not: null } } }),
-        // @ts-expect-error - distinct is valid but typescript complains sometimes
-        prisma.user.count({ where: { invites: { some: {} } }, distinct: ["id"] }),
+        // Count users who have invited at least one person
+        prisma.user.count({ where: { invites: { some: {} } } }),
     ]);
 
     // Calculate quest completion breakdown
