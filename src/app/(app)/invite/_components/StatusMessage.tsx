@@ -83,34 +83,12 @@ export function StatusBadge({ variant, children, className }: StatusBadgeProps) 
 interface StatusMessageProps {
   status: "idle" | "validating" | "success" | "failed";
   error: string | null;
-  isPending: boolean;
 }
 
-export function StatusMessage({ status, error, isPending }: StatusMessageProps) {
+export function StatusMessage({ status, error }: StatusMessageProps) {
   return (
     <div className="min-h-[60px] flex items-center justify-center">
       <AnimatePresence mode="wait">
-        {(isPending || status === "validating") && (
-          <motion.p
-            key="validating"
-            className="text-xs text-[#a0a0a0] flex items-center gap-2"
-            style={{
-              fontFamily: "'Press Start 2P', 'Geist Mono', monospace",
-              letterSpacing: "0.04em",
-            }}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-          >
-            <motion.span
-              className="inline-block w-3 h-3 border-2 border-white/30 border-t-cyan-400 rounded-full"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
-            />
-            Validating...
-          </motion.p>
-        )}
-
         {status === "failed" && error && (
           <StatusBadge key="failed" variant="error">
             <FailedIcon className="h-[18px] w-[18px]" />

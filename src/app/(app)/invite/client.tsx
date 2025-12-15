@@ -84,7 +84,10 @@ export default function InvitePageClient() {
 
     setError(validationState.error);
     setStatus("failed");
-    inputControls.start({ x: [-8, 8, -6, 6, -4, 4, 0], transition: { duration: 0.4 } });
+    inputControls.start({
+      x: [-8, 8, -6, 6, -4, 4, 0],
+      transition: { duration: 0.4 },
+    });
   }, [validationState, router, inputControls]);
 
   // Auto-validate on 6 char input
@@ -117,7 +120,10 @@ export default function InvitePageClient() {
     if (!result.success) {
       setError(result.error.issues[0].message);
       setStatus("failed");
-      inputControls.start({ x: [-8, 8, -6, 6, -4, 4, 0], transition: { duration: 0.4 } });
+      inputControls.start({
+        x: [-8, 8, -6, 6, -4, 4, 0],
+        transition: { duration: 0.4 },
+      });
       return;
     }
 
@@ -212,7 +218,7 @@ export default function InvitePageClient() {
             </FancyBorderButton>
           </motion.div>
 
-          <StatusMessage status={status} error={error} isPending={isPending} />
+          <StatusMessage status={status} error={error} />
         </form>
       </div>
     </div>
