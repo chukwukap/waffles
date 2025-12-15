@@ -17,7 +17,7 @@ import {
   ArrowRightIcon,
   InformationCircleIcon,
 } from "@heroicons/react/24/outline";
-import { useActionState, useState, useRef, useMemo } from "react";
+import { useActionState, useState, useRef, useMemo, useTransition } from "react";
 import { MediaPicker } from "@/components/admin/MediaPicker";
 import { ConfirmationModal } from "@/components/admin/ConfirmationModal";
 
@@ -173,10 +173,12 @@ export function GameForm({
   // UI state
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [pendingFormData, setPendingFormData] = useState<FormData | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  
+  // Use transition for form submission to avoid React warning
+  const [isPending, startTransition] = useTransition();
 
   const currentTheme = useMemo(
     () => THEMES.find((t) => t.id === selectedTheme),
@@ -241,18 +243,18 @@ export function GameForm({
     setShowConfirmation(true);
   };
 
-  // Confirm game creation
-  const handleConfirmCreate = async () => {
+  // Confirm game creation - wrapped in startTransition for React 19 compatibility
+  const handleConfirmCreate = () => {
     if (!pendingFormData) return;
 
-    setIsSubmitting(true);
-    try {
-      await formAction(pendingFormData);
-    } finally {
-      setIsSubmitting(false);
-      setShowConfirmation(false);
-      setPendingFormData(null);
-    }
+    startTransition(async () => {
+      try {
+        await formAction(pendingFormData);
+      } finally {
+        setShowConfirmation(false);
+        setPendingFormData(null);
+      }
+    });
   };
 
   // Get preview items for confirmation modal
@@ -872,7 +874,7 @@ export function GameForm({
           </Link>
           <button
             type="submit"
-            disabled={isSubmitting || completionPercentage < 100}
+            disabled={isPending || completionPercentage < 100}
             className="group inline-flex items-center gap-3 px-8 py-4 bg-linear-to-r from-[#FFC931] to-[#FFD966] text-black font-bold rounded-2xl hover:shadow-lg hover:shadow-[#FFC931]/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black focus:ring-[#FFC931] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-display text-lg"
           >
             {isEdit ? "Save Changes" : "Create Game"}
@@ -885,7 +887,7 @@ export function GameForm({
       <ConfirmationModal
         isOpen={showConfirmation}
         onClose={() => {
-          if (!isSubmitting) {
+          if (!isPending) {
             setShowConfirmation(false);
             setPendingFormData(null);
           }
@@ -896,7 +898,7 @@ export function GameForm({
         confirmText="Create Game"
         cancelText="Go Back"
         variant="warning"
-        isLoading={isSubmitting}
+        isLoading={isPending}
         previewItems={getPreviewItems()}
       />
     </>

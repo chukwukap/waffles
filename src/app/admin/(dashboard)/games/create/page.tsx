@@ -3,10 +3,7 @@
 import { createGameAction } from "@/actions/admin/games";
 import { GameForm } from "@/components/admin/GameForm";
 import Link from "next/link";
-import {
-  ArrowLeftIcon,
-  RocketLaunchIcon,
-} from "@heroicons/react/24/outline";
+import { ArrowLeftIcon, RocketLaunchIcon } from "@heroicons/react/24/outline";
 
 export default function CreateGamePage() {
   return (
