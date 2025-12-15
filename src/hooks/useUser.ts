@@ -2,6 +2,9 @@ import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import sdk from "@farcaster/miniapp-sdk";
 import { useState, useCallback, useEffect, useRef } from "react";
 
+// Custom event for onboarding completion
+export const ONBOARDING_COMPLETE_EVENT = "waffles:onboarding-complete";
+
 export interface UserData {
   fid: number;
   username: string | null;
@@ -36,10 +39,20 @@ export function useUser() {
         cache: "no-store",
       });
 
+      // 404/401 = user not in DB yet (new user, needs to join waitlist)
+      // This is NOT an error - it's the expected state before onboarding
+      if (response.status === 404 || response.status === 401) {
+        setUser(null);
+        setError(null);
+        hasLoaded.current = true;
+        return;
+      }
+
       if (!response.ok) throw new Error("Failed to fetch user");
 
       const json: UserData = await response.json();
       setUser(json);
+      setError(null);
       hasLoaded.current = true;
     } catch (err) {
       console.error(err);
@@ -51,6 +64,19 @@ export function useUser() {
 
   useEffect(() => {
     fetchUser();
+  }, [fetchUser]);
+
+  // Listen for onboarding completion to refetch user data
+  useEffect(() => {
+    const handleOnboardingComplete = () => {
+      hasLoaded.current = false; // Reset so we show loader briefly
+      fetchUser();
+    };
+
+    window.addEventListener(ONBOARDING_COMPLETE_EVENT, handleOnboardingComplete);
+    return () => {
+      window.removeEventListener(ONBOARDING_COMPLETE_EVENT, handleOnboardingComplete);
+    };
   }, [fetchUser]);
 
   return { user, isLoading, error, refetch: fetchUser };
