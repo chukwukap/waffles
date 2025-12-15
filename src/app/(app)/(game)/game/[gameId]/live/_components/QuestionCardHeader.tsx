@@ -2,7 +2,6 @@ import { formatTimeColon } from "@/lib/utils";
 
 import Image from "next/image";
 import { TimerTube } from "./TimerTube";
-import { SoundToggle } from "./SoundToggle";
 
 export function QuestionCardHeader({
   questionNumber,
@@ -22,8 +21,6 @@ export function QuestionCardHeader({
         {String(questionNumber).padStart(2, "0")}/
         {String(totalQuestions).padStart(2, "0")}
       </span>
-
-      <SoundToggle />
 
       {/* Timer Logic */}
       {remaining > 3 ? (

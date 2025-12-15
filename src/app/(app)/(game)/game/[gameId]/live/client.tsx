@@ -7,7 +7,6 @@ import { usePartyGame } from "@/hooks/usePartyGame";
 import QuestionCard from "./_components/QuestionCard";
 import RoundCountdownCard from "./_components/RoundCountdownCard";
 import { LiveGameInfoPayload } from "./page";
-import { useSound } from "@/components/providers/SoundContext";
 import { EXTRA_TIME_SECONDS } from "@/lib/constants";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
 
@@ -46,7 +45,6 @@ export default function LiveGameClient({
   gameInfo: LiveGameInfoPayload | null;
 }) {
   const router = useRouter();
-  const { playSound } = useSound();
 
   const [userInfo, setUserInfo] = React.useState<UserInfo | null>(null);
   const [initialQuestionIndex, setInitialQuestionIndex] = React.useState<number | null>(null);
@@ -122,9 +120,8 @@ export default function LiveGameClient({
   // Reveals the next question after round countdown completes
   const handleRoundCountdownComplete = React.useCallback(() => {
     setShowRoundCountdown(false);
-    playSound("nextQuestion");
     setCurrentQuestionIndex((prev) => prev + 1);
-  }, [playSound]);
+  }, []);
 
   // This function decides what to do after a question's time is up
   const handleQuestionCompleted = React.useCallback(() => {
@@ -133,7 +130,6 @@ export default function LiveGameClient({
 
     // If we've reached the end of the questions, redirect to the score page
     if (nextQuestionIndex >= questions.length) {
-      playSound("gameOver");
       router.push(`/game/${gameInfo?.id}/score`);
       return;
     }
@@ -145,9 +141,8 @@ export default function LiveGameClient({
     }
 
     // Otherwise, advance to the next question immediately
-    playSound("nextQuestion");
     setCurrentQuestionIndex(nextQuestionIndex);
-  }, [currentQuestionIndex, gameInfo?.questions, gameInfo?.id, router, playSound]);
+  }, [currentQuestionIndex, gameInfo?.questions, gameInfo?.id, router]);
 
   // Loading state
   if (isLoading || initialQuestionIndex === null) {

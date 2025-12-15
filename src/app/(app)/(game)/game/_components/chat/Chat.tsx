@@ -5,7 +5,6 @@ import { ChatIcon, SendIcon, UsersIcon } from "@/components/icons";
 import Backdrop from "@/components/ui/Backdrop";
 import { ChatComment } from "./ChatComment";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
-import { useSound } from "@/components/providers/SoundContext";
 import { ChatWithUser } from "@/lib/types";
 import { sendMessageSchema } from "@/lib/schemas";
 import { useUser } from "@/hooks/useUser";
@@ -56,7 +55,6 @@ export const Chat = ({
   const { context: miniKitContext } = useMiniKit();
   const fid = miniKitContext?.user?.fid;
   const { user } = useUser();
-  const { playSound } = useSound();
   const [message, setMessage] = useState("");
   // Local state for optimistic + server messages
   const [comments, setComments] = useState<ChatCommentType[]>([]);
@@ -135,7 +133,6 @@ export const Chat = ({
     }
 
     setIsSubmitting(true);
-    playSound("click");
 
     const currentMessage = message.trim();
     setMessage("");

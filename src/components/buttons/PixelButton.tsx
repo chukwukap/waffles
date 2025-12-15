@@ -1,8 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "@/lib/utils"; // Assuming a utility like tailwind-merge
-import { useSound } from "@/components/providers/SoundContext";
+import { cn } from "@/lib/utils";
 
 interface PixelButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -11,7 +10,7 @@ interface PixelButtonProps
   backgroundColor?: string;
   borderColor?: string;
   textColor?: string;
-  borderWidth?: number; // Border width in pixels
+  borderWidth?: number;
 }
 
 const PixelButton = React.forwardRef<HTMLButtonElement, PixelButtonProps>(
@@ -22,15 +21,13 @@ const PixelButton = React.forwardRef<HTMLButtonElement, PixelButtonProps>(
       backgroundColor = "#000000",
       borderColor = "#FFC931",
       textColor = "#FFD972",
-      borderWidth = 4, // Default to a 4px border
+      borderWidth = 4,
       onClick,
       disabled,
       ...props
     },
     ref
   ) => {
-    const { playSound } = useSound();
-
     const containerStyle = {
       backgroundColor: borderColor,
       padding: `${borderWidth}px`,
@@ -39,13 +36,6 @@ const PixelButton = React.forwardRef<HTMLButtonElement, PixelButtonProps>(
     const buttonStyle = {
       backgroundColor: backgroundColor,
       color: textColor,
-    };
-
-    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-      if (!disabled) {
-        playSound("click");
-      }
-      onClick?.(e);
     };
 
     return (
@@ -63,10 +53,10 @@ const PixelButton = React.forwardRef<HTMLButtonElement, PixelButtonProps>(
           className={cn(
             "pixel-corners flex h-full w-full items-center justify-center px-6 py-3 font-display text-[14px]  tracking-wider",
             "disabled:cursor-not-allowed disabled:opacity-60",
-            className
-          )}
+          className
+        )}
           ref={ref}
-          onClick={handleClick}
+          onClick={onClick}
           disabled={disabled}
           {...props}
         >

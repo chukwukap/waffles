@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 import { PALETTES } from "@/lib/constants";
 
 import { useCountdown } from "@/hooks/useCountdown";
-import { useSound } from "@/components/providers/SoundContext";
 import { QuestionCardHeader } from "./QuestionCardHeader";
 import { QuestionOption } from "./QuestionOption";
 import type { LiveGameInfoPayload } from "../page";
@@ -32,8 +31,6 @@ export function QuestionCard({
 }) {
   const [selectedOptionIndex, setSelectedOptionIndex] = React.useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-
-  const { playSound } = useSound();
 
   // Track submission status to prevent double submits
   const [hasSubmitted, setHasSubmitted] = React.useState(false);
@@ -115,12 +112,6 @@ export function QuestionCard({
     handleTimerComplete,
     false
   );
-
-  // Play sound on question change
-  React.useEffect(() => {
-    if (!question || !question.soundUrl) return;
-    playSound(question.soundUrl, { volume: 0.8 });
-  }, [playSound, question.id, question.soundUrl]);
 
   // Start the countdown when the component mounts
   React.useEffect(() => {
