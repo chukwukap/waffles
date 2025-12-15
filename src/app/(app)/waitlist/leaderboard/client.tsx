@@ -2,6 +2,7 @@
 
 import { use, useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import { env } from "@/lib/env";
 
 // ============================================
@@ -131,8 +132,8 @@ function LeaderboardRow({
         entry.isCurrentUser
           ? "border-[#1B8FF5]/50 bg-[#1B8FF5]/10"
           : isTopThree
-            ? "bg-amber-500/5 border-amber-500/20"
-            : "bg-white/[0.02] border-white/[0.06]"
+          ? "bg-amber-500/5 border-amber-500/20"
+          : "bg-white/2 border-white/6"
       }`}
     >
       {/* Current user glow */}
@@ -156,10 +157,13 @@ function LeaderboardRow({
       {/* Avatar */}
       <div className="relative w-8 h-8 rounded-full overflow-hidden bg-white/10 shrink-0">
         {entry.pfpUrl ? (
-          <img
+          <Image
             src={entry.pfpUrl}
             alt={entry.username || `User ${entry.fid}`}
+            width={32}
+            height={32}
             className="object-cover w-full h-full"
+            unoptimized
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-white/30 text-xs">
@@ -201,7 +205,7 @@ function LeaderboardRow({
 function FloatingUserRow({ entry }: { entry: LeaderboardEntry }) {
   return (
     <motion.div
-      className="absolute bottom-0 left-0 right-0 z-30 px-4 pb-4 pt-2 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/95 to-transparent"
+      className="absolute bottom-0 left-0 right-0 z-30 px-4 pb-4 pt-2 bg-linear-to-t from-[#0a0a0a] via-[#0a0a0a]/95 to-transparent"
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 30 }}
