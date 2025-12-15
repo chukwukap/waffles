@@ -247,6 +247,7 @@ export default function InvitePageClient() {
 
           {/* Button with entrance animation */}
           <motion.div
+            className="w-full"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 20 }}
