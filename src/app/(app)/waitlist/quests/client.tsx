@@ -80,76 +80,6 @@ function QuestParticles() {
 }
 
 // ============================================
-// PROGRESS BAR - Shows quest completion
-// ============================================
-function QuestProgress({
-  completed,
-  total,
-}: {
-  completed: number;
-  total: number;
-}) {
-  const percentage = Math.round((completed / total) * 100);
-
-  return (
-    <motion.div
-      className="w-full mb-4"
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2 }}
-    >
-      <div className="flex justify-between items-center mb-2">
-        <span className="text-[#99A0AE] font-display text-sm">
-          {completed}/{total} completed
-        </span>
-        <motion.span
-          className="text-cyan-400 font-body text-lg"
-          key={percentage}
-          initial={{ scale: 1.3 }}
-          animate={{ scale: 1 }}
-          transition={{ type: "spring", stiffness: 300 }}
-        >
-          {percentage}%
-        </motion.span>
-      </div>
-      <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-        <motion.div
-          className="h-full bg-linear-to-r from-cyan-500 to-cyan-400 rounded-full"
-          initial={{ width: 0 }}
-          animate={{ width: `${percentage}%` }}
-          transition={{ duration: 0.8, ease: "easeOut", delay: 0.3 }}
-        />
-      </div>
-    </motion.div>
-  );
-}
-
-// ============================================
-// POINTS DISPLAY - Total points earned
-// ============================================
-function PointsDisplay({ points }: { points: number }) {
-  return (
-    <motion.div
-      className="flex items-center justify-center gap-2 mb-4"
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: 0.1, type: "spring" }}
-    >
-      <motion.span
-        className="text-amber-400 font-body text-2xl"
-        key={points}
-        initial={{ scale: 1.5, color: "#4ade80" }}
-        animate={{ scale: 1, color: "#fbbf24" }}
-        transition={{ type: "spring", stiffness: 300 }}
-      >
-        {points}
-      </motion.span>
-      <span className="text-[#99A0AE] font-display text-sm">points earned</span>
-    </motion.div>
-  );
-}
-
-// ============================================
 // QUEST CARD - Individual quest item
 // ============================================
 function QuestCard({
@@ -193,18 +123,6 @@ function QuestCard({
         isCompleted && "opacity-60"
       )}
     >
-      {/* Completion glow effect */}
-      <AnimatePresence>
-        {isCompleted && (
-          <motion.div
-            className="absolute inset-0 rounded-2xl bg-green-500/10 pointer-events-none"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          />
-        )}
-      </AnimatePresence>
-
       {/* Icon with bounce */}
       <motion.div
         className="shrink-0 w-12 h-12 rounded-xl overflow-hidden relative"
@@ -254,25 +172,9 @@ function QuestCard({
 
         {/* Invite quest progress indicator */}
         {isInviteQuest && !isCompleted && (
-          <div className="flex items-center gap-2 mt-1">
-            <div className="flex gap-1">
-              {[0, 1, 2].map((i) => (
-                <motion.div
-                  key={i}
-                  className={cn(
-                    "w-2 h-2 rounded-full",
-                    (invitesCount ?? 0) > i ? "bg-cyan-400" : "bg-white/20"
-                  )}
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.1 * i }}
-                />
-              ))}
-            </div>
-            <span className="text-[12px] font-display text-white/50">
-              {Math.min(invitesCount ?? 0, 3)}/3 friends joined
-            </span>
-          </div>
+          <span className="text-[12px] font-display text-white/50 mt-1">
+            {Math.min(invitesCount ?? 0, 3)}/3 friends joined
+          </span>
         )}
 
         {/* Pending state - Complete button */}
@@ -342,8 +244,7 @@ export function QuestsPageClient() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Optimistic points - tracks points added before server confirms
-  const [optimisticPoints, setOptimisticPoints] = useState(0);
+  // Optimistic completed - tracks completed quests before server confirms
   const [optimisticCompleted, setOptimisticCompleted] = useState<string[]>([]);
 
   // Fetch waitlist data on mount
@@ -357,7 +258,6 @@ export function QuestsPageClient() {
         const data = await response.json();
         setWaitlistData(data);
         // Reset optimistic state when we get fresh data
-        setOptimisticPoints(0);
         setOptimisticCompleted([]);
       } catch (err) {
         console.error("Error fetching waitlist data:", err);
@@ -387,20 +287,13 @@ export function QuestsPageClient() {
     },
   });
 
-  // Wrap handleComplete to add optimistic points
+  // Wrap handleComplete for optimistic UI updates
   const handleComplete = (questId: string) => {
-    // Find the quest to get its points
-    const quest = QUESTS.find((q) => q.id === questId);
-    if (quest && !optimisticCompleted.includes(questId)) {
-      setOptimisticPoints((prev) => prev + quest.points);
+    if (!optimisticCompleted.includes(questId)) {
       setOptimisticCompleted((prev) => [...prev, questId]);
     }
-    // Call original handler
     originalHandleComplete(questId);
   };
-
-  // Calculate total points (server + optimistic)
-  const displayPoints = (waitlistData?.points ?? 0) + optimisticPoints;
 
   // Calculate completion stats (including optimistic)
   const completedCount = useMemo(() => {
@@ -461,10 +354,6 @@ export function QuestsPageClient() {
       {/* Scrollable content */}
       <div className="relative z-10 flex-1 overflow-y-auto px-4 py-4">
         <div className="w-full max-w-lg mx-auto space-y-3">
-          {/* Points & Progress */}
-          <PointsDisplay points={displayPoints} />
-          <QuestProgress completed={completedCount} total={QUESTS.length} />
-
           {/* Quest List */}
           <motion.div
             className="space-y-3"
