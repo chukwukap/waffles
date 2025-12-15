@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import sdk from "@farcaster/miniapp-sdk";
-import { useUser } from "@/hooks/useUser";
 import { useMutuals } from "@/hooks/useMutuals";
 
 interface MutualsData {
@@ -19,68 +18,38 @@ interface TicketData {
   redeemedAt: string | null;
 }
 
-interface GameUserData {
-  ticket: TicketData | null;
-  mutuals: MutualsData | null;
-  isLoading: boolean;
-  isAuthorized: boolean;
-}
-
-export function useGameData(
-  fid: number | undefined,
-  gameId: number | undefined
-): GameUserData {
-  const { user, isLoading: isUserLoading } = useUser();
-
+/**
+ * Hook to fetch game-specific user data (ticket + mutuals).
+ * Auth is handled by GameAuthGate in layout.
+ */
+export function useGameData(fid: number | undefined, gameId: number | undefined) {
   const [ticket, setTicket] = useState<TicketData | null>(null);
-  const [isFetchingGameData, setIsFetchingGameData] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Use the hook for mutuals, requesting enough for the avatar diamond (25)
-  const mutuals = useMutuals({
-    context: "game",
-    gameId,
-    limit: 25,
-  });
+  const mutuals = useMutuals({ context: "game", gameId, limit: 25 });
 
-  const fetchGameSpecificData = useCallback(async () => {
+  const fetchTicket = useCallback(async () => {
     if (!fid || !gameId) {
-      setIsFetchingGameData(false);
+      setIsLoading(false);
       return;
     }
 
-    setIsFetchingGameData(true);
-
     try {
-      // Use authenticated fetch to get tickets for this game
-      const ticketRes = await sdk.quickAuth.fetch(
-        `/api/v1/me/tickets?gameId=${gameId}`
-      );
-
-      if (ticketRes.ok) {
-        const tickets: TicketData[] = await ticketRes.json();
-        // Get the first ticket for this game (should be only one per user per game)
+      const res = await sdk.quickAuth.fetch(`/api/v1/me/tickets?gameId=${gameId}`);
+      if (res.ok) {
+        const tickets: TicketData[] = await res.json();
         setTicket(tickets[0] || null);
-      } else {
-        setTicket(null);
       }
     } catch (err) {
-      console.error("Error fetching game data:", err);
+      console.error("Error fetching ticket:", err);
     } finally {
-      setIsFetchingGameData(false);
+      setIsLoading(false);
     }
   }, [fid, gameId]);
 
   useEffect(() => {
-    fetchGameSpecificData();
-  }, [fetchGameSpecificData]);
+    fetchTicket();
+  }, [fetchTicket]);
 
-  const isAuthorized = !isUserLoading && user?.status === "ACTIVE";
-  const isLoading = isUserLoading || isFetchingGameData;
-
-  return {
-    ticket,
-    mutuals,
-    isLoading,
-    isAuthorized,
-  };
+  return { ticket, mutuals, isLoading };
 }

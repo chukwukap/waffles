@@ -1,14 +1,15 @@
 import { GameHeader } from "./game/_components/GameHeader";
+import { GameAuthGate } from "./game/_components/GameAuthGate";
 
-export default function PlatformLayout({
-    children,
+export default function GameLayout({
+  children,
 }: {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }) {
-    return (
-        <>
-            <GameHeader />
-            {children}
-        </>
-    );
+  return (
+    <GameAuthGate>
+      <GameHeader />
+      {children}
+    </GameAuthGate>
+  );
 }

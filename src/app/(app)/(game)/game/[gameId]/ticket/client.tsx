@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { CardStack } from "@/components/CardStack";
 import { useMutuals } from "@/hooks/useMutuals";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
@@ -17,7 +16,6 @@ interface UserInfo {
   fid: number;
   username: string | null;
   pfpUrl: string | null;
-  status: string;
 }
 
 interface TicketInfo {
@@ -32,51 +30,40 @@ type TicketPageClientImplProps = {
   gameInfo: TicketPageGameInfo;
 };
 
+// Auth is handled by GameAuthGate in layout
 export default function TicketPageClientImpl({
   gameInfo,
 }: TicketPageClientImplProps) {
-  const router = useRouter();
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [ticket, setTicket] = useState<TicketInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch user data and ticket on mount
+  // Fetch user and ticket data (auth verified by layout)
   useEffect(() => {
-    async function fetchUserData() {
+    async function fetchData() {
       try {
         // Fetch user profile
         const userRes = await sdk.quickAuth.fetch("/api/v1/me");
-        if (!userRes.ok) {
-          if (userRes.status === 401) {
-            router.push("/invite");
-            return;
-          }
-          throw new Error("Failed to fetch user");
+        if (userRes.ok) {
+          setUserInfo(await userRes.json());
         }
-        const userData = await userRes.json();
-
-        // Check authorization
-        if (userData.status !== "ACTIVE") {
-          router.push("/invite");
-          return;
-        }
-
-        setUserInfo(userData);
 
         // Fetch tickets for this game
-        const ticketRes = await sdk.quickAuth.fetch(`/api/v1/me/tickets?gameId=${gameInfo.id}`);
+        const ticketRes = await sdk.quickAuth.fetch(
+          `/api/v1/me/tickets?gameId=${gameInfo.id}`
+        );
         if (ticketRes.ok) {
           const tickets: TicketInfo[] = await ticketRes.json();
           setTicket(tickets[0] || null);
         }
       } catch (error) {
-        console.error("Error fetching user data:", error);
+        console.error("Error fetching data:", error);
       } finally {
         setIsLoading(false);
       }
     }
-    fetchUserData();
-  }, [gameInfo.id, router]);
+    fetchData();
+  }, [gameInfo.id]);
 
   // Use hook for mutuals
   const mutualsData = useMutuals({
@@ -104,18 +91,7 @@ export default function TicketPageClientImpl({
     );
   }
 
-  if (!userInfo) {
-    return (
-      <>
-        <div className="flex-1 flex items-center justify-center">
-          <p className="text-white/60">Please sign in to continue</p>
-        </div>
-        <BottomNav />
-      </>
-    );
-  }
-
-  if (ticket !== null) {
+  if (ticket !== null && userInfo) {
     return (
       <>
         <SuccessCard

@@ -1,14 +1,12 @@
 "use client";
 
-import { useRef, useMemo, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRef, useMemo } from "react";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
 import { calculatePrizePool, formatTime } from "@/lib/utils";
 import { useCountdown } from "@/hooks/useCountdown";
 import { usePartyGame } from "@/hooks/usePartyGame";
 import { useGameData } from "@/hooks/useGameData";
-import { WaffleLoader } from "@/components/ui/WaffleLoader";
 import { BottomNav } from "@/components/BottomNav";
 
 import { GameActionButton } from "../_components/GameActionButton";
@@ -24,29 +22,19 @@ interface Props {
   game: GameDetails;
 }
 
+// Auth is handled by GameAuthGate in layout
 export default function GameDetailsClient({ game }: Props) {
-  const router = useRouter();
   const { context } = useMiniKit();
   const fid = context?.user?.fid;
 
-  // User data
-  const { ticket, mutuals, isLoading, isAuthorized } = useGameData(
-    fid,
-    game.id
-  );
+  // User data (for ticket status and mutuals)
+  const { ticket, mutuals } = useGameData(fid, game.id);
 
   // PartyKit for real-time features
   const { onlineCount, messages, events, sendChat } = usePartyGame({
     gameId: game.id.toString(),
-    enabled: isAuthorized,
+    enabled: true, // Auth already verified by layout
   });
-
-  // Redirect unauthorized users
-  useEffect(() => {
-    if (!isLoading && !isAuthorized && fid) {
-      router.replace("/invite");
-    }
-  }, [isLoading, isAuthorized, fid, router]);
 
   // Countdown logic
   const startMs = game.startsAt.getTime();
@@ -118,15 +106,6 @@ export default function GameDetailsClient({ game }: Props) {
       <GameActionButton>{formatTime(countdown.remaining)}</GameActionButton>
     );
   };
-
-  // Loading state
-  if (isLoading || (!isAuthorized && fid)) {
-    return (
-      <div className="flex-1 flex items-center justify-center h-full">
-        <WaffleLoader text="CHECKING ACCESS..." />
-      </div>
-    );
-  }
 
   return (
     <>

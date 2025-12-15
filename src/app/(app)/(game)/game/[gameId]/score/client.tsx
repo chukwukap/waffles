@@ -1,7 +1,6 @@
 "use client";
 
 import { use, useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import WinningsCard from "../_component/WinningsCard";
 import Leaderboard from "./_components/Leaderboard";
 import Image from "next/image";
@@ -31,20 +30,20 @@ interface UserScore {
   percentile: number;
 }
 
+// Auth is handled by GameAuthGate in layout
 export default function ScorePageClient({
   leaderboardPromise,
 }: {
   gameId: number;
   leaderboardPromise: Promise<LeaderboardData>;
 }) {
-  const router = useRouter();
   const leaderboardData = use(leaderboardPromise);
 
   const [userInfo, setUserInfo] = useState<{ fid: number; username: string; pfpUrl: string } | null>(null);
   const [userScore, setUserScore] = useState<UserScore | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Calculate leaderboard entries
+  // Top 3 for leaderboard display
   const leaderboard = useMemo(() => {
     return leaderboardData.allPlayersInGame.slice(0, 3).map((p) => ({
       username: p.user?.username ?? "anon",
@@ -53,19 +52,13 @@ export default function ScorePageClient({
     }));
   }, [leaderboardData]);
 
-  // Fetch user data on mount
+  // Fetch user data (auth verified by layout)
   useEffect(() => {
     async function fetchUserScore() {
       try {
-        // Fetch user profile
         const userRes = await sdk.quickAuth.fetch("/api/v1/me");
-        if (!userRes.ok) {
-          if (userRes.status === 401) {
-            router.push("/invite");
-            return;
-          }
-          throw new Error("Failed to fetch user");
-        }
+        if (!userRes.ok) throw new Error("Failed to fetch user");
+
         const userData = await userRes.json();
         setUserInfo({
           fid: userData.fid,
@@ -80,17 +73,14 @@ export default function ScorePageClient({
 
         if (userIndex !== -1) {
           const player = leaderboardData.allPlayersInGame[userIndex];
-          const totalPlayers = leaderboardData.allPlayersInGame.length;
+          const total = leaderboardData.allPlayersInGame.length;
           const rank = userIndex + 1;
-          const percentile = totalPlayers > 0
-            ? Math.round(((totalPlayers - rank) / totalPlayers) * 100)
-            : 0;
 
           setUserScore({
             score: player.score,
             rank,
-            winnings: rank === 1 ? 50 : 0, // Winner gets $50
-            percentile,
+            winnings: rank === 1 ? 50 : 0,
+            percentile: total > 0 ? Math.round(((total - rank) / total) * 100) : 0,
           });
         }
       } catch (error) {
@@ -100,7 +90,7 @@ export default function ScorePageClient({
       }
     }
     fetchUserScore();
-  }, [leaderboardData, router]);
+  }, [leaderboardData]);
 
   if (isLoading) {
     return (

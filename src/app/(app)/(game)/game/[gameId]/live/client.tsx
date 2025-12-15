@@ -23,22 +23,14 @@ function shouldShowRoundCountdown(
   const thisRoundIndex = questions[currentIdx]?.roundIndex;
   const nextRoundIndex = questions[currentIdx + 1]?.roundIndex;
 
-  if (
+  return (
     typeof thisRoundIndex === "number" &&
     typeof nextRoundIndex === "number" &&
     nextRoundIndex > thisRoundIndex
-  ) {
-    return true;
-  }
-  return false;
+  );
 }
 
-interface UserInfo {
-  fid: number;
-  status: string;
-  username: string;
-}
-
+// Auth is handled by GameAuthGate in layout
 export default function LiveGameClient({
   gameInfo,
 }: {
@@ -46,42 +38,24 @@ export default function LiveGameClient({
 }) {
   const router = useRouter();
 
-  const [userInfo, setUserInfo] = React.useState<UserInfo | null>(null);
   const [initialQuestionIndex, setInitialQuestionIndex] = React.useState<number | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [currentQuestionIndex, setCurrentQuestionIndex] = React.useState(0);
   const [showRoundCountdown, setShowRoundCountdown] = React.useState(false);
 
-  // Fetch user data and answer progress on mount
+  // Fetch answer progress on mount (auth already verified by layout)
   React.useEffect(() => {
-    async function fetchUserDataAndProgress() {
+    async function fetchProgress() {
       if (!gameInfo) return;
 
       try {
-        // Fetch user profile
-        const userRes = await sdk.quickAuth.fetch("/api/v1/me");
-        if (!userRes.ok) {
-          if (userRes.status === 401) {
-            router.push("/invite");
-            return;
-          }
-          throw new Error("Failed to fetch user");
-        }
-        const userData = await userRes.json();
-
-        // Check authorization
-        if (userData.status !== "ACTIVE") {
-          router.push("/invite");
-          return;
-        }
-
-        setUserInfo(userData);
-
-        // Fetch user's game history to determine progress
-        const historyRes = await sdk.quickAuth.fetch(`/api/v1/me/games`);
+        const historyRes = await sdk.quickAuth.fetch("/api/v1/me/games");
         if (historyRes.ok) {
           const games = await historyRes.json();
-          const currentGame = games.find((g: { gameId: number; answeredQuestions?: number }) => g.gameId === gameInfo.id);
+          const currentGame = games.find(
+            (g: { gameId: number; answeredQuestions?: number }) =>
+              g.gameId === gameInfo.id
+          );
           const answeredCount = currentGame?.answeredQuestions ?? 0;
 
           // If user has already completed all questions, redirect to score
@@ -98,18 +72,20 @@ export default function LiveGameClient({
           setCurrentQuestionIndex(0);
         }
       } catch (error) {
-        console.error("Error fetching user data:", error);
+        console.error("Error fetching game progress:", error);
+        setInitialQuestionIndex(0);
+        setCurrentQuestionIndex(0);
       } finally {
         setIsLoading(false);
       }
     }
-    fetchUserDataAndProgress();
+    fetchProgress();
   }, [gameInfo, router]);
 
-  // PartyKit Integration
-  const { isConnected, onlineCount, messages, events, sendChat, sendEvent } = usePartyGame({
+  // PartyKit Integration (auth verified by layout)
+  const { onlineCount, messages, events, sendChat, sendEvent } = usePartyGame({
     gameId: gameInfo?.id?.toString() ?? "",
-    enabled: !!gameInfo && !!userInfo,
+    enabled: !!gameInfo,
   });
 
   // Get the duration for the *current* question
@@ -158,14 +134,6 @@ export default function LiveGameClient({
     return (
       <div className="flex-1 flex items-center justify-center text-white/60">
         Loading game questions...
-      </div>
-    );
-  }
-
-  if (!userInfo) {
-    return (
-      <div className="flex-1 flex items-center justify-center text-white/60">
-        Please sign in to play
       </div>
     );
   }
