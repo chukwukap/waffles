@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { EllipsisVerticalIcon, PencilIcon, TrashIcon, PlayIcon, StopIcon, DocumentDuplicateIcon } from "@heroicons/react/24/outline";
+import { EllipsisVerticalIcon, PencilIcon, TrashIcon, PlayIcon, StopIcon, DocumentDuplicateIcon, EyeIcon } from "@heroicons/react/24/outline";
 import { startGameAction, endGameAction } from "@/actions/admin/games";
 import { duplicateGameAction } from "@/actions/admin/duplicate-game";
 import { DeleteGameButton } from "@/components/admin/DeleteGameButton";
@@ -125,6 +125,15 @@ export function GameActions({ game, onOpenChange }: GameActionsProps) {
                         className="fixed w-48 bg-slate-800 rounded-lg shadow-lg border border-slate-700 py-1 z-50"
                         style={{ top: `${position.top}px`, right: `${position.right}px` }}
                     >
+                        <Link
+                            href={`/admin/games/${game.id}`}
+                            className="flex items-center gap-2 px-4 py-2 text-sm text-[#FFC931] hover:bg-slate-700 transition-colors"
+                            onClick={() => toggleOpen(false)}
+                        >
+                            <EyeIcon className="h-4 w-4" />
+                            View Details
+                        </Link>
+
                         <Link
                             href={`/admin/games/${game.id}/edit`}
                             className="flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors"

@@ -6,6 +6,7 @@ import { requireAdminSession } from "@/lib/admin-auth";
 import { logAdminAction, AdminAction, EntityType } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { createGameOnChain } from "@/lib/settlement";
 
 const gameSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -62,6 +63,7 @@ export async function createGameAction(
   const data = validation.data;
 
   try {
+    // 1. Create game in database
     const game = await prisma.game.create({
       data: {
         title: data.title,
@@ -78,13 +80,42 @@ export async function createGameAction(
       },
     });
 
-    await logAdminAction({
-      adminId: authResult.session.userId,
-      action: AdminAction.CREATE_GAME,
-      entityType: EntityType.GAME,
-      entityId: game.id,
-      details: { title: game.title, theme: game.theme },
-    });
+    // 2. Create game on-chain immediately after database creation
+    // This ensures the game is ready for players to buy tickets
+    try {
+      const txHash = await createGameOnChain(game.id, data.entryFee);
+      console.log(`[CreateGame] Game ${game.id} created on-chain. TX: ${txHash}`);
+      
+      // Log the on-chain creation as part of the game creation
+      await logAdminAction({
+        adminId: authResult.session.userId,
+        action: AdminAction.CREATE_GAME,
+        entityType: EntityType.GAME,
+        entityId: game.id,
+        details: { 
+          title: game.title, 
+          theme: game.theme,
+          onChainTx: txHash,
+          entryFee: data.entryFee,
+        },
+      });
+    } catch (onChainError) {
+      // Log the error but don't fail the game creation
+      // The game exists in DB and can be manually created on-chain later if needed
+      console.error(`[CreateGame] On-chain creation failed for game ${game.id}:`, onChainError);
+      
+      await logAdminAction({
+        adminId: authResult.session.userId,
+        action: AdminAction.CREATE_GAME,
+        entityType: EntityType.GAME,
+        entityId: game.id,
+        details: { 
+          title: game.title, 
+          theme: game.theme,
+          onChainError: onChainError instanceof Error ? onChainError.message : "Unknown error",
+        },
+      });
+    }
 
     revalidatePath("/admin/games");
     redirect(`/admin/games/${game.id}/questions`);

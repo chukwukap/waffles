@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { GameActions } from "@/components/admin/GameActions";
 
 function GameStatusBadge({ status }: { status: string }) {
@@ -26,12 +27,16 @@ export function GameRow({ game }: { game: any }) {
     const [isActionsOpen, setIsActionsOpen] = useState(false);
 
     return (
-        <tr className={`admin-table-row ${isActionsOpen ? 'relative z-50' : ''}`}>
+        <tr className={`admin-table-row hover:bg-white/5 transition-colors ${isActionsOpen ? 'relative z-50' : ''}`}>
             <td className="px-6 py-4 whitespace-nowrap">
-                <div className="font-medium text-white text-base">{game.title}</div>
-                <div className="text-xs text-white/50 capitalize mt-0.5 bg-white/5 inline-block px-2 py-0.5 rounded-lg">
-                    {game.theme.toLowerCase()}
-                </div>
+                <Link href={`/admin/games/${game.id}`} className="block group">
+                    <div className="font-medium text-white text-base group-hover:text-[#FFC931] transition-colors">
+                        {game.title}
+                    </div>
+                    <div className="text-xs text-white/50 capitalize mt-0.5 bg-white/5 inline-block px-2 py-0.5 rounded-lg">
+                        {game.theme.toLowerCase()}
+                    </div>
+                </Link>
             </td>
             <td className="px-6 py-4 whitespace-nowrap">
                 <GameStatusBadge status={game.status} />
@@ -52,4 +57,3 @@ export function GameRow({ game }: { game: any }) {
         </tr>
     );
 }
-

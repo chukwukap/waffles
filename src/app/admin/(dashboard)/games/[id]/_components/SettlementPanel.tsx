@@ -4,7 +4,6 @@ import { useState } from "react";
 import { getExplorerUrl } from "@/lib/contracts/config";
 import {
     ChartPieIcon,
-    CurrencyDollarIcon,
     ArrowPathIcon,
     CheckCircleIcon,
     XCircleIcon,
@@ -21,7 +20,8 @@ interface SettlementPanelProps {
     };
 }
 
-type SettlementAction = "create" | "end" | "settle";
+// Note: "create" action removed - games are now created on-chain automatically during game creation
+type SettlementAction = "end" | "settle";
 
 export function SettlementPanel({
     gameId,
@@ -40,8 +40,6 @@ export function SettlementPanel({
         setResult(null);
 
         try {
-            const entryFee = action === "create" ? 5 : undefined; // Default entry fee
-
             const res = await fetch("/api/v1/admin/settlement", {
                 method: "POST",
                 headers: {
@@ -51,7 +49,6 @@ export function SettlementPanel({
                 body: JSON.stringify({
                     action,
                     gameId,
-                    entryFee,
                 }),
             });
 
@@ -81,8 +78,6 @@ export function SettlementPanel({
         data: { txHash?: string; winnersCount?: number }
     ) => {
         switch (action) {
-            case "create":
-                return `Game created on-chain`;
             case "end":
                 return `Game ended on-chain`;
             case "settle":
@@ -92,10 +87,11 @@ export function SettlementPanel({
         }
     };
 
-    const canCreate = gameStatus === "SCHEDULED" && !onChainStatus?.exists;
+    // Games are now created on-chain automatically when created in admin
     const canEnd = gameStatus === "ENDED" && onChainStatus?.exists && !onChainStatus?.ended;
     const canSettle = gameStatus === "ENDED" && onChainStatus?.ended && !onChainStatus?.settled;
     const isSettled = onChainStatus?.settled;
+    const isOnChain = onChainStatus?.exists;
 
     return (
         <div className="space-y-4">
@@ -111,7 +107,6 @@ export function SettlementPanel({
                 <StatusBadge
                     label="On-Chain"
                     active={onChainStatus?.exists}
-                    pending={isLoading === "create"}
                 />
                 <StatusBadge
                     label="Game Ended"
@@ -127,16 +122,6 @@ export function SettlementPanel({
 
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-3">
-                {canCreate && (
-                    <ActionButton
-                        onClick={() => executeSettlement("create")}
-                        loading={isLoading === "create"}
-                        icon={<CurrencyDollarIcon className="h-4 w-4" />}
-                        label="Create On-Chain"
-                        variant="primary"
-                    />
-                )}
-
                 {canEnd && (
                     <ActionButton
                         onClick={() => executeSettlement("end")}
@@ -164,14 +149,25 @@ export function SettlementPanel({
                     </div>
                 )}
 
-                {!canCreate && !canEnd && !canSettle && !isSettled && (
-                    <p className="text-white/50 text-sm">
-                        {gameStatus === "SCHEDULED" && onChainStatus?.exists
-                            ? "Game is created on-chain. Wait for it to end."
-                            : gameStatus === "LIVE"
-                                ? "Game is live. Settlement available after game ends."
-                                : "No settlement actions available."}
-                    </p>
+                {/* Status messages when no actions available */}
+                {!canEnd && !canSettle && !isSettled && (
+                    <div className="text-white/50 text-sm space-y-1">
+                        {!isOnChain && gameStatus === "SCHEDULED" && (
+                            <p className="flex items-center gap-2">
+                                <span className="inline-block w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                                Game was not created on-chain. This may indicate an error during creation.
+                            </p>
+                        )}
+                        {isOnChain && gameStatus === "SCHEDULED" && (
+                            <p>Game is registered on-chain. Waiting for game to go live and end.</p>
+                        )}
+                        {isOnChain && gameStatus === "LIVE" && (
+                            <p>Game is live. Settlement actions will be available after the game ends.</p>
+                        )}
+                        {!isOnChain && gameStatus !== "SCHEDULED" && (
+                            <p>No settlement actions available.</p>
+                        )}
+                    </div>
                 )}
             </div>
 

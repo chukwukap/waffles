@@ -3,8 +3,9 @@
 import { GameActionResult } from "@/actions/admin/games";
 import Link from "next/link";
 import { CalendarIcon, CurrencyDollarIcon, PuzzlePieceIcon, PhotoIcon, SparklesIcon } from "@heroicons/react/24/outline";
-import { useActionState, useState } from "react";
+import { useActionState, useState, useRef } from "react";
 import { MediaPicker } from "@/components/admin/MediaPicker";
+import { ConfirmationModal } from "@/components/admin/ConfirmationModal";
 
 interface GameFormProps {
     action: (prevState: GameActionResult | null, formData: FormData) => Promise<GameActionResult>;
@@ -57,14 +58,82 @@ export function GameForm({ action, initialData, isEdit = false }: GameFormProps)
     const [state, formAction] = useActionState<GameActionResult | null, FormData>(action, null);
     const [selectedTheme, setSelectedTheme] = useState(initialData?.theme || "");
     const [coverUrl, setCoverUrl] = useState(initialData?.coverUrl || "");
+    
+    // Confirmation modal state
+    const [showConfirmation, setShowConfirmation] = useState(false);
+    const [pendingFormData, setPendingFormData] = useState<FormData | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const formRef = useRef<HTMLFormElement>(null);
 
     // Format dates for datetime-local inputs (only if editing)
     const formatDateTime = (date?: Date) => date ? new Date(date).toISOString().slice(0, 16) : "";
 
     const currentTheme = THEMES.find(t => t.id === selectedTheme) || THEMES[0];
 
+    /**
+     * Handles form submission - shows confirmation for new games
+     */
+    const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        // For edit mode, submit directly without confirmation
+        if (isEdit) {
+            return; // Let the form action handle it
+        }
+
+        // For create mode, show confirmation first
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget);
+        setPendingFormData(formData);
+        setShowConfirmation(true);
+    };
+
+    /**
+     * Confirms and submits the game creation
+     */
+    const handleConfirmCreate = async () => {
+        if (!pendingFormData) return;
+
+        setIsSubmitting(true);
+        try {
+            // Submit the form programmatically
+            await formAction(pendingFormData);
+        } finally {
+            setIsSubmitting(false);
+            setShowConfirmation(false);
+            setPendingFormData(null);
+        }
+    };
+
+    /**
+     * Gets preview items for the confirmation modal
+     */
+    const getPreviewItems = () => {
+        if (!pendingFormData) return [];
+
+        const title = pendingFormData.get("title")?.toString() || "";
+        const theme = THEMES.find(t => t.id === pendingFormData.get("theme"))?.label || "";
+        const entryFee = pendingFormData.get("entryFee")?.toString() || "0";
+        const prizePool = pendingFormData.get("prizePool")?.toString() || "0";
+        const startsAt = pendingFormData.get("startsAt")?.toString() || "";
+        const maxPlayers = pendingFormData.get("maxPlayers")?.toString() || "";
+
+        return [
+            { label: "Title", value: title },
+            { label: "Theme", value: theme },
+            { label: "Entry Fee", value: `$${entryFee} USDC` },
+            { label: "Prize Pool", value: `$${prizePool} USDC` },
+            { label: "Starts At", value: startsAt ? new Date(startsAt).toLocaleString() : "Not set" },
+            { label: "Max Players", value: maxPlayers },
+        ];
+    };
+
     return (
-        <form action={formAction} className="space-y-8">
+        <>
+        <form 
+            ref={formRef}
+            action={formAction} 
+            onSubmit={handleFormSubmit}
+            className="space-y-8"
+        >
             {/* Error Display */}
             {state && !state.success && (
                 <div className="p-4 bg-red-500/20 border border-red-500/30 rounded-xl flex items-center gap-3 text-red-400">
@@ -299,11 +368,32 @@ export function GameForm({ action, initialData, isEdit = false }: GameFormProps)
                 </Link>
                 <button
                     type="submit"
+                    disabled={isSubmitting}
                     className="px-10 py-3.5 bg-[#FFC931] text-black font-bold rounded-xl hover:bg-[#FFD966] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black focus:ring-[#FFC931] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#FFC931]/20 transition-all hover:scale-[1.02] active:scale-[0.98] font-display text-lg"
                 >
                     {isEdit ? "Save Changes" : "Create Game →"}
                 </button>
             </div>
         </form>
+
+        {/* Confirmation Modal for New Game Creation */}
+        <ConfirmationModal
+            isOpen={showConfirmation}
+            onClose={() => {
+                if (!isSubmitting) {
+                    setShowConfirmation(false);
+                    setPendingFormData(null);
+                }
+            }}
+            onConfirm={handleConfirmCreate}
+            title="Create New Game?"
+            description="This will create a new trivia game and register it on-chain. Players will be able to join once the game is live. Please review the details below."
+            confirmText="Create Game"
+            cancelText="Go Back"
+            variant="warning"
+            isLoading={isSubmitting}
+            previewItems={getPreviewItems()}
+        />
+        </>
     );
 }
