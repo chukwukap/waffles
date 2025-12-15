@@ -29,44 +29,31 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Validate rank
-    const validatedRank = waitlistRank.match(/^[0-9]{1,6}$/)
-      ? `#${waitlistRank}`
-      : "#?";
+    // Validate and format rank
+    const rankNum = parseInt(waitlistRank);
+    const validatedRank = !isNaN(rankNum) && rankNum > 0 ? rankNum : null;
 
-    // Fetch user avatar
+    // Fetch user data
     let pfpUrl: string | null = null;
+    let username: string | null = null;
     if (fidParam) {
       try {
         const fid = parseInt(fidParam);
         const user = await prisma.user.findUnique({
           where: { fid },
-          select: { pfpUrl: true },
+          select: { pfpUrl: true, username: true },
         });
         pfpUrl = user?.pfpUrl || null;
+        username = user?.username || null;
       } catch (error) {
-        console.error("Failed to fetch user pfpUrl:", error);
+        console.error("Failed to fetch user:", error);
       }
     }
 
-    // Load assets from filesystem (required for ImageResponse)
+    // Load font
     const publicDir = join(process.cwd(), "public");
     const fontPath = join(publicDir, "fonts/editundo_bd.ttf");
-    const bgPath = join(publicDir, "images/share/waitlist-bg.png");
-    const logoPath = join(publicDir, "logo-onboarding.png");
-    const scrollPath = join(publicDir, "images/share/scroll.png");
-
-    const [fontData, bgBuffer, logoBuffer, scrollBuffer] = await Promise.all([
-      readFile(fontPath),
-      readFile(bgPath),
-      readFile(logoPath),
-      readFile(scrollPath),
-    ]);
-
-    // Convert to base64 (required for ImageResponse)
-    const bgBase64 = `data:image/png;base64,${bgBuffer.toString("base64")}`;
-    const logoBase64 = `data:image/png;base64,${logoBuffer.toString("base64")}`;
-    const scrollBase64 = `data:image/png;base64,${scrollBuffer.toString("base64")}`;
+    const fontData = await readFile(fontPath);
 
     return new ImageResponse(
       (
@@ -74,22 +61,55 @@ export async function GET(request: NextRequest) {
           style={{
             display: "flex",
             flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "space-between",
             width: "100%",
             height: "100%",
-            backgroundImage: `url(${bgBase64})`,
-            backgroundSize: "100% 100%",
-            padding: "40px 20px",
+            background: "linear-gradient(145deg, #0a0a0a 0%, #151520 50%, #0a0a0a 100%)",
             fontFamily: '"PixelFont"',
             color: "white",
-            letterSpacing: "1px",
+            position: "relative",
+            overflow: "hidden",
           }}
         >
-          {/* Logo */}
-          <img src={logoBase64} width="212" height="42" alt="WAFFLES Logo" />
+          {/* Background grid pattern */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundImage: `
+                linear-gradient(rgba(255,201,49,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,201,49,0.03) 1px, transparent 1px)
+              `,
+              backgroundSize: "40px 40px",
+            }}
+          />
 
-          {/* Middle Content */}
+          {/* Glowing orbs */}
+          <div
+            style={{
+              position: "absolute",
+              width: 400,
+              height: 400,
+              borderRadius: "50%",
+              background: "radial-gradient(circle, rgba(255,201,49,0.15) 0%, transparent 70%)",
+              top: -100,
+              right: -100,
+              filter: "blur(60px)",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              width: 300,
+              height: 300,
+              borderRadius: "50%",
+              background: "radial-gradient(circle, rgba(27,143,245,0.12) 0%, transparent 70%)",
+              bottom: -50,
+              left: -50,
+              filter: "blur(40px)",
+            }}
+          />
+
+          {/* Content container */}
           <div
             style={{
               display: "flex",
@@ -97,48 +117,170 @@ export async function GET(request: NextRequest) {
               alignItems: "center",
               justifyContent: "center",
               flex: 1,
-              gap: 20,
-              marginTop: 60,
+              padding: "60px",
+              position: "relative",
+              zIndex: 1,
             }}
           >
-            {/* User Avatar */}
-            {pfpUrl && (
-              <img
-                src={pfpUrl}
-                width="120"
-                height="120"
-                alt="User Avatar"
-                style={{
-                  borderRadius: "50%",
-                  border: "4px solid #5DD9C1",
-                  marginBottom: 20,
-                }}
-              />
-            )}
-
-            {/* Rank Text */}
-            <div style={{ display: "flex", fontSize: 80 }}>
-              <span style={{ color: "#FCD34D" }}>{validatedRank}</span>
-              &nbsp;ON THE
+            {/* Top: WAFFLES text logo */}
+            <div
+              style={{
+                display: "flex",
+                fontSize: 42,
+                letterSpacing: "8px",
+                color: "#FFC931",
+                marginBottom: 50,
+                textShadow: "0 0 30px rgba(255,201,49,0.5)",
+              }}
+            >
+              WAFFLES
             </div>
 
-            {/* Waitlist Text */}
-            <div style={{ fontSize: 80 }}>WAITLIST</div>
+            {/* Center: Avatar + Rank */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 30,
+              }}
+            >
+              {/* Avatar with ring */}
+              {pfpUrl && (
+                <div
+                  style={{
+                    display: "flex",
+                    position: "relative",
+                  }}
+                >
+                  {/* Outer glow ring */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: -8,
+                      borderRadius: "50%",
+                      background: "linear-gradient(135deg, #FFC931 0%, #FF8C00 100%)",
+                      opacity: 0.6,
+                      filter: "blur(15px)",
+                    }}
+                  />
+                  {/* Avatar */}
+                  <img
+                    src={pfpUrl}
+                    width="140"
+                    height="140"
+                    alt="Avatar"
+                    style={{
+                      borderRadius: "50%",
+                      border: "4px solid #FFC931",
+                      position: "relative",
+                    }}
+                  />
+                </div>
+              )}
 
-            {/* Scroll Image */}
-            <img
-              src={scrollBase64}
-              width="250"
-              height="277"
-              alt="Waitlist Scroll"
-              style={{ marginTop: 40 }}
-            />
+              {/* Rank display */}
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                {/* Big rank number */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "baseline",
+                    gap: 8,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 160,
+                      fontWeight: 700,
+                      background: "linear-gradient(180deg, #FFC931 0%, #FF8C00 100%)",
+                      backgroundClip: "text",
+                      color: "transparent",
+                      lineHeight: 1,
+                      textShadow: "0 4px 30px rgba(255,201,49,0.4)",
+                    }}
+                  >
+                    #{validatedRank || "?"}
+                  </span>
+                </div>
+
+                {/* "ON THE WAITLIST" text */}
+                <div
+                  style={{
+                    display: "flex",
+                    fontSize: 32,
+                    letterSpacing: "6px",
+                    color: "rgba(255,255,255,0.7)",
+                    marginTop: 10,
+                  }}
+                >
+                  ON THE WAITLIST
+                </div>
+
+                {/* Username if available */}
+                {username && (
+                  <div
+                    style={{
+                      display: "flex",
+                      fontSize: 24,
+                      color: "rgba(255,255,255,0.4)",
+                      marginTop: 8,
+                    }}
+                  >
+                    @{username}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Bottom CTA */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                marginTop: 60,
+                padding: "16px 32px",
+                background: "rgba(255,201,49,0.1)",
+                borderRadius: 16,
+                border: "1px solid rgba(255,201,49,0.3)",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 22,
+                  color: "#FFC931",
+                  letterSpacing: "2px",
+                }}
+              >
+                JOIN THE WAITLIST →
+              </span>
+            </div>
           </div>
+
+          {/* Bottom decorative line */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: 4,
+              background: "linear-gradient(90deg, transparent 0%, #FFC931 50%, transparent 100%)",
+            }}
+          />
         </div>
       ),
       {
         width: 1200,
-        height: 800,
+        height: 630,
         fonts: [
           {
             name: "PixelFont",
