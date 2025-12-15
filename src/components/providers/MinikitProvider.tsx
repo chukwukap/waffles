@@ -3,17 +3,10 @@
 import { OnchainKitProvider } from "@coinbase/onchainkit";
 import { base } from "viem/chains";
 import { env } from "@/lib/env";
-import { useMiniKitInit } from "@/hooks/useMiniKitInit";
 import { minikitConfig } from "../../../minikit.config";
 
 interface Props {
   children: React.ReactNode;
-}
-
-function MiniKitInitializer({ children }: { children: React.ReactNode }) {
-  // This ensures MiniKit is initialized globally
-  useMiniKitInit();
-  return <>{children}</>;
 }
 
 export function MinikitProvider({ children }: Props) {
@@ -36,7 +29,7 @@ export function MinikitProvider({ children }: Props) {
         notificationProxyUrl: minikitConfig.miniapp.webhookUrl,
       }}
     >
-      <MiniKitInitializer>{children}</MiniKitInitializer>
+      {children}
     </OnchainKitProvider>
   );
 }
