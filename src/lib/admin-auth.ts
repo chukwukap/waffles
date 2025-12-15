@@ -104,7 +104,8 @@ export async function getAdminSession(): Promise<AdminSession | null> {
 
     // Check if session is expired
     if (session.expiresAt < Date.now()) {
-      await destroyAdminSession();
+      // Note: Don't delete cookie here - can't modify cookies during render
+      // Stale cookie is harmless since we always verify
       return null;
     }
 
@@ -139,7 +140,8 @@ export async function requireAdminSession(): Promise<{
   });
 
   if (!user || user.role !== "ADMIN") {
-    await destroyAdminSession();
+    // Note: Don't delete cookie here - can't modify cookies during render
+    // Stale cookie is harmless since we always verify against DB
     return {
       authenticated: false,
       error: "Admin access revoked",
