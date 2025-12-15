@@ -2,10 +2,10 @@
 
 import { useAddFrame, useComposeCast } from "@coinbase/onchainkit/minikit";
 import { notify } from "@/components/ui/Toaster";
-import { useCallback, startTransition, useEffect, useActionState } from "react";
+import { useCallback, startTransition, useEffect, useActionState, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import Image from "next/image";
 import confetti from "canvas-confetti";
 
@@ -22,83 +22,457 @@ import { useUser } from "@/hooks/useUser";
 import { useMutuals } from "@/hooks/useMutuals";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
 
-// Animation Variants
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-      delayChildren: 0.2,
-    },
-  },
-};
+// ============================================
+// FLOATING PARTICLES - Background magic ✨
+// ============================================
+function FloatingParticles() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {[...Array(12)].map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute w-1 h-1 bg-amber-400/30 rounded-full"
+          style={{
+            left: `${10 + (i * 7)}%`,
+            top: `${20 + (i % 3) * 25}%`,
+          }}
+          animate={{
+            y: [0, -30, 0],
+            x: [0, (i % 2 === 0 ? 10 : -10), 0],
+            opacity: [0.2, 0.6, 0.2],
+            scale: [1, 1.5, 1],
+          }}
+          transition={{
+            duration: 3 + (i % 3),
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: i * 0.3,
+          }}
+        />
+      ))}
+      {/* Larger floating orbs */}
+      {[...Array(4)].map((_, i) => (
+        <motion.div
+          key={`orb-${i}`}
+          className="absolute w-32 h-32 rounded-full blur-3xl"
+          style={{
+            background: i % 2 === 0 
+              ? "radial-gradient(circle, rgba(251,191,36,0.08) 0%, transparent 70%)"
+              : "radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 70%)",
+            left: `${i * 30}%`,
+            top: `${30 + (i % 2) * 40}%`,
+          }}
+          animate={{
+            x: [0, 20, 0],
+            y: [0, -20, 0],
+          }}
+          transition={{
+            duration: 8 + i * 2,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      type: "spring" as const,
-      stiffness: 300,
-      damping: 24,
-    },
-  },
-};
+// ============================================
+// ANIMATED LOGO - With glow pulse
+// ============================================
+function AnimatedLogo({ size = "normal" }: { size?: "normal" | "large" }) {
+  const width = size === "large" ? 200 : 122;
+  const height = size === "large" ? 38 : 23;
+  
+  return (
+    <motion.div 
+      className="relative"
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ type: "spring", stiffness: 200, damping: 20 }}
+    >
+      {/* Glow behind logo */}
+      <motion.div
+        className="absolute inset-0 blur-2xl"
+        style={{
+          background: "radial-gradient(circle, rgba(251,191,36,0.3) 0%, transparent 70%)",
+        }}
+        animate={{ 
+          opacity: [0.3, 0.6, 0.3],
+          scale: [1, 1.1, 1],
+        }}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <Image
+        src="/logo-onboarding.png"
+        alt="WAFFLES logo"
+        width={width}
+        height={height}
+        priority
+        className="object-contain relative z-10"
+      />
+    </motion.div>
+  );
+}
 
-// --- Main Component ---
+// ============================================
+// MAGICAL SCROLL - The hero illustration
+// ============================================
+function MagicalScroll() {
+  return (
+    <motion.div
+      className="relative"
+      initial={{ opacity: 0, y: 40, scale: 0.8 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ 
+        type: "spring", 
+        stiffness: 150, 
+        damping: 20,
+        delay: 0.2 
+      }}
+    >
+      {/* Magical glow ring */}
+      <motion.div
+        className="absolute -inset-8 rounded-full"
+        style={{
+          background: "radial-gradient(circle, rgba(251,191,36,0.15) 0%, transparent 60%)",
+        }}
+        animate={{ 
+          scale: [1, 1.2, 1],
+          opacity: [0.3, 0.6, 0.3],
+        }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+      />
+      
+      {/* Sparkles around scroll */}
+      {[...Array(6)].map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute w-1.5 h-1.5 bg-amber-300 rounded-full"
+          style={{
+            left: `${50 + Math.cos(i * 60 * Math.PI / 180) * 60}%`,
+            top: `${50 + Math.sin(i * 60 * Math.PI / 180) * 60}%`,
+          }}
+          animate={{
+            scale: [0, 1, 0],
+            opacity: [0, 1, 0],
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            delay: i * 0.3,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+      
+      {/* The scroll itself */}
+      <motion.div
+        animate={{ 
+          y: [0, -12, 0], 
+          rotate: [0, -3, 3, 0],
+        }}
+        transition={{ 
+          duration: 5, 
+          repeat: Infinity, 
+          ease: "easeInOut" 
+        }}
+      >
+        <Image
+          src="/images/illustrations/waitlist-scroll.svg"
+          width={170}
+          height={189}
+          priority
+          alt="scroll"
+          className="drop-shadow-[0_15px_40px_rgba(251,191,36,0.3)] max-h-full w-auto object-contain"
+        />
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ============================================
+// ANIMATED RANK BADGE - Pulsing glory
+// ============================================
+function RankBadge({ rank }: { rank: number | null }) {
+  if (!rank) return null;
+  
+  return (
+    <motion.div
+      className="relative inline-flex items-center justify-center"
+      initial={{ scale: 0, rotate: -180 }}
+      animate={{ scale: 1, rotate: 0 }}
+      transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.5 }}
+    >
+      {/* Glow pulse */}
+      <motion.div
+        className="absolute inset-0 rounded-full bg-amber-400/20 blur-xl"
+        animate={{ scale: [1, 1.4, 1], opacity: [0.3, 0.6, 0.3] }}
+        transition={{ duration: 2, repeat: Infinity }}
+      />
+      
+      {/* Badge */}
+      <div className="relative px-4 py-1.5 rounded-full bg-linear-to-r from-amber-500/20 to-orange-500/20 border border-amber-400/40">
+        <span className="font-body text-amber-300 text-lg">
+          #{rank}
+        </span>
+      </div>
+    </motion.div>
+  );
+}
+
+// ============================================
+// SHIMMERING TEXT - For headlines
+// ============================================
+function ShimmerText({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <motion.span
+      className={`relative inline-block ${className}`}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.3 }}
+    >
+      {/* Shimmer overlay */}
+      <motion.span
+        className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent"
+        animate={{ x: ["-100%", "100%"] }}
+        transition={{ duration: 3, repeat: Infinity, ease: "linear", repeatDelay: 2 }}
+        style={{ WebkitBackgroundClip: "text" }}
+      />
+      {children}
+    </motion.span>
+  );
+}
+
+// ============================================
+// ANIMATED BUTTON GROUP
+// ============================================
+function ActionButtons({ 
+  onShare, 
+  pending 
+}: { 
+  onShare: () => void; 
+  pending: boolean;
+}) {
+  const questRouter = useRouter();
+  
+  return (
+    <motion.div 
+      className="w-full flex flex-col items-center gap-3"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.6, type: "spring", stiffness: 200, damping: 20 }}
+    >
+      <FancyBorderButton
+        onClick={() => questRouter.push(`/waitlist/quests`)}
+        className="mx-auto text-[#191919] text-[22px]"
+        disabled={pending}
+      >
+        <motion.span
+          animate={{ scale: [1, 1.02, 1] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          COMPLETE QUESTS
+        </motion.span>
+      </FancyBorderButton>
+
+      {/* Secondary Actions */}
+      <div className="flex gap-2 w-full max-w-sm justify-center">
+        {[
+          { label: "SHARE", onClick: onShare },
+          { label: "LEADERBOARD", href: "/waitlist/leaderboard" },
+        ].map((btn, i) => (
+          <motion.div 
+            key={btn.label}
+            className="flex-1"
+            initial={{ opacity: 0, x: i === 0 ? -20 : 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.7 + i * 0.1, type: "spring" }}
+          >
+            {btn.href ? (
+              <Link
+                href={btn.href}
+                className="flex items-center justify-center w-full h-[42px] rounded-xl border-2 border-white/30 bg-white/5 backdrop-blur-sm font-body font-normal text-white/90 text-[13px] leading-none uppercase transition-all active:scale-95 active:bg-white/10"
+              >
+                {btn.label}
+              </Link>
+            ) : (
+              <button
+                onClick={btn.onClick}
+                className="w-full h-[42px] rounded-xl border-2 border-white/30 bg-white/5 backdrop-blur-sm font-body font-normal text-white/90 text-[13px] leading-none uppercase transition-all active:scale-95 active:bg-white/10"
+              >
+                {btn.label}
+              </button>
+            )}
+          </motion.div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+// ============================================
+// JOIN CTA - The main call to action
+// ============================================
+function JoinCTA({ 
+  onJoin, 
+  pending,
+  error,
+}: { 
+  onJoin: () => void;
+  pending: boolean;
+  error?: string;
+}) {
+  const buttonControls = useAnimation();
+  
+  // Subtle attention-grabbing animation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!pending) {
+        buttonControls.start({
+          scale: [1, 1.02, 1],
+          transition: { duration: 0.6 }
+        });
+      }
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [buttonControls, pending]);
+  
+  return (
+    <motion.div 
+      className="w-full flex flex-col items-center gap-3"
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.5, type: "spring", stiffness: 200, damping: 20 }}
+    >
+      <AnimatePresence>
+        {error && (
+          <motion.p 
+            className="text-red-400 text-sm"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+          >
+            {error}
+          </motion.p>
+        )}
+      </AnimatePresence>
+      
+      <motion.div animate={buttonControls} className="w-full">
+        <FancyBorderButton
+          onClick={onJoin}
+          disabled={pending}
+          className="mx-auto text-[#191919] text-[22px] w-full"
+        >
+          <AnimatePresence mode="wait">
+            {pending ? (
+              <motion.span
+                key="loading"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex items-center gap-2"
+              >
+                <motion.span
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  className="w-5 h-5 border-2 border-[#191919]/30 border-t-[#191919] rounded-full"
+                />
+                JOINING...
+              </motion.span>
+            ) : (
+              <motion.span
+                key="cta"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                GET ME ON THE LIST
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </FancyBorderButton>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ============================================
+// MAIN COMPONENT
+// ============================================
 export function WaitlistClient() {
   const { context } = useMiniKit();
   const addFrame = useAddFrame();
   const searchParams = useSearchParams();
-  const router = useRouter();
   const { composeCastAsync } = useComposeCast();
 
   const fid = context?.user?.fid;
   const ref = searchParams.get("ref") || null;
 
-  // 1. Data Fetching
+  // Data Fetching
   const { user, isLoading, error, refetch } = useUser();
   const mutualsData = useMutuals();
+  
+  // Track if user just joined (for celebration)
+  const [justJoined, setJustJoined] = useState(false);
 
-  // 2. Form Action
+  // Form Action
   const [state, action, pending] = useActionState<JoinWaitlistState, FormData>(
     joinWaitlistAction,
     { ok: false }
   );
 
-  // Handle Join Success
+  // Handle Join Success - Celebration! 🎉
   useEffect(() => {
     if (state.ok && !pending) {
+      setJustJoined(true);
       refetch();
-      // Trigger confetti
-      const duration = 3 * 1000;
+      
+      // Epic confetti celebration
+      const duration = 4 * 1000;
       const animationEnd = Date.now() + duration;
-      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+      const colors = ["#FFC931", "#FFD972", "#B45CFF", "#2E7DFF", "#18DCA5"];
 
       const randomInRange = (min: number, max: number) =>
         Math.random() * (max - min) + min;
 
-      const interval = setInterval(function () {
+      const interval = setInterval(() => {
         const timeLeft = animationEnd - Date.now();
 
         if (timeLeft <= 0) {
-          return clearInterval(interval);
+          clearInterval(interval);
+          return;
         }
 
-        const particleCount = 50 * (timeLeft / duration);
+        const particleCount = 60 * (timeLeft / duration);
+        
+        // Left side burst
         confetti({
-          ...defaults,
-          particleCount,
-          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+          particleCount: Math.floor(particleCount / 2),
+          startVelocity: 35,
+          spread: 80,
+          origin: { x: randomInRange(0.1, 0.3), y: randomInRange(0.2, 0.4) },
+          colors,
+          ticks: 80,
+          gravity: 0.8,
+          scalar: 1.2,
         });
+        
+        // Right side burst
         confetti({
-          ...defaults,
-          particleCount,
-          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+          particleCount: Math.floor(particleCount / 2),
+          startVelocity: 35,
+          spread: 80,
+          origin: { x: randomInRange(0.7, 0.9), y: randomInRange(0.2, 0.4) },
+          colors,
+          ticks: 80,
+          gravity: 0.8,
+          scalar: 1.2,
         });
-      }, 250);
+      }, 200);
+      
+      // Reset justJoined after animation
+      setTimeout(() => setJustJoined(false), 4000);
     }
   }, [state.ok, pending, refetch]);
 
@@ -106,21 +480,13 @@ export function WaitlistClient() {
     async (formData: FormData) => {
       if (!fid) return;
 
-      // Trigger Add MiniApp and store notification token
       try {
         const result = await addFrame();
-
-        // Store notification token if returned
         if (result && context?.client.clientFid) {
-          await saveNotificationTokenAction(
-            fid,
-            context.client.clientFid,
-            result
-          );
+          await saveNotificationTokenAction(fid, context.client.clientFid, result);
         }
-      } catch (error) {
-        console.error("Failed to add miniapp:", error);
-        // Continue with join even if addMiniApp fails
+      } catch (err) {
+        console.error("Failed to add miniapp:", err);
       }
 
       startTransition(() => {
@@ -149,15 +515,16 @@ think you can beat me? you're on😏`;
     }
   }, [composeCastAsync, fid, user?.rank]);
 
-  // Helper for rank message
-  const rankMsg = (n: number | null) => {
-    if (n === 1) return "You're #1 on the waitlist.";
-    if (n && n > 1) return `You're #${n} on the waitlist.`;
-    return "You're on the waitlist!";
-  };
+  const handleJoin = useCallback(() => {
+    const formData = new FormData();
+    if (fid) formData.append("fid", fid.toString());
+    if (ref) formData.append("ref", ref.toString());
+    handleSubmit(formData);
+  }, [fid, ref, handleSubmit]);
 
-  // 4. Render Logic
-
+  // ============================================
+  // LOADING STATE
+  // ============================================
   if (isLoading) {
     return (
       <section className="flex-1 flex items-center justify-center">
@@ -166,196 +533,173 @@ think you can beat me? you're on😏`;
     );
   }
 
+  // ============================================
+  // ERROR STATE
+  // ============================================
   if (error) {
     return (
-      <section className="flex-1 flex flex-col items-center justify-center gap-4">
-        <h1 className="font-body font-normal text-[44px] text-center text-white">
-          ERROR
-        </h1>
-        <p className="text-red-400 text-sm">{error}</p>
-      </section>
+      <motion.section 
+        className="flex-1 flex flex-col items-center justify-center gap-4 px-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
+        <motion.div
+          animate={{ rotate: [0, -5, 5, 0] }}
+          transition={{ duration: 0.5, repeat: 3 }}
+        >
+          <h1 className="font-body font-normal text-[44px] text-center text-white">
+            OOPS!
+          </h1>
+        </motion.div>
+        <p className="text-red-400 text-sm text-center">{error}</p>
+      </motion.section>
     );
   }
 
+  // ============================================
+  // ON THE LIST VIEW
+  // ============================================
   if (user?.status === "WAITLIST" || user?.status === "ACTIVE") {
     return (
       <>
-        <motion.section
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="flex-1 min-h-0 overflow-hidden px-4 flex flex-col items-center"
-        >
-          {/* Logo - fixed height, won't shrink */}
-          <motion.div variants={itemVariants} className="shrink-0 pt-6 pb-2">
-            <div className="w-[122px] h-[23px] relative">
-              <Image
-                src="/logo-onboarding.png"
-                alt="WAFFLES logo"
-                width={224}
-                height={42}
-                priority
-                className="object-contain"
-              />
-            </div>
+        <section className="relative flex-1 min-h-0 overflow-hidden px-4 flex flex-col items-center">
+          {/* Background particles */}
+          <FloatingParticles />
+          
+          {/* Logo */}
+          <motion.div 
+            className="shrink-0 pt-6 pb-2 z-10"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <AnimatedLogo />
           </motion.div>
 
-          {/* Scroll Illustration - flexible, will shrink to fit */}
-          <motion.div
-            variants={itemVariants}
-            className="flex-1 min-h-0 flex items-center justify-center py-2"
-          >
-            <motion.div
-              animate={{ y: [0, -8, 0], rotate: [0, -2, 2, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="h-full flex items-center"
-            >
-              <Image
-                src="/images/illustrations/waitlist-scroll.svg"
-                width={170}
-                height={189}
-                priority
-                alt="scroll"
-                className="drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)] max-h-full w-auto object-contain"
-              />
-            </motion.div>
-          </motion.div>
+          {/* Scroll Illustration */}
+          <div className="flex-1 min-h-0 flex items-center justify-center py-2 z-10">
+            <MagicalScroll />
+          </div>
 
-          {/* Content: Rank & Description - fixed height, won't shrink */}
-          <motion.div
-            variants={itemVariants}
-            className="shrink-0 flex flex-col items-center text-center w-full pb-2"
-          >
-            <h1 className="font-body font-normal not-italic text-[40px] leading-[92%] tracking-[-0.03em] text-center text-white mb-1">
-              YOU&apos;RE ON <br />
+          {/* Content */}
+          <div className="shrink-0 flex flex-col items-center text-center w-full pb-2 z-10">
+            {/* Celebration text */}
+            <AnimatePresence>
+              {justJoined && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.5, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.5, y: -20 }}
+                  className="mb-2"
+                >
+                  <span className="text-amber-300 font-body text-lg">🎉 Welcome aboard! 🎉</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            
+            <ShimmerText className="font-body font-normal not-italic text-[38px] leading-[92%] tracking-[-0.03em] text-center text-white mb-2">
+              YOU&apos;RE ON
+              <br />
               THE LIST!
-            </h1>
+            </ShimmerText>
 
-            {/* Dynamic Rank Message */}
-            <p className="text-[#99A0AE] font-display font-medium text-[15px] leading-[130%] tracking-[-0.03em] text-center text-pretty mx-auto">
-              {rankMsg(user.rank)} Move up faster <br />
-              by completing quests and inviting friends!
-            </p>
-
-            {/* Primary Action: COMPLETE QUESTS */}
-            <div className="mt-3 w-full flex flex-col items-center gap-3">
-              <FancyBorderButton
-                onClick={() => router.push(`/waitlist/quests`)}
-                className="mx-auto text-[#191919] text-[24px]"
-                disabled={pending}
-              >
-                COMPLETE QUESTS
-              </FancyBorderButton>
-
-              {/* Secondary Actions: Two Links */}
-              <div className="flex gap-1 w-full max-w-sm justify-center">
-                <motion.div whileTap={{ scale: 0.98 }} className="flex-1">
-                  <button
-                    onClick={handleShare}
-                    className="w-full h-[42px] rounded-xl border-2 border-white/40 px-2 py-2 bg-white/9 font-body font-normal text-white text-[14px] leading-none tracking-normal uppercase"
-                  >
-                    SHARE WAITLIST
-                  </button>
-                </motion.div>
-                <motion.div whileTap={{ scale: 0.98 }} className="flex-1">
-                  <Link
-                    href="/waitlist/leaderboard"
-                    className="flex items-center justify-center w-full h-[42px] rounded-xl border-2 border-white/40 px-2 py-2 bg-white/9 font-body font-normal text-white text-[14px] leading-none tracking-normal uppercase"
-                  >
-                    SEE LEADERBOARD
-                  </Link>
-                </motion.div>
-              </div>
+            {/* Rank Badge */}
+            <div className="mb-2">
+              <RankBadge rank={user.rank} />
             </div>
-          </motion.div>
 
-          {/* Mutuals - fixed height */}
-          <motion.div variants={itemVariants} className="shrink-0 py-2">
+            {/* Subtitle */}
+            <motion.p 
+              className="text-[#99A0AE] font-display font-medium text-[14px] leading-[130%] tracking-[-0.03em] text-center text-pretty mx-auto mb-3"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              Move up faster by completing quests
+              <br />
+              and inviting friends!
+            </motion.p>
+
+            {/* Action Buttons */}
+            <ActionButtons onShare={handleShare} pending={pending} />
+          </div>
+
+          {/* Mutuals */}
+          <motion.div 
+            className="shrink-0 py-2 z-10"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8 }}
+          >
             <WaitlistMutuals mutualsData={mutualsData} />
           </motion.div>
-        </motion.section>
+        </section>
+        
         <WaitlistFooter />
       </>
     );
   }
 
+  // ============================================
+  // JOIN VIEW (Not on list yet)
+  // ============================================
   return (
     <>
-      <motion.section
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="flex-1 min-h-0 overflow-hidden px-4 flex flex-col items-center"
-      >
-        {/* Logo - fixed height */}
-        <motion.div variants={itemVariants} className="shrink-0 pt-8 pb-2">
-          <div className="w-[200px] h-[38px] relative mx-auto">
-            <Image
-              src="/logo-onboarding.png"
-              alt="WAFFLES logo"
-              width={224}
-              height={42}
-              priority
-              className="object-contain"
-            />
-          </div>
+      <section className="relative flex-1 min-h-0 overflow-hidden px-4 flex flex-col items-center">
+        {/* Background particles */}
+        <FloatingParticles />
+        
+        {/* Logo */}
+        <motion.div 
+          className="shrink-0 pt-8 pb-2 z-10"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <AnimatedLogo size="large" />
         </motion.div>
 
-        {/* Scroll Illustration - flexible, will shrink to fit */}
-        <motion.div
-          variants={itemVariants}
-          className="flex-1 min-h-0 flex items-center justify-center py-2"
-        >
-          <motion.div
-            animate={{ y: [0, -8, 0], rotate: [0, 2, -2, 0] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            className="h-full flex items-center"
-          >
-            <Image
-              src="/images/illustrations/waitlist-scroll.svg"
-              width={170}
-              height={189}
-              priority
-              alt="scroll"
-              className="mx-auto drop-shadow-2xl max-h-full w-auto object-contain"
-            />
-          </motion.div>
-        </motion.div>
+        {/* Scroll Illustration */}
+        <div className="flex-1 min-h-0 flex items-center justify-center py-2 z-10">
+          <MagicalScroll />
+        </div>
 
-        {/* Join Form UI - fixed height */}
-        <motion.div
-          variants={itemVariants}
-          className="shrink-0 flex flex-col items-center text-center w-full gap-2 pb-2"
-        >
-          <h1 className="font-body font-normal not-italic text-[40px] leading-[92%] tracking-[-0.03em] text-center text-white mb-1">
-            JOIN THE <br />
+        {/* Join Form UI */}
+        <div className="shrink-0 flex flex-col items-center text-center w-full gap-2 pb-2 z-10">
+          <ShimmerText className="font-body font-normal not-italic text-[38px] leading-[92%] tracking-[-0.03em] text-center text-white mb-1">
+            JOIN THE
+            <br />
             WAITLIST
-          </h1>
+          </ShimmerText>
 
-          <p className="text-[#99A0AE] font-display font-medium text-[15px] leading-[130%] tracking-[-0.03em] text-center mx-auto">
-            Join now to be first to play when <br /> Waffles launches
-          </p>
-          {state.error && <p className="text-red-400 text-sm">{state.error}</p>}
-
-          <FancyBorderButton
-            onClick={() => {
-              const formData = new FormData();
-              if (fid) formData.append("fid", fid.toString());
-              if (ref) formData.append("ref", ref.toString());
-              handleSubmit(formData);
-            }}
-            disabled={pending}
-            className="mx-auto text-[#191919] text-[24px] mt-2 px-5 w-full max-w-full"
+          <motion.p 
+            className="text-[#99A0AE] font-display font-medium text-[14px] leading-[130%] tracking-[-0.03em] text-center mx-auto"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
           >
-            {pending ? "JOINING..." : "GET ME ON THE LIST"}
-          </FancyBorderButton>
-        </motion.div>
+            Join now to be first to play
+            <br />
+            when Waffles launches
+          </motion.p>
 
-        {/* Mutuals - fixed height */}
-        <motion.div variants={itemVariants} className="shrink-0 py-2">
+          <JoinCTA 
+            onJoin={handleJoin} 
+            pending={pending}
+            error={state.error}
+          />
+        </div>
+
+        {/* Mutuals */}
+        <motion.div 
+          className="shrink-0 py-2 z-10"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6 }}
+        >
           <WaitlistMutuals mutualsData={mutualsData} />
         </motion.div>
-      </motion.section>
+      </section>
+      
       <WaitlistFooter />
     </>
   );

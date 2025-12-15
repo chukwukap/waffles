@@ -1,6 +1,6 @@
 /**
  * Reusable micro-interaction animations using Framer Motion
- * 
+ *
  * HOW JITTER WORKS:
  * Jitter creates small, rapid movements that make UI feel alive.
  * Key principles:
@@ -165,27 +165,32 @@ export const staggerContainerFast: Variants = {
 
 /**
  * Use with useAnimation hook from framer-motion
- * 
+ *
  * Example:
  * ```tsx
  * const controls = useAnimation();
- * 
+ *
  * const handleError = () => {
  *   triggerShake(controls);
  * };
- * 
+ *
  * <motion.div animate={controls} variants={shakeX}>
  * ```
  */
-export const triggerShake = async (controls: { start: (variant: string) => Promise<void> }) => {
+export const triggerShake = async (controls: {
+  start: (variant: string) => Promise<void>;
+}) => {
   await controls.start("shake");
 };
 
-export const triggerWiggle = async (controls: { start: (variant: string) => Promise<void> }) => {
+export const triggerWiggle = async (controls: {
+  start: (variant: string) => Promise<void>;
+}) => {
   await controls.start("wiggle");
 };
 
-export const triggerPulse = async (controls: { start: (variant: string) => Promise<void> }) => {
+export const triggerPulse = async (controls: {
+  start: (variant: string) => Promise<void>;
+}) => {
   await controls.start("pulse");
 };
-
