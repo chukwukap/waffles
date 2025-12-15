@@ -52,6 +52,13 @@ export default function RootLayout({
       )}
       suppressHydrationWarning
     >
+      <head>
+        {/* Preload onboarding images - browser fetches immediately */}
+        <link rel="preload" as="image" href="/logo-onboarding.png" />
+        <link rel="preload" as="image" href="/images/illustrations/waffle-ticket.png" />
+        <link rel="preload" as="image" href="/images/illustrations/money-bag.png" />
+        <link rel="preload" as="image" href="/images/illustrations/crown.png" />
+      </head>
       <body className="antialiased" suppressHydrationWarning>
         {children}
         <SpeedInsights />
