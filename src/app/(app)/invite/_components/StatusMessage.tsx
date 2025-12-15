@@ -58,7 +58,11 @@ interface StatusBadgeProps {
   className?: string;
 }
 
-export function StatusBadge({ variant, children, className }: StatusBadgeProps) {
+export function StatusBadge({
+  variant,
+  children,
+  className,
+}: StatusBadgeProps) {
   return (
     <motion.div
       style={{ clipPath: TWO_STEP_CLIP_PATH }}
