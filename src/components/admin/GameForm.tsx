@@ -97,21 +97,36 @@ const PRESETS = [
     label: "Quick Game",
     icon: BoltIcon,
     description: "5 min rounds, 50 players",
-    values: { roundDurationSec: 15, maxPlayers: 50, entryFee: 1, prizePool: 40 },
+    values: {
+      roundDurationSec: 15,
+      maxPlayers: 50,
+      entryFee: 1,
+      prizePool: 40,
+    },
   },
   {
     id: "standard",
     label: "Standard",
     icon: TrophyIcon,
     description: "10 min rounds, 200 players",
-    values: { roundDurationSec: 20, maxPlayers: 200, entryFee: 5, prizePool: 800 },
+    values: {
+      roundDurationSec: 20,
+      maxPlayers: 200,
+      entryFee: 5,
+      prizePool: 800,
+    },
   },
   {
     id: "premium",
     label: "Premium",
     icon: SparklesIcon,
     description: "15 min rounds, 500 players",
-    values: { roundDurationSec: 30, maxPlayers: 500, entryFee: 25, prizePool: 10000 },
+    values: {
+      roundDurationSec: 30,
+      maxPlayers: 500,
+      entryFee: 25,
+      prizePool: 10000,
+    },
   },
 ];
 
@@ -124,21 +139,35 @@ export function GameForm({
     action,
     null
   );
-  
+
   // Form state
   const [selectedTheme, setSelectedTheme] = useState(initialData?.theme || "");
   const [coverUrl, setCoverUrl] = useState(initialData?.coverUrl || "");
   const [title, setTitle] = useState(initialData?.title || "");
-  const [description, setDescription] = useState(initialData?.description || "");
-  const [entryFee, setEntryFee] = useState(initialData?.entryFee?.toString() || "");
-  const [prizePool, setPrizePool] = useState(initialData?.prizePool?.toString() || "");
-  const [roundDuration, setRoundDuration] = useState(initialData?.roundDurationSec?.toString() || "");
-  const [maxPlayers, setMaxPlayers] = useState(initialData?.maxPlayers?.toString() || "");
+  const [description, setDescription] = useState(
+    initialData?.description || ""
+  );
+  const [entryFee, setEntryFee] = useState(
+    initialData?.entryFee?.toString() || ""
+  );
+  const [prizePool, setPrizePool] = useState(
+    initialData?.prizePool?.toString() || ""
+  );
+  const [roundDuration, setRoundDuration] = useState(
+    initialData?.roundDurationSec?.toString() || ""
+  );
+  const [maxPlayers, setMaxPlayers] = useState(
+    initialData?.maxPlayers?.toString() || ""
+  );
   const [startsAt, setStartsAt] = useState(
-    initialData?.startsAt ? new Date(initialData.startsAt).toISOString().slice(0, 16) : ""
+    initialData?.startsAt
+      ? new Date(initialData.startsAt).toISOString().slice(0, 16)
+      : ""
   );
   const [endsAt, setEndsAt] = useState(
-    initialData?.endsAt ? new Date(initialData.endsAt).toISOString().slice(0, 16) : ""
+    initialData?.endsAt
+      ? new Date(initialData.endsAt).toISOString().slice(0, 16)
+      : ""
   );
 
   // UI state
@@ -232,12 +261,29 @@ export function GameForm({
 
     const themeData = THEMES.find((t) => t.id === pendingFormData.get("theme"));
     return [
-      { label: "Title", value: pendingFormData.get("title")?.toString() || "Untitled" },
-      { label: "Theme", value: themeData ? `${themeData.icon} ${themeData.label}` : "Not selected" },
+      {
+        label: "Title",
+        value: pendingFormData.get("title")?.toString() || "Untitled",
+      },
+      {
+        label: "Theme",
+        value: themeData
+          ? `${themeData.icon} ${themeData.label}`
+          : "Not selected",
+      },
       { label: "Entry Fee", value: `$${pendingFormData.get("entryFee")} USDC` },
-      { label: "Prize Pool", value: `$${pendingFormData.get("prizePool")} USDC` },
-      { label: "Starts At", value: startsAt ? new Date(startsAt).toLocaleString() : "Not set" },
-      { label: "Max Players", value: pendingFormData.get("maxPlayers")?.toString() || "0" },
+      {
+        label: "Prize Pool",
+        value: `$${pendingFormData.get("prizePool")} USDC`,
+      },
+      {
+        label: "Starts At",
+        value: startsAt ? new Date(startsAt).toLocaleString() : "Not set",
+      },
+      {
+        label: "Max Players",
+        value: pendingFormData.get("maxPlayers")?.toString() || "0",
+      },
     ];
   };
 
@@ -254,7 +300,16 @@ export function GameForm({
     if (roundDuration) filled++;
     if (maxPlayers) filled++;
     return Math.round((filled / total) * 100);
-  }, [title, selectedTheme, startsAt, endsAt, entryFee, prizePool, roundDuration, maxPlayers]);
+  }, [
+    title,
+    selectedTheme,
+    startsAt,
+    endsAt,
+    entryFee,
+    prizePool,
+    roundDuration,
+    maxPlayers,
+  ]);
 
   return (
     <>
@@ -269,7 +324,8 @@ export function GameForm({
           <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center gap-3 text-red-400 animate-in slide-in-from-top-2 duration-300">
             <ExclamationCircleIcon className="h-5 w-5 shrink-0" />
             <p className="text-sm font-medium">
-              {validationError || (state && "error" in state ? state.error : "")}
+              {validationError ||
+                (state && "error" in state ? state.error : "")}
             </p>
           </div>
         ) : null}
@@ -278,7 +334,9 @@ export function GameForm({
         <div className="admin-panel p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-white/60">Form completion</span>
-            <span className="text-sm font-bold text-[#FFC931]">{completionPercentage}%</span>
+            <span className="text-sm font-bold text-[#FFC931]">
+              {completionPercentage}%
+            </span>
           </div>
           <div className="h-2 bg-white/10 rounded-full overflow-hidden">
             <div
@@ -299,8 +357,12 @@ export function GameForm({
                   <SparklesIcon className="h-5 w-5 text-[#FFC931]" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-white font-display">Choose Theme</h3>
-                  <p className="text-sm text-white/50">Select the trivia category</p>
+                  <h3 className="font-bold text-white font-display">
+                    Choose Theme
+                  </h3>
+                  <p className="text-sm text-white/50">
+                    Select the trivia category
+                  </p>
                 </div>
               </div>
 
@@ -325,8 +387,12 @@ export function GameForm({
                       </div>
                     )}
                     <div className="text-3xl mb-2">{theme.icon}</div>
-                    <div className="text-sm font-bold text-white">{theme.label}</div>
-                    <div className="text-xs text-white/50 mt-0.5">{theme.description}</div>
+                    <div className="text-sm font-bold text-white">
+                      {theme.label}
+                    </div>
+                    <div className="text-xs text-white/50 mt-0.5">
+                      {theme.description}
+                    </div>
                   </button>
                 ))}
               </div>
@@ -340,14 +406,21 @@ export function GameForm({
                   <PuzzlePieceIcon className="h-5 w-5 text-[#00CFF2]" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-white font-display">Game Details</h3>
-                  <p className="text-sm text-white/50">Name and describe your game</p>
+                  <h3 className="font-bold text-white font-display">
+                    Game Details
+                  </h3>
+                  <p className="text-sm text-white/50">
+                    Name and describe your game
+                  </p>
                 </div>
               </div>
 
               <div className="space-y-5">
                 <div>
-                  <label htmlFor="title" className="block text-sm font-medium text-white/70 mb-2">
+                  <label
+                    htmlFor="title"
+                    className="block text-sm font-medium text-white/70 mb-2"
+                  >
                     Game Title <span className="text-red-400">*</span>
                   </label>
                   <input
@@ -366,8 +439,12 @@ export function GameForm({
                 </div>
 
                 <div>
-                  <label htmlFor="description" className="block text-sm font-medium text-white/70 mb-2">
-                    Description <span className="text-white/30">(optional)</span>
+                  <label
+                    htmlFor="description"
+                    className="block text-sm font-medium text-white/70 mb-2"
+                  >
+                    Description{" "}
+                    <span className="text-white/30">(optional)</span>
                   </label>
                   <textarea
                     id="description"
@@ -389,8 +466,12 @@ export function GameForm({
                   <PhotoIcon className="h-5 w-5 text-[#FB72FF]" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-white font-display">Cover Image</h3>
-                  <p className="text-sm text-white/50">Eye-catching visual for the game card</p>
+                  <h3 className="font-bold text-white font-display">
+                    Cover Image
+                  </h3>
+                  <p className="text-sm text-white/50">
+                    Eye-catching visual for the game card
+                  </p>
                 </div>
               </div>
               <MediaPicker
@@ -410,21 +491,30 @@ export function GameForm({
                     <CalendarIcon className="h-5 w-5 text-[#14B985]" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-white font-display">Schedule</h3>
-                    <p className="text-sm text-white/50">When does the game run?</p>
+                    <h3 className="font-bold text-white font-display">
+                      Schedule
+                    </h3>
+                    <p className="text-sm text-white/50">
+                      When does the game run?
+                    </p>
                   </div>
                 </div>
                 {gameDuration && (
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-[#14B985]/15 rounded-lg">
                     <ClockIcon className="h-4 w-4 text-[#14B985]" />
-                    <span className="text-sm font-medium text-[#14B985]">{gameDuration}</span>
+                    <span className="text-sm font-medium text-[#14B985]">
+                      {gameDuration}
+                    </span>
                   </div>
                 )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                  <label htmlFor="startsAt" className="block text-sm font-medium text-white/70 mb-2">
+                  <label
+                    htmlFor="startsAt"
+                    className="block text-sm font-medium text-white/70 mb-2"
+                  >
                     Start Time <span className="text-red-400">*</span>
                   </label>
                   <input
@@ -438,7 +528,10 @@ export function GameForm({
                   />
                 </div>
                 <div>
-                  <label htmlFor="endsAt" className="block text-sm font-medium text-white/70 mb-2">
+                  <label
+                    htmlFor="endsAt"
+                    className="block text-sm font-medium text-white/70 mb-2"
+                  >
                     End Time <span className="text-red-400">*</span>
                   </label>
                   <input
@@ -462,8 +555,12 @@ export function GameForm({
                     <BoltIcon className="h-5 w-5 text-[#FFC931]" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-white font-display">Quick Presets</h3>
-                    <p className="text-sm text-white/50">Start with recommended configurations</p>
+                    <h3 className="font-bold text-white font-display">
+                      Quick Presets
+                    </h3>
+                    <p className="text-sm text-white/50">
+                      Start with recommended configurations
+                    </p>
                   </div>
                 </div>
 
@@ -484,11 +581,19 @@ export function GameForm({
                           <CheckIcon className="h-3 w-3 text-black" />
                         </div>
                       )}
-                      <preset.icon className={`h-5 w-5 mb-2 ${
-                        activePreset === preset.id ? "text-[#FFC931]" : "text-white/60"
-                      }`} />
-                      <div className="font-bold text-white text-sm">{preset.label}</div>
-                      <div className="text-xs text-white/50 mt-0.5">{preset.description}</div>
+                      <preset.icon
+                        className={`h-5 w-5 mb-2 ${
+                          activePreset === preset.id
+                            ? "text-[#FFC931]"
+                            : "text-white/60"
+                        }`}
+                      />
+                      <div className="font-bold text-white text-sm">
+                        {preset.label}
+                      </div>
+                      <div className="text-xs text-white/50 mt-0.5">
+                        {preset.description}
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -504,18 +609,25 @@ export function GameForm({
                     <CurrencyDollarIcon className="h-5 w-5 text-[#FFC931]" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-white font-display">Economics</h3>
+                    <h3 className="font-bold text-white font-display">
+                      Economics
+                    </h3>
                     <p className="text-sm text-white/50">Fees & prizes</p>
                   </div>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <label htmlFor="entryFee" className="block text-sm font-medium text-white/70 mb-2">
+                    <label
+                      htmlFor="entryFee"
+                      className="block text-sm font-medium text-white/70 mb-2"
+                    >
                       Entry Fee <span className="text-white/40">(USDC)</span>
                     </label>
                     <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#FFC931] font-bold">$</span>
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#FFC931] font-bold">
+                        $
+                      </span>
                       <input
                         type="number"
                         id="entryFee"
@@ -535,11 +647,16 @@ export function GameForm({
                   </div>
 
                   <div>
-                    <label htmlFor="prizePool" className="block text-sm font-medium text-white/70 mb-2">
+                    <label
+                      htmlFor="prizePool"
+                      className="block text-sm font-medium text-white/70 mb-2"
+                    >
                       Prize Pool <span className="text-white/40">(USDC)</span>
                     </label>
                     <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#FFC931] font-bold">$</span>
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#FFC931] font-bold">
+                        $
+                      </span>
                       <input
                         type="number"
                         id="prizePool"
@@ -566,15 +683,21 @@ export function GameForm({
                     <ClockIcon className="h-5 w-5 text-[#00CFF2]" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-white font-display">Gameplay</h3>
+                    <h3 className="font-bold text-white font-display">
+                      Gameplay
+                    </h3>
                     <p className="text-sm text-white/50">Timing & limits</p>
                   </div>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <label htmlFor="roundDurationSec" className="block text-sm font-medium text-white/70 mb-2">
-                      Round Duration <span className="text-white/40">(seconds)</span>
+                    <label
+                      htmlFor="roundDurationSec"
+                      className="block text-sm font-medium text-white/70 mb-2"
+                    >
+                      Round Duration{" "}
+                      <span className="text-white/40">(seconds)</span>
                     </label>
                     <input
                       type="number"
@@ -593,7 +716,10 @@ export function GameForm({
                   </div>
 
                   <div>
-                    <label htmlFor="maxPlayers" className="block text-sm font-medium text-white/70 mb-2">
+                    <label
+                      htmlFor="maxPlayers"
+                      className="block text-sm font-medium text-white/70 mb-2"
+                    >
                       Max Players
                     </label>
                     <div className="relative">
@@ -625,7 +751,9 @@ export function GameForm({
             <div className="admin-panel p-5 sticky top-6">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-2 h-2 rounded-full bg-[#14B985] animate-pulse" />
-                <span className="text-sm font-medium text-white/60">Live Preview</span>
+                <span className="text-sm font-medium text-white/60">
+                  Live Preview
+                </span>
               </div>
 
               {/* Mini Game Card Preview */}
@@ -654,12 +782,14 @@ export function GameForm({
                     </div>
                   )}
                   <div className="absolute inset-0 bg-linear-to-t from-black/80 to-transparent" />
-                  
+
                   {/* Theme Badge */}
                   {currentTheme && (
                     <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/50 backdrop-blur-sm rounded-lg">
                       <span className="text-sm">{currentTheme.icon}</span>
-                      <span className="text-xs font-medium text-white">{currentTheme.label}</span>
+                      <span className="text-xs font-medium text-white">
+                        {currentTheme.label}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -694,15 +824,21 @@ export function GameForm({
               <div className="mt-5 space-y-3">
                 <div className="flex items-center justify-between py-2.5 border-b border-white/10">
                   <span className="text-sm text-white/50">Max Players</span>
-                  <span className="text-sm font-bold text-white">{maxPlayers || "—"}</span>
+                  <span className="text-sm font-bold text-white">
+                    {maxPlayers || "—"}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between py-2.5 border-b border-white/10">
                   <span className="text-sm text-white/50">Round Duration</span>
-                  <span className="text-sm font-bold text-white">{roundDuration ? `${roundDuration}s` : "—"}</span>
+                  <span className="text-sm font-bold text-white">
+                    {roundDuration ? `${roundDuration}s` : "—"}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between py-2.5 border-b border-white/10">
                   <span className="text-sm text-white/50">Game Duration</span>
-                  <span className="text-sm font-bold text-white">{gameDuration || "—"}</span>
+                  <span className="text-sm font-bold text-white">
+                    {gameDuration || "—"}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between py-2.5">
                   <span className="text-sm text-white/50">Est. Revenue</span>
@@ -717,7 +853,8 @@ export function GameForm({
                 <div className="flex gap-2">
                   <InformationCircleIcon className="h-4 w-4 text-[#FFC931] shrink-0 mt-0.5" />
                   <p className="text-xs text-white/70">
-                    Game will be created on-chain automatically. Players can join once the game goes live.
+                    Game will be created on-chain automatically. Players can
+                    join once the game goes live.
                   </p>
                 </div>
               </div>

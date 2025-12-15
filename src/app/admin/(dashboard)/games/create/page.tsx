@@ -6,7 +6,6 @@ import Link from "next/link";
 import {
   ArrowLeftIcon,
   RocketLaunchIcon,
-  SparklesIcon,
 } from "@heroicons/react/24/outline";
 
 export default function CreateGamePage() {
@@ -35,19 +34,7 @@ export default function CreateGamePage() {
                   Create New Game
                 </h1>
               </div>
-              <p className="text-white/60 mt-2 ml-14">
-                Set up a new trivia game for your players. Fill in the details
-                below and your game will be live on-chain.
-              </p>
             </div>
-          </div>
-
-          {/* Quick tips */}
-          <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-[#FFC931]/10 border border-[#FFC931]/20 rounded-xl">
-            <SparklesIcon className="h-4 w-4 text-[#FFC931]" />
-            <span className="text-sm text-white/70">
-              Use presets for quick setup
-            </span>
           </div>
         </div>
       </div>
