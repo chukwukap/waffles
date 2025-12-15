@@ -84,14 +84,14 @@ export function MediaPicker({ label, name, accept = "all", onSelect, selectedUrl
 
     return (
         <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-300">{label}</label>
+            {label && <label className="block text-sm font-medium text-white/70">{label}</label>}
 
             {/* Hidden input for form submission */}
             <input type="hidden" name={name} value={selectedUrl || ""} />
 
             {selectedUrl ? (
                 <div className="relative group">
-                    <div className="aspect-video bg-slate-700 rounded-lg overflow-hidden border border-slate-700">
+                    <div className="aspect-video bg-black/30 rounded-xl overflow-hidden border border-white/10">
                         <Image
                             src={selectedUrl}
                             alt="Selected"
@@ -103,14 +103,14 @@ export function MediaPicker({ label, name, accept = "all", onSelect, selectedUrl
                     <button
                         type="button"
                         onClick={() => onSelect("")}
-                        className="absolute top-2 right-2 p-1.5 bg-slate-800/90 backdrop-blur-sm rounded-full text-slate-400 hover:text-red-600 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-2 right-2 p-1.5 bg-black/80 backdrop-blur-sm rounded-full text-white/60 hover:text-red-400 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                         <XMarkIcon className="h-4 w-4" />
                     </button>
                     <button
                         type="button"
                         onClick={() => setIsOpen(true)}
-                        className="mt-2 w-full px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium text-slate-300 transition-colors"
+                        className="mt-3 w-full px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-medium text-white/70 transition-colors"
                     >
                         Change Media
                     </button>
@@ -119,12 +119,12 @@ export function MediaPicker({ label, name, accept = "all", onSelect, selectedUrl
                 <button
                     type="button"
                     onClick={() => setIsOpen(true)}
-                    className="w-full border-2 border-dashed border-slate-600 rounded-xl p-8 text-center hover:border-purple-500 hover:bg-slate-700/50 transition-colors"
+                    className="w-full border-2 border-dashed border-white/20 rounded-xl p-8 text-center hover:border-[#FFC931]/50 hover:bg-white/5 transition-colors"
                 >
                     <div className="flex flex-col items-center gap-2">
-                        <PhotoIcon className="h-10 w-10 text-slate-400" />
-                        <div className="text-sm font-medium text-slate-100">Select from Library</div>
-                        <div className="text-xs text-slate-400">Click to browse uploaded files</div>
+                        <PhotoIcon className="h-10 w-10 text-white/40" />
+                        <div className="text-sm font-medium text-white">Select from Library</div>
+                        <div className="text-xs text-white/50">Click to browse uploaded files</div>
                     </div>
                 </button>
             )}
@@ -132,38 +132,40 @@ export function MediaPicker({ label, name, accept = "all", onSelect, selectedUrl
             {/* Media Picker Modal */}
             {isOpen && (
                 <>
-                    <div className="fixed inset-0 bg-black/70 z-40" onClick={() => setIsOpen(false)} />
-                    <div className="fixed inset-4 md:inset-10 bg-slate-800 rounded-xl shadow-2xl z-50 flex flex-col border border-slate-700">
+                    <div className="fixed inset-0 bg-black/80 z-40" onClick={() => setIsOpen(false)} />
+                    <div className="fixed inset-4 md:inset-10 admin-panel z-50 flex flex-col border border-white/10 shadow-2xl">
                         {/* Header */}
-                        <div className="flex items-center justify-between p-6 border-b border-slate-700">
-                            <h2 className="text-lg font-semibold text-slate-100">Select {accept === "all" ? "Media" : accept.charAt(0).toUpperCase() + accept.slice(1)}</h2>
+                        <div className="flex items-center justify-between p-5 border-b border-white/10">
+                            <h2 className="text-lg font-semibold text-white font-display">
+                                Select {accept === "all" ? "Media" : accept.charAt(0).toUpperCase() + accept.slice(1)}
+                            </h2>
                             <button
                                 onClick={() => setIsOpen(false)}
-                                className="p-1.5 hover:bg-slate-700 rounded-lg transition-colors text-slate-400"
+                                className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white"
                             >
                                 <XMarkIcon className="h-5 w-5" />
                             </button>
                         </div>
 
                         {/* Search */}
-                        <div className="p-4 border-b border-slate-700">
+                        <div className="p-4 border-b border-white/10">
                             <input
                                 type="text"
                                 placeholder="Search files..."
                                 value={filter}
                                 onChange={(e) => setFilter(e.target.value)}
-                                className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-slate-100 placeholder-slate-500"
+                                className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] text-white placeholder-white/40 transition-all"
                             />
                         </div>
 
                         {/* Files Grid */}
-                        <div className="flex-1 overflow-y-auto p-4 bg-slate-900">
+                        <div className="flex-1 overflow-y-auto p-4 bg-black/20">
                             {loading ? (
-                                <div className="flex items-center justify-center h-full text-slate-400">Loading...</div>
+                                <div className="flex items-center justify-center h-full text-white/50">Loading...</div>
                             ) : filteredFiles.length === 0 ? (
-                                <div className="flex items-center justify-center h-full text-slate-400">No files found</div>
+                                <div className="flex items-center justify-center h-full text-white/50">No files found</div>
                             ) : (
-                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                                     {filteredFiles.map((file) => {
                                         const actualContentType = inferContentType(file.pathname, file.contentType);
                                         const fileName = file.pathname.split("/").pop() || "";
@@ -171,46 +173,43 @@ export function MediaPicker({ label, name, accept = "all", onSelect, selectedUrl
                                         return (
                                             <div
                                                 key={file.url}
-                                                className="relative flex flex-col bg-slate-800 rounded-lg overflow-hidden border-2 border-slate-700 hover:border-purple-500 transition-all group"
+                                                className="relative flex flex-col bg-white/5 rounded-xl overflow-hidden border border-white/10 hover:border-[#FFC931]/50 transition-all group cursor-pointer"
+                                                onClick={() => handleSelect(file.url)}
                                             >
                                                 {/* Preview Area */}
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleSelect(file.url)}
-                                                    className="aspect-video bg-slate-900 flex items-center justify-center relative overflow-hidden"
-                                                >
+                                                <div className="aspect-video bg-black/30 flex items-center justify-center relative overflow-hidden">
                                                     {actualContentType.startsWith("image") ? (
                                                         <Image
                                                             src={file.url}
                                                             alt={fileName}
                                                             fill
-                                                            className="object-contain group-hover:scale-105 transition-transform"
+                                                            className="object-cover group-hover:scale-105 transition-transform"
                                                             unoptimized
                                                         />
                                                     ) : actualContentType.startsWith("audio") ? (
                                                         <div className="flex flex-col items-center gap-2 w-full p-4">
-                                                            <MusicalNoteIcon className="h-12 w-12 text-purple-400" />
-                                                            <span className="text-xs text-slate-400">Audio</span>
+                                                            <MusicalNoteIcon className="h-10 w-10 text-[#FB72FF]" />
+                                                            <span className="text-xs text-white/50">Audio</span>
                                                         </div>
                                                     ) : actualContentType.startsWith("video") ? (
                                                         <div className="flex flex-col items-center gap-2">
-                                                            <VideoCameraIcon className="h-12 w-12 text-blue-400" />
-                                                            <span className="text-xs text-slate-400">Video</span>
+                                                            <VideoCameraIcon className="h-10 w-10 text-[#00CFF2]" />
+                                                            <span className="text-xs text-white/50">Video</span>
                                                         </div>
                                                     ) : (
-                                                        <PhotoIcon className="h-12 w-12 text-slate-400" />
+                                                        <PhotoIcon className="h-10 w-10 text-white/40" />
                                                     )}
-                                                </button>
+                                                </div>
 
                                                 {/* File Name & Audio Player */}
-                                                <div className="p-2 bg-slate-800 border-t border-slate-700">
-                                                    <div className="text-xs text-slate-300 truncate font-medium mb-1">
+                                                <div className="p-2.5 bg-black/20 border-t border-white/5">
+                                                    <div className="text-xs text-white/70 truncate font-medium">
                                                         {fileName}
                                                     </div>
                                                     {actualContentType.startsWith("audio") && (
                                                         <audio
                                                             controls
-                                                            className="w-full h-8"
+                                                            className="w-full h-7 mt-2"
                                                             onClick={(e) => e.stopPropagation()}
                                                             onPlay={(e) => e.stopPropagation()}
                                                         >
@@ -219,13 +218,8 @@ export function MediaPicker({ label, name, accept = "all", onSelect, selectedUrl
                                                     )}
                                                 </div>
 
-                                                {/* Select button overlay for non-audio files */}
-                                                {!actualContentType.startsWith("audio") && (
-                                                    <div
-                                                        className="absolute inset-0 bg-purple-600/0 group-hover:bg-purple-600/10 transition-colors cursor-pointer"
-                                                        onClick={() => handleSelect(file.url)}
-                                                    />
-                                                )}
+                                                {/* Hover overlay */}
+                                                <div className="absolute inset-0 bg-[#FFC931]/0 group-hover:bg-[#FFC931]/5 transition-colors pointer-events-none" />
                                             </div>
                                         );
                                     })}
@@ -238,3 +232,4 @@ export function MediaPicker({ label, name, accept = "all", onSelect, selectedUrl
         </div>
     );
 }
+

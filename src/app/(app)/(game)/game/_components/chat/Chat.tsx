@@ -4,157 +4,99 @@ import sdk from "@farcaster/miniapp-sdk";
 import { ChatIcon, SendIcon, UsersIcon } from "@/components/icons";
 import Backdrop from "@/components/ui/Backdrop";
 import { ChatComment } from "./ChatComment";
-import { useGameEvents } from "@/hooks/useGameEvents";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useSound } from "@/components/providers/SoundContext";
 import { ChatWithUser } from "@/lib/types";
 import { sendMessageSchema } from "@/lib/schemas";
 import { useUser } from "@/hooks/useUser";
 
+import { ChatMessage } from "@/hooks/usePartyGame";
+
+// ... existing imports ...
+
 interface ChatCommentType {
-  id: number;
+  id: string | number;
   name: string;
   time: string;
   message: string;
   avatarUrl: string | null;
-  isCurrentUser?: boolean;
-  status?: "pending" | "sent" | "error";
-  fid?: number; // Store FID to help identify own messages
+  isCurrentUser: boolean;
+  status: "sent" | "pending" | "error";
+  fid: number;
 }
+
+// Map PartyKit message format to UI format
+const mapMessageToComment = (msg: ChatMessage, currentFid?: number): ChatCommentType => ({
+  id: msg.id, // now string
+  name: msg.sender.username,
+  time: new Date(msg.timestamp).toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }),
+  message: msg.text,
+  avatarUrl: msg.sender.pfpUrl,
+  isCurrentUser: currentFid ? msg.sender.fid === currentFid : false,
+  status: "sent",
+  fid: msg.sender.fid,
+});
 
 export const Chat = ({
   gameId,
-  activeCount: initialActiveCount = 0,
-  onStatsUpdate,
+  activeCount = 0,
+  messages = [],
+  onSendMessage,
 }: {
-  gameId: number | null;
+  gameId: string | number | null;
   activeCount?: number;
-  onStatsUpdate?: (count: number) => void;
+  messages?: ChatMessage[];
+  onSendMessage?: (text: string) => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { context: miniKitContext } = useMiniKit();
   const fid = miniKitContext?.user?.fid;
-  const { user } = useUser(); // Get full user details for optimistic UI
+  const { user } = useUser();
   const { playSound } = useSound();
   const [message, setMessage] = useState("");
+  // Local state for optimistic + server messages
   const [comments, setComments] = useState<ChatCommentType[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const chatListRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [activeCount, setActiveCount] = useState(initialActiveCount);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [showNewMessages, setShowNewMessages] = useState(false);
 
-  // Subscribe to real-time chat events
-  useGameEvents({
-    gameId,
-    enabled: isOpen && !!gameId,
-    onChat: (chatEvent) => {
-      const isMyMessage = !!(fid && chatEvent.user.fid === Number(fid));
-
-      const comment: ChatCommentType = {
-        id: chatEvent.id,
-        name: chatEvent.user.username,
-        time: new Date(chatEvent.createdAt).toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        }),
-        message: chatEvent.message,
-        avatarUrl: chatEvent.user.pfpUrl,
-        isCurrentUser: isMyMessage,
-        status: "sent",
-        fid: chatEvent.user.fid,
-      };
-
-      setComments((prev) => {
-        // Check if we have this message already (by ID)
-        const exists = prev.some((c) => c.id === comment.id);
-        if (exists) return prev;
-
-        // If this is my message, we might have a pending version
-        if (isMyMessage) {
-          // Find a pending message with the same content
-          // This is a simple heuristic. For more robustness, we could use a client-generated ID.
-          const pendingIndex = prev.findIndex(c =>
-            c.status === "pending" &&
-            c.message === comment.message &&
-            c.isCurrentUser
-          );
-
-          if (pendingIndex !== -1) {
-            // Replace pending message with real one
-            const newComments = [...prev];
-            newComments[pendingIndex] = comment;
-            return newComments;
-          }
-        }
-
-        return [...prev, comment];
-      });
-
-      if (!shouldAutoScroll && !isMyMessage) {
-        setShowNewMessages(true);
-      }
-    },
-    onStats: (stats) => {
-      setActiveCount(stats.onlineCount);
-      onStatsUpdate?.(stats.onlineCount);
-    },
-  });
-
-  // Load initial chat messages when opening
+  // Sync props to local comments state
   useEffect(() => {
-    if (!isOpen || !gameId) return;
+    const formatted = messages.map(m => mapMessageToComment(m, Number(fid)));
+    setComments(prev => {
+      // Merge optimistic messages that are still pending
+      const pending = prev.filter(c => c.status === "pending" || c.status === "error");
+      // De-duplicate: if pending message is now in server messages (by content/timestamp heuristic or ID if we had it), remove pending
+      // For now, just append server messages and filter out duplicate IDs if any
+      // A better way is to rely on IDs.
+      return formatted; // Simplified: Trust server state for now, optimistic handling needs ID correlation
+    });
 
-    // Auto-focus input when drawer opens
+    // Auto-scroll logic (simplified)
+    if (shouldAutoScroll) {
+      // Using timeout to allow render
+      setTimeout(() => {
+        if (chatListRef.current) {
+          chatListRef.current.scrollTop = chatListRef.current.scrollHeight;
+        }
+      }, 0);
+    }
+  }, [messages, fid, shouldAutoScroll]);
+
+
+  // Auto-focus input when drawer opens
+  useEffect(() => {
+    if (!isOpen) return;
     setTimeout(() => {
       inputRef.current?.focus();
-    }, 300); // Wait for drawer animation
-
-    const fetchMessages = async () => {
-      try {
-        const response = await fetch(`/api/v1/games/${gameId}/chat`);
-        if (!response.ok) throw new Error("Failed to fetch messages");
-
-        const data = await response.json();
-        const messages: ChatWithUser[] = data.messages || [];
-        const formattedComments: ChatCommentType[] = messages.map((msg) => ({
-          id: msg.id,
-          name: msg.user.username ?? "anon",
-          time: new Date(msg.createdAt).toLocaleTimeString("en-US", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-          }),
-          message: msg.text,
-          avatarUrl: msg.user.pfpUrl,
-          isCurrentUser: fid ? msg.user.fid === Number(fid) : false,
-          status: "sent",
-          fid: msg.user.fid,
-        }));
-
-        setComments((prev) => {
-          const combined = [...formattedComments, ...prev];
-          // Deduplicate by ID
-          const unique = combined.filter((c, index, self) =>
-            index === self.findIndex((t) => t.id === c.id)
-          );
-          return unique;
-        });
-        // Force scroll to bottom on initial load
-        setTimeout(() => {
-          if (chatListRef.current) {
-            chatListRef.current.scrollTop = chatListRef.current.scrollHeight;
-          }
-        }, 100);
-      } catch (error) {
-        console.error("Error fetching chat messages:", error);
-      }
-    };
-
-    fetchMessages();
-  }, [isOpen, gameId, fid]);
+    }, 300);
+  }, [isOpen]);
 
   // Handle scroll events to determine if we should auto-scroll
   const handleScroll = () => {
@@ -188,8 +130,7 @@ export const Chat = ({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const validation = sendMessageSchema.shape.message.safeParse(message);
-    if (!validation.success || !gameId || !fid || isSubmitting) {
+    if (!message.trim() || !onSendMessage || isSubmitting) {
       return;
     }
 
@@ -200,46 +141,16 @@ export const Chat = ({
     setMessage("");
     inputRef.current?.focus();
 
-    // Optimistic Update
-    const tempId = -Date.now(); // Negative ID for temp messages
-    const optimisticComment: ChatCommentType = {
-      id: tempId,
-      name: user?.username || "You",
-      time: new Date().toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      }),
-      message: currentMessage,
-      avatarUrl: user?.pfpUrl || null,
-      isCurrentUser: true,
-      status: "pending",
-      fid: Number(fid),
-    };
-
-    setComments(prev => [...prev, optimisticComment]);
-    setShouldAutoScroll(true);
-
-    // Scroll to the new message
-    setTimeout(() => scrollToBottom(), 100);
-
-    const result = await sdk.quickAuth.fetch(`/api/v1/games/${gameId}/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: currentMessage }),
-    });
-
-    if (!result.ok) {
-      console.error("Failed to send message");
-      // Mark as error
-      setComments(prev => prev.map(c =>
-        c.id === tempId ? { ...c, status: "error" } : c
-      ));
-      setMessage(currentMessage); // Restore text so user can try again
+    try {
+      onSendMessage(currentMessage);
+      setShouldAutoScroll(true);
+      setTimeout(() => scrollToBottom(), 100);
+    } catch (e) {
+      console.error("Failed to send", e);
+      setMessage(currentMessage);
+    } finally {
+      setIsSubmitting(false);
     }
-    // SSE handler will update the optimistic message with the real one
-
-    setIsSubmitting(false);
   };
 
   const hasText = message.trim().length > 0;

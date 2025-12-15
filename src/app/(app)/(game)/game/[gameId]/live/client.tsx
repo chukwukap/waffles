@@ -3,6 +3,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import sdk from "@farcaster/miniapp-sdk";
 
+import { usePartyGame } from "@/hooks/usePartyGame";
 import QuestionCard from "./_components/QuestionCard";
 import RoundCountdownCard from "./_components/RoundCountdownCard";
 import { LiveGameInfoPayload } from "./page";
@@ -36,6 +37,7 @@ function shouldShowRoundCountdown(
 interface UserInfo {
   fid: number;
   status: string;
+  username: string;
 }
 
 export default function LiveGameClient({
@@ -106,6 +108,12 @@ export default function LiveGameClient({
     fetchUserDataAndProgress();
   }, [gameInfo, router]);
 
+  // PartyKit Integration
+  const { isConnected, onlineCount, messages, events, sendChat, sendEvent } = usePartyGame({
+    gameId: gameInfo?.id?.toString() ?? "",
+    enabled: !!gameInfo && !!userInfo,
+  });
+
   // Get the duration for the *current* question
   const questionTotalTime =
     (gameInfo?.questions[currentQuestionIndex]?.durationSec ?? 10) +
@@ -175,6 +183,11 @@ export default function LiveGameClient({
           onComplete={handleRoundCountdownComplete}
           gameId={gameInfo?.id ?? null}
           nextRoundNumber={gameInfo?.questions[currentQuestionIndex + 1]?.roundIndex ?? 1}
+          // Pass realtime props
+          liveEvents={events}
+          onlineCount={onlineCount}
+          chatMessages={messages}
+          onSendChat={sendChat}
         />
       ) : (
         <QuestionCard
@@ -183,6 +196,14 @@ export default function LiveGameClient({
           totalQuestions={gameInfo.questions.length}
           duration={questionTotalTime}
           onComplete={handleQuestionCompleted}
+          onAnswerSubmitted={(isCorrect) => {
+            if (isCorrect) {
+              sendEvent({
+                type: "answer",
+                content: "answered correctly!",
+              });
+            }
+          }}
         />
       )}
     </>

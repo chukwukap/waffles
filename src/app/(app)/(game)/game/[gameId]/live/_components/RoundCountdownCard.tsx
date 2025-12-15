@@ -8,17 +8,26 @@ import { useEffect } from "react";
 import { useSound } from "@/components/providers/SoundContext";
 import LiveEventFeed from "../../../_components/LiveEventFeed";
 import { Chat } from "../../../_components/chat/Chat";
+import { ChatMessage, GameEvent } from "@/hooks/usePartyGame";
 
 export default function RoundCountdownCard({
   duration,
   onComplete,
   gameId,
   nextRoundNumber,
+  liveEvents,
+  onlineCount,
+  chatMessages,
+  onSendChat,
 }: {
   duration: number;
   onComplete: () => void;
   gameId: number | null;
   nextRoundNumber: number;
+  liveEvents: GameEvent["payload"][];
+  onlineCount: number;
+  chatMessages: ChatMessage[];
+  onSendChat: (text: string) => void;
 }) {
   const { playSound } = useSound();
 
@@ -34,9 +43,18 @@ export default function RoundCountdownCard({
           onComplete={onComplete}
           nextRoundNumber={nextRoundNumber}
         />
-        <LiveEventFeed maxEvents={5} gameId={gameId} />
+        <LiveEventFeed
+          maxEvents={5}
+          gameId={gameId}
+          initialEvents={liveEvents}
+        />
       </div>
-      <Chat gameId={gameId} />
+      <Chat
+        gameId={gameId}
+        activeCount={onlineCount}
+        messages={chatMessages}
+        onSendMessage={onSendChat}
+      />
     </>
   );
 }

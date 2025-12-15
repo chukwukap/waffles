@@ -6,6 +6,7 @@ import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useRouter } from "next/navigation";
 
 import { useCountdown } from "@/hooks/useCountdown";
+import { usePartyGame } from "@/hooks/usePartyGame";
 
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
 
@@ -38,8 +39,17 @@ export default function GameHomePageClient({
     isAuthorized
   } = useGameData(fid, game?.id);
 
-  // State
-  const [activeCount, setActiveCount] = useState(0);
+  // PartyKit Integration
+  const {
+    isConnected,
+    onlineCount,
+    messages,
+    events,
+    sendChat,
+  } = usePartyGame({
+    gameId: game?.id?.toString() ?? "",
+    enabled: !!game && isAuthorized,
+  });
 
   // Redirect if not active - using useEffect to avoid render side-effects
   useEffect(() => {
@@ -151,16 +161,19 @@ export default function GameHomePageClient({
         <LiveEventFeed
           maxEvents={5}
           gameId={game?.id ?? null}
+          initialEvents={events}
         />
-
-        <Chat
-          gameId={game?.id ?? null}
-          activeCount={activeCount}
-          onStatsUpdate={(count: number) => setActiveCount(count)}
-        />
-
       </section>
+
+      <Chat
+        gameId={game?.id ?? null}
+        activeCount={onlineCount}
+        messages={messages}
+        onSendMessage={sendChat}
+      />
+
       <BottomNav />
     </>
   );
 }
+

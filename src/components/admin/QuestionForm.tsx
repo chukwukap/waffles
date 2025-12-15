@@ -1,6 +1,5 @@
 "use client";
 
-
 import { QuestionActionResult } from "@/actions/admin/questions";
 import { useActionState, useRef, useState, useEffect } from "react";
 import { MediaPicker } from "@/components/admin/MediaPicker";
@@ -25,152 +24,140 @@ export function QuestionForm({ gameId, action, nextRoundIndex }: QuestionFormPro
     useEffect(() => {
         if (state?.success && formRef.current) {
             formRef.current.reset();
-            setResetKey((prev: number) => prev + 1); // Force remount of MediaPicker components
+            setResetKey((prev: number) => prev + 1);
             setMediaUrl("");
             setSoundUrl("");
         }
     }, [state?.success]);
 
     return (
-        <div className="space-y-6">
-            <form ref={formRef} action={formAction} className="space-y-4">
-                <input type="hidden" name="mediaUrl" value={mediaUrl} />
-                <input type="hidden" name="soundUrl" value={soundUrl} />
+        <form ref={formRef} action={formAction} className="space-y-5">
+            <input type="hidden" name="mediaUrl" value={mediaUrl} />
+            <input type="hidden" name="soundUrl" value={soundUrl} />
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                    <div className="md:col-span-3">
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
-                            Question Content
-                        </label>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
-                            Round #
-                        </label>
-                        <input
-                            type="number"
-                            name="roundIndex"
-                            defaultValue={nextRoundIndex}
-                            min={1}
-                            className="w-full px-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-slate-800 text-white"
-                        />
-                    </div>
+            {/* Question Content */}
+            <div>
+                <label className="block text-sm font-medium text-white/70 mb-2">
+                    Question <span className="text-red-400">*</span>
+                </label>
+                <textarea
+                    name="content"
+                    required
+                    rows={2}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all resize-none"
+                    placeholder="Enter your trivia question..."
+                />
+            </div>
+
+            {/* Round Index */}
+            <div>
+                <label className="block text-sm font-medium text-white/70 mb-2">
+                    Round # <span className="text-red-400">*</span>
+                </label>
+                <input
+                    type="number"
+                    name="roundIndex"
+                    defaultValue={nextRoundIndex}
+                    min={1}
+                    className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
+                />
+            </div>
+
+            {/* Media Pickers */}
+            <div className="space-y-4">
+                <MediaPicker
+                    key={`media-${resetKey}`}
+                    label="Image (optional)"
+                    name="mediaUrl"
+                    accept="image"
+                    selectedUrl={mediaUrl}
+                    onSelect={setMediaUrl}
+                />
+                <MediaPicker
+                    key={`sound-${resetKey}`}
+                    label="Audio (optional)"
+                    name="soundUrl"
+                    accept="audio"
+                    selectedUrl={soundUrl}
+                    onSelect={setSoundUrl}
+                />
+            </div>
+
+            {/* Answer Options */}
+            <div>
+                <label className="block text-sm font-medium text-white/70 mb-3">
+                    Answer Options <span className="text-red-400">*</span>
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                    {['A', 'B', 'C', 'D'].map((letter) => (
+                        <div key={letter}>
+                            <div className="flex items-center gap-2 mb-1.5">
+                                <span className="text-xs font-bold px-2 py-0.5 rounded bg-white/10 text-white/60">{letter}</span>
+                            </div>
+                            <input
+                                type="text"
+                                name={`option${letter}`}
+                                required
+                                placeholder={`Option ${letter}`}
+                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-white/30 focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
+                            />
+                        </div>
+                    ))}
                 </div>
+            </div>
 
+            {/* Correct Answer & Duration */}
+            <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <textarea
-                        name="content"
+                    <label className="block text-sm font-medium text-white/70 mb-2">
+                        Correct <span className="text-red-400">*</span>
+                    </label>
+                    <select
+                        name="correctAnswer"
                         required
-                        rows={2}
-                        className="w-full px-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-slate-800 text-white"
-                        placeholder="Enter question content..."
+                        className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
+                    >
+                        <option value="" className="bg-[#0a0a0b]">Select...</option>
+                        <option value="A" className="bg-[#0a0a0b]">A</option>
+                        <option value="B" className="bg-[#0a0a0b]">B</option>
+                        <option value="C" className="bg-[#0a0a0b]">C</option>
+                        <option value="D" className="bg-[#0a0a0b]">D</option>
+                    </select>
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-white/70 mb-2">
+                        Duration <span className="text-white/30">(sec)</span>
+                    </label>
+                    <input
+                        type="number"
+                        name="durationSec"
+                        defaultValue={10}
+                        min={5}
+                        className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
                     />
                 </div>
+            </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <MediaPicker
-                        key={`media-${resetKey}`}
-                        label="Question Image (Optional)"
-                        name="mediaUrl"
-                        accept="image"
-                        selectedUrl={mediaUrl}
-                        onSelect={setMediaUrl}
-                    />
-                    <MediaPicker
-                        key={`sound-${resetKey}`}
-                        label="Question Audio (Optional)"
-                        name="soundUrl"
-                        accept="audio"
-                        selectedUrl={soundUrl}
-                        onSelect={setSoundUrl}
-                    />
+            {/* Feedback Messages */}
+            {state && !state.success && (
+                <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-xl">
+                    <p className="text-red-400 text-sm">{state.error}</p>
                 </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Option A</label>
-                        <input
-                            type="text"
-                            name="optionA"
-                            required
-                            className="w-full px-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Option B</label>
-                        <input
-                            type="text"
-                            name="optionB"
-                            required
-                            className="w-full px-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Option C</label>
-                        <input
-                            type="text"
-                            name="optionC"
-                            required
-                            className="w-full px-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Option D</label>
-                        <input
-                            type="text"
-                            name="optionD"
-                            required
-                            className="w-full px-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        />
-                    </div>
+            )}
+            {state && state.success && (
+                <div className="p-3 bg-[#14B985]/20 border border-[#14B985]/30 rounded-xl">
+                    <p className="text-[#14B985] text-sm">✓ Question added!</p>
                 </div>
+            )}
 
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Correct Answer</label>
-                        <select
-                            name="correctAnswer"
-                            required
-                            className="w-full px-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        >
-                            <option value="">Select correct answer...</option>
-                            <option value="A">A</option>
-                            <option value="B">B</option>
-                            <option value="C">C</option>
-                            <option value="D">D</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Duration (seconds)</label>
-                        <input
-                            type="number"
-                            name="durationSec"
-                            defaultValue={10}
-                            min={5}
-                            className="w-full px-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        />
-                    </div>
-                </div>
-
-                {state && !state.success && (
-                    <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-red-800 text-sm">{state.error}</p>
-                    </div>
-                )}
-
-                {state && state.success && (
-                    <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                        <p className="text-green-800 text-sm">Question added successfully!</p>
-                    </div>
-                )}
-
-                <button
-                    type="submit"
-                    className="px-6 py-2 bg-linear-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg hover:from-purple-700 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-                >
-                    Add Question
-                </button>
-            </form>
-        </div>
+            {/* Submit Button */}
+            <button
+                type="submit"
+                className="w-full px-6 py-3 bg-[#FFC931] text-black font-bold rounded-xl hover:bg-[#FFD966] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black focus:ring-[#FFC931] disabled:opacity-50 transition-all"
+            >
+                Add Question
+            </button>
+        </form>
     );
 }
+

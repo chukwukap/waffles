@@ -21,12 +21,14 @@ export function QuestionCard({
   totalQuestions,
   duration,
   onComplete,
+  onAnswerSubmitted,
 }: {
   question: Question;
   questionNumber: number;
   totalQuestions: number;
   duration: number;
   onComplete: () => void;
+  onAnswerSubmitted?: (isCorrect: boolean) => void;
 }) {
   const [selectedOptionIndex, setSelectedOptionIndex] = React.useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -87,6 +89,13 @@ export function QuestionCard({
 
     // 3. Submit immediately
     submitAnswer(index, timeTakenMs);
+
+    // 4. Trigger gamification event
+    if (onAnswerSubmitted) {
+      // Check if correct (assuming we check strictly client side here for visual effect, though server validates)
+      const isCorrect = index === question.correctIndex;
+      onAnswerSubmitted(isCorrect);
+    }
   };
 
   // Handler for timer completion

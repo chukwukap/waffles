@@ -235,6 +235,16 @@ html {
   }
 }
 
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(100vh) rotate(0deg);
+  }
+  50% {
+    transform: translateY(50vh) rotate(180deg);
+  }
+}
+
 @utility animate-glow {
   animation: glow-pulse 2s ease-in-out infinite;
 }
