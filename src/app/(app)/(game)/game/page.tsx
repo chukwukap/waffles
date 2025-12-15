@@ -44,38 +44,37 @@ export type LobbyGame = Prisma.GameGetPayload<{
   };
 }>;
 
-const selectFields = {
-  id: true,
-  title: true,
-  theme: true,
-  status: true,
-  startsAt: true,
-  endsAt: true,
-  entryFee: true,
-  prizePool: true,
-  _count: { select: { tickets: true, players: true } },
-};
-
-// Fetch all relevant games
+// Single query - filter and sort in JS
 const getGames = cache(async () => {
-  const [liveGames, scheduledGames, endedGames] = await Promise.all([
-    prisma.game.findMany({
-      where: { status: "LIVE" },
-      orderBy: { startsAt: "desc" },
-      select: selectFields,
-    }),
-    prisma.game.findMany({
-      where: { status: "SCHEDULED" },
-      orderBy: { startsAt: "asc" },
-      select: selectFields,
-    }),
-    prisma.game.findMany({
-      where: { status: "ENDED" },
-      orderBy: { endsAt: "desc" },
-      take: 5,
-      select: selectFields,
-    }),
-  ]);
+  const games = await prisma.game.findMany({
+    where: { status: { in: ["LIVE", "SCHEDULED", "ENDED"] } },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      title: true,
+      theme: true,
+      status: true,
+      startsAt: true,
+      endsAt: true,
+      entryFee: true,
+      prizePool: true,
+      _count: { select: { tickets: true, players: true } },
+    },
+  });
+
+  // Group and sort in memory
+  const liveGames = games
+    .filter((g) => g.status === "LIVE")
+    .sort((a, b) => b.startsAt.getTime() - a.startsAt.getTime());
+
+  const scheduledGames = games
+    .filter((g) => g.status === "SCHEDULED")
+    .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+
+  const endedGames = games
+    .filter((g) => g.status === "ENDED")
+    .sort((a, b) => (b.endsAt?.getTime() ?? 0) - (a.endsAt?.getTime() ?? 0))
+    .slice(0, 5);
 
   return { liveGames, scheduledGames, endedGames };
 });
