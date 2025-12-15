@@ -16,7 +16,8 @@ type AuthStatus = "checking" | "new_user" | "authenticated";
  * 1. Farcaster splash is visible (we haven't called ready)
  * 2. We get context → check if user exists in DB
  * 3. Call setMiniAppReady() → Farcaster hides splash
- * 4. Show app or onboarding overlay
+ * 4. New user → show onboarding (children don't render yet)
+ * 5. After onboarding → render children
  *
  * Note: Onboarding images are preloaded via <link rel="preload"> in layout.tsx
  */
@@ -28,7 +29,6 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const pfpUrl = context?.user?.pfpUrl;
 
   const [status, setStatus] = useState<AuthStatus>("checking");
-  const [mountKey, setMountKey] = useState(0);
 
   // Check user status, THEN signal ready
   useEffect(() => {
@@ -64,22 +64,18 @@ export function AuthGate({ children }: { children: ReactNode }) {
     }
 
     setStatus("authenticated");
-    setMountKey((k) => k + 1);
   }, [fid, username, pfpUrl, address]);
 
-  // While checking, render nothing (Farcaster splash is visible)
+  // While checking → Farcaster splash is visible
   if (status === "checking") {
     return null;
   }
 
-  return (
-    <>
-      <div key={mountKey} className="contents">
-        {children}
-      </div>
-      {status === "new_user" && (
-        <OnboardingOverlay onComplete={handleOnboardingComplete} />
-      )}
-    </>
-  );
+  // New user → show onboarding only (no children = no wasted API calls)
+  if (status === "new_user") {
+    return <OnboardingOverlay onComplete={handleOnboardingComplete} />;
+  }
+
+  // Authenticated → render app
+  return <>{children}</>;
 }
