@@ -1,41 +1,30 @@
 "use client";
 
-import { useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { OnboardingOverlay } from "./onboarding-overlay";
-import { ONBOARDING_COMPLETE_EVENT } from "@/hooks/useUser";
 import type { ReactNode } from "react";
 
-interface OnboardingGateProps {
-  children: ReactNode;
-}
-
 /**
- * Handles onboarding flow without blocking app render.
- * 
- * The overlay is a fixed full-screen element that covers the app,
- * so we can safely render both. This avoids blank screens and lets
- * the app start loading in the background.
+ * Simple onboarding gate.
+ * Shows overlay on top when needed, remounts children after completion.
  */
-export function OnboardingGate({ children }: OnboardingGateProps) {
-  const { shouldShowOnboarding, completeOnboarding } = useOnboarding();
+export function OnboardingGate({ children }: { children: ReactNode }) {
+  const { needsOnboarding, completeOnboarding } = useOnboarding();
+  const [remountKey, setRemountKey] = useState(0);
 
-  // Wrap completeOnboarding to also dispatch event for useUser to refetch
-  const handleOnboardingComplete = useCallback(async () => {
+  const handleComplete = useCallback(async () => {
     await completeOnboarding();
-    // Notify useUser hooks to refetch now that user exists
-    window.dispatchEvent(new Event(ONBOARDING_COMPLETE_EVENT));
+    // Remount children so useUser refetches fresh data
+    setRemountKey((k) => k + 1);
   }, [completeOnboarding]);
 
   return (
     <>
-      {/* Always render children - they handle their own loading states */}
-      {children}
-      
-      {/* Overlay shows on top when onboarding is needed */}
-      {shouldShowOnboarding && (
-        <OnboardingOverlay onComplete={handleOnboardingComplete} />
-      )}
+      <div key={remountKey} className="contents">
+        {children}
+      </div>
+      {needsOnboarding && <OnboardingOverlay onComplete={handleComplete} />}
     </>
   );
 }

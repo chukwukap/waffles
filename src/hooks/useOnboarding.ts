@@ -1,103 +1,54 @@
 "use client";
 
-import { useCallback, useState, useEffect } from "react";
-import { syncUserAction } from "@/actions/onboarding";
+import { useState, useEffect, useCallback } from "react";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useAccount } from "wagmi";
 import sdk from "@farcaster/miniapp-sdk";
+import { syncUserAction } from "@/actions/onboarding";
 
+type Status = "loading" | "needs_onboarding" | "ready";
+
+/**
+ * Simple onboarding hook.
+ * Checks if user exists, provides function to complete onboarding.
+ */
 export function useOnboarding() {
   const { address } = useAccount();
-  const { context: miniKitContext } = useMiniKit();
-  const fid = miniKitContext?.user?.fid;
-  const pfpUrl = miniKitContext?.user?.pfpUrl;
-  const username = miniKitContext?.user?.username;
+  const { context } = useMiniKit();
+  const fid = context?.user?.fid;
+  const pfpUrl = context?.user?.pfpUrl;
+  const username = context?.user?.username;
 
-  const [isReady, setIsReady] = useState(false);
-  const [isOnboarded, setIsOnboarded] = useState(false);
-  const [isCheckingStatus, setIsCheckingStatus] = useState(true);
+  const [status, setStatus] = useState<Status>("loading");
 
-  // Check onboarding status from database
+  // Check if user exists in DB
   useEffect(() => {
-    async function checkOnboardingStatus() {
-      if (!fid) {
-        // Wait for fid to be available
-        return;
-      }
+    if (!fid) return;
 
+    async function check() {
       try {
-        // Use authenticated fetch to check if user exists
-        const response = await sdk.quickAuth.fetch(`/api/v1/me`, {
-          cache: "no-store",
-        });
-
-        if (response.ok) {
-          // User exists in database - they are onboarded
-          setIsOnboarded(true);
-        } else if (response.status === 404 || response.status === 401) {
-          // User doesn't exist or not authenticated - needs onboarding
-          setIsOnboarded(false);
-        } else {
-          console.error("Failed to check onboarding status:", response.status);
-          setIsOnboarded(false);
-        }
-      } catch (error) {
-        console.error("Error checking onboarding status:", error);
-        setIsOnboarded(false);
-      } finally {
-        setIsCheckingStatus(false);
-        setIsReady(true);
+        const res = await sdk.quickAuth.fetch("/api/v1/me", { cache: "no-store" });
+        setStatus(res.ok ? "ready" : "needs_onboarding");
+      } catch {
+        setStatus("needs_onboarding");
       }
     }
-
-    checkOnboardingStatus();
+    check();
   }, [fid]);
 
+  // Create user in DB
   const completeOnboarding = useCallback(async () => {
-    if (!fid) {
-      console.warn("Cannot sync user profile: Missing FID.");
-      return;
-    }
+    if (!fid) throw new Error("No FID");
 
-    console.log("Syncing user profile after onboarding:", {
-      fid,
-      username,
-      pfpUrl,
-      wallet: address,
-    });
+    const result = await syncUserAction({ fid, username, pfpUrl, wallet: address });
+    if (!result.success) throw new Error(result.error || "Sync failed");
 
-    try {
-      const result = await syncUserAction({
-        fid: fid,
-        username: username,
-        pfpUrl: pfpUrl,
-        wallet: address,
-      });
-
-      if (!result.success) {
-        console.error("User sync failed during onboarding:", result.error);
-        throw new Error(result.error || "User sync failed");
-      }
-
-      console.log(
-        "User sync successful:",
-        result.user,
-        "Referral:",
-        result.user.inviteCode
-      );
-
-      // Mark as onboarded after successful database sync
-      setIsOnboarded(true);
-    } catch (err) {
-      console.error("Unexpected error during user sync:", err);
-      throw err;
-    }
+    setStatus("ready");
   }, [fid, username, pfpUrl, address]);
 
   return {
-    isReady: isReady && !isCheckingStatus,
-    isOnboarded,
-    shouldShowOnboarding: isReady && !isCheckingStatus && !isOnboarded,
+    isLoading: status === "loading",
+    needsOnboarding: status === "needs_onboarding",
     completeOnboarding,
   };
 }
