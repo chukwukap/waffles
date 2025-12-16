@@ -29,9 +29,8 @@ const joinWaitlistSchema = z.object({
 });
 
 /**
- * Adds a user to the waitlist by setting their User.status to WAITLIST.
- * If a referrer FID is provided, it links the referral and increments
- * the referrer's invite quota.
+ * Adds a user to the waitlist by setting their joinedWaitlistAt timestamp.
+ * If a referrer FID is provided, it links the referral via referredById.
  */
 export async function joinWaitlistAction(
   prevState: JoinWaitlistState | null,
@@ -53,15 +52,20 @@ export async function joinWaitlistAction(
     // 1. Find the user joining
     const user = await prisma.user.findUnique({
       where: { fid },
-      select: { id: true, status: true, invitedById: true },
+      select: {
+        id: true,
+        joinedWaitlistAt: true,
+        hasGameAccess: true,
+        referredById: true,
+      },
     });
 
     if (!user) {
       return { ok: false, error: "User not found." };
     }
 
-    // 2. Check if already active or on list
-    if (user.status === "ACTIVE" || user.status === "WAITLIST") {
+    // 2. Check if already on waitlist or has game access
+    if (user.joinedWaitlistAt || user.hasGameAccess) {
       return { ok: true, already: true };
     }
 
@@ -76,14 +80,13 @@ export async function joinWaitlistAction(
 
     // 4. Perform database updates in a transaction
     await prisma.$transaction(async (tx) => {
-      // a. Update the user's status to WAITLIST
-      //    If referrer exists AND user isn't already linked, link them.
+      // a. Record waitlist join timestamp and link referrer if not already linked
       await tx.user.update({
         where: { id: user.id },
         data: {
-          status: "WAITLIST",
-          invitedById:
-            referrerUser && !user.invitedById ? referrerUser.id : undefined,
+          joinedWaitlistAt: new Date(),
+          referredById:
+            referrerUser && !user.referredById ? referrerUser.id : undefined,
         },
       });
 
@@ -102,14 +105,12 @@ export async function joinWaitlistAction(
           data: {
             inviterId: referrerUser.id,
             inviteeId: user.id,
-            status: "PENDING", // Waitlist referrals are pending
-            amount: 0, // Or grant points/rewards as needed
+            status: "PENDING",
+            amount: 0,
           },
         });
       }
     });
-
-    // Track analytics
 
     revalidatePath("/waitlist");
     return { ok: true, already: false };
@@ -158,7 +159,7 @@ export async function completeWaitlistQuest(
         id: true,
         completedTasks: true, // DB field remains completedTasks
         _count: {
-          select: { invites: true },
+          select: { referrals: true },
         },
       },
     });
@@ -208,7 +209,7 @@ export async function completeWaitlistQuest(
 
     // Verify "invite_three_friends" quest
     if (questId === "invite_three_friends") {
-      if (user._count.invites < 3) {
+      if (user._count.referrals < 3) {
         return {
           success: false,
           error: "You need 3 invites to complete this quest.",

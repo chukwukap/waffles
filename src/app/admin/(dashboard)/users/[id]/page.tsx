@@ -7,18 +7,18 @@ async function getUser(id: number) {
     return prisma.user.findUnique({
         where: { id },
         include: {
-            invites: {
+            referrals: {
                 select: {
                     id: true,
                     fid: true,
                     username: true,
-                    status: true,
+                    hasGameAccess: true,
                     createdAt: true,
                 },
                 orderBy: { createdAt: "desc" },
                 take: 10,
             },
-            invitedBy: {
+            referredBy: {
                 select: {
                     id: true,
                     fid: true,
@@ -57,7 +57,7 @@ async function getUser(id: number) {
             },
             _count: {
                 select: {
-                    invites: true,
+                    referrals: true,
                     tickets: true,
                     games: true,
                 },
@@ -77,13 +77,6 @@ export default async function UserDetailsPage({
     if (!user) {
         notFound();
     }
-
-    const statusColors: Record<string, string> = {
-        NONE: "bg-white/10 text-white/60",
-        WAITLIST: "bg-[#FFC931]/20 text-[#FFC931]",
-        ACTIVE: "bg-[#14B985]/20 text-[#14B985]",
-        BANNED: "bg-red-500/20 text-red-400",
-    };
 
     return (
         <div className="space-y-6">
@@ -132,8 +125,11 @@ export default async function UserDetailsPage({
                             <div>
                                 <dt className="font-medium text-white/50">Status</dt>
                                 <dd className="mt-1">
-                                    <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[user.status] || statusColors.NONE}`}>
-                                        {user.status}
+                                    <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${user.isBanned ? 'bg-red-500/20 text-red-400' :
+                                        user.hasGameAccess ? 'bg-[#14B985]/20 text-[#14B985]' :
+                                            'bg-[#FFC931]/20 text-[#FFC931]'
+                                        }`}>
+                                        {user.isBanned ? 'BANNED' : user.hasGameAccess ? 'ACTIVE' : 'WAITLIST'}
                                     </span>
                                 </dd>
                             </div>
@@ -165,7 +161,7 @@ export default async function UserDetailsPage({
                     {/* Activity Stats */}
                     <div className="grid grid-cols-3 gap-4">
                         <div className="admin-panel p-4">
-                            <div className="text-2xl font-bold text-[#FFC931] font-body admin-stat-glow">{user._count.invites}</div>
+                            <div className="text-2xl font-bold text-[#FFC931] font-body admin-stat-glow">{user._count.referrals}</div>
                             <div className="text-sm text-white/50 font-display">Referrals</div>
                         </div>
                         <div className="admin-panel p-4">
@@ -196,8 +192,8 @@ export default async function UserDetailsPage({
                                         <div className="text-right">
                                             <div className="font-bold text-[#FFC931]">${ticket.amountUSDC}</div>
                                             <div className={`text-xs ${ticket.status === "PAID" || ticket.status === "REDEEMED"
-                                                    ? "text-[#14B985]"
-                                                    : "text-white/50"
+                                                ? "text-[#14B985]"
+                                                : "text-white/50"
                                                 }`}>{ticket.status}</div>
                                         </div>
                                     </div>

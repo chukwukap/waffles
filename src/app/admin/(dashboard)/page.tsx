@@ -25,7 +25,7 @@ async function getStats() {
         recentTickets
     ] = await Promise.all([
         prisma.user.count(),
-        prisma.user.count({ where: { status: "ACTIVE" } }),
+        prisma.user.count({ where: { hasGameAccess: true } }),
         prisma.game.count(),
         prisma.game.count({ where: { status: "LIVE" } }),
         prisma.ticket.count(),

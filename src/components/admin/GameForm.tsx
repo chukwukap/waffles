@@ -41,7 +41,7 @@ interface GameFormProps {
     endsAt: Date;
     entryFee: number;
     prizePool: number;
-    roundDurationSec: number;
+    roundBreakSec: number;
     maxPlayers: number;
   };
   isEdit?: boolean;
@@ -104,7 +104,7 @@ const PRESETS = [
     icon: BoltIcon,
     description: "5 min rounds, 50 players",
     values: {
-      roundDurationSec: 15,
+      roundBreakSec: 15,
       maxPlayers: 50,
       entryFee: 1,
       prizePool: 40,
@@ -116,7 +116,7 @@ const PRESETS = [
     icon: TrophyIcon,
     description: "10 min rounds, 200 players",
     values: {
-      roundDurationSec: 20,
+      roundBreakSec: 20,
       maxPlayers: 200,
       entryFee: 5,
       prizePool: 800,
@@ -128,7 +128,7 @@ const PRESETS = [
     icon: SparklesIcon,
     description: "15 min rounds, 500 players",
     values: {
-      roundDurationSec: 30,
+      roundBreakSec: 30,
       maxPlayers: 500,
       entryFee: 25,
       prizePool: 10000,
@@ -160,7 +160,7 @@ export function GameForm({
     initialData?.prizePool?.toString() || ""
   );
   const [roundDuration, setRoundDuration] = useState(
-    initialData?.roundDurationSec?.toString() || ""
+    initialData?.roundBreakSec?.toString() || ""
   );
   const [maxPlayers, setMaxPlayers] = useState(
     initialData?.maxPlayers?.toString() || ""
@@ -215,7 +215,7 @@ export function GameForm({
   const applyPreset = (presetId: string) => {
     const preset = PRESETS.find((p) => p.id === presetId);
     if (preset) {
-      setRoundDuration(preset.values.roundDurationSec.toString());
+      setRoundDuration(preset.values.roundBreakSec.toString());
       setMaxPlayers(preset.values.maxPlayers.toString());
       setEntryFee(preset.values.entryFee.toString());
       setPrizePool(preset.values.prizePool.toString());
@@ -701,7 +701,7 @@ export function GameForm({
                 <div className="space-y-4">
                   <div>
                     <label
-                      htmlFor="roundDurationSec"
+                      htmlFor="roundBreakSec"
                       className="block text-sm font-medium text-white/70 mb-2"
                     >
                       Round Duration{" "}
@@ -709,8 +709,8 @@ export function GameForm({
                     </label>
                     <input
                       type="number"
-                      id="roundDurationSec"
-                      name="roundDurationSec"
+                      id="roundBreakSec"
+                      name="roundBreakSec"
                       required
                       value={roundDuration}
                       onChange={(e) => {

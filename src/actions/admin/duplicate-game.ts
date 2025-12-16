@@ -46,7 +46,7 @@ export async function duplicateGameAction(gameId: number): Promise<void> {
         endsAt: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000),
         entryFee: originalGame.entryFee,
         prizePool: originalGame.prizePool,
-        roundDurationSec: originalGame.roundDurationSec,
+        roundBreakSec: originalGame.roundBreakSec,
         maxPlayers: originalGame.maxPlayers,
         status: "SCHEDULED", // Always start as scheduled
       },

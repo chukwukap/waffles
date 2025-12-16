@@ -29,17 +29,21 @@ export type AggregateUser = {
 export type UserAvgAggregateOutputType = {
   id: number | null
   fid: number | null
+  referredById: number | null
   inviteQuota: number | null
+  accessGrantedBy: number | null
+  bannedBy: number | null
   waitlistPoints: number | null
-  invitedById: number | null
 }
 
 export type UserSumAggregateOutputType = {
   id: number | null
   fid: number | null
+  referredById: number | null
   inviteQuota: number | null
+  accessGrantedBy: number | null
+  bannedBy: number | null
   waitlistPoints: number | null
-  invitedById: number | null
 }
 
 export type UserMinAggregateOutputType = {
@@ -50,11 +54,17 @@ export type UserMinAggregateOutputType = {
   wallet: string | null
   role: $Enums.UserRole | null
   password: string | null
+  referredById: number | null
   inviteCode: string | null
   inviteQuota: number | null
-  status: $Enums.UserStatus | null
+  hasGameAccess: boolean | null
+  accessGrantedAt: Date | null
+  accessGrantedBy: number | null
+  isBanned: boolean | null
+  bannedAt: Date | null
+  bannedBy: number | null
+  joinedWaitlistAt: Date | null
   waitlistPoints: number | null
-  invitedById: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -67,11 +77,17 @@ export type UserMaxAggregateOutputType = {
   wallet: string | null
   role: $Enums.UserRole | null
   password: string | null
+  referredById: number | null
   inviteCode: string | null
   inviteQuota: number | null
-  status: $Enums.UserStatus | null
+  hasGameAccess: boolean | null
+  accessGrantedAt: Date | null
+  accessGrantedBy: number | null
+  isBanned: boolean | null
+  bannedAt: Date | null
+  bannedBy: number | null
+  joinedWaitlistAt: Date | null
   waitlistPoints: number | null
-  invitedById: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -84,12 +100,18 @@ export type UserCountAggregateOutputType = {
   wallet: number
   role: number
   password: number
+  referredById: number
   inviteCode: number
   inviteQuota: number
-  status: number
-  completedTasks: number
+  hasGameAccess: number
+  accessGrantedAt: number
+  accessGrantedBy: number
+  isBanned: number
+  bannedAt: number
+  bannedBy: number
+  joinedWaitlistAt: number
   waitlistPoints: number
-  invitedById: number
+  completedTasks: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -99,17 +121,21 @@ export type UserCountAggregateOutputType = {
 export type UserAvgAggregateInputType = {
   id?: true
   fid?: true
+  referredById?: true
   inviteQuota?: true
+  accessGrantedBy?: true
+  bannedBy?: true
   waitlistPoints?: true
-  invitedById?: true
 }
 
 export type UserSumAggregateInputType = {
   id?: true
   fid?: true
+  referredById?: true
   inviteQuota?: true
+  accessGrantedBy?: true
+  bannedBy?: true
   waitlistPoints?: true
-  invitedById?: true
 }
 
 export type UserMinAggregateInputType = {
@@ -120,11 +146,17 @@ export type UserMinAggregateInputType = {
   wallet?: true
   role?: true
   password?: true
+  referredById?: true
   inviteCode?: true
   inviteQuota?: true
-  status?: true
+  hasGameAccess?: true
+  accessGrantedAt?: true
+  accessGrantedBy?: true
+  isBanned?: true
+  bannedAt?: true
+  bannedBy?: true
+  joinedWaitlistAt?: true
   waitlistPoints?: true
-  invitedById?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -137,11 +169,17 @@ export type UserMaxAggregateInputType = {
   wallet?: true
   role?: true
   password?: true
+  referredById?: true
   inviteCode?: true
   inviteQuota?: true
-  status?: true
+  hasGameAccess?: true
+  accessGrantedAt?: true
+  accessGrantedBy?: true
+  isBanned?: true
+  bannedAt?: true
+  bannedBy?: true
+  joinedWaitlistAt?: true
   waitlistPoints?: true
-  invitedById?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -154,12 +192,18 @@ export type UserCountAggregateInputType = {
   wallet?: true
   role?: true
   password?: true
+  referredById?: true
   inviteCode?: true
   inviteQuota?: true
-  status?: true
-  completedTasks?: true
+  hasGameAccess?: true
+  accessGrantedAt?: true
+  accessGrantedBy?: true
+  isBanned?: true
+  bannedAt?: true
+  bannedBy?: true
+  joinedWaitlistAt?: true
   waitlistPoints?: true
-  invitedById?: true
+  completedTasks?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -259,12 +303,18 @@ export type UserGroupByOutputType = {
   wallet: string | null
   role: $Enums.UserRole
   password: string | null
+  referredById: number | null
   inviteCode: string
   inviteQuota: number
-  status: $Enums.UserStatus
-  completedTasks: string[]
+  hasGameAccess: boolean
+  accessGrantedAt: Date | null
+  accessGrantedBy: number | null
+  isBanned: boolean
+  bannedAt: Date | null
+  bannedBy: number | null
+  joinedWaitlistAt: Date | null
   waitlistPoints: number
-  invitedById: number | null
+  completedTasks: string[]
   createdAt: Date
   updatedAt: Date
   _count: UserCountAggregateOutputType | null
@@ -300,16 +350,22 @@ export type UserWhereInput = {
   wallet?: Prisma.StringNullableFilter<"User"> | string | null
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   password?: Prisma.StringNullableFilter<"User"> | string | null
+  referredById?: Prisma.IntNullableFilter<"User"> | number | null
   inviteCode?: Prisma.StringFilter<"User"> | string
   inviteQuota?: Prisma.IntFilter<"User"> | number
-  status?: Prisma.EnumUserStatusFilter<"User"> | $Enums.UserStatus
-  completedTasks?: Prisma.StringNullableListFilter<"User">
+  hasGameAccess?: Prisma.BoolFilter<"User"> | boolean
+  accessGrantedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  accessGrantedBy?: Prisma.IntNullableFilter<"User"> | number | null
+  isBanned?: Prisma.BoolFilter<"User"> | boolean
+  bannedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  bannedBy?: Prisma.IntNullableFilter<"User"> | number | null
+  joinedWaitlistAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   waitlistPoints?: Prisma.IntFilter<"User"> | number
-  invitedById?: Prisma.IntNullableFilter<"User"> | number | null
+  completedTasks?: Prisma.StringNullableListFilter<"User">
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
-  invitedBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
-  invites?: Prisma.UserListRelationFilter
+  referredBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  referrals?: Prisma.UserListRelationFilter
   rewards?: Prisma.ReferralRewardListRelationFilter
   tickets?: Prisma.TicketListRelationFilter
   games?: Prisma.GamePlayerListRelationFilter
@@ -327,16 +383,22 @@ export type UserOrderByWithRelationInput = {
   wallet?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
   password?: Prisma.SortOrderInput | Prisma.SortOrder
+  referredById?: Prisma.SortOrderInput | Prisma.SortOrder
   inviteCode?: Prisma.SortOrder
   inviteQuota?: Prisma.SortOrder
-  status?: Prisma.SortOrder
-  completedTasks?: Prisma.SortOrder
+  hasGameAccess?: Prisma.SortOrder
+  accessGrantedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  accessGrantedBy?: Prisma.SortOrderInput | Prisma.SortOrder
+  isBanned?: Prisma.SortOrder
+  bannedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  bannedBy?: Prisma.SortOrderInput | Prisma.SortOrder
+  joinedWaitlistAt?: Prisma.SortOrderInput | Prisma.SortOrder
   waitlistPoints?: Prisma.SortOrder
-  invitedById?: Prisma.SortOrderInput | Prisma.SortOrder
+  completedTasks?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  invitedBy?: Prisma.UserOrderByWithRelationInput
-  invites?: Prisma.UserOrderByRelationAggregateInput
+  referredBy?: Prisma.UserOrderByWithRelationInput
+  referrals?: Prisma.UserOrderByRelationAggregateInput
   rewards?: Prisma.ReferralRewardOrderByRelationAggregateInput
   tickets?: Prisma.TicketOrderByRelationAggregateInput
   games?: Prisma.GamePlayerOrderByRelationAggregateInput
@@ -358,15 +420,21 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   pfpUrl?: Prisma.StringNullableFilter<"User"> | string | null
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   password?: Prisma.StringNullableFilter<"User"> | string | null
+  referredById?: Prisma.IntNullableFilter<"User"> | number | null
   inviteQuota?: Prisma.IntFilter<"User"> | number
-  status?: Prisma.EnumUserStatusFilter<"User"> | $Enums.UserStatus
-  completedTasks?: Prisma.StringNullableListFilter<"User">
+  hasGameAccess?: Prisma.BoolFilter<"User"> | boolean
+  accessGrantedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  accessGrantedBy?: Prisma.IntNullableFilter<"User"> | number | null
+  isBanned?: Prisma.BoolFilter<"User"> | boolean
+  bannedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  bannedBy?: Prisma.IntNullableFilter<"User"> | number | null
+  joinedWaitlistAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   waitlistPoints?: Prisma.IntFilter<"User"> | number
-  invitedById?: Prisma.IntNullableFilter<"User"> | number | null
+  completedTasks?: Prisma.StringNullableListFilter<"User">
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
-  invitedBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
-  invites?: Prisma.UserListRelationFilter
+  referredBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  referrals?: Prisma.UserListRelationFilter
   rewards?: Prisma.ReferralRewardListRelationFilter
   tickets?: Prisma.TicketListRelationFilter
   games?: Prisma.GamePlayerListRelationFilter
@@ -384,12 +452,18 @@ export type UserOrderByWithAggregationInput = {
   wallet?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
   password?: Prisma.SortOrderInput | Prisma.SortOrder
+  referredById?: Prisma.SortOrderInput | Prisma.SortOrder
   inviteCode?: Prisma.SortOrder
   inviteQuota?: Prisma.SortOrder
-  status?: Prisma.SortOrder
-  completedTasks?: Prisma.SortOrder
+  hasGameAccess?: Prisma.SortOrder
+  accessGrantedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  accessGrantedBy?: Prisma.SortOrderInput | Prisma.SortOrder
+  isBanned?: Prisma.SortOrder
+  bannedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  bannedBy?: Prisma.SortOrderInput | Prisma.SortOrder
+  joinedWaitlistAt?: Prisma.SortOrderInput | Prisma.SortOrder
   waitlistPoints?: Prisma.SortOrder
-  invitedById?: Prisma.SortOrderInput | Prisma.SortOrder
+  completedTasks?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
@@ -410,12 +484,18 @@ export type UserScalarWhereWithAggregatesInput = {
   wallet?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   role?: Prisma.EnumUserRoleWithAggregatesFilter<"User"> | $Enums.UserRole
   password?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  referredById?: Prisma.IntNullableWithAggregatesFilter<"User"> | number | null
   inviteCode?: Prisma.StringWithAggregatesFilter<"User"> | string
   inviteQuota?: Prisma.IntWithAggregatesFilter<"User"> | number
-  status?: Prisma.EnumUserStatusWithAggregatesFilter<"User"> | $Enums.UserStatus
-  completedTasks?: Prisma.StringNullableListFilter<"User">
+  hasGameAccess?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  accessGrantedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  accessGrantedBy?: Prisma.IntNullableWithAggregatesFilter<"User"> | number | null
+  isBanned?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  bannedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  bannedBy?: Prisma.IntNullableWithAggregatesFilter<"User"> | number | null
+  joinedWaitlistAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   waitlistPoints?: Prisma.IntWithAggregatesFilter<"User"> | number
-  invitedById?: Prisma.IntNullableWithAggregatesFilter<"User"> | number | null
+  completedTasks?: Prisma.StringNullableListFilter<"User">
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
@@ -429,13 +509,19 @@ export type UserCreateInput = {
   password?: string | null
   inviteCode: string
   inviteQuota?: number
-  status?: $Enums.UserStatus
-  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  hasGameAccess?: boolean
+  accessGrantedAt?: Date | string | null
+  accessGrantedBy?: number | null
+  isBanned?: boolean
+  bannedAt?: Date | string | null
+  bannedBy?: number | null
+  joinedWaitlistAt?: Date | string | null
   waitlistPoints?: number
+  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  invitedBy?: Prisma.UserCreateNestedOneWithoutInvitesInput
-  invites?: Prisma.UserCreateNestedManyWithoutInvitedByInput
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferredByInput
   rewards?: Prisma.ReferralRewardCreateNestedManyWithoutInviterInput
   tickets?: Prisma.TicketCreateNestedManyWithoutUserInput
   games?: Prisma.GamePlayerCreateNestedManyWithoutUserInput
@@ -453,15 +539,21 @@ export type UserUncheckedCreateInput = {
   wallet?: string | null
   role?: $Enums.UserRole
   password?: string | null
+  referredById?: number | null
   inviteCode: string
   inviteQuota?: number
-  status?: $Enums.UserStatus
-  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  hasGameAccess?: boolean
+  accessGrantedAt?: Date | string | null
+  accessGrantedBy?: number | null
+  isBanned?: boolean
+  bannedAt?: Date | string | null
+  bannedBy?: number | null
+  joinedWaitlistAt?: Date | string | null
   waitlistPoints?: number
-  invitedById?: number | null
+  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  invites?: Prisma.UserUncheckedCreateNestedManyWithoutInvitedByInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   rewards?: Prisma.ReferralRewardUncheckedCreateNestedManyWithoutInviterInput
   tickets?: Prisma.TicketUncheckedCreateNestedManyWithoutUserInput
   games?: Prisma.GamePlayerUncheckedCreateNestedManyWithoutUserInput
@@ -480,13 +572,19 @@ export type UserUpdateInput = {
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  hasGameAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  accessGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessGrantedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  invitedBy?: Prisma.UserUpdateOneWithoutInvitesNestedInput
-  invites?: Prisma.UserUpdateManyWithoutInvitedByNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   rewards?: Prisma.ReferralRewardUpdateManyWithoutInviterNestedInput
   tickets?: Prisma.TicketUpdateManyWithoutUserNestedInput
   games?: Prisma.GamePlayerUpdateManyWithoutUserNestedInput
@@ -504,15 +602,21 @@ export type UserUncheckedUpdateInput = {
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  hasGameAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  accessGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessGrantedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
-  invitedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  invites?: Prisma.UserUncheckedUpdateManyWithoutInvitedByNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   rewards?: Prisma.ReferralRewardUncheckedUpdateManyWithoutInviterNestedInput
   tickets?: Prisma.TicketUncheckedUpdateManyWithoutUserNestedInput
   games?: Prisma.GamePlayerUncheckedUpdateManyWithoutUserNestedInput
@@ -530,12 +634,18 @@ export type UserCreateManyInput = {
   wallet?: string | null
   role?: $Enums.UserRole
   password?: string | null
+  referredById?: number | null
   inviteCode: string
   inviteQuota?: number
-  status?: $Enums.UserStatus
-  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  hasGameAccess?: boolean
+  accessGrantedAt?: Date | string | null
+  accessGrantedBy?: number | null
+  isBanned?: boolean
+  bannedAt?: Date | string | null
+  bannedBy?: number | null
+  joinedWaitlistAt?: Date | string | null
   waitlistPoints?: number
-  invitedById?: number | null
+  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -549,9 +659,15 @@ export type UserUpdateManyMutationInput = {
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  hasGameAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  accessGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessGrantedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -564,12 +680,18 @@ export type UserUncheckedUpdateManyInput = {
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  hasGameAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  accessGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessGrantedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
-  invitedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -605,12 +727,18 @@ export type UserCountOrderByAggregateInput = {
   wallet?: Prisma.SortOrder
   role?: Prisma.SortOrder
   password?: Prisma.SortOrder
+  referredById?: Prisma.SortOrder
   inviteCode?: Prisma.SortOrder
   inviteQuota?: Prisma.SortOrder
-  status?: Prisma.SortOrder
-  completedTasks?: Prisma.SortOrder
+  hasGameAccess?: Prisma.SortOrder
+  accessGrantedAt?: Prisma.SortOrder
+  accessGrantedBy?: Prisma.SortOrder
+  isBanned?: Prisma.SortOrder
+  bannedAt?: Prisma.SortOrder
+  bannedBy?: Prisma.SortOrder
+  joinedWaitlistAt?: Prisma.SortOrder
   waitlistPoints?: Prisma.SortOrder
-  invitedById?: Prisma.SortOrder
+  completedTasks?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -618,9 +746,11 @@ export type UserCountOrderByAggregateInput = {
 export type UserAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   fid?: Prisma.SortOrder
+  referredById?: Prisma.SortOrder
   inviteQuota?: Prisma.SortOrder
+  accessGrantedBy?: Prisma.SortOrder
+  bannedBy?: Prisma.SortOrder
   waitlistPoints?: Prisma.SortOrder
-  invitedById?: Prisma.SortOrder
 }
 
 export type UserMaxOrderByAggregateInput = {
@@ -631,11 +761,17 @@ export type UserMaxOrderByAggregateInput = {
   wallet?: Prisma.SortOrder
   role?: Prisma.SortOrder
   password?: Prisma.SortOrder
+  referredById?: Prisma.SortOrder
   inviteCode?: Prisma.SortOrder
   inviteQuota?: Prisma.SortOrder
-  status?: Prisma.SortOrder
+  hasGameAccess?: Prisma.SortOrder
+  accessGrantedAt?: Prisma.SortOrder
+  accessGrantedBy?: Prisma.SortOrder
+  isBanned?: Prisma.SortOrder
+  bannedAt?: Prisma.SortOrder
+  bannedBy?: Prisma.SortOrder
+  joinedWaitlistAt?: Prisma.SortOrder
   waitlistPoints?: Prisma.SortOrder
-  invitedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -648,11 +784,17 @@ export type UserMinOrderByAggregateInput = {
   wallet?: Prisma.SortOrder
   role?: Prisma.SortOrder
   password?: Prisma.SortOrder
+  referredById?: Prisma.SortOrder
   inviteCode?: Prisma.SortOrder
   inviteQuota?: Prisma.SortOrder
-  status?: Prisma.SortOrder
+  hasGameAccess?: Prisma.SortOrder
+  accessGrantedAt?: Prisma.SortOrder
+  accessGrantedBy?: Prisma.SortOrder
+  isBanned?: Prisma.SortOrder
+  bannedAt?: Prisma.SortOrder
+  bannedBy?: Prisma.SortOrder
+  joinedWaitlistAt?: Prisma.SortOrder
   waitlistPoints?: Prisma.SortOrder
-  invitedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -660,9 +802,11 @@ export type UserMinOrderByAggregateInput = {
 export type UserSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   fid?: Prisma.SortOrder
+  referredById?: Prisma.SortOrder
   inviteQuota?: Prisma.SortOrder
+  accessGrantedBy?: Prisma.SortOrder
+  bannedBy?: Prisma.SortOrder
   waitlistPoints?: Prisma.SortOrder
-  invitedById?: Prisma.SortOrder
 }
 
 export type UserScalarRelationFilter = {
@@ -674,23 +818,23 @@ export type UserCreatecompletedTasksInput = {
   set: string[]
 }
 
-export type UserCreateNestedOneWithoutInvitesInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutInvitesInput, Prisma.UserUncheckedCreateWithoutInvitesInput>
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutInvitesInput
+export type UserCreateNestedOneWithoutReferralsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutReferralsInput, Prisma.UserUncheckedCreateWithoutReferralsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutReferralsInput
   connect?: Prisma.UserWhereUniqueInput
 }
 
-export type UserCreateNestedManyWithoutInvitedByInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutInvitedByInput, Prisma.UserUncheckedCreateWithoutInvitedByInput> | Prisma.UserCreateWithoutInvitedByInput[] | Prisma.UserUncheckedCreateWithoutInvitedByInput[]
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutInvitedByInput | Prisma.UserCreateOrConnectWithoutInvitedByInput[]
-  createMany?: Prisma.UserCreateManyInvitedByInputEnvelope
+export type UserCreateNestedManyWithoutReferredByInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutReferredByInput, Prisma.UserUncheckedCreateWithoutReferredByInput> | Prisma.UserCreateWithoutReferredByInput[] | Prisma.UserUncheckedCreateWithoutReferredByInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutReferredByInput | Prisma.UserCreateOrConnectWithoutReferredByInput[]
+  createMany?: Prisma.UserCreateManyReferredByInputEnvelope
   connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
 }
 
-export type UserUncheckedCreateNestedManyWithoutInvitedByInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutInvitedByInput, Prisma.UserUncheckedCreateWithoutInvitedByInput> | Prisma.UserCreateWithoutInvitedByInput[] | Prisma.UserUncheckedCreateWithoutInvitedByInput[]
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutInvitedByInput | Prisma.UserCreateOrConnectWithoutInvitedByInput[]
-  createMany?: Prisma.UserCreateManyInvitedByInputEnvelope
+export type UserUncheckedCreateNestedManyWithoutReferredByInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutReferredByInput, Prisma.UserUncheckedCreateWithoutReferredByInput> | Prisma.UserCreateWithoutReferredByInput[] | Prisma.UserUncheckedCreateWithoutReferredByInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutReferredByInput | Prisma.UserCreateOrConnectWithoutReferredByInput[]
+  createMany?: Prisma.UserCreateManyReferredByInputEnvelope
   connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
 }
 
@@ -714,8 +858,20 @@ export type StringFieldUpdateOperationsInput = {
   set?: string
 }
 
-export type EnumUserStatusFieldUpdateOperationsInput = {
-  set?: $Enums.UserStatus
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
+}
+
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
+}
+
+export type NullableIntFieldUpdateOperationsInput = {
+  set?: number | null
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
 }
 
 export type UserUpdatecompletedTasksInput = {
@@ -727,49 +883,41 @@ export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
 }
 
-export type UserUpdateOneWithoutInvitesNestedInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutInvitesInput, Prisma.UserUncheckedCreateWithoutInvitesInput>
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutInvitesInput
-  upsert?: Prisma.UserUpsertWithoutInvitesInput
+export type UserUpdateOneWithoutReferralsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutReferralsInput, Prisma.UserUncheckedCreateWithoutReferralsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutReferralsInput
+  upsert?: Prisma.UserUpsertWithoutReferralsInput
   disconnect?: Prisma.UserWhereInput | boolean
   delete?: Prisma.UserWhereInput | boolean
   connect?: Prisma.UserWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutInvitesInput, Prisma.UserUpdateWithoutInvitesInput>, Prisma.UserUncheckedUpdateWithoutInvitesInput>
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutReferralsInput, Prisma.UserUpdateWithoutReferralsInput>, Prisma.UserUncheckedUpdateWithoutReferralsInput>
 }
 
-export type UserUpdateManyWithoutInvitedByNestedInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutInvitedByInput, Prisma.UserUncheckedCreateWithoutInvitedByInput> | Prisma.UserCreateWithoutInvitedByInput[] | Prisma.UserUncheckedCreateWithoutInvitedByInput[]
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutInvitedByInput | Prisma.UserCreateOrConnectWithoutInvitedByInput[]
-  upsert?: Prisma.UserUpsertWithWhereUniqueWithoutInvitedByInput | Prisma.UserUpsertWithWhereUniqueWithoutInvitedByInput[]
-  createMany?: Prisma.UserCreateManyInvitedByInputEnvelope
+export type UserUpdateManyWithoutReferredByNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutReferredByInput, Prisma.UserUncheckedCreateWithoutReferredByInput> | Prisma.UserCreateWithoutReferredByInput[] | Prisma.UserUncheckedCreateWithoutReferredByInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutReferredByInput | Prisma.UserCreateOrConnectWithoutReferredByInput[]
+  upsert?: Prisma.UserUpsertWithWhereUniqueWithoutReferredByInput | Prisma.UserUpsertWithWhereUniqueWithoutReferredByInput[]
+  createMany?: Prisma.UserCreateManyReferredByInputEnvelope
   set?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
   disconnect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
   delete?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
   connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
-  update?: Prisma.UserUpdateWithWhereUniqueWithoutInvitedByInput | Prisma.UserUpdateWithWhereUniqueWithoutInvitedByInput[]
-  updateMany?: Prisma.UserUpdateManyWithWhereWithoutInvitedByInput | Prisma.UserUpdateManyWithWhereWithoutInvitedByInput[]
+  update?: Prisma.UserUpdateWithWhereUniqueWithoutReferredByInput | Prisma.UserUpdateWithWhereUniqueWithoutReferredByInput[]
+  updateMany?: Prisma.UserUpdateManyWithWhereWithoutReferredByInput | Prisma.UserUpdateManyWithWhereWithoutReferredByInput[]
   deleteMany?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
 }
 
-export type NullableIntFieldUpdateOperationsInput = {
-  set?: number | null
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
-export type UserUncheckedUpdateManyWithoutInvitedByNestedInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutInvitedByInput, Prisma.UserUncheckedCreateWithoutInvitedByInput> | Prisma.UserCreateWithoutInvitedByInput[] | Prisma.UserUncheckedCreateWithoutInvitedByInput[]
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutInvitedByInput | Prisma.UserCreateOrConnectWithoutInvitedByInput[]
-  upsert?: Prisma.UserUpsertWithWhereUniqueWithoutInvitedByInput | Prisma.UserUpsertWithWhereUniqueWithoutInvitedByInput[]
-  createMany?: Prisma.UserCreateManyInvitedByInputEnvelope
+export type UserUncheckedUpdateManyWithoutReferredByNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutReferredByInput, Prisma.UserUncheckedCreateWithoutReferredByInput> | Prisma.UserCreateWithoutReferredByInput[] | Prisma.UserUncheckedCreateWithoutReferredByInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutReferredByInput | Prisma.UserCreateOrConnectWithoutReferredByInput[]
+  upsert?: Prisma.UserUpsertWithWhereUniqueWithoutReferredByInput | Prisma.UserUpsertWithWhereUniqueWithoutReferredByInput[]
+  createMany?: Prisma.UserCreateManyReferredByInputEnvelope
   set?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
   disconnect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
   delete?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
   connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
-  update?: Prisma.UserUpdateWithWhereUniqueWithoutInvitedByInput | Prisma.UserUpdateWithWhereUniqueWithoutInvitedByInput[]
-  updateMany?: Prisma.UserUpdateManyWithWhereWithoutInvitedByInput | Prisma.UserUpdateManyWithWhereWithoutInvitedByInput[]
+  update?: Prisma.UserUpdateWithWhereUniqueWithoutReferredByInput | Prisma.UserUpdateWithWhereUniqueWithoutReferredByInput[]
+  updateMany?: Prisma.UserUpdateManyWithWhereWithoutReferredByInput | Prisma.UserUpdateManyWithWhereWithoutReferredByInput[]
   deleteMany?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
 }
 
@@ -871,7 +1019,7 @@ export type UserUpdateOneRequiredWithoutAuditLogsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAuditLogsInput, Prisma.UserUpdateWithoutAuditLogsInput>, Prisma.UserUncheckedUpdateWithoutAuditLogsInput>
 }
 
-export type UserCreateWithoutInvitesInput = {
+export type UserCreateWithoutReferralsInput = {
   fid: number
   username?: string | null
   pfpUrl?: string | null
@@ -880,12 +1028,18 @@ export type UserCreateWithoutInvitesInput = {
   password?: string | null
   inviteCode: string
   inviteQuota?: number
-  status?: $Enums.UserStatus
-  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  hasGameAccess?: boolean
+  accessGrantedAt?: Date | string | null
+  accessGrantedBy?: number | null
+  isBanned?: boolean
+  bannedAt?: Date | string | null
+  bannedBy?: number | null
+  joinedWaitlistAt?: Date | string | null
   waitlistPoints?: number
+  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  invitedBy?: Prisma.UserCreateNestedOneWithoutInvitesInput
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferralsInput
   rewards?: Prisma.ReferralRewardCreateNestedManyWithoutInviterInput
   tickets?: Prisma.TicketCreateNestedManyWithoutUserInput
   games?: Prisma.GamePlayerCreateNestedManyWithoutUserInput
@@ -895,7 +1049,7 @@ export type UserCreateWithoutInvitesInput = {
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutAdminInput
 }
 
-export type UserUncheckedCreateWithoutInvitesInput = {
+export type UserUncheckedCreateWithoutReferralsInput = {
   id?: number
   fid: number
   username?: string | null
@@ -903,12 +1057,18 @@ export type UserUncheckedCreateWithoutInvitesInput = {
   wallet?: string | null
   role?: $Enums.UserRole
   password?: string | null
+  referredById?: number | null
   inviteCode: string
   inviteQuota?: number
-  status?: $Enums.UserStatus
-  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  hasGameAccess?: boolean
+  accessGrantedAt?: Date | string | null
+  accessGrantedBy?: number | null
+  isBanned?: boolean
+  bannedAt?: Date | string | null
+  bannedBy?: number | null
+  joinedWaitlistAt?: Date | string | null
   waitlistPoints?: number
-  invitedById?: number | null
+  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
   rewards?: Prisma.ReferralRewardUncheckedCreateNestedManyWithoutInviterInput
@@ -920,12 +1080,12 @@ export type UserUncheckedCreateWithoutInvitesInput = {
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutAdminInput
 }
 
-export type UserCreateOrConnectWithoutInvitesInput = {
+export type UserCreateOrConnectWithoutReferralsInput = {
   where: Prisma.UserWhereUniqueInput
-  create: Prisma.XOR<Prisma.UserCreateWithoutInvitesInput, Prisma.UserUncheckedCreateWithoutInvitesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutReferralsInput, Prisma.UserUncheckedCreateWithoutReferralsInput>
 }
 
-export type UserCreateWithoutInvitedByInput = {
+export type UserCreateWithoutReferredByInput = {
   fid: number
   username?: string | null
   pfpUrl?: string | null
@@ -934,12 +1094,18 @@ export type UserCreateWithoutInvitedByInput = {
   password?: string | null
   inviteCode: string
   inviteQuota?: number
-  status?: $Enums.UserStatus
-  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  hasGameAccess?: boolean
+  accessGrantedAt?: Date | string | null
+  accessGrantedBy?: number | null
+  isBanned?: boolean
+  bannedAt?: Date | string | null
+  bannedBy?: number | null
+  joinedWaitlistAt?: Date | string | null
   waitlistPoints?: number
+  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  invites?: Prisma.UserCreateNestedManyWithoutInvitedByInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferredByInput
   rewards?: Prisma.ReferralRewardCreateNestedManyWithoutInviterInput
   tickets?: Prisma.TicketCreateNestedManyWithoutUserInput
   games?: Prisma.GamePlayerCreateNestedManyWithoutUserInput
@@ -949,7 +1115,7 @@ export type UserCreateWithoutInvitedByInput = {
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutAdminInput
 }
 
-export type UserUncheckedCreateWithoutInvitedByInput = {
+export type UserUncheckedCreateWithoutReferredByInput = {
   id?: number
   fid: number
   username?: string | null
@@ -959,12 +1125,18 @@ export type UserUncheckedCreateWithoutInvitedByInput = {
   password?: string | null
   inviteCode: string
   inviteQuota?: number
-  status?: $Enums.UserStatus
-  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  hasGameAccess?: boolean
+  accessGrantedAt?: Date | string | null
+  accessGrantedBy?: number | null
+  isBanned?: boolean
+  bannedAt?: Date | string | null
+  bannedBy?: number | null
+  joinedWaitlistAt?: Date | string | null
   waitlistPoints?: number
+  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  invites?: Prisma.UserUncheckedCreateNestedManyWithoutInvitedByInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   rewards?: Prisma.ReferralRewardUncheckedCreateNestedManyWithoutInviterInput
   tickets?: Prisma.TicketUncheckedCreateNestedManyWithoutUserInput
   games?: Prisma.GamePlayerUncheckedCreateNestedManyWithoutUserInput
@@ -974,28 +1146,28 @@ export type UserUncheckedCreateWithoutInvitedByInput = {
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutAdminInput
 }
 
-export type UserCreateOrConnectWithoutInvitedByInput = {
+export type UserCreateOrConnectWithoutReferredByInput = {
   where: Prisma.UserWhereUniqueInput
-  create: Prisma.XOR<Prisma.UserCreateWithoutInvitedByInput, Prisma.UserUncheckedCreateWithoutInvitedByInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutReferredByInput, Prisma.UserUncheckedCreateWithoutReferredByInput>
 }
 
-export type UserCreateManyInvitedByInputEnvelope = {
-  data: Prisma.UserCreateManyInvitedByInput | Prisma.UserCreateManyInvitedByInput[]
+export type UserCreateManyReferredByInputEnvelope = {
+  data: Prisma.UserCreateManyReferredByInput | Prisma.UserCreateManyReferredByInput[]
   skipDuplicates?: boolean
 }
 
-export type UserUpsertWithoutInvitesInput = {
-  update: Prisma.XOR<Prisma.UserUpdateWithoutInvitesInput, Prisma.UserUncheckedUpdateWithoutInvitesInput>
-  create: Prisma.XOR<Prisma.UserCreateWithoutInvitesInput, Prisma.UserUncheckedCreateWithoutInvitesInput>
+export type UserUpsertWithoutReferralsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutReferralsInput, Prisma.UserUncheckedUpdateWithoutReferralsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutReferralsInput, Prisma.UserUncheckedCreateWithoutReferralsInput>
   where?: Prisma.UserWhereInput
 }
 
-export type UserUpdateToOneWithWhereWithoutInvitesInput = {
+export type UserUpdateToOneWithWhereWithoutReferralsInput = {
   where?: Prisma.UserWhereInput
-  data: Prisma.XOR<Prisma.UserUpdateWithoutInvitesInput, Prisma.UserUncheckedUpdateWithoutInvitesInput>
+  data: Prisma.XOR<Prisma.UserUpdateWithoutReferralsInput, Prisma.UserUncheckedUpdateWithoutReferralsInput>
 }
 
-export type UserUpdateWithoutInvitesInput = {
+export type UserUpdateWithoutReferralsInput = {
   fid?: Prisma.IntFieldUpdateOperationsInput | number
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pfpUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1004,12 +1176,18 @@ export type UserUpdateWithoutInvitesInput = {
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  hasGameAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  accessGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessGrantedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  invitedBy?: Prisma.UserUpdateOneWithoutInvitesNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferralsNestedInput
   rewards?: Prisma.ReferralRewardUpdateManyWithoutInviterNestedInput
   tickets?: Prisma.TicketUpdateManyWithoutUserNestedInput
   games?: Prisma.GamePlayerUpdateManyWithoutUserNestedInput
@@ -1019,7 +1197,7 @@ export type UserUpdateWithoutInvitesInput = {
   auditLogs?: Prisma.AuditLogUpdateManyWithoutAdminNestedInput
 }
 
-export type UserUncheckedUpdateWithoutInvitesInput = {
+export type UserUncheckedUpdateWithoutReferralsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   fid?: Prisma.IntFieldUpdateOperationsInput | number
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1027,12 +1205,18 @@ export type UserUncheckedUpdateWithoutInvitesInput = {
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  hasGameAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  accessGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessGrantedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
-  invitedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   rewards?: Prisma.ReferralRewardUncheckedUpdateManyWithoutInviterNestedInput
@@ -1044,20 +1228,20 @@ export type UserUncheckedUpdateWithoutInvitesInput = {
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutAdminNestedInput
 }
 
-export type UserUpsertWithWhereUniqueWithoutInvitedByInput = {
+export type UserUpsertWithWhereUniqueWithoutReferredByInput = {
   where: Prisma.UserWhereUniqueInput
-  update: Prisma.XOR<Prisma.UserUpdateWithoutInvitedByInput, Prisma.UserUncheckedUpdateWithoutInvitedByInput>
-  create: Prisma.XOR<Prisma.UserCreateWithoutInvitedByInput, Prisma.UserUncheckedCreateWithoutInvitedByInput>
+  update: Prisma.XOR<Prisma.UserUpdateWithoutReferredByInput, Prisma.UserUncheckedUpdateWithoutReferredByInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutReferredByInput, Prisma.UserUncheckedCreateWithoutReferredByInput>
 }
 
-export type UserUpdateWithWhereUniqueWithoutInvitedByInput = {
+export type UserUpdateWithWhereUniqueWithoutReferredByInput = {
   where: Prisma.UserWhereUniqueInput
-  data: Prisma.XOR<Prisma.UserUpdateWithoutInvitedByInput, Prisma.UserUncheckedUpdateWithoutInvitedByInput>
+  data: Prisma.XOR<Prisma.UserUpdateWithoutReferredByInput, Prisma.UserUncheckedUpdateWithoutReferredByInput>
 }
 
-export type UserUpdateManyWithWhereWithoutInvitedByInput = {
+export type UserUpdateManyWithWhereWithoutReferredByInput = {
   where: Prisma.UserScalarWhereInput
-  data: Prisma.XOR<Prisma.UserUpdateManyMutationInput, Prisma.UserUncheckedUpdateManyWithoutInvitedByInput>
+  data: Prisma.XOR<Prisma.UserUpdateManyMutationInput, Prisma.UserUncheckedUpdateManyWithoutReferredByInput>
 }
 
 export type UserScalarWhereInput = {
@@ -1071,12 +1255,18 @@ export type UserScalarWhereInput = {
   wallet?: Prisma.StringNullableFilter<"User"> | string | null
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   password?: Prisma.StringNullableFilter<"User"> | string | null
+  referredById?: Prisma.IntNullableFilter<"User"> | number | null
   inviteCode?: Prisma.StringFilter<"User"> | string
   inviteQuota?: Prisma.IntFilter<"User"> | number
-  status?: Prisma.EnumUserStatusFilter<"User"> | $Enums.UserStatus
-  completedTasks?: Prisma.StringNullableListFilter<"User">
+  hasGameAccess?: Prisma.BoolFilter<"User"> | boolean
+  accessGrantedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  accessGrantedBy?: Prisma.IntNullableFilter<"User"> | number | null
+  isBanned?: Prisma.BoolFilter<"User"> | boolean
+  bannedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  bannedBy?: Prisma.IntNullableFilter<"User"> | number | null
+  joinedWaitlistAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   waitlistPoints?: Prisma.IntFilter<"User"> | number
-  invitedById?: Prisma.IntNullableFilter<"User"> | number | null
+  completedTasks?: Prisma.StringNullableListFilter<"User">
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
 }
@@ -1090,13 +1280,19 @@ export type UserCreateWithoutRewardsInput = {
   password?: string | null
   inviteCode: string
   inviteQuota?: number
-  status?: $Enums.UserStatus
-  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  hasGameAccess?: boolean
+  accessGrantedAt?: Date | string | null
+  accessGrantedBy?: number | null
+  isBanned?: boolean
+  bannedAt?: Date | string | null
+  bannedBy?: number | null
+  joinedWaitlistAt?: Date | string | null
   waitlistPoints?: number
+  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  invitedBy?: Prisma.UserCreateNestedOneWithoutInvitesInput
-  invites?: Prisma.UserCreateNestedManyWithoutInvitedByInput
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferredByInput
   tickets?: Prisma.TicketCreateNestedManyWithoutUserInput
   games?: Prisma.GamePlayerCreateNestedManyWithoutUserInput
   answers?: Prisma.AnswerCreateNestedManyWithoutUserInput
@@ -1113,15 +1309,21 @@ export type UserUncheckedCreateWithoutRewardsInput = {
   wallet?: string | null
   role?: $Enums.UserRole
   password?: string | null
+  referredById?: number | null
   inviteCode: string
   inviteQuota?: number
-  status?: $Enums.UserStatus
-  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  hasGameAccess?: boolean
+  accessGrantedAt?: Date | string | null
+  accessGrantedBy?: number | null
+  isBanned?: boolean
+  bannedAt?: Date | string | null
+  bannedBy?: number | null
+  joinedWaitlistAt?: Date | string | null
   waitlistPoints?: number
-  invitedById?: number | null
+  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  invites?: Prisma.UserUncheckedCreateNestedManyWithoutInvitedByInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   tickets?: Prisma.TicketUncheckedCreateNestedManyWithoutUserInput
   games?: Prisma.GamePlayerUncheckedCreateNestedManyWithoutUserInput
   answers?: Prisma.AnswerUncheckedCreateNestedManyWithoutUserInput
@@ -1155,13 +1357,19 @@ export type UserUpdateWithoutRewardsInput = {
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  hasGameAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  accessGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessGrantedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  invitedBy?: Prisma.UserUpdateOneWithoutInvitesNestedInput
-  invites?: Prisma.UserUpdateManyWithoutInvitedByNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   tickets?: Prisma.TicketUpdateManyWithoutUserNestedInput
   games?: Prisma.GamePlayerUpdateManyWithoutUserNestedInput
   answers?: Prisma.AnswerUpdateManyWithoutUserNestedInput
@@ -1178,15 +1386,21 @@ export type UserUncheckedUpdateWithoutRewardsInput = {
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  hasGameAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  accessGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessGrantedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
-  invitedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  invites?: Prisma.UserUncheckedUpdateManyWithoutInvitedByNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   tickets?: Prisma.TicketUncheckedUpdateManyWithoutUserNestedInput
   games?: Prisma.GamePlayerUncheckedUpdateManyWithoutUserNestedInput
   answers?: Prisma.AnswerUncheckedUpdateManyWithoutUserNestedInput
@@ -1204,13 +1418,19 @@ export type UserCreateWithoutTicketsInput = {
   password?: string | null
   inviteCode: string
   inviteQuota?: number
-  status?: $Enums.UserStatus
-  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  hasGameAccess?: boolean
+  accessGrantedAt?: Date | string | null
+  accessGrantedBy?: number | null
+  isBanned?: boolean
+  bannedAt?: Date | string | null
+  bannedBy?: number | null
+  joinedWaitlistAt?: Date | string | null
   waitlistPoints?: number
+  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  invitedBy?: Prisma.UserCreateNestedOneWithoutInvitesInput
-  invites?: Prisma.UserCreateNestedManyWithoutInvitedByInput
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferredByInput
   rewards?: Prisma.ReferralRewardCreateNestedManyWithoutInviterInput
   games?: Prisma.GamePlayerCreateNestedManyWithoutUserInput
   answers?: Prisma.AnswerCreateNestedManyWithoutUserInput
@@ -1227,15 +1447,21 @@ export type UserUncheckedCreateWithoutTicketsInput = {
   wallet?: string | null
   role?: $Enums.UserRole
   password?: string | null
+  referredById?: number | null
   inviteCode: string
   inviteQuota?: number
-  status?: $Enums.UserStatus
-  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  hasGameAccess?: boolean
+  accessGrantedAt?: Date | string | null
+  accessGrantedBy?: number | null
+  isBanned?: boolean
+  bannedAt?: Date | string | null
+  bannedBy?: number | null
+  joinedWaitlistAt?: Date | string | null
   waitlistPoints?: number
-  invitedById?: number | null
+  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  invites?: Prisma.UserUncheckedCreateNestedManyWithoutInvitedByInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   rewards?: Prisma.ReferralRewardUncheckedCreateNestedManyWithoutInviterInput
   games?: Prisma.GamePlayerUncheckedCreateNestedManyWithoutUserInput
   answers?: Prisma.AnswerUncheckedCreateNestedManyWithoutUserInput
@@ -1269,13 +1495,19 @@ export type UserUpdateWithoutTicketsInput = {
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  hasGameAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  accessGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessGrantedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  invitedBy?: Prisma.UserUpdateOneWithoutInvitesNestedInput
-  invites?: Prisma.UserUpdateManyWithoutInvitedByNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   rewards?: Prisma.ReferralRewardUpdateManyWithoutInviterNestedInput
   games?: Prisma.GamePlayerUpdateManyWithoutUserNestedInput
   answers?: Prisma.AnswerUpdateManyWithoutUserNestedInput
@@ -1292,15 +1524,21 @@ export type UserUncheckedUpdateWithoutTicketsInput = {
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  hasGameAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  accessGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessGrantedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
-  invitedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  invites?: Prisma.UserUncheckedUpdateManyWithoutInvitedByNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   rewards?: Prisma.ReferralRewardUncheckedUpdateManyWithoutInviterNestedInput
   games?: Prisma.GamePlayerUncheckedUpdateManyWithoutUserNestedInput
   answers?: Prisma.AnswerUncheckedUpdateManyWithoutUserNestedInput
@@ -1318,13 +1556,19 @@ export type UserCreateWithoutGamesInput = {
   password?: string | null
   inviteCode: string
   inviteQuota?: number
-  status?: $Enums.UserStatus
-  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  hasGameAccess?: boolean
+  accessGrantedAt?: Date | string | null
+  accessGrantedBy?: number | null
+  isBanned?: boolean
+  bannedAt?: Date | string | null
+  bannedBy?: number | null
+  joinedWaitlistAt?: Date | string | null
   waitlistPoints?: number
+  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  invitedBy?: Prisma.UserCreateNestedOneWithoutInvitesInput
-  invites?: Prisma.UserCreateNestedManyWithoutInvitedByInput
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferredByInput
   rewards?: Prisma.ReferralRewardCreateNestedManyWithoutInviterInput
   tickets?: Prisma.TicketCreateNestedManyWithoutUserInput
   answers?: Prisma.AnswerCreateNestedManyWithoutUserInput
@@ -1341,15 +1585,21 @@ export type UserUncheckedCreateWithoutGamesInput = {
   wallet?: string | null
   role?: $Enums.UserRole
   password?: string | null
+  referredById?: number | null
   inviteCode: string
   inviteQuota?: number
-  status?: $Enums.UserStatus
-  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  hasGameAccess?: boolean
+  accessGrantedAt?: Date | string | null
+  accessGrantedBy?: number | null
+  isBanned?: boolean
+  bannedAt?: Date | string | null
+  bannedBy?: number | null
+  joinedWaitlistAt?: Date | string | null
   waitlistPoints?: number
-  invitedById?: number | null
+  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  invites?: Prisma.UserUncheckedCreateNestedManyWithoutInvitedByInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   rewards?: Prisma.ReferralRewardUncheckedCreateNestedManyWithoutInviterInput
   tickets?: Prisma.TicketUncheckedCreateNestedManyWithoutUserInput
   answers?: Prisma.AnswerUncheckedCreateNestedManyWithoutUserInput
@@ -1383,13 +1633,19 @@ export type UserUpdateWithoutGamesInput = {
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  hasGameAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  accessGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessGrantedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  invitedBy?: Prisma.UserUpdateOneWithoutInvitesNestedInput
-  invites?: Prisma.UserUpdateManyWithoutInvitedByNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   rewards?: Prisma.ReferralRewardUpdateManyWithoutInviterNestedInput
   tickets?: Prisma.TicketUpdateManyWithoutUserNestedInput
   answers?: Prisma.AnswerUpdateManyWithoutUserNestedInput
@@ -1406,15 +1662,21 @@ export type UserUncheckedUpdateWithoutGamesInput = {
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  hasGameAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  accessGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessGrantedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
-  invitedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  invites?: Prisma.UserUncheckedUpdateManyWithoutInvitedByNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   rewards?: Prisma.ReferralRewardUncheckedUpdateManyWithoutInviterNestedInput
   tickets?: Prisma.TicketUncheckedUpdateManyWithoutUserNestedInput
   answers?: Prisma.AnswerUncheckedUpdateManyWithoutUserNestedInput
@@ -1432,13 +1694,19 @@ export type UserCreateWithoutAnswersInput = {
   password?: string | null
   inviteCode: string
   inviteQuota?: number
-  status?: $Enums.UserStatus
-  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  hasGameAccess?: boolean
+  accessGrantedAt?: Date | string | null
+  accessGrantedBy?: number | null
+  isBanned?: boolean
+  bannedAt?: Date | string | null
+  bannedBy?: number | null
+  joinedWaitlistAt?: Date | string | null
   waitlistPoints?: number
+  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  invitedBy?: Prisma.UserCreateNestedOneWithoutInvitesInput
-  invites?: Prisma.UserCreateNestedManyWithoutInvitedByInput
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferredByInput
   rewards?: Prisma.ReferralRewardCreateNestedManyWithoutInviterInput
   tickets?: Prisma.TicketCreateNestedManyWithoutUserInput
   games?: Prisma.GamePlayerCreateNestedManyWithoutUserInput
@@ -1455,15 +1723,21 @@ export type UserUncheckedCreateWithoutAnswersInput = {
   wallet?: string | null
   role?: $Enums.UserRole
   password?: string | null
+  referredById?: number | null
   inviteCode: string
   inviteQuota?: number
-  status?: $Enums.UserStatus
-  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  hasGameAccess?: boolean
+  accessGrantedAt?: Date | string | null
+  accessGrantedBy?: number | null
+  isBanned?: boolean
+  bannedAt?: Date | string | null
+  bannedBy?: number | null
+  joinedWaitlistAt?: Date | string | null
   waitlistPoints?: number
-  invitedById?: number | null
+  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  invites?: Prisma.UserUncheckedCreateNestedManyWithoutInvitedByInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   rewards?: Prisma.ReferralRewardUncheckedCreateNestedManyWithoutInviterInput
   tickets?: Prisma.TicketUncheckedCreateNestedManyWithoutUserInput
   games?: Prisma.GamePlayerUncheckedCreateNestedManyWithoutUserInput
@@ -1497,13 +1771,19 @@ export type UserUpdateWithoutAnswersInput = {
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  hasGameAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  accessGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessGrantedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  invitedBy?: Prisma.UserUpdateOneWithoutInvitesNestedInput
-  invites?: Prisma.UserUpdateManyWithoutInvitedByNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   rewards?: Prisma.ReferralRewardUpdateManyWithoutInviterNestedInput
   tickets?: Prisma.TicketUpdateManyWithoutUserNestedInput
   games?: Prisma.GamePlayerUpdateManyWithoutUserNestedInput
@@ -1520,15 +1800,21 @@ export type UserUncheckedUpdateWithoutAnswersInput = {
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  hasGameAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  accessGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessGrantedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
-  invitedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  invites?: Prisma.UserUncheckedUpdateManyWithoutInvitedByNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   rewards?: Prisma.ReferralRewardUncheckedUpdateManyWithoutInviterNestedInput
   tickets?: Prisma.TicketUncheckedUpdateManyWithoutUserNestedInput
   games?: Prisma.GamePlayerUncheckedUpdateManyWithoutUserNestedInput
@@ -1546,13 +1832,19 @@ export type UserCreateWithoutChatsInput = {
   password?: string | null
   inviteCode: string
   inviteQuota?: number
-  status?: $Enums.UserStatus
-  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  hasGameAccess?: boolean
+  accessGrantedAt?: Date | string | null
+  accessGrantedBy?: number | null
+  isBanned?: boolean
+  bannedAt?: Date | string | null
+  bannedBy?: number | null
+  joinedWaitlistAt?: Date | string | null
   waitlistPoints?: number
+  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  invitedBy?: Prisma.UserCreateNestedOneWithoutInvitesInput
-  invites?: Prisma.UserCreateNestedManyWithoutInvitedByInput
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferredByInput
   rewards?: Prisma.ReferralRewardCreateNestedManyWithoutInviterInput
   tickets?: Prisma.TicketCreateNestedManyWithoutUserInput
   games?: Prisma.GamePlayerCreateNestedManyWithoutUserInput
@@ -1569,15 +1861,21 @@ export type UserUncheckedCreateWithoutChatsInput = {
   wallet?: string | null
   role?: $Enums.UserRole
   password?: string | null
+  referredById?: number | null
   inviteCode: string
   inviteQuota?: number
-  status?: $Enums.UserStatus
-  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  hasGameAccess?: boolean
+  accessGrantedAt?: Date | string | null
+  accessGrantedBy?: number | null
+  isBanned?: boolean
+  bannedAt?: Date | string | null
+  bannedBy?: number | null
+  joinedWaitlistAt?: Date | string | null
   waitlistPoints?: number
-  invitedById?: number | null
+  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  invites?: Prisma.UserUncheckedCreateNestedManyWithoutInvitedByInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   rewards?: Prisma.ReferralRewardUncheckedCreateNestedManyWithoutInviterInput
   tickets?: Prisma.TicketUncheckedCreateNestedManyWithoutUserInput
   games?: Prisma.GamePlayerUncheckedCreateNestedManyWithoutUserInput
@@ -1611,13 +1909,19 @@ export type UserUpdateWithoutChatsInput = {
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  hasGameAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  accessGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessGrantedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  invitedBy?: Prisma.UserUpdateOneWithoutInvitesNestedInput
-  invites?: Prisma.UserUpdateManyWithoutInvitedByNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   rewards?: Prisma.ReferralRewardUpdateManyWithoutInviterNestedInput
   tickets?: Prisma.TicketUpdateManyWithoutUserNestedInput
   games?: Prisma.GamePlayerUpdateManyWithoutUserNestedInput
@@ -1634,15 +1938,21 @@ export type UserUncheckedUpdateWithoutChatsInput = {
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  hasGameAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  accessGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessGrantedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
-  invitedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  invites?: Prisma.UserUncheckedUpdateManyWithoutInvitedByNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   rewards?: Prisma.ReferralRewardUncheckedUpdateManyWithoutInviterNestedInput
   tickets?: Prisma.TicketUncheckedUpdateManyWithoutUserNestedInput
   games?: Prisma.GamePlayerUncheckedUpdateManyWithoutUserNestedInput
@@ -1660,13 +1970,19 @@ export type UserCreateWithoutNotifsInput = {
   password?: string | null
   inviteCode: string
   inviteQuota?: number
-  status?: $Enums.UserStatus
-  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  hasGameAccess?: boolean
+  accessGrantedAt?: Date | string | null
+  accessGrantedBy?: number | null
+  isBanned?: boolean
+  bannedAt?: Date | string | null
+  bannedBy?: number | null
+  joinedWaitlistAt?: Date | string | null
   waitlistPoints?: number
+  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  invitedBy?: Prisma.UserCreateNestedOneWithoutInvitesInput
-  invites?: Prisma.UserCreateNestedManyWithoutInvitedByInput
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferredByInput
   rewards?: Prisma.ReferralRewardCreateNestedManyWithoutInviterInput
   tickets?: Prisma.TicketCreateNestedManyWithoutUserInput
   games?: Prisma.GamePlayerCreateNestedManyWithoutUserInput
@@ -1683,15 +1999,21 @@ export type UserUncheckedCreateWithoutNotifsInput = {
   wallet?: string | null
   role?: $Enums.UserRole
   password?: string | null
+  referredById?: number | null
   inviteCode: string
   inviteQuota?: number
-  status?: $Enums.UserStatus
-  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  hasGameAccess?: boolean
+  accessGrantedAt?: Date | string | null
+  accessGrantedBy?: number | null
+  isBanned?: boolean
+  bannedAt?: Date | string | null
+  bannedBy?: number | null
+  joinedWaitlistAt?: Date | string | null
   waitlistPoints?: number
-  invitedById?: number | null
+  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  invites?: Prisma.UserUncheckedCreateNestedManyWithoutInvitedByInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   rewards?: Prisma.ReferralRewardUncheckedCreateNestedManyWithoutInviterInput
   tickets?: Prisma.TicketUncheckedCreateNestedManyWithoutUserInput
   games?: Prisma.GamePlayerUncheckedCreateNestedManyWithoutUserInput
@@ -1725,13 +2047,19 @@ export type UserUpdateWithoutNotifsInput = {
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  hasGameAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  accessGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessGrantedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  invitedBy?: Prisma.UserUpdateOneWithoutInvitesNestedInput
-  invites?: Prisma.UserUpdateManyWithoutInvitedByNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   rewards?: Prisma.ReferralRewardUpdateManyWithoutInviterNestedInput
   tickets?: Prisma.TicketUpdateManyWithoutUserNestedInput
   games?: Prisma.GamePlayerUpdateManyWithoutUserNestedInput
@@ -1748,15 +2076,21 @@ export type UserUncheckedUpdateWithoutNotifsInput = {
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  hasGameAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  accessGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessGrantedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
-  invitedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  invites?: Prisma.UserUncheckedUpdateManyWithoutInvitedByNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   rewards?: Prisma.ReferralRewardUncheckedUpdateManyWithoutInviterNestedInput
   tickets?: Prisma.TicketUncheckedUpdateManyWithoutUserNestedInput
   games?: Prisma.GamePlayerUncheckedUpdateManyWithoutUserNestedInput
@@ -1774,13 +2108,19 @@ export type UserCreateWithoutAuditLogsInput = {
   password?: string | null
   inviteCode: string
   inviteQuota?: number
-  status?: $Enums.UserStatus
-  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  hasGameAccess?: boolean
+  accessGrantedAt?: Date | string | null
+  accessGrantedBy?: number | null
+  isBanned?: boolean
+  bannedAt?: Date | string | null
+  bannedBy?: number | null
+  joinedWaitlistAt?: Date | string | null
   waitlistPoints?: number
+  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  invitedBy?: Prisma.UserCreateNestedOneWithoutInvitesInput
-  invites?: Prisma.UserCreateNestedManyWithoutInvitedByInput
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferredByInput
   rewards?: Prisma.ReferralRewardCreateNestedManyWithoutInviterInput
   tickets?: Prisma.TicketCreateNestedManyWithoutUserInput
   games?: Prisma.GamePlayerCreateNestedManyWithoutUserInput
@@ -1797,15 +2137,21 @@ export type UserUncheckedCreateWithoutAuditLogsInput = {
   wallet?: string | null
   role?: $Enums.UserRole
   password?: string | null
+  referredById?: number | null
   inviteCode: string
   inviteQuota?: number
-  status?: $Enums.UserStatus
-  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  hasGameAccess?: boolean
+  accessGrantedAt?: Date | string | null
+  accessGrantedBy?: number | null
+  isBanned?: boolean
+  bannedAt?: Date | string | null
+  bannedBy?: number | null
+  joinedWaitlistAt?: Date | string | null
   waitlistPoints?: number
-  invitedById?: number | null
+  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  invites?: Prisma.UserUncheckedCreateNestedManyWithoutInvitedByInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
   rewards?: Prisma.ReferralRewardUncheckedCreateNestedManyWithoutInviterInput
   tickets?: Prisma.TicketUncheckedCreateNestedManyWithoutUserInput
   games?: Prisma.GamePlayerUncheckedCreateNestedManyWithoutUserInput
@@ -1839,13 +2185,19 @@ export type UserUpdateWithoutAuditLogsInput = {
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  hasGameAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  accessGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessGrantedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  invitedBy?: Prisma.UserUpdateOneWithoutInvitesNestedInput
-  invites?: Prisma.UserUpdateManyWithoutInvitedByNestedInput
+  referredBy?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   rewards?: Prisma.ReferralRewardUpdateManyWithoutInviterNestedInput
   tickets?: Prisma.TicketUpdateManyWithoutUserNestedInput
   games?: Prisma.GamePlayerUpdateManyWithoutUserNestedInput
@@ -1862,15 +2214,21 @@ export type UserUncheckedUpdateWithoutAuditLogsInput = {
   wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  hasGameAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  accessGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessGrantedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
-  invitedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  invites?: Prisma.UserUncheckedUpdateManyWithoutInvitedByNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   rewards?: Prisma.ReferralRewardUncheckedUpdateManyWithoutInviterNestedInput
   tickets?: Prisma.TicketUncheckedUpdateManyWithoutUserNestedInput
   games?: Prisma.GamePlayerUncheckedUpdateManyWithoutUserNestedInput
@@ -1879,7 +2237,7 @@ export type UserUncheckedUpdateWithoutAuditLogsInput = {
   chats?: Prisma.ChatUncheckedUpdateManyWithoutUserNestedInput
 }
 
-export type UserCreateManyInvitedByInput = {
+export type UserCreateManyReferredByInput = {
   id?: number
   fid: number
   username?: string | null
@@ -1889,14 +2247,20 @@ export type UserCreateManyInvitedByInput = {
   password?: string | null
   inviteCode: string
   inviteQuota?: number
-  status?: $Enums.UserStatus
-  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
+  hasGameAccess?: boolean
+  accessGrantedAt?: Date | string | null
+  accessGrantedBy?: number | null
+  isBanned?: boolean
+  bannedAt?: Date | string | null
+  bannedBy?: number | null
+  joinedWaitlistAt?: Date | string | null
   waitlistPoints?: number
+  completedTasks?: Prisma.UserCreatecompletedTasksInput | string[]
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
-export type UserUpdateWithoutInvitedByInput = {
+export type UserUpdateWithoutReferredByInput = {
   fid?: Prisma.IntFieldUpdateOperationsInput | number
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pfpUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1905,12 +2269,18 @@ export type UserUpdateWithoutInvitedByInput = {
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  hasGameAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  accessGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessGrantedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  invites?: Prisma.UserUpdateManyWithoutInvitedByNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferredByNestedInput
   rewards?: Prisma.ReferralRewardUpdateManyWithoutInviterNestedInput
   tickets?: Prisma.TicketUpdateManyWithoutUserNestedInput
   games?: Prisma.GamePlayerUpdateManyWithoutUserNestedInput
@@ -1920,7 +2290,7 @@ export type UserUpdateWithoutInvitedByInput = {
   auditLogs?: Prisma.AuditLogUpdateManyWithoutAdminNestedInput
 }
 
-export type UserUncheckedUpdateWithoutInvitedByInput = {
+export type UserUncheckedUpdateWithoutReferredByInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   fid?: Prisma.IntFieldUpdateOperationsInput | number
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1930,12 +2300,18 @@ export type UserUncheckedUpdateWithoutInvitedByInput = {
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  hasGameAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  accessGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessGrantedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  invites?: Prisma.UserUncheckedUpdateManyWithoutInvitedByNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
   rewards?: Prisma.ReferralRewardUncheckedUpdateManyWithoutInviterNestedInput
   tickets?: Prisma.TicketUncheckedUpdateManyWithoutUserNestedInput
   games?: Prisma.GamePlayerUncheckedUpdateManyWithoutUserNestedInput
@@ -1945,7 +2321,7 @@ export type UserUncheckedUpdateWithoutInvitedByInput = {
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutAdminNestedInput
 }
 
-export type UserUncheckedUpdateManyWithoutInvitedByInput = {
+export type UserUncheckedUpdateManyWithoutReferredByInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   fid?: Prisma.IntFieldUpdateOperationsInput | number
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1955,9 +2331,15 @@ export type UserUncheckedUpdateManyWithoutInvitedByInput = {
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
   inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
+  hasGameAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  accessGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessGrantedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  completedTasks?: Prisma.UserUpdatecompletedTasksInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1968,7 +2350,7 @@ export type UserUncheckedUpdateManyWithoutInvitedByInput = {
  */
 
 export type UserCountOutputType = {
-  invites: number
+  referrals: number
   rewards: number
   tickets: number
   games: number
@@ -1979,7 +2361,7 @@ export type UserCountOutputType = {
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  invites?: boolean | UserCountOutputTypeCountInvitesArgs
+  referrals?: boolean | UserCountOutputTypeCountReferralsArgs
   rewards?: boolean | UserCountOutputTypeCountRewardsArgs
   tickets?: boolean | UserCountOutputTypeCountTicketsArgs
   games?: boolean | UserCountOutputTypeCountGamesArgs
@@ -2002,7 +2384,7 @@ export type UserCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensi
 /**
  * UserCountOutputType without action
  */
-export type UserCountOutputTypeCountInvitesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type UserCountOutputTypeCountReferralsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.UserWhereInput
 }
 
@@ -2064,16 +2446,22 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   wallet?: boolean
   role?: boolean
   password?: boolean
+  referredById?: boolean
   inviteCode?: boolean
   inviteQuota?: boolean
-  status?: boolean
-  completedTasks?: boolean
+  hasGameAccess?: boolean
+  accessGrantedAt?: boolean
+  accessGrantedBy?: boolean
+  isBanned?: boolean
+  bannedAt?: boolean
+  bannedBy?: boolean
+  joinedWaitlistAt?: boolean
   waitlistPoints?: boolean
-  invitedById?: boolean
+  completedTasks?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  invitedBy?: boolean | Prisma.User$invitedByArgs<ExtArgs>
-  invites?: boolean | Prisma.User$invitesArgs<ExtArgs>
+  referredBy?: boolean | Prisma.User$referredByArgs<ExtArgs>
+  referrals?: boolean | Prisma.User$referralsArgs<ExtArgs>
   rewards?: boolean | Prisma.User$rewardsArgs<ExtArgs>
   tickets?: boolean | Prisma.User$ticketsArgs<ExtArgs>
   games?: boolean | Prisma.User$gamesArgs<ExtArgs>
@@ -2092,15 +2480,21 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   wallet?: boolean
   role?: boolean
   password?: boolean
+  referredById?: boolean
   inviteCode?: boolean
   inviteQuota?: boolean
-  status?: boolean
-  completedTasks?: boolean
+  hasGameAccess?: boolean
+  accessGrantedAt?: boolean
+  accessGrantedBy?: boolean
+  isBanned?: boolean
+  bannedAt?: boolean
+  bannedBy?: boolean
+  joinedWaitlistAt?: boolean
   waitlistPoints?: boolean
-  invitedById?: boolean
+  completedTasks?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  invitedBy?: boolean | Prisma.User$invitedByArgs<ExtArgs>
+  referredBy?: boolean | Prisma.User$referredByArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -2111,15 +2505,21 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   wallet?: boolean
   role?: boolean
   password?: boolean
+  referredById?: boolean
   inviteCode?: boolean
   inviteQuota?: boolean
-  status?: boolean
-  completedTasks?: boolean
+  hasGameAccess?: boolean
+  accessGrantedAt?: boolean
+  accessGrantedBy?: boolean
+  isBanned?: boolean
+  bannedAt?: boolean
+  bannedBy?: boolean
+  joinedWaitlistAt?: boolean
   waitlistPoints?: boolean
-  invitedById?: boolean
+  completedTasks?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  invitedBy?: boolean | Prisma.User$invitedByArgs<ExtArgs>
+  referredBy?: boolean | Prisma.User$referredByArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectScalar = {
@@ -2130,20 +2530,26 @@ export type UserSelectScalar = {
   wallet?: boolean
   role?: boolean
   password?: boolean
+  referredById?: boolean
   inviteCode?: boolean
   inviteQuota?: boolean
-  status?: boolean
-  completedTasks?: boolean
+  hasGameAccess?: boolean
+  accessGrantedAt?: boolean
+  accessGrantedBy?: boolean
+  isBanned?: boolean
+  bannedAt?: boolean
+  bannedBy?: boolean
+  joinedWaitlistAt?: boolean
   waitlistPoints?: boolean
-  invitedById?: boolean
+  completedTasks?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "fid" | "username" | "pfpUrl" | "wallet" | "role" | "password" | "inviteCode" | "inviteQuota" | "status" | "completedTasks" | "waitlistPoints" | "invitedById" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "fid" | "username" | "pfpUrl" | "wallet" | "role" | "password" | "referredById" | "inviteCode" | "inviteQuota" | "hasGameAccess" | "accessGrantedAt" | "accessGrantedBy" | "isBanned" | "bannedAt" | "bannedBy" | "joinedWaitlistAt" | "waitlistPoints" | "completedTasks" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  invitedBy?: boolean | Prisma.User$invitedByArgs<ExtArgs>
-  invites?: boolean | Prisma.User$invitesArgs<ExtArgs>
+  referredBy?: boolean | Prisma.User$referredByArgs<ExtArgs>
+  referrals?: boolean | Prisma.User$referralsArgs<ExtArgs>
   rewards?: boolean | Prisma.User$rewardsArgs<ExtArgs>
   tickets?: boolean | Prisma.User$ticketsArgs<ExtArgs>
   games?: boolean | Prisma.User$gamesArgs<ExtArgs>
@@ -2154,17 +2560,17 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  invitedBy?: boolean | Prisma.User$invitedByArgs<ExtArgs>
+  referredBy?: boolean | Prisma.User$referredByArgs<ExtArgs>
 }
 export type UserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  invitedBy?: boolean | Prisma.User$invitedByArgs<ExtArgs>
+  referredBy?: boolean | Prisma.User$referredByArgs<ExtArgs>
 }
 
 export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "User"
   objects: {
-    invitedBy: Prisma.$UserPayload<ExtArgs> | null
-    invites: Prisma.$UserPayload<ExtArgs>[]
+    referredBy: Prisma.$UserPayload<ExtArgs> | null
+    referrals: Prisma.$UserPayload<ExtArgs>[]
     rewards: Prisma.$ReferralRewardPayload<ExtArgs>[]
     tickets: Prisma.$TicketPayload<ExtArgs>[]
     games: Prisma.$GamePlayerPayload<ExtArgs>[]
@@ -2181,12 +2587,18 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     wallet: string | null
     role: $Enums.UserRole
     password: string | null
+    referredById: number | null
     inviteCode: string
     inviteQuota: number
-    status: $Enums.UserStatus
-    completedTasks: string[]
+    hasGameAccess: boolean
+    accessGrantedAt: Date | null
+    accessGrantedBy: number | null
+    isBanned: boolean
+    bannedAt: Date | null
+    bannedBy: number | null
+    joinedWaitlistAt: Date | null
     waitlistPoints: number
-    invitedById: number | null
+    completedTasks: string[]
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["user"]>
@@ -2583,8 +2995,8 @@ readonly fields: UserFieldRefs;
  */
 export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  invitedBy<T extends Prisma.User$invitedByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$invitedByArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  invites<T extends Prisma.User$invitesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$invitesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  referredBy<T extends Prisma.User$referredByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$referredByArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  referrals<T extends Prisma.User$referralsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$referralsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   rewards<T extends Prisma.User$rewardsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$rewardsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReferralRewardPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   tickets<T extends Prisma.User$ticketsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$ticketsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TicketPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   games<T extends Prisma.User$gamesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$gamesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GamePlayerPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -2628,12 +3040,18 @@ export interface UserFieldRefs {
   readonly wallet: Prisma.FieldRef<"User", 'String'>
   readonly role: Prisma.FieldRef<"User", 'UserRole'>
   readonly password: Prisma.FieldRef<"User", 'String'>
+  readonly referredById: Prisma.FieldRef<"User", 'Int'>
   readonly inviteCode: Prisma.FieldRef<"User", 'String'>
   readonly inviteQuota: Prisma.FieldRef<"User", 'Int'>
-  readonly status: Prisma.FieldRef<"User", 'UserStatus'>
-  readonly completedTasks: Prisma.FieldRef<"User", 'String[]'>
+  readonly hasGameAccess: Prisma.FieldRef<"User", 'Boolean'>
+  readonly accessGrantedAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly accessGrantedBy: Prisma.FieldRef<"User", 'Int'>
+  readonly isBanned: Prisma.FieldRef<"User", 'Boolean'>
+  readonly bannedAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly bannedBy: Prisma.FieldRef<"User", 'Int'>
+  readonly joinedWaitlistAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly waitlistPoints: Prisma.FieldRef<"User", 'Int'>
-  readonly invitedById: Prisma.FieldRef<"User", 'Int'>
+  readonly completedTasks: Prisma.FieldRef<"User", 'String[]'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
 }
@@ -3032,9 +3450,9 @@ export type UserDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
 }
 
 /**
- * User.invitedBy
+ * User.referredBy
  */
-export type User$invitedByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type User$referredByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
    * Select specific fields to fetch from the User
    */
@@ -3051,9 +3469,9 @@ export type User$invitedByArgs<ExtArgs extends runtime.Types.Extensions.Internal
 }
 
 /**
- * User.invites
+ * User.referrals
  */
-export type User$invitesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type User$referralsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
    * Select specific fields to fetch from the User
    */

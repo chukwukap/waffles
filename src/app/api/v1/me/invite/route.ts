@@ -20,7 +20,7 @@ export const GET = withAuth(async (_request, auth: AuthResult) => {
         inviteCode: true,
         inviteQuota: true,
         _count: {
-          select: { invites: true },
+          select: { referrals: true },
         },
       },
     });
@@ -34,7 +34,7 @@ export const GET = withAuth(async (_request, auth: AuthResult) => {
 
     return NextResponse.json<InviteResponse>({
       code: user.inviteCode,
-      invitesCount: user._count.invites,
+      invitesCount: user._count.referrals,
       inviteQuota: user.inviteQuota,
     });
   } catch (error) {

@@ -35,7 +35,7 @@ export async function GET(
         status: true,
         entryFee: true,
         prizePool: true,
-        roundDurationSec: true,
+        roundBreakSec: true,
         maxPlayers: true,
         _count: {
           select: {

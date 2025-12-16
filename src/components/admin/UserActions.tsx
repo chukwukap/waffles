@@ -1,16 +1,40 @@
 "use client";
 
-import { updateUserStatusAction, adjustInviteQuotaAction, promoteToAdminAction } from "@/actions/admin/users";
+import { grantGameAccessAction, banUserAction, unbanUserAction, adjustInviteQuotaAction, promoteToAdminAction } from "@/actions/admin/users";
 import { useState } from "react";
 
-export function UserActions({ user }: { user: any }) {
+export function UserActions({ user }: { user: { id: number; username: string | null; inviteQuota: number; hasGameAccess: boolean; isBanned: boolean; role: string } }) {
     const [loading, setLoading] = useState(false);
 
-    const handleStatusChange = async (status: "NONE" | "WAITLIST" | "ACTIVE" | "BANNED") => {
-        if (!confirm(`Change user status to ${status}?`)) return;
+    const handleGrantAccess = async () => {
+        if (!confirm(`Grant game access to this user?`)) return;
 
         setLoading(true);
-        const result = await updateUserStatusAction(user.id, status);
+        const result = await grantGameAccessAction(user.id);
+        setLoading(false);
+
+        if (!result.success) {
+            alert(result.error);
+        }
+    };
+
+    const handleBan = async () => {
+        if (!confirm(`Ban this user?`)) return;
+
+        setLoading(true);
+        const result = await banUserAction(user.id);
+        setLoading(false);
+
+        if (!result.success) {
+            alert(result.error);
+        }
+    };
+
+    const handleUnban = async () => {
+        if (!confirm(`Unban this user?`)) return;
+
+        setLoading(true);
+        const result = await unbanUserAction(user.id);
         setLoading(false);
 
         if (!result.success) {
@@ -54,29 +78,32 @@ export function UserActions({ user }: { user: any }) {
             <h3 className="text-lg font-semibold text-white mb-4 font-display">Actions</h3>
             <div className="space-y-4">
                 <div>
-                    <p className="text-sm font-medium text-white/50 mb-3">Change Status</p>
+                    <p className="text-sm font-medium text-white/50 mb-3">Access Control</p>
                     <div className="flex flex-wrap gap-2">
                         <button
-                            onClick={() => handleStatusChange("ACTIVE")}
-                            disabled={loading || user.status === "ACTIVE"}
+                            onClick={handleGrantAccess}
+                            disabled={loading || user.hasGameAccess}
                             className="px-3 py-1.5 bg-[#14B985]/20 disabled:opacity-40 text-[#14B985] text-sm rounded-xl hover:bg-[#14B985]/30 border border-[#14B985]/30 transition-colors font-medium"
                         >
-                            Activate
+                            Grant Access
                         </button>
-                        <button
-                            onClick={() => handleStatusChange("WAITLIST")}
-                            disabled={loading || user.status === "WAITLIST"}
-                            className="px-3 py-1.5 bg-[#FFC931]/20 disabled:opacity-40 text-[#FFC931] text-sm rounded-xl hover:bg-[#FFC931]/30 border border-[#FFC931]/30 transition-colors font-medium"
-                        >
-                            Waitlist
-                        </button>
-                        <button
-                            onClick={() => handleStatusChange("BANNED")}
-                            disabled={loading || user.status === "BANNED"}
-                            className="px-3 py-1.5 bg-red-500/20 disabled:opacity-40 text-red-400 text-sm rounded-xl hover:bg-red-500/30 border border-red-500/30 transition-colors font-medium"
-                        >
-                            Ban
-                        </button>
+                        {user.isBanned ? (
+                            <button
+                                onClick={handleUnban}
+                                disabled={loading}
+                                className="px-3 py-1.5 bg-[#FFC931]/20 disabled:opacity-40 text-[#FFC931] text-sm rounded-xl hover:bg-[#FFC931]/30 border border-[#FFC931]/30 transition-colors font-medium"
+                            >
+                                Unban
+                            </button>
+                        ) : (
+                            <button
+                                onClick={handleBan}
+                                disabled={loading}
+                                className="px-3 py-1.5 bg-red-500/20 disabled:opacity-40 text-red-400 text-sm rounded-xl hover:bg-red-500/30 border border-red-500/30 transition-colors font-medium"
+                            >
+                                Ban
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -105,4 +132,3 @@ export function UserActions({ user }: { user: any }) {
         </div>
     );
 }
-

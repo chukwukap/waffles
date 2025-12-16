@@ -60,7 +60,7 @@ async function main() {
         username: username.trim() || null,
         wallet: wallet.trim() || null,
         inviteCode,
-        status: "ACTIVE",
+        hasGameAccess: true,
         role: "ADMIN",
         inviteQuota: 999,
       },
@@ -84,7 +84,7 @@ async function main() {
       // Promote to admin
       user = await prisma.user.update({
         where: { id: user.id },
-        data: { role: "ADMIN", status: "ACTIVE" },
+        data: { role: "ADMIN", hasGameAccess: true },
       });
       console.log("✅ User promoted to ADMIN");
     }

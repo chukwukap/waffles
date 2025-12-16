@@ -46,9 +46,7 @@ export async function GET(request: NextRequest) {
 
     const users = await prisma.user.findMany({
       where: {
-        status: {
-          in: ["WAITLIST", "ACTIVE"],
-        },
+        OR: [{ joinedWaitlistAt: { not: null } }, { hasGameAccess: true }],
       },
       orderBy: [
         { waitlistPoints: "desc" },
@@ -66,9 +64,7 @@ export async function GET(request: NextRequest) {
 
     const totalParticipants = await prisma.user.count({
       where: {
-        status: {
-          in: ["WAITLIST", "ACTIVE"],
-        },
+        OR: [{ joinedWaitlistAt: { not: null } }, { hasGameAccess: true }],
       },
     });
 
@@ -86,9 +82,7 @@ export async function GET(request: NextRequest) {
             waitlistPoints: {
               gt: user.waitlistPoints,
             },
-            status: {
-              in: ["WAITLIST", "ACTIVE"],
-            },
+            OR: [{ joinedWaitlistAt: { not: null } }, { hasGameAccess: true }],
           },
         });
         userRank = rank + 1;

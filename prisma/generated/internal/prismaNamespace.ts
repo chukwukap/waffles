@@ -1200,12 +1200,18 @@ export const UserScalarFieldEnum = {
   wallet: 'wallet',
   role: 'role',
   password: 'password',
+  referredById: 'referredById',
   inviteCode: 'inviteCode',
   inviteQuota: 'inviteQuota',
-  status: 'status',
-  completedTasks: 'completedTasks',
+  hasGameAccess: 'hasGameAccess',
+  accessGrantedAt: 'accessGrantedAt',
+  accessGrantedBy: 'accessGrantedBy',
+  isBanned: 'isBanned',
+  bannedAt: 'bannedAt',
+  bannedBy: 'bannedBy',
+  joinedWaitlistAt: 'joinedWaitlistAt',
   waitlistPoints: 'waitlistPoints',
-  invitedById: 'invitedById',
+  completedTasks: 'completedTasks',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1237,7 +1243,7 @@ export const GameScalarFieldEnum = {
   endsAt: 'endsAt',
   entryFee: 'entryFee',
   prizePool: 'prizePool',
-  roundDurationSec: 'roundDurationSec',
+  roundBreakSec: 'roundBreakSec',
   maxPlayers: 'maxPlayers',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -1436,16 +1442,9 @@ export type ListEnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$Pri
 
 
 /**
- * Reference to a field of type 'UserStatus'
+ * Reference to a field of type 'Boolean'
  */
-export type EnumUserStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserStatus'>
-    
-
-
-/**
- * Reference to a field of type 'UserStatus[]'
- */
-export type ListEnumUserStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserStatus[]'>
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -1530,13 +1529,6 @@ export type EnumTicketStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$Pri
  * Reference to a field of type 'TicketStatus[]'
  */
 export type ListEnumTicketStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TicketStatus[]'>
-    
-
-
-/**
- * Reference to a field of type 'Boolean'
- */
-export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 

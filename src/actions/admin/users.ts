@@ -6,9 +6,8 @@ import { requireAdminSession } from "@/lib/admin-auth";
 import { logAdminAction, AdminAction, EntityType } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 
-const updateUserStatusSchema = z.object({
+const userIdSchema = z.object({
   userId: z.number().int().positive(),
-  status: z.enum(["NONE", "WAITLIST", "ACTIVE", "BANNED"]),
 });
 
 const adjustQuotaSchema = z.object({
@@ -21,18 +20,17 @@ export type UserActionResult =
   | { success: false; error: string };
 
 /**
- * Update user status (ACTIVE, BANNED, WAITLIST, NONE)
+ * Grant game access to a user
  */
-export async function updateUserStatusAction(
-  userId: number,
-  status: "NONE" | "WAITLIST" | "ACTIVE" | "BANNED"
+export async function grantGameAccessAction(
+  userId: number
 ): Promise<UserActionResult> {
   const authResult = await requireAdminSession();
   if (!authResult.authenticated || !authResult.session) {
     return { success: false, error: "Unauthorized" };
   }
 
-  const validation = updateUserStatusSchema.safeParse({ userId, status });
+  const validation = userIdSchema.safeParse({ userId });
   if (!validation.success) {
     return { success: false, error: "Invalid input" };
   }
@@ -40,20 +38,19 @@ export async function updateUserStatusAction(
   try {
     const user = await prisma.user.update({
       where: { id: userId },
-      data: { status },
+      data: {
+        hasGameAccess: true,
+        accessGrantedAt: new Date(),
+        accessGrantedBy: authResult.session.userId,
+      },
     });
-
-    const action =
-      status === "BANNED"
-        ? AdminAction.BAN_USER
-        : AdminAction.UPDATE_USER_STATUS;
 
     await logAdminAction({
       adminId: authResult.session.userId,
-      action,
+      action: AdminAction.UPDATE_USER_STATUS,
       entityType: EntityType.USER,
       entityId: userId,
-      details: { newStatus: status, username: user.username },
+      details: { action: "grant_access", username: user.username },
     });
 
     revalidatePath("/admin/users");
@@ -61,8 +58,94 @@ export async function updateUserStatusAction(
 
     return { success: true };
   } catch (error) {
-    console.error("Update user status error:", error);
-    return { success: false, error: "Failed to update user status" };
+    console.error("Grant game access error:", error);
+    return { success: false, error: "Failed to grant game access" };
+  }
+}
+
+/**
+ * Ban a user
+ */
+export async function banUserAction(userId: number): Promise<UserActionResult> {
+  const authResult = await requireAdminSession();
+  if (!authResult.authenticated || !authResult.session) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const validation = userIdSchema.safeParse({ userId });
+  if (!validation.success) {
+    return { success: false, error: "Invalid input" };
+  }
+
+  try {
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        isBanned: true,
+        bannedAt: new Date(),
+        bannedBy: authResult.session.userId,
+      },
+    });
+
+    await logAdminAction({
+      adminId: authResult.session.userId,
+      action: AdminAction.BAN_USER,
+      entityType: EntityType.USER,
+      entityId: userId,
+      details: { username: user.username },
+    });
+
+    revalidatePath("/admin/users");
+    revalidatePath(`/admin/users/${userId}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Ban user error:", error);
+    return { success: false, error: "Failed to ban user" };
+  }
+}
+
+/**
+ * Unban a user
+ */
+export async function unbanUserAction(
+  userId: number
+): Promise<UserActionResult> {
+  const authResult = await requireAdminSession();
+  if (!authResult.authenticated || !authResult.session) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const validation = userIdSchema.safeParse({ userId });
+  if (!validation.success) {
+    return { success: false, error: "Invalid input" };
+  }
+
+  try {
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        isBanned: false,
+        bannedAt: null,
+        bannedBy: null,
+      },
+    });
+
+    await logAdminAction({
+      adminId: authResult.session.userId,
+      action: AdminAction.UPDATE_USER_STATUS,
+      entityType: EntityType.USER,
+      entityId: userId,
+      details: { action: "unban", username: user.username },
+    });
+
+    revalidatePath("/admin/users");
+    revalidatePath(`/admin/users/${userId}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Unban user error:", error);
+    return { success: false, error: "Failed to unban user" };
   }
 }
 

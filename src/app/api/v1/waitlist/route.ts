@@ -8,7 +8,8 @@ interface WaitlistResponse {
   points: number;
   inviteCode: string | null;
   invitesCount: number;
-  status: string;
+  hasGameAccess: boolean;
+  joinedWaitlistAt: Date | null;
   completedTasks: string[];
 }
 
@@ -24,11 +25,12 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
         fid: true,
         waitlistPoints: true,
         inviteCode: true,
-        status: true,
+        hasGameAccess: true,
+        joinedWaitlistAt: true,
         completedTasks: true,
         _count: {
           select: {
-            invites: true,
+            referrals: true,
           },
         },
       },
@@ -55,8 +57,9 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
       rank: rank + 1,
       points: user.waitlistPoints,
       inviteCode: user.inviteCode,
-      invitesCount: user._count.invites,
-      status: user.status,
+      invitesCount: user._count.referrals,
+      hasGameAccess: user.hasGameAccess,
+      joinedWaitlistAt: user.joinedWaitlistAt,
       completedTasks: user.completedTasks,
     };
 

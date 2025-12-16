@@ -10,7 +10,9 @@ export interface UserData {
   waitlistPoints: number;
   rank: number;
   invitesCount: number;
-  status: string;
+  hasGameAccess: boolean;
+  isBanned: boolean;
+  joinedWaitlistAt: Date | null;
 }
 
 /**
@@ -30,7 +32,9 @@ export function useUser() {
 
     setIsLoading(true);
     try {
-      const res = await sdk.quickAuth.fetch("/api/v1/me", { cache: "no-store" });
+      const res = await sdk.quickAuth.fetch("/api/v1/me", {
+        cache: "no-store",
+      });
 
       // 404/401 = not in DB yet (expected for new users)
       if (res.status === 404 || res.status === 401) {

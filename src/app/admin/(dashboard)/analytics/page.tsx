@@ -74,9 +74,9 @@ async function getOverviewData(start: Date, end: Date) {
         }),
         prisma.user.count({ where: { createdAt: { gte: start, lte: end } } }),
         prisma.user.count({ where: { createdAt: { gte: previousStart, lt: start } } }),
-        prisma.user.count({ where: { status: "ACTIVE", games: { some: {} } } }),
+        prisma.user.count({ where: { hasGameAccess: true, games: { some: {} } } }),
         prisma.user.groupBy({ by: ["createdAt"], where: { createdAt: { gte: start, lte: end } }, _count: true }),
-        prisma.user.groupBy({ by: ["status"], _count: true }),
+        prisma.user.groupBy({ by: ["hasGameAccess", "isBanned"], _count: true }),
         prisma.game.count({ where: { status: "ENDED", endsAt: { gte: start, lte: end } } }),
         prisma.game.findMany({
             take: 10,
@@ -91,19 +91,19 @@ async function getOverviewData(start: Date, end: Date) {
         prisma.game.count({ where: { status: "LIVE" } }),
         prisma.gamePlayer.aggregate({ _avg: { score: true } }),
         prisma.gamePlayer.count({ where: { game: { status: "LIVE" } } }),
-        prisma.user.count({ where: { invitedById: { not: null } } }),
-        prisma.user.count({ where: { invitedById: { not: null }, games: { some: {} } } }),
+        prisma.user.count({ where: { referredById: { not: null } } }),
+        prisma.user.count({ where: { referredById: { not: null }, games: { some: {} } } }),
         prisma.referralReward.count({ where: { status: "CLAIMED" } }),
         prisma.user.findMany({
             take: 10,
-            where: { invites: { some: {} } },
+            where: { referrals: { some: {} } },
             select: {
                 id: true,
                 username: true,
-                _count: { select: { invites: true } },
-                invites: { select: { tickets: { where: { status: { in: ["PAID", "REDEEMED"] } }, select: { amountUSDC: true } } } },
+                _count: { select: { referrals: true } },
+                referrals: { select: { tickets: { where: { status: { in: ["PAID", "REDEEMED"] } }, select: { amountUSDC: true } } } },
             },
-            orderBy: { invites: { _count: "desc" } },
+            orderBy: { referrals: { _count: "desc" } },
         }),
         prisma.ticket.findMany({
             take: 5,
@@ -147,8 +147,23 @@ async function getOverviewData(start: Date, end: Date) {
         return { date: date.slice(5), signups: dailyMap.get(date)!.signups, cumulative: cumulativeUsers };
     });
 
-    const statusColors: Record<string, string> = { ACTIVE: "#14B985", WAITLIST: "#FFC931", NONE: "#666", BANNED: "#EF4444" };
-    const userStatusData = userStatusCounts.map((s) => ({ status: s.status, count: s._count, color: statusColors[s.status] || "#666" }));
+    // User status now uses booleans, so we need different logic
+    const userStatusData = userStatusCounts.map((s) => {
+        // Determine label and color based on boolean fields
+        let label = "None";
+        let color = "#666";
+        if (s.isBanned) {
+            label = "Banned";
+            color = "#EF4444";
+        } else if (s.hasGameAccess) {
+            label = "Active";
+            color = "#14B985";
+        } else {
+            label = "Waitlist";
+            color = "#FFC931";
+        }
+        return { status: label, count: s._count, color };
+    });
 
     const gamePerformance = topGames.map((game) => ({
         id: game.id,
@@ -174,11 +189,11 @@ async function getOverviewData(start: Date, end: Date) {
     const topReferrers = topReferrersData.map((user) => ({
         id: user.id,
         username: user.username || `user${user.id}`,
-        referralCount: user._count.invites,
-        revenueGenerated: user.invites.reduce((sum, invite) => sum + invite.tickets.reduce((ts, t) => ts + t.amountUSDC, 0), 0),
+        referralCount: user._count.referrals,
+        revenueGenerated: user.referrals.reduce((sum: number, invite: { tickets: { amountUSDC: number }[] }) => sum + invite.tickets.reduce((ts: number, t: { amountUSDC: number }) => ts + t.amountUSDC, 0), 0),
     }));
 
-    const totalInviters = await prisma.user.count({ where: { invites: { some: {} } } });
+    const totalInviters = await prisma.user.count({ where: { referrals: { some: {} } } });
     const kFactor = totalInviters > 0 ? referredUsers / totalInviters : 0;
     const ticketBuyers = await prisma.user.count({ where: { tickets: { some: {} } } });
     const allUsers = await prisma.user.count();
@@ -217,12 +232,12 @@ async function getOverviewData(start: Date, end: Date) {
 async function getWaitlistData() {
     const totalQuests = QUESTS.length;
     const [waitlistUsers, activeUsers, usersWithQuests, invitedUsersCount, totalInviters] = await Promise.all([
-        prisma.user.count({ where: { status: "WAITLIST" } }),
-        prisma.user.count({ where: { status: "ACTIVE" } }),
-        prisma.user.findMany({ where: { status: { in: ["WAITLIST", "ACTIVE"] } }, select: { completedTasks: true } }),
-        prisma.user.count({ where: { invitedById: { not: null } } }),
-        // Count users who have invited at least one person
-        prisma.user.count({ where: { invites: { some: {} } } }),
+        prisma.user.count({ where: { joinedWaitlistAt: { not: null }, hasGameAccess: false } }),
+        prisma.user.count({ where: { hasGameAccess: true } }),
+        prisma.user.findMany({ where: { joinedWaitlistAt: { not: null } }, select: { completedTasks: true } }),
+        prisma.user.count({ where: { referredById: { not: null } } }),
+        // Count users who have referred at least one person
+        prisma.user.count({ where: { referrals: { some: {} } } }),
     ]);
 
     // Calculate quest completion breakdown

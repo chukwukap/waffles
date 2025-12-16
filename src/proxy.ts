@@ -32,6 +32,7 @@ export function proxy(request: NextRequest) {
       // Session is valid, allow request
       return NextResponse.next();
     } catch (error) {
+      console.error("Error parsing session cookie:", error);
       // Invalid session data, redirect to login
       const response = NextResponse.redirect(
         new URL("/admin/login", request.url)

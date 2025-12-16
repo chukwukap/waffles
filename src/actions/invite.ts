@@ -23,13 +23,13 @@ export type ValidateReferralResult = ValidationSuccess | ValidationError;
  * Server Action: Validates an invite code and links the invitee to the inviter.
  * This is the core of the referral system.
  */
-export async function validateReferralAction(
+export async function redeemInviteCodeAction(
   _prevState: ValidateReferralResult | null,
   formData: FormData
 ): Promise<ValidateReferralResult> {
   const validation = validateReferralSchema.safeParse({
-    code: formData.get("code"),
-    fid: formData.get("fid"),
+    code: formData.get("inviteCode"),
+    fid: formData.get("userFid"),
   });
 
   if (!validation.success) {
@@ -48,7 +48,7 @@ export async function validateReferralAction(
       }),
       prisma.user.findUnique({
         where: { fid },
-        select: { id: true, invitedById: true, status: true },
+        select: { id: true, hasGameAccess: true, accessGrantedBy: true },
       }),
     ]);
 
@@ -66,34 +66,22 @@ export async function validateReferralAction(
       return { valid: false, error: "You cannot invite yourself." };
     }
 
-    // CHANGED: Logic to allow waitlisted users to be activated
-    // If user is already ACTIVE, we enforce strict referral rules (cannot change referrer)
-    if (invitee.status === "ACTIVE") {
-      if (invitee.invitedById) {
-        if (invitee.invitedById === inviter.id) {
-          return {
-            valid: true,
-            inviterId: inviter.id,
-            inviteeId: invitee.id,
-            code: code,
-          };
-        }
-        return {
-          valid: false,
-          error: "You have already accepted an invite from someone else.",
-        };
-      }
-      return { valid: false, error: "You have already accepted an invite." };
+    // If user already has game access, return success (idempotent)
+    if (invitee.hasGameAccess) {
+      return {
+        valid: true,
+        inviterId: invitee.accessGrantedBy ?? inviter.id,
+        inviteeId: invitee.id,
+        code: code,
+      };
     }
 
-    // If user is NOT ACTIVE (e.g. WAITLIST or NONE), we allow them to proceed.
-    // This will overwrite their invitedById (if any) and set them to ACTIVE.
-
+    // Check inviter has quota
     if (inviter.inviteQuota <= 0) {
       return { valid: false, error: "Inviter has no invites left." };
     }
 
-    // 3. All checks passed. Perform the referral in a transaction.
+    // 3. All checks passed. Perform the activation in a transaction.
     await prisma.$transaction(async (tx) => {
       // a. Decrement inviter's quota - strictly ensure > 0 to prevent race conditions
       const quotaUpdate = await tx.user.updateMany({
@@ -105,21 +93,21 @@ export async function validateReferralAction(
         throw new Error("Inviter has no invites left.");
       }
 
-      // b. Link invitee to inviter
+      // b. Grant game access to invitee
       await tx.user.update({
         where: { id: invitee.id },
         data: {
-          invitedById: inviter.id,
-          status: "ACTIVE", // <-- Activate the user!
+          hasGameAccess: true,
+          accessGrantedAt: new Date(),
+          accessGrantedBy: inviter.id,
         },
       });
 
       // c. Log or Update the reward event
-      // Use upsert to handle case where user was already referred on waitlist
       await tx.referralReward.upsert({
         where: { inviteeId: invitee.id },
         update: {
-          inviterId: inviter.id, // Update to the new inviter (the one who activated them)
+          inviterId: inviter.id,
           status: "PENDING",
         },
         create: {
@@ -131,8 +119,6 @@ export async function validateReferralAction(
       });
     });
 
-    // Track successful invite redemption
-
     return {
       valid: true,
       inviterId: inviter.id,
@@ -140,7 +126,7 @@ export async function validateReferralAction(
       code,
     };
   } catch (err) {
-    console.error("[VALIDATE_REFERRAL_ACTION_ERROR]", err);
+    console.error("[REDEEM_INVITE_CODE_ERROR]", err);
     return { valid: false, error: "Validation failed due to a server error." };
   }
 }

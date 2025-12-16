@@ -93,7 +93,7 @@ export async function submitAnswerAction(
     // 1. Get User
     const user = await prisma.user.findUnique({
       where: { fid },
-      select: { id: true, status: true }, // Added status
+      select: { id: true, hasGameAccess: true, isBanned: true },
     });
     console.log("[submitAnswerAction] User fetch:", user);
     if (!user) {
@@ -102,7 +102,7 @@ export async function submitAnswerAction(
     }
 
     // Enforce access control
-    if (user.status !== "ACTIVE") {
+    if (!user.hasGameAccess || user.isBanned) {
       return {
         success: false,
         error: "Access denied. You must be invited to play.",

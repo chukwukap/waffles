@@ -142,7 +142,7 @@ export default function LiveGameClient({
     <>
       {showRoundCountdown ? (
         <RoundCountdownCard
-          duration={gameInfo?.roundDurationSec ?? 15}
+          duration={gameInfo?.roundBreakSec ?? 15}
           onComplete={handleRoundCountdownComplete}
           gameId={gameInfo?.id ?? null}
           nextRoundNumber={gameInfo?.questions[currentQuestionIndex + 1]?.roundIndex ?? 1}

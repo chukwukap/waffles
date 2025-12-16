@@ -146,11 +146,11 @@ export default async function LeaderboardPage({
 
   const user = await prisma.user.findUnique({
     where: { fid: userFid },
-    select: { status: true },
+    select: { hasGameAccess: true, isBanned: true },
   });
 
   // Enforce access control
-  if (!user || user.status !== "ACTIVE") {
+  if (!user || !user.hasGameAccess || user.isBanned) {
     redirect("/invite");
   }
 

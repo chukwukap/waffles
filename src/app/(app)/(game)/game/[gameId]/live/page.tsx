@@ -8,7 +8,7 @@ export const revalidate = 0;
 export type LiveGameInfoPayload = Prisma.GameGetPayload<{
   select: {
     id: true;
-    roundDurationSec: true;
+    roundBreakSec: true;
     questions: {
       select: {
         id: true;
@@ -49,7 +49,7 @@ export default async function LiveGamePage({
     where: { id: gameIdNum },
     select: {
       id: true,
-      roundDurationSec: true,
+      roundBreakSec: true,
       questions: {
         select: {
           id: true,

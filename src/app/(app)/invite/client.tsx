@@ -8,14 +8,14 @@ import {
   startTransition,
   useActionState,
 } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { motion, useAnimation } from "framer-motion";
 
 import { useUser } from "@/hooks/useUser";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import {
-  validateReferralAction,
+  redeemInviteCodeAction,
   type ValidateReferralResult,
 } from "@/actions/invite";
 import { validateReferralSchema } from "@/lib/schemas";
@@ -29,11 +29,20 @@ type ValidationStatus = "idle" | "validating" | "success" | "failed";
 // Shared spring config
 const spring = { type: "spring" as const, stiffness: 200, damping: 20 };
 
-export default function InvitePageClient() {
+interface InvitePageClientProps {
+  /** Called when invite validation succeeds - allows parent to update state */
+  onSuccess?: () => void;
+}
+
+export default function InvitePageClient({ onSuccess }: InvitePageClientProps) {
   const { user } = useUser();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const inputControls = useAnimation();
+
+  // Animate input in on mount
+  useEffect(() => {
+    inputControls.start({ opacity: 1, y: 0 });
+  }, [inputControls]);
 
   const fid = user?.fid;
   const initialCode = searchParams.get("code") || searchParams.get("ref") || "";
@@ -49,14 +58,14 @@ export default function InvitePageClient() {
   const [validationState, validateAction, isPending] = useActionState<
     ValidateReferralResult | null,
     FormData
-  >(validateReferralAction, null);
+  >(redeemInviteCodeAction, null);
 
   const runValidation = useCallback(
     (code: string) => {
       if (!fid) return;
       const formData = new FormData();
-      formData.append("code", code);
-      formData.append("fid", String(fid));
+      formData.append("inviteCode", code);
+      formData.append("userFid", String(fid));
       startTransition(() => validateAction(formData));
     },
     [fid, validateAction]
@@ -78,8 +87,10 @@ export default function InvitePageClient() {
     if (validationState.valid) {
       setError(null);
       setStatus("success");
-      const timer = setTimeout(() => router.push("/game"), 1500);
-      return () => clearTimeout(timer);
+      // Call parent's callback to update user state
+      // GameAuthGate will automatically show game content when status changes
+      onSuccess?.();
+      return;
     }
 
     setError(validationState.error);
@@ -88,7 +99,7 @@ export default function InvitePageClient() {
       x: [-8, 8, -6, 6, -4, 4, 0],
       transition: { duration: 0.4 },
     });
-  }, [validationState, router, inputControls]);
+  }, [validationState, onSuccess, inputControls]);
 
   // Auto-validate on 6 char input
   useEffect(() => {

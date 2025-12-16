@@ -17,7 +17,7 @@ const gameSchema = z.object({
   endsAt: z.string().transform((str) => new Date(str)),
   entryFee: z.coerce.number().min(0, "Entry fee must be non-negative"),
   prizePool: z.coerce.number().min(0, "Prize pool must be non-negative"),
-  roundDurationSec: z.coerce
+  roundBreakSec: z.coerce
     .number()
     .min(5, "Duration must be at least 5 seconds"),
   maxPlayers: z.coerce.number().min(2, "Must allow at least 2 players"),
@@ -48,7 +48,7 @@ export async function createGameAction(
     endsAt: formData.get("endsAt"),
     entryFee: formData.get("entryFee"),
     prizePool: formData.get("prizePool"),
-    roundDurationSec: formData.get("roundDurationSec"),
+    roundBreakSec: formData.get("roundBreakSec"),
     maxPlayers: formData.get("maxPlayers"),
   };
 
@@ -74,7 +74,7 @@ export async function createGameAction(
         endsAt: new Date(data.endsAt),
         entryFee: data.entryFee,
         prizePool: data.prizePool,
-        roundDurationSec: data.roundDurationSec,
+        roundBreakSec: data.roundBreakSec,
         maxPlayers: data.maxPlayers,
         status: "SCHEDULED",
       },
@@ -151,7 +151,7 @@ export async function updateGameAction(
     endsAt: formData.get("endsAt"),
     entryFee: formData.get("entryFee"),
     prizePool: formData.get("prizePool"),
-    roundDurationSec: formData.get("roundDurationSec"),
+    roundBreakSec: formData.get("roundBreakSec"),
     maxPlayers: formData.get("maxPlayers"),
   };
 
@@ -177,7 +177,7 @@ export async function updateGameAction(
         endsAt: new Date(data.endsAt),
         entryFee: data.entryFee,
         prizePool: data.prizePool,
-        roundDurationSec: data.roundDurationSec,
+        roundBreakSec: data.roundBreakSec,
         maxPlayers: data.maxPlayers,
       },
     });

@@ -8,7 +8,9 @@ interface MeResponse {
   username: string | null;
   pfpUrl: string | null;
   wallet: string | null;
-  status: string;
+  hasGameAccess: boolean;
+  isBanned: boolean;
+  joinedWaitlistAt: Date | null;
   inviteCode: string | null;
   waitlistPoints: number;
   rank: number;
@@ -27,7 +29,7 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
       include: {
         _count: {
           select: {
-            invites: true,
+            referrals: true,
           },
         },
       },
@@ -55,11 +57,13 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
       username: user.username,
       pfpUrl: user.pfpUrl,
       wallet: user.wallet,
-      status: user.status,
+      hasGameAccess: user.hasGameAccess,
+      isBanned: user.isBanned,
+      joinedWaitlistAt: user.joinedWaitlistAt,
       inviteCode: user.inviteCode,
       waitlistPoints: user.waitlistPoints,
       rank: rank + 1,
-      invitesCount: user._count.invites,
+      invitesCount: user._count.referrals,
       createdAt: user.createdAt,
     };
 

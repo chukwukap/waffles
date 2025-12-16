@@ -22,7 +22,8 @@ interface ProfileResponse {
   username: string | null;
   pfpUrl: string | null;
   wallet: string | null;
-  status: string;
+  hasGameAccess: boolean;
+  isBanned: boolean;
   inviteCode: string | null;
   waitlistPoints: number;
   rank: number;
@@ -59,7 +60,7 @@ export default function ProfilePageClient() {
         }
         const data: ProfileResponse = await res.json();
 
-        if (data.status !== "ACTIVE") {
+        if (!data.hasGameAccess || data.isBanned) {
           router.push("/invite");
           return;
         }

@@ -9,8 +9,15 @@ async function getUsers(searchParams: { page?: string; status?: string; q?: stri
 
     const where: any = {};
 
-    if (searchParams.status) {
-        where.status = searchParams.status;
+    // Handle status filter by converting to boolean queries
+    if (searchParams.status === 'ACTIVE') {
+        where.hasGameAccess = true;
+        where.isBanned = false;
+    } else if (searchParams.status === 'BANNED') {
+        where.isBanned = true;
+    } else if (searchParams.status === 'WAITLIST') {
+        where.joinedWaitlistAt = { not: null };
+        where.hasGameAccess = false;
     }
 
     if (searchParams.role) {
@@ -37,14 +44,16 @@ async function getUsers(searchParams: { page?: string; status?: string; q?: stri
                 fid: true,
                 username: true,
                 wallet: true,
-                status: true,
+                hasGameAccess: true,
+                isBanned: true,
+                joinedWaitlistAt: true,
                 role: true,
                 inviteQuota: true,
                 inviteCode: true,
                 createdAt: true,
                 _count: {
                     select: {
-                        invites: true,
+                        referrals: true,
                         games: true,
                         tickets: true,
                     },
@@ -57,19 +66,20 @@ async function getUsers(searchParams: { page?: string; status?: string; q?: stri
     return { users, total, page, pageSize };
 }
 
-function UserStatusBadge({ status }: { status: string }) {
-    const colors = {
-        NONE: "bg-white/10 text-white/60",
-        WAITLIST: "bg-[#FFC931]/20 text-[#FFC931]",
-        ACTIVE: "bg-[#14B985]/20 text-[#14B985]",
-        BANNED: "bg-red-500/20 text-red-400",
-    };
+function UserStatusBadge({ hasGameAccess, isBanned }: { hasGameAccess: boolean; isBanned: boolean }) {
+    let status = 'WAITLIST';
+    let colorClass = 'bg-[#FFC931]/20 text-[#FFC931]';
+
+    if (isBanned) {
+        status = 'BANNED';
+        colorClass = 'bg-red-500/20 text-red-400';
+    } else if (hasGameAccess) {
+        status = 'ACTIVE';
+        colorClass = 'bg-[#14B985]/20 text-[#14B985]';
+    }
 
     return (
-        <span
-            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colors[status as keyof typeof colors] || colors.NONE
-                }`}
-        >
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClass}`}>
             {status}
         </span>
     );
@@ -140,7 +150,7 @@ export default async function UsersListPage({
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    <UserStatusBadge status={user.status} />
+                                    <UserStatusBadge hasGameAccess={user.hasGameAccess} isBanned={user.isBanned} />
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                                     <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${user.role === "ADMIN"
@@ -151,7 +161,7 @@ export default async function UsersListPage({
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                    <div className="text-white">{user._count.invites} <span className="text-white/50">referred</span></div>
+                                    <div className="text-white">{user._count.referrals} <span className="text-white/50">referred</span></div>
                                     <div className="text-xs text-white/40">{user.inviteQuota} quota left</div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm">

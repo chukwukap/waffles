@@ -20,20 +20,34 @@ model User {
 
   // -- ADMIN --
   role     UserRole @default(USER)
-  password String? // Hashed password for admin accounts
+  password String?
 
-  // -- VIRAL LOOP --
-  inviteCode     String     @unique
-  inviteQuota    Int        @default(3)
-  status         UserStatus @default(NONE)
-  completedTasks String[]   @default([])
-  waitlistPoints Int        @default(0)
+  // -- REFERRAL (who brought them into the system) --
+  referredBy   User?  @relation("Referrals", fields: [referredById], references: [id])
+  referredById Int?
+  referrals    User[] @relation("Referrals")
 
-  // -- RELATIONSHIPS --
-  invitedBy   User?            @relation("ReferralTree", fields: [invitedById], references: [id])
-  invitedById Int?
-  invites     User[]           @relation("ReferralTree")
-  rewards     ReferralReward[] @relation("InviterRewards")
+  // -- INVITE SYSTEM --
+  inviteCode  String @unique
+  inviteQuota Int    @default(30)
+
+  // -- ACCESS CONTROL (simple booleans) --
+  hasGameAccess   Boolean   @default(false)
+  accessGrantedAt DateTime?
+  accessGrantedBy Int? // User ID who gave the invite code
+
+  // -- BAN (separate concern) --
+  isBanned Boolean   @default(false)
+  bannedAt DateTime?
+  bannedBy Int? // Admin ID who banned
+
+  // -- WAITLIST (historical record) --
+  joinedWaitlistAt DateTime?
+  waitlistPoints   Int       @default(0)
+  completedTasks   String[]  @default([])
+
+  // -- REWARD TRACKING --
+  rewards ReferralReward[] @relation("InviterRewards")
 
   // -- DATA --
   createdAt DateTime @default(now())
@@ -50,13 +64,6 @@ model User {
 enum UserRole {
   USER
   ADMIN
-}
-
-enum UserStatus {
-  NONE
-  WAITLIST
-  ACTIVE
-  BANNED
 }
 
 model ReferralReward {
@@ -100,10 +107,10 @@ model Game {
   endsAt   DateTime
 
   // -- CONFIGURATION --
-  entryFee         Float @default(50)
-  prizePool        Int   @default(0)
-  roundDurationSec Int   @default(15)
-  maxPlayers       Int   @default(200)
+  entryFee      Float @default(20)
+  prizePool     Int   @default(0)
+  roundBreakSec Int   @default(10)
+  maxPlayers    Int   @default(200)
 
   // -- DATA --
   questions Question[]

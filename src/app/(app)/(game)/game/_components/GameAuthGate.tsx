@@ -1,43 +1,33 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { type ReactNode } from "react";
 import { useUser } from "@/hooks/useUser";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
+import InvitePageClient from "@/app/(app)/invite/client";
 
 /**
  * GameAuthGate - Protects game routes.
- * Only users with status "ACTIVE" (invited) can access.
+ * If user is ACTIVE: render game content.
+ * If user is NOT ACTIVE: render invite form inline (no redirects).
  */
 export function GameAuthGate({ children }: { children: ReactNode }) {
-  const router = useRouter();
-  const { user, isLoading } = useUser();
+  const { user, isLoading, refetch } = useUser();
 
-  const isAuthorized = user?.status === "ACTIVE";
-
-  useEffect(() => {
-    // Once loaded, redirect if not authorized
-    if (!isLoading && !isAuthorized) {
-      router.replace("/invite");
-    }
-  }, [isLoading, isAuthorized, router]);
+  const isAuthorized = user?.hasGameAccess && !user?.isBanned;
 
   // Loading state
   if (isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <WaffleLoader text="CHECKING ACCESS..." />
+        <WaffleLoader text="LOADING..." />
       </div>
     );
   }
 
-  // Not authorized → redirecting
+  // Not authorized → show invite form inline (no redirect)
+  // Pass refetch so child can update parent's user state
   if (!isAuthorized) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <WaffleLoader text="REDIRECTING..." />
-      </div>
-    );
+    return <InvitePageClient onSuccess={refetch} />;
   }
 
   // Authorized → render game

@@ -54,10 +54,10 @@ export const POST = withAuth(async (request, auth: AuthResult) => {
     // Check user status
     const user = await prisma.user.findUnique({
       where: { id: auth.userId },
-      select: { id: true, status: true, wallet: true },
+      select: { id: true, hasGameAccess: true, isBanned: true, wallet: true },
     });
 
-    if (!user || user.status !== "ACTIVE") {
+    if (!user || !user.hasGameAccess || user.isBanned) {
       return NextResponse.json<ApiError>(
         {
           error: "Access denied. You must be invited to play.",

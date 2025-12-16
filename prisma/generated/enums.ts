@@ -17,16 +17,6 @@ export const UserRole = {
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]
 
 
-export const UserStatus = {
-  NONE: 'NONE',
-  WAITLIST: 'WAITLIST',
-  ACTIVE: 'ACTIVE',
-  BANNED: 'BANNED'
-} as const
-
-export type UserStatus = (typeof UserStatus)[keyof typeof UserStatus]
-
-
 export const RewardStatus = {
   PENDING: 'PENDING',
   UNLOCKED: 'UNLOCKED',

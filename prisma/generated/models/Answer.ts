@@ -618,10 +618,6 @@ export type AnswerUncheckedUpdateManyWithoutQuestionNestedInput = {
   deleteMany?: Prisma.AnswerScalarWhereInput | Prisma.AnswerScalarWhereInput[]
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
-}
-
 export type AnswerCreateWithoutUserInput = {
   selectedIndex: number
   isCorrect: boolean

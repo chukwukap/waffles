@@ -466,10 +466,6 @@ export type EnumRewardStatusFieldUpdateOperationsInput = {
   set?: $Enums.RewardStatus
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type ReferralRewardCreateWithoutInviterInput = {
   inviteeId: number
   status?: $Enums.RewardStatus
