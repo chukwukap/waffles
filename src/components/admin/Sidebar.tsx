@@ -13,6 +13,7 @@ import {
     Cog6ToothIcon,
     ArrowRightOnRectangleIcon,
     PhotoIcon,
+    StarIcon,
 } from "@heroicons/react/24/outline";
 import { WaffleIcon } from "@/components/icons";
 
@@ -20,6 +21,7 @@ const navigation = [
     { name: "Dashboard", href: "/admin", icon: HomeIcon },
     { name: "Games", href: "/admin/games", icon: TrophyIcon },
     { name: "Users", href: "/admin/users", icon: UsersIcon },
+    { name: "Quests", href: "/admin/quests", icon: StarIcon },
     { name: "Tickets", href: "/admin/tickets", icon: TicketIcon },
     { name: "Media Library", href: "/admin/media", icon: PhotoIcon },
     { name: "Analytics", href: "/admin/analytics", icon: ChartBarIcon },

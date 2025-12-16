@@ -28,6 +28,16 @@ export type User = Prisma.UserModel
  */
 export type ReferralReward = Prisma.ReferralRewardModel
 /**
+ * Model Quest
+ * 
+ */
+export type Quest = Prisma.QuestModel
+/**
+ * Model CompletedQuest
+ * 
+ */
+export type CompletedQuest = Prisma.CompletedQuestModel
+/**
  * Model Game
  * 
  */

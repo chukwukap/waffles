@@ -53,6 +53,8 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   User: 'User',
   ReferralReward: 'ReferralReward',
+  Quest: 'Quest',
+  CompletedQuest: 'CompletedQuest',
   Game: 'Game',
   Question: 'Question',
   Ticket: 'Ticket',
@@ -98,7 +100,6 @@ export const UserScalarFieldEnum = {
   bannedBy: 'bannedBy',
   joinedWaitlistAt: 'joinedWaitlistAt',
   waitlistPoints: 'waitlistPoints',
-  completedTasks: 'completedTasks',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -117,6 +118,45 @@ export const ReferralRewardScalarFieldEnum = {
 } as const
 
 export type ReferralRewardScalarFieldEnum = (typeof ReferralRewardScalarFieldEnum)[keyof typeof ReferralRewardScalarFieldEnum]
+
+
+export const QuestScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  title: 'title',
+  description: 'description',
+  iconUrl: 'iconUrl',
+  category: 'category',
+  sortOrder: 'sortOrder',
+  points: 'points',
+  type: 'type',
+  actionUrl: 'actionUrl',
+  castHash: 'castHash',
+  targetFid: 'targetFid',
+  requiredCount: 'requiredCount',
+  isActive: 'isActive',
+  startsAt: 'startsAt',
+  endsAt: 'endsAt',
+  repeatFrequency: 'repeatFrequency',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type QuestScalarFieldEnum = (typeof QuestScalarFieldEnum)[keyof typeof QuestScalarFieldEnum]
+
+
+export const CompletedQuestScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  questId: 'questId',
+  completedAt: 'completedAt',
+  pointsAwarded: 'pointsAwarded',
+  isApproved: 'isApproved',
+  approvedBy: 'approvedBy',
+  approvedAt: 'approvedAt'
+} as const
+
+export type CompletedQuestScalarFieldEnum = (typeof CompletedQuestScalarFieldEnum)[keyof typeof CompletedQuestScalarFieldEnum]
 
 
 export const GameScalarFieldEnum = {

@@ -26,6 +26,39 @@ export const RewardStatus = {
 export type RewardStatus = (typeof RewardStatus)[keyof typeof RewardStatus]
 
 
+export const QuestType = {
+  LINK: 'LINK',
+  FARCASTER_FOLLOW: 'FARCASTER_FOLLOW',
+  FARCASTER_CAST: 'FARCASTER_CAST',
+  FARCASTER_RECAST: 'FARCASTER_RECAST',
+  REFERRAL: 'REFERRAL',
+  CUSTOM: 'CUSTOM'
+} as const
+
+export type QuestType = (typeof QuestType)[keyof typeof QuestType]
+
+
+export const QuestCategory = {
+  SOCIAL: 'SOCIAL',
+  ONBOARDING: 'ONBOARDING',
+  REFERRAL: 'REFERRAL',
+  ENGAGEMENT: 'ENGAGEMENT',
+  SPECIAL: 'SPECIAL'
+} as const
+
+export type QuestCategory = (typeof QuestCategory)[keyof typeof QuestCategory]
+
+
+export const RepeatFrequency = {
+  ONCE: 'ONCE',
+  DAILY: 'DAILY',
+  WEEKLY: 'WEEKLY',
+  UNLIMITED: 'UNLIMITED'
+} as const
+
+export type RepeatFrequency = (typeof RepeatFrequency)[keyof typeof RepeatFrequency]
+
+
 export const GameTheme = {
   FOOTBALL: 'FOOTBALL',
   MOVIES: 'MOVIES',

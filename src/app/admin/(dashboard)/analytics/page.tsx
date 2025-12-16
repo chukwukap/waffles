@@ -26,7 +26,6 @@ import {
     AnalyticsTabs,
     type AnalyticsTab,
 } from "@/components/admin/analytics";
-import { QUESTS } from "@/lib/quests";
 
 // ============================================================
 // DATA FETCHING
@@ -230,11 +229,16 @@ async function getOverviewData(start: Date, end: Date) {
 }
 
 async function getWaitlistData() {
-    const totalQuests = QUESTS.length;
-    const [waitlistUsers, activeUsers, usersWithQuests, invitedUsersCount, totalInviters] = await Promise.all([
+    const [totalQuests, waitlistUsers, activeUsers, usersWithQuests, invitedUsersCount, totalInviters] = await Promise.all([
+        prisma.quest.count({ where: { isActive: true } }),
         prisma.user.count({ where: { joinedWaitlistAt: { not: null }, hasGameAccess: false } }),
         prisma.user.count({ where: { hasGameAccess: true } }),
-        prisma.user.findMany({ where: { joinedWaitlistAt: { not: null } }, select: { completedTasks: true } }),
+        prisma.user.findMany({
+            where: { joinedWaitlistAt: { not: null } },
+            select: {
+                _count: { select: { completedQuests: true } }
+            }
+        }),
         prisma.user.count({ where: { referredById: { not: null } } }),
         // Count users who have referred at least one person
         prisma.user.count({ where: { referrals: { some: {} } } }),
@@ -249,8 +253,8 @@ async function getWaitlistData() {
     };
 
     usersWithQuests.forEach((user) => {
-        const completed = user.completedTasks.length;
-        const percentage = (completed / totalQuests) * 100;
+        const completed = user._count.completedQuests;
+        const percentage = totalQuests > 0 ? (completed / totalQuests) * 100 : 0;
         if (percentage === 100) questCompletion.all++;
         else if (percentage >= 75) questCompletion.most++;
         else if (percentage >= 50) questCompletion.half++;

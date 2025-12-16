@@ -7,7 +7,7 @@ import {
 } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { notify } from "@/components/ui/Toaster";
-import { Quest, QuestId, QuestStatus, WaitlistData } from "../client";
+import { Quest, QuestStatus, WaitlistData } from "../client";
 import { completeWaitlistQuest, CompleteQuestState } from "@/actions/waitlist";
 import {
   useComposeCast,
@@ -48,7 +48,7 @@ think you can beat me? you're on😏`;
   }, [composeCastAsync, fid, waitlistData.rank]);
 
   // Track which quests have been "started" (clicked GO) -> Pending State
-  const [pendingQuests, setPendingQuests] = useLocalStorage<QuestId[]>(
+  const [pendingQuests, setPendingQuests] = useLocalStorage<string[]>(
     "waffles:quests:pending",
     []
   );
@@ -62,16 +62,16 @@ think you can beat me? you're on😏`;
   );
 
   const handleGo = async (quest: Quest) => {
-    // 1. Handle specific actions
-    if (quest.type === "invite") {
+    // 1. Handle specific actions based on quest type
+    if (quest.type === "REFERRAL") {
       share();
       return;
     }
 
-    if (quest.type === "view_cast" && quest.castHash) {
+    if (quest.type === "FARCASTER_RECAST" && quest.castHash) {
       // Use MiniKit's viewCast to open the cast in Farcaster
       viewCast({ hash: quest.castHash, close: false });
-    } else if (quest.type === "farcaster_share") {
+    } else if (quest.type === "FARCASTER_CAST") {
       try {
         await composeCastAsync({
           text: `just got in to waffles
@@ -88,26 +88,26 @@ think you can beat me? you're on😏`,
     }
 
     // 2. Set quest to pending state (shows COMPLETE button)
-    if (!pendingQuests.includes(quest.id)) {
-      setPendingQuests([...pendingQuests, quest.id]);
+    if (!pendingQuests.includes(quest.slug)) {
+      setPendingQuests([...pendingQuests, quest.slug]);
     }
   };
 
-  const handleComplete = (questId: string) => {
+  const handleComplete = (questSlug: string) => {
     if (!fid) {
       notify.error("User not identified");
       return;
     }
 
     // Optimistically mark as completed
-    setOptimisticCompleted((prev) => [...prev, questId]);
+    setOptimisticCompleted((prev) => [...prev, questSlug]);
 
     // Remove from pending since it's now completed (optimistically)
-    setPendingQuests((prev) => prev.filter((id) => id !== questId));
+    setPendingQuests((prev) => prev.filter((slug) => slug !== questSlug));
 
     const formData = new FormData();
     formData.append("fid", fid.toString());
-    formData.append("questId", questId);
+    formData.append("questId", questSlug); // Using slug as questId
 
     startTransition(() => {
       action(formData);
@@ -128,25 +128,35 @@ think you can beat me? you're on😏`,
   }, [state]);
 
   const getQuestStatus = (quest: Quest): QuestStatus => {
-    // 1. Completed?
+    // 1. Already completed from API?
+    if (quest.isCompleted) {
+      return "completed";
+    }
+
+    // 2. Optimistically completed?
     if (
-      waitlistData?.completedTasks.includes(quest.id) ||
-      optimisticCompleted.includes(quest.id)
+      waitlistData?.completedQuests.includes(quest.slug) ||
+      optimisticCompleted.includes(quest.slug)
     ) {
       return "completed";
     }
 
-    // 2. Pending?
-    if (quest.type === "invite") {
-      if (waitlistData.invitesCount >= 3) return "pending";
-      return "initial";
-    }
-
-    if (pendingQuests.includes(quest.id)) {
+    // 3. Pending approval (CUSTOM quests)?
+    if (quest.isPending) {
       return "pending";
     }
 
-    // 3. Initial
+    // 4. Pending (user clicked GO)?
+    if (quest.type === "REFERRAL") {
+      if (waitlistData.invitesCount >= quest.requiredCount) return "pending";
+      return "initial";
+    }
+
+    if (pendingQuests.includes(quest.slug)) {
+      return "pending";
+    }
+
+    // 5. Initial
     return "initial";
   };
 

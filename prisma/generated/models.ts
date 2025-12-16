@@ -10,6 +10,8 @@
  */
 export type * from './models/User'
 export type * from './models/ReferralReward'
+export type * from './models/Quest'
+export type * from './models/CompletedQuest'
 export type * from './models/Game'
 export type * from './models/Question'
 export type * from './models/Ticket'

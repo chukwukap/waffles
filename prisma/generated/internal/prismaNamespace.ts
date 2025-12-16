@@ -386,6 +386,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 export const ModelName = {
   User: 'User',
   ReferralReward: 'ReferralReward',
+  Quest: 'Quest',
+  CompletedQuest: 'CompletedQuest',
   Game: 'Game',
   Question: 'Question',
   Ticket: 'Ticket',
@@ -409,7 +411,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "referralReward" | "game" | "question" | "ticket" | "gamePlayer" | "answer" | "chat" | "notificationToken" | "auditLog"
+    modelProps: "user" | "referralReward" | "quest" | "completedQuest" | "game" | "question" | "ticket" | "gamePlayer" | "answer" | "chat" | "notificationToken" | "auditLog"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -558,6 +560,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.ReferralRewardCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.ReferralRewardCountAggregateOutputType> | number
+        }
+      }
+    }
+    Quest: {
+      payload: Prisma.$QuestPayload<ExtArgs>
+      fields: Prisma.QuestFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.QuestFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.QuestFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestPayload>
+        }
+        findFirst: {
+          args: Prisma.QuestFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.QuestFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestPayload>
+        }
+        findMany: {
+          args: Prisma.QuestFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestPayload>[]
+        }
+        create: {
+          args: Prisma.QuestCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestPayload>
+        }
+        createMany: {
+          args: Prisma.QuestCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.QuestCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestPayload>[]
+        }
+        delete: {
+          args: Prisma.QuestDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestPayload>
+        }
+        update: {
+          args: Prisma.QuestUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestPayload>
+        }
+        deleteMany: {
+          args: Prisma.QuestDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.QuestUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.QuestUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestPayload>[]
+        }
+        upsert: {
+          args: Prisma.QuestUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestPayload>
+        }
+        aggregate: {
+          args: Prisma.QuestAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateQuest>
+        }
+        groupBy: {
+          args: Prisma.QuestGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.QuestGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.QuestCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.QuestCountAggregateOutputType> | number
+        }
+      }
+    }
+    CompletedQuest: {
+      payload: Prisma.$CompletedQuestPayload<ExtArgs>
+      fields: Prisma.CompletedQuestFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CompletedQuestFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CompletedQuestPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CompletedQuestFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CompletedQuestPayload>
+        }
+        findFirst: {
+          args: Prisma.CompletedQuestFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CompletedQuestPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CompletedQuestFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CompletedQuestPayload>
+        }
+        findMany: {
+          args: Prisma.CompletedQuestFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CompletedQuestPayload>[]
+        }
+        create: {
+          args: Prisma.CompletedQuestCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CompletedQuestPayload>
+        }
+        createMany: {
+          args: Prisma.CompletedQuestCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CompletedQuestCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CompletedQuestPayload>[]
+        }
+        delete: {
+          args: Prisma.CompletedQuestDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CompletedQuestPayload>
+        }
+        update: {
+          args: Prisma.CompletedQuestUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CompletedQuestPayload>
+        }
+        deleteMany: {
+          args: Prisma.CompletedQuestDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CompletedQuestUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CompletedQuestUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CompletedQuestPayload>[]
+        }
+        upsert: {
+          args: Prisma.CompletedQuestUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CompletedQuestPayload>
+        }
+        aggregate: {
+          args: Prisma.CompletedQuestAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCompletedQuest>
+        }
+        groupBy: {
+          args: Prisma.CompletedQuestGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CompletedQuestGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CompletedQuestCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CompletedQuestCountAggregateOutputType> | number
         }
       }
     }
@@ -1211,7 +1361,6 @@ export const UserScalarFieldEnum = {
   bannedBy: 'bannedBy',
   joinedWaitlistAt: 'joinedWaitlistAt',
   waitlistPoints: 'waitlistPoints',
-  completedTasks: 'completedTasks',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1230,6 +1379,45 @@ export const ReferralRewardScalarFieldEnum = {
 } as const
 
 export type ReferralRewardScalarFieldEnum = (typeof ReferralRewardScalarFieldEnum)[keyof typeof ReferralRewardScalarFieldEnum]
+
+
+export const QuestScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  title: 'title',
+  description: 'description',
+  iconUrl: 'iconUrl',
+  category: 'category',
+  sortOrder: 'sortOrder',
+  points: 'points',
+  type: 'type',
+  actionUrl: 'actionUrl',
+  castHash: 'castHash',
+  targetFid: 'targetFid',
+  requiredCount: 'requiredCount',
+  isActive: 'isActive',
+  startsAt: 'startsAt',
+  endsAt: 'endsAt',
+  repeatFrequency: 'repeatFrequency',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type QuestScalarFieldEnum = (typeof QuestScalarFieldEnum)[keyof typeof QuestScalarFieldEnum]
+
+
+export const CompletedQuestScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  questId: 'questId',
+  completedAt: 'completedAt',
+  pointsAwarded: 'pointsAwarded',
+  isApproved: 'isApproved',
+  approvedBy: 'approvedBy',
+  approvedAt: 'approvedAt'
+} as const
+
+export type CompletedQuestScalarFieldEnum = (typeof CompletedQuestScalarFieldEnum)[keyof typeof CompletedQuestScalarFieldEnum]
 
 
 export const GameScalarFieldEnum = {
@@ -1477,6 +1665,48 @@ export type ListEnumRewardStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
 
 
 /**
+ * Reference to a field of type 'QuestCategory'
+ */
+export type EnumQuestCategoryFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QuestCategory'>
+    
+
+
+/**
+ * Reference to a field of type 'QuestCategory[]'
+ */
+export type ListEnumQuestCategoryFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QuestCategory[]'>
+    
+
+
+/**
+ * Reference to a field of type 'QuestType'
+ */
+export type EnumQuestTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QuestType'>
+    
+
+
+/**
+ * Reference to a field of type 'QuestType[]'
+ */
+export type ListEnumQuestTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QuestType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'RepeatFrequency'
+ */
+export type EnumRepeatFrequencyFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RepeatFrequency'>
+    
+
+
+/**
+ * Reference to a field of type 'RepeatFrequency[]'
+ */
+export type ListEnumRepeatFrequencyFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RepeatFrequency[]'>
+    
+
+
+/**
  * Reference to a field of type 'GameTheme'
  */
 export type EnumGameThemeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'GameTheme'>
@@ -1626,6 +1856,8 @@ export type PrismaClientOptions = ({
 export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   referralReward?: Prisma.ReferralRewardOmit
+  quest?: Prisma.QuestOmit
+  completedQuest?: Prisma.CompletedQuestOmit
   game?: Prisma.GameOmit
   question?: Prisma.QuestionOmit
   ticket?: Prisma.TicketOmit

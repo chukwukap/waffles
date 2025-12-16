@@ -43,8 +43,8 @@ model User {
 
   // -- WAITLIST (historical record) --
   joinedWaitlistAt DateTime?
-  waitlistPoints   Int       @default(0)
-  completedTasks   String[]  @default([])
+  waitlistPoints   Int              @default(0)
+  completedQuests  CompletedQuest[]
 
   // -- REWARD TRACKING --
   rewards ReferralReward[] @relation("InviterRewards")
@@ -86,6 +86,98 @@ enum RewardStatus {
   PENDING // Invitee registered
   UNLOCKED // Invitee played
   CLAIMED // Money sent to wallet
+}
+
+// ==========================================
+// 1.5 QUEST SYSTEM
+// ==========================================
+
+enum QuestType {
+  LINK // Open external URL (Discord, Twitter, etc.)
+  FARCASTER_FOLLOW // Follow a Farcaster account
+  FARCASTER_CAST // Post a cast (optionally with mention)
+  FARCASTER_RECAST // Recast a specific post
+  REFERRAL // Invite friends
+  CUSTOM // Admin-verified manually
+}
+
+enum QuestCategory {
+  SOCIAL // Twitter, Discord, Farcaster
+  ONBOARDING // Getting started tasks
+  REFERRAL // Invite-related
+  ENGAGEMENT // Daily/recurring engagement
+  SPECIAL // Limited-time events
+}
+
+enum RepeatFrequency {
+  ONCE // One-time only
+  DAILY // Resets daily
+  WEEKLY // Resets weekly
+  UNLIMITED // Can repeat anytime
+}
+
+model Quest {
+  id   Int    @id @default(autoincrement())
+  slug String @unique // URL-safe identifier
+
+  // -- DISPLAY --
+  title       String
+  description String
+  iconUrl     String?
+
+  // -- CATEGORIZATION --
+  category  QuestCategory @default(SOCIAL)
+  sortOrder Int           @default(0)
+
+  // -- REWARDS --
+  points Int @default(0)
+
+  // -- ACTION CONFIG --
+  type      QuestType
+  actionUrl String? // External URL for LINK type
+  castHash  String? // For FARCASTER_RECAST
+  targetFid Int? // For verification (follow/mention this FID)
+
+  // -- REQUIREMENTS --
+  requiredCount Int @default(1) // "Invite 3 friends" = 3
+
+  // -- SCHEDULING --
+  isActive Boolean   @default(true)
+  startsAt DateTime?
+  endsAt   DateTime?
+
+  // -- REPEATABILITY --
+  repeatFrequency RepeatFrequency @default(ONCE)
+
+  // -- METADATA --
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // -- RELATIONS --
+  completions CompletedQuest[]
+}
+
+model CompletedQuest {
+  id Int @id @default(autoincrement())
+
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int
+
+  quest   Quest @relation(fields: [questId], references: [id], onDelete: Cascade)
+  questId Int
+
+  // -- TRACKING --
+  completedAt   DateTime @default(now())
+  pointsAwarded Int      @default(0)
+
+  // -- FOR CUSTOM QUESTS (manual approval) --
+  isApproved Boolean   @default(true) // false = pending admin approval
+  approvedBy Int? // Admin who approved
+  approvedAt DateTime?
+
+  @@index([userId])
+  @@index([questId])
+  @@index([userId, questId])
 }
 
 // ==========================================

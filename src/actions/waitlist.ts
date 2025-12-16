@@ -2,13 +2,6 @@
 
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { QUESTS } from "@/lib/quests";
-
-// Derive quest points from the source of truth
-const QUEST_POINTS = QUESTS.reduce((acc: Record<string, number>, quest) => {
-  acc[quest.id] = quest.points;
-  return acc;
-}, {} as Record<string, number>);
 import { z } from "zod";
 import { Prisma } from "@/lib/db";
 import { verifyFarcasterFollow } from "@/lib/verifyFarcasterFollow";
@@ -139,25 +132,37 @@ export type CompleteQuestState = {
   success: boolean;
   message?: string;
   error?: string;
+  pendingApproval?: boolean;
 };
 
+/**
+ * Complete a quest for the current user.
+ * Uses database-driven quests with proper verification.
+ */
 export async function completeWaitlistQuest(
   prevState: CompleteQuestState | null,
   formData: FormData
 ): Promise<CompleteQuestState> {
   try {
     const fid = Number(formData.get("fid"));
-    const questId = formData.get("questId") as string;
+    const questSlug = formData.get("questId") as string; // Now using slug
 
-    if (!fid || !questId) {
+    if (!fid || !questSlug) {
       return { success: false, error: "Missing FID or Quest ID" };
     }
 
+    // 1. Get user with their referral count and completed quests
     const user = await prisma.user.findUnique({
       where: { fid },
       select: {
         id: true,
-        completedTasks: true, // DB field remains completedTasks
+        completedQuests: {
+          select: {
+            questId: true,
+            quest: { select: { slug: true } },
+            completedAt: true,
+          },
+        },
         _count: {
           select: { referrals: true },
         },
@@ -168,76 +173,161 @@ export async function completeWaitlistQuest(
       return { success: false, error: "User not found" };
     }
 
-    // Find the quest definition
-    const quest = QUESTS.find((t) => t.id === questId);
+    // 2. Find the quest from database
+    const quest = await prisma.quest.findUnique({
+      where: { slug: questSlug },
+    });
 
-    // Verify Farcaster quests if verifiable
-    if (quest?.verifiable && quest.targetFid) {
-      try {
-        let isVerified = false;
-
-        if (questId === "share_waitlist_farcaster") {
-          // For share quests, verify they mentioned @wafflesdotfun
-          isVerified = await verifyFarcasterMention(fid, quest.targetFid);
-
-          if (!isVerified) {
-            return {
-              success: false,
-              error:
-                "Please tag @wafflesdotfun in a cast first, then try again",
-            };
-          }
-        } else {
-          // For follow quests, verify they follow
-          isVerified = await verifyFarcasterFollow(fid, quest.targetFid);
-
-          if (!isVerified) {
-            return {
-              success: false,
-              error: "Please follow @wafflesdotfun first, then try again",
-            };
-          }
-        }
-      } catch (error) {
-        // Graceful fallback: If Neynar API fails, allow completion anyway
-        console.error(
-          `[QUEST_VERIFY] Neynar API failed for FID ${fid}, quest ${questId}, allowing completion:`,
-          error
-        );
-      }
+    if (!quest) {
+      return { success: false, error: "Quest not found" };
     }
 
-    // Verify "invite_three_friends" quest
-    if (questId === "invite_three_friends") {
-      if (user._count.referrals < 3) {
+    // 3. Check if quest is active and within schedule
+    if (!quest.isActive) {
+      return { success: false, error: "This quest is no longer available" };
+    }
+
+    const now = new Date();
+    if (quest.startsAt && now < quest.startsAt) {
+      return { success: false, error: "This quest hasn't started yet" };
+    }
+    if (quest.endsAt && now > quest.endsAt) {
+      return { success: false, error: "This quest has ended" };
+    }
+
+    // 4. Check if already completed (for non-repeatable quests)
+    const existingCompletion = user.completedQuests.find(
+      (cq) => cq.quest.slug === questSlug
+    );
+
+    if (existingCompletion && quest.repeatFrequency === "ONCE") {
+      return { success: true, message: "Quest already completed" };
+    }
+
+    // For repeatable quests, check cooldown
+    if (existingCompletion && quest.repeatFrequency !== "ONCE") {
+      const lastCompleted = existingCompletion.completedAt;
+      const cooldownMs =
+        quest.repeatFrequency === "DAILY"
+          ? 24 * 60 * 60 * 1000
+          : quest.repeatFrequency === "WEEKLY"
+          ? 7 * 24 * 60 * 60 * 1000
+          : 0;
+
+      if (
+        cooldownMs > 0 &&
+        now.getTime() - lastCompleted.getTime() < cooldownMs
+      ) {
+        const timeLeft = Math.ceil(
+          (cooldownMs - (now.getTime() - lastCompleted.getTime())) /
+            (60 * 60 * 1000)
+        );
         return {
           success: false,
-          error: "You need 3 invites to complete this quest.",
+          error: `Quest available again in ${timeLeft} hours`,
         };
       }
     }
 
-    // Check if already completed
-    if (user.completedTasks.includes(questId)) {
-      return { success: true, message: "Quest already completed" };
+    // 5. Verify quest based on type
+    switch (quest.type) {
+      case "FARCASTER_FOLLOW":
+        if (quest.targetFid) {
+          try {
+            const isFollowing = await verifyFarcasterFollow(
+              fid,
+              quest.targetFid
+            );
+            if (!isFollowing) {
+              return {
+                success: false,
+                error: "Please follow the account first, then try again",
+              };
+            }
+          } catch (error) {
+            console.error(
+              `[QUEST_VERIFY] Follow verification failed, allowing:`,
+              error
+            );
+          }
+        }
+        break;
+
+      case "FARCASTER_CAST":
+        if (quest.targetFid) {
+          try {
+            const hasMentioned = await verifyFarcasterMention(
+              fid,
+              quest.targetFid
+            );
+            if (!hasMentioned) {
+              return {
+                success: false,
+                error: "Please tag the account in a cast first, then try again",
+              };
+            }
+          } catch (error) {
+            console.error(
+              `[QUEST_VERIFY] Mention verification failed, allowing:`,
+              error
+            );
+          }
+        }
+        break;
+
+      case "REFERRAL":
+        if (user._count.referrals < quest.requiredCount) {
+          return {
+            success: false,
+            error: `You need ${quest.requiredCount} referrals to complete this quest (current: ${user._count.referrals})`,
+          };
+        }
+        break;
+
+      case "CUSTOM":
+        // CUSTOM quests require admin approval - create pending completion
+        await prisma.completedQuest.create({
+          data: {
+            userId: user.id,
+            questId: quest.id,
+            pointsAwarded: quest.points,
+            isApproved: false, // Pending admin approval
+          },
+        });
+
+        revalidatePath("/waitlist/quests");
+        return {
+          success: true,
+          message: "Quest submitted for review!",
+          pendingApproval: true,
+        };
+
+      // LINK and FARCASTER_RECAST use honor system
+      case "LINK":
+      case "FARCASTER_RECAST":
+      default:
+        break;
     }
 
-    // Get points for this quest
-    const pointsToAward = QUEST_POINTS[questId] || 0;
-
-    // Add quest to completed list and award points
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        completedTasks: {
-          // DB field remains completedTasks
-          push: questId,
+    // 6. Create completion record and award points
+    await prisma.$transaction([
+      prisma.completedQuest.create({
+        data: {
+          userId: user.id,
+          questId: quest.id,
+          pointsAwarded: quest.points,
+          isApproved: true,
         },
-        waitlistPoints: {
-          increment: pointsToAward,
+      }),
+      prisma.user.update({
+        where: { id: user.id },
+        data: {
+          waitlistPoints: {
+            increment: quest.points,
+          },
         },
-      },
-    });
+      }),
+    ]);
 
     revalidatePath("/waitlist");
     revalidatePath("/waitlist/quests");
@@ -245,7 +335,7 @@ export async function completeWaitlistQuest(
 
     return {
       success: true,
-      message: `Quest completed! +${pointsToAward} points`,
+      message: `Quest completed! +${quest.points} points`,
     };
   } catch (error) {
     console.error("Error completing quest:", error);

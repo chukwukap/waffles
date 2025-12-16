@@ -5,25 +5,43 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuestActions } from "./_components/useQuestActions";
-import { QUESTS, Quest, QuestId, QuestStatus } from "@/lib/quests";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
 import sdk from "@farcaster/miniapp-sdk";
 
 // ============================================
 // TYPES
 // ============================================
+export interface Quest {
+  id: number;
+  slug: string;
+  title: string;
+  description: string;
+  iconUrl: string | null;
+  category: string;
+  points: number;
+  type: string;
+  actionUrl: string | null;
+  castHash: string | null;
+  requiredCount: number;
+  repeatFrequency: string;
+  isCompleted: boolean;
+  isPending: boolean;
+  progress: number;
+}
+
+export type QuestStatus = "initial" | "pending" | "completed";
+
 export interface WaitlistData {
   fid: number;
   rank: number;
   points: number;
   inviteCode: string | null;
   invitesCount: number;
-  status: string;
-  completedTasks: string[];
+  hasGameAccess: boolean;
+  joinedWaitlistAt: Date | null;
+  completedQuests: string[];
+  quests: Quest[];
 }
-
-export type { Quest, QuestId, QuestStatus };
-export { QUESTS };
 
 // ============================================
 // FLOATING PARTICLES - Lighter version for quests
@@ -129,7 +147,7 @@ function QuestCard({
         whileTap={{ scale: 0.9, rotate: -10 }}
       >
         <Image
-          src={quest.iconPath}
+          src={quest.iconUrl || "/images/icons/default.png"}
           alt={quest.title}
           fill
           className="object-cover"
@@ -167,7 +185,7 @@ function QuestCard({
           {quest.title}
         </p>
         <p className="font-display font-medium text-[13px] leading-tight text-[#99A0AE] line-clamp-2">
-          {quest.text}
+          {quest.description}
         </p>
 
         {/* Invite quest progress indicator */}
@@ -282,8 +300,10 @@ export function QuestsPageClient() {
       points: 0,
       inviteCode: null,
       invitesCount: 0,
-      status: "",
-      completedTasks: [],
+      hasGameAccess: false,
+      joinedWaitlistAt: null,
+      completedQuests: [],
+      quests: [],
     },
   });
 
@@ -297,13 +317,13 @@ export function QuestsPageClient() {
 
   // Calculate completion stats (including optimistic)
   const completedCount = useMemo(() => {
-    if (!waitlistData) return optimisticCompleted.length;
-    const serverCompleted = QUESTS.filter((q) =>
-      waitlistData.completedTasks.includes(q.id)
+    if (!waitlistData?.quests) return optimisticCompleted.length;
+    const serverCompleted = waitlistData.quests.filter((q) =>
+      waitlistData.completedQuests.includes(q.slug)
     ).length;
     // Add optimistic completions that aren't already in server data
     const additionalOptimistic = optimisticCompleted.filter(
-      (id) => !waitlistData.completedTasks.includes(id)
+      (slug) => !waitlistData.completedQuests.includes(slug)
     ).length;
     return serverCompleted + additionalOptimistic;
   }, [waitlistData, optimisticCompleted]);
@@ -361,7 +381,7 @@ export function QuestsPageClient() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            {QUESTS.map((quest, index) => {
+            {waitlistData.quests.map((quest, index) => {
               const status = getQuestStatus(quest);
               return (
                 <QuestCard
@@ -370,7 +390,7 @@ export function QuestsPageClient() {
                   status={status}
                   index={index}
                   onGo={() => handleGo(quest)}
-                  onComplete={() => handleComplete(quest.id)}
+                  onComplete={() => handleComplete(quest.slug)}
                   isPending={isPending}
                   invitesCount={waitlistData.invitesCount}
                 />
@@ -380,7 +400,7 @@ export function QuestsPageClient() {
 
           {/* Completion message */}
           <AnimatePresence>
-            {completedCount === QUESTS.length && (
+            {completedCount === waitlistData.quests.length && (
               <motion.div
                 className="text-center py-6"
                 initial={{ opacity: 0, y: 20 }}

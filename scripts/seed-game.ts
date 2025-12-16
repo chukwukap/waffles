@@ -57,7 +57,7 @@ async function main() {
       endsAt,
       entryFee: defaultGameConfig.entryFee,
       prizePool: defaultGameConfig.prizePool,
-      roundDurationSec: defaultGameConfig.roundDurationSec,
+      roundBreakSec: defaultGameConfig.roundDurationSec,
       maxPlayers: defaultGameConfig.maxPlayers,
     },
   });

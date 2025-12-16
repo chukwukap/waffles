@@ -193,7 +193,7 @@ export const gameQuestions = rawGameQuestions;
  */
 export const defaultGameConfig = {
   entryFee: 50, // Maps to Game.entryFee
-  roundDurationSec: 15, // Maps to Game.roundDurationSec
+  roundDurationSec: 15, // Maps to Game.roundBreakSec (break time between rounds)
   maxPlayers: 200, // Maps to Game.maxPlayers
   prizePool: 0, // Maps to Game.prizePool
   theme: "MOVIES" as const, // Maps to Game.theme (GameTheme enum)

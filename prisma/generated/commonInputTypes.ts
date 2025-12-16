@@ -236,6 +236,57 @@ export type EnumRewardStatusWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumRewardStatusFilter<$PrismaModel>
 }
 
+export type EnumQuestCategoryFilter<$PrismaModel = never> = {
+  equals?: $Enums.QuestCategory | Prisma.EnumQuestCategoryFieldRefInput<$PrismaModel>
+  in?: $Enums.QuestCategory[] | Prisma.ListEnumQuestCategoryFieldRefInput<$PrismaModel>
+  notIn?: $Enums.QuestCategory[] | Prisma.ListEnumQuestCategoryFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumQuestCategoryFilter<$PrismaModel> | $Enums.QuestCategory
+}
+
+export type EnumQuestTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.QuestType | Prisma.EnumQuestTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.QuestType[] | Prisma.ListEnumQuestTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.QuestType[] | Prisma.ListEnumQuestTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumQuestTypeFilter<$PrismaModel> | $Enums.QuestType
+}
+
+export type EnumRepeatFrequencyFilter<$PrismaModel = never> = {
+  equals?: $Enums.RepeatFrequency | Prisma.EnumRepeatFrequencyFieldRefInput<$PrismaModel>
+  in?: $Enums.RepeatFrequency[] | Prisma.ListEnumRepeatFrequencyFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RepeatFrequency[] | Prisma.ListEnumRepeatFrequencyFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRepeatFrequencyFilter<$PrismaModel> | $Enums.RepeatFrequency
+}
+
+export type EnumQuestCategoryWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.QuestCategory | Prisma.EnumQuestCategoryFieldRefInput<$PrismaModel>
+  in?: $Enums.QuestCategory[] | Prisma.ListEnumQuestCategoryFieldRefInput<$PrismaModel>
+  notIn?: $Enums.QuestCategory[] | Prisma.ListEnumQuestCategoryFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumQuestCategoryWithAggregatesFilter<$PrismaModel> | $Enums.QuestCategory
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumQuestCategoryFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumQuestCategoryFilter<$PrismaModel>
+}
+
+export type EnumQuestTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.QuestType | Prisma.EnumQuestTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.QuestType[] | Prisma.ListEnumQuestTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.QuestType[] | Prisma.ListEnumQuestTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumQuestTypeWithAggregatesFilter<$PrismaModel> | $Enums.QuestType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumQuestTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumQuestTypeFilter<$PrismaModel>
+}
+
+export type EnumRepeatFrequencyWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.RepeatFrequency | Prisma.EnumRepeatFrequencyFieldRefInput<$PrismaModel>
+  in?: $Enums.RepeatFrequency[] | Prisma.ListEnumRepeatFrequencyFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RepeatFrequency[] | Prisma.ListEnumRepeatFrequencyFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRepeatFrequencyWithAggregatesFilter<$PrismaModel> | $Enums.RepeatFrequency
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumRepeatFrequencyFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumRepeatFrequencyFilter<$PrismaModel>
+}
+
 export type EnumGameThemeFilter<$PrismaModel = never> = {
   equals?: $Enums.GameTheme | Prisma.EnumGameThemeFieldRefInput<$PrismaModel>
   in?: $Enums.GameTheme[] | Prisma.ListEnumGameThemeFieldRefInput<$PrismaModel>
@@ -598,6 +649,57 @@ export type NestedEnumRewardStatusWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumRewardStatusFilter<$PrismaModel>
   _max?: Prisma.NestedEnumRewardStatusFilter<$PrismaModel>
+}
+
+export type NestedEnumQuestCategoryFilter<$PrismaModel = never> = {
+  equals?: $Enums.QuestCategory | Prisma.EnumQuestCategoryFieldRefInput<$PrismaModel>
+  in?: $Enums.QuestCategory[] | Prisma.ListEnumQuestCategoryFieldRefInput<$PrismaModel>
+  notIn?: $Enums.QuestCategory[] | Prisma.ListEnumQuestCategoryFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumQuestCategoryFilter<$PrismaModel> | $Enums.QuestCategory
+}
+
+export type NestedEnumQuestTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.QuestType | Prisma.EnumQuestTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.QuestType[] | Prisma.ListEnumQuestTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.QuestType[] | Prisma.ListEnumQuestTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumQuestTypeFilter<$PrismaModel> | $Enums.QuestType
+}
+
+export type NestedEnumRepeatFrequencyFilter<$PrismaModel = never> = {
+  equals?: $Enums.RepeatFrequency | Prisma.EnumRepeatFrequencyFieldRefInput<$PrismaModel>
+  in?: $Enums.RepeatFrequency[] | Prisma.ListEnumRepeatFrequencyFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RepeatFrequency[] | Prisma.ListEnumRepeatFrequencyFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRepeatFrequencyFilter<$PrismaModel> | $Enums.RepeatFrequency
+}
+
+export type NestedEnumQuestCategoryWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.QuestCategory | Prisma.EnumQuestCategoryFieldRefInput<$PrismaModel>
+  in?: $Enums.QuestCategory[] | Prisma.ListEnumQuestCategoryFieldRefInput<$PrismaModel>
+  notIn?: $Enums.QuestCategory[] | Prisma.ListEnumQuestCategoryFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumQuestCategoryWithAggregatesFilter<$PrismaModel> | $Enums.QuestCategory
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumQuestCategoryFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumQuestCategoryFilter<$PrismaModel>
+}
+
+export type NestedEnumQuestTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.QuestType | Prisma.EnumQuestTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.QuestType[] | Prisma.ListEnumQuestTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.QuestType[] | Prisma.ListEnumQuestTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumQuestTypeWithAggregatesFilter<$PrismaModel> | $Enums.QuestType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumQuestTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumQuestTypeFilter<$PrismaModel>
+}
+
+export type NestedEnumRepeatFrequencyWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.RepeatFrequency | Prisma.EnumRepeatFrequencyFieldRefInput<$PrismaModel>
+  in?: $Enums.RepeatFrequency[] | Prisma.ListEnumRepeatFrequencyFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RepeatFrequency[] | Prisma.ListEnumRepeatFrequencyFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRepeatFrequencyWithAggregatesFilter<$PrismaModel> | $Enums.RepeatFrequency
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumRepeatFrequencyFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumRepeatFrequencyFilter<$PrismaModel>
 }
 
 export type NestedEnumGameThemeFilter<$PrismaModel = never> = {
