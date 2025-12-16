@@ -130,12 +130,16 @@ export async function settleGame(gameId: number): Promise<{
   winners: Winner[];
   txHash: `0x${string}`;
 }> {
+  // Import game phase utility
+  const { getGamePhase } = await import("@/lib/game-utils");
+
   // 1. Get game and verify it has ended
   const game = await prisma.game.findUnique({
     where: { id: gameId },
     select: {
       id: true,
-      status: true,
+      startsAt: true,
+      endsAt: true,
       prizePool: true,
     },
   });
@@ -144,17 +148,17 @@ export async function settleGame(gameId: number): Promise<{
     throw new Error(`Game ${gameId} not found`);
   }
 
-  if (game.status !== "ENDED") {
-    throw new Error(
-      `Game ${gameId} has not ended yet (status: ${game.status})`
-    );
+  const phase = getGamePhase(game);
+  if (phase !== "ENDED") {
+    throw new Error(`Game ${gameId} has not ended yet (phase: ${phase})`);
   }
 
-  // 2. Get ranked players (top 3 get prizes)
-  const rankedPlayers = await prisma.gamePlayer.findMany({
+  // 2. Get ranked entries (top 3 get prizes)
+  const rankedEntries = await prisma.gameEntry.findMany({
     where: {
       gameId,
       rank: { not: null, lte: 3 },
+      paidAt: { not: null },
     },
     include: {
       user: {
@@ -164,22 +168,22 @@ export async function settleGame(gameId: number): Promise<{
     orderBy: { rank: "asc" },
   });
 
-  if (rankedPlayers.length === 0) {
-    throw new Error(`No ranked players for game ${gameId}`);
+  if (rankedEntries.length === 0) {
+    throw new Error(`No ranked entries for game ${gameId}`);
   }
 
   // 3. Calculate prize distribution
   const prizeDistribution = [0.6, 0.3, 0.1]; // 60%, 30%, 10%
-  const winners: Winner[] = rankedPlayers
-    .filter((p) => p.user.wallet)
-    .map((player, index) => {
+  const winners: Winner[] = rankedEntries
+    .filter((e) => e.user.wallet)
+    .map((entry, index) => {
       const prizeShare = prizeDistribution[index] || 0;
       const amountUSDC = game.prizePool * prizeShare;
       const amount = parseUnits(amountUSDC.toFixed(6), TOKEN_CONFIG.decimals);
 
       return {
         gameId,
-        address: player.user.wallet as `0x${string}`,
+        address: entry.user.wallet as `0x${string}`,
         amount,
       };
     });

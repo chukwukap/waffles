@@ -1,151 +1,129 @@
-import * as React from "react";
+/**
+ * useCountdown Hook (Optimized)
+ *
+ * Efficient countdown that only updates once per second.
+ * Uses setTimeout aligned to second boundaries for accuracy.
+ */
+
+"use client";
+
+import { useState, useEffect, useCallback, useRef } from "react";
+
+interface UseCountdownOptions {
+  onComplete?: () => void;
+  autoStart?: boolean;
+}
+
+interface UseCountdownReturn {
+  /** Remaining seconds (integer) */
+  seconds: number;
+  /** Whether the countdown is running */
+  isRunning: boolean;
+  /** Whether the countdown has completed */
+  isComplete: boolean;
+  /** Start or resume the countdown */
+  start: () => void;
+  /** Pause the countdown */
+  pause: () => void;
+  /** Reset to initial duration */
+  reset: () => void;
+}
 
 /**
- * Countdown timer hook with drift-resistant timing.
- * Uses requestAnimationFrame for smooth updates and accurate timing.
+ * Efficient countdown hook.
  *
- * @param durationSec - Total countdown duration in seconds
- * @param onComplete - Callback invoked when countdown reaches zero
- * @param autoStart - Whether to start automatically (default: true)
+ * @param targetMs - Unix timestamp when countdown ends (ms)
+ * @param options - Configuration options
+ * @returns Countdown state and controls
  */
 export function useCountdown(
-  durationSec: number,
-  onComplete?: () => void,
-  autoStart: boolean = true
-) {
-  const [remaining, setRemaining] = React.useState(durationSec);
-  const [isRunning, setIsRunning] = React.useState(autoStart);
+  targetMs: number,
+  options: UseCountdownOptions = {}
+): UseCountdownReturn {
+  const { onComplete, autoStart = true } = options;
 
-  // Refs to avoid re-renders and maintain stable references
-  const rAFRef = React.useRef<number | null>(null);
-  const endTimeRef = React.useRef<number | null>(null);
-  const onCompleteRef = React.useRef(onComplete);
-  const remainingRef = React.useRef(remaining);
+  // Calculate initial seconds
+  const getSecondsRemaining = useCallback(() => {
+    return Math.max(0, Math.ceil((targetMs - Date.now()) / 1000));
+  }, [targetMs]);
 
-  // Keep refs in sync
-  React.useEffect(() => {
-    onCompleteRef.current = onComplete;
-  }, [onComplete]);
+  const [seconds, setSeconds] = useState(getSecondsRemaining);
+  const [isRunning, setIsRunning] = useState(autoStart);
+  const [isComplete, setIsComplete] = useState(false);
 
-  React.useEffect(() => {
-    remainingRef.current = remaining;
-  }, [remaining]);
+  // Refs for callbacks (avoid stale closures)
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
-  // Core animation loop
-  const loop = React.useCallback(() => {
-    if (!endTimeRef.current) return;
+  // Sync state when target changes
+  useEffect(() => {
+    const newSeconds = getSecondsRemaining();
+    setSeconds(newSeconds);
+    setIsComplete(newSeconds <= 0);
+    if (newSeconds > 0 && autoStart) {
+      setIsRunning(true);
+    }
+  }, [targetMs, getSecondsRemaining, autoStart]);
 
+  // Main countdown effect
+  useEffect(() => {
+    if (!isRunning || isComplete) return;
+
+    // Calculate ms until next second boundary
     const now = Date.now();
-    const newRemaining = Math.max(0, (endTimeRef.current - now) / 1000);
+    const msUntilNextSecond = 1000 - (now % 1000);
 
-    if (newRemaining <= 0) {
-      // Timer finished
-      setRemaining(0);
-      setIsRunning(false);
-      endTimeRef.current = null;
-      if (rAFRef.current) {
-        cancelAnimationFrame(rAFRef.current);
-        rAFRef.current = null;
+    const timeout = setTimeout(() => {
+      const remaining = getSecondsRemaining();
+      setSeconds(remaining);
+
+      if (remaining <= 0) {
+        setIsComplete(true);
+        setIsRunning(false);
+        onCompleteRef.current?.();
       }
-      onCompleteRef.current?.();
-    } else {
-      setRemaining(newRemaining);
-      rAFRef.current = requestAnimationFrame(loop);
-    }
-  }, []);
+    }, msUntilNextSecond);
 
-  // Start/stop timer based on isRunning state
-  React.useEffect(() => {
-    if (isRunning && !rAFRef.current) {
-      // Start timer
-      endTimeRef.current = Date.now() + remainingRef.current * 1000;
-      rAFRef.current = requestAnimationFrame(loop);
-    } else if (!isRunning && rAFRef.current) {
-      // Stop timer
-      cancelAnimationFrame(rAFRef.current);
-      rAFRef.current = null;
-      endTimeRef.current = null;
-    }
-
-    return () => {
-      if (rAFRef.current) {
-        cancelAnimationFrame(rAFRef.current);
-        rAFRef.current = null;
-      }
-    };
-  }, [isRunning, loop]);
-
-  // Reset when duration changes
-  React.useEffect(() => {
-    // Stop current timer
-    if (rAFRef.current) {
-      cancelAnimationFrame(rAFRef.current);
-      rAFRef.current = null;
-    }
-    endTimeRef.current = null;
-
-    // Reset state
-    setRemaining(durationSec);
-    remainingRef.current = durationSec;
-    setIsRunning(autoStart);
-
-    // Auto-start if enabled
-    if (autoStart) {
-      endTimeRef.current = Date.now() + durationSec * 1000;
-      rAFRef.current = requestAnimationFrame(loop);
-    }
-  }, [durationSec, autoStart, loop]);
+    return () => clearTimeout(timeout);
+  }, [seconds, isRunning, isComplete, getSecondsRemaining]);
 
   // Control functions
-  const start = React.useCallback(() => {
-    setIsRunning(true);
-  }, []);
-
-  const pause = React.useCallback(() => {
-    if (endTimeRef.current) {
-      // Update remaining to exact paused time
-      const exactRemaining = Math.max(
-        0,
-        (endTimeRef.current - Date.now()) / 1000
-      );
-      setRemaining(exactRemaining);
-      remainingRef.current = exactRemaining;
+  const start = useCallback(() => {
+    if (!isComplete) {
+      setIsRunning(true);
     }
+  }, [isComplete]);
+
+  const pause = useCallback(() => {
     setIsRunning(false);
   }, []);
 
-  const reset = React.useCallback(() => {
-    // Stop timer
-    if (rAFRef.current) {
-      cancelAnimationFrame(rAFRef.current);
-      rAFRef.current = null;
-    }
-    endTimeRef.current = null;
-
-    // Reset state
-    setRemaining(durationSec);
-    remainingRef.current = durationSec;
+  const reset = useCallback(() => {
+    setSeconds(getSecondsRemaining());
+    setIsComplete(false);
     setIsRunning(autoStart);
-
-    // Auto-start if enabled
-    if (autoStart) {
-      endTimeRef.current = Date.now() + durationSec * 1000;
-      rAFRef.current = requestAnimationFrame(loop);
-    }
-  }, [durationSec, autoStart, loop]);
-
-  // Calculate percentage
-  const percentage = React.useMemo(() => {
-    if (durationSec <= 0) return 0;
-    return ((durationSec - Math.max(0, remaining)) / durationSec) * 100;
-  }, [remaining, durationSec]);
+  }, [getSecondsRemaining, autoStart]);
 
   return {
-    remaining: Math.max(0, remaining),
+    seconds,
     isRunning,
+    isComplete,
     start,
     pause,
     reset,
-    percentage,
   };
+}
+
+/**
+ * Simplified countdown from duration.
+ *
+ * @param durationSec - Duration in seconds
+ * @param options - Configuration options
+ */
+export function useCountdownFromDuration(
+  durationSec: number,
+  options: UseCountdownOptions = {}
+): UseCountdownReturn {
+  const targetMs = useRef(Date.now() + durationSec * 1000).current;
+  return useCountdown(targetMs, options);
 }

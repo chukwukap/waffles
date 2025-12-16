@@ -14,9 +14,9 @@ datasource db {
 model User {
   id       Int     @id @default(autoincrement())
   fid      Int     @unique
-  username String?
-  pfpUrl   String?
-  wallet   String? @unique
+  username String? @db.VarChar(100)
+  pfpUrl   String? @db.VarChar(500)
+  wallet   String? @unique @db.VarChar(42)
 
   // -- ADMIN --
   role     UserRole @default(USER)
@@ -28,37 +28,39 @@ model User {
   referrals    User[] @relation("Referrals")
 
   // -- INVITE SYSTEM --
-  inviteCode  String @unique
-  inviteQuota Int    @default(30)
+  inviteCode  String @unique @db.VarChar(25)
+  inviteQuota Int    @default(30) @db.SmallInt
 
-  // -- ACCESS CONTROL (simple booleans) --
+  // -- ACCESS CONTROL --
   hasGameAccess   Boolean   @default(false)
   accessGrantedAt DateTime?
-  accessGrantedBy Int? // User ID who gave the invite code
+  accessGrantedBy Int?
 
-  // -- BAN (separate concern) --
+  // -- BAN --
   isBanned Boolean   @default(false)
   bannedAt DateTime?
-  bannedBy Int? // Admin ID who banned
+  bannedBy Int?
 
-  // -- WAITLIST (historical record) --
+  // -- WAITLIST --
   joinedWaitlistAt DateTime?
   waitlistPoints   Int              @default(0)
+  waitlistRank     Int? // Pre-computed rank (updated periodically)
   completedQuests  CompletedQuest[]
 
   // -- REWARD TRACKING --
   rewards ReferralReward[] @relation("InviterRewards")
 
-  // -- DATA --
+  // -- TIMESTAMPS --
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tickets   Ticket[]
-  games     GamePlayer[]
-  answers   Answer[]
-  notifs    NotificationToken[]
+  // -- RELATIONS --
+  entries   GameEntry[]
   chats     Chat[]
+  notifs    NotificationToken[]
   auditLogs AuditLog[]
+
+  @@index([waitlistPoints(sort: Desc)])
 }
 
 enum UserRole {
@@ -71,21 +73,21 @@ model ReferralReward {
   inviter   User @relation("InviterRewards", fields: [inviterId], references: [id])
   inviterId Int
 
-  inviteeId Int @unique // One reward per new user
+  inviteeId Int @unique
 
   status RewardStatus @default(PENDING)
-  amount Int          @default(0) // Points or USDC
+  amount Int          @default(0) @db.SmallInt
 
   createdAt  DateTime  @default(now())
-  unlockedAt DateTime? // When invitee played their first game
+  unlockedAt DateTime?
 
   @@index([inviterId])
 }
 
 enum RewardStatus {
-  PENDING // Invitee registered
-  UNLOCKED // Invitee played
-  CLAIMED // Money sent to wallet
+  PENDING
+  UNLOCKED
+  CLAIMED
 }
 
 // ==========================================
@@ -93,53 +95,53 @@ enum RewardStatus {
 // ==========================================
 
 enum QuestType {
-  LINK // Open external URL (Discord, Twitter, etc.)
-  FARCASTER_FOLLOW // Follow a Farcaster account
-  FARCASTER_CAST // Post a cast (optionally with mention)
-  FARCASTER_RECAST // Recast a specific post
-  REFERRAL // Invite friends
-  CUSTOM // Admin-verified manually
+  LINK
+  FARCASTER_FOLLOW
+  FARCASTER_CAST
+  FARCASTER_RECAST
+  REFERRAL
+  CUSTOM
 }
 
 enum QuestCategory {
-  SOCIAL // Twitter, Discord, Farcaster
-  ONBOARDING // Getting started tasks
-  REFERRAL // Invite-related
-  ENGAGEMENT // Daily/recurring engagement
-  SPECIAL // Limited-time events
+  SOCIAL
+  ONBOARDING
+  REFERRAL
+  ENGAGEMENT
+  SPECIAL
 }
 
 enum RepeatFrequency {
-  ONCE // One-time only
-  DAILY // Resets daily
-  WEEKLY // Resets weekly
-  UNLIMITED // Can repeat anytime
+  ONCE
+  DAILY
+  WEEKLY
+  UNLIMITED
 }
 
 model Quest {
   id   Int    @id @default(autoincrement())
-  slug String @unique // URL-safe identifier
+  slug String @unique @db.VarChar(50)
 
   // -- DISPLAY --
-  title       String
-  description String
-  iconUrl     String?
+  title       String  @db.VarChar(100)
+  description String  @db.VarChar(500)
+  iconUrl     String? @db.VarChar(255)
 
   // -- CATEGORIZATION --
   category  QuestCategory @default(SOCIAL)
-  sortOrder Int           @default(0)
+  sortOrder Int           @default(0) @db.SmallInt
 
   // -- REWARDS --
-  points Int @default(0)
+  points Int @default(0) @db.SmallInt
 
   // -- ACTION CONFIG --
   type      QuestType
-  actionUrl String? // External URL for LINK type
-  castHash  String? // For FARCASTER_RECAST
-  targetFid Int? // For verification (follow/mention this FID)
+  actionUrl String?   @db.VarChar(500)
+  castHash  String?   @db.VarChar(66)
+  targetFid Int?
 
   // -- REQUIREMENTS --
-  requiredCount Int @default(1) // "Invite 3 friends" = 3
+  requiredCount Int @default(1) @db.SmallInt
 
   // -- SCHEDULING --
   isActive Boolean   @default(true)
@@ -149,7 +151,7 @@ model Quest {
   // -- REPEATABILITY --
   repeatFrequency RepeatFrequency @default(ONCE)
 
-  // -- METADATA --
+  // -- TIMESTAMPS --
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -166,18 +168,16 @@ model CompletedQuest {
   quest   Quest @relation(fields: [questId], references: [id], onDelete: Cascade)
   questId Int
 
-  // -- TRACKING --
   completedAt   DateTime @default(now())
-  pointsAwarded Int      @default(0)
+  pointsAwarded Int      @default(0) @db.SmallInt
 
-  // -- FOR CUSTOM QUESTS (manual approval) --
-  isApproved Boolean   @default(true) // false = pending admin approval
-  approvedBy Int? // Admin who approved
+  isApproved Boolean   @default(true)
+  approvedBy Int?
   approvedAt DateTime?
 
+  @@unique([userId, questId])
   @@index([userId])
   @@index([questId])
-  @@index([userId, questId])
 }
 
 // ==========================================
@@ -188,33 +188,38 @@ model Game {
   id Int @id @default(autoincrement())
 
   // -- INFO --
-  title       String
-  description String?
+  title       String    @db.VarChar(100)
+  description String?   @db.VarChar(1000)
   theme       GameTheme
-  coverUrl    String
-  status      GameStatus @default(SCHEDULED)
+  coverUrl    String?   @db.VarChar(255)
 
-  // -- TIMING --
+  // -- TIMING (source of truth for game phase) --
   startsAt DateTime
   endsAt   DateTime
 
-  // -- CONFIGURATION --
-  entryFee      Float @default(20)
-  prizePool     Int   @default(0)
-  roundBreakSec Int   @default(10)
-  maxPlayers    Int   @default(200)
+  // -- PRICING --
+  ticketPrice Float @default(5)
 
-  // -- DATA --
+  // -- PRE-COMPUTED STATS (updated atomically) --
+  prizePool   Float @default(0) // Sum of ticket prices
+  playerCount Int   @default(0) // Count of entries
+
+  // -- CONFIGURATION --
+  roundBreakSec Int @default(15) @db.SmallInt
+  maxPlayers    Int @default(100) @db.SmallInt
+
+  // -- RELATIONS --
   questions Question[]
-  tickets   Ticket[]
-  players   GamePlayer[]
-  answers   Answer[]
+  entries   GameEntry[]
   chats     Chat[]
 
+  // -- TIMESTAMPS --
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([status, startsAt]) // For finding the "next game" quickly
+  // -- INDEXES --
+  @@index([startsAt])
+  @@index([endsAt])
 }
 
 enum GameTheme {
@@ -223,116 +228,84 @@ enum GameTheme {
   ANIME
   POLITICS
   CRYPTO
+  GENERAL
 }
 
-enum GameStatus {
-  SCHEDULED
-  LIVE
-  ENDED
-  CANCELLED
-}
+// NOTE: GameStatus enum REMOVED
+// Phase is now derived from startsAt/endsAt:
+// - now < startsAt => SCHEDULED
+// - startsAt <= now < endsAt => LIVE
+// - now >= endsAt => ENDED
 
 model Question {
   id     Int  @id @default(autoincrement())
   game   Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
   gameId Int
 
-  roundIndex Int @default(1) // e.g. 1, 2, 3... 
-  order      Int @default(0) // For ordering within a round 
+  // -- ORDERING --
+  roundIndex   Int @default(1) @db.SmallInt
+  orderInRound Int @default(0) @db.SmallInt
 
   // -- CONTENT --
-  content      String
-  mediaUrl     String // Optional image/video for the question
-  soundUrl     String // Optional audio for the question
-  options      String[]
-  correctIndex Int
+  content      String   @db.VarChar(1000)
+  mediaUrl     String?  @db.VarChar(255)
+  soundUrl     String?  @db.VarChar(255)
+  options      String[] // Native Postgres array
+  correctIndex Int      @db.SmallInt
 
-  durationSec Int @default(10)
+  // -- TIMING & SCORING --
+  durationSec Int @default(10) @db.SmallInt
+  points      Int @default(100) @db.SmallInt
 
-  answers Answer[]
-
+  // -- TIMESTAMPS --
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([gameId, roundIndex])
+  @@index([gameId, roundIndex, orderInRound])
 }
 
 // ==========================================
-// 3. THE ACTION (The "Play" Layer)
+// 3. GAME ENTRY (Consolidates Ticket + GamePlayer)
 // ==========================================
+// Single record per user per game: payment + progress + results
 
-// The "Receipt"
-model Ticket {
-  id     Int    @id @default(autoincrement())
-  code   String @unique @default(cuid())
-  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  gameId Int
-  user   User   @relation(fields: [userId], references: [id])
-  userId Int
+model GameEntry {
+  id Int @id @default(autoincrement())
 
-  amountUSDC Float
-  txHash     String?
-  status     TicketStatus @default(PENDING)
-
-  purchasedAt DateTime  @default(now())
-  redeemedAt  DateTime?
-  updatedAt   DateTime  @updatedAt
-
-  @@unique([gameId, userId])
-}
-
-enum TicketStatus {
-  PENDING
-  PAID
-  FAILED
-  REDEEMED // They have entered the lobby
-}
-
-// This is the "Live State" of a user in a specific game.
-model GamePlayer {
-  id     Int  @id @default(autoincrement())
   game   Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
   gameId Int
+
   user   User @relation(fields: [userId], references: [id])
   userId Int
 
-  claimedAt DateTime? // Timestamp when the prize was claimed
+  // -- PAYMENT --
+  txHash String?   @db.VarChar(66)
+  paidAt DateTime?
 
-  // -- LEADERBOARD DATA --
-  score    Int      @default(0)
-  rank     Int? // Null until game ends
-  joinedAt DateTime @default(now())
+  // -- PROGRESS (updated per answer) --
+  score    Int @default(0)
+  answered Int @default(0) @db.SmallInt
 
-  // Faster Lookups: We want to find the top scorers of a specific game quickly
+  // -- ANSWERS (embedded JSON for speed) --
+  // Format: { "questionId": { "selected": 0, "correct": true, "points": 100, "ms": 2340 } }
+  answers Json @default("{}")
+
+  // -- FINAL RESULTS (set when game ends) --
+  rank      Int?      @db.SmallInt
+  prize     Float?
+  claimedAt DateTime?
+
+  // -- TIMESTAMPS --
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@unique([gameId, userId])
   @@index([gameId, score(sort: Desc)])
-}
-
-// The "Audit Log"
-model Answer {
-  id         Int      @id @default(autoincrement())
-  user       User     @relation(fields: [userId], references: [id])
-  userId     Int
-  game       Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  gameId     Int
-  question   Question @relation(fields: [questionId], references: [id])
-  questionId Int
-
-  selectedIndex Int // Stores the index of the selected option (or -1 for no answer)
-  isCorrect     Boolean
-  pointsEarned  Int     @default(0)
-  latencyMs     Int // Time taken in milliseconds
-
-  createdAt DateTime @default(now())
-
-  @@unique([userId, questionId]) // User can't answer the same question twice
-  // Performance indexes
-  @@index([userId, isCorrect], name: "user_correct_idx")
-  @@index([gameId, userId], name: "game_user_idx") // For quickly finding all of a user's answers in a game
+  @@index([userId, createdAt(sort: Desc)])
 }
 
 // ==========================================
-// 4. UTILS
+// 4. CHAT (Persisted messages)
 // ==========================================
 
 model Chat {
@@ -341,19 +314,23 @@ model Chat {
   gameId    Int
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
-  text      String
+  text      String   @db.VarChar(500)
   createdAt DateTime @default(now())
 
-  @@index([gameId, createdAt]) // For loading chat history fast
+  @@index([gameId, createdAt])
 }
+
+// ==========================================
+// 5. NOTIFICATIONS
+// ==========================================
 
 model NotificationToken {
   id        Int      @id @default(autoincrement())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    Int
   appFid    Int
-  token     String
-  url       String
+  token     String   @db.VarChar(255)
+  url       String   @db.VarChar(500)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -362,7 +339,7 @@ model NotificationToken {
 }
 
 // ==========================================
-// 5. ADMIN (Audit & Logging)
+// 6. ADMIN AUDIT LOG
 // ==========================================
 
 model AuditLog {
@@ -370,11 +347,11 @@ model AuditLog {
   admin   User @relation(fields: [adminId], references: [id])
   adminId Int
 
-  action     String // "CREATE_GAME", "BAN_USER", "UPDATE_GAME", etc.
-  entityType String // "Game", "User", "Question", etc.
-  entityId   Int? // ID of affected entity
-  details    Json? // Additional context (before/after values, etc.)
-  ip         String? // Admin's IP address
+  action     String   @db.VarChar(50)
+  entityType String   @db.VarChar(50)
+  entityId   Int?
+  details    Json?
+  ip         String?  @db.VarChar(45)
   createdAt  DateTime @default(now())
 
   @@index([adminId, createdAt])

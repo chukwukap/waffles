@@ -54,9 +54,12 @@ export async function GET(
       );
     }
 
-    // Get leaderboard
-    const gamePlayers = await prisma.gamePlayer.findMany({
-      where: { gameId: gameIdNum },
+    // Get leaderboard from game entries (paid entries only)
+    const entries = await prisma.gameEntry.findMany({
+      where: {
+        gameId: gameIdNum,
+        paidAt: { not: null },
+      },
       include: {
         user: {
           select: {
@@ -72,18 +75,21 @@ export async function GET(
       skip: offset,
     });
 
-    const leaderboard: LeaderboardEntry[] = gamePlayers.map((gp, index) => ({
+    const leaderboard: LeaderboardEntry[] = entries.map((entry, index) => ({
       rank: offset + index + 1,
-      userId: gp.user.id,
-      fid: gp.user.fid,
-      username: gp.user.username,
-      pfpUrl: gp.user.pfpUrl,
-      score: gp.score,
+      userId: entry.user.id,
+      fid: entry.user.fid,
+      username: entry.user.username,
+      pfpUrl: entry.user.pfpUrl,
+      score: entry.score,
     }));
 
     // Get total count for pagination
-    const totalCount = await prisma.gamePlayer.count({
-      where: { gameId: gameIdNum },
+    const totalCount = await prisma.gameEntry.count({
+      where: {
+        gameId: gameIdNum,
+        paidAt: { not: null },
+      },
     });
 
     return NextResponse.json({

@@ -7,6 +7,8 @@ type Params = { gameId: string };
 /**
  * POST /api/v1/games/[gameId]/leave
  * Leave a game (auth required)
+ * Note: With new GameEntry model, we don't actually delete entries as they represent tickets
+ * This just returns success for API compatibility
  */
 export const POST = withAuth<Params>(
   async (request, auth: AuthResult, params) => {
@@ -33,10 +35,9 @@ export const POST = withAuth<Params>(
         );
       }
 
-      // Remove participation (delete the record)
-      await prisma.gamePlayer.deleteMany({
-        where: { userId: auth.userId, gameId: gameIdNum },
-      });
+      // With GameEntry model, we can't delete entries (they represent paid tickets)
+      // Just return success for API compatibility
+      // A user can always "leave" and rejoin via the join endpoint
 
       return NextResponse.json({ success: true, gameId: gameIdNum });
     } catch (error) {

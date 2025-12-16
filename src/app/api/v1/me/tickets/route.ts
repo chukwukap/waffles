@@ -1,26 +1,29 @@
 import { NextResponse } from "next/server";
 import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getGamePhase } from "@/lib/game-utils";
 
-interface TicketResponse {
+interface EntryResponse {
   id: number;
-  code: string;
   status: string;
   amountUSDC: number;
   gameId: number;
-  purchasedAt: Date;
-  redeemedAt: Date | null;
+  paidAt: Date | null;
+  createdAt: Date;
+  score: number;
+  answered: number;
   game: {
     id: number;
     startsAt: Date;
     endsAt: Date;
     status: string;
+    ticketPrice: number;
   };
 }
 
 /**
  * GET /api/v1/me/tickets
- * Get all tickets for the authenticated user
+ * Get all game entries (tickets) for the authenticated user
  * Optional query param: ?gameId=X to filter by specific game
  */
 export const GET = withAuth(async (request, auth: AuthResult) => {
@@ -39,7 +42,7 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
       }
     }
 
-    const tickets = await prisma.ticket.findMany({
+    const entries = await prisma.gameEntry.findMany({
       where: whereClause,
       include: {
         game: {
@@ -47,22 +50,29 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
             id: true,
             startsAt: true,
             endsAt: true,
-            status: true,
+            ticketPrice: true,
           },
         },
       },
-      orderBy: { purchasedAt: "desc" },
+      orderBy: { createdAt: "desc" },
     });
 
-    const response: TicketResponse[] = tickets.map((ticket) => ({
-      id: ticket.id,
-      code: ticket.code,
-      status: ticket.status,
-      amountUSDC: ticket.amountUSDC,
-      gameId: ticket.gameId,
-      purchasedAt: ticket.purchasedAt,
-      redeemedAt: ticket.redeemedAt,
-      game: ticket.game,
+    const response: EntryResponse[] = entries.map((entry) => ({
+      id: entry.id,
+      status: entry.paidAt ? "PAID" : "PENDING",
+      amountUSDC: entry.game.ticketPrice,
+      gameId: entry.gameId,
+      paidAt: entry.paidAt,
+      createdAt: entry.createdAt,
+      score: entry.score,
+      answered: entry.answered,
+      game: {
+        id: entry.game.id,
+        startsAt: entry.game.startsAt,
+        endsAt: entry.game.endsAt,
+        status: getGamePhase(entry.game),
+        ticketPrice: entry.game.ticketPrice,
+      },
     }));
 
     return NextResponse.json(response);

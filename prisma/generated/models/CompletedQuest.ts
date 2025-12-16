@@ -275,6 +275,7 @@ export type CompletedQuestOrderByWithRelationInput = {
 
 export type CompletedQuestWhereUniqueInput = Prisma.AtLeast<{
   id?: number
+  userId_questId?: Prisma.CompletedQuestUserIdQuestIdCompoundUniqueInput
   AND?: Prisma.CompletedQuestWhereInput | Prisma.CompletedQuestWhereInput[]
   OR?: Prisma.CompletedQuestWhereInput[]
   NOT?: Prisma.CompletedQuestWhereInput | Prisma.CompletedQuestWhereInput[]
@@ -287,7 +288,7 @@ export type CompletedQuestWhereUniqueInput = Prisma.AtLeast<{
   approvedAt?: Prisma.DateTimeNullableFilter<"CompletedQuest"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   quest?: Prisma.XOR<Prisma.QuestScalarRelationFilter, Prisma.QuestWhereInput>
-}, "id">
+}, "id" | "userId_questId">
 
 export type CompletedQuestOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -399,6 +400,11 @@ export type CompletedQuestListRelationFilter = {
 
 export type CompletedQuestOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
+}
+
+export type CompletedQuestUserIdQuestIdCompoundUniqueInput = {
+  userId: number
+  questId: number
 }
 
 export type CompletedQuestCountOrderByAggregateInput = {

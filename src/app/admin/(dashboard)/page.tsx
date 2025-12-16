@@ -6,9 +6,9 @@ import {
     TrophyIcon,
     BanknotesIcon,
     TicketIcon,
-    ArrowTrendingUpIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
+import { getGamePhase } from "@/lib/game-utils";
 
 async function getStats() {
     const now = new Date();
@@ -18,36 +18,42 @@ async function getStats() {
         totalUsers,
         activeUsers,
         totalGames,
-        liveGames,
-        totalTickets,
-        paidTickets,
+        // Count live games using time-based phase
+        liveGamesRaw,
+        // Use gameEntry instead of ticket
+        totalEntries,
+        paidEntries,
         recentUsers,
-        recentTickets
+        recentEntries
     ] = await Promise.all([
         prisma.user.count(),
         prisma.user.count({ where: { hasGameAccess: true } }),
         prisma.game.count(),
-        prisma.game.count({ where: { status: "LIVE" } }),
-        prisma.ticket.count(),
-        prisma.ticket.count({ where: { status: "PAID" } }),
-        // Fetch recent data for charts (simplified for now, fetching last 7 days raw)
+        prisma.game.findMany({
+            where: { startsAt: { lte: now }, endsAt: { gt: now } },
+            select: { id: true },
+        }),
+        prisma.gameEntry.count(),
+        prisma.gameEntry.count({ where: { paidAt: { not: null } } }),
+        // Fetch recent data for charts
         prisma.user.findMany({
             where: { createdAt: { gte: sevenDaysAgo } },
             select: { createdAt: true },
         }),
-        prisma.ticket.findMany({
+        prisma.gameEntry.findMany({
             where: {
-                status: "PAID",
-                purchasedAt: { gte: sevenDaysAgo }
+                paidAt: { not: null, gte: sevenDaysAgo }
             },
-            select: { purchasedAt: true, amountUSDC: true },
+            select: {
+                paidAt: true,
+                game: { select: { ticketPrice: true } },
+            },
         }),
     ]);
 
-    // Calculate total revenue
-    const revenue = await prisma.ticket.aggregate({
-        where: { status: { in: ["PAID", "REDEEMED"] } },
-        _sum: { amountUSDC: true },
+    // Calculate total revenue from games' prizePool
+    const revenueResult = await prisma.game.aggregate({
+        _sum: { prizePool: true },
     });
 
     // Process chart data
@@ -58,24 +64,24 @@ async function getStats() {
 
     const userGrowth = dates.map(date => ({
         date: new Date(date).toLocaleDateString('en-US', { weekday: 'short' }),
-        count: recentUsers.filter(u => u.createdAt.toISOString().startsWith(date)).length
+        count: recentUsers.filter((u: { createdAt: Date }) => u.createdAt.toISOString().startsWith(date)).length
     }));
 
     const revenueData = dates.map(date => ({
         date: new Date(date).toLocaleDateString('en-US', { weekday: 'short' }),
-        amount: recentTickets
-            .filter(t => t.purchasedAt.toISOString().startsWith(date))
-            .reduce((sum, t) => sum + (t.amountUSDC || 0), 0)
+        amount: recentEntries
+            .filter((e: { paidAt: Date | null }) => e.paidAt?.toISOString().startsWith(date))
+            .reduce((sum: number, e: { game: { ticketPrice: number } }) => sum + (e.game.ticketPrice || 0), 0)
     }));
 
     return {
         totalUsers,
         activeUsers,
         totalGames,
-        liveGames,
-        totalTickets,
-        paidTickets,
-        totalRevenue: revenue._sum.amountUSDC || 0,
+        liveGames: liveGamesRaw.length,
+        totalTickets: totalEntries,
+        paidTickets: paidEntries,
+        totalRevenue: revenueResult._sum.prizePool || 0,
         userGrowth,
         revenueData,
     };
@@ -86,7 +92,13 @@ async function getRecentActivity() {
         prisma.game.findMany({
             take: 3,
             orderBy: { createdAt: "desc" },
-            include: { _count: { select: { players: true } } },
+            select: {
+                id: true,
+                title: true,
+                startsAt: true,
+                endsAt: true,
+                playerCount: true,
+            },
         }),
         prisma.user.findMany({
             take: 3,
@@ -162,22 +174,25 @@ export default async function AdminDashboard() {
                         {activity.games.length === 0 ? (
                             <div className="p-6 text-center text-white/50">No games yet</div>
                         ) : (
-                            activity.games.map((game) => (
-                                <div key={game.id} className="px-6 py-4 flex items-center justify-between admin-table-row">
-                                    <div>
-                                        <p className="font-medium text-white">{game.title}</p>
-                                        <p className="text-xs text-white/50">{new Date(game.startsAt).toLocaleDateString()}</p>
+                            activity.games.map((game) => {
+                                const phase = getGamePhase(game);
+                                return (
+                                    <div key={game.id} className="px-6 py-4 flex items-center justify-between admin-table-row">
+                                        <div>
+                                            <p className="font-medium text-white">{game.title}</p>
+                                            <p className="text-xs text-white/50">{new Date(game.startsAt).toLocaleDateString()}</p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${phase === "LIVE"
+                                                ? "bg-[#14B985]/20 text-[#14B985]"
+                                                : "bg-white/10 text-white/60"
+                                                }`}>
+                                                {phase}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${game.status === "LIVE"
-                                            ? "bg-[#14B985]/20 text-[#14B985]"
-                                            : "bg-white/10 text-white/60"
-                                            }`}>
-                                            {game.status}
-                                        </span>
-                                    </div>
-                                </div>
-                            ))
+                                );
+                            })
                         )}
                     </div>
                 </div>

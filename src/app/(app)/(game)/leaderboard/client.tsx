@@ -1,147 +1,169 @@
 "use client";
-import Image from "next/image";
-import {
-  useEffect,
-  useRef,
-  useCallback,
-  use,
-  useState,
-  useTransition,
-} from "react";
 
-import { LeaderboardApiResponse } from "./page";
-import { LeaderboardTabKey, Tabs } from "./_components/Tabs";
-import { useInfiniteLoader } from "./_components/useInfiniteLoader";
+import { useEffect, useRef, useState, useCallback } from "react";
+import Image from "next/image";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
+
+import { LeaderboardData, TabKey } from "./page";
+import { Tabs, LeaderboardTabKey } from "./_components/Tabs";
 import { Top3 } from "./_components/Top3";
 import { Row } from "./_components/Row";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
 
-// This is the shape of the data fetched from the server
-type InitialData = Promise<LeaderboardApiResponse>;
-
-interface LeaderboardClientPageProps {
-  initialDataPromise: InitialData;
-  userFid: number | null;
-  activeTab: LeaderboardTabKey;
+// ============================================
+// TYPES
+// ============================================
+interface LeaderboardClientProps {
+  initialData: LeaderboardData;
+  activeTab: TabKey;
+  gameId?: number;
 }
 
-export default function LeaderboardClientPage({
-  initialDataPromise,
-  userFid,
+// ============================================
+// COMPONENT
+// ============================================
+export default function LeaderboardClient({
+  initialData,
   activeTab,
-}: LeaderboardClientPageProps) {
-  // 1. Get initial data fetched on the server
-  // This will suspend until the promise resolves
-  const initialData = use(initialDataPromise);
+  gameId,
+}: LeaderboardClientProps) {
+  // Get user FID from MiniKit context
+  const { context } = useMiniKit();
+  const userFid = context?.user?.fid ?? null;
 
-  // 2. Setup state for client-side data management
-  const [entries, setEntries] = useState(initialData.users);
+  // ============================================
+  // STATE
+  // ============================================
+  const [entries, setEntries] = useState(initialData.entries);
   const [hasMore, setHasMore] = useState(initialData.hasMore);
-  const [page, setPage] = useState(1); // We fetched page 0 on server, so next is 1
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [currentError, setCurrentError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [page, setPage] = useState(1); // Page 0 was fetched on server
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // 3. Reset state when the active tab changes
+  // ============================================
+  // REFS
+  // ============================================
+  const loaderRef = useRef<HTMLDivElement>(null);
+  const crownRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // ============================================
+  // EFFECTS
+  // ============================================
+
+  // Reset state when tab changes
   useEffect(() => {
-    // The `initialData` will be for the *new* tab because the page
-    // re-rendered. We just need to reset our client state.
-    setEntries(initialData.users);
+    setEntries(initialData.entries);
     setHasMore(initialData.hasMore);
     setPage(1);
-    setCurrentError(null);
-    setIsLoadingMore(false);
+    setError(null);
   }, [activeTab, initialData]);
 
-  // 5. Function to load more entries
-  // Ref to store current abort controller
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  const loadMore = useCallback(async () => {
-    if (isLoadingMore || !hasMore || isPending) return;
-
-    // Abort previous request if it exists (though isLoadingMore should prevent this, it's safer)
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-
-    setIsLoadingMore(true);
-    setCurrentError(null);
-
-    startTransition(async () => {
-      try {
-        const url = `/api/v1/leaderboard?tab=${activeTab}&page=${page}`;
-        console.log(`[Leaderboard] Fetching page ${page} for tab ${activeTab}`);
-
-        const res = await fetch(url, {
-          signal: controller.signal,
-        });
-
-        if (!res.ok) {
-          const errorText = await res.text().catch(() => "Unknown error");
-          throw new Error(`Failed to fetch: ${res.status} ${res.statusText} - ${errorText}`);
-        }
-
-        const newData: LeaderboardApiResponse = await res.json();
-
-        // Prevent state update if component unmounted or aborted (redundant with signal but safe)
-        if (controller.signal.aborted) return;
-
-        setEntries((prev) => [...prev, ...newData.users]);
-        setHasMore(newData.hasMore);
-        setPage((prev) => prev + 1);
-      } catch (err) {
-        if (err instanceof Error && err.name === "AbortError") {
-          console.log("[Leaderboard] Request aborted");
-          return;
-        }
-        console.error("[Leaderboard] Failed to load more data:", err);
-        setCurrentError("Failed to load data. Please try again.");
-      } finally {
-        if (abortControllerRef.current === controller) {
-          abortControllerRef.current = null;
-        }
-        setIsLoadingMore(false);
-      }
-    });
-  }, [isLoadingMore, hasMore, isPending, activeTab, page]);
-
-  // 6. Infinite Loading Trigger (unchanged logic)
-  const [loaderRef] = useInfiniteLoader(loadMore, "0px 0px 600px 0px", 0, [
-    isLoadingMore,
-    hasMore,
-  ]);
-
-  // 7. Hero Animation (unchanged)
-  const crownRef = useRef<HTMLDivElement>(null);
+  // Hero scroll animation
   useEffect(() => {
     const el = crownRef.current;
     if (!el) return;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
-        const ratio = 1 - entry.intersectionRatio;
+        const progress = 1 - entry.intersectionRatio;
         document.documentElement.style.setProperty(
           "--lb-progress",
-          `${Math.min(Math.max(ratio, 0), 1)}`
+          `${Math.min(Math.max(progress, 0), 1)}`
         );
       },
       { threshold: Array.from({ length: 21 }, (_, i) => i / 20) }
     );
+
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
 
-  const isLoadingInitial = false; // Data is already loaded via use()
-  const isEmpty = !isLoadingInitial && entries.length === 0;
+  // Infinite scroll observer
+  useEffect(() => {
+    const el = loaderRef.current;
+    if (!el || !hasMore || isLoading) return;
 
-  // ───────────────────────── RENDER ─────────────────────────
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          loadMore();
+        }
+      },
+      { rootMargin: "600px" }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore, isLoading]);
+
+  // ============================================
+  // HANDLERS
+  // ============================================
+
+  const loadMore = useCallback(async () => {
+    if (isLoading || !hasMore) return;
+
+    // Abort previous request
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const params = new URLSearchParams({ tab: activeTab, page: String(page) });
+      if (gameId) params.set("gameId", String(gameId));
+
+      const res = await fetch(`/api/v1/leaderboard?${params}`, {
+        signal: controller.signal,
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to fetch: ${res.status}`);
+      }
+
+      const data: LeaderboardData = await res.json();
+
+      if (!controller.signal.aborted) {
+        setEntries((prev) => [...prev, ...data.entries]);
+        setHasMore(data.hasMore);
+        setPage((prev) => prev + 1);
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") return;
+      console.error("[Leaderboard] Load more failed:", err);
+      setError("Failed to load more. Try again.");
+    } finally {
+      if (abortRef.current === controller) {
+        abortRef.current = null;
+      }
+      setIsLoading(false);
+    }
+  }, [isLoading, hasMore, activeTab, page, gameId]);
+
+  // ============================================
+  // COMPUTED
+  // ============================================
+  const isEmpty = entries.length === 0;
+  const top3 = entries.slice(0, 3);
+  const rest = entries.slice(3);
+  const tabDescription =
+    activeTab === "game"
+      ? initialData.gameTitle ?? "Game Leaderboard"
+      : activeTab === "current"
+        ? "Real-time standings from the current game"
+        : "The greatest of all time";
+
+  // ============================================
+  // RENDER
+  // ============================================
   return (
     <div className="flex-1 overflow-y-auto flex flex-col mx-auto max-w-sm px-4">
-      {/* HERO + TABS */}
+      {/* HERO SECTION */}
       <section className="pt-6 md:pt-10 relative">
+        {/* Crown Image */}
         <div ref={crownRef} className="relative grid place-items-center">
           <Image
             src="/images/chest-crown.png"
@@ -156,67 +178,64 @@ export default function LeaderboardClientPage({
             }}
           />
         </div>
-        {/* Sticky Header with Title, Tabs, Description */}
+
+        {/* Sticky Header */}
         <div className="sticky top-[61px] z-10 -mx-4 px-4 pb-2 pt-1 backdrop-blur-sm">
           <h1 className="text-center font-body text-2xl md:text-3xl tracking-wide">
             LEADERBOARD
           </h1>
+
           <div className="mt-5 flex items-center justify-center gap-6">
-            {/* Pass activeTab and userFid to Tabs component */}
-            <Tabs activeTab={activeTab} fid={userFid} />
+            <Tabs activeTab={activeTab as LeaderboardTabKey} fid={userFid} />
           </div>
+
           <p className="mt-4 text-center text-muted font-display">
-            {activeTab === "current"
-              ? "Real-time standings from the current game"
-              : "The greatest of all time"}
+            {tabDescription}
           </p>
         </div>
       </section>
 
-      {/* LIST */}
+      {/* LIST SECTION */}
       <section className="pb-24 pt-4 space-y-4">
-        {entries.length > 0 && (
-          <Top3 entries={entries.slice(0, 3)} currentUserId={userFid} />
-        )}
+        {/* Top 3 */}
+        {top3.length > 0 && <Top3 entries={top3} currentUserId={userFid} />}
 
-        {/* Render rest of the list */}
+        {/* Rest of list */}
         <div className="space-y-3">
-          {entries.slice(3).map((e) => (
+          {rest.map((entry) => (
             <Row
-              key={`${activeTab}-${e.rank}-${e.id}`}
-              entry={e}
-              isCurrentUser={userFid != null && e.fid === userFid}
+              key={`${activeTab}-${entry.rank}-${entry.id}`}
+              entry={entry}
+              isCurrentUser={userFid != null && entry.fid === userFid}
             />
           ))}
 
-          {/* Loading Indicator */}
-          {(isLoadingMore || isPending) && (
+          {/* Loading indicator */}
+          {isLoading && (
             <div className="py-4">
               <WaffleLoader size={60} text="" />
             </div>
           )}
 
-          {/* Error Message */}
-          {currentError && !isPending && (
-            <div className="panel px-4 py-3 text-sm text-danger">
-              {currentError}
-            </div>
+          {/* Error message */}
+          {error && !isLoading && (
+            <div className="panel px-4 py-3 text-sm text-danger">{error}</div>
           )}
 
-          {/* Empty State */}
-          {isEmpty && !currentError && (
+          {/* Empty state */}
+          {isEmpty && !error && (
             <div className="panel px-4 py-6 text-center text-sm text-muted">
               Nothing here yet.
             </div>
           )}
 
-          {/* Infinite Scroll Trigger Element */}
-          {hasMore && !isLoadingMore && !currentError && !isPending && (
+          {/* Infinite scroll trigger */}
+          {hasMore && !isLoading && !error && (
             <div ref={loaderRef} className="h-10 w-full" />
           )}
 
-          {/* End of List Indicator */}
-          {!hasMore && !isEmpty && !currentError && (
+          {/* End of list */}
+          {!hasMore && !isEmpty && !error && (
             <div className="panel px-4 py-3 text-center text-sm text-muted">
               End of list.
             </div>

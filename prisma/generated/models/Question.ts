@@ -30,30 +30,33 @@ export type QuestionAvgAggregateOutputType = {
   id: number | null
   gameId: number | null
   roundIndex: number | null
-  order: number | null
+  orderInRound: number | null
   correctIndex: number | null
   durationSec: number | null
+  points: number | null
 }
 
 export type QuestionSumAggregateOutputType = {
   id: number | null
   gameId: number | null
   roundIndex: number | null
-  order: number | null
+  orderInRound: number | null
   correctIndex: number | null
   durationSec: number | null
+  points: number | null
 }
 
 export type QuestionMinAggregateOutputType = {
   id: number | null
   gameId: number | null
   roundIndex: number | null
-  order: number | null
+  orderInRound: number | null
   content: string | null
   mediaUrl: string | null
   soundUrl: string | null
   correctIndex: number | null
   durationSec: number | null
+  points: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -62,12 +65,13 @@ export type QuestionMaxAggregateOutputType = {
   id: number | null
   gameId: number | null
   roundIndex: number | null
-  order: number | null
+  orderInRound: number | null
   content: string | null
   mediaUrl: string | null
   soundUrl: string | null
   correctIndex: number | null
   durationSec: number | null
+  points: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -76,13 +80,14 @@ export type QuestionCountAggregateOutputType = {
   id: number
   gameId: number
   roundIndex: number
-  order: number
+  orderInRound: number
   content: number
   mediaUrl: number
   soundUrl: number
   options: number
   correctIndex: number
   durationSec: number
+  points: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -93,30 +98,33 @@ export type QuestionAvgAggregateInputType = {
   id?: true
   gameId?: true
   roundIndex?: true
-  order?: true
+  orderInRound?: true
   correctIndex?: true
   durationSec?: true
+  points?: true
 }
 
 export type QuestionSumAggregateInputType = {
   id?: true
   gameId?: true
   roundIndex?: true
-  order?: true
+  orderInRound?: true
   correctIndex?: true
   durationSec?: true
+  points?: true
 }
 
 export type QuestionMinAggregateInputType = {
   id?: true
   gameId?: true
   roundIndex?: true
-  order?: true
+  orderInRound?: true
   content?: true
   mediaUrl?: true
   soundUrl?: true
   correctIndex?: true
   durationSec?: true
+  points?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -125,12 +133,13 @@ export type QuestionMaxAggregateInputType = {
   id?: true
   gameId?: true
   roundIndex?: true
-  order?: true
+  orderInRound?: true
   content?: true
   mediaUrl?: true
   soundUrl?: true
   correctIndex?: true
   durationSec?: true
+  points?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -139,13 +148,14 @@ export type QuestionCountAggregateInputType = {
   id?: true
   gameId?: true
   roundIndex?: true
-  order?: true
+  orderInRound?: true
   content?: true
   mediaUrl?: true
   soundUrl?: true
   options?: true
   correctIndex?: true
   durationSec?: true
+  points?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -241,13 +251,14 @@ export type QuestionGroupByOutputType = {
   id: number
   gameId: number
   roundIndex: number
-  order: number
+  orderInRound: number
   content: string
-  mediaUrl: string
-  soundUrl: string
+  mediaUrl: string | null
+  soundUrl: string | null
   options: string[]
   correctIndex: number
   durationSec: number
+  points: number
   createdAt: Date
   updatedAt: Date
   _count: QuestionCountAggregateOutputType | null
@@ -279,34 +290,34 @@ export type QuestionWhereInput = {
   id?: Prisma.IntFilter<"Question"> | number
   gameId?: Prisma.IntFilter<"Question"> | number
   roundIndex?: Prisma.IntFilter<"Question"> | number
-  order?: Prisma.IntFilter<"Question"> | number
+  orderInRound?: Prisma.IntFilter<"Question"> | number
   content?: Prisma.StringFilter<"Question"> | string
-  mediaUrl?: Prisma.StringFilter<"Question"> | string
-  soundUrl?: Prisma.StringFilter<"Question"> | string
+  mediaUrl?: Prisma.StringNullableFilter<"Question"> | string | null
+  soundUrl?: Prisma.StringNullableFilter<"Question"> | string | null
   options?: Prisma.StringNullableListFilter<"Question">
   correctIndex?: Prisma.IntFilter<"Question"> | number
   durationSec?: Prisma.IntFilter<"Question"> | number
+  points?: Prisma.IntFilter<"Question"> | number
   createdAt?: Prisma.DateTimeFilter<"Question"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Question"> | Date | string
   game?: Prisma.XOR<Prisma.GameScalarRelationFilter, Prisma.GameWhereInput>
-  answers?: Prisma.AnswerListRelationFilter
 }
 
 export type QuestionOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   gameId?: Prisma.SortOrder
   roundIndex?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  orderInRound?: Prisma.SortOrder
   content?: Prisma.SortOrder
-  mediaUrl?: Prisma.SortOrder
-  soundUrl?: Prisma.SortOrder
+  mediaUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  soundUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   options?: Prisma.SortOrder
   correctIndex?: Prisma.SortOrder
   durationSec?: Prisma.SortOrder
+  points?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   game?: Prisma.GameOrderByWithRelationInput
-  answers?: Prisma.AnswerOrderByRelationAggregateInput
 }
 
 export type QuestionWhereUniqueInput = Prisma.AtLeast<{
@@ -316,30 +327,31 @@ export type QuestionWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.QuestionWhereInput | Prisma.QuestionWhereInput[]
   gameId?: Prisma.IntFilter<"Question"> | number
   roundIndex?: Prisma.IntFilter<"Question"> | number
-  order?: Prisma.IntFilter<"Question"> | number
+  orderInRound?: Prisma.IntFilter<"Question"> | number
   content?: Prisma.StringFilter<"Question"> | string
-  mediaUrl?: Prisma.StringFilter<"Question"> | string
-  soundUrl?: Prisma.StringFilter<"Question"> | string
+  mediaUrl?: Prisma.StringNullableFilter<"Question"> | string | null
+  soundUrl?: Prisma.StringNullableFilter<"Question"> | string | null
   options?: Prisma.StringNullableListFilter<"Question">
   correctIndex?: Prisma.IntFilter<"Question"> | number
   durationSec?: Prisma.IntFilter<"Question"> | number
+  points?: Prisma.IntFilter<"Question"> | number
   createdAt?: Prisma.DateTimeFilter<"Question"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Question"> | Date | string
   game?: Prisma.XOR<Prisma.GameScalarRelationFilter, Prisma.GameWhereInput>
-  answers?: Prisma.AnswerListRelationFilter
 }, "id">
 
 export type QuestionOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   gameId?: Prisma.SortOrder
   roundIndex?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  orderInRound?: Prisma.SortOrder
   content?: Prisma.SortOrder
-  mediaUrl?: Prisma.SortOrder
-  soundUrl?: Prisma.SortOrder
+  mediaUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  soundUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   options?: Prisma.SortOrder
   correctIndex?: Prisma.SortOrder
   durationSec?: Prisma.SortOrder
+  points?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.QuestionCountOrderByAggregateInput
@@ -356,103 +368,106 @@ export type QuestionScalarWhereWithAggregatesInput = {
   id?: Prisma.IntWithAggregatesFilter<"Question"> | number
   gameId?: Prisma.IntWithAggregatesFilter<"Question"> | number
   roundIndex?: Prisma.IntWithAggregatesFilter<"Question"> | number
-  order?: Prisma.IntWithAggregatesFilter<"Question"> | number
+  orderInRound?: Prisma.IntWithAggregatesFilter<"Question"> | number
   content?: Prisma.StringWithAggregatesFilter<"Question"> | string
-  mediaUrl?: Prisma.StringWithAggregatesFilter<"Question"> | string
-  soundUrl?: Prisma.StringWithAggregatesFilter<"Question"> | string
+  mediaUrl?: Prisma.StringNullableWithAggregatesFilter<"Question"> | string | null
+  soundUrl?: Prisma.StringNullableWithAggregatesFilter<"Question"> | string | null
   options?: Prisma.StringNullableListFilter<"Question">
   correctIndex?: Prisma.IntWithAggregatesFilter<"Question"> | number
   durationSec?: Prisma.IntWithAggregatesFilter<"Question"> | number
+  points?: Prisma.IntWithAggregatesFilter<"Question"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Question"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Question"> | Date | string
 }
 
 export type QuestionCreateInput = {
   roundIndex?: number
-  order?: number
+  orderInRound?: number
   content: string
-  mediaUrl: string
-  soundUrl: string
+  mediaUrl?: string | null
+  soundUrl?: string | null
   options?: Prisma.QuestionCreateoptionsInput | string[]
   correctIndex: number
   durationSec?: number
+  points?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   game: Prisma.GameCreateNestedOneWithoutQuestionsInput
-  answers?: Prisma.AnswerCreateNestedManyWithoutQuestionInput
 }
 
 export type QuestionUncheckedCreateInput = {
   id?: number
   gameId: number
   roundIndex?: number
-  order?: number
+  orderInRound?: number
   content: string
-  mediaUrl: string
-  soundUrl: string
+  mediaUrl?: string | null
+  soundUrl?: string | null
   options?: Prisma.QuestionCreateoptionsInput | string[]
   correctIndex: number
   durationSec?: number
+  points?: number
   createdAt?: Date | string
   updatedAt?: Date | string
-  answers?: Prisma.AnswerUncheckedCreateNestedManyWithoutQuestionInput
 }
 
 export type QuestionUpdateInput = {
   roundIndex?: Prisma.IntFieldUpdateOperationsInput | number
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  orderInRound?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
-  mediaUrl?: Prisma.StringFieldUpdateOperationsInput | string
-  soundUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  soundUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   options?: Prisma.QuestionUpdateoptionsInput | string[]
   correctIndex?: Prisma.IntFieldUpdateOperationsInput | number
   durationSec?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   game?: Prisma.GameUpdateOneRequiredWithoutQuestionsNestedInput
-  answers?: Prisma.AnswerUpdateManyWithoutQuestionNestedInput
 }
 
 export type QuestionUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   gameId?: Prisma.IntFieldUpdateOperationsInput | number
   roundIndex?: Prisma.IntFieldUpdateOperationsInput | number
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  orderInRound?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
-  mediaUrl?: Prisma.StringFieldUpdateOperationsInput | string
-  soundUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  soundUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   options?: Prisma.QuestionUpdateoptionsInput | string[]
   correctIndex?: Prisma.IntFieldUpdateOperationsInput | number
   durationSec?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  answers?: Prisma.AnswerUncheckedUpdateManyWithoutQuestionNestedInput
 }
 
 export type QuestionCreateManyInput = {
   id?: number
   gameId: number
   roundIndex?: number
-  order?: number
+  orderInRound?: number
   content: string
-  mediaUrl: string
-  soundUrl: string
+  mediaUrl?: string | null
+  soundUrl?: string | null
   options?: Prisma.QuestionCreateoptionsInput | string[]
   correctIndex: number
   durationSec?: number
+  points?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type QuestionUpdateManyMutationInput = {
   roundIndex?: Prisma.IntFieldUpdateOperationsInput | number
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  orderInRound?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
-  mediaUrl?: Prisma.StringFieldUpdateOperationsInput | string
-  soundUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  soundUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   options?: Prisma.QuestionUpdateoptionsInput | string[]
   correctIndex?: Prisma.IntFieldUpdateOperationsInput | number
   durationSec?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -461,13 +476,14 @@ export type QuestionUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   gameId?: Prisma.IntFieldUpdateOperationsInput | number
   roundIndex?: Prisma.IntFieldUpdateOperationsInput | number
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  orderInRound?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
-  mediaUrl?: Prisma.StringFieldUpdateOperationsInput | string
-  soundUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  soundUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   options?: Prisma.QuestionUpdateoptionsInput | string[]
   correctIndex?: Prisma.IntFieldUpdateOperationsInput | number
   durationSec?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -494,13 +510,14 @@ export type QuestionCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   gameId?: Prisma.SortOrder
   roundIndex?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  orderInRound?: Prisma.SortOrder
   content?: Prisma.SortOrder
   mediaUrl?: Prisma.SortOrder
   soundUrl?: Prisma.SortOrder
   options?: Prisma.SortOrder
   correctIndex?: Prisma.SortOrder
   durationSec?: Prisma.SortOrder
+  points?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -509,21 +526,23 @@ export type QuestionAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   gameId?: Prisma.SortOrder
   roundIndex?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  orderInRound?: Prisma.SortOrder
   correctIndex?: Prisma.SortOrder
   durationSec?: Prisma.SortOrder
+  points?: Prisma.SortOrder
 }
 
 export type QuestionMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   gameId?: Prisma.SortOrder
   roundIndex?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  orderInRound?: Prisma.SortOrder
   content?: Prisma.SortOrder
   mediaUrl?: Prisma.SortOrder
   soundUrl?: Prisma.SortOrder
   correctIndex?: Prisma.SortOrder
   durationSec?: Prisma.SortOrder
+  points?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -532,12 +551,13 @@ export type QuestionMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   gameId?: Prisma.SortOrder
   roundIndex?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  orderInRound?: Prisma.SortOrder
   content?: Prisma.SortOrder
   mediaUrl?: Prisma.SortOrder
   soundUrl?: Prisma.SortOrder
   correctIndex?: Prisma.SortOrder
   durationSec?: Prisma.SortOrder
+  points?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -546,14 +566,10 @@ export type QuestionSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   gameId?: Prisma.SortOrder
   roundIndex?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  orderInRound?: Prisma.SortOrder
   correctIndex?: Prisma.SortOrder
   durationSec?: Prisma.SortOrder
-}
-
-export type QuestionScalarRelationFilter = {
-  is?: Prisma.QuestionWhereInput
-  isNot?: Prisma.QuestionWhereInput
+  points?: Prisma.SortOrder
 }
 
 export type QuestionCreateNestedManyWithoutGameInput = {
@@ -607,47 +623,33 @@ export type QuestionUpdateoptionsInput = {
   push?: string | string[]
 }
 
-export type QuestionCreateNestedOneWithoutAnswersInput = {
-  create?: Prisma.XOR<Prisma.QuestionCreateWithoutAnswersInput, Prisma.QuestionUncheckedCreateWithoutAnswersInput>
-  connectOrCreate?: Prisma.QuestionCreateOrConnectWithoutAnswersInput
-  connect?: Prisma.QuestionWhereUniqueInput
-}
-
-export type QuestionUpdateOneRequiredWithoutAnswersNestedInput = {
-  create?: Prisma.XOR<Prisma.QuestionCreateWithoutAnswersInput, Prisma.QuestionUncheckedCreateWithoutAnswersInput>
-  connectOrCreate?: Prisma.QuestionCreateOrConnectWithoutAnswersInput
-  upsert?: Prisma.QuestionUpsertWithoutAnswersInput
-  connect?: Prisma.QuestionWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.QuestionUpdateToOneWithWhereWithoutAnswersInput, Prisma.QuestionUpdateWithoutAnswersInput>, Prisma.QuestionUncheckedUpdateWithoutAnswersInput>
-}
-
 export type QuestionCreateWithoutGameInput = {
   roundIndex?: number
-  order?: number
+  orderInRound?: number
   content: string
-  mediaUrl: string
-  soundUrl: string
+  mediaUrl?: string | null
+  soundUrl?: string | null
   options?: Prisma.QuestionCreateoptionsInput | string[]
   correctIndex: number
   durationSec?: number
+  points?: number
   createdAt?: Date | string
   updatedAt?: Date | string
-  answers?: Prisma.AnswerCreateNestedManyWithoutQuestionInput
 }
 
 export type QuestionUncheckedCreateWithoutGameInput = {
   id?: number
   roundIndex?: number
-  order?: number
+  orderInRound?: number
   content: string
-  mediaUrl: string
-  soundUrl: string
+  mediaUrl?: string | null
+  soundUrl?: string | null
   options?: Prisma.QuestionCreateoptionsInput | string[]
   correctIndex: number
   durationSec?: number
+  points?: number
   createdAt?: Date | string
   updatedAt?: Date | string
-  answers?: Prisma.AnswerUncheckedCreateNestedManyWithoutQuestionInput
 }
 
 export type QuestionCreateOrConnectWithoutGameInput = {
@@ -683,208 +685,108 @@ export type QuestionScalarWhereInput = {
   id?: Prisma.IntFilter<"Question"> | number
   gameId?: Prisma.IntFilter<"Question"> | number
   roundIndex?: Prisma.IntFilter<"Question"> | number
-  order?: Prisma.IntFilter<"Question"> | number
+  orderInRound?: Prisma.IntFilter<"Question"> | number
   content?: Prisma.StringFilter<"Question"> | string
-  mediaUrl?: Prisma.StringFilter<"Question"> | string
-  soundUrl?: Prisma.StringFilter<"Question"> | string
+  mediaUrl?: Prisma.StringNullableFilter<"Question"> | string | null
+  soundUrl?: Prisma.StringNullableFilter<"Question"> | string | null
   options?: Prisma.StringNullableListFilter<"Question">
   correctIndex?: Prisma.IntFilter<"Question"> | number
   durationSec?: Prisma.IntFilter<"Question"> | number
+  points?: Prisma.IntFilter<"Question"> | number
   createdAt?: Prisma.DateTimeFilter<"Question"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Question"> | Date | string
-}
-
-export type QuestionCreateWithoutAnswersInput = {
-  roundIndex?: number
-  order?: number
-  content: string
-  mediaUrl: string
-  soundUrl: string
-  options?: Prisma.QuestionCreateoptionsInput | string[]
-  correctIndex: number
-  durationSec?: number
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  game: Prisma.GameCreateNestedOneWithoutQuestionsInput
-}
-
-export type QuestionUncheckedCreateWithoutAnswersInput = {
-  id?: number
-  gameId: number
-  roundIndex?: number
-  order?: number
-  content: string
-  mediaUrl: string
-  soundUrl: string
-  options?: Prisma.QuestionCreateoptionsInput | string[]
-  correctIndex: number
-  durationSec?: number
-  createdAt?: Date | string
-  updatedAt?: Date | string
-}
-
-export type QuestionCreateOrConnectWithoutAnswersInput = {
-  where: Prisma.QuestionWhereUniqueInput
-  create: Prisma.XOR<Prisma.QuestionCreateWithoutAnswersInput, Prisma.QuestionUncheckedCreateWithoutAnswersInput>
-}
-
-export type QuestionUpsertWithoutAnswersInput = {
-  update: Prisma.XOR<Prisma.QuestionUpdateWithoutAnswersInput, Prisma.QuestionUncheckedUpdateWithoutAnswersInput>
-  create: Prisma.XOR<Prisma.QuestionCreateWithoutAnswersInput, Prisma.QuestionUncheckedCreateWithoutAnswersInput>
-  where?: Prisma.QuestionWhereInput
-}
-
-export type QuestionUpdateToOneWithWhereWithoutAnswersInput = {
-  where?: Prisma.QuestionWhereInput
-  data: Prisma.XOR<Prisma.QuestionUpdateWithoutAnswersInput, Prisma.QuestionUncheckedUpdateWithoutAnswersInput>
-}
-
-export type QuestionUpdateWithoutAnswersInput = {
-  roundIndex?: Prisma.IntFieldUpdateOperationsInput | number
-  order?: Prisma.IntFieldUpdateOperationsInput | number
-  content?: Prisma.StringFieldUpdateOperationsInput | string
-  mediaUrl?: Prisma.StringFieldUpdateOperationsInput | string
-  soundUrl?: Prisma.StringFieldUpdateOperationsInput | string
-  options?: Prisma.QuestionUpdateoptionsInput | string[]
-  correctIndex?: Prisma.IntFieldUpdateOperationsInput | number
-  durationSec?: Prisma.IntFieldUpdateOperationsInput | number
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  game?: Prisma.GameUpdateOneRequiredWithoutQuestionsNestedInput
-}
-
-export type QuestionUncheckedUpdateWithoutAnswersInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  gameId?: Prisma.IntFieldUpdateOperationsInput | number
-  roundIndex?: Prisma.IntFieldUpdateOperationsInput | number
-  order?: Prisma.IntFieldUpdateOperationsInput | number
-  content?: Prisma.StringFieldUpdateOperationsInput | string
-  mediaUrl?: Prisma.StringFieldUpdateOperationsInput | string
-  soundUrl?: Prisma.StringFieldUpdateOperationsInput | string
-  options?: Prisma.QuestionUpdateoptionsInput | string[]
-  correctIndex?: Prisma.IntFieldUpdateOperationsInput | number
-  durationSec?: Prisma.IntFieldUpdateOperationsInput | number
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type QuestionCreateManyGameInput = {
   id?: number
   roundIndex?: number
-  order?: number
+  orderInRound?: number
   content: string
-  mediaUrl: string
-  soundUrl: string
+  mediaUrl?: string | null
+  soundUrl?: string | null
   options?: Prisma.QuestionCreateoptionsInput | string[]
   correctIndex: number
   durationSec?: number
+  points?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type QuestionUpdateWithoutGameInput = {
   roundIndex?: Prisma.IntFieldUpdateOperationsInput | number
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  orderInRound?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
-  mediaUrl?: Prisma.StringFieldUpdateOperationsInput | string
-  soundUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  soundUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   options?: Prisma.QuestionUpdateoptionsInput | string[]
   correctIndex?: Prisma.IntFieldUpdateOperationsInput | number
   durationSec?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  answers?: Prisma.AnswerUpdateManyWithoutQuestionNestedInput
 }
 
 export type QuestionUncheckedUpdateWithoutGameInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   roundIndex?: Prisma.IntFieldUpdateOperationsInput | number
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  orderInRound?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
-  mediaUrl?: Prisma.StringFieldUpdateOperationsInput | string
-  soundUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  soundUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   options?: Prisma.QuestionUpdateoptionsInput | string[]
   correctIndex?: Prisma.IntFieldUpdateOperationsInput | number
   durationSec?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  answers?: Prisma.AnswerUncheckedUpdateManyWithoutQuestionNestedInput
 }
 
 export type QuestionUncheckedUpdateManyWithoutGameInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   roundIndex?: Prisma.IntFieldUpdateOperationsInput | number
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  orderInRound?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
-  mediaUrl?: Prisma.StringFieldUpdateOperationsInput | string
-  soundUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  soundUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   options?: Prisma.QuestionUpdateoptionsInput | string[]
   correctIndex?: Prisma.IntFieldUpdateOperationsInput | number
   durationSec?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-
-/**
- * Count Type QuestionCountOutputType
- */
-
-export type QuestionCountOutputType = {
-  answers: number
-}
-
-export type QuestionCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  answers?: boolean | QuestionCountOutputTypeCountAnswersArgs
-}
-
-/**
- * QuestionCountOutputType without action
- */
-export type QuestionCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the QuestionCountOutputType
-   */
-  select?: Prisma.QuestionCountOutputTypeSelect<ExtArgs> | null
-}
-
-/**
- * QuestionCountOutputType without action
- */
-export type QuestionCountOutputTypeCountAnswersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.AnswerWhereInput
-}
 
 
 export type QuestionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   gameId?: boolean
   roundIndex?: boolean
-  order?: boolean
+  orderInRound?: boolean
   content?: boolean
   mediaUrl?: boolean
   soundUrl?: boolean
   options?: boolean
   correctIndex?: boolean
   durationSec?: boolean
+  points?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   game?: boolean | Prisma.GameDefaultArgs<ExtArgs>
-  answers?: boolean | Prisma.Question$answersArgs<ExtArgs>
-  _count?: boolean | Prisma.QuestionCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["question"]>
 
 export type QuestionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   gameId?: boolean
   roundIndex?: boolean
-  order?: boolean
+  orderInRound?: boolean
   content?: boolean
   mediaUrl?: boolean
   soundUrl?: boolean
   options?: boolean
   correctIndex?: boolean
   durationSec?: boolean
+  points?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   game?: boolean | Prisma.GameDefaultArgs<ExtArgs>
@@ -894,13 +796,14 @@ export type QuestionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   id?: boolean
   gameId?: boolean
   roundIndex?: boolean
-  order?: boolean
+  orderInRound?: boolean
   content?: boolean
   mediaUrl?: boolean
   soundUrl?: boolean
   options?: boolean
   correctIndex?: boolean
   durationSec?: boolean
+  points?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   game?: boolean | Prisma.GameDefaultArgs<ExtArgs>
@@ -910,22 +813,21 @@ export type QuestionSelectScalar = {
   id?: boolean
   gameId?: boolean
   roundIndex?: boolean
-  order?: boolean
+  orderInRound?: boolean
   content?: boolean
   mediaUrl?: boolean
   soundUrl?: boolean
   options?: boolean
   correctIndex?: boolean
   durationSec?: boolean
+  points?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type QuestionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "gameId" | "roundIndex" | "order" | "content" | "mediaUrl" | "soundUrl" | "options" | "correctIndex" | "durationSec" | "createdAt" | "updatedAt", ExtArgs["result"]["question"]>
+export type QuestionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "gameId" | "roundIndex" | "orderInRound" | "content" | "mediaUrl" | "soundUrl" | "options" | "correctIndex" | "durationSec" | "points" | "createdAt" | "updatedAt", ExtArgs["result"]["question"]>
 export type QuestionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   game?: boolean | Prisma.GameDefaultArgs<ExtArgs>
-  answers?: boolean | Prisma.Question$answersArgs<ExtArgs>
-  _count?: boolean | Prisma.QuestionCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type QuestionIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   game?: boolean | Prisma.GameDefaultArgs<ExtArgs>
@@ -938,19 +840,19 @@ export type $QuestionPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
   name: "Question"
   objects: {
     game: Prisma.$GamePayload<ExtArgs>
-    answers: Prisma.$AnswerPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     gameId: number
     roundIndex: number
-    order: number
+    orderInRound: number
     content: string
-    mediaUrl: string
-    soundUrl: string
+    mediaUrl: string | null
+    soundUrl: string | null
     options: string[]
     correctIndex: number
     durationSec: number
+    points: number
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["question"]>
@@ -1348,7 +1250,6 @@ readonly fields: QuestionFieldRefs;
 export interface Prisma__QuestionClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   game<T extends Prisma.GameDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.GameDefaultArgs<ExtArgs>>): Prisma.Prisma__GameClient<runtime.Types.Result.GetResult<Prisma.$GamePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  answers<T extends Prisma.Question$answersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Question$answersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AnswerPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1381,13 +1282,14 @@ export interface QuestionFieldRefs {
   readonly id: Prisma.FieldRef<"Question", 'Int'>
   readonly gameId: Prisma.FieldRef<"Question", 'Int'>
   readonly roundIndex: Prisma.FieldRef<"Question", 'Int'>
-  readonly order: Prisma.FieldRef<"Question", 'Int'>
+  readonly orderInRound: Prisma.FieldRef<"Question", 'Int'>
   readonly content: Prisma.FieldRef<"Question", 'String'>
   readonly mediaUrl: Prisma.FieldRef<"Question", 'String'>
   readonly soundUrl: Prisma.FieldRef<"Question", 'String'>
   readonly options: Prisma.FieldRef<"Question", 'String[]'>
   readonly correctIndex: Prisma.FieldRef<"Question", 'Int'>
   readonly durationSec: Prisma.FieldRef<"Question", 'Int'>
+  readonly points: Prisma.FieldRef<"Question", 'Int'>
   readonly createdAt: Prisma.FieldRef<"Question", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Question", 'DateTime'>
 }
@@ -1783,30 +1685,6 @@ export type QuestionDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Limit how many Questions to delete.
    */
   limit?: number
-}
-
-/**
- * Question.answers
- */
-export type Question$answersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the Answer
-   */
-  select?: Prisma.AnswerSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the Answer
-   */
-  omit?: Prisma.AnswerOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.AnswerInclude<ExtArgs> | null
-  where?: Prisma.AnswerWhereInput
-  orderBy?: Prisma.AnswerOrderByWithRelationInput | Prisma.AnswerOrderByWithRelationInput[]
-  cursor?: Prisma.AnswerWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.AnswerScalarFieldEnum | Prisma.AnswerScalarFieldEnum[]
 }
 
 /**

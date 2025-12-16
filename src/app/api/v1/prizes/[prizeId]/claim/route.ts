@@ -1,13 +1,9 @@
 import { NextResponse } from "next/server";
 import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { z } from "zod";
+import { getGamePhase } from "@/lib/game-utils";
 
 type Params = { prizeId: string };
-
-const claimSchema = z.object({
-  gameId: z.number().int().positive("Invalid Game ID"),
-});
 
 interface ClaimResponse {
   success: boolean;
@@ -34,51 +30,59 @@ export const POST = withAuth<Params>(
         );
       }
 
-      // Find game player record
-      const gamePlayer = await prisma.gamePlayer.findUnique({
+      // Find game entry
+      const entry = await prisma.gameEntry.findUnique({
         where: { gameId_userId: { gameId: gameIdNum, userId: auth.userId } },
         select: {
           claimedAt: true,
           rank: true,
           score: true,
+          paidAt: true,
           game: {
             select: {
-              status: true,
-              tickets: {
-                where: { userId: auth.userId, status: "PAID" },
-                select: { amountUSDC: true },
-              },
+              startsAt: true,
+              endsAt: true,
+              ticketPrice: true,
+              prizePool: true,
             },
           },
         },
       });
 
-      if (!gamePlayer) {
+      if (!entry) {
         return NextResponse.json<ApiError>(
-          { error: "Game record not found", code: "NOT_FOUND" },
+          { error: "Game entry not found", code: "NOT_FOUND" },
           { status: 404 }
         );
       }
 
-      // Check if game has ended
-      if (gamePlayer.game.status !== "ENDED") {
+      // Check if game has ended using time-based phase
+      const phase = getGamePhase(entry.game);
+      if (phase !== "ENDED") {
         return NextResponse.json<ApiError>(
           { error: "Game has not ended yet", code: "GAME_NOT_ENDED" },
           { status: 400 }
         );
       }
 
+      // Check if entry is paid
+      if (!entry.paidAt) {
+        return NextResponse.json<ApiError>(
+          { error: "Entry not paid", code: "NOT_PAID" },
+          { status: 400 }
+        );
+      }
+
       // Check if already claimed
-      if (gamePlayer.claimedAt) {
+      if (entry.claimedAt) {
         return NextResponse.json<ApiError>(
           { error: "Prize already claimed", code: "ALREADY_CLAIMED" },
           { status: 400 }
         );
       }
 
-      // Check eligibility (rank 1 or has winnings)
-      const winnings = gamePlayer.game.tickets[0]?.amountUSDC ?? 0;
-      const isEligible = gamePlayer.rank === 1 || winnings > 0;
+      // Check eligibility (top 3 ranks get prizes)
+      const isEligible = entry.rank !== null && entry.rank <= 3;
 
       if (!isEligible) {
         return NextResponse.json<ApiError>(
@@ -87,9 +91,9 @@ export const POST = withAuth<Params>(
         );
       }
 
-      // Update database with claim timestamp
+      // Update entry with claim timestamp
       const claimedAt = new Date();
-      await prisma.gamePlayer.update({
+      await prisma.gameEntry.update({
         where: { gameId_userId: { gameId: gameIdNum, userId: auth.userId } },
         data: { claimedAt },
       });

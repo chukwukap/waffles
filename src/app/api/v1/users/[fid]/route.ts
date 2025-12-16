@@ -32,7 +32,7 @@ export async function GET(
         createdAt: true,
         _count: {
           select: {
-            games: true,
+            entries: true,
           },
         },
       },
@@ -45,16 +45,16 @@ export async function GET(
       );
     }
 
-    // Get user stats (public info only)
-    const stats = await prisma.gamePlayer.aggregate({
-      where: { userId: user.id },
+    // Get user stats using gameEntry (public info only)
+    const stats = await prisma.gameEntry.aggregate({
+      where: { userId: user.id, paidAt: { not: null } },
       _sum: { score: true },
       _count: { _all: true },
     });
 
     // Calculate wins (rank 1)
-    const wins = await prisma.gamePlayer.count({
-      where: { userId: user.id, rank: 1 },
+    const wins = await prisma.gameEntry.count({
+      where: { userId: user.id, rank: 1, paidAt: { not: null } },
     });
 
     return NextResponse.json({

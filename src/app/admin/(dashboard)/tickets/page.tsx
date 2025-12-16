@@ -1,27 +1,49 @@
 import { prisma } from "@/lib/db";
 import Link from "next/link";
 
-async function getTickets(searchParams: { page?: string; status?: string; game?: string }) {
+// Type for game entry with relations
+interface EntryWithRelations {
+    id: number;
+    paidAt: Date | null;
+    createdAt: Date;
+    score: number;
+    rank: number | null;
+    user: {
+        id: number;
+        username: string | null;
+        fid: number;
+    };
+    game: {
+        id: number;
+        title: string;
+        ticketPrice: number;
+    };
+}
+
+async function getEntries(searchParams: { page?: string; status?: string; game?: string }) {
     const page = parseInt(searchParams.page || "1");
     const pageSize = 50;
     const skip = (page - 1) * pageSize;
 
-    const where: any = {};
+    const where: Record<string, unknown> = {};
 
-    if (searchParams.status) {
-        where.status = searchParams.status;
+    // Filter by payment status
+    if (searchParams.status === "PAID") {
+        where.paidAt = { not: null };
+    } else if (searchParams.status === "PENDING") {
+        where.paidAt = null;
     }
 
     if (searchParams.game) {
         where.gameId = parseInt(searchParams.game);
     }
 
-    const [tickets, total, games] = await Promise.all([
-        prisma.ticket.findMany({
+    const [entries, total, games] = await Promise.all([
+        prisma.gameEntry.findMany({
             where,
             skip,
             take: pageSize,
-            orderBy: { purchasedAt: "desc" },
+            orderBy: { createdAt: "desc" },
             include: {
                 user: {
                     select: {
@@ -34,11 +56,12 @@ async function getTickets(searchParams: { page?: string; status?: string; game?:
                     select: {
                         id: true,
                         title: true,
+                        ticketPrice: true,
                     },
                 },
             },
         }),
-        prisma.ticket.count({ where }),
+        prisma.gameEntry.count({ where }),
         prisma.game.findMany({
             select: { id: true, title: true },
             orderBy: { createdAt: "desc" },
@@ -46,7 +69,7 @@ async function getTickets(searchParams: { page?: string; status?: string; game?:
         }),
     ]);
 
-    return { tickets, total, page, pageSize, games };
+    return { entries: entries as EntryWithRelations[], total, page, pageSize, games };
 }
 
 export default async function TicketsPage({
@@ -55,15 +78,15 @@ export default async function TicketsPage({
     searchParams: Promise<{ page?: string; status?: string; game?: string }>;
 }) {
     const resolvedParams = await searchParams;
-    const { tickets, total, page, pageSize, games } = await getTickets(resolvedParams);
+    const { entries, total, page, pageSize, games } = await getEntries(resolvedParams);
     const totalPages = Math.ceil(total / pageSize);
 
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-white font-display">Tickets</h1>
+                <h1 className="text-2xl font-bold text-white font-display">Game Entries</h1>
                 <p className="text-white/60 mt-1">
-                    <span className="text-[#FFC931] font-bold">{total.toLocaleString()}</span> total tickets
+                    <span className="text-[#FFC931] font-bold">{total.toLocaleString()}</span> total entries
                 </p>
             </div>
 
@@ -76,10 +99,8 @@ export default async function TicketsPage({
                         className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
                     >
                         <option value="" className="bg-[#0a0a0b]">All Statuses</option>
-                        <option value="PENDING" className="bg-[#0a0a0b]">Pending</option>
+                        <option value="PENDING" className="bg-[#0a0a0b]">Pending Payment</option>
                         <option value="PAID" className="bg-[#0a0a0b]">Paid</option>
-                        <option value="REDEEMED" className="bg-[#0a0a0b]">Redeemed</option>
-                        <option value="REFUNDED" className="bg-[#0a0a0b]">Refunded</option>
                     </select>
                     <select
                         name="game"
@@ -87,7 +108,7 @@ export default async function TicketsPage({
                         className="flex-1 min-w-[200px] px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
                     >
                         <option value="" className="bg-[#0a0a0b]">All Games</option>
-                        {games.map((game) => (
+                        {games.map((game: { id: number; title: string }) => (
                             <option key={game.id} value={game.id} className="bg-[#0a0a0b]">
                                 {game.title}
                             </option>
@@ -102,7 +123,7 @@ export default async function TicketsPage({
                 </form>
             </div>
 
-            {/* Tickets Table */}
+            {/* Entries Table */}
             <div className="admin-panel overflow-hidden">
                 <table className="min-w-full divide-y divide-white/6">
                     <thead className="bg-white/3">
@@ -123,60 +144,64 @@ export default async function TicketsPage({
                                 Status
                             </th>
                             <th className="px-6 py-4 text-left text-xs font-medium text-white/50 uppercase font-display">
+                                Score
+                            </th>
+                            <th className="px-6 py-4 text-left text-xs font-medium text-white/50 uppercase font-display">
                                 Created
                             </th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/6">
-                        {tickets.map((ticket) => (
-                            <tr key={ticket.id} className="admin-table-row">
+                        {entries.map((entry) => (
+                            <tr key={entry.id} className="admin-table-row">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-[#00CFF2]">
-                                    #{ticket.id}
+                                    #{entry.id}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="flex items-center gap-3">
                                         <div className="h-8 w-8 bg-[#FFC931]/20 rounded-full flex items-center justify-center text-[#FFC931] font-bold text-xs">
-                                            {ticket.user.username?.[0]?.toUpperCase() || "U"}
+                                            {entry.user.username?.[0]?.toUpperCase() || "U"}
                                         </div>
                                         <div>
                                             <div className="text-sm text-white">
-                                                {ticket.user.username || "Anonymous"}
+                                                {entry.user.username || "Anonymous"}
                                             </div>
-                                            <div className="text-xs text-white/50">@{ticket.user.username}</div>
+                                            <div className="text-xs text-white/50">@{entry.user.username}</div>
                                         </div>
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 text-sm text-white">
-                                    {ticket.game.title}
+                                    {entry.game.title}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-[#FFC931]">
-                                    ${ticket.amountUSDC}
+                                    ${entry.game.ticketPrice}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span
-                                        className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${ticket.status === "PAID" || ticket.status === "REDEEMED"
+                                        className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${entry.paidAt
                                             ? "bg-[#14B985]/20 text-[#14B985]"
-                                            : ticket.status === "PENDING"
-                                                ? "bg-[#FFC931]/20 text-[#FFC931]"
-                                                : "bg-white/10 text-white/60"
+                                            : "bg-[#FFC931]/20 text-[#FFC931]"
                                             }`}
                                     >
-                                        {ticket.status}
+                                        {entry.paidAt ? "PAID" : "PENDING"}
                                     </span>
                                 </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                                    {entry.score}
+                                </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-white/50">
-                                    {new Date(ticket.purchasedAt).toLocaleDateString()}
+                                    {new Date(entry.createdAt).toLocaleDateString()}
                                 </td>
                             </tr>
                         ))}
-                        {tickets.length === 0 && (
+                        {entries.length === 0 && (
                             <tr>
-                                <td colSpan={6} className="px-6 py-16 text-center">
+                                <td colSpan={7} className="px-6 py-16 text-center">
                                     <div className="flex flex-col items-center">
                                         <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-4">
                                             <span className="text-3xl">🎟️</span>
                                         </div>
-                                        <p className="text-white font-display">No tickets found</p>
+                                        <p className="text-white font-display">No entries found</p>
                                         <p className="text-sm text-white/50 mt-1">Try adjusting your filters.</p>
                                     </div>
                                 </td>
@@ -215,4 +240,3 @@ export default async function TicketsPage({
         </div>
     );
 }
-

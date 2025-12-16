@@ -9,184 +9,155 @@ import { PALETTES } from "@/lib/constants";
 import { useCountdown } from "@/hooks/useCountdown";
 import { QuestionCardHeader } from "./QuestionCardHeader";
 import { QuestionOption } from "./QuestionOption";
-import type { LiveGameInfoPayload } from "../page";
+import type { LiveGameQuestion } from "../page";
 
-// Get the specific type for a single question
-type Question = LiveGameInfoPayload["questions"][number];
+// ==========================================
+// PROPS
+// ==========================================
+
+interface QuestionCardProps {
+  question: LiveGameQuestion;
+  gameId: number;  // Added for API calls
+  questionNumber: number;
+  totalQuestions: number;
+  onComplete: () => void;
+  onAnswer: (selectedIndex: number, isCorrect: boolean, points: number) => void;
+}
+
+// ==========================================
+// COMPONENT
+// ==========================================
 
 export function QuestionCard({
   question,
+  gameId,
   questionNumber,
   totalQuestions,
-  duration,
   onComplete,
-  onAnswerSubmitted,
-}: {
-  question: Question;
-  questionNumber: number;
-  totalQuestions: number;
-  duration: number;
-  onComplete: () => void;
-  onAnswerSubmitted?: (isCorrect: boolean) => void;
-}) {
-  const [selectedOptionIndex, setSelectedOptionIndex] = React.useState<number | null>(null);
+  onAnswer,
+}: QuestionCardProps) {
+  const [selectedIndex, setSelectedIndex] = React.useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-
-  // Track submission status to prevent double submits
   const [hasSubmitted, setHasSubmitted] = React.useState(false);
-  // Track start time for accurate duration calculation
   const startTimeRef = React.useRef<number>(Date.now());
 
-  // Reset start time when question changes
+  // Reset on question change
   React.useEffect(() => {
     startTimeRef.current = Date.now();
     setHasSubmitted(false);
-    setSelectedOptionIndex(null);
+    setSelectedIndex(null);
+    setIsSubmitting(false);
   }, [question.id]);
 
-  // Helper to submit answer via v1 API
+  // Countdown
+  const targetMs = startTimeRef.current + question.durationSec * 1000;
+  const { seconds, isComplete } = useCountdown(targetMs, {
+    onComplete: async () => {
+      // Submit timeout if no answer
+      if (!hasSubmitted) {
+        setHasSubmitted(true);
+        await submitAnswer(null);
+      }
+      onComplete();
+    },
+  });
+
+  // Submit answer to API
   const submitAnswer = React.useCallback(
-    async (index: number | null, timeTakenMs: number) => {
+    async (index: number | null) => {
       setIsSubmitting(true);
+      const timeTakenMs = Date.now() - startTimeRef.current;
+
       try {
-        const res = await sdk.quickAuth.fetch(`/api/v1/games/${question.gameId}/answers`, {
+        await sdk.quickAuth.fetch(`/api/v1/games/${gameId}/answer`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             questionId: question.id,
             selectedIndex: index,
-            timeTakenMs,
+            timeMs: timeTakenMs,
           }),
         });
-
-        if (!res.ok) {
-          const errorData = await res.json();
-          console.error("Answer submission failed:", errorData.error);
-        }
       } catch (error) {
         console.error("Failed to submit answer:", error);
       } finally {
         setIsSubmitting(false);
       }
     },
-    [question.gameId, question.id]
+    [gameId, question.id]
   );
 
-  // Handler for user selecting an option
-  const handleSelect = (index: number) => {
-    if (isSubmitting) return;
+  // Handle selection
+  const handleSelect = React.useCallback(
+    async (index: number) => {
+      if (hasSubmitted || isSubmitting) return;
 
-    // 1. Update UI immediately
-    setSelectedOptionIndex(index);
-    setHasSubmitted(true);
-
-    // 2. Calculate precise time taken
-    const now = Date.now();
-    const timeTakenMs = Math.min(now - startTimeRef.current, duration * 1000);
-
-    // 3. Submit immediately
-    submitAnswer(index, timeTakenMs);
-
-    // 4. Trigger gamification event
-    if (onAnswerSubmitted) {
-      // Check if correct (assuming we check strictly client side here for visual effect, though server validates)
-      const isCorrect = index === question.correctIndex;
-      onAnswerSubmitted(isCorrect);
-    }
-  };
-
-  // Handler for timer completion
-  const handleTimerComplete = async () => {
-    // If timer runs out and we haven't submitted, submit a "timeout" (no answer)
-    if (!hasSubmitted) {
+      setSelectedIndex(index);
       setHasSubmitted(true);
-      await submitAnswer(null, duration * 1000);
-    }
 
-    // Always trigger completion (navigation) when timer ends
-    onComplete();
-  };
+      const isCorrect = index === question.correctIndex;
 
-  const { remaining, start, reset } = useCountdown(
-    duration,
-    handleTimerComplete,
-    false
+      // Optimistic callback
+      onAnswer(index, isCorrect, isCorrect ? question.points : 0);
+
+      // Submit to server
+      await submitAnswer(index);
+    },
+    [hasSubmitted, isSubmitting, question.correctIndex, question.points, onAnswer, submitAnswer]
   );
-
-  // Start the countdown when the component mounts
-  React.useEffect(() => {
-    reset();
-    start();
-    startTimeRef.current = Date.now();
-  }, [reset, start, question.id]);
 
   return (
     <div className="w-full max-w-lg mx-auto mt-2">
       <QuestionCardHeader
         questionNumber={questionNumber}
         totalQuestions={totalQuestions}
-        remaining={remaining}
-        duration={duration - 3}
+        remaining={seconds}
+        duration={question.durationSec}
       />
 
-      <section
-        className="mx-auto w-full max-w-lg px-4 animate-up"
-        aria-live="polite"
-      >
-        <div
-          className="
-          mx-auto mb-4 flex items-center justify-center select-none
-          w-full max-w-[206px] font-normal text-[36px] leading-[0.92]
-          text-center tracking-[-0.03em] text-white font-body
-        "
-        >
+      <section className="mx-auto w-full max-w-lg px-4" aria-live="polite">
+        {/* Question Content */}
+        <div className="mx-auto mb-4 flex items-center justify-center w-full max-w-[306px] font-body font-normal text-[36px] leading-[0.92] text-center tracking-[-0.03em] text-white">
           {question.content}
         </div>
 
+        {/* Media */}
         {question.mediaUrl && (
           <figure className="mx-auto mb-4 flex justify-center w-full">
             <div className="relative w-full max-w-[299px] h-[158px] rounded-[10px] overflow-hidden bg-[#17171a] border border-[#313136] shadow-[0_8px_0_#000]">
               <Image
                 src={question.mediaUrl}
-                alt={question.content || "Question media"}
+                alt={question.content}
                 fill
-                fetchPriority="high"
-                className="object-cover w-full h-full rounded-[10px]"
-                sizes="(max-width: 299px) 100vw, 299px"
+                className="object-cover"
+                sizes="299px"
               />
             </div>
           </figure>
         )}
 
-        <ul className={cn("mx-auto mb-2 flex w-full flex-col gap-2")}>
+        {/* Options */}
+        <ul className="mx-auto mb-2 flex w-full flex-col gap-2">
           {question.options.map((opt, idx) => {
             const palette = PALETTES[idx % PALETTES.length];
-
             return (
               <QuestionOption
                 key={idx}
                 option={opt}
                 index={idx}
                 palette={palette}
-                selectedOptionIndex={selectedOptionIndex}
+                selectedOptionIndex={selectedIndex}
                 onSelect={handleSelect}
-                disabled={isSubmitting}
+                disabled={hasSubmitted || isSubmitting}
               />
             );
           })}
         </ul>
 
-        {selectedOptionIndex !== null && (
-          <div
-            className={cn(
-              "mx-auto text-center font-display font-medium text-[16px] leading-[130%] tracking-[-0.03em] text-[#99A0AE] transition-opacity",
-              "opacity-100"
-            )}
-            aria-live="polite"
-          >
-            {isSubmitting
-              ? "Submitting..."
-              : "Answer selected! Waiting for time to run out..."}
+        {/* Status */}
+        {hasSubmitted && (
+          <div className="mx-auto text-center font-display text-[16px] text-[#99A0AE]">
+            {isSubmitting ? "Submitting..." : "Answer submitted!"}
           </div>
         )}
       </section>

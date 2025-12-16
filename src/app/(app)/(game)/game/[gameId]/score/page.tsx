@@ -20,14 +20,15 @@ export type ScorePagePayload = {
 };
 
 // Fetch public game data (leaderboard) for the score page
+// Updated to use GameEntry instead of GamePlayer
 const getGameLeaderboard = cache(async (gameId: number) => {
-  const [game, allPlayersInGame] = await Promise.all([
+  const [game, allEntriesInGame] = await Promise.all([
     prisma.game.findUnique({
       where: { id: gameId },
       select: { theme: true },
     }),
-    prisma.gamePlayer.findMany({
-      where: { gameId },
+    prisma.gameEntry.findMany({
+      where: { gameId, paidAt: { not: null } },
       orderBy: { score: "desc" },
       include: {
         user: {
@@ -37,7 +38,7 @@ const getGameLeaderboard = cache(async (gameId: number) => {
     }),
   ]);
 
-  return { game, allPlayersInGame };
+  return { game, allPlayersInGame: allEntriesInGame };
 });
 
 export default async function ScorePage({

@@ -51,7 +51,7 @@ export default function GameDetailsClient({
                 const userRes = await sdk.quickAuth.fetch("/api/v1/me");
                 if (!userRes.ok) {
                     if (userRes.status === 401) {
-                        router.push("/invite");
+                        router.push("/redeem");
                         return;
                     }
                     throw new Error("Failed to fetch user");

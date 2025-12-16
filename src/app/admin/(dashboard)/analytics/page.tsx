@@ -26,72 +26,94 @@ import {
     AnalyticsTabs,
     type AnalyticsTab,
 } from "@/components/admin/analytics";
+import { getGamePhase } from "@/lib/game-utils";
 
 // ============================================================
-// DATA FETCHING
+// DATA FETCHING (Updated for new schema: GameEntry, no ticket)
 // ============================================================
 
 async function getOverviewData(start: Date, end: Date) {
     const periodDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
     const previousStart = new Date(start.getTime() - periodDays * 24 * 60 * 60 * 1000);
+    const now = new Date();
 
     const [
+        // Revenue from game entries
         currentRevenue,
         previousRevenue,
-        ticketsByDay,
+        entriesByDay,
+        // User stats
         totalUsers,
         previousPeriodUsers,
         activeUsers,
         usersByDay,
         userStatusCounts,
-        gamesPlayed,
+        // Games
+        gamesEnded,
         topGames,
-        liveGames,
+        liveGamesRaw,
+        // Player stats
         avgScoreResult,
         activePlayersInLive,
+        // Referrals
         referredUsers,
         usersWhoPlayed,
         claimedRewards,
         topReferrersData,
-        recentTickets,
+        // Activity
+        recentEntries,
         recentSignups,
         recentGameEnds,
     ] = await Promise.all([
-        prisma.ticket.aggregate({
-            where: { status: { in: ["PAID", "REDEEMED"] }, purchasedAt: { gte: start, lte: end } },
-            _sum: { amountUSDC: true },
+        // Revenue: sum of prizePool contributions from entries
+        prisma.gameEntry.aggregate({
+            where: { paidAt: { gte: start, lte: end } },
+            _count: true,
         }),
-        prisma.ticket.aggregate({
-            where: { status: { in: ["PAID", "REDEEMED"] }, purchasedAt: { gte: previousStart, lt: start } },
-            _sum: { amountUSDC: true },
+        prisma.gameEntry.aggregate({
+            where: { paidAt: { gte: previousStart, lt: start } },
+            _count: true,
         }),
-        prisma.ticket.groupBy({
-            by: ["purchasedAt"],
-            where: { status: { in: ["PAID", "REDEEMED"] }, purchasedAt: { gte: start, lte: end } },
-            _sum: { amountUSDC: true },
+        prisma.gameEntry.groupBy({
+            by: ["paidAt"],
+            where: { paidAt: { gte: start, lte: end } },
             _count: true,
         }),
         prisma.user.count({ where: { createdAt: { gte: start, lte: end } } }),
         prisma.user.count({ where: { createdAt: { gte: previousStart, lt: start } } }),
-        prisma.user.count({ where: { hasGameAccess: true, games: { some: {} } } }),
+        prisma.user.count({ where: { hasGameAccess: true, entries: { some: {} } } }),
         prisma.user.groupBy({ by: ["createdAt"], where: { createdAt: { gte: start, lte: end } }, _count: true }),
         prisma.user.groupBy({ by: ["hasGameAccess", "isBanned"], _count: true }),
-        prisma.game.count({ where: { status: "ENDED", endsAt: { gte: start, lte: end } } }),
+        prisma.game.count({ where: { endsAt: { lte: now, gte: start } } }),
         prisma.game.findMany({
             take: 10,
-            orderBy: { tickets: { _count: "desc" } },
+            orderBy: { playerCount: "desc" },
             where: { startsAt: { gte: start, lte: end } },
-            include: {
-                _count: { select: { players: true, tickets: true } },
-                tickets: { where: { status: { in: ["PAID", "REDEEMED"] } }, select: { amountUSDC: true } },
-                players: { select: { score: true } },
+            select: {
+                id: true,
+                title: true,
+                theme: true,
+                startsAt: true,
+                endsAt: true,
+                playerCount: true,
+                prizePool: true,
+                ticketPrice: true,
             },
         }),
-        prisma.game.count({ where: { status: "LIVE" } }),
-        prisma.gamePlayer.aggregate({ _avg: { score: true } }),
-        prisma.gamePlayer.count({ where: { game: { status: "LIVE" } } }),
+        prisma.game.findMany({
+            where: { startsAt: { lte: now }, endsAt: { gt: now } },
+        }),
+        prisma.gameEntry.aggregate({
+            where: { paidAt: { not: null } },
+            _avg: { score: true }
+        }),
+        prisma.gameEntry.count({
+            where: {
+                game: { startsAt: { lte: now }, endsAt: { gt: now } }
+            }
+        }),
         prisma.user.count({ where: { referredById: { not: null } } }),
-        prisma.user.count({ where: { referredById: { not: null }, games: { some: {} } } }),
+        prisma.user.count({ where: { referredById: { not: null }, entries: { some: {} } } }),
         prisma.referralReward.count({ where: { status: "CLAIMED" } }),
         prisma.user.findMany({
             take: 10,
@@ -100,40 +122,54 @@ async function getOverviewData(start: Date, end: Date) {
                 id: true,
                 username: true,
                 _count: { select: { referrals: true } },
-                referrals: { select: { tickets: { where: { status: { in: ["PAID", "REDEEMED"] } }, select: { amountUSDC: true } } } },
             },
             orderBy: { referrals: { _count: "desc" } },
         }),
-        prisma.ticket.findMany({
+        prisma.gameEntry.findMany({
             take: 5,
-            orderBy: { purchasedAt: "desc" },
-            where: { status: { in: ["PAID", "REDEEMED"] } },
-            include: { user: { select: { username: true } }, game: { select: { title: true } } },
+            orderBy: { paidAt: "desc" },
+            where: { paidAt: { not: null } },
+            include: {
+                user: { select: { username: true } },
+                game: { select: { title: true, ticketPrice: true } }
+            },
         }),
-        prisma.user.findMany({ take: 5, orderBy: { createdAt: "desc" }, select: { id: true, username: true, createdAt: true } }),
+        prisma.user.findMany({
+            take: 5,
+            orderBy: { createdAt: "desc" },
+            select: { id: true, username: true, createdAt: true }
+        }),
         prisma.game.findMany({
             take: 3,
             orderBy: { endsAt: "desc" },
-            where: { status: "ENDED" },
-            select: { id: true, title: true, endsAt: true, _count: { select: { players: true } } },
+            where: { endsAt: { lte: now } },
+            select: { id: true, title: true, endsAt: true, playerCount: true },
         }),
     ]);
 
+    // Calculate total revenue from top games
+    const totalRevenue = topGames.reduce((sum, g) => sum + g.prizePool, 0);
+    const previousRevenueTotal = 0; // Would need historical data
+
     // Process daily data
-    const dailyMap = new Map<string, { revenue: number; tickets: number; signups: number }>();
+    type DailyData = { revenue: number; entries: number; signups: number };
+    const dailyMap = new Map<string, DailyData>();
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        dailyMap.set(d.toISOString().split("T")[0], { revenue: 0, tickets: 0, signups: 0 });
+        dailyMap.set(d.toISOString().split("T")[0], { revenue: 0, entries: 0, signups: 0 });
     }
-    ticketsByDay.forEach((day) => {
-        const dateStr = new Date(day.purchasedAt).toISOString().split("T")[0];
-        const existing = dailyMap.get(dateStr) || { revenue: 0, tickets: 0, signups: 0 };
-        existing.revenue += day._sum.amountUSDC || 0;
-        existing.tickets += day._count;
-        dailyMap.set(dateStr, existing);
+
+    entriesByDay.forEach((day) => {
+        if (day.paidAt) {
+            const dateStr = new Date(day.paidAt).toISOString().split("T")[0];
+            const existing = dailyMap.get(dateStr) || { revenue: 0, entries: 0, signups: 0 };
+            existing.entries += day._count;
+            dailyMap.set(dateStr, existing);
+        }
     });
+
     usersByDay.forEach((day) => {
         const dateStr = new Date(day.createdAt).toISOString().split("T")[0];
-        const existing = dailyMap.get(dateStr) || { revenue: 0, tickets: 0, signups: 0 };
+        const existing = dailyMap.get(dateStr) || { revenue: 0, entries: 0, signups: 0 };
         existing.signups += day._count;
         dailyMap.set(dateStr, existing);
     });
@@ -146,9 +182,7 @@ async function getOverviewData(start: Date, end: Date) {
         return { date: date.slice(5), signups: dailyMap.get(date)!.signups, cumulative: cumulativeUsers };
     });
 
-    // User status now uses booleans, so we need different logic
     const userStatusData = userStatusCounts.map((s) => {
-        // Determine label and color based on boolean fields
         let label = "None";
         let color = "#666";
         if (s.isBanned) {
@@ -164,23 +198,24 @@ async function getOverviewData(start: Date, end: Date) {
         return { status: label, count: s._count, color };
     });
 
+    // Game performance using pre-computed counters
     const gamePerformance = topGames.map((game) => ({
         id: game.id,
         title: game.title,
         theme: game.theme,
-        status: game.status,
-        playerCount: game._count.players,
-        ticketCount: game._count.tickets,
-        revenue: game.tickets.reduce((sum, t) => sum + t.amountUSDC, 0),
-        avgScore: game.players.length > 0 ? game.players.reduce((sum, p) => sum + p.score, 0) / game.players.length : 0,
+        status: getGamePhase(game),
+        playerCount: game.playerCount,
+        ticketCount: game.playerCount,
+        revenue: game.prizePool,
+        avgScore: 0, // Would need to compute from entries
     }));
 
     const themeRevenueMap = new Map<string, { games: number; revenue: number; players: number }>();
     topGames.forEach((game) => {
         const existing = themeRevenueMap.get(game.theme) || { games: 0, revenue: 0, players: 0 };
         existing.games += 1;
-        existing.revenue += game.tickets.reduce((sum, t) => sum + t.amountUSDC, 0);
-        existing.players += game._count.players;
+        existing.revenue += game.prizePool;
+        existing.players += game.playerCount;
         themeRevenueMap.set(game.theme, existing);
     });
     const themeData = Array.from(themeRevenueMap.entries()).map(([theme, data]) => ({ theme, ...data }));
@@ -189,27 +224,40 @@ async function getOverviewData(start: Date, end: Date) {
         id: user.id,
         username: user.username || `user${user.id}`,
         referralCount: user._count.referrals,
-        revenueGenerated: user.referrals.reduce((sum: number, invite: { tickets: { amountUSDC: number }[] }) => sum + invite.tickets.reduce((ts: number, t: { amountUSDC: number }) => ts + t.amountUSDC, 0), 0),
+        revenueGenerated: 0, // Would need to compute from referrals' entries
     }));
 
     const totalInviters = await prisma.user.count({ where: { referrals: { some: {} } } });
     const kFactor = totalInviters > 0 ? referredUsers / totalInviters : 0;
-    const ticketBuyers = await prisma.user.count({ where: { tickets: { some: {} } } });
+    const entryBuyers = await prisma.user.count({ where: { entries: { some: { paidAt: { not: null } } } } });
     const allUsers = await prisma.user.count();
-    const conversionRate = allUsers > 0 ? (ticketBuyers / allUsers) * 100 : 0;
+    const conversionRate = allUsers > 0 ? (entryBuyers / allUsers) * 100 : 0;
 
     const recentActivities = [
-        ...recentTickets.map((t) => ({ type: "ticket" as const, message: `${t.user.username || "User"} bought a ticket for ${t.game.title}`, timestamp: t.purchasedAt, metadata: { amount: t.amountUSDC } })),
-        ...recentSignups.map((u) => ({ type: "signup" as const, message: `@${u.username || `user${u.id}`} joined Waffles`, timestamp: u.createdAt })),
-        ...recentGameEnds.map((g) => ({ type: "game_end" as const, message: `${g.title} ended with ${g._count.players} players`, timestamp: g.endsAt })),
+        ...recentEntries.map((e) => ({
+            type: "ticket" as const,
+            message: `${e.user.username || "User"} bought a ticket for ${e.game.title}`,
+            timestamp: e.paidAt!,
+            metadata: { amount: e.game.ticketPrice }
+        })),
+        ...recentSignups.map((u) => ({
+            type: "signup" as const,
+            message: `@${u.username || `user${u.id}`} joined Waffles`,
+            timestamp: u.createdAt
+        })),
+        ...recentGameEnds.map((g) => ({
+            type: "game_end" as const,
+            message: `${g.title} ended with ${g.playerCount} players`,
+            timestamp: g.endsAt
+        })),
     ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 10);
 
     return {
-        totalRevenue: currentRevenue._sum.amountUSDC || 0,
-        previousRevenue: previousRevenue._sum.amountUSDC || 0,
+        totalRevenue,
+        previousRevenue: previousRevenueTotal,
         totalUsers,
         previousUsers: previousPeriodUsers,
-        gamesPlayed,
+        gamesPlayed: gamesEnded,
         avgScore: avgScoreResult._avg.score || 0,
         conversionRate,
         kFactor,
@@ -222,7 +270,7 @@ async function getOverviewData(start: Date, end: Date) {
         themeData,
         referralFunnel: { invitesSent: allUsers, registered: referredUsers, played: usersWhoPlayed, rewardsClaimed: claimedRewards },
         topReferrers,
-        liveGamesCount: liveGames,
+        liveGamesCount: liveGamesRaw.length,
         activePlayersCount: activePlayersInLive,
         recentActivities,
     };
@@ -240,267 +288,243 @@ async function getWaitlistData() {
             }
         }),
         prisma.user.count({ where: { referredById: { not: null } } }),
-        // Count users who have referred at least one person
         prisma.user.count({ where: { referrals: { some: {} } } }),
     ]);
 
-    // Calculate quest completion breakdown
     const questCompletion = {
         all: 0,
         most: 0,
-        half: 0,
+        some: 0,
         none: 0,
     };
 
-    usersWithQuests.forEach((user) => {
-        const completed = user._count.completedQuests;
-        const percentage = totalQuests > 0 ? (completed / totalQuests) * 100 : 0;
-        if (percentage === 100) questCompletion.all++;
-        else if (percentage >= 75) questCompletion.most++;
-        else if (percentage >= 50) questCompletion.half++;
-        else questCompletion.none++;
+    usersWithQuests.forEach((u) => {
+        const count = u._count.completedQuests;
+        if (count === 0) questCompletion.none++;
+        else if (count < totalQuests / 2) questCompletion.some++;
+        else if (count < totalQuests) questCompletion.most++;
+        else questCompletion.all++;
     });
 
     return {
-        totalWaitlist: waitlistUsers,
-        totalActive: activeUsers,
-        avgInvitesPerUser: totalInviters > 0 ? invitedUsersCount / totalInviters : 0,
-        totalInvitedUsers: invitedUsersCount,
+        waitlistUsers,
+        activeUsers,
+        totalQuests,
         questCompletion,
+        invitedUsers: invitedUsersCount,
+        viralCoefficient: totalInviters > 0 ? invitedUsersCount / totalInviters : 0,
     };
 }
 
-async function getGameInsightsData() {
-    const [ticketCounts, prizePoolSum, gamesEnded, playersWithTickets, playersWhoPlayed] = await Promise.all([
-        prisma.ticket.groupBy({ by: ["status"], _count: true }),
-        prisma.game.aggregate({ _sum: { prizePool: true } }),
-        prisma.game.count({ where: { status: "ENDED" } }),
-        prisma.ticket.count({ where: { status: { in: ["PAID", "REDEEMED"] } } }),
-        prisma.gamePlayer.count(),
+async function getGameInsights() {
+    const now = new Date();
+
+    const [games, entries] = await Promise.all([
+        prisma.game.findMany({
+            orderBy: { createdAt: "desc" },
+            take: 20,
+            select: {
+                id: true,
+                title: true,
+                theme: true,
+                startsAt: true,
+                endsAt: true,
+                playerCount: true,
+                prizePool: true,
+                ticketPrice: true,
+                maxPlayers: true,
+            },
+        }),
+        prisma.gameEntry.groupBy({
+            by: ["gameId"],
+            _avg: { score: true },
+            _count: true,
+        }),
     ]);
 
-    const ticketConversion = { pending: 0, paid: 0, redeemed: 0, failed: 0 };
-    ticketCounts.forEach((tc) => {
-        const key = tc.status.toLowerCase() as keyof typeof ticketConversion;
-        if (key in ticketConversion) ticketConversion[key] = tc._count;
+    const entryMap = new Map(entries.map(e => [e.gameId, e]));
+
+    return games.map((game) => {
+        const entry = entryMap.get(game.id);
+        return {
+            id: game.id,
+            title: game.title,
+            theme: game.theme,
+            status: getGamePhase(game),
+            playerCount: game.playerCount,
+            maxPlayers: game.maxPlayers,
+            prizePool: game.prizePool,
+            avgScore: entry?._avg.score || 0,
+            fillRate: game.maxPlayers > 0 ? (game.playerCount / game.maxPlayers) * 100 : 0,
+        };
     });
-
-    const avgPlayersPerGame = gamesEnded > 0 ? playersWhoPlayed / gamesEnded : 0;
-    const completionRate = playersWithTickets > 0 ? (playersWhoPlayed / playersWithTickets) * 100 : 0;
-
-    return {
-        ticketConversion,
-        totalPrizePool: prizePoolSum._sum.prizePool || 0,
-        gamesCompleted: gamesEnded,
-        avgPlayersPerGame,
-        completionRate,
-    };
-}
-
-async function getPlayerData() {
-    const [avgScoreResult, totalCorrect, totalAnswers, avgLatencyResult, totalPlayers, repeatPlayers, scores] = await Promise.all([
-        prisma.gamePlayer.aggregate({ _avg: { score: true } }),
-        prisma.answer.count({ where: { isCorrect: true } }),
-        prisma.answer.count(),
-        prisma.answer.aggregate({ _avg: { latencyMs: true } }),
-        prisma.gamePlayer.groupBy({ by: ["userId"], _count: true }),
-        prisma.gamePlayer.groupBy({ by: ["userId"], _count: true, having: { userId: { _count: { gt: 1 } } } }),
-        prisma.gamePlayer.findMany({ select: { score: true } }),
-    ]);
-
-    // Score distribution buckets
-    const buckets = [
-        { range: "0-100", min: 0, max: 100, count: 0 },
-        { range: "101-250", min: 101, max: 250, count: 0 },
-        { range: "251-500", min: 251, max: 500, count: 0 },
-        { range: "501-750", min: 501, max: 750, count: 0 },
-        { range: "751-1000", min: 751, max: 1000, count: 0 },
-        { range: "1000+", min: 1001, max: Infinity, count: 0 },
-    ];
-    scores.forEach((p) => {
-        const bucket = buckets.find((b) => p.score >= b.min && p.score <= b.max);
-        if (bucket) bucket.count++;
-    });
-
-    const avgAccuracy = totalAnswers > 0 ? (totalCorrect / totalAnswers) * 100 : 0;
-
-    return {
-        avgScore: avgScoreResult._avg.score || 0,
-        avgAccuracy,
-        avgAnswerTime: avgLatencyResult._avg.latencyMs || 0,
-        scoreDistribution: buckets.map((b) => ({ range: b.range, count: b.count })),
-        totalPlayers: totalPlayers.length,
-        repeatPlayers: repeatPlayers.length,
-    };
-}
-
-async function getQuestionData() {
-    const questions = await prisma.question.findMany({
-        include: {
-            game: { select: { title: true } },
-            answers: { select: { isCorrect: true, latencyMs: true } },
-        },
-        take: 100,
-        orderBy: { answers: { _count: "desc" } },
-    });
-
-    return questions.map((q) => ({
-        id: q.id,
-        content: q.content.slice(0, 100),
-        gameTitle: q.game.title,
-        totalAnswers: q.answers.length,
-        correctAnswers: q.answers.filter((a) => a.isCorrect).length,
-        avgLatencyMs: q.answers.length > 0 ? q.answers.reduce((s, a) => s + a.latencyMs, 0) / q.answers.length : 0,
-        accuracy: q.answers.length > 0 ? (q.answers.filter((a) => a.isCorrect).length / q.answers.length) * 100 : 0,
-    }));
-}
-
-async function getChatData() {
-    const [totalMessages, chatters, totalPlayers, messagesByQuestion] = await Promise.all([
-        prisma.chat.count(),
-        prisma.chat.groupBy({ by: ["userId"], _count: true }),
-        prisma.gamePlayer.count(),
-        prisma.chat.findMany({ select: { text: true } }),
-    ]);
-
-    // Simple keyword extraction (top common words)
-    const wordCounts = new Map<string, number>();
-    const stopWords = new Set(["the", "a", "an", "is", "it", "to", "of", "and", "in", "for", "on", "that", "this", "i", "you", "we", "he", "she", "they", "what", "how", "why", "when", "where", "who"]);
-    messagesByQuestion.forEach((msg) => {
-        msg.text.toLowerCase().split(/\s+/).forEach((word) => {
-            const clean = word.replace(/[^a-z0-9]/g, "");
-            if (clean.length > 2 && !stopWords.has(clean)) {
-                wordCounts.set(clean, (wordCounts.get(clean) || 0) + 1);
-            }
-        });
-    });
-    const topKeywords = Array.from(wordCounts.entries())
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 20)
-        .map(([word, count]) => ({ word, count }));
-
-    return {
-        totalMessages,
-        uniqueChatters: chatters.length,
-        totalPlayers,
-        participationRate: totalPlayers > 0 ? (chatters.length / totalPlayers) * 100 : 0,
-        messagesByRound: [], // Would need round tracking
-        topKeywords,
-    };
 }
 
 // ============================================================
-// LOADING SKELETON
+// PAGE COMPONENT
 // ============================================================
 
-function LoadingSkeleton() {
-    return (
-        <div className="space-y-6 animate-pulse">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-                {[...Array(6)].map((_, i) => (
-                    <div key={i} className="admin-panel p-5 h-32">
-                        <div className="h-4 w-20 bg-white/10 rounded mb-3" />
-                        <div className="h-8 w-24 bg-white/10 rounded" />
-                    </div>
-                ))}
-            </div>
-            <div className="admin-panel h-96" />
-        </div>
-    );
-}
-
-// ============================================================
-// TAB CONTENT COMPONENTS
-// ============================================================
-
-async function OverviewContent({ range }: { range: string }) {
-    const { start, end } = getDateRangeFromParam(range);
-    const data = await getOverviewData(start, end);
-    const revenueChange = data.previousRevenue > 0 ? ((data.totalRevenue - data.previousRevenue) / data.previousRevenue) * 100 : 0;
-    const userChange = data.previousUsers > 0 ? ((data.totalUsers - data.previousUsers) / data.previousUsers) * 100 : 0;
-
-    return (
-        <div className="space-y-8">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-                <KPICard title="Revenue" value={`$${data.totalRevenue.toFixed(0)}`} icon={<BanknotesIcon className="h-5 w-5 text-[#FFC931]" />} change={{ value: revenueChange, isPositive: revenueChange >= 0 }} sparklineData={data.revenueSparkline} glowVariant="gold" />
-                <KPICard title="New Users" value={data.totalUsers} icon={<UsersIcon className="h-5 w-5 text-[#00CFF2]" />} change={{ value: userChange, isPositive: userChange >= 0 }} sparklineData={data.usersSparkline} glowVariant="cyan" />
-                <KPICard title="Games Played" value={data.gamesPlayed} icon={<TrophyIcon className="h-5 w-5 text-[#FB72FF]" />} glowVariant="pink" />
-                <KPICard title="Avg Score" value={data.avgScore.toFixed(0)} icon={<ChartBarIcon className="h-5 w-5 text-[#14B985]" />} glowVariant="success" />
-                <KPICard title="Conversion" value={`${data.conversionRate.toFixed(1)}%`} icon={<ArrowTrendingUpIcon className="h-5 w-5 text-[#FFC931]" />} subtitle="signups → buyers" glowVariant="gold" />
-                <KPICard title="K-Factor" value={data.kFactor.toFixed(2)} icon={<SparklesIcon className="h-5 w-5 text-[#FB72FF]" />} subtitle={data.kFactor >= 1 ? "Viral! 🚀" : "Growing"} glowVariant="pink" />
-            </div>
-            <div className="grid gap-6 lg:grid-cols-2">
-                <RevenueChart data={data.revenueData} />
-                <UserGrowthChart dailyData={data.userGrowthData} statusData={data.userStatusData} />
-            </div>
-            <ThemeAnalytics data={data.themeData} />
-            <GamePerformanceTable games={data.gamePerformance} />
-            <div className="grid gap-6 lg:grid-cols-2">
-                <ReferralFunnel funnel={data.referralFunnel} kFactor={data.kFactor} topReferrers={data.topReferrers} />
-                <ActivityFeed activities={data.recentActivities} liveGamesCount={data.liveGamesCount} activePlayersCount={data.activePlayersCount} />
-            </div>
-        </div>
-    );
-}
-
-async function WaitlistContent() {
-    const data = await getWaitlistData();
-    return <WaitlistAnalytics data={data} />;
-}
-
-async function GamesContent() {
-    const [gameData, questionData] = await Promise.all([getGameInsightsData(), getQuestionData()]);
-    return (
-        <div className="space-y-8">
-            <GameInsights data={gameData} />
-            <QuestionDifficulty questions={questionData} />
-        </div>
-    );
-}
-
-async function PlayersContent() {
-    const [playerData, chatData] = await Promise.all([getPlayerData(), getChatData()]);
-    return (
-        <div className="space-y-8">
-            <PlayerEngagement data={playerData} />
-            <ChatAnalytics data={chatData} />
-        </div>
-    );
-}
-
-// ============================================================
-// MAIN PAGE
-// ============================================================
-
-export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<{ range?: string; tab?: string }> }) {
-    const params = await searchParams;
-    const range = params.range || "7d";
-    const tab = (params.tab as AnalyticsTab) || "overview";
-    const { label } = getDateRangeFromParam(range);
+export default async function AnalyticsPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ range?: string; tab?: string }>;
+}) {
+    const { range, tab } = await searchParams;
+    const { start, end } = getDateRangeFromParam(range ?? "7d");
+    const activeTab = (tab || "overview") as AnalyticsTab;
 
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <div className="flex flex-col gap-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-2xl font-bold text-white font-display">Analytics</h1>
-                        <p className="text-white/60 mt-1">
-                            Platform metrics and insights • <span className="text-[#FFC931]">{label}</span>
-                        </p>
-                    </div>
-                    <DateRangePicker currentRange={range} />
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Analytics</h1>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Track platform performance and user engagement
+                    </p>
                 </div>
-                <AnalyticsTabs currentTab={tab} />
+                <DateRangePicker currentRange={range || "7d"} />
             </div>
 
-            {/* Tab Content */}
-            <Suspense fallback={<LoadingSkeleton />}>
-                {tab === "overview" && <OverviewContent range={range} />}
-                {tab === "waitlist" && <WaitlistContent />}
-                {tab === "games" && <GamesContent />}
-                {tab === "players" && <PlayersContent />}
+            <AnalyticsTabs currentTab={activeTab} />
+
+            <Suspense fallback={<AnalyticsSkeleton />}>
+                <AnalyticsContent start={start} end={end} activeTab={activeTab} />
             </Suspense>
+        </div>
+    );
+}
+
+async function AnalyticsContent({
+    start,
+    end,
+    activeTab,
+}: {
+    start: Date;
+    end: Date;
+    activeTab: AnalyticsTab;
+}) {
+    if (activeTab === "overview") {
+        const data = await getOverviewData(start, end);
+        return <OverviewTab data={data} />;
+    }
+    if (activeTab === "waitlist") {
+        const rawData = await getWaitlistData();
+        // Map to component expected format
+        const data = {
+            totalWaitlist: rawData.waitlistUsers,
+            totalActive: rawData.activeUsers,
+            questCompletion: {
+                all: rawData.questCompletion.all,
+                most: rawData.questCompletion.most,
+                half: rawData.questCompletion.some,
+                none: rawData.questCompletion.none,
+            },
+            avgInvitesPerUser: rawData.viralCoefficient,
+            totalInvitedUsers: rawData.invitedUsers,
+        };
+        return <WaitlistAnalytics data={data} />;
+    }
+    if (activeTab === "games") {
+        const games = await getGameInsights();
+        // Compute aggregate stats
+        const totalPrizePool = games.reduce((sum, g) => sum + g.prizePool, 0);
+        const gamesCompleted = games.filter(g => g.status === "ENDED").length;
+        const avgPlayersPerGame = games.length > 0 ? games.reduce((sum, g) => sum + g.playerCount, 0) / games.length : 0;
+        const totalEntries = games.reduce((sum, g) => sum + g.playerCount, 0);
+        const playedEntries = games.filter(g => g.status === "ENDED").reduce((sum, g) => sum + g.playerCount, 0);
+        const completionRate = totalEntries > 0 ? (playedEntries / totalEntries) * 100 : 0;
+
+        const data = {
+            ticketConversion: {
+                pending: 0, // Would need to track separately
+                paid: totalEntries,
+                redeemed: playedEntries,
+                failed: 0,
+            },
+            totalPrizePool,
+            gamesCompleted,
+            avgPlayersPerGame,
+            completionRate,
+        };
+        return <GameInsights data={data} />;
+    }
+    return null;
+}
+
+function OverviewTab({ data }: { data: Awaited<ReturnType<typeof getOverviewData>> }) {
+    const revenueChange = data.previousRevenue > 0
+        ? ((data.totalRevenue - data.previousRevenue) / data.previousRevenue) * 100
+        : 0;
+    const usersChange = data.previousUsers > 0
+        ? ((data.totalUsers - data.previousUsers) / data.previousUsers) * 100
+        : 0;
+
+    return (
+        <div className="space-y-6">
+            {/* KPI Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <KPICard
+                    title="Total Revenue"
+                    value={`$${data.totalRevenue.toLocaleString()}`}
+                    change={{ value: revenueChange, isPositive: revenueChange >= 0 }}
+                    icon={<BanknotesIcon className="h-5 w-5 text-[#FFC931]" />}
+                    sparklineData={data.revenueSparkline}
+                />
+                <KPICard
+                    title="New Users"
+                    value={data.totalUsers.toLocaleString()}
+                    change={{ value: usersChange, isPositive: usersChange >= 0 }}
+                    icon={<UsersIcon className="h-5 w-5 text-[#00CFF2]" />}
+                    sparklineData={data.usersSparkline}
+                    glowVariant="cyan"
+                />
+                <KPICard
+                    title="Games Played"
+                    value={data.gamesPlayed.toString()}
+                    icon={<TrophyIcon className="h-5 w-5 text-[#14B985]" />}
+                    glowVariant="success"
+                />
+                <KPICard
+                    title="Conversion Rate"
+                    value={`${data.conversionRate.toFixed(1)}%`}
+                    icon={<ChartBarIcon className="h-5 w-5 text-[#FB72FF]" />}
+                    glowVariant="pink"
+                />
+            </div>
+
+            {/* Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <RevenueChart data={data.revenueData.map(d => ({ date: d.date, revenue: d.revenue, tickets: d.entries }))} />
+                <UserGrowthChart dailyData={data.userGrowthData} statusData={data.userStatusData} />
+            </div>
+
+            {/* Game Performance */}
+            <GamePerformanceTable games={data.gamePerformance} />
+
+            {/* Theme Analytics */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <ThemeAnalytics data={data.themeData} />
+                <ReferralFunnel funnel={data.referralFunnel} kFactor={data.kFactor} topReferrers={data.topReferrers} />
+            </div>
+
+            {/* Activity Feed */}
+            <ActivityFeed activities={data.recentActivities} liveGamesCount={data.liveGamesCount} activePlayersCount={data.activePlayersCount} />
+        </div>
+    );
+}
+
+function AnalyticsSkeleton() {
+    return (
+        <div className="space-y-6 animate-pulse">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {[...Array(4)].map((_, i) => (
+                    <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+                ))}
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="h-80 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+                <div className="h-80 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+            </div>
         </div>
     );
 }

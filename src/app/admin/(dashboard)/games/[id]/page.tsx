@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { endGameAction } from "@/actions/admin/games";
+import { forceEndGameAction } from "@/actions/admin/games";
 import {
     PencilIcon,
     QuestionMarkCircleIcon,
@@ -9,6 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { SettlementPanel } from "./_components/SettlementPanel";
 import { getOnChainGame } from "@/lib/settlement";
+import { getGamePhase } from "@/lib/game-utils";
 
 export default async function GameDetailPage({
     params,
@@ -24,11 +25,23 @@ export default async function GameDetailPage({
 
     const game = await prisma.game.findUnique({
         where: { id: gameId },
-        include: {
+        select: {
+            id: true,
+            title: true,
+            description: true,
+            theme: true,
+            coverUrl: true,
+            startsAt: true,
+            endsAt: true,
+            ticketPrice: true,
+            prizePool: true,
+            playerCount: true,
+            maxPlayers: true,
+            roundBreakSec: true,
             _count: {
                 select: {
-                    players: true,
                     questions: true,
+                    entries: true,
                 },
             },
         },
@@ -37,6 +50,9 @@ export default async function GameDetailPage({
     if (!game) {
         notFound();
     }
+
+    // Derive phase from time
+    const phase = getGamePhase(game);
 
     // Get on-chain status (optional, may fail if not deployed)
     let onChainStatus = {
@@ -75,7 +91,6 @@ export default async function GameDetailPage({
         SCHEDULED: "bg-[#FFC931]/20 text-[#FFC931]",
         LIVE: "bg-[#14B985]/20 text-[#14B985]",
         ENDED: "bg-white/10 text-white/60",
-        CANCELLED: "bg-red-500/20 text-red-400",
     };
 
     return (
@@ -95,10 +110,10 @@ export default async function GameDetailPage({
                         {game.title}
                     </h1>
                     <span
-                        className={`inline-flex px-3 py-1 rounded-full text-xs font-medium mt-2 ${statusColors[game.status] || statusColors.CANCELLED
+                        className={`inline-flex px-3 py-1 rounded-full text-xs font-medium mt-2 ${statusColors[phase] || statusColors.ENDED
                             }`}
                     >
-                        {game.status}
+                        {phase}
                     </span>
                 </div>
                 <div className="flex items-center gap-3">
@@ -126,14 +141,14 @@ export default async function GameDetailPage({
                         Status
                     </h3>
                     <p
-                        className={`text-2xl font-bold font-body ${game.status === "LIVE"
+                        className={`text-2xl font-bold font-body ${phase === "LIVE"
                             ? "text-[#14B985] admin-stat-glow-success"
-                            : game.status === "SCHEDULED"
+                            : phase === "SCHEDULED"
                                 ? "text-[#FFC931] admin-stat-glow"
                                 : "text-white"
                             }`}
                     >
-                        {game.status}
+                        {phase}
                     </p>
                 </div>
                 <div className="admin-panel p-6">
@@ -141,7 +156,7 @@ export default async function GameDetailPage({
                         Players
                     </h3>
                     <p className="text-2xl font-bold text-[#00CFF2] font-body admin-stat-glow-cyan">
-                        {game._count.players}
+                        {game.playerCount}
                     </p>
                 </div>
                 <div className="admin-panel p-6">
@@ -168,11 +183,11 @@ export default async function GameDetailPage({
                     Game Actions
                 </h2>
                 <div className="flex flex-wrap gap-4">
-                    {game.status === "LIVE" && (
+                    {phase === "LIVE" && (
                         <form
                             action={async () => {
                                 "use server";
-                                await endGameAction(game.id);
+                                await forceEndGameAction(game.id);
                             }}
                         >
                             <button
@@ -184,7 +199,7 @@ export default async function GameDetailPage({
                             </button>
                         </form>
                     )}
-                    {game.status === "ENDED" && (
+                    {phase === "ENDED" && (
                         <div className="flex items-center gap-2 text-[#14B985]">
                             <span className="text-lg">✓</span>
                             <p className="font-medium">
@@ -192,7 +207,7 @@ export default async function GameDetailPage({
                             </p>
                         </div>
                     )}
-                    {game.status === "SCHEDULED" && (
+                    {phase === "SCHEDULED" && (
                         <p className="text-white/50">
                             Game is scheduled. Actions will be available when the game goes
                             live.
@@ -205,7 +220,7 @@ export default async function GameDetailPage({
             <div className="admin-panel p-6">
                 <SettlementPanel
                     gameId={game.id}
-                    gameStatus={game.status}
+                    gameStatus={phase}
                     onChainStatus={onChainStatus}
                 />
             </div>

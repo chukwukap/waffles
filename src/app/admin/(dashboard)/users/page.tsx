@@ -54,8 +54,7 @@ async function getUsers(searchParams: { page?: string; status?: string; q?: stri
                 _count: {
                     select: {
                         referrals: true,
-                        games: true,
-                        tickets: true,
+                        entries: true,
                     },
                 },
             },
@@ -165,8 +164,7 @@ export default async function UsersListPage({
                                     <div className="text-xs text-white/40">{user.inviteQuota} quota left</div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                    <div className="text-white">{user._count.games} <span className="text-white/50">games</span></div>
-                                    <div className="text-xs text-white/40">{user._count.tickets} tickets</div>
+                                    <div className="text-white">{user._count.entries} <span className="text-white/50">entries</span></div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                                     <Link

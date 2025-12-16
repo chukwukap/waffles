@@ -1,15 +1,16 @@
-import { GameStatus, prisma } from "@/lib/db";
+import { prisma } from "@/lib/db";
 import Link from "next/link";
 import { GameFilters } from "@/components/admin/GameFilters";
-import { GameActions } from "@/components/admin/GameActions";
 import { GameRow } from "@/components/admin/GameRow";
 import { PlusIcon } from "@heroicons/react/24/outline";
+import { getGamePhase, type GamePhase } from "@/lib/game-utils";
 
-// Define status type locally to avoid import issues
-const VALID_STATUSES: GameStatus[] = ["SCHEDULED", "LIVE", "ENDED", "CANCELLED"];
+// Phase filtering using time-based logic
+const VALID_PHASES: GamePhase[] = ["SCHEDULED", "LIVE", "ENDED"];
 
 async function getGames(searchParams: { search?: string; status?: string }) {
-    const where: any = {};
+    const where: Record<string, unknown> = {};
+    const now = new Date();
 
     if (searchParams.search) {
         where.title = {
@@ -18,19 +19,36 @@ async function getGames(searchParams: { search?: string; status?: string }) {
         };
     }
 
-    if (searchParams.status && VALID_STATUSES.includes(searchParams.status as GameStatus)) {
-        where.status = searchParams.status as GameStatus;
+    // Filter by phase using time-based logic
+    if (searchParams.status && VALID_PHASES.includes(searchParams.status as GamePhase)) {
+        const phase = searchParams.status as GamePhase;
+        if (phase === "LIVE") {
+            where.startsAt = { lte: now };
+            where.endsAt = { gt: now };
+        } else if (phase === "ENDED") {
+            where.endsAt = { lte: now };
+        } else if (phase === "SCHEDULED") {
+            where.startsAt = { gt: now };
+        }
     }
 
     return prisma.game.findMany({
         where,
-        orderBy: [{ status: "asc" }, { startsAt: "desc" }],
-        include: {
+        orderBy: [{ startsAt: "desc" }],
+        select: {
+            id: true,
+            title: true,
+            theme: true,
+            startsAt: true,
+            endsAt: true,
+            playerCount: true,
+            prizePool: true,
+            ticketPrice: true,
+            maxPlayers: true,
             _count: {
                 select: {
-                    players: true,
                     questions: true,
-                    tickets: true,
+                    entries: true,
                 },
             },
         },
@@ -44,6 +62,12 @@ export default async function GamesListPage({
 }) {
     const resolvedParams = await searchParams;
     const games = await getGames(resolvedParams);
+
+    // Add phase to each game for display
+    const gamesWithPhase = games.map(game => ({
+        ...game,
+        phase: getGamePhase(game),
+    }));
 
     return (
         <div className="space-y-6">
@@ -89,7 +113,7 @@ export default async function GamesListPage({
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/6">
-                            {games.length === 0 ? (
+                            {gamesWithPhase.length === 0 ? (
                                 <tr>
                                     <td colSpan={6} className="px-6 py-16 text-center">
                                         <div className="flex flex-col items-center justify-center">
@@ -104,7 +128,7 @@ export default async function GamesListPage({
                                     </td>
                                 </tr>
                             ) : (
-                                games.map((game) => <GameRow key={game.id} game={game} />)
+                                gamesWithPhase.map((game) => <GameRow key={game.id} game={game} />)
                             )}
                         </tbody>
                     </table>
@@ -113,4 +137,3 @@ export default async function GamesListPage({
         </div>
     );
 }
-

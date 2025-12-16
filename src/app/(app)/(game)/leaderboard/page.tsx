@@ -1,168 +1,192 @@
-import { cache } from "react";
 import { prisma } from "@/lib/db";
-import { LeaderboardEntry } from "@/lib/types";
-import LeaderboardClientPage from "./client";
-import { BottomNav } from "@/components/BottomNav";
 import { env } from "@/lib/env";
-import { redirect } from "next/navigation";
+import { LeaderboardEntry } from "@/lib/types";
+import { BottomNav } from "@/components/BottomNav";
+import LeaderboardClient from "./client";
 
-export type TabKey = "current" | "allTime";
+// ============================================
+// TYPES
+// ============================================
+export type TabKey = "current" | "allTime" | "game";
 
-export interface LeaderboardApiResponse {
-  users: LeaderboardEntry[];
+export interface LeaderboardData {
+  entries: LeaderboardEntry[];
   hasMore: boolean;
-  totalPlayers?: number;
-  totalPoints?: number;
+  totalPlayers: number;
+  gameTitle?: string;
 }
 
+// ============================================
+// CONSTANTS
+// ============================================
 const PAGE_SIZE = env.nextPublicLeaderboardPageSize;
 
-/**
- * Server-side function to fetch leaderboard data.
- * Wrapped in cache() to de-duplicate requests.
- */
-export const getLeaderboardData = cache(
-  async (tab: TabKey, page: number = 0): Promise<LeaderboardApiResponse> => {
-    try {
-      let entries: LeaderboardEntry[] = [];
-      let totalCount = 0;
-      let totalPoints = 0;
+// ============================================
+// DATA FETCHING (Updated for GameEntry)
+// ============================================
 
-      if (tab === "current") {
-        // --- Query for "Current Game" Tab ---
-        const now = new Date();
-        const currentGame = await prisma.game.findFirst({
-          where: { endsAt: { gt: now }, status: "LIVE" },
-          orderBy: { startsAt: "asc" },
-          select: { id: true },
-        });
+async function getCurrentGameLeaderboard(page: number): Promise<LeaderboardData> {
+  const now = new Date();
 
-        if (!currentGame) {
-          return { users: [], hasMore: false, totalPlayers: 0, totalPoints: 0 };
-        }
+  // Find the current live game (phase derived from time, not status)
+  const currentGame = await prisma.game.findFirst({
+    where: {
+      startsAt: { lte: now },
+      endsAt: { gt: now },
+    },
+    orderBy: { startsAt: "asc" },
+    select: { id: true, title: true },
+  });
 
-        const [players, total] = await prisma.$transaction([
-          prisma.gamePlayer.findMany({
-            where: { gameId: currentGame.id },
-            select: {
-              score: true,
-              user: {
-                select: { id: true, fid: true, username: true, pfpUrl: true },
-              },
-            },
-            orderBy: { score: "desc" },
-            take: PAGE_SIZE,
-            skip: page * PAGE_SIZE,
-          }),
-          prisma.gamePlayer.count({
-            where: { gameId: currentGame.id },
-          }),
-        ]);
-
-        totalCount = total;
-        entries = players.map((p, index) => ({
-          id: p.user.id,
-          fid: p.user.fid,
-          rank: page * PAGE_SIZE + index + 1,
-          username: p.user.username,
-          points: p.score,
-          pfpUrl: p.user.pfpUrl,
-        }));
-
-        // Note: totalPoints for 'current' might be expensive, skipping for now
-      } else {
-        // --- Query for "All Time" Tab ---
-        // Optimization: Use count() instead of second groupBy to save resources
-        const [aggregatedScores, totalCountResult] = await prisma.$transaction([
-          prisma.gamePlayer.groupBy({
-            by: ["userId"],
-            _sum: { score: true },
-            orderBy: { _sum: { score: "desc" } },
-            take: PAGE_SIZE,
-            skip: page * PAGE_SIZE,
-          }),
-          // Efficiently count unique users with scores
-          prisma.gamePlayer.groupBy({
-            by: ["userId"],
-            orderBy: { userId: "asc" }, // Added to satisfy TS requirement
-          }),
-        ]);
-
-        totalCount = totalCountResult.length;
-        const userIds = aggregatedScores.map((s) => s.userId);
-
-        if (userIds.length > 0) {
-          const users = await prisma.user.findMany({
-            where: { id: { in: userIds } },
-            select: { id: true, fid: true, username: true, pfpUrl: true },
-          });
-          const usersMap = new Map(users.map((u) => [u.id, u]));
-
-          entries = aggregatedScores.map((s, index) => {
-            const user = usersMap.get(s.userId);
-            const points = s._sum?.score ?? 0;
-            totalPoints += points; // Summing total points for this page
-            return {
-              id: user?.id ?? 0,
-              fid: user?.fid ?? 0,
-              rank: page * PAGE_SIZE + index + 1,
-              username: user?.username ?? "Unknown",
-              points: points,
-              pfpUrl: user?.pfpUrl ?? null,
-            };
-          });
-        }
-      }
-
-      return {
-        users: entries,
-        hasMore: (page + 1) * PAGE_SIZE < totalCount,
-        totalPlayers: totalCount,
-        totalPoints: totalPoints, // This is page total for 'allTime'
-      };
-    } catch (error) {
-      console.error("Failed to fetch leaderboard data:", error);
-      return { users: [], hasMore: false };
-    }
+  if (!currentGame) {
+    return { entries: [], hasMore: false, totalPlayers: 0 };
   }
-);
 
+  return getGameLeaderboardById(currentGame.id, page, currentGame.title);
+}
 
-/**
- * This is the main Server Component for the leaderboard page.
- */
+async function getGameLeaderboardById(
+  gameId: number,
+  page: number,
+  gameTitle?: string
+): Promise<LeaderboardData> {
+  // Fetch game title if not provided
+  let title = gameTitle;
+  if (!title) {
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      select: { title: true },
+    });
+    title = game?.title ?? "Game";
+  }
+
+  // Fetch entries and count in parallel (using GameEntry instead of GamePlayer)
+  const [entries, total] = await Promise.all([
+    prisma.gameEntry.findMany({
+      where: { gameId, paidAt: { not: null } }, // Only paid entries
+      select: {
+        score: true,
+        rank: true,
+        user: {
+          select: { id: true, fid: true, username: true, pfpUrl: true },
+        },
+      },
+      orderBy: { score: "desc" },
+      take: PAGE_SIZE,
+      skip: page * PAGE_SIZE,
+    }),
+    prisma.gameEntry.count({ where: { gameId, paidAt: { not: null } } }),
+  ]);
+
+  const formattedEntries: LeaderboardEntry[] = entries.map((e, index) => ({
+    id: e.user.id,
+    fid: e.user.fid,
+    rank: e.rank ?? (page * PAGE_SIZE + index + 1),
+    username: e.user.username,
+    points: e.score,
+    pfpUrl: e.user.pfpUrl,
+  }));
+
+  return {
+    entries: formattedEntries,
+    hasMore: (page + 1) * PAGE_SIZE < total,
+    totalPlayers: total,
+    gameTitle: title,
+  };
+}
+
+async function getAllTimeLeaderboard(page: number): Promise<LeaderboardData> {
+  // Get aggregated scores grouped by user (using GameEntry)
+  const aggregatedScores = await prisma.gameEntry.groupBy({
+    by: ["userId"],
+    where: { paidAt: { not: null } }, // Only count paid entries
+    _sum: { score: true },
+    orderBy: { _sum: { score: "desc" } },
+    take: PAGE_SIZE,
+    skip: page * PAGE_SIZE,
+  });
+
+  // Get total unique players count
+  const totalResult = await prisma.gameEntry.groupBy({
+    by: ["userId"],
+    where: { paidAt: { not: null } },
+    _count: true,
+  });
+  const total = totalResult.length;
+
+  if (aggregatedScores.length === 0) {
+    return { entries: [], hasMore: false, totalPlayers: total };
+  }
+
+  // Fetch user details
+  const userIds = aggregatedScores.map((s) => s.userId);
+  const users = await prisma.user.findMany({
+    where: { id: { in: userIds } },
+    select: { id: true, fid: true, username: true, pfpUrl: true },
+  });
+
+  const userMap = new Map(users.map((u) => [u.id, u]));
+
+  const entries: LeaderboardEntry[] = aggregatedScores.map((s, index) => {
+    const user = userMap.get(s.userId);
+    return {
+      id: user?.id ?? 0,
+      fid: user?.fid ?? 0,
+      rank: page * PAGE_SIZE + index + 1,
+      username: user?.username ?? "Unknown",
+      points: s._sum?.score ?? 0,
+      pfpUrl: user?.pfpUrl ?? null,
+    };
+  });
+
+  return {
+    entries,
+    hasMore: (page + 1) * PAGE_SIZE < total,
+    totalPlayers: total,
+  };
+}
+
+export async function getLeaderboardData(
+  tab: TabKey,
+  page: number = 0,
+  gameId?: number
+): Promise<LeaderboardData> {
+  try {
+    if (tab === "game" && gameId) {
+      return await getGameLeaderboardById(gameId, page);
+    }
+    return tab === "current"
+      ? await getCurrentGameLeaderboard(page)
+      : await getAllTimeLeaderboard(page);
+  } catch (error) {
+    console.error("Failed to fetch leaderboard:", error);
+    return { entries: [], hasMore: false, totalPlayers: 0 };
+  }
+}
+
+// ============================================
+// PAGE COMPONENT
+// ============================================
 export default async function LeaderboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ fid?: string; tab?: string }>;
+  searchParams: Promise<{ tab?: string; gameId?: string }>;
 }) {
-  const { fid, tab } = await searchParams;
-  const activeTab = (tab || "current") as TabKey;
-  const userFid = fid ? Number(fid) : null;
+  const { tab, gameId: gameIdParam } = await searchParams;
 
-  if (!userFid) {
-    redirect("/invite");
-  }
+  // Determine which tab to show
+  const gameId = gameIdParam ? parseInt(gameIdParam, 10) : undefined;
+  const activeTab: TabKey = gameId ? "game" : (tab === "allTime" ? "allTime" : "current");
 
-  const user = await prisma.user.findUnique({
-    where: { fid: userFid },
-    select: { hasGameAccess: true, isBanned: true },
-  });
-
-  // Enforce access control
-  if (!user || !user.hasGameAccess || user.isBanned) {
-    redirect("/invite");
-  }
-
-  // Start fetching Page 0 on the server.
-  const initialDataPromise = getLeaderboardData(activeTab, 0);
+  // Fetch initial data on the server
+  const initialData = await getLeaderboardData(activeTab, 0, gameId);
 
   return (
     <>
-      <LeaderboardClientPage
-        initialDataPromise={initialDataPromise}
-        userFid={userFid}
+      <LeaderboardClient
+        initialData={initialData}
         activeTab={activeTab}
+        gameId={gameId}
       />
       <BottomNav />
     </>

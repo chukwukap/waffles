@@ -53,17 +53,12 @@ export default function ProfilePageClient() {
         const res = await sdk.quickAuth.fetch("/api/v1/me/profile");
         if (!res.ok) {
           if (res.status === 401) {
-            router.push("/invite");
+            router.push("/redeem");
             return;
           }
           throw new Error("Failed to fetch profile");
         }
         const data: ProfileResponse = await res.json();
-
-        if (!data.hasGameAccess || data.isBanned) {
-          router.push("/invite");
-          return;
-        }
 
         setProfileData(data);
       } catch (error) {
@@ -178,7 +173,6 @@ export default function ProfilePageClient() {
       <BottomNav />
       <InviteDrawer
         isOpen={inviteOpen}
-        inviteLink={inviteLink}
         onClose={() => setInviteOpen(false)}
       />
     </>

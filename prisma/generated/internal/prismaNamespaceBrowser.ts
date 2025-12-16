@@ -57,9 +57,7 @@ export const ModelName = {
   CompletedQuest: 'CompletedQuest',
   Game: 'Game',
   Question: 'Question',
-  Ticket: 'Ticket',
-  GamePlayer: 'GamePlayer',
-  Answer: 'Answer',
+  GameEntry: 'GameEntry',
   Chat: 'Chat',
   NotificationToken: 'NotificationToken',
   AuditLog: 'AuditLog'
@@ -100,6 +98,7 @@ export const UserScalarFieldEnum = {
   bannedBy: 'bannedBy',
   joinedWaitlistAt: 'joinedWaitlistAt',
   waitlistPoints: 'waitlistPoints',
+  waitlistRank: 'waitlistRank',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -165,11 +164,11 @@ export const GameScalarFieldEnum = {
   description: 'description',
   theme: 'theme',
   coverUrl: 'coverUrl',
-  status: 'status',
   startsAt: 'startsAt',
   endsAt: 'endsAt',
-  entryFee: 'entryFee',
+  ticketPrice: 'ticketPrice',
   prizePool: 'prizePool',
+  playerCount: 'playerCount',
   roundBreakSec: 'roundBreakSec',
   maxPlayers: 'maxPlayers',
   createdAt: 'createdAt',
@@ -183,13 +182,14 @@ export const QuestionScalarFieldEnum = {
   id: 'id',
   gameId: 'gameId',
   roundIndex: 'roundIndex',
-  order: 'order',
+  orderInRound: 'orderInRound',
   content: 'content',
   mediaUrl: 'mediaUrl',
   soundUrl: 'soundUrl',
   options: 'options',
   correctIndex: 'correctIndex',
   durationSec: 'durationSec',
+  points: 'points',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -197,48 +197,23 @@ export const QuestionScalarFieldEnum = {
 export type QuestionScalarFieldEnum = (typeof QuestionScalarFieldEnum)[keyof typeof QuestionScalarFieldEnum]
 
 
-export const TicketScalarFieldEnum = {
+export const GameEntryScalarFieldEnum = {
   id: 'id',
-  code: 'code',
   gameId: 'gameId',
   userId: 'userId',
-  amountUSDC: 'amountUSDC',
   txHash: 'txHash',
-  status: 'status',
-  purchasedAt: 'purchasedAt',
-  redeemedAt: 'redeemedAt',
+  paidAt: 'paidAt',
+  score: 'score',
+  answered: 'answered',
+  answers: 'answers',
+  rank: 'rank',
+  prize: 'prize',
+  claimedAt: 'claimedAt',
+  createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
-export type TicketScalarFieldEnum = (typeof TicketScalarFieldEnum)[keyof typeof TicketScalarFieldEnum]
-
-
-export const GamePlayerScalarFieldEnum = {
-  id: 'id',
-  gameId: 'gameId',
-  userId: 'userId',
-  claimedAt: 'claimedAt',
-  score: 'score',
-  rank: 'rank',
-  joinedAt: 'joinedAt'
-} as const
-
-export type GamePlayerScalarFieldEnum = (typeof GamePlayerScalarFieldEnum)[keyof typeof GamePlayerScalarFieldEnum]
-
-
-export const AnswerScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  gameId: 'gameId',
-  questionId: 'questionId',
-  selectedIndex: 'selectedIndex',
-  isCorrect: 'isCorrect',
-  pointsEarned: 'pointsEarned',
-  latencyMs: 'latencyMs',
-  createdAt: 'createdAt'
-} as const
-
-export type AnswerScalarFieldEnum = (typeof AnswerScalarFieldEnum)[keyof typeof AnswerScalarFieldEnum]
+export type GameEntryScalarFieldEnum = (typeof GameEntryScalarFieldEnum)[keyof typeof GameEntryScalarFieldEnum]
 
 
 export const ChatScalarFieldEnum = {
@@ -285,6 +260,13 @@ export const SortOrder = {
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const JsonNullValueInput = {
+  JsonNull: 'JsonNull'
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const NullableJsonNullValueInput = {

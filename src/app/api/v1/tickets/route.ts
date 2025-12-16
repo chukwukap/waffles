@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
-import { randomBytes } from "crypto";
 import { createPublicClient, http, isHash } from "viem";
 import { base } from "viem/chains";
 
@@ -21,18 +20,19 @@ const publicClient = createPublicClient({
   transport: http(),
 });
 
-interface TicketResponse {
+interface EntryResponse {
   id: number;
-  code: string;
   status: string;
   amountUSDC: number;
   gameId: number;
-  purchasedAt: Date;
+  paidAt: Date | null;
+  createdAt: Date;
 }
 
 /**
  * POST /api/v1/tickets
- * Purchase a ticket for a game (auth required)
+ * Purchase a ticket (game entry) for a game (auth required)
+ * Uses GameEntry model instead of deprecated Ticket model
  */
 export const POST = withAuth(async (request, auth: AuthResult) => {
   try {
@@ -70,13 +70,26 @@ export const POST = withAuth(async (request, auth: AuthResult) => {
     // Find Game
     const game = await prisma.game.findUnique({
       where: { id: gameId },
-      select: { id: true, entryFee: true },
+      select: {
+        id: true,
+        ticketPrice: true,
+        maxPlayers: true,
+        playerCount: true,
+      },
     });
 
     if (!game) {
       return NextResponse.json<ApiError>(
         { error: "Game not found", code: "NOT_FOUND" },
         { status: 404 }
+      );
+    }
+
+    // Check if game is full
+    if (game.maxPlayers > 0 && game.playerCount >= game.maxPlayers) {
+      return NextResponse.json<ApiError>(
+        { error: "Game is full", code: "GAME_FULL" },
+        { status: 400 }
       );
     }
 
@@ -94,13 +107,15 @@ export const POST = withAuth(async (request, auth: AuthResult) => {
       }
 
       try {
-        const existingTx = await prisma.ticket.findFirst({
+        // Check if txHash already used
+        const existingEntry = await prisma.gameEntry.findFirst({
           where: { txHash },
         });
 
         if (
-          existingTx &&
-          (existingTx.userId !== auth.userId || existingTx.gameId !== gameId)
+          existingEntry &&
+          (existingEntry.userId !== auth.userId ||
+            existingEntry.gameId !== gameId)
         ) {
           return NextResponse.json<ApiError>(
             { error: "Transaction hash already used", code: "TX_REUSED" },
@@ -128,86 +143,77 @@ export const POST = withAuth(async (request, auth: AuthResult) => {
       }
     }
 
-    // Check for existing ticket (idempotency)
-    const existingTicket = await prisma.ticket.findUnique({
+    // Check for existing entry (idempotency)
+    const existingEntry = await prisma.gameEntry.findUnique({
       where: { gameId_userId: { gameId, userId: auth.userId } },
     });
 
-    if (existingTicket) {
-      if (txHash && existingTicket.txHash !== txHash && isVerified) {
-        const updatedTicket = await prisma.ticket.update({
-          where: { id: existingTicket.id },
-          data: { txHash, status: "PAID" },
+    if (existingEntry) {
+      // Update if transaction verified and entry not yet paid
+      if (txHash && !existingEntry.paidAt && isVerified) {
+        const updatedEntry = await prisma.gameEntry.update({
+          where: { id: existingEntry.id },
+          data: { txHash, paidAt: new Date() },
         });
 
-        return NextResponse.json<TicketResponse>({
-          id: updatedTicket.id,
-          code: updatedTicket.code,
-          status: updatedTicket.status,
-          amountUSDC: updatedTicket.amountUSDC,
-          gameId: updatedTicket.gameId,
-          purchasedAt: updatedTicket.purchasedAt,
+        return NextResponse.json<EntryResponse>({
+          id: updatedEntry.id,
+          status: "PAID",
+          amountUSDC: game.ticketPrice,
+          gameId: updatedEntry.gameId,
+          paidAt: updatedEntry.paidAt,
+          createdAt: updatedEntry.createdAt,
         });
       }
 
-      return NextResponse.json<TicketResponse>({
-        id: existingTicket.id,
-        code: existingTicket.code,
-        status: existingTicket.status,
-        amountUSDC: existingTicket.amountUSDC,
-        gameId: existingTicket.gameId,
-        purchasedAt: existingTicket.purchasedAt,
+      return NextResponse.json<EntryResponse>({
+        id: existingEntry.id,
+        status: existingEntry.paidAt ? "PAID" : "PENDING",
+        amountUSDC: game.ticketPrice,
+        gameId: existingEntry.gameId,
+        paidAt: existingEntry.paidAt,
+        createdAt: existingEntry.createdAt,
       });
     }
 
-    // Generate unique code
-    let code: string = "";
-    for (let attempt = 0; attempt < 10; attempt++) {
-      code = randomBytes(6).toString("hex").toUpperCase();
-      const exists = await prisma.ticket.findUnique({ where: { code } });
-      if (!exists) break;
-      if (attempt === 9) {
-        return NextResponse.json<ApiError>(
-          {
-            error: "Could not generate unique ticket code",
-            code: "CODE_GEN_FAILED",
-          },
-          { status: 500 }
-        );
-      }
-    }
+    // Create new entry
+    const paidAt = isVerified ? new Date() : null;
 
-    const status = isVerified ? "PAID" : "PENDING";
-
-    const newTicket = await prisma.$transaction(async (tx) => {
-      const ticket = await tx.ticket.create({
+    const newEntry = await prisma.$transaction(async (tx) => {
+      const entry = await tx.gameEntry.create({
         data: {
           userId: auth.userId,
           gameId,
-          amountUSDC: game.entryFee,
-          code,
           txHash: txHash ?? null,
-          status,
+          paidAt,
+          score: 0,
+          answered: 0,
+          answers: {},
         },
       });
 
-      await tx.gamePlayer.upsert({
-        where: { gameId_userId: { gameId, userId: auth.userId } },
-        update: {},
-        create: { gameId, userId: auth.userId, score: 0 },
-      });
+      // Update game player count if paid
+      if (paidAt) {
+        await tx.game.update({
+          where: { id: gameId },
+          data: {
+            playerCount: { increment: 1 },
+            prizePool: { increment: game.ticketPrice },
+          },
+        });
+      }
 
-      return ticket;
+      return entry;
     });
 
-    return NextResponse.json<TicketResponse>(
+    return NextResponse.json<EntryResponse>(
       {
-        id: newTicket.id,
-        code: newTicket.code,
-        status: newTicket.status,
-        amountUSDC: newTicket.amountUSDC,
-        gameId: newTicket.gameId,
-        purchasedAt: newTicket.purchasedAt,
+        id: newEntry.id,
+        status: newEntry.paidAt ? "PAID" : "PENDING",
+        amountUSDC: game.ticketPrice,
+        gameId: newEntry.gameId,
+        paidAt: newEntry.paidAt,
+        createdAt: newEntry.createdAt,
       },
       { status: 201 }
     );
@@ -221,7 +227,7 @@ export const POST = withAuth(async (request, auth: AuthResult) => {
       error.code === "P2002"
     ) {
       return NextResponse.json<ApiError>(
-        { error: "Ticket already exists", code: "CONFLICT" },
+        { error: "Entry already exists", code: "CONFLICT" },
         { status: 409 }
       );
     }

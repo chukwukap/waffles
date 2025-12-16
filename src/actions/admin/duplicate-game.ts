@@ -12,6 +12,7 @@ export type DuplicateGameResult =
 
 /**
  * Duplicate a game with all its questions
+ * Updated for new schema (ticketPrice, orderInRound, no status)
  */
 export async function duplicateGameAction(gameId: number): Promise<void> {
   const authResult = await requireAdminSession();
@@ -25,7 +26,7 @@ export async function duplicateGameAction(gameId: number): Promise<void> {
       where: { id: gameId },
       include: {
         questions: {
-          orderBy: { roundIndex: "asc" },
+          orderBy: [{ roundIndex: "asc" }, { orderInRound: "asc" }],
         },
       },
     });
@@ -35,6 +36,7 @@ export async function duplicateGameAction(gameId: number): Promise<void> {
     }
 
     // Create new game with "Copy" suffix
+    // No status field - uses time-based phase detection
     const newGame = await prisma.game.create({
       data: {
         title: `${originalGame.title} (Copy)`,
@@ -44,11 +46,11 @@ export async function duplicateGameAction(gameId: number): Promise<void> {
         // Set dates to future (7 days from now)
         startsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         endsAt: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000),
-        entryFee: originalGame.entryFee,
-        prizePool: originalGame.prizePool,
+        ticketPrice: originalGame.ticketPrice,
+        prizePool: 0, // New game starts with 0
+        playerCount: 0,
         roundBreakSec: originalGame.roundBreakSec,
         maxPlayers: originalGame.maxPlayers,
-        status: "SCHEDULED", // Always start as scheduled
       },
     });
 
@@ -58,13 +60,14 @@ export async function duplicateGameAction(gameId: number): Promise<void> {
         data: originalGame.questions.map((q) => ({
           gameId: newGame.id,
           roundIndex: q.roundIndex,
+          orderInRound: q.orderInRound,
           content: q.content,
           options: q.options,
           correctIndex: q.correctIndex,
           mediaUrl: q.mediaUrl,
           soundUrl: q.soundUrl,
           durationSec: q.durationSec,
-          order: q.order,
+          points: q.points,
         })),
       });
     }

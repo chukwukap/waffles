@@ -22,7 +22,7 @@ export default function StatsClient() {
         const gamesRes = await sdk.quickAuth.fetch("/api/v1/me/games");
         if (!gamesRes.ok) {
           if (gamesRes.status === 401) {
-            router.push("/invite");
+            router.push("/redeem");
             return;
           }
           throw new Error("Failed to fetch games");

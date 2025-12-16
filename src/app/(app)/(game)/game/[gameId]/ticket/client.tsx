@@ -71,13 +71,10 @@ export default function TicketPageClientImpl({
     gameId: gameInfo.id
   });
 
-  // Prize pool calculation
+  // Prize pool calculation (now uses pre-computed prizePool field)
   const prizePool = useMemo(() => {
-    const ticketPrice = gameInfo.entryFee;
-    const additionPrizePool = gameInfo.prizePool;
-    const pool =
-      (gameInfo._count?.tickets ?? 0) * ticketPrice + (additionPrizePool ?? 0);
-    return pool;
+    // prizePool is pre-computed in the database
+    return gameInfo.prizePool;
   }, [gameInfo]);
 
   if (isLoading) {
@@ -95,7 +92,7 @@ export default function TicketPageClientImpl({
     return (
       <>
         <SuccessCard
-          coverUrl={gameInfo.coverUrl}
+          coverUrl={gameInfo.coverUrl ?? ""}
           theme={gameInfo.theme}
           prizePool={prizePool}
           fid={userInfo.fid}
@@ -143,11 +140,11 @@ export default function TicketPageClientImpl({
         </h2>
         <div className="mx-auto mb-4">
           <WaffleCard
-            spots={gameInfo._count?.tickets ?? 0}
+            spots={gameInfo.playerCount}
             prizePool={prizePool}
-            price={gameInfo.entryFee}
+            price={gameInfo.ticketPrice}
             maxPlayers={gameInfo.maxPlayers}
-            fid={userInfo.fid}
+            fid={userInfo?.fid ?? 0}
             gameId={gameInfo.id}
           />
         </div>

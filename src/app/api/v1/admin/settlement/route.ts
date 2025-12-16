@@ -149,12 +149,11 @@ export async function GET(request: NextRequest) {
       where: { id: gameId },
       select: {
         id: true,
-        status: true,
-        entryFee: true,
+        startsAt: true,
+        endsAt: true,
+        ticketPrice: true,
         prizePool: true,
-        _count: {
-          select: { tickets: true },
-        },
+        playerCount: true,
       },
     });
 

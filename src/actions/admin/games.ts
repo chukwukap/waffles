@@ -7,16 +7,27 @@ import { logAdminAction, AdminAction, EntityType } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createGameOnChain } from "@/lib/settlement";
+import { getGamePhase } from "@/lib/game-utils";
+
+// ==========================================
+// SCHEMA (Updated for new model)
+// ==========================================
 
 const gameSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   description: z.string().optional(),
-  theme: z.enum(["FOOTBALL", "MOVIES", "ANIME", "POLITICS", "CRYPTO"]),
+  theme: z.enum([
+    "FOOTBALL",
+    "MOVIES",
+    "ANIME",
+    "POLITICS",
+    "CRYPTO",
+    "GENERAL",
+  ]),
   coverUrl: z.string().optional().nullable(),
   startsAt: z.string().transform((str) => new Date(str)),
   endsAt: z.string().transform((str) => new Date(str)),
-  entryFee: z.coerce.number().min(0, "Entry fee must be non-negative"),
-  prizePool: z.coerce.number().min(0, "Prize pool must be non-negative"),
+  ticketPrice: z.coerce.number().min(0, "Ticket price must be non-negative"),
   roundBreakSec: z.coerce
     .number()
     .min(5, "Duration must be at least 5 seconds"),
@@ -27,9 +38,10 @@ export type GameActionResult =
   | { success: true; gameId?: number }
   | { success: false; error: string };
 
-/**
- * Create a new game
- */
+// ==========================================
+// CREATE GAME
+// ==========================================
+
 export async function createGameAction(
   _prevState: GameActionResult | null,
   formData: FormData
@@ -46,8 +58,7 @@ export async function createGameAction(
     coverUrl: formData.get("coverUrl"),
     startsAt: formData.get("startsAt"),
     endsAt: formData.get("endsAt"),
-    entryFee: formData.get("entryFee"),
-    prizePool: formData.get("prizePool"),
+    ticketPrice: formData.get("entryFee") || formData.get("ticketPrice"), // Support both field names
     roundBreakSec: formData.get("roundBreakSec"),
     maxPlayers: formData.get("maxPlayers"),
   };
@@ -63,7 +74,7 @@ export async function createGameAction(
   const data = validation.data;
 
   try {
-    // 1. Create game in database
+    // Create game in database (no status field, uses time-based phase)
     const game = await prisma.game.create({
       data: {
         title: data.title,
@@ -72,55 +83,58 @@ export async function createGameAction(
         coverUrl: data.coverUrl || "",
         startsAt: new Date(data.startsAt),
         endsAt: new Date(data.endsAt),
-        entryFee: data.entryFee,
-        prizePool: data.prizePool,
+        ticketPrice: data.ticketPrice,
+        prizePool: 0, // Start at 0, incremented when entries are created
+        playerCount: 0,
         roundBreakSec: data.roundBreakSec,
         maxPlayers: data.maxPlayers,
-        status: "SCHEDULED",
       },
     });
 
-    // 2. Create game on-chain immediately after database creation
-    // This ensures the game is ready for players to buy tickets
+    // Create game on-chain
     try {
-      const txHash = await createGameOnChain(game.id, data.entryFee);
-      console.log(`[CreateGame] Game ${game.id} created on-chain. TX: ${txHash}`);
-      
-      // Log the on-chain creation as part of the game creation
-    await logAdminAction({
-      adminId: authResult.session.userId,
-      action: AdminAction.CREATE_GAME,
-      entityType: EntityType.GAME,
-      entityId: game.id,
-        details: { 
-          title: game.title, 
-          theme: game.theme,
-          onChainTx: txHash,
-          entryFee: data.entryFee,
-        },
-      });
-    } catch (onChainError) {
-      // Log the error but don't fail the game creation
-      // The game exists in DB and can be manually created on-chain later if needed
-      console.error(`[CreateGame] On-chain creation failed for game ${game.id}:`, onChainError);
-      
+      const txHash = await createGameOnChain(game.id, data.ticketPrice);
+      console.log(
+        `[CreateGame] Game ${game.id} created on-chain. TX: ${txHash}`
+      );
+
       await logAdminAction({
         adminId: authResult.session.userId,
         action: AdminAction.CREATE_GAME,
         entityType: EntityType.GAME,
         entityId: game.id,
-        details: { 
-          title: game.title, 
+        details: {
+          title: game.title,
           theme: game.theme,
-          onChainError: onChainError instanceof Error ? onChainError.message : "Unknown error",
+          onChainTx: txHash,
+          ticketPrice: data.ticketPrice,
         },
-    });
+      });
+    } catch (onChainError) {
+      console.error(
+        `[CreateGame] On-chain creation failed for game ${game.id}:`,
+        onChainError
+      );
+
+      await logAdminAction({
+        adminId: authResult.session.userId,
+        action: AdminAction.CREATE_GAME,
+        entityType: EntityType.GAME,
+        entityId: game.id,
+        details: {
+          title: game.title,
+          theme: game.theme,
+          onChainError:
+            onChainError instanceof Error
+              ? onChainError.message
+              : "Unknown error",
+        },
+      });
     }
 
     revalidatePath("/admin/games");
     redirect(`/admin/games/${game.id}/questions`);
   } catch (error) {
-    // Re-throw Next.js redirects (they're not actual errors)
     if (error instanceof Error && error.message === "NEXT_REDIRECT") {
       throw error;
     }
@@ -129,9 +143,10 @@ export async function createGameAction(
   }
 }
 
-/**
- * Update an existing game
- */
+// ==========================================
+// UPDATE GAME
+// ==========================================
+
 export async function updateGameAction(
   gameId: number,
   _prevState: GameActionResult | null,
@@ -149,8 +164,7 @@ export async function updateGameAction(
     coverUrl: formData.get("coverUrl"),
     startsAt: formData.get("startsAt"),
     endsAt: formData.get("endsAt"),
-    entryFee: formData.get("entryFee"),
-    prizePool: formData.get("prizePool"),
+    ticketPrice: formData.get("entryFee") || formData.get("ticketPrice"),
     roundBreakSec: formData.get("roundBreakSec"),
     maxPlayers: formData.get("maxPlayers"),
   };
@@ -175,8 +189,7 @@ export async function updateGameAction(
         coverUrl: data.coverUrl || "",
         startsAt: new Date(data.startsAt),
         endsAt: new Date(data.endsAt),
-        entryFee: data.entryFee,
-        prizePool: data.prizePool,
+        ticketPrice: data.ticketPrice,
         roundBreakSec: data.roundBreakSec,
         maxPlayers: data.maxPlayers,
       },
@@ -200,9 +213,10 @@ export async function updateGameAction(
   }
 }
 
-/**
- * Delete a game (form action - returns void)
- */
+// ==========================================
+// DELETE GAME
+// ==========================================
+
 export async function deleteGameAction(gameId: number): Promise<void> {
   const authResult = await requireAdminSession();
   if (!authResult.authenticated || !authResult.session) {
@@ -228,46 +242,14 @@ export async function deleteGameAction(gameId: number): Promise<void> {
   redirect("/admin/games");
 }
 
-/**
- * Change game status
- */
-export async function changeGameStatusAction(
-  gameId: number,
-  status: "SCHEDULED" | "LIVE" | "ENDED" | "CANCELLED"
-): Promise<GameActionResult> {
-  const authResult = await requireAdminSession();
-  if (!authResult.authenticated || !authResult.session) {
-    return { success: false, error: "Unauthorized" };
-  }
-
-  try {
-    await prisma.game.update({
-      where: { id: gameId },
-      data: { status },
-    });
-
-    await logAdminAction({
-      adminId: authResult.session.userId,
-      action: AdminAction.CHANGE_GAME_STATUS,
-      entityType: EntityType.GAME,
-      entityId: gameId,
-      details: { newStatus: status },
-    });
-
-    revalidatePath("/admin/games");
-    revalidatePath(`/admin/games/${gameId}`);
-
-    return { success: true };
-  } catch (error) {
-    console.error("Change game status error:", error);
-    return { success: false, error: "Failed to change game status" };
-  }
-}
+// ==========================================
+// CHANGE GAME TIMING (replaces status actions)
+// ==========================================
 
 /**
- * Start a game (change status to LIVE)
+ * Force start a game by setting startsAt to now.
  */
-export async function startGameAction(
+export async function forceStartGameAction(
   gameId: number
 ): Promise<GameActionResult> {
   const authResult = await requireAdminSession();
@@ -279,7 +261,8 @@ export async function startGameAction(
     const game = await prisma.game.findUnique({
       where: { id: gameId },
       select: {
-        status: true,
+        startsAt: true,
+        endsAt: true,
         title: true,
         _count: { select: { questions: true } },
       },
@@ -289,36 +272,33 @@ export async function startGameAction(
       return { success: false, error: "Game not found" };
     }
 
-    if (game.status === "LIVE") {
+    const phase = getGamePhase(game);
+    if (phase === "LIVE") {
       return { success: false, error: "Game is already live" };
     }
-
-    if (game.status === "ENDED" || game.status === "CANCELLED") {
-      return {
-        success: false,
-        error: `Cannot start ${game.status.toLowerCase()} game`,
-      };
+    if (phase === "ENDED") {
+      return { success: false, error: "Cannot start ended game" };
     }
-
     if (game._count.questions === 0) {
       return { success: false, error: "Cannot start game without questions" };
     }
 
+    // Set startsAt to now
     await prisma.game.update({
       where: { id: gameId },
-      data: { status: "LIVE" },
+      data: { startsAt: new Date() },
     });
 
     await logAdminAction({
       adminId: authResult.session.userId,
-      action: AdminAction.UPDATE_GAME, // Changed from AdminAction.UPDATE
+      action: AdminAction.UPDATE_GAME,
       entityType: EntityType.GAME,
-      entityId: gameId, // Changed from gameId.toString()
-      details: { status: "LIVE", title: game.title }, // Changed from metadata
+      entityId: gameId,
+      details: { action: "FORCE_START", title: game.title },
     });
 
     revalidatePath("/admin/games");
-    revalidatePath(`/admin/games/${gameId}`); // Added revalidate for specific game page
+    revalidatePath(`/admin/games/${gameId}`);
     return { success: true };
   } catch (error) {
     console.error("Failed to start game:", error);
@@ -327,9 +307,11 @@ export async function startGameAction(
 }
 
 /**
- * End a game (change status to ENDED)
+ * Force end a game by setting endsAt to now and calculating ranks.
  */
-export async function endGameAction(gameId: number): Promise<GameActionResult> {
+export async function forceEndGameAction(
+  gameId: number
+): Promise<GameActionResult> {
   const authResult = await requireAdminSession();
   if (!authResult.authenticated || !authResult.session) {
     return { success: false, error: "Unauthorized" };
@@ -338,44 +320,39 @@ export async function endGameAction(gameId: number): Promise<GameActionResult> {
   try {
     const game = await prisma.game.findUnique({
       where: { id: gameId },
-      select: { status: true, title: true },
+      select: { startsAt: true, endsAt: true, title: true },
     });
 
     if (!game) {
       return { success: false, error: "Game not found" };
     }
 
-    if (game.status === "ENDED") {
+    const phase = getGamePhase(game);
+    if (phase === "ENDED") {
       return { success: false, error: "Game has already ended" };
     }
 
-    if (game.status === "CANCELLED") {
-      return { success: false, error: "Cannot end cancelled game" };
-    }
-
-    // 1. Update Game Status
+    // Set endsAt to now
     await prisma.game.update({
       where: { id: gameId },
-      data: { status: "ENDED" },
+      data: { endsAt: new Date() },
     });
 
-    // 2. Calculate Ranks
-    // Fetch all players sorted by score (desc) and joinedAt (asc)
-    const players = await prisma.gamePlayer.findMany({
-      where: { gameId },
+    // Calculate ranks for all entries
+    const entries = await prisma.gameEntry.findMany({
+      where: { gameId, paidAt: { not: null } },
       orderBy: [
         { score: "desc" },
-        { joinedAt: "asc" }, // Tie-breaker: earlier joiner wins
+        { createdAt: "asc" }, // Tie-breaker: earlier entry wins
       ],
       select: { id: true },
     });
 
-    // 3. Persist Ranks
-    // We use a transaction to ensure all ranks are updated atomically
+    // Update ranks in transaction
     await prisma.$transaction(
-      players.map((player, index) =>
-        prisma.gamePlayer.update({
-          where: { id: player.id },
+      entries.map((entry, index) =>
+        prisma.gameEntry.update({
+          where: { id: entry.id },
           data: { rank: index + 1 },
         })
       )
@@ -383,21 +360,27 @@ export async function endGameAction(gameId: number): Promise<GameActionResult> {
 
     await logAdminAction({
       adminId: authResult.session.userId,
-      action: AdminAction.UPDATE_GAME, // Changed from AdminAction.UPDATE
+      action: AdminAction.UPDATE_GAME,
       entityType: EntityType.GAME,
-      entityId: gameId, // Changed from gameId.toString()
+      entityId: gameId,
       details: {
-        status: "ENDED",
+        action: "FORCE_END",
         title: game.title,
-        playerCount: players.length,
-      }, // Changed from metadata
+        playerCount: entries.length,
+      },
     });
 
     revalidatePath("/admin/games");
-    revalidatePath(`/admin/games/${gameId}`); // Added revalidate for specific game page
+    revalidatePath(`/admin/games/${gameId}`);
     return { success: true };
   } catch (error) {
     console.error("Failed to end game:", error);
     return { success: false, error: "Failed to end game" };
   }
 }
+
+// Keep old function names as aliases for backwards compatibility
+export const startGameAction = forceStartGameAction;
+export const endGameAction = forceEndGameAction;
+
+// Removed changeGameStatusAction - no longer needed with time-based phases

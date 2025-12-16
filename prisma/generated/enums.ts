@@ -64,27 +64,8 @@ export const GameTheme = {
   MOVIES: 'MOVIES',
   ANIME: 'ANIME',
   POLITICS: 'POLITICS',
-  CRYPTO: 'CRYPTO'
+  CRYPTO: 'CRYPTO',
+  GENERAL: 'GENERAL'
 } as const
 
 export type GameTheme = (typeof GameTheme)[keyof typeof GameTheme]
-
-
-export const GameStatus = {
-  SCHEDULED: 'SCHEDULED',
-  LIVE: 'LIVE',
-  ENDED: 'ENDED',
-  CANCELLED: 'CANCELLED'
-} as const
-
-export type GameStatus = (typeof GameStatus)[keyof typeof GameStatus]
-
-
-export const TicketStatus = {
-  PENDING: 'PENDING',
-  PAID: 'PAID',
-  FAILED: 'FAILED',
-  REDEEMED: 'REDEEMED'
-} as const
-
-export type TicketStatus = (typeof TicketStatus)[keyof typeof TicketStatus]

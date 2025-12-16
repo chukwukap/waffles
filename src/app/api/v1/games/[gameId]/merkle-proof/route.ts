@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { generateMerkleProof, type Winner } from "@/lib/merkle";
 import { parseUnits } from "viem";
 import { TOKEN_CONFIG } from "@/lib/contracts/config";
+import { getGamePhase } from "@/lib/game-utils";
 
 interface MerkleProofResponse {
   gameId: number;
@@ -41,12 +42,13 @@ export const GET = withAuth<{ gameId: string }>(
         );
       }
 
-      // Get game and check if settled
+      // Get game and check if ended
       const game = await prisma.game.findUnique({
         where: { id: gameId },
         select: {
           id: true,
-          status: true,
+          startsAt: true,
+          endsAt: true,
           prizePool: true,
         },
       });
@@ -58,19 +60,21 @@ export const GET = withAuth<{ gameId: string }>(
         );
       }
 
-      if (game.status !== "ENDED") {
+      const phase = getGamePhase(game);
+      if (phase !== "ENDED") {
         return NextResponse.json<ApiError>(
           { error: "Game has not ended yet", code: "GAME_NOT_ENDED" },
           { status: 400 }
         );
       }
 
-      // Get all winners for this game (ranked players with winnings)
+      // Get all winners for this game (entries with rank <= 3)
       // Rank 1 = 60% of prize pool, Rank 2 = 30%, Rank 3 = 10%
-      const rankedPlayers = await prisma.gamePlayer.findMany({
+      const rankedEntries = await prisma.gameEntry.findMany({
         where: {
           gameId,
           rank: { not: null, lte: 3 }, // Top 3 get prizes
+          paidAt: { not: null },
         },
         include: {
           user: {
@@ -80,7 +84,7 @@ export const GET = withAuth<{ gameId: string }>(
         orderBy: { rank: "asc" },
       });
 
-      if (rankedPlayers.length === 0) {
+      if (rankedEntries.length === 0) {
         return NextResponse.json<ApiError>(
           { error: "No winners for this game", code: "NO_WINNERS" },
           { status: 400 }
@@ -89,9 +93,9 @@ export const GET = withAuth<{ gameId: string }>(
 
       // Calculate prize distribution
       const prizeDistribution = [0.6, 0.3, 0.1]; // 60%, 30%, 10%
-      const winners: Winner[] = rankedPlayers
-        .filter((p) => p.user.wallet) // Only players with wallets
-        .map((player, index) => {
+      const winners: Winner[] = rankedEntries
+        .filter((e) => e.user.wallet) // Only entries with wallets
+        .map((entry, index) => {
           const prizeShare = prizeDistribution[index] || 0;
           const amountUSDC = game.prizePool * prizeShare;
           const amount = parseUnits(
@@ -101,7 +105,7 @@ export const GET = withAuth<{ gameId: string }>(
 
           return {
             gameId,
-            address: player.user.wallet as `0x${string}`,
+            address: entry.user.wallet as `0x${string}`,
             amount,
           };
         });
@@ -123,7 +127,7 @@ export const GET = withAuth<{ gameId: string }>(
       const userWinnerIndex = winners.findIndex(
         (w) => w.address.toLowerCase() === user.wallet!.toLowerCase()
       );
-      const userRank = rankedPlayers[userWinnerIndex]?.rank || 0;
+      const userRank = rankedEntries[userWinnerIndex]?.rank || 0;
       const prizeShare = prizeDistribution[userRank - 1] || 0;
       const amountUSDC = game.prizePool * prizeShare;
 

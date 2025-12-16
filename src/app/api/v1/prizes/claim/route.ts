@@ -34,42 +34,42 @@ export const POST = withAuth(async (request, auth: AuthResult) => {
 
     const { gameId } = validation.data;
 
-    // Find game player record
-    const gamePlayer = await prisma.gamePlayer.findUnique({
+    // Find game entry
+    const entry = await prisma.gameEntry.findUnique({
       where: { gameId_userId: { gameId, userId: auth.userId } },
       select: {
         claimedAt: true,
         rank: true,
         score: true,
-        game: {
-          select: {
-            tickets: {
-              where: { userId: auth.userId, status: "PAID" },
-              select: { amountUSDC: true },
-            },
-          },
-        },
+        paidAt: true,
       },
     });
 
-    if (!gamePlayer) {
+    if (!entry) {
       return NextResponse.json<ApiError>(
-        { error: "Game record not found", code: "NOT_FOUND" },
+        { error: "Game entry not found", code: "NOT_FOUND" },
         { status: 404 }
       );
     }
 
     // Check if already claimed
-    if (gamePlayer.claimedAt) {
+    if (entry.claimedAt) {
       return NextResponse.json<ApiError>(
         { error: "Prize already claimed", code: "ALREADY_CLAIMED" },
         { status: 400 }
       );
     }
 
-    // Check eligibility
-    const winnings = gamePlayer.game.tickets[0]?.amountUSDC ?? 0;
-    const isEligible = gamePlayer.rank === 1 || winnings > 0;
+    // Check if paid
+    if (!entry.paidAt) {
+      return NextResponse.json<ApiError>(
+        { error: "Entry not paid", code: "NOT_PAID" },
+        { status: 400 }
+      );
+    }
+
+    // Check eligibility (top 3 ranks get prizes)
+    const isEligible = entry.rank !== null && entry.rank <= 3;
 
     if (!isEligible) {
       return NextResponse.json<ApiError>(
@@ -80,7 +80,7 @@ export const POST = withAuth(async (request, auth: AuthResult) => {
 
     // Claim the prize
     const claimedAt = new Date();
-    await prisma.gamePlayer.update({
+    await prisma.gameEntry.update({
       where: { gameId_userId: { gameId, userId: auth.userId } },
       data: { claimedAt },
     });

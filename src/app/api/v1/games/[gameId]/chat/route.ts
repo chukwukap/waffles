@@ -112,7 +112,7 @@ export const POST = withAuth<Params>(
       // Check if game exists
       const game = await prisma.game.findUnique({
         where: { id: gameIdNum },
-        select: { id: true, status: true },
+        select: { id: true },
       });
 
       if (!game) {

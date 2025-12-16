@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getGamePhase } from "@/lib/game-utils";
 
 /**
  * GET /api/v1/me/games
@@ -8,8 +9,12 @@ import { prisma } from "@/lib/db";
  */
 export const GET = withAuth(async (request, auth: AuthResult) => {
   try {
-    const gamePlayers = await prisma.gamePlayer.findMany({
-      where: { userId: auth.userId },
+    // Get all entries for the user
+    const entries = await prisma.gameEntry.findMany({
+      where: {
+        userId: auth.userId,
+        paidAt: { not: null }, // Only paid entries
+      },
       include: {
         game: {
           select: {
@@ -18,57 +23,51 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
             theme: true,
             startsAt: true,
             endsAt: true,
-            status: true,
             prizePool: true,
+            playerCount: true,
             _count: {
               select: {
-                players: true,
                 questions: true,
               },
             },
           },
         },
       },
-      orderBy: { joinedAt: "desc" },
+      orderBy: { createdAt: "desc" },
     });
 
-    // Calculate rank and answered questions for each game
+    // Calculate rank for each game entry
     const response = await Promise.all(
-      gamePlayers.map(async (gp) => {
-        // Get rank by counting players with higher scores
-        const higherScores = await prisma.gamePlayer.count({
+      entries.map(async (entry) => {
+        // Get rank by counting entries with higher scores in the same game
+        const higherScores = await prisma.gameEntry.count({
           where: {
-            gameId: gp.gameId,
-            score: { gt: gp.score },
+            gameId: entry.gameId,
+            paidAt: { not: null },
+            score: { gt: entry.score },
           },
         });
 
-        // Count how many questions the user has answered in this game
-        const answeredCount = await prisma.answer.count({
-          where: {
-            userId: auth.userId,
-            gameId: gp.gameId,
-          },
-        });
+        const phase = getGamePhase(entry.game);
 
         return {
-          id: gp.id,
-          gameId: gp.gameId,
-          score: gp.score,
-          rank: higherScores + 1,
-          joinedAt: gp.joinedAt,
-          claimedAt: gp.claimedAt,
-          answeredQuestions: answeredCount,
+          id: entry.id,
+          gameId: entry.gameId,
+          score: entry.score,
+          rank: entry.rank ?? higherScores + 1,
+          paidAt: entry.paidAt,
+          claimedAt: entry.claimedAt,
+          answeredQuestions: entry.answered,
           game: {
-            id: gp.game.id,
-            title: gp.game.title,
-            theme: gp.game.theme,
-            startsAt: gp.game.startsAt,
-            endsAt: gp.game.endsAt,
-            status: gp.game.status,
-            prizePool: gp.game.prizePool,
-            totalQuestions: gp.game._count.questions,
-            playersCount: gp.game._count.players,
+            id: entry.game.id,
+            title: entry.game.title,
+            theme: entry.game.theme,
+            startsAt: entry.game.startsAt,
+            endsAt: entry.game.endsAt,
+            status: phase,
+            prizePool: entry.game.prizePool,
+            totalQuestions: entry.game._count.questions,
+            playersCount: entry.game.playerCount,
           },
         };
       })

@@ -25,41 +25,28 @@ async function getUser(id: number) {
                     username: true,
                 },
             },
-            tickets: {
+            // Use entries instead of tickets and games
+            entries: {
                 select: {
                     id: true,
                     game: {
                         select: {
                             id: true,
                             title: true,
-                        },
-                    },
-                    status: true,
-                    amountUSDC: true,
-                    purchasedAt: true,
-                },
-                orderBy: { purchasedAt: "desc" },
-                take: 5,
-            },
-            games: {
-                select: {
-                    game: {
-                        select: {
-                            id: true,
-                            title: true,
-                            startsAt: true,
+                            ticketPrice: true,
                         },
                     },
                     score: true,
+                    paidAt: true,
+                    createdAt: true,
                 },
-                orderBy: { game: { startsAt: "desc" } },
-                take: 5,
+                orderBy: { createdAt: "desc" },
+                take: 10,
             },
             _count: {
                 select: {
                     referrals: true,
-                    tickets: true,
-                    games: true,
+                    entries: true,
                 },
             },
         },
@@ -77,6 +64,9 @@ export default async function UserDetailsPage({
     if (!user) {
         notFound();
     }
+
+    // Count paid entries
+    const paidEntriesCount = user.entries.filter(e => e.paidAt).length;
 
     return (
         <div className="space-y-6">
@@ -100,58 +90,65 @@ export default async function UserDetailsPage({
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* User Info */}
+            <div className="flex items-center justify-between">
+                <span
+                    className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${user.isBanned
+                        ? "bg-red-500/20 text-red-400"
+                        : user.hasGameAccess
+                            ? "bg-[#14B985]/20 text-[#14B985]"
+                            : "bg-[#FFC931]/20 text-[#FFC931]"
+                        }`}
+                >
+                    {user.isBanned ? "BANNED" : user.hasGameAccess ? "ACTIVE" : "WAITLIST"}
+                </span>
+                <UserActions user={user} />
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2 space-y-6">
+                    {/* User Info */}
                     <div className="admin-panel p-6">
-                        <h3 className="text-lg font-semibold text-white mb-4 font-display">
-                            User Information
-                        </h3>
-                        <dl className="grid grid-cols-2 gap-4 text-sm">
+                        <h2 className="text-xl font-bold text-white mb-4 font-display">User Information</h2>
+                        <dl className="grid grid-cols-2 gap-4">
                             <div>
-                                <dt className="font-medium text-white/50">User ID</dt>
-                                <dd className="mt-1 text-white font-mono">{user.fid}</dd>
+                                <dt className="text-sm text-white/50 font-display">User ID</dt>
+                                <dd className="text-white font-mono">{user.id}</dd>
                             </div>
                             <div>
-                                <dt className="font-medium text-white/50">Username</dt>
-                                <dd className="mt-1 text-white">{user.username || "—"}</dd>
+                                <dt className="text-sm text-white/50 font-display">Farcaster ID</dt>
+                                <dd className="text-white font-mono">{user.fid}</dd>
                             </div>
                             <div>
-                                <dt className="font-medium text-white/50">Wallet</dt>
-                                <dd className="mt-1 text-[#00CFF2] font-mono text-xs truncate">
-                                    {user.wallet || "—"}
+                                <dt className="text-sm text-white/50 font-display">Role</dt>
+                                <dd className={`${user.role === "ADMIN" ? "text-[#FB72FF]" : "text-white"}`}>
+                                    {user.role}
                                 </dd>
                             </div>
                             <div>
-                                <dt className="font-medium text-white/50">Status</dt>
-                                <dd className="mt-1">
-                                    <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${user.isBanned ? 'bg-red-500/20 text-red-400' :
-                                        user.hasGameAccess ? 'bg-[#14B985]/20 text-[#14B985]' :
-                                            'bg-[#FFC931]/20 text-[#FFC931]'
-                                        }`}>
-                                        {user.isBanned ? 'BANNED' : user.hasGameAccess ? 'ACTIVE' : 'WAITLIST'}
-                                    </span>
+                                <dt className="text-sm text-white/50 font-display">Wallet</dt>
+                                <dd className="text-white font-mono text-xs truncate">
+                                    {user.wallet || "Not connected"}
                                 </dd>
                             </div>
                             <div>
-                                <dt className="font-medium text-white/50">Role</dt>
-                                <dd className="mt-1">
-                                    <span className={user.role === "ADMIN" ? "text-[#FB72FF] font-semibold" : "text-white"}>
-                                        {user.role}
-                                    </span>
+                                <dt className="text-sm text-white/50 font-display">Invite Code</dt>
+                                <dd className="text-[#FFC931] font-mono">{user.inviteCode}</dd>
+                            </div>
+                            <div>
+                                <dt className="text-sm text-white/50 font-display">Referred By</dt>
+                                <dd className="text-white">
+                                    {user.referredBy ? (
+                                        <Link href={`/admin/users/${user.referredBy.id}`} className="text-[#FFC931] hover:underline">
+                                            @{user.referredBy.username}
+                                        </Link>
+                                    ) : (
+                                        <span className="text-white/50">-</span>
+                                    )}
                                 </dd>
                             </div>
                             <div>
-                                <dt className="font-medium text-white/50">Invite Code</dt>
-                                <dd className="mt-1 text-[#FFC931] font-mono">{user.inviteCode}</dd>
-                            </div>
-                            <div>
-                                <dt className="font-medium text-white/50">Invite Quota</dt>
-                                <dd className="mt-1 text-white">{user.inviteQuota}</dd>
-                            </div>
-                            <div>
-                                <dt className="font-medium text-white/50">Joined</dt>
-                                <dd className="mt-1 text-white">
+                                <dt className="text-sm text-white/50 font-display">Joined At</dt>
+                                <dd className="text-white">
                                     {new Date(user.createdAt).toLocaleDateString()}
                                 </dd>
                             </div>
@@ -165,36 +162,36 @@ export default async function UserDetailsPage({
                             <div className="text-sm text-white/50 font-display">Referrals</div>
                         </div>
                         <div className="admin-panel p-4">
-                            <div className="text-2xl font-bold text-[#00CFF2] font-body admin-stat-glow-cyan">{user._count.games}</div>
-                            <div className="text-sm text-white/50 font-display">Games Played</div>
+                            <div className="text-2xl font-bold text-[#00CFF2] font-body admin-stat-glow-cyan">{user._count.entries}</div>
+                            <div className="text-sm text-white/50 font-display">Game Entries</div>
                         </div>
                         <div className="admin-panel p-4">
-                            <div className="text-2xl font-bold text-[#FB72FF] font-body admin-stat-glow-pink">{user._count.tickets}</div>
-                            <div className="text-sm text-white/50 font-display">Tickets</div>
+                            <div className="text-2xl font-bold text-[#FB72FF] font-body admin-stat-glow-pink">{paidEntriesCount}</div>
+                            <div className="text-sm text-white/50 font-display">Paid Entries</div>
                         </div>
                     </div>
 
-                    {/* Recent Tickets */}
-                    {user.tickets.length > 0 && (
+                    {/* Recent Game Entries */}
+                    {user.entries.length > 0 && (
                         <div className="admin-panel p-6">
                             <h3 className="text-lg font-semibold text-white mb-4 font-display">
-                                Recent Tickets
+                                Recent Game Entries
                             </h3>
                             <div className="space-y-3">
-                                {user.tickets.map((ticket) => (
-                                    <div key={ticket.id} className="flex justify-between items-center py-3 border-b border-white/6 last:border-0">
+                                {user.entries.map((entry) => (
+                                    <div key={entry.id} className="flex justify-between items-center py-3 border-b border-white/6 last:border-0">
                                         <div>
-                                            <div className="font-medium text-white">{ticket.game.title}</div>
+                                            <div className="font-medium text-white">{entry.game.title}</div>
                                             <div className="text-sm text-white/50">
-                                                {new Date(ticket.purchasedAt).toLocaleDateString()}
+                                                {entry.paidAt ? new Date(entry.paidAt).toLocaleDateString() : "Pending payment"}
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <div className="font-bold text-[#FFC931]">${ticket.amountUSDC}</div>
-                                            <div className={`text-xs ${ticket.status === "PAID" || ticket.status === "REDEEMED"
+                                            <div className="font-bold text-[#FFC931]">${entry.game.ticketPrice}</div>
+                                            <div className={`text-xs ${entry.paidAt
                                                 ? "text-[#14B985]"
                                                 : "text-white/50"
-                                                }`}>{ticket.status}</div>
+                                                }`}>{entry.paidAt ? "PAID" : "PENDING"}</div>
                                         </div>
                                     </div>
                                 ))}
@@ -203,12 +200,48 @@ export default async function UserDetailsPage({
                     )}
                 </div>
 
-                {/* Actions Sidebar */}
-                <div>
-                    <UserActions user={user} />
+                {/* Referrals Sidebar */}
+                <div className="space-y-6">
+                    <div className="admin-panel p-6">
+                        <h3 className="text-lg font-semibold text-white mb-4 font-display">
+                            Referrals ({user._count.referrals})
+                        </h3>
+                        {user.referrals.length === 0 ? (
+                            <p className="text-white/50 text-sm">No referrals yet.</p>
+                        ) : (
+                            <div className="space-y-3">
+                                {user.referrals.map((referral) => (
+                                    <Link
+                                        key={referral.id}
+                                        href={`/admin/users/${referral.id}`}
+                                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors"
+                                    >
+                                        <div className="h-8 w-8 bg-[#FFC931]/20 rounded-full flex items-center justify-center text-[#FFC931] font-bold text-xs">
+                                            {referral.username?.[0]?.toUpperCase() || "U"}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-white truncate">
+                                                @{referral.username}
+                                            </p>
+                                            <p className="text-xs text-white/50">
+                                                {new Date(referral.createdAt).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                        <span
+                                            className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${referral.hasGameAccess
+                                                ? "bg-[#14B985]/20 text-[#14B985]"
+                                                : "bg-[#FFC931]/20 text-[#FFC931]"
+                                                }`}
+                                        >
+                                            {referral.hasGameAccess ? "ACTIVE" : "WAITLIST"}
+                                        </span>
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
     );
 }
-

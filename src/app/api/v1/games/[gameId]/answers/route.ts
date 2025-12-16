@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { prisma, Prisma } from "@/lib/db";
 import { z } from "zod";
 import { calculateScore, QuestionDifficulty } from "@/lib/scoring";
 
@@ -17,6 +17,13 @@ interface SubmitAnswerResponse {
   isCorrect: boolean;
   pointsEarned: number;
   totalScore: number;
+}
+
+interface AnswerEntry {
+  selected: number;
+  correct: boolean;
+  points: number;
+  ms: number;
 }
 
 /**
@@ -52,20 +59,33 @@ export const POST = withAuth<Params>(
       const { questionId, selectedIndex, timeTakenMs } = validation.data;
       const selectedIndexValue = selectedIndex ?? -1;
 
-      // Verify user is a player in this game
-      const gamePlayer = await prisma.gamePlayer.findUnique({
+      // Verify user has a game entry
+      const entry = await prisma.gameEntry.findUnique({
         where: {
           gameId_userId: {
             gameId: gameIdNum,
             userId: auth.userId,
           },
         },
-        select: { score: true },
+        select: {
+          id: true,
+          score: true,
+          answered: true,
+          answers: true,
+          paidAt: true,
+        },
       });
 
-      if (!gamePlayer) {
+      if (!entry) {
         return NextResponse.json<ApiError>(
-          { error: "You must join the game first", code: "NOT_IN_GAME" },
+          { error: "You must have a game entry first", code: "NOT_IN_GAME" },
+          { status: 403 }
+        );
+      }
+
+      if (!entry.paidAt) {
+        return NextResponse.json<ApiError>(
+          { error: "Payment required to play", code: "PAYMENT_REQUIRED" },
           { status: 403 }
         );
       }
@@ -73,7 +93,12 @@ export const POST = withAuth<Params>(
       // Get question details
       const question = await prisma.question.findUnique({
         where: { id: questionId },
-        select: { correctIndex: true, durationSec: true, gameId: true },
+        select: {
+          correctIndex: true,
+          durationSec: true,
+          gameId: true,
+          points: true,
+        },
       });
 
       if (!question) {
@@ -93,88 +118,77 @@ export const POST = withAuth<Params>(
         );
       }
 
+      // Parse existing answers
+      const existingAnswers =
+        (entry.answers as unknown as Record<string, AnswerEntry>) || {};
+      const questionKey = String(questionId);
+
+      // Check if already answered
+      if (existingAnswers[questionKey]) {
+        // Return existing answer instead of error (idempotent)
+        const existing = existingAnswers[questionKey];
+        return NextResponse.json<SubmitAnswerResponse>({
+          success: true,
+          isCorrect: existing.correct,
+          pointsEarned: existing.points,
+          totalScore: entry.score,
+        });
+      }
+
       // Calculate score
       const maxTimeSec = question.durationSec ?? 10;
-      const correct = selectedIndex === question.correctIndex;
+      const isCorrect = selectedIndexValue === question.correctIndex;
 
-      // Calculate consecutive correct answers for combo bonus
-      const recentAnswers = await prisma.answer.findMany({
-        where: {
-          userId: auth.userId,
-          gameId: gameIdNum,
-          questionId: { not: questionId },
-        },
-        orderBy: { createdAt: "desc" },
-        take: 10,
-        select: { isCorrect: true },
-      });
-
+      // Count consecutive correct answers for combo bonus
+      const answerValues = Object.values(existingAnswers);
       let consecutiveCorrect = 0;
-      for (const ans of recentAnswers) {
-        if (ans.isCorrect) consecutiveCorrect++;
+
+      // Count backwards through existing answers
+      for (let i = answerValues.length - 1; i >= 0; i--) {
+        if (answerValues[i].correct) consecutiveCorrect++;
         else break;
       }
 
       const scoreResult = calculateScore({
         timeTakenMs,
         maxTimeSec,
-        isCorrect: correct,
+        isCorrect,
         difficulty: QuestionDifficulty.MEDIUM,
         consecutiveCorrect,
       });
 
-      const newPoints = scoreResult.score;
-      let totalScore = gamePlayer.score;
+      const pointsEarned = isCorrect ? scoreResult.score : 0;
+      const newTotalScore = entry.score + pointsEarned;
 
-      // Use transaction for atomic update
-      await prisma.$transaction(async (tx) => {
-        // Find previous answer if any
-        const previousAnswer = await tx.answer.findUnique({
-          where: {
-            userId_questionId: { userId: auth.userId, questionId },
-          },
-          select: { pointsEarned: true },
-        });
+      // Build new answer entry
+      const newAnswer: AnswerEntry = {
+        selected: selectedIndexValue,
+        correct: isCorrect,
+        points: pointsEarned,
+        ms: timeTakenMs,
+      };
 
-        const previousPoints = previousAnswer?.pointsEarned ?? 0;
+      // Build updated answers object
+      const updatedAnswers = {
+        ...existingAnswers,
+        [questionKey]: newAnswer,
+      } as unknown as Prisma.JsonObject;
 
-        // Upsert the answer
-        await tx.answer.upsert({
-          where: {
-            userId_questionId: { userId: auth.userId, questionId },
-          },
-          update: {
-            selectedIndex: selectedIndexValue,
-            isCorrect: correct,
-            latencyMs: timeTakenMs,
-            pointsEarned: newPoints,
-          },
-          create: {
-            userId: auth.userId,
-            gameId: gameIdNum,
-            questionId,
-            selectedIndex: selectedIndexValue,
-            isCorrect: correct,
-            latencyMs: timeTakenMs,
-            pointsEarned: newPoints,
-          },
-        });
-
-        // Update game player score
-        const pointsDelta = newPoints - previousPoints;
-        totalScore = Math.max(0, gamePlayer.score + pointsDelta);
-
-        await tx.gamePlayer.update({
-          where: { gameId_userId: { gameId: gameIdNum, userId: auth.userId } },
-          data: { score: totalScore },
-        });
+      // Update entry atomically
+      await prisma.gameEntry.update({
+        where: { id: entry.id },
+        data: {
+          answers: updatedAnswers,
+          score: newTotalScore,
+          answered: entry.answered + 1,
+        },
       });
 
       const response: SubmitAnswerResponse = {
         success: true,
-        isCorrect: correct,
-        pointsEarned: newPoints,
-        totalScore,
+        isCorrect,
+        pointsEarned,
+        totalScore: newTotalScore,
       };
 
       return NextResponse.json(response);

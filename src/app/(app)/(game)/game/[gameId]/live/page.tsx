@@ -1,37 +1,86 @@
+import { cache } from "react";
+import { redirect, notFound } from "next/navigation";
+import { prisma } from "@/lib/db";
+import { getGamePhase } from "@/lib/game-utils";
 import LiveGameClient from "./client";
-import { Prisma, prisma } from "@/lib/db";
-import { notFound } from "next/navigation";
 
-export const revalidate = 0;
+export const dynamic = "force-dynamic";
 
-// Define the payload types for the client component
-export type LiveGameInfoPayload = Prisma.GameGetPayload<{
-  select: {
-    id: true;
-    roundBreakSec: true;
-    questions: {
-      select: {
-        id: true;
-        gameId: true;
-        content: true;
-        mediaUrl: true;
-        soundUrl: true;
-        options: true;
-        correctIndex: true;
-        durationSec: true;
-        roundIndex: true;
-      };
-      orderBy: [{ roundIndex: "asc" }, { id: "asc" }];
-    };
+// ==========================================
+// TYPES
+// ==========================================
+
+export interface LiveGameQuestion {
+  id: number;
+  content: string;
+  mediaUrl: string | null;
+  soundUrl: string | null;
+  options: string[];
+  correctIndex: number;
+  durationSec: number;
+  points: number;
+  roundIndex: number;
+  orderInRound: number;
+}
+
+export interface LiveGameData {
+  id: number;
+  roundBreakSec: number;
+  questions: LiveGameQuestion[];
+}
+
+// ==========================================
+// DATA FETCHING
+// ==========================================
+
+const getLiveGame = cache(async (gameId: number): Promise<LiveGameData | null> => {
+  const game = await prisma.game.findUnique({
+    where: { id: gameId },
+    select: {
+      id: true,
+      startsAt: true,
+      endsAt: true,
+      roundBreakSec: true,
+      questions: {
+        select: {
+          id: true,
+          content: true,
+          mediaUrl: true,
+          soundUrl: true,
+          options: true,
+          correctIndex: true,
+          durationSec: true,
+          points: true,
+          roundIndex: true,
+          orderInRound: true,
+        },
+        orderBy: [
+          { roundIndex: "asc" },
+          { orderInRound: "asc" },
+        ],
+      },
+    },
+  });
+
+  if (!game) return null;
+
+  // Check if game is live
+  const phase = getGamePhase(game);
+  if (phase !== "LIVE") {
+    return null; // Not live, should redirect
+  }
+
+  return {
+    id: game.id,
+    roundBreakSec: game.roundBreakSec,
+    questions: game.questions,
   };
-}>;
+});
 
-export type LiveGameUserInfoPayload = {
-  fid: number;
-  status: string;
-};
+// ==========================================
+// PAGE COMPONENT
+// ==========================================
 
-// Server-side data fetching - only fetch public game data
 export default async function LiveGamePage({
   params,
 }: {
@@ -41,39 +90,15 @@ export default async function LiveGamePage({
   const gameIdNum = Number(gameId);
 
   if (isNaN(gameIdNum)) {
-    throw new Error("Invalid game ID");
-  }
-
-  // Fetch Game Data (public - includes questions)
-  const game = await prisma.game.findUnique({
-    where: { id: gameIdNum },
-    select: {
-      id: true,
-      roundBreakSec: true,
-      questions: {
-        select: {
-          id: true,
-          gameId: true,
-          content: true,
-          mediaUrl: true,
-          soundUrl: true,
-          options: true,
-          correctIndex: true,
-          durationSec: true,
-          roundIndex: true,
-        },
-        orderBy: [
-          { roundIndex: "asc" },
-          { order: "asc" },
-        ],
-      },
-    },
-  });
-
-  if (!game) {
     notFound();
   }
 
-  // User auth and progress tracking is handled client-side
-  return <LiveGameClient gameInfo={game} />;
+  const game = await getLiveGame(gameIdNum);
+
+  // If game doesn't exist or is not live, redirect to game hub
+  if (!game) {
+    redirect("/game");
+  }
+
+  return <LiveGameClient game={game} />;
 }

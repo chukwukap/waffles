@@ -48,20 +48,10 @@ export type Game = Prisma.GameModel
  */
 export type Question = Prisma.QuestionModel
 /**
- * Model Ticket
+ * Model GameEntry
  * 
  */
-export type Ticket = Prisma.TicketModel
-/**
- * Model GamePlayer
- * 
- */
-export type GamePlayer = Prisma.GamePlayerModel
-/**
- * Model Answer
- * 
- */
-export type Answer = Prisma.AnswerModel
+export type GameEntry = Prisma.GameEntryModel
 /**
  * Model Chat
  * 

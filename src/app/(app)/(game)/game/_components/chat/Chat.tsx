@@ -290,14 +290,15 @@ export const Chat = ({
           <div className="flex items-center gap-2 px-2 justify-start" role="status" aria-live="polite">
             <UsersIcon className="w-4 h-[13.5px] text-[#B93814]" aria-hidden="true" />
             <span
-              className="text-[#99A0AE] text-xs font-medium"
+              className="text-[#99A0AE] text-xs font-medium font-display"
               style={{
-                fontFamily: "Brockmann",
                 lineHeight: "130%",
                 letterSpacing: "-0.03em",
               }}
             >
-              {activeCount} players are active in the chat
+              {activeCount === 1
+                ? "1 player is active in the chat"
+                : `${activeCount} players are active in the chat`}
             </span>
           </div>
         )}

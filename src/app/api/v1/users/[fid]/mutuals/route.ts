@@ -49,19 +49,20 @@ export const GET = withAuth<Params>(
       // TODO: Integrate with Farcaster Hub or Neynar API to get actual mutuals
       // For now, return users who have played games together
 
-      // Get games the authenticated user has played
-      const myGames = await prisma.gamePlayer.findMany({
-        where: { userId: auth.userId },
+      // Get games the authenticated user has played (paid entries)
+      const myEntries = await prisma.gameEntry.findMany({
+        where: { userId: auth.userId, paidAt: { not: null } },
         select: { gameId: true },
       });
 
-      const myGameIds = myGames.map((g) => g.gameId);
+      const myGameIds = myEntries.map((e) => e.gameId);
 
       // Find other users who played the same games
-      const mutualPlayers = await prisma.gamePlayer.findMany({
+      const mutualPlayers = await prisma.gameEntry.findMany({
         where: {
           gameId: { in: myGameIds },
           userId: { not: auth.userId },
+          paidAt: { not: null },
         },
         include: {
           user: {
@@ -76,10 +77,10 @@ export const GET = withAuth<Params>(
         take: 20,
       });
 
-      const mutuals: Mutual[] = mutualPlayers.map((gp) => ({
-        fid: gp.user.fid,
-        username: gp.user.username,
-        pfpUrl: gp.user.pfpUrl,
+      const mutuals: Mutual[] = mutualPlayers.map((entry) => ({
+        fid: entry.user.fid,
+        username: entry.user.username,
+        pfpUrl: entry.user.pfpUrl,
       }));
 
       return NextResponse.json({

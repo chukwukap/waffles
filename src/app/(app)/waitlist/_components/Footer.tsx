@@ -30,8 +30,8 @@ const containerVariants = {
 
 // Each character bounces in from below
 const characterVariants = {
-  hidden: { 
-    opacity: 0, 
+  hidden: {
+    opacity: 0,
     y: 40,
     scale: 0.8,
   },
@@ -40,7 +40,7 @@ const characterVariants = {
     y: 0,
     scale: 1,
     transition: {
-      type: "spring",
+      type: "spring" as const,
       stiffness: 300,
       damping: 20,
       delay: i * 0.05,
@@ -50,7 +50,7 @@ const characterVariants = {
 
 export function WaitlistFooter() {
   return (
-    <motion.footer 
+    <motion.footer
       className="shrink-0 overflow-hidden"
       variants={containerVariants}
       initial="hidden"
@@ -67,12 +67,12 @@ export function WaitlistFooter() {
           >
             {/* Subtle bounce animation on each character */}
             <motion.div
-              animate={{ 
+              animate={{
                 y: [0, -3, 0],
               }}
-              transition={{ 
+              transition={{
                 duration: 2 + (index % 3) * 0.5,
-                repeat: Infinity, 
+                repeat: Infinity,
                 ease: "easeInOut",
                 delay: index * 0.15,
               }}

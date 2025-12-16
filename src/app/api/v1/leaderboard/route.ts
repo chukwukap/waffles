@@ -53,9 +53,13 @@ export async function GET(request: NextRequest) {
 
     if (tab === "current") {
       // --- Query for "Current Game" Tab ---
+      // Find a live game (startsAt <= now < endsAt)
       const now = new Date();
       const currentGame = await prisma.game.findFirst({
-        where: { endsAt: { gt: now }, status: "LIVE" },
+        where: {
+          startsAt: { lte: now },
+          endsAt: { gt: now },
+        },
         orderBy: { startsAt: "asc" },
         select: { id: true },
       });
@@ -70,8 +74,8 @@ export async function GET(request: NextRequest) {
       }
 
       const [players, total] = await prisma.$transaction([
-        prisma.gamePlayer.findMany({
-          where: { gameId: currentGame.id },
+        prisma.gameEntry.findMany({
+          where: { gameId: currentGame.id, paidAt: { not: null } },
           select: {
             score: true,
             user: {
@@ -82,8 +86,8 @@ export async function GET(request: NextRequest) {
           take: PAGE_SIZE,
           skip: page * PAGE_SIZE,
         }),
-        prisma.gamePlayer.count({
-          where: { gameId: currentGame.id },
+        prisma.gameEntry.count({
+          where: { gameId: currentGame.id, paidAt: { not: null } },
         }),
       ]);
 
@@ -99,15 +103,17 @@ export async function GET(request: NextRequest) {
     } else {
       // --- Query for "All Time" Tab ---
       const [aggregatedScores, totalCountResult] = await prisma.$transaction([
-        prisma.gamePlayer.groupBy({
+        prisma.gameEntry.groupBy({
           by: ["userId"],
+          where: { paidAt: { not: null } },
           _sum: { score: true },
           orderBy: { _sum: { score: "desc" } },
           take: PAGE_SIZE,
           skip: page * PAGE_SIZE,
         }),
-        prisma.gamePlayer.groupBy({
+        prisma.gameEntry.groupBy({
           by: ["userId"],
+          where: { paidAt: { not: null } },
           orderBy: { userId: "asc" },
         }),
       ]);

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getGamePhase } from "@/lib/game-utils";
 
 type Params = { gameId: string };
 
@@ -32,15 +33,14 @@ export async function GET(
         coverUrl: true,
         startsAt: true,
         endsAt: true,
-        status: true,
-        entryFee: true,
+        ticketPrice: true,
         prizePool: true,
         roundBreakSec: true,
         maxPlayers: true,
+        playerCount: true,
         _count: {
           select: {
-            tickets: true,
-            players: true,
+            entries: true,
             questions: true,
           },
         },
@@ -53,9 +53,10 @@ export async function GET(
             options: true, // String[] field
             durationSec: true,
             roundIndex: true,
-            order: true,
+            orderInRound: true,
+            points: true,
           },
-          orderBy: { order: "asc" },
+          orderBy: { orderInRound: "asc" },
         },
       },
     });
@@ -67,7 +68,13 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(game);
+    // Add computed phase
+    const gameWithPhase = {
+      ...game,
+      status: getGamePhase(game),
+    };
+
+    return NextResponse.json(gameWithPhase);
   } catch (error) {
     console.error("GET /api/v1/games/[gameId] Error:", error);
     return NextResponse.json(

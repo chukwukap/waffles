@@ -8,7 +8,7 @@ import { calculateStreak } from "@/lib/streaks";
  * Returns complete profile data including stats, game history, and invite code
  */
 export const GET = withAuth(async (request: NextRequest, auth: AuthResult) => {
-  const { userId, fid } = auth;
+  const { userId } = auth;
 
   // 1. Fetch user data
   const user = await prisma.user.findUnique({
@@ -33,27 +33,27 @@ export const GET = withAuth(async (request: NextRequest, auth: AuthResult) => {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  // 2. Fetch game participation data
+  // 2. Fetch game participation data using gameEntry
   const [statsAggregate, recentGames, streakData, waitlistRank] =
     await Promise.all([
-      // A. Aggregate Stats
-      prisma.gamePlayer.aggregate({
-        where: { userId: user.id },
+      // A. Aggregate Stats from gameEntry
+      prisma.gameEntry.aggregate({
+        where: { userId: user.id, paidAt: { not: null } },
         _count: { _all: true },
         _sum: { score: true },
         _max: { score: true },
       }),
 
       // B. Recent Game History (last 14)
-      prisma.gamePlayer.findMany({
-        where: { userId: user.id },
-        orderBy: { joinedAt: "desc" },
+      prisma.gameEntry.findMany({
+        where: { userId: user.id, paidAt: { not: null } },
+        orderBy: { createdAt: "desc" },
         take: 14,
         select: {
           score: true,
           rank: true,
           claimedAt: true,
-          joinedAt: true,
+          paidAt: true,
           game: {
             select: {
               id: true,
@@ -65,10 +65,10 @@ export const GET = withAuth(async (request: NextRequest, auth: AuthResult) => {
       }),
 
       // C. Streak data (last 100 games for calculation)
-      prisma.gamePlayer.findMany({
-        where: { userId: user.id },
-        select: { joinedAt: true },
-        orderBy: { joinedAt: "desc" },
+      prisma.gameEntry.findMany({
+        where: { userId: user.id, paidAt: { not: null } },
+        select: { paidAt: true },
+        orderBy: { paidAt: "desc" },
         take: 100,
       }),
 
@@ -93,11 +93,11 @@ export const GET = withAuth(async (request: NextRequest, auth: AuthResult) => {
 
   if (totalGames > 0) {
     const [winStats, bestRankStat] = await Promise.all([
-      prisma.gamePlayer.count({
-        where: { userId: user.id, rank: 1 },
+      prisma.gameEntry.count({
+        where: { userId: user.id, rank: 1, paidAt: { not: null } },
       }),
-      prisma.gamePlayer.findFirst({
-        where: { userId: user.id, rank: { not: null } },
+      prisma.gameEntry.findFirst({
+        where: { userId: user.id, rank: { not: null }, paidAt: { not: null } },
         orderBy: { rank: "asc" },
         select: { rank: true },
       }),
@@ -111,7 +111,9 @@ export const GET = withAuth(async (request: NextRequest, auth: AuthResult) => {
   const winRate = totalGames > 0 ? (wins / totalGames) * 100 : 0;
 
   // Calculate streak
-  const gameDates = streakData.map((g) => g.joinedAt);
+  const gameDates = streakData
+    .map((g) => g.paidAt)
+    .filter((d): d is Date => d !== null);
   const currentStreak = calculateStreak(gameDates);
 
   // 4. Format game history

@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
 import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getGamePhase } from "@/lib/game-utils";
 
 type Params = { gameId: string };
 
 /**
  * POST /api/v1/games/[gameId]/join
  * Join a game (auth required)
- * User must have a valid ticket for this game
+ * Creates a game entry if user doesn't have one
+ *
+ * Note: This is a simplified join - actual ticket purchase uses /entry endpoint
  */
 export const POST = withAuth<Params>(
   async (request, auth: AuthResult, params) => {
@@ -21,10 +24,10 @@ export const POST = withAuth<Params>(
         );
       }
 
-      // Check if game exists
+      // Check if game exists and is joinable
       const game = await prisma.game.findUnique({
         where: { id: gameIdNum },
-        select: { id: true, status: true },
+        select: { id: true, startsAt: true, endsAt: true },
       });
 
       if (!game) {
@@ -34,52 +37,39 @@ export const POST = withAuth<Params>(
         );
       }
 
-      // Verify and redeem ticket
-      const ticket = await prisma.ticket.findUnique({
-        where: {
-          gameId_userId: {
-            gameId: gameIdNum,
-            userId: auth.userId,
-          },
-        },
-      });
-
-      if (!ticket || ticket.status !== "PAID") {
-        // Allow re-joining if already REDEEMED
-        if (ticket?.status === "REDEEMED") {
-          // Already redeemed, proceed to ensure GamePlayer exists
-        } else {
-          return NextResponse.json<ApiError>(
-            { error: "Valid ticket required to join", code: "TICKET_REQUIRED" },
-            { status: 403 }
-          );
-        }
-      } else {
-        // Mark ticket as REDEEMED
-        await prisma.ticket.update({
-          where: { id: ticket.id },
-          data: {
-            status: "REDEEMED",
-            redeemedAt: new Date(),
-          },
-        });
+      // Check game phase
+      const phase = getGamePhase(game);
+      if (phase === "ENDED") {
+        return NextResponse.json<ApiError>(
+          { error: "Game has ended", code: "GAME_ENDED" },
+          { status: 400 }
+        );
       }
 
-      // Create GamePlayer if it doesn't already exist (idempotent)
-      await prisma.gamePlayer.upsert({
+      // Check if user has a paid entry
+      const entry = await prisma.gameEntry.findUnique({
         where: {
           gameId_userId: {
             gameId: gameIdNum,
             userId: auth.userId,
           },
         },
-        update: {}, // Nothing to update if they already joined
-        create: {
-          gameId: gameIdNum,
-          userId: auth.userId,
-          score: 0,
-        },
+        select: { id: true, paidAt: true },
       });
+
+      if (!entry) {
+        return NextResponse.json<ApiError>(
+          { error: "Game entry required to join", code: "ENTRY_REQUIRED" },
+          { status: 403 }
+        );
+      }
+
+      if (!entry.paidAt) {
+        return NextResponse.json<ApiError>(
+          { error: "Payment required to join", code: "PAYMENT_REQUIRED" },
+          { status: 403 }
+        );
+      }
 
       return NextResponse.json({ success: true, gameId: gameIdNum });
     } catch (error) {

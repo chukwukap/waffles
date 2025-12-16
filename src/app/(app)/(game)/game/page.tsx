@@ -1,11 +1,15 @@
-import { Metadata } from "next";
 import { cache } from "react";
-
-import { prisma, Prisma } from "@/lib/db";
-import { env } from "@/lib/env";
+import { Metadata } from "next";
+import { prisma } from "@/lib/db";
 import { minikitConfig } from "../../../../../minikit.config";
+import { env } from "@/lib/env";
+import { getActiveGameWhere, getActiveGameOrderBy } from "@/lib/game-utils";
 
-import LobbyClient from "./_components/LobbyClient";
+import { GameHub } from "./client";
+
+// ==========================================
+// METADATA
+// ==========================================
 
 export const metadata: Metadata = {
   title: minikitConfig.miniapp.name,
@@ -28,62 +32,135 @@ export const metadata: Metadata = {
   },
 };
 
-// Game type for the lobby
-export type LobbyGame = Prisma.GameGetPayload<{
-  select: {
-    id: true;
-    title: true;
-    theme: true;
-    status: true;
-    startsAt: true;
-    endsAt: true;
-    entryFee: true;
-    prizePool: true;
-    _count: { select: { tickets: true; players: true } };
-  };
-}>;
+// ==========================================
+// DATA TYPES
+// ==========================================
 
-// Shared select for game queries
-const gameSelect = {
-  id: true,
-  title: true,
-  theme: true,
-  status: true,
-  startsAt: true,
-  endsAt: true,
-  entryFee: true,
-  prizePool: true,
-  _count: { select: { tickets: true, players: true } },
-} as const;
-
-// Fetch next upcoming/live game and past games
-const getGames = cache(async () => {
-  // Get the next game (LIVE first, then SCHEDULED)
-  const nextGame = await prisma.game.findFirst({
-    where: { status: { in: ["LIVE", "SCHEDULED"] } },
-    orderBy: [
-      { status: "asc" }, // LIVE comes before SCHEDULED alphabetically
-      { startsAt: "asc" },
-    ],
-    select: gameSelect,
-  });
-
-  // Get recent ended games
-  const pastGames = await prisma.game.findMany({
-    where: { status: "ENDED" },
-    orderBy: { endsAt: "desc" },
-    take: 10,
-    select: gameSelect,
-  });
-
-  return { nextGame, pastGames };
-});
-
-export default async function GameLobbyPage() {
-  const { nextGame, pastGames } = await getGames();
-
-  return <LobbyClient nextGame={nextGame} pastGames={pastGames} />;
+export interface GamePageData {
+  id: number;
+  title: string;
+  theme: string;
+  coverUrl: string | null;
+  startsAt: Date;
+  endsAt: Date;
+  ticketPrice: number;
+  prizePool: number;
+  playerCount: number;
+  maxPlayers: number;
+  questionCount: number;
 }
 
-export const revalidate = 3;
+export interface PastGameData {
+  id: number;
+  title: string;
+  theme: string;
+  playerCount: number;
+  prizePool: number;
+  endsAt: Date;
+}
 
+// ==========================================
+// DATA FETCHING
+// ==========================================
+
+/**
+ * Fetch active game (live or next scheduled).
+ * Uses pre-computed counters - no COUNT queries.
+ */
+const getActiveGame = cache(async (): Promise<GamePageData | null> => {
+  const game = await prisma.game.findFirst({
+    where: getActiveGameWhere(),
+    orderBy: getActiveGameOrderBy(),
+    select: {
+      id: true,
+      title: true,
+      theme: true,
+      coverUrl: true,
+      startsAt: true,
+      endsAt: true,
+      ticketPrice: true,
+      prizePool: true,
+      playerCount: true,
+      maxPlayers: true,
+      _count: { select: { questions: true } },
+    },
+  });
+
+  if (!game) return null;
+
+  return {
+    id: game.id,
+    title: game.title,
+    theme: game.theme,
+    coverUrl: game.coverUrl,
+    startsAt: game.startsAt,
+    endsAt: game.endsAt,
+    ticketPrice: game.ticketPrice,
+    prizePool: game.prizePool,
+    playerCount: game.playerCount,
+    maxPlayers: game.maxPlayers,
+    questionCount: game._count.questions,
+  };
+});
+
+/**
+ * Fetch recent past games.
+ */
+const getPastGames = cache(async (): Promise<PastGameData[]> => {
+  const now = new Date();
+
+  const games = await prisma.game.findMany({
+    where: { endsAt: { lt: now } },
+    orderBy: { endsAt: "desc" },
+    take: 5,
+    select: {
+      id: true,
+      title: true,
+      theme: true,
+      playerCount: true,
+      prizePool: true,
+      endsAt: true,
+    },
+  });
+
+  return games;
+});
+
+/**
+ * Generate PartyKit auth token for the user.
+ * This is called server-side so user doesn't need another fetch.
+ */
+async function generatePartyToken(gameId: number): Promise<string> {
+  // For now, return a simple token
+  // In production, this should be a signed JWT
+  return Buffer.from(JSON.stringify({
+    gameId,
+    exp: Date.now() + 1000 * 60 * 60, // 1 hour
+  })).toString("base64");
+}
+
+// ==========================================
+// PAGE COMPONENT
+// ==========================================
+
+export default async function GamePage() {
+  // Parallel fetches for speed
+  const [game, pastGames] = await Promise.all([
+    getActiveGame(),
+    getPastGames(),
+  ]);
+
+  // Generate PartyKit token if there's an active game
+  const partyToken = game ? await generatePartyToken(game.id) : null;
+
+  return (
+    <GameHub
+      game={game}
+      pastGames={pastGames}
+      partyToken={partyToken}
+    />
+  );
+}
+
+// Force dynamic rendering for real-time data
+export const dynamic = "force-dynamic";

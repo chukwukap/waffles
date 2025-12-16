@@ -8,11 +8,38 @@ export default async function EditGamePage({ params }: { params: Promise<{ id: s
     const { id } = await params;
     const game = await prisma.game.findUnique({
         where: { id: parseInt(id) },
+        select: {
+            id: true,
+            title: true,
+            description: true,
+            theme: true,
+            coverUrl: true,
+            startsAt: true,
+            endsAt: true,
+            ticketPrice: true,
+            prizePool: true,
+            roundBreakSec: true,
+            maxPlayers: true,
+        },
     });
 
     if (!game) {
         notFound();
     }
+
+    // Transform to form data shape (form uses entryFee, schema uses ticketPrice)
+    const formData = {
+        title: game.title,
+        description: game.description,
+        theme: game.theme,
+        coverUrl: game.coverUrl,
+        startsAt: game.startsAt,
+        endsAt: game.endsAt,
+        entryFee: game.ticketPrice, // Map ticketPrice -> entryFee for form
+        prizePool: game.prizePool,
+        roundBreakSec: game.roundBreakSec,
+        maxPlayers: game.maxPlayers,
+    };
 
     return (
         <div className="max-w-4xl space-y-6">
@@ -31,10 +58,9 @@ export default async function EditGamePage({ params }: { params: Promise<{ id: s
 
             <GameForm
                 action={updateGameAction.bind(null, game.id)}
-                initialData={game}
+                initialData={formData}
                 isEdit={true}
             />
         </div>
     );
 }
-

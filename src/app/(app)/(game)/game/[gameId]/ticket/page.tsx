@@ -1,31 +1,25 @@
 import TicketPageClientImpl from "./client";
 import { prisma } from "@/lib/db";
 import { cache } from "react";
-import { Prisma } from "@/lib/db";
 
-export type TicketPageGameInfo = Prisma.GameGetPayload<{
-  select: {
-    id: true;
-    title: true;
-    description: true;
-    coverUrl: true;
-    startsAt: true;
-    endsAt: true;
-    theme: true;
-    entryFee: true;
-    prizePool: true;
-    maxPlayers: true;
-    _count: {
-      select: {
-        tickets: true;
-      };
-    };
-  };
-}>;
+// Updated type for new schema (ticketPrice, entries instead of tickets)
+export type TicketPageGameInfo = {
+  id: number;
+  title: string;
+  description: string | null;
+  coverUrl: string | null;
+  startsAt: Date;
+  endsAt: Date;
+  theme: string;
+  ticketPrice: number;
+  prizePool: number;
+  maxPlayers: number;
+  playerCount: number;
+};
 
 // Game data is public - can be fetched server-side
-const getGameInfo = cache(async (gameIdNum: number) => {
-  return prisma.game.findUnique({
+const getGameInfo = cache(async (gameIdNum: number): Promise<TicketPageGameInfo | null> => {
+  const game = await prisma.game.findUnique({
     where: { id: gameIdNum },
     select: {
       id: true,
@@ -35,16 +29,14 @@ const getGameInfo = cache(async (gameIdNum: number) => {
       startsAt: true,
       endsAt: true,
       theme: true,
-      entryFee: true,
+      ticketPrice: true,
       prizePool: true,
       maxPlayers: true,
-      _count: {
-        select: {
-          tickets: true,
-        },
-      },
+      playerCount: true,
     },
   });
+
+  return game;
 });
 
 export default async function TicketPage({
