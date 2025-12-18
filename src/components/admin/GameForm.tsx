@@ -39,7 +39,7 @@ interface GameFormProps {
     coverUrl?: string | null;
     startsAt: Date;
     endsAt: Date;
-    entryFee: number;
+    tierPrices: number[];
     prizePool: number;
     roundBreakSec: number;
     maxPlayers: number;
@@ -153,8 +153,14 @@ export function GameForm({
   const [description, setDescription] = useState(
     initialData?.description || ""
   );
-  const [entryFee, setEntryFee] = useState(
-    initialData?.entryFee?.toString() || ""
+  const [tierPrice1, setTierPrice1] = useState(
+    initialData?.tierPrices?.[0]?.toString() || "20"
+  );
+  const [tierPrice2, setTierPrice2] = useState(
+    initialData?.tierPrices?.[1]?.toString() || "50"
+  );
+  const [tierPrice3, setTierPrice3] = useState(
+    initialData?.tierPrices?.[2]?.toString() || "100"
   );
   const [prizePool, setPrizePool] = useState(
     initialData?.prizePool?.toString() || ""
@@ -191,12 +197,12 @@ export function GameForm({
     [selectedTheme]
   );
 
-  // Calculate estimated revenue
+  // Calculate estimated revenue using highest tier
   const estimatedRevenue = useMemo(() => {
-    const fee = parseFloat(entryFee) || 0;
+    const fee = parseFloat(tierPrice3) || 0;
     const players = parseInt(maxPlayers) || 0;
     return fee * players;
-  }, [entryFee, maxPlayers]);
+  }, [tierPrice3, maxPlayers]);
 
   // Calculate game duration
   const gameDuration = useMemo(() => {
@@ -211,13 +217,16 @@ export function GameForm({
     return mins > 0 ? `${hours}h ${mins}m` : `${hours} hours`;
   }, [startsAt, endsAt]);
 
-  // Apply preset values
   const applyPreset = (presetId: string) => {
     const preset = PRESETS.find((p) => p.id === presetId);
     if (preset) {
       setRoundDuration(preset.values.roundBreakSec.toString());
       setMaxPlayers(preset.values.maxPlayers.toString());
-      setEntryFee(preset.values.entryFee.toString());
+      // Set tier prices based on preset entry fee
+      const baseFee = preset.values.entryFee;
+      setTierPrice1((baseFee * 1).toString());
+      setTierPrice2((baseFee * 2.5).toString());
+      setTierPrice3((baseFee * 5).toString());
       setPrizePool(preset.values.prizePool.toString());
       setActivePreset(presetId);
     }
@@ -298,12 +307,14 @@ export function GameForm({
   // Check form completion percentage
   const completionPercentage = useMemo(() => {
     let filled = 0;
-    const total = 8;
+    const total = 10;
     if (title.trim()) filled++;
     if (selectedTheme) filled++;
     if (startsAt) filled++;
     if (endsAt) filled++;
-    if (entryFee) filled++;
+    if (tierPrice1) filled++;
+    if (tierPrice2) filled++;
+    if (tierPrice3) filled++;
     if (prizePool) filled++;
     if (roundDuration) filled++;
     if (maxPlayers) filled++;
@@ -313,7 +324,9 @@ export function GameForm({
     selectedTheme,
     startsAt,
     endsAt,
-    entryFee,
+    tierPrice1,
+    tierPrice2,
+    tierPrice3,
     prizePool,
     roundDuration,
     maxPlayers,
@@ -383,11 +396,10 @@ export function GameForm({
                       setSelectedTheme(theme.id);
                       setValidationError(null);
                     }}
-                    className={`relative group p-4 rounded-2xl border-2 transition-all duration-300 ${
-                      selectedTheme === theme.id
+                    className={`relative group p-4 rounded-2xl border-2 transition-all duration-300 ${selectedTheme === theme.id
                         ? `border-white/30 bg-linear-to-br ${theme.color} shadow-lg ${theme.glowColor}`
                         : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"
-                    }`}
+                      }`}
                   >
                     {selectedTheme === theme.id && (
                       <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-[#14B985] flex items-center justify-center">
@@ -578,11 +590,10 @@ export function GameForm({
                       key={preset.id}
                       type="button"
                       onClick={() => applyPreset(preset.id)}
-                      className={`relative p-4 rounded-xl border transition-all duration-200 text-left ${
-                        activePreset === preset.id
+                      className={`relative p-4 rounded-xl border transition-all duration-200 text-left ${activePreset === preset.id
                           ? "border-[#FFC931] bg-[#FFC931]/10"
                           : "border-white/10 bg-white/5 hover:bg-white/8 hover:border-white/20"
-                      }`}
+                        }`}
                     >
                       {activePreset === preset.id && (
                         <div className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#FFC931] flex items-center justify-center">
@@ -590,11 +601,10 @@ export function GameForm({
                         </div>
                       )}
                       <preset.icon
-                        className={`h-5 w-5 mb-2 ${
-                          activePreset === preset.id
+                        className={`h-5 w-5 mb-2 ${activePreset === preset.id
                             ? "text-[#FFC931]"
                             : "text-white/60"
-                        }`}
+                          }`}
                       />
                       <div className="font-bold text-white text-sm">
                         {preset.label}
@@ -618,19 +628,21 @@ export function GameForm({
                   </div>
                   <div>
                     <h3 className="font-bold text-white font-display">
-                      Economics
+                      Ticket Tiers
                     </h3>
-                    <p className="text-sm text-white/50">Fees & prizes</p>
+                    <p className="text-sm text-white/50">Set prices for each tier</p>
                   </div>
                 </div>
 
                 <div className="space-y-4">
+                  {/* Tier 1 - Bronze */}
                   <div>
                     <label
-                      htmlFor="entryFee"
-                      className="block text-sm font-medium text-white/70 mb-2"
+                      htmlFor="tierPrice1"
+                      className="flex items-center gap-2 text-sm font-medium text-white/70 mb-2"
                     >
-                      Entry Fee <span className="text-white/40">(USDC)</span>
+                      <span className="w-3 h-3 rounded-full bg-gradient-to-br from-orange-600 to-orange-800"></span>
+                      Tier 1 (Bronze) <span className="text-white/40">(USDC)</span>
                     </label>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#FFC931] font-bold">
@@ -638,22 +650,85 @@ export function GameForm({
                       </span>
                       <input
                         type="number"
-                        id="entryFee"
-                        name="entryFee"
+                        id="tierPrice1"
+                        name="tierPrice1"
                         required
-                        value={entryFee}
+                        value={tierPrice1}
                         onChange={(e) => {
-                          setEntryFee(e.target.value);
+                          setTierPrice1(e.target.value);
                           setActivePreset(null);
                         }}
                         min={0}
                         step="0.01"
                         className="w-full pl-8 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
-                        placeholder="0.00"
+                        placeholder="20"
                       />
                     </div>
                   </div>
 
+                  {/* Tier 2 - Silver */}
+                  <div>
+                    <label
+                      htmlFor="tierPrice2"
+                      className="flex items-center gap-2 text-sm font-medium text-white/70 mb-2"
+                    >
+                      <span className="w-3 h-3 rounded-full bg-gradient-to-br from-gray-300 to-gray-500"></span>
+                      Tier 2 (Silver) <span className="text-white/40">(USDC)</span>
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#FFC931] font-bold">
+                        $
+                      </span>
+                      <input
+                        type="number"
+                        id="tierPrice2"
+                        name="tierPrice2"
+                        required
+                        value={tierPrice2}
+                        onChange={(e) => {
+                          setTierPrice2(e.target.value);
+                          setActivePreset(null);
+                        }}
+                        min={0}
+                        step="0.01"
+                        className="w-full pl-8 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
+                        placeholder="50"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Tier 3 - Gold */}
+                  <div>
+                    <label
+                      htmlFor="tierPrice3"
+                      className="flex items-center gap-2 text-sm font-medium text-white/70 mb-2"
+                    >
+                      <span className="w-3 h-3 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600"></span>
+                      Tier 3 (Gold) <span className="text-white/40">(USDC)</span>
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#FFC931] font-bold">
+                        $
+                      </span>
+                      <input
+                        type="number"
+                        id="tierPrice3"
+                        name="tierPrice3"
+                        required
+                        value={tierPrice3}
+                        onChange={(e) => {
+                          setTierPrice3(e.target.value);
+                          setActivePreset(null);
+                        }}
+                        min={0}
+                        step="0.01"
+                        className="w-full pl-8 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
+                        placeholder="100"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Prize Pool */}
                   <div>
                     <label
                       htmlFor="prizePool"
@@ -768,13 +843,12 @@ export function GameForm({
               <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-white/10 to-white/5 border border-white/10">
                 {/* Cover Image / Theme Background */}
                 <div
-                  className={`h-32 relative ${
-                    coverUrl
+                  className={`h-32 relative ${coverUrl
                       ? ""
                       : currentTheme
-                      ? `bg-linear-to-br ${currentTheme.color}`
-                      : "bg-linear-to-br from-white/10 to-white/5"
-                  }`}
+                        ? `bg-linear-to-br ${currentTheme.color}`
+                        : "bg-linear-to-br from-white/10 to-white/5"
+                    }`}
                 >
                   {coverUrl && (
                     // eslint-disable-next-line @next/next/no-img-element

@@ -16,7 +16,7 @@ export default async function EditGamePage({ params }: { params: Promise<{ id: s
             coverUrl: true,
             startsAt: true,
             endsAt: true,
-            ticketPrice: true,
+            tierPrices: true,
             prizePool: true,
             roundBreakSec: true,
             maxPlayers: true,
@@ -27,7 +27,7 @@ export default async function EditGamePage({ params }: { params: Promise<{ id: s
         notFound();
     }
 
-    // Transform to form data shape (form uses entryFee, schema uses ticketPrice)
+    // Transform to form data shape
     const formData = {
         title: game.title,
         description: game.description,
@@ -35,7 +35,7 @@ export default async function EditGamePage({ params }: { params: Promise<{ id: s
         coverUrl: game.coverUrl,
         startsAt: game.startsAt,
         endsAt: game.endsAt,
-        entryFee: game.ticketPrice, // Map ticketPrice -> entryFee for form
+        tierPrices: game.tierPrices,
         prizePool: game.prizePool,
         roundBreakSec: game.roundBreakSec,
         maxPlayers: game.maxPlayers,

@@ -27,7 +27,9 @@ const gameSchema = z.object({
   coverUrl: z.string().optional().nullable(),
   startsAt: z.string().transform((str) => new Date(str)),
   endsAt: z.string().transform((str) => new Date(str)),
-  ticketPrice: z.coerce.number().min(0, "Ticket price must be non-negative"),
+  tierPrice1: z.coerce.number().min(0, "Tier price must be non-negative"),
+  tierPrice2: z.coerce.number().min(0, "Tier price must be non-negative"),
+  tierPrice3: z.coerce.number().min(0, "Tier price must be non-negative"),
   roundBreakSec: z.coerce
     .number()
     .min(5, "Duration must be at least 5 seconds"),
@@ -58,7 +60,9 @@ export async function createGameAction(
     coverUrl: formData.get("coverUrl"),
     startsAt: formData.get("startsAt"),
     endsAt: formData.get("endsAt"),
-    ticketPrice: formData.get("entryFee") || formData.get("ticketPrice"), // Support both field names
+    tierPrice1: formData.get("tierPrice1"),
+    tierPrice2: formData.get("tierPrice2"),
+    tierPrice3: formData.get("tierPrice3"),
     roundBreakSec: formData.get("roundBreakSec"),
     maxPlayers: formData.get("maxPlayers"),
   };
@@ -83,7 +87,7 @@ export async function createGameAction(
         coverUrl: data.coverUrl || "",
         startsAt: new Date(data.startsAt),
         endsAt: new Date(data.endsAt),
-        ticketPrice: data.ticketPrice,
+        tierPrices: [data.tierPrice1, data.tierPrice2, data.tierPrice3],
         prizePool: 0, // Start at 0, incremented when entries are created
         playerCount: 0,
         roundBreakSec: data.roundBreakSec,
@@ -93,7 +97,7 @@ export async function createGameAction(
 
     // Create game on-chain
     try {
-      const txHash = await createGameOnChain(game.id, data.ticketPrice);
+      const txHash = await createGameOnChain(game.id, data.tierPrice1);
       console.log(
         `[CreateGame] Game ${game.id} created on-chain. TX: ${txHash}`
       );
@@ -107,7 +111,7 @@ export async function createGameAction(
           title: game.title,
           theme: game.theme,
           onChainTx: txHash,
-          ticketPrice: data.ticketPrice,
+          tierPrices: [data.tierPrice1, data.tierPrice2, data.tierPrice3],
         },
       });
     } catch (onChainError) {
@@ -164,7 +168,9 @@ export async function updateGameAction(
     coverUrl: formData.get("coverUrl"),
     startsAt: formData.get("startsAt"),
     endsAt: formData.get("endsAt"),
-    ticketPrice: formData.get("entryFee") || formData.get("ticketPrice"),
+    tierPrice1: formData.get("tierPrice1"),
+    tierPrice2: formData.get("tierPrice2"),
+    tierPrice3: formData.get("tierPrice3"),
     roundBreakSec: formData.get("roundBreakSec"),
     maxPlayers: formData.get("maxPlayers"),
   };
@@ -189,7 +195,7 @@ export async function updateGameAction(
         coverUrl: data.coverUrl || "",
         startsAt: new Date(data.startsAt),
         endsAt: new Date(data.endsAt),
-        ticketPrice: data.ticketPrice,
+        tierPrices: [data.tierPrice1, data.tierPrice2, data.tierPrice3],
         roundBreakSec: data.roundBreakSec,
         maxPlayers: data.maxPlayers,
       },
