@@ -13,7 +13,7 @@ import {
 } from "@coinbase/onchainkit/transaction";
 import type { LifecycleStatus } from "@coinbase/onchainkit/transaction";
 
-import { useTokenBalance } from "@/hooks/useWaffleGame";
+import { useTokenBalance } from "@/hooks/waffleContractHooks";
 import { TOKEN_CONFIG, CHAIN_CONFIG } from "@/lib/contracts/config";
 import { notify } from "@/components/ui/Toaster";
 import { MinikitProvider } from "@/components/providers/MinikitProvider";

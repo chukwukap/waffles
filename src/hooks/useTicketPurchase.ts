@@ -11,7 +11,7 @@ import {
   useTokenBalance,
   useTokenAllowance,
   useHasTicket,
-} from "./useWaffleGame";
+} from "./waffleContractHooks";
 import { TOKEN_CONFIG } from "@/lib/contracts/config";
 import { notify } from "@/components/ui/Toaster";
 

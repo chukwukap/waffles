@@ -10,7 +10,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { useRouter } from "next/navigation";
-import { useClaimPrize, useHasClaimed } from "@/hooks/useWaffleGame";
+import { useClaimPrize, useHasClaimed } from "@/hooks/waffleContractHooks";
 import { useAccount } from "wagmi";
 
 interface GameHistoryItemProps {

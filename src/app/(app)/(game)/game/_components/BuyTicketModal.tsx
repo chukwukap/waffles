@@ -14,7 +14,7 @@ import {
 import type { LifecycleStatus } from "@coinbase/onchainkit/transaction";
 import sdk from "@farcaster/miniapp-sdk";
 
-import { useTokenBalance, useTokenAllowance, useHasTicket } from "@/hooks/useWaffleGame";
+import { useTokenBalance, useTokenAllowance, useHasTicket } from "@/hooks/waffleContractHooks";
 import { TOKEN_CONFIG, WAFFLE_GAME_CONFIG, CHAIN_CONFIG } from "@/lib/contracts/config";
 import { notify } from "@/components/ui/Toaster";
 import waffleGameAbi from "@/lib/contracts/WaffleGameAbi.json";
