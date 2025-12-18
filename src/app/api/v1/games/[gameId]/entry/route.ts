@@ -1,8 +1,113 @@
 import { NextResponse } from "next/server";
+import { createPublicClient, http, decodeEventLog, type Hex } from "viem";
+import { base, baseSepolia } from "viem/chains";
 import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { WAFFLE_GAME_CONFIG, CHAIN_CONFIG } from "@/lib/contracts/config";
+import waffleGameAbi from "@/lib/contracts/WaffleGameAbi.json";
 
 type Params = { gameId: string };
+
+// Create public client for on-chain verification
+const publicClient = createPublicClient({
+  chain: CHAIN_CONFIG.isMainnet ? base : baseSepolia,
+  transport: http(),
+});
+
+// TicketPurchased event signature
+const TICKET_PURCHASED_TOPIC = "0x" as Hex; // Will be matched by ABI decoding
+
+/**
+ * Verify a ticket purchase transaction on-chain
+ * Returns the decoded event data if valid, null otherwise
+ */
+async function verifyTicketPurchase(
+  txHash: Hex,
+  expectedGameId: number,
+  expectedBuyer: string
+): Promise<{ gameId: bigint; player: string; amount: bigint } | null> {
+  try {
+    // Get transaction receipt
+    const receipt = await publicClient.getTransactionReceipt({ hash: txHash });
+
+    if (!receipt || receipt.status !== "success") {
+      console.error("[verifyTicketPurchase] Transaction not successful");
+      return null;
+    }
+
+    // Verify the transaction was to the WaffleGame contract
+    if (
+      receipt.to?.toLowerCase() !== WAFFLE_GAME_CONFIG.address.toLowerCase()
+    ) {
+      console.error("[verifyTicketPurchase] Wrong contract address");
+      return null;
+    }
+
+    // Find TicketPurchased event in logs
+    for (const log of receipt.logs) {
+      // Only check logs from our contract
+      if (
+        log.address.toLowerCase() !== WAFFLE_GAME_CONFIG.address.toLowerCase()
+      ) {
+        continue;
+      }
+
+      try {
+        const decoded = decodeEventLog({
+          abi: waffleGameAbi,
+          data: log.data,
+          topics: log.topics,
+        });
+
+        if (decoded.eventName === "TicketPurchased" && decoded.args) {
+          const args = decoded.args as unknown as {
+            gameId: bigint;
+            player: string;
+            amount: bigint;
+          };
+
+          // Verify gameId matches
+          if (Number(args.gameId) !== expectedGameId) {
+            console.error(
+              "[verifyTicketPurchase] Game ID mismatch:",
+              args.gameId,
+              "vs",
+              expectedGameId
+            );
+            continue;
+          }
+
+          // Verify buyer matches (case-insensitive)
+          if (args.player.toLowerCase() !== expectedBuyer.toLowerCase()) {
+            console.error(
+              "[verifyTicketPurchase] Buyer mismatch:",
+              args.player,
+              "vs",
+              expectedBuyer
+            );
+            continue;
+          }
+
+          // All checks passed
+          return {
+            gameId: args.gameId,
+            player: args.player,
+            amount: args.amount,
+          };
+        }
+      } catch {
+        // Not our event, continue
+        continue;
+      }
+    }
+
+    console.error("[verifyTicketPurchase] TicketPurchased event not found");
+    return null;
+  } catch (error) {
+    console.error("[verifyTicketPurchase] Error:", error);
+    return null;
+  }
+}
 
 /**
  * GET /api/v1/games/:gameId/entry
@@ -58,7 +163,7 @@ export const GET = withAuth<Params>(
 
 /**
  * POST /api/v1/games/:gameId/entry
- * Create a new entry for a game after payment.
+ * Create a new entry for a game after on-chain payment verification.
  */
 export const POST = withAuth<Params>(
   async (request, auth: AuthResult, params) => {
@@ -93,10 +198,8 @@ export const POST = withAuth<Params>(
       });
 
       if (existing) {
-        return NextResponse.json<ApiError>(
-          { error: "Entry already exists", code: "ALREADY_EXISTS" },
-          { status: 409 }
-        );
+        // Entry already exists - return success (idempotent)
+        return NextResponse.json(existing, { status: 200 });
       }
 
       // Verify game exists and is not ended
@@ -118,6 +221,32 @@ export const POST = withAuth<Params>(
         );
       }
 
+      // Get user's wallet address for on-chain verification
+      const user = await prisma.user.findUnique({
+        where: { id: auth.userId },
+        select: { wallet: true },
+      });
+
+      // Verify the transaction on-chain if user has wallet
+      if (user?.wallet) {
+        const verified = await verifyTicketPurchase(
+          txHash as Hex,
+          gameId,
+          user.wallet
+        );
+
+        if (!verified) {
+          return NextResponse.json<ApiError>(
+            {
+              error: "Transaction verification failed",
+              code: "VERIFICATION_FAILED",
+            },
+            { status: 400 }
+          );
+        }
+      }
+
+      // Game time/capacity checks
       if (new Date() >= game.endsAt) {
         return NextResponse.json<ApiError>(
           { error: "Game has ended", code: "GAME_ENDED" },

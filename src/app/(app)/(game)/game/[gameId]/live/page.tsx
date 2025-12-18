@@ -2,7 +2,8 @@ import { cache } from "react";
 import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getGamePhase } from "@/lib/game-utils";
-import LiveGameClient from "./client";
+import { LiveGameProvider } from "./LiveGameProvider";
+import LiveGameScreen from "./LiveGameScreen";
 
 export const dynamic = "force-dynamic";
 
@@ -67,7 +68,7 @@ const getLiveGame = cache(async (gameId: number): Promise<LiveGameData | null> =
   // Check if game is live
   const phase = getGamePhase(game);
   if (phase !== "LIVE") {
-    return null; // Not live, should redirect
+    return null;
   }
 
   return {
@@ -100,5 +101,9 @@ export default async function LiveGamePage({
     redirect("/game");
   }
 
-  return <LiveGameClient game={game} />;
+  return (
+    <LiveGameProvider game={game}>
+      <LiveGameScreen />
+    </LiveGameProvider>
+  );
 }

@@ -9,26 +9,13 @@ import { TOKEN_CONFIG } from "@/lib/contracts/config";
 export function WalletBalance() {
     const { address } = useAccount();
     const chainId = useChainId();
-    const { roundedBalance, refetch, status, convertedBalance, error, response } = useGetTokenBalance(address as `0x${string}`, {
+    const { roundedBalance } = useGetTokenBalance(address as `0x${string}`, {
         address: TOKEN_CONFIG.address as `0x${string}`,
         decimals: TOKEN_CONFIG.decimals,
         name: TOKEN_CONFIG.symbol,
         symbol: TOKEN_CONFIG.symbol,
         image: "/images/tokens/usdc.png",
         chainId: chainId,
-    });
-
-    console.log("[GAME Header] useGetTokenBalance result:", {
-        roundedBalance,
-        convertedBalance,
-        status,
-        error,
-        responseKeys: response ? Object.keys(response) : [],
-        responseData: response?.data,
-        responseError: response?.error,
-        responseIsLoading: response?.isLoading,
-        responseStatus: response?.status,
-        hasRefetch: !!refetch
     });
 
     // If stuck pending, try manual refetch after a delay

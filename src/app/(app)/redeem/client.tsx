@@ -1,13 +1,20 @@
 "use client";
 
-import { useEffect, useState, useRef, useActionState, startTransition } from "react";
+import { useEffect, useState, useRef, useActionState, startTransition, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import { motion, useAnimation } from "framer-motion";
+import { motion, useAnimation, AnimatePresence } from "framer-motion";
 
 import { useUser } from "@/hooks/useUser";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { redeemInviteCodeAction, type ValidateReferralResult } from "@/actions/invite";
+import {
+  springs,
+  shakeX,
+  pulse,
+  triggerShake,
+  triggerPulse,
+} from "@/lib/animations";
 
 import { InvitePageHeader } from "./_components/InviteHeader";
 import { InviteInput } from "./_components/InviteInput";
@@ -41,8 +48,10 @@ export default function InvitePageClient() {
   const inputRef = useRef<HTMLInputElement>(null);
   const hasAutoValidated = useRef(false);
 
-  // Animation
+  // Animation controls
   const inputControls = useAnimation();
+  const keyControls = useAnimation();
+  const buttonControls = useAnimation();
 
   // Server action
   const [result, submitAction, isPending] = useActionState<ValidateReferralResult | null, FormData>(
@@ -71,6 +80,7 @@ export default function InvitePageClient() {
       hasAutoValidated.current = true;
       handleSubmit(initialCode.toUpperCase());
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialCode, fid]);
 
   // Handle server action result
@@ -80,6 +90,14 @@ export default function InvitePageClient() {
     if (result.valid) {
       setStatus("success");
       setError(null);
+
+      // Celebration animation on key
+      keyControls.start({
+        scale: [1, 1.2, 1],
+        rotate: [0, 10, -10, 0],
+        transition: { duration: 0.5 },
+      });
+
       // Refetch user data and redirect to game
       refetch().then(() => {
         router.replace("/game");
@@ -87,29 +105,28 @@ export default function InvitePageClient() {
     } else {
       setStatus("failed");
       setError(result.error);
-      shakeInput();
+      // Shake the input on error
+      triggerShake(inputControls);
+      // Wiggle the key
+      keyControls.start({
+        x: [-5, 5, -5, 5, 0],
+        transition: { duration: 0.3 },
+      });
     }
-  }, [result, refetch, router]);
+  }, [result, refetch, router, inputControls, keyControls]);
 
   // ============================================
   // HANDLERS
   // ============================================
 
-  const shakeInput = () => {
-    inputControls.start({
-      x: [-8, 8, -6, 6, -4, 4, 0],
-      transition: { duration: 0.4 },
-    });
-  };
-
-  const handleSubmit = (codeToSubmit?: string) => {
+  const handleSubmit = useCallback((codeToSubmit?: string) => {
     const submitCode = (codeToSubmit || code).trim().toUpperCase();
 
     // Validate code length
     if (submitCode.length !== CODE_LENGTH) {
       setError("Code must be 6 characters");
       setStatus("failed");
-      shakeInput();
+      triggerShake(inputControls);
       return;
     }
 
@@ -124,6 +141,12 @@ export default function InvitePageClient() {
     setStatus("validating");
     inputRef.current?.blur();
 
+    // Pulse the button while validating
+    buttonControls.start({
+      scale: [1, 1.02, 1],
+      transition: { duration: 0.8, repeat: Infinity },
+    });
+
     const formData = new FormData();
     formData.append("inviteCode", submitCode);
     formData.append("userFid", String(fid));
@@ -131,7 +154,7 @@ export default function InvitePageClient() {
     startTransition(() => {
       submitAction(formData);
     });
-  };
+  }, [code, fid, inputControls, buttonControls, submitAction]);
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -176,16 +199,23 @@ export default function InvitePageClient() {
           transition={SPRING}
         >
           <motion.div
-            animate={{ y: [0, -6, 0] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            animate={keyControls}
+            initial={{ y: 0 }}
           >
-            <Image
-              src="/images/illustrations/invite-key.png"
-              alt="Invite Key"
-              width={95}
-              height={113}
-              priority
-            />
+            <motion.div
+              animate={{ y: [0, -6, 0] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Image
+                src="/images/illustrations/invite-key.png"
+                alt="Invite Key"
+                width={95}
+                height={113}
+                priority
+              />
+            </motion.div>
           </motion.div>
         </motion.div>
 
@@ -209,38 +239,54 @@ export default function InvitePageClient() {
             Invite Code
           </label>
 
-          {/* Input */}
+          {/* Input with shake animation */}
           <motion.div
             className="w-full"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...SPRING, delay: 0.15 }}
           >
-            <InviteInput
-              ref={inputRef}
-              id="inviteCodeInput"
-              type="text"
-              value={code}
-              onChange={handleCodeChange}
-              placeholder="INVITE CODE"
-              maxLength={CODE_LENGTH}
-              autoFocus={!initialCode}
-              style={{ textTransform: "uppercase" }}
-              inputMode="text"
-              autoCapitalize="characters"
-            />
+            <motion.div
+              animate={inputControls}
+              variants={shakeX}
+            >
+              <InviteInput
+                ref={inputRef}
+                id="inviteCodeInput"
+                type="text"
+                value={code}
+                onChange={handleCodeChange}
+                placeholder="INVITE CODE"
+                maxLength={CODE_LENGTH}
+                autoFocus={!initialCode}
+                style={{ textTransform: "uppercase" }}
+                inputMode="text"
+                autoCapitalize="characters"
+              />
+            </motion.div>
           </motion.div>
 
-          {/* Submit Button */}
+          {/* Submit Button with tap animation */}
           <motion.div
             className="w-full"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...SPRING, delay: 0.2 }}
           >
-            <FancyBorderButton disabled={isDisabled}>
-              {buttonText}
-            </FancyBorderButton>
+            <motion.div
+              animate={buttonControls}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onAnimationComplete={() => {
+                if (status !== "validating") {
+                  buttonControls.stop();
+                }
+              }}
+            >
+              <FancyBorderButton disabled={isDisabled}>
+                {buttonText}
+              </FancyBorderButton>
+            </motion.div>
           </motion.div>
 
           {/* Status Message */}

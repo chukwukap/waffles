@@ -22,6 +22,12 @@ export default function GameHistory({ gameHistory, fid }: GameHistoryProps) {
         >
           Recent Activity
         </h2>
+        <Link
+          href="/profile/history"
+          className="font-display font-medium text-waffle-gold tracking-[-0.03em] hover:underline text-[14px]"
+        >
+          View all
+        </Link>
       </div>
 
       {displayedGames.length > 0 ? (

@@ -47,6 +47,7 @@ export interface GameEvent {
   id: string;
   type: "join" | "answer" | "achievement";
   username: string;
+  pfpUrl: string | null;
   content: string;
   timestamp: number;
 }
@@ -88,6 +89,14 @@ interface GameStore {
 
   // Actions - Reset
   reset: () => void;
+
+  // Chat function (set by useLive)
+  sendChat: (text: string) => void;
+  setSendChat: (fn: (text: string) => void) => void;
+
+  // Event function (set by useLive)
+  sendEvent: (type: string, content: string) => void;
+  setSendEvent: (fn: (type: string, content: string) => void) => void;
 }
 
 // ==========================================
@@ -102,6 +111,8 @@ const initialState = {
   onlineCount: 0,
   messages: [],
   events: [],
+  sendChat: () => {}, // No-op until useLive sets it
+  sendEvent: () => {}, // No-op until useLive sets it
 };
 
 // ==========================================
@@ -169,6 +180,12 @@ export const useGameStore = create<GameStore>()(
           "incrementAnswered"
         ),
 
+      // Chat function setter
+      setSendChat: (fn) => set({ sendChat: fn }, false, "setSendChat"),
+
+      // Event function setter
+      setSendEvent: (fn) => set({ sendEvent: fn }, false, "setSendEvent"),
+
       // Reset
       reset: () => set(initialState, false, "reset"),
     }),
@@ -190,3 +207,5 @@ export const selectMessages = (state: GameStore) => state.messages;
 export const selectEvents = (state: GameStore) => state.events;
 export const selectScore = (state: GameStore) => state.entry?.score ?? 0;
 export const selectAnswered = (state: GameStore) => state.entry?.answered ?? 0;
+export const selectSendChat = (state: GameStore) => state.sendChat;
+export const selectSendEvent = (state: GameStore) => state.sendEvent;

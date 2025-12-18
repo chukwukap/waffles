@@ -126,19 +126,6 @@ const getPastGames = cache(async (): Promise<PastGameData[]> => {
   return games;
 });
 
-/**
- * Generate PartyKit auth token for the user.
- * This is called server-side so user doesn't need another fetch.
- */
-async function generatePartyToken(gameId: number): Promise<string> {
-  // For now, return a simple token
-  // In production, this should be a signed JWT
-  return Buffer.from(JSON.stringify({
-    gameId,
-    exp: Date.now() + 1000 * 60 * 60, // 1 hour
-  })).toString("base64");
-}
-
 // ==========================================
 // PAGE COMPONENT
 // ==========================================
@@ -150,14 +137,10 @@ export default async function GamePage() {
     getPastGames(),
   ]);
 
-  // Generate PartyKit token if there's an active game
-  const partyToken = game ? await generatePartyToken(game.id) : null;
-
   return (
     <GameHub
       game={game}
       pastGames={pastGames}
-      partyToken={partyToken}
     />
   );
 }

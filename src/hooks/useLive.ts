@@ -7,21 +7,19 @@
 
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import PartySocket from "partysocket";
 import { useGameStore } from "@/lib/game-store";
-import type { ChatMessage, GameEvent } from "@/lib/game-store";
+import sdk from "@farcaster/miniapp-sdk";
 
 // ==========================================
 // MESSAGE PROTOCOL
 // ==========================================
 
-// Compact message types (single char for payload size)
-type MessageType = "s" | "p" | "c" | "e" | "a";
-
 interface SyncPayload {
   n: number; // online count
   h: Array<{
+    // history
     i: string;
     u: string;
     p: string | null;
@@ -33,6 +31,7 @@ interface SyncPayload {
 interface PresencePayload {
   n: number; // online count
   j?: string; // joined username
+  p?: string | null; // joined user pfp
   l?: string; // left username
 }
 
@@ -48,6 +47,7 @@ interface EventPayload {
   i: string;
   t: "join" | "answer" | "achievement";
   u: string;
+  p?: string | null; // pfp
   c: string;
   ts: number;
 }
@@ -57,7 +57,7 @@ type IncomingMessage =
   | { t: "p"; d: PresencePayload }
   | { t: "c"; d: ChatPayload }
   | { t: "e"; d: EventPayload }
-  | { t: "a"; d: { u: string; q: number; c: boolean } };
+  | { t: "a"; d: { u: string; p?: string | null; q: number; c: boolean } };
 
 // ==========================================
 // HOOK PROPS
@@ -65,7 +65,7 @@ type IncomingMessage =
 
 interface UseLiveProps {
   gameId: number;
-  token: string;
+  token?: string | null;
   enabled?: boolean;
 }
 
@@ -73,9 +73,16 @@ interface UseLiveProps {
 // HOOK IMPLEMENTATION
 // ==========================================
 
-export function useLive({ gameId, token, enabled = true }: UseLiveProps) {
+export function useLive({
+  gameId,
+  token: providedToken,
+  enabled = true,
+}: UseLiveProps) {
   const socketRef = useRef<PartySocket | null>(null);
   const hasConnectedRef = useRef(false);
+  const [authToken, setAuthToken] = useState<string | null>(
+    providedToken ?? null
+  );
 
   // Store actions (stable references)
   const {
@@ -85,6 +92,8 @@ export function useLive({ gameId, token, enabled = true }: UseLiveProps) {
     setMessages,
     addEvent,
     setEvents,
+    setSendChat,
+    setSendEvent,
   } = useGameStore();
 
   // Handle incoming messages
@@ -114,6 +123,7 @@ export function useLive({ gameId, token, enabled = true }: UseLiveProps) {
                 id: `join-${Date.now()}`,
                 type: "join",
                 username: msg.d.j,
+                pfpUrl: msg.d.p || null,
                 content: "joined the game",
                 timestamp: Date.now(),
               });
@@ -135,6 +145,7 @@ export function useLive({ gameId, token, enabled = true }: UseLiveProps) {
               id: msg.d.i,
               type: msg.d.t,
               username: msg.d.u,
+              pfpUrl: msg.d.p || null,
               content: msg.d.c,
               timestamp: msg.d.ts,
             });
@@ -145,6 +156,7 @@ export function useLive({ gameId, token, enabled = true }: UseLiveProps) {
               id: `answer-${Date.now()}`,
               type: "answer",
               username: msg.d.u,
+              pfpUrl: msg.d.p || null,
               content: msg.d.c ? "answered correctly!" : "answered",
               timestamp: Date.now(),
             });
@@ -157,9 +169,35 @@ export function useLive({ gameId, token, enabled = true }: UseLiveProps) {
     [setOnlineCount, setMessages, addMessage, addEvent]
   );
 
+  // Fetch auth token if not provided
+  useEffect(() => {
+    if (providedToken) {
+      setAuthToken(providedToken);
+      return;
+    }
+
+    if (!enabled || !gameId) return;
+
+    async function fetchToken() {
+      try {
+        const res = await sdk.quickAuth.fetch("/api/v1/auth/party-token");
+        if (res.ok) {
+          const data = await res.json();
+          setAuthToken(data.token);
+        } else {
+          console.error("[useLive] Failed to fetch party token:", res.status);
+        }
+      } catch (error) {
+        console.error("[useLive] Error fetching party token:", error);
+      }
+    }
+
+    fetchToken();
+  }, [providedToken, enabled, gameId]);
+
   // Connect to PartyKit
   useEffect(() => {
-    if (!enabled || !gameId || !token) {
+    if (!enabled || !gameId || !authToken) {
       return;
     }
 
@@ -177,7 +215,7 @@ export function useLive({ gameId, token, enabled = true }: UseLiveProps) {
     const socket = new PartySocket({
       host,
       room: `game-${gameId}`,
-      query: { t: token },
+      query: { token: authToken },
     });
 
     socket.onopen = () => {
@@ -203,7 +241,7 @@ export function useLive({ gameId, token, enabled = true }: UseLiveProps) {
       hasConnectedRef.current = false;
       setConnected(false);
     };
-  }, [gameId, token, enabled, handleMessage, setConnected]);
+  }, [gameId, authToken, enabled, handleMessage, setConnected]);
 
   // Send chat message
   const sendChat = useCallback((text: string) => {
@@ -212,12 +250,30 @@ export function useLive({ gameId, token, enabled = true }: UseLiveProps) {
     }
   }, []);
 
-  // Send game event
+  // Send game event (type: "answer", content: "answered question 3")
   const sendEvent = useCallback((type: string, content: string) => {
     if (socketRef.current?.readyState === WebSocket.OPEN) {
-      socketRef.current.send(JSON.stringify({ t: "e", type, content }));
+      socketRef.current.send(
+        JSON.stringify({
+          t: "e",
+          d: { t: type, c: content },
+        })
+      );
     }
   }, []);
+
+  // Register sendChat and sendEvent with store so other components can use them
+  useEffect(() => {
+    if (enabled && socketRef.current) {
+      setSendChat(sendChat);
+      setSendEvent(sendEvent);
+    }
+    return () => {
+      // Clear on unmount
+      setSendChat(() => {});
+      setSendEvent(() => {});
+    };
+  }, [enabled, sendChat, sendEvent, setSendChat, setSendEvent]);
 
   return {
     sendChat,

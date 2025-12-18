@@ -15,6 +15,8 @@ interface LeaderboardData {
   game: { theme: string } | null;
   allPlayersInGame: Array<{
     score: number;
+    rank: number | null;
+    prize: number | null;
     user: {
       fid: number;
       username: string | null;
@@ -34,7 +36,6 @@ interface UserScore {
 export default function ScorePageClient({
   leaderboardPromise,
 }: {
-  gameId: number;
   leaderboardPromise: Promise<LeaderboardData>;
 }) {
   const leaderboardData = use(leaderboardPromise);
@@ -74,13 +75,15 @@ export default function ScorePageClient({
         if (userIndex !== -1) {
           const player = leaderboardData.allPlayersInGame[userIndex];
           const total = leaderboardData.allPlayersInGame.length;
-          const rank = userIndex + 1;
+          const rank = player.rank ?? userIndex + 1;
+          // Percentile: what % of players you beat
+          const percentile = total > 1 ? Math.round(((total - rank) / (total - 1)) * 100) : 100;
 
           setUserScore({
             score: player.score,
             rank,
-            winnings: rank === 1 ? 50 : 0,
-            percentile: total > 0 ? Math.round(((total - rank) / total) * 100) : 0,
+            winnings: player.prize ?? 0,
+            percentile: Math.max(0, Math.min(100, percentile)),
           });
         }
       } catch (error) {

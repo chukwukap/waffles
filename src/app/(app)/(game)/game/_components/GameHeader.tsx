@@ -1,17 +1,21 @@
 "use client";
 import { LeaveGameIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import LeaveGameDrawer from "./LeaveGameDrawer";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { WalletBalance } from "./WalletBalance";
 
 export function GameHeader() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const gameId = Number(searchParams.get("gameId"));
+
+  // Extract gameId from pathname (e.g., /game/123/live -> 123)
+  const gameId = useMemo(() => {
+    const match = pathname?.match(/\/game\/(\d+)/);
+    return match ? Number(match[1]) : null;
+  }, [pathname]);
 
   const [isLeaveGameDrawerOpen, setIsLeaveGameDrawerOpen] = useState(false);
 

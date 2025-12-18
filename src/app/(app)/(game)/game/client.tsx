@@ -1,25 +1,25 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import sdk from "@farcaster/miniapp-sdk";
 
-import { useGameStore, selectGame, selectEntry, selectPhase, selectOnlineCount } from "@/lib/game-store";
-import { getGamePhase, formatCountdown, formatPrizePool, formatPlayerCount } from "@/lib/game-utils";
-import { useCountdown } from "@/hooks/useCountdown";
+import { useGameStore, selectPhase, selectEntry, selectOnlineCount } from "@/lib/game-store";
+import { getGamePhase } from "@/lib/game-utils";
+import { formatTime } from "@/lib/utils";
+import { useTimer } from "@/hooks/useTimer";
 import { useLive } from "@/hooks/useLive";
-
 import { BottomNav } from "@/components/BottomNav";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
-import { Clock } from "@/components/icons";
 
-import { GameChat } from "./_components/GameChat";
-import { LiveEventFeed } from "./_components/LiveEventFeed";
-import { PastGamesCard } from "./_components/PastGamesCard";
 import { GameActionButton } from "./_components/GameActionButton";
+import { GameChat } from "./_components/chat/GameChat";
+import { LiveEventFeed } from "./_components/LiveEventFeed";
+import { GameStatusHeader } from "./_components/GameStatusHeader";
+import { PrizePoolDisplay } from "./_components/PrizePoolDisplay";
+import { PlayerCountDisplay } from "./_components/PlayerCountDisplay";
+import { PastGamesCard } from "./_components/PastGamesCard";
 
 import type { GamePageData, PastGameData } from "./page";
 
@@ -30,14 +30,13 @@ import type { GamePageData, PastGameData } from "./page";
 interface GameHubProps {
     game: GamePageData | null;
     pastGames: PastGameData[];
-    partyToken: string | null;
 }
 
 // ==========================================
 // COMPONENT
 // ==========================================
 
-export function GameHub({ game, pastGames, partyToken }: GameHubProps) {
+export function GameHub({ game, pastGames }: GameHubProps) {
     const { context } = useMiniKit();
     const router = useRouter();
     const fid = context?.user?.fid;
@@ -62,13 +61,11 @@ export function GameHub({ game, pastGames, partyToken }: GameHubProps) {
                 if (res.ok) {
                     const userData = await res.json();
                     if (!userData.hasGameAccess || userData.isBanned) {
-                        // User does not have access, redirect to redeem
                         router.replace("/redeem");
                         return;
                     }
                     setHasAccess(true);
                 } else if (res.status === 401 || res.status === 404) {
-                    // User not found or not authenticated, redirect to redeem
                     router.replace("/redeem");
                     return;
                 }
@@ -83,7 +80,6 @@ export function GameHub({ game, pastGames, partyToken }: GameHubProps) {
 
         checkAccess();
     }, [fid, router]);
-
 
     useEffect(() => {
         if (game) {
@@ -131,38 +127,93 @@ export function GameHub({ game, pastGames, partyToken }: GameHubProps) {
         fetchEntry();
     }, [fid, game, setEntry]);
 
-    // Real-time connection
+    // Real-time connection (token fetched internally by useLive)
     useLive({
         gameId: game?.id ?? 0,
-        token: partyToken ?? "",
-        enabled: !!game && !!partyToken,
+        enabled: !!game && hasAccess,
     });
 
     // Selectors
     const phase = useGameStore(selectPhase);
     const entry = useGameStore(selectEntry);
-    const onlineCount = useGameStore(selectOnlineCount);
 
-    // Countdown
+    // Countdown - uses target timestamp
     const targetMs = game?.startsAt.getTime() ?? 0;
-    const { seconds: countdown, isComplete: hasStarted } = useCountdown(targetMs);
+    const countdown = useTimer(targetMs);
 
-    // Derived state
+    // Derived state from phase (no need to calculate manually)
     const isLive = phase === "LIVE";
-    const hasEntry = entry !== null;
-    const isEmpty = !game || phase === "ENDED";
+    const hasEnded = phase === "ENDED";
+    const isEmpty = !game;
 
-    // Formatted values
-    const formattedPrize = game ? formatPrizePool(game.prizePool) : "$0";
-    const formattedPlayers = game ? formatPlayerCount(game.playerCount) : "0 players";
+    // Prize pool calculation
+    const prizePool = game?.prizePool ?? 0;
+    const formattedPrize = `$${prizePool.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    })}`;
 
-    // Status text
-    const statusText = useMemo(() => {
+    // Status helpers
+    const getStatusText = () => {
         if (!game) return "NO UPCOMING GAMES";
-        if (phase === "ENDED") return "GAME ENDED";
-        if (phase === "LIVE") return "GAME IS LIVE";
-        return "NEXT GAME STARTS IN";
-    }, [game, phase]);
+        if (hasEnded) return "Game has ended";
+        if (isLive) return "Game is LIVE";
+        return "GAME STARTS IN";
+    };
+
+    const renderActionButton = () => {
+        if (!game) return null;
+
+        const pink = "var(--color-neon-pink)";
+
+        if (hasEnded) {
+            return <GameActionButton disabled>ENDED</GameActionButton>;
+        }
+
+        // User already has ticket
+        if (entry) {
+            if (isLive) {
+                return (
+                    <GameActionButton
+                        href={`/game/${game.id}/live`}
+                        backgroundColor={pink}
+                        variant="wide"
+                        textColor="dark"
+                    >
+                        START
+                    </GameActionButton>
+                );
+            }
+            // Has ticket, waiting for game to start - show countdown
+            return (
+                <GameActionButton disabled>
+                    {formatTime(countdown)}
+                </GameActionButton>
+            );
+        }
+
+        // No ticket - show GET TICKET if live, countdown if scheduled
+        if (isLive) {
+            return (
+                <GameActionButton
+                    href={`/game/${game.id}/ticket`}
+                    backgroundColor={pink}
+                    variant="wide"
+                    textColor="dark"
+                >
+                    GET TICKET
+                </GameActionButton>
+            );
+        }
+
+        // Scheduled - show countdown (buy button added separately below)
+        return (
+            <GameActionButton>{formatTime(countdown)}</GameActionButton>
+        );
+    };
+
+    // Show buy ticket CTA when game is scheduled and user has no ticket
+    const showBuyTicketCTA = game && !hasEnded && !isLive && !entry;
 
     // ==========================================
     // RENDER: Access Check Loading
@@ -209,94 +260,46 @@ export function GameHub({ game, pastGames, partyToken }: GameHubProps) {
     }
 
     // ==========================================
-    // RENDER: Active Game
+    // RENDER: Active Game (Original UI)
     // ==========================================
 
     return (
         <>
-            <section className="flex-1 overflow-y-auto px-4 py-2">
-                <div className="space-y-4">
-                    {/* Hero Image */}
-                    <div className="flex justify-center py-6">
-                        <Image
-                            src="/images/hero-image.png"
-                            alt="Waffles"
-                            width={180}
-                            height={120}
-                            className="object-contain"
-                            priority
-                        />
+            <section className="flex-1 overflow-y-auto space-y-1 px-3">
+                <GameStatusHeader
+                    statusText={getStatusText()}
+                    actionButton={renderActionButton()}
+                />
+
+                <PrizePoolDisplay formattedPrizePool={formattedPrize} />
+
+                <PlayerCountDisplay
+                    mutualsCount={0}
+                    playerCount={game.playerCount}
+                    avatars={[]}
+                />
+
+                {/* Buy Ticket CTA - shown when game is scheduled and user has no ticket */}
+                {showBuyTicketCTA && (
+                    <div className="flex justify-center py-4">
+                        <a
+                            href={`/game/${game.id}/ticket`}
+                            className="flex items-center gap-2 px-6 py-3 bg-(--color-neon-pink) text-black font-body font-bold text-lg rounded-xl hover:opacity-90 transition-opacity"
+                        >
+                            🎫 GET YOUR TICKET
+                        </a>
                     </div>
+                )}
 
-                    {/* Status Section */}
-                    <div className="flex flex-col items-center gap-3 py-2">
-                        <div className="flex items-center gap-2">
-                            <Clock className="w-6 h-6" aria-label="Countdown" />
-                            <span className="text-white font-body text-lg tracking-tight">
-                                {statusText}
-                            </span>
-                        </div>
-
-                        {/* Countdown / Live Button */}
-                        {!isLive ? (
-                            <div className="border-2 border-(--color-neon-pink) rounded-full px-6 py-2">
-                                <span className="text-(--color-neon-pink) font-body text-xl tracking-wide">
-                                    {formatCountdown(countdown)}
-                                </span>
-                            </div>
-                        ) : (
-                            <GameActionButton
-                                href={hasEntry ? `/game/play` : `/game/buy`}
-                                variant="wide"
-                            >
-                                {hasEntry ? "START" : "GET TICKET"}
-                            </GameActionButton>
-                        )}
-                    </div>
-
-                    {/* Stats Row */}
-                    <div className="flex justify-center gap-8 py-4">
-                        <div className="text-center">
-                            <p className="text-white/50 font-display text-sm">PRIZE POOL</p>
-                            <p className="text-white font-body text-2xl">{formattedPrize}</p>
-                        </div>
-                        <div className="text-center">
-                            <p className="text-white/50 font-display text-sm">PLAYERS</p>
-                            <p className="text-white font-body text-2xl">{game.playerCount}/{game.maxPlayers}</p>
-                        </div>
-                        {onlineCount > 0 && (
-                            <div className="text-center">
-                                <p className="text-white/50 font-display text-sm">ONLINE</p>
-                                <p className="text-white font-body text-2xl">{onlineCount}</p>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Buy Button (when scheduled) */}
-                    {!isLive && (
-                        <div className="flex justify-center py-4">
-                            <Link
-                                href="/game/buy"
-                                className="relative px-8 py-3 text-black font-body text-lg tracking-wide bg-white rounded-full 
-                         shadow-lg hover:shadow-xl transition-shadow
-                         after:absolute after:bottom-[-4px] after:left-0 after:right-0 
-                         after:h-1 after:bg-(--color-neon-cyan) after:rounded-full"
-                            >
-                                BUY WAFFLE ${game.ticketPrice.toFixed(0)}
-                            </Link>
-                        </div>
-                    )}
-
-                    {/* Past Games */}
-                    {pastGames.length > 0 && <PastGamesCard games={pastGames} />}
-
-                    {/* Live Event Feed */}
-                    <LiveEventFeed />
-                </div>
+                <LiveEventFeed />
             </section>
 
-            {/* Chat Drawer */}
-            <GameChat gameId={game.id} />
+            {/* GameChat */}
+            <div className="w-full bg-[#0E0E0E] border-t border-white/10 px-4 py-3">
+                <div className="w-full max-w-lg mx-auto">
+                    <GameChat />
+                </div>
+            </div>
 
             <BottomNav />
         </>

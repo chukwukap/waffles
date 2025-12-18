@@ -1,7 +1,7 @@
 "use client";
 
-import { useCountdown } from "@/hooks/useCountdown";
-import { formatCountdown } from "@/lib/game-utils";
+import { useRef } from "react";
+import { useTimer } from "@/hooks/useTimer";
 import CircularProgress from "./CircularProgress";
 
 // ==========================================
@@ -23,8 +23,9 @@ export function CountdownTimer({
   onComplete,
   nextRoundNumber,
 }: CountdownTimerProps) {
-  const targetMs = Date.now() + duration * 1000;
-  const { seconds, isComplete } = useCountdown(targetMs, { onComplete });
+  // Use ref to prevent target from resetting on re-render
+  const targetMs = useRef(Date.now() + duration * 1000).current;
+  const seconds = useTimer(targetMs, onComplete);
 
   // Calculate percentage remaining
   const percentage = (seconds / duration) * 100;

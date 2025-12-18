@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
 import { prisma, Prisma } from "@/lib/db";
 import { z } from "zod";
-import { calculateScore, QuestionDifficulty } from "@/lib/scoring";
+import { getScore } from "@/lib/scoring";
 
 type Params = { gameId: string };
 
@@ -58,6 +58,26 @@ export const POST = withAuth<Params>(
 
       const { questionId, selectedIndex, timeTakenMs } = validation.data;
       const selectedIndexValue = selectedIndex ?? -1;
+
+      // Check if game has ended
+      const game = await prisma.game.findUnique({
+        where: { id: gameIdNum },
+        select: { endsAt: true },
+      });
+
+      if (!game) {
+        return NextResponse.json<ApiError>(
+          { error: "Game not found", code: "NOT_FOUND" },
+          { status: 404 }
+        );
+      }
+
+      if (new Date() > game.endsAt) {
+        return NextResponse.json<ApiError>(
+          { error: "Game has ended", code: "GAME_ENDED" },
+          { status: 403 }
+        );
+      }
 
       // Verify user has a game entry
       const entry = await prisma.gameEntry.findUnique({
@@ -139,25 +159,7 @@ export const POST = withAuth<Params>(
       const maxTimeSec = question.durationSec ?? 10;
       const isCorrect = selectedIndexValue === question.correctIndex;
 
-      // Count consecutive correct answers for combo bonus
-      const answerValues = Object.values(existingAnswers);
-      let consecutiveCorrect = 0;
-
-      // Count backwards through existing answers
-      for (let i = answerValues.length - 1; i >= 0; i--) {
-        if (answerValues[i].correct) consecutiveCorrect++;
-        else break;
-      }
-
-      const scoreResult = calculateScore({
-        timeTakenMs,
-        maxTimeSec,
-        isCorrect,
-        difficulty: QuestionDifficulty.MEDIUM,
-        consecutiveCorrect,
-      });
-
-      const pointsEarned = isCorrect ? scoreResult.score : 0;
+      const pointsEarned = getScore(timeTakenMs, maxTimeSec, isCorrect);
       const newTotalScore = entry.score + pointsEarned;
 
       // Build new answer entry

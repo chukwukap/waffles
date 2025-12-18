@@ -9,7 +9,7 @@ import { BottomNav } from "@/components/BottomNav";
 import sdk from "@farcaster/miniapp-sdk";
 
 import { TicketPageGameInfo } from "./page";
-import { WaffleCard } from "./_components/WaffleCard";
+import { TicketPurchaseCard } from "./_components/TicketPurchaseCard";
 import { SuccessCard } from "./_components/SuccessCard";
 
 interface UserInfo {
@@ -49,13 +49,7 @@ export default function TicketPageClientImpl({
         }
 
         // Fetch tickets for this game
-        const ticketRes = await sdk.quickAuth.fetch(
-          `/api/v1/me/tickets?gameId=${gameInfo.id}`
-        );
-        if (ticketRes.ok) {
-          const tickets: TicketInfo[] = await ticketRes.json();
-          setTicket(tickets[0] || null);
-        }
+        await fetchTicket();
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -64,6 +58,21 @@ export default function TicketPageClientImpl({
     }
     fetchData();
   }, [gameInfo.id]);
+
+  // Separate function to fetch ticket (can be called after purchase)
+  async function fetchTicket() {
+    try {
+      const ticketRes = await sdk.quickAuth.fetch(
+        `/api/v1/me/tickets?gameId=${gameInfo.id}`
+      );
+      if (ticketRes.ok) {
+        const tickets: TicketInfo[] = await ticketRes.json();
+        setTicket(tickets[0] || null);
+      }
+    } catch (error) {
+      console.error("Error fetching ticket:", error);
+    }
+  }
 
   // Use hook for mutuals
   const mutualsData = useMutuals({
@@ -105,14 +114,18 @@ export default function TicketPageClientImpl({
   }
 
   return (
-    <>
-      <div className="flex-1 overflow-y-auto px-4 space-y-1 w-full overflow-x-hidden">
-        <div className="flex flex-row items-center justify-between w-full max-w-lg h-[50px] mt-4 mx-auto">
+    <div className="h-dvh flex flex-col">
+      <div className="flex-1 flex flex-col px-4 w-full min-h-0">
+        {/* Theme Header */}
+        <div
+          className="flex flex-row items-center justify-between w-full max-w-lg mx-auto shrink-0"
+          style={{ height: "clamp(40px, 7dvh, 50px)", marginTop: "clamp(8px, 2dvh, 16px)" }}
+        >
           <div className="flex flex-col justify-center items-start h-full">
             <p className="font-medium font-display text-[14px] leading-[130%] tracking-[-0.03em] text-center text-[#99A0AE]">
               Next game theme
             </p>
-            <h1 className="font-body font-normal text-[32px] leading-[100%] tracking-normal text-white">
+            <h1 className="font-body font-normal text-[clamp(24px,5vw,32px)] leading-[100%] tracking-normal text-white">
               {gameInfo.theme.toUpperCase()}
             </h1>
           </div>
@@ -127,31 +140,46 @@ export default function TicketPageClientImpl({
             />
           )}
         </div>
-        <Image
-          src="/images/illustrations/waffles.svg"
-          alt="Waffle"
-          width={225}
-          height={132}
-          priority
-          className="mx-auto mb-2"
-        />
-        <h2 className="font-body font-normal text-[44px] leading-[92%] tracking-[-0.03em] text-center mb-4">
-          GET YOUR WAFFLE
-        </h2>
-        <div className="mx-auto mb-4">
-          <WaffleCard
-            spots={gameInfo.playerCount}
-            prizePool={prizePool}
-            price={gameInfo.ticketPrice}
-            maxPlayers={gameInfo.maxPlayers}
-            fid={userInfo?.fid ?? 0}
-            gameId={gameInfo.id}
+
+        {/* Waffle Image */}
+        <div
+          className="mx-auto shrink-0"
+          style={{ height: "clamp(80px, 16dvh, 132px)", marginBottom: "clamp(4px, 1dvh, 8px)" }}
+        >
+          <Image
+            src="/images/illustrations/waffles.svg"
+            alt="Waffle"
+            width={225}
+            height={132}
+            priority
+            className="h-full w-auto object-contain"
           />
         </div>
 
-        <div className="flex flex-col items-center mb-8">
+        {/* Title */}
+        <h2
+          className="font-body font-normal leading-[92%] tracking-[-0.03em] text-center shrink-0"
+          style={{ fontSize: "clamp(44px, 7vw, 44px)", marginBottom: "clamp(8px, 2dvh, 16px)" }}
+        >
+          GET YOUR WAFFLE
+        </h2>
+
+        {/* Purchase Card */}
+        <div className="mx-auto shrink-0" style={{ marginBottom: "clamp(8px, 2dvh, 16px)" }}>
+          <TicketPurchaseCard
+            spots={gameInfo.maxPlayers - gameInfo.playerCount}
+            prizePool={prizePool}
+            price={gameInfo.ticketPrice}
+            maxPlayers={gameInfo.maxPlayers}
+            gameId={gameInfo.id}
+            onPurchaseSuccess={fetchTicket}
+          />
+        </div>
+
+        {/* Mutuals Section */}
+        <div className="flex flex-col items-center justify-center flex-1 min-h-0 pb-2">
           <CardStack
-            size="clamp(32px,7vw,48px)"
+            size="clamp(40px,3vw,50px)"
             borderColor="#fff"
             imageUrls={
               mutualsData?.mutuals
@@ -159,7 +187,7 @@ export default function TicketPageClientImpl({
                 .filter((url): url is string => url !== null) ?? undefined
             }
           />
-          <p className="font-display text-[#99A0AE] text-sm mt-2">
+          <p className="font-display text-[#99A0AE] text-xs mt-1">
             {mutualsData?.totalCount === 0
               ? "and others have joined the game"
               : `and ${mutualsData?.totalCount ?? 0} other${(mutualsData?.totalCount ?? 0) === 1 ? "" : "s"
@@ -168,6 +196,6 @@ export default function TicketPageClientImpl({
         </div>
       </div>
       <BottomNav />
-    </>
+    </div>
   );
 }

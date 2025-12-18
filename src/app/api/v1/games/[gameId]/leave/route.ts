@@ -6,40 +6,72 @@ type Params = { gameId: string };
 
 /**
  * POST /api/v1/games/[gameId]/leave
- * Leave a game (auth required)
- * Note: With new GameEntry model, we don't actually delete entries as they represent tickets
- * This just returns success for API compatibility
+ * Leave/forfeit a game during live phase.
+ * Sets leftAt timestamp on GameEntry.
  */
 export const POST = withAuth<Params>(
   async (request, auth: AuthResult, params) => {
     try {
-      const gameIdNum = parseInt(params.gameId, 10);
+      const gameId = parseInt(params.gameId, 10);
 
-      if (isNaN(gameIdNum)) {
+      if (isNaN(gameId)) {
         return NextResponse.json<ApiError>(
           { error: "Invalid game ID", code: "INVALID_PARAM" },
           { status: 400 }
         );
       }
 
-      // Check if game exists
-      const game = await prisma.game.findUnique({
-        where: { id: gameIdNum },
-        select: { id: true },
+      // Get user's entry with game timing info
+      const entry = await prisma.gameEntry.findUnique({
+        where: {
+          gameId_userId: {
+            gameId,
+            userId: auth.userId,
+          },
+        },
+        select: {
+          id: true,
+          leftAt: true,
+          game: {
+            select: {
+              startsAt: true,
+              endsAt: true,
+            },
+          },
+        },
       });
 
-      if (!game) {
+      if (!entry) {
         return NextResponse.json<ApiError>(
-          { error: "Game not found", code: "NOT_FOUND" },
+          { error: "You are not in this game", code: "NOT_IN_GAME" },
           { status: 404 }
         );
       }
 
-      // With GameEntry model, we can't delete entries (they represent paid tickets)
-      // Just return success for API compatibility
-      // A user can always "leave" and rejoin via the join endpoint
+      if (entry.leftAt) {
+        // Already left - idempotent, return success
+        return NextResponse.json({ success: true, leftAt: entry.leftAt });
+      }
 
-      return NextResponse.json({ success: true, gameId: gameIdNum });
+      // Check if game is currently live
+      const now = new Date();
+      const isLive = now >= entry.game.startsAt && now < entry.game.endsAt;
+
+      if (!isLive) {
+        return NextResponse.json<ApiError>(
+          { error: "You can only leave during a live game", code: "NOT_LIVE" },
+          { status: 400 }
+        );
+      }
+
+      // Mark entry as left (forfeit)
+      const updated = await prisma.gameEntry.update({
+        where: { id: entry.id },
+        data: { leftAt: now },
+        select: { leftAt: true },
+      });
+
+      return NextResponse.json({ success: true, leftAt: updated.leftAt });
     } catch (error) {
       console.error("POST /api/v1/games/[gameId]/leave Error:", error);
       return NextResponse.json<ApiError>(

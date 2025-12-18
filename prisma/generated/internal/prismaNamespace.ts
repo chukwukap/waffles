@@ -1322,6 +1322,7 @@ export const GameEntryScalarFieldEnum = {
   rank: 'rank',
   prize: 'prize',
   claimedAt: 'claimedAt',
+  leftAt: 'leftAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

@@ -1,8 +1,8 @@
 "use client";
 
 import { OnchainKitProvider } from "@coinbase/onchainkit";
-import { base } from "viem/chains";
 import { env } from "@/lib/env";
+import { CHAIN_CONFIG } from "@/lib/contracts/config";
 import { minikitConfig } from "../../../minikit.config";
 
 interface Props {
@@ -13,7 +13,7 @@ export function MinikitProvider({ children }: Props) {
   return (
     <OnchainKitProvider
       apiKey={env.nextPublicOnchainkitApiKey}
-      chain={base}
+      chain={CHAIN_CONFIG.chain}
       config={{
         appearance: {
           mode: "dark",

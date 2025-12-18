@@ -1,6 +1,10 @@
 import type * as Party from "partykit/server";
 import { jwtVerify } from "jose";
 
+// ==========================================
+// TYPES
+// ==========================================
+
 interface UserProfile {
   fid: number;
   username: string;
@@ -14,10 +18,13 @@ interface ChatMessage {
   timestamp: number;
 }
 
-interface ServerMessage {
-  type: "chat" | "presence" | "event" | "sync";
-  payload: unknown;
-}
+// Compact message protocol for minimal payload size
+// t = type, d = data
+// s = sync, p = presence, c = chat, e = event
+
+// ==========================================
+// GAME SERVER
+// ==========================================
 
 export default class GameServer implements Party.Server {
   // Enable hibernation for scale (up to 32K connections per room)
@@ -28,6 +35,68 @@ export default class GameServer implements Party.Server {
   chatHistory: ChatMessage[] = [];
 
   constructor(readonly room: Party.Room) {}
+
+  // ==========================================
+  // AUTHENTICATION (via onBeforeConnect)
+  // ==========================================
+
+  /**
+   * Authenticate connections BEFORE they reach onConnect.
+   * This follows PartyKit best practices from:
+   * https://docs.partykit.io/guides/authentication/
+   */
+  static async onBeforeConnect(
+    request: Party.Request,
+    lobby: Party.Lobby
+  ): Promise<Party.Request | Response> {
+    try {
+      // Get token from query string
+      const url = new URL(request.url);
+      const token = url.searchParams.get("token");
+
+      if (!token) {
+        console.error("[Auth] Missing token");
+        return new Response("Unauthorized: No token", { status: 401 });
+      }
+
+      // Get secret from environment
+      const secret = lobby.env.PARTYKIT_SECRET as string;
+      if (!secret) {
+        console.error("[Auth] PARTYKIT_SECRET not configured");
+        return new Response("Server configuration error", { status: 500 });
+      }
+
+      // Verify JWT
+      const { payload } = await jwtVerify(
+        token,
+        new TextEncoder().encode(secret),
+        { algorithms: ["HS256"] }
+      );
+
+      if (!payload.fid || !payload.username) {
+        console.error("[Auth] Invalid token payload");
+        return new Response("Unauthorized: Invalid token", { status: 401 });
+      }
+
+      // Pass user info to onConnect via headers
+      request.headers.set("X-User-Fid", String(payload.fid));
+      request.headers.set("X-User-Username", String(payload.username));
+      request.headers.set(
+        "X-User-PfpUrl",
+        payload.pfpUrl ? String(payload.pfpUrl) : ""
+      );
+
+      // Forward to onConnect
+      return request;
+    } catch (e) {
+      console.error("[Auth] JWT verification failed:", e);
+      return new Response("Unauthorized: Invalid token", { status: 401 });
+    }
+  }
+
+  // ==========================================
+  // LIFECYCLE HOOKS
+  // ==========================================
 
   // Load state from storage on startup (or wake from hibernation)
   async onStart() {
@@ -45,61 +114,42 @@ export default class GameServer implements Party.Server {
   }
 
   async onConnect(conn: Party.Connection, ctx: Party.ConnectionContext) {
-    // 1. JWT Authentication
-    const url = new URL(ctx.request.url);
-    const token = url.searchParams.get("token");
+    // User is already authenticated via onBeforeConnect
+    // Extract user info from headers set in onBeforeConnect
+    const fid = Number(ctx.request.headers.get("X-User-Fid"));
+    const username = ctx.request.headers.get("X-User-Username") || "Unknown";
+    const pfpUrl = ctx.request.headers.get("X-User-PfpUrl") || null;
 
-    if (!token) {
-      console.error("Missing token");
-      conn.close(1008, "Unauthorized: No token");
-      return;
-    }
+    const user: UserProfile = {
+      fid,
+      username,
+      pfpUrl: pfpUrl || null,
+    };
 
-    let user: UserProfile;
-    try {
-      const secret = this.room.env.PARTYKIT_SECRET as string;
-      if (!secret) {
-        throw new Error("PARTYKIT_SECRET not configured on server");
-      }
-
-      const { payload } = await jwtVerify(
-        token,
-        new TextEncoder().encode(secret),
-        { algorithms: ["HS256"] }
-      );
-
-      if (!payload.fid || !payload.username) {
-        throw new Error("Invalid token payload");
-      }
-
-      user = {
-        fid: Number(payload.fid),
-        username: String(payload.username),
-        pfpUrl: payload.pfpUrl ? String(payload.pfpUrl) : null,
-      };
-    } catch (e) {
-      console.error("Auth failed:", e);
-      conn.close(1008, "Unauthorized: Invalid token");
-      return;
-    }
-
-    // 2. Attach user to connection state
+    // Attach user to connection state
     conn.setState(user);
 
     console.log(
       `[Join] ${user.username} (fid:${user.fid}) joined room ${this.room.id}`
     );
 
-    // 3. Broadcast presence update to others
+    // Broadcast presence update to others
     this.broadcastPresence(user, "join");
 
-    // 4. Send initial sync data to this connection
+    // Send initial sync data to this connection (compact format)
+    // s = sync, n = online count, h = history
     conn.send(
       JSON.stringify({
-        type: "sync",
-        payload: {
-          onlineCount: this.getOnlineCount(),
-          history: this.chatHistory,
+        t: "s",
+        d: {
+          n: this.getOnlineCount(),
+          h: this.chatHistory.map((m) => ({
+            i: m.id,
+            u: m.sender.username,
+            p: m.sender.pfpUrl,
+            m: m.text,
+            ts: m.timestamp,
+          })),
         },
       })
     );
@@ -112,11 +162,13 @@ export default class GameServer implements Party.Server {
 
       if (!user) return;
 
-      switch (data.type) {
-        case "chat": {
+      // Handle compact format: t = type, m = message text
+      switch (data.t) {
+        case "c": {
+          // c = chat message
           const chatMsg: ChatMessage = {
             id: crypto.randomUUID(),
-            text: data.text,
+            text: data.m,
             sender: user,
             timestamp: Date.now(),
           };
@@ -126,13 +178,31 @@ export default class GameServer implements Party.Server {
 
           await this.room.storage.put("chatHistory", this.chatHistory);
 
-          this.broadcast({ type: "chat", payload: chatMsg });
+          // Broadcast chat in compact format
+          this.broadcast({
+            t: "c",
+            d: {
+              i: chatMsg.id,
+              u: chatMsg.sender.username,
+              p: chatMsg.sender.pfpUrl,
+              m: chatMsg.text,
+              ts: chatMsg.timestamp,
+            },
+          });
           break;
         }
-        case "event": {
+        case "e": {
+          // e = event (answer, achievement, etc.)
           this.broadcast({
-            type: "event",
-            payload: { ...data.payload, user },
+            t: "e",
+            d: {
+              i: crypto.randomUUID(),
+              t: data.d?.t || "event",
+              u: user.username,
+              p: user.pfpUrl,
+              c: data.d?.c || "",
+              ts: Date.now(),
+            },
           });
           break;
         }
@@ -154,24 +224,27 @@ export default class GameServer implements Party.Server {
     console.error(`[Error] Connection ${conn.id} error:`, error.message);
   }
 
-  // --- Helpers ---
+  // ==========================================
+  // HELPERS
+  // ==========================================
 
   /** Get current online count from active connections (hibernation-safe) */
   getOnlineCount(): number {
     return [...this.room.getConnections()].length;
   }
 
-  broadcast(msg: ServerMessage, exclude: string[] = []) {
+  broadcast(msg: Record<string, unknown>, exclude: string[] = []) {
     this.room.broadcast(JSON.stringify(msg), exclude);
   }
 
   broadcastPresence(user: UserProfile, type: "join" | "leave") {
+    // p = presence, n = online count, j = joined, l = left
     this.broadcast({
-      type: "presence",
-      payload: {
-        onlineCount: this.getOnlineCount(),
-        joined: type === "join" ? user : undefined,
-        left: type === "leave" ? user : undefined,
+      t: "p",
+      d: {
+        n: this.getOnlineCount(),
+        j: type === "join" ? user.username : undefined,
+        l: type === "leave" ? user.username : undefined,
       },
     });
   }

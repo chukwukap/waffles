@@ -30,7 +30,10 @@ const getGameLeaderboard = cache(async (gameId: number) => {
     prisma.gameEntry.findMany({
       where: { gameId, paidAt: { not: null } },
       orderBy: { score: "desc" },
-      include: {
+      select: {
+        score: true,
+        rank: true,
+        prize: true,
         user: {
           select: { fid: true, username: true, pfpUrl: true },
         },
@@ -61,5 +64,5 @@ export default async function ScorePage({
   const leaderboardPromise = getGameLeaderboard(gameIdNum);
 
   // User-specific data (their score, rank) is fetched client-side with auth
-  return <ScorePageClient gameId={gameIdNum} leaderboardPromise={leaderboardPromise} />;
+  return <ScorePageClient leaderboardPromise={leaderboardPromise} />;
 }
