@@ -4,13 +4,15 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import sdk from "@farcaster/miniapp-sdk";
+import { motion, AnimatePresence } from "motion/react";
 
-import { useGameStore, selectPhase, selectEntry, selectOnlineCount } from "@/lib/game-store";
+import { useGameStore, selectPhase, selectEntry } from "@/lib/game-store";
 import { getGamePhase } from "@/lib/game-utils";
 import { useTimer } from "@/hooks/useTimer";
 import { useLive } from "@/hooks/useLive";
 import { BottomNav } from "@/components/BottomNav";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
+import { springs, staggerContainer, fadeInUp } from "@/lib/animations";
 
 import { GameChat } from "./_components/chat/GameChat";
 import { LiveEventFeed } from "./_components/LiveEventFeed";
@@ -151,8 +153,21 @@ export function GameHub({ game, pastGames }: GameHubProps) {
         return (
             <>
                 <main className="flex-1 flex flex-col items-center justify-center min-h-[60vh]">
-                    <WaffleLoader />
-                    <p className="text-white/50 mt-4 text-sm">Verifying access...</p>
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={springs.gentle}
+                    >
+                        <WaffleLoader />
+                    </motion.div>
+                    <motion.p
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2, ...springs.gentle }}
+                        className="text-white/50 mt-4 text-sm"
+                    >
+                        Verifying access...
+                    </motion.p>
                 </main>
                 <BottomNav />
             </>
@@ -166,34 +181,65 @@ export function GameHub({ game, pastGames }: GameHubProps) {
     if (isEmpty) {
         return (
             <>
-                <section className="flex-1 overflow-y-auto px-4 py-2">
+                <motion.section
+                    variants={staggerContainer}
+                    initial="hidden"
+                    animate="visible"
+                    className="flex-1 overflow-y-auto px-4 py-2"
+                >
                     <div className="flex flex-col items-center justify-center gap-6 py-16">
-                        <div className="text-center space-y-2">
-                            <h2 className="text-white font-body text-2xl">NO GAMES YET</h2>
-                            <p className="text-white/50 font-display text-sm max-w-[280px]">
+                        <motion.div
+                            variants={fadeInUp}
+                            className="text-center space-y-2"
+                        >
+                            <motion.h2
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1, ...springs.bouncy }}
+                                className="text-white font-body text-2xl"
+                            >
+                                NO GAMES YET
+                            </motion.h2>
+                            <motion.p
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.3 }}
+                                className="text-white/50 font-display text-sm max-w-[280px]"
+                            >
                                 New games are coming soon. Check back later!
-                            </p>
-                        </div>
+                            </motion.p>
+                        </motion.div>
 
                         {pastGames.length > 0 && (
-                            <div className="w-full mt-4">
+                            <motion.div
+                                initial={{ opacity: 0, y: 30 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.4, ...springs.gentle }}
+                                className="w-full mt-4"
+                            >
                                 <PastGamesCard games={pastGames} />
-                            </div>
+                            </motion.div>
                         )}
                     </div>
-                </section>
+                </motion.section>
                 <BottomNav />
             </>
         );
     }
 
     // ==========================================
-    // RENDER: Active Game (Original UI)
+    // RENDER: Active Game (Animated UI)
     // ==========================================
 
     return (
         <>
-            <section className="flex-1 flex flex-col justify-center items-center overflow-hidden px-4 py-4">
+            {/* Main game card section with entrance animation */}
+            <motion.section
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.4 }}
+                className="flex-1 flex flex-col justify-center items-center overflow-hidden px-4 py-4"
+            >
                 <NextGameCard
                     gameId={game.id}
                     theme={game.theme}
@@ -207,19 +253,29 @@ export function GameHub({ game, pastGames }: GameHubProps) {
                     spotsTotal={game.maxPlayers ?? 100}
                     spotsTaken={game.playerCount ?? 0}
                 />
-            </section>
+            </motion.section>
 
-            {/* Live Event Feed */}
-            <div className="shrink-0 w-full px-4">
+            {/* Live Event Feed with slide-up animation */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, ...springs.gentle }}
+                className="shrink-0 w-full px-4"
+            >
                 <LiveEventFeed />
-            </div>
+            </motion.div>
 
-            {/* GameChat */}
-            <div className="shrink-0 w-full bg-[#0E0E0E] border-t border-white/10 px-4 py-3">
+            {/* GameChat with slide-up animation */}
+            <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6, ...springs.gentle }}
+                className="shrink-0 w-full bg-[#0E0E0E] border-t border-white/10 px-4 py-3"
+            >
                 <div className="w-full max-w-lg mx-auto">
                     <GameChat />
                 </div>
-            </div>
+            </motion.div>
 
             <BottomNav />
             <CheerOverlay />
