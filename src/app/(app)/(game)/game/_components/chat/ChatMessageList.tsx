@@ -1,9 +1,11 @@
 "use client";
 
-import { useRef, useEffect, useState, useImperativeHandle, forwardRef, memo } from "react";
+import { useRef, useEffect, useState, useImperativeHandle, forwardRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { ChatComment } from "./ChatComment";
 import { useGameStore, selectMessages, type ChatMessage } from "@/lib/game-store";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
+import { springs } from "@/lib/animations";
 
 // ==========================================
 // TYPES
@@ -115,24 +117,64 @@ export const ChatMessageList = forwardRef<ChatMessageListRef, ChatMessageListPro
                 >
                     <div className="flex flex-col gap-2 py-4">
                         {comments.length === 0 ? (
-                            <div className="flex items-center justify-center h-full text-white/40 text-sm py-8">
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.2 }}
+                                className="flex items-center justify-center h-full text-white/40 text-sm py-8"
+                            >
                                 No messages yet. Start the conversation!
-                            </div>
+                            </motion.div>
                         ) : (
-                            comments.map((comment) => (
-                                <ChatComment
-                                    key={comment.id}
-                                    name={comment.name}
-                                    time={comment.time}
-                                    message={comment.message}
-                                    avatarUrl={comment.avatarUrl}
-                                    isCurrentUser={comment.isCurrentUser}
-                                    status={comment.status}
-                                />
-                            ))
+                            <AnimatePresence initial={false} mode="popLayout">
+                                {comments.map((comment, index) => (
+                                    <motion.div
+                                        key={comment.id}
+                                        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.95 }}
+                                        transition={{
+                                            ...springs.gentle,
+                                            delay: index === comments.length - 1 ? 0 : 0,
+                                        }}
+                                        layout
+                                    >
+                                        <ChatComment
+                                            name={comment.name}
+                                            time={comment.time}
+                                            message={comment.message}
+                                            avatarUrl={comment.avatarUrl}
+                                            isCurrentUser={comment.isCurrentUser}
+                                            status={comment.status}
+                                        />
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
                         )}
                     </div>
                 </div>
+
+                {/* New messages indicator with bounce animation */}
+                <AnimatePresence>
+                    {showNewMessages && (
+                        <motion.button
+                            initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                            whileTap={{ scale: 0.95 }}
+                            transition={springs.bouncy}
+                            onClick={scrollToBottom}
+                            className="absolute bottom-2 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-blue-500 text-white text-xs font-medium rounded-full shadow-lg"
+                        >
+                            <motion.span
+                                animate={{ y: [0, -2, 0] }}
+                                transition={{ duration: 1, repeat: Infinity }}
+                            >
+                                ↓ New messages
+                            </motion.span>
+                        </motion.button>
+                    )}
+                </AnimatePresence>
             </div>
         );
     }

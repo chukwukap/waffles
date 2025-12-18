@@ -169,7 +169,12 @@ export function ConfirmationModal({
               <div className="bg-white/5 rounded-xl p-4 mb-6 border border-white/8">
                 <div className="space-y-2.5">
                   {previewItems
-                    .filter((item) => item.value != null && item.value !== "null" && item.value !== "undefined")
+                    .filter(
+                      (item) =>
+                        item.value != null &&
+                        item.value !== "null" &&
+                        item.value !== "undefined"
+                    )
                     .map((item, index) => (
                       <div
                         key={index}

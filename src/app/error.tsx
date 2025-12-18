@@ -37,7 +37,7 @@ export default function GameErrorPage({ error, reset }: ErrorPageProps) {
       {/* Error Container */}
       <div className="flex flex-col items-center gap-3 max-w-[350px]">
         {/* Title */}
-        <h1 className="font-display text-[32px] leading-none text-white uppercase tracking-wide">
+        <h1 className="font-body text-[32px] leading-none text-white uppercase tracking-wide">
           Unhandled Error
         </h1>
 
