@@ -1,12 +1,13 @@
 "use client";
 
-import { Dispatch, SetStateAction, useCallback, useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useCallback, useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import sdk from "@farcaster/miniapp-sdk";
 import { cn } from "@/lib/utils";
 import { notify } from "@/components/ui/Toaster";
+import { playSound } from "@/lib/sounds";
 
 interface LeaveGameDrawerProps {
   open: boolean;
@@ -21,6 +22,15 @@ export default function LeaveGameDrawer({
 }: LeaveGameDrawerProps) {
   const router = useRouter();
   const [isLeaving, setIsLeaving] = useState(false);
+  const prevOpen = useRef(false);
+
+  // Play warning sound when drawer opens
+  useEffect(() => {
+    if (open && !prevOpen.current) {
+      playSound("exitWarning");
+    }
+    prevOpen.current = open;
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;

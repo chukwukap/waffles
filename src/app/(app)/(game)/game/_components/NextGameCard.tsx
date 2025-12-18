@@ -21,20 +21,6 @@ interface NextGameCardProps {
   onPurchaseSuccess?: () => void;
 }
 
-// Dotted pattern background component
-function DottedPattern() {
-  return (
-    <div
-      className="absolute inset-0 overflow-hidden pointer-events-none"
-      style={{
-        backgroundImage: `radial-gradient(circle, #18181B 1.5px, transparent 1.5px)`,
-        backgroundSize: "7px 7px",
-        opacity: 0.5,
-      }}
-    />
-  );
-}
-
 export function NextGameCard({
   gameId,
   theme,
@@ -100,9 +86,6 @@ export function NextGameCard({
           boxShadow: "0px 5px 5.2px 8px rgba(12, 12, 14, 0.5)",
         }}
       >
-        {/* Dotted Pattern Background */}
-        <DottedPattern />
-
         {/* Header */}
         <div
           className="relative flex justify-center items-center gap-2 shrink-0 z-10"

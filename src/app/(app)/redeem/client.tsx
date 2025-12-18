@@ -15,6 +15,7 @@ import {
   triggerShake,
   triggerPulse,
 } from "@/lib/animations";
+import { playSound } from "@/lib/sounds";
 
 import { InvitePageHeader } from "./_components/InviteHeader";
 import { InviteInput } from "./_components/InviteInput";
@@ -90,6 +91,7 @@ export default function InvitePageClient() {
     if (result.valid) {
       setStatus("success");
       setError(null);
+      playSound("codeValid");
 
       // Celebration animation on key
       keyControls.start({
@@ -105,6 +107,7 @@ export default function InvitePageClient() {
     } else {
       setStatus("failed");
       setError(result.error);
+      playSound("codeInvalid");
       // Shake the input on error
       triggerShake(inputControls);
       // Wiggle the key

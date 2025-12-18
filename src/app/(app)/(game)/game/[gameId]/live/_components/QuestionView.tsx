@@ -5,6 +5,7 @@ import { useLiveGame } from "../LiveGameProvider";
 import { QuestionCardHeader } from "./QuestionCardHeader";
 import { QuestionOption } from "./QuestionOption";
 import { PALETTES } from "@/lib/constants";
+import { playSound } from "@/lib/sounds";
 import type { LiveGameQuestion } from "../page";
 
 // ==========================================
@@ -35,6 +36,7 @@ export default function QuestionView({
     const handleSelect = (index: number) => {
         if (isAnswered) return;
         submitAnswer(index);
+        playSound("answerSubmit");
     };
 
     return (

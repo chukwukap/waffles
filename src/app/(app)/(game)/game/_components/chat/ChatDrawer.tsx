@@ -7,6 +7,7 @@ import Backdrop from "@/components/ui/Backdrop";
 import { ChatMessageList } from "./ChatMessageList";
 import { useGameStore, selectIsConnected, selectSendChat } from "@/lib/game-store";
 import { springs } from "@/lib/animations";
+import { playSound } from "@/lib/sounds";
 
 // ==========================================
 // TYPES
@@ -49,6 +50,7 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
 
             try {
                 sendChat(currentMessage);
+                playSound("chatSend");
                 setTimeout(() => messageListRef.current?.scrollToBottom(), 100);
             } catch (err) {
                 console.error("Failed to send:", err);

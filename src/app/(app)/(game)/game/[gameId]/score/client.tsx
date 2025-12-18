@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect, useMemo } from "react";
+import { use, useState, useEffect, useMemo, useRef } from "react";
 import WinningsCard from "../_component/WinningsCard";
 import Leaderboard from "./_components/Leaderboard";
 import Image from "next/image";
@@ -8,6 +8,7 @@ import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { FlashIcon } from "@/components/icons";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
 import { BottomNav } from "@/components/BottomNav";
+import { playSound } from "@/lib/sounds";
 import sdk from "@farcaster/miniapp-sdk";
 import Link from "next/link";
 
@@ -43,6 +44,7 @@ export default function ScorePageClient({
   const [userInfo, setUserInfo] = useState<{ fid: number; username: string; pfpUrl: string } | null>(null);
   const [userScore, setUserScore] = useState<UserScore | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const hasPlayedSound = useRef(false);
 
   // Top 3 for leaderboard display
   const leaderboard = useMemo(() => {
@@ -85,6 +87,12 @@ export default function ScorePageClient({
             winnings: player.prize ?? 0,
             percentile: Math.max(0, Math.min(100, percentile)),
           });
+
+          // Play victory or defeat sound based on rank (only once)
+          if (!hasPlayedSound.current) {
+            hasPlayedSound.current = true;
+            playSound(rank <= 3 ? "victory" : "defeat");
+          }
         }
       } catch (error) {
         console.error("Error fetching user score:", error);

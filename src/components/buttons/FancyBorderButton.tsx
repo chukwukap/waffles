@@ -4,6 +4,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { motion, HTMLMotionProps } from "framer-motion";
 import { springs, tapBounce, hoverLift } from "@/lib/animations";
+import { playSound } from "@/lib/sounds";
 
 interface FancyBorderButtonProps extends Omit<HTMLMotionProps<"button">, "children"> {
   children: React.ReactNode;
@@ -25,6 +26,17 @@ export const FancyBorderButton = React.forwardRef<
     },
     ref
   ) => {
+    // Wrap onClick to play click sound
+    const handleClick = React.useCallback(
+      (e: React.MouseEvent<HTMLButtonElement>) => {
+        if (!disabled) {
+          playSound("click");
+        }
+        onClick?.(e);
+      },
+      [onClick, disabled]
+    );
+
     return (
       <motion.button
         ref={ref}
@@ -44,7 +56,7 @@ export const FancyBorderButton = React.forwardRef<
           "disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100",
           className
         )}
-        onClick={onClick}
+        onClick={handleClick}
         disabled={disabled}
         {...props}
       >

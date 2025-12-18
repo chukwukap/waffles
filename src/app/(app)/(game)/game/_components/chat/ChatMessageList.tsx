@@ -6,6 +6,7 @@ import { ChatComment } from "./ChatComment";
 import { useGameStore, selectMessages, type ChatMessage } from "@/lib/game-store";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { springs } from "@/lib/animations";
+import { playSound } from "@/lib/sounds";
 
 // ==========================================
 // TYPES
@@ -62,6 +63,19 @@ export const ChatMessageList = forwardRef<ChatMessageListRef, ChatMessageListPro
 
         const storeMessages = useGameStore(selectMessages);
         const comments = storeMessages.map((m) => mapMessageToComment(m, username));
+        const prevMessageCount = useRef(storeMessages.length);
+
+        // Play sound when new message from others arrives
+        useEffect(() => {
+            if (storeMessages.length > prevMessageCount.current) {
+                const latestMessage = storeMessages[storeMessages.length - 1];
+                // Only play sound for messages from others
+                if (latestMessage && latestMessage.username !== username) {
+                    playSound("chatReceive");
+                }
+            }
+            prevMessageCount.current = storeMessages.length;
+        }, [storeMessages, username]);
 
         // Expose scrollToBottom via ref
         useImperativeHandle(ref, () => ({
