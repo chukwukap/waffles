@@ -889,7 +889,7 @@ export function GameForm({
                     <div>
                       <div className="text-xs text-white/40">Entry Fee</div>
                       <div className="text-lg font-bold text-[#FFC931]">
-                        ${entryFee || "0"}
+                        ${tierPrice1 || "0"}
                       </div>
                     </div>
                     <div className="text-right">
