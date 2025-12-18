@@ -9,6 +9,7 @@ interface NextGameCardProps {
     gameId: number;
     theme: string;
     themeIcon?: string;
+    tierPrices: number[];
     countdown: number;
     hasTicket: boolean;
     isLive: boolean;
@@ -38,6 +39,7 @@ export function NextGameCard({
     gameId,
     theme,
     themeIcon,
+    tierPrices,
     countdown,
     hasTicket,
     isLive,
@@ -279,6 +281,7 @@ export function NextGameCard({
                 gameId={gameId}
                 theme={theme}
                 themeIcon={themeIcon}
+                tierPrices={tierPrices}
                 prizePool={prizePool}
                 onPurchaseSuccess={onPurchaseSuccess}
             />

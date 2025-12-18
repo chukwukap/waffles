@@ -137,6 +137,7 @@ export const GET = withAuth<Params>(
           score: true,
           answered: true,
           paidAt: true,
+          paidAmount: true,
           rank: true,
           prize: true,
           createdAt: true,
@@ -178,11 +179,18 @@ export const POST = withAuth<Params>(
       }
 
       const body = await request.json();
-      const { txHash } = body;
+      const { txHash, paidAmount } = body;
 
       if (!txHash || typeof txHash !== "string") {
         return NextResponse.json<ApiError>(
           { error: "Transaction hash is required", code: "INVALID_INPUT" },
+          { status: 400 }
+        );
+      }
+
+      if (typeof paidAmount !== "number" || paidAmount <= 0) {
+        return NextResponse.json<ApiError>(
+          { error: "Valid paidAmount is required", code: "INVALID_INPUT" },
           { status: 400 }
         );
       }
@@ -210,7 +218,7 @@ export const POST = withAuth<Params>(
           endsAt: true,
           playerCount: true,
           maxPlayers: true,
-          ticketPrice: true,
+          tierPrices: true,
         },
       });
 
@@ -244,6 +252,18 @@ export const POST = withAuth<Params>(
             { status: 400 }
           );
         }
+
+        // Validate that paid amount matches one of the tier prices
+        const verifiedAmount = Number(verified.amount) / 1e6; // Convert from USDC decimals
+        if (!game.tierPrices.includes(verifiedAmount)) {
+          return NextResponse.json<ApiError>(
+            {
+              error: "Invalid tier amount",
+              code: "INVALID_TIER",
+            },
+            { status: 400 }
+          );
+        }
       }
 
       // Game time/capacity checks
@@ -268,6 +288,7 @@ export const POST = withAuth<Params>(
             gameId,
             userId: auth.userId,
             txHash,
+            paidAmount,
             paidAt: new Date(),
           },
         });
@@ -276,7 +297,7 @@ export const POST = withAuth<Params>(
           where: { id: gameId },
           data: {
             playerCount: { increment: 1 },
-            prizePool: { increment: game.ticketPrice },
+            prizePool: { increment: paidAmount },
           },
         });
 

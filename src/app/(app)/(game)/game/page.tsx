@@ -43,7 +43,7 @@ export interface GamePageData {
   coverUrl: string | null;
   startsAt: Date;
   endsAt: Date;
-  ticketPrice: number;
+  tierPrices: number[];
   prizePool: number;
   playerCount: number;
   maxPlayers: number;
@@ -78,7 +78,7 @@ const getActiveGame = cache(async (): Promise<GamePageData | null> => {
       coverUrl: true,
       startsAt: true,
       endsAt: true,
-      ticketPrice: true,
+      tierPrices: true,
       prizePool: true,
       playerCount: true,
       maxPlayers: true,
@@ -95,7 +95,7 @@ const getActiveGame = cache(async (): Promise<GamePageData | null> => {
     coverUrl: game.coverUrl,
     startsAt: game.startsAt,
     endsAt: game.endsAt,
-    ticketPrice: game.ticketPrice,
+    tierPrices: game.tierPrices,
     prizePool: game.prizePool,
     playerCount: game.playerCount,
     maxPlayers: game.maxPlayers,

@@ -87,7 +87,7 @@ export function GameHub({ game, pastGames }: GameHubProps) {
                 coverUrl: game.coverUrl,
                 startsAt: game.startsAt,
                 endsAt: game.endsAt,
-                ticketPrice: game.ticketPrice,
+                tierPrices: game.tierPrices,
                 prizePool: game.prizePool,
                 playerCount: game.playerCount,
                 maxPlayers: game.maxPlayers,
@@ -198,6 +198,7 @@ export function GameHub({ game, pastGames }: GameHubProps) {
                     gameId={game.id}
                     theme={game.theme}
                     themeIcon={game.coverUrl ?? undefined}
+                    tierPrices={game.tierPrices}
                     countdown={countdown}
                     hasTicket={!!entry}
                     isLive={isLive}

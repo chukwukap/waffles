@@ -1279,7 +1279,7 @@ export const GameScalarFieldEnum = {
   coverUrl: 'coverUrl',
   startsAt: 'startsAt',
   endsAt: 'endsAt',
-  ticketPrice: 'ticketPrice',
+  tierPrices: 'tierPrices',
   prizePool: 'prizePool',
   playerCount: 'playerCount',
   roundBreakSec: 'roundBreakSec',
@@ -1315,6 +1315,7 @@ export const GameEntryScalarFieldEnum = {
   gameId: 'gameId',
   userId: 'userId',
   txHash: 'txHash',
+  paidAmount: 'paidAmount',
   paidAt: 'paidAt',
   score: 'score',
   answered: 'answered',
@@ -1556,16 +1557,16 @@ export type ListEnumGameThemeFieldRefInput<$PrismaModel> = FieldRefInputType<$Pr
 
 
 /**
- * Reference to a field of type 'Float'
+ * Reference to a field of type 'Float[]'
  */
-export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
 
 
 /**
- * Reference to a field of type 'Float[]'
+ * Reference to a field of type 'Float'
  */
-export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
     
 
 

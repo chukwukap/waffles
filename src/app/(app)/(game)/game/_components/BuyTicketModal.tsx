@@ -33,24 +33,21 @@ const erc20Abi = [
     },
 ] as const;
 
-// Tier configuration with selected and unselected gradients
-const TIERS = [
+// Tier gradient configs (index -> gradient)
+const TIER_GRADIENTS = [
     {
-        price: 20,
         gradientSelected: "linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(211, 77, 25, 0.52) 100%)",
         gradientUnselected: "linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(211, 77, 25, 0.2) 100%)",
     },
     {
-        price: 50,
         gradientSelected: "linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.52) 100%)",
         gradientUnselected: "linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.12) 100%)",
     },
     {
-        price: 100,
         gradientSelected: "linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 201, 49, 0.52) 100%)",
         gradientUnselected: "linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 201, 49, 0.12) 100%)",
     },
-] as const;
+];
 
 interface BuyTicketModalProps {
     isOpen: boolean;
@@ -58,6 +55,7 @@ interface BuyTicketModalProps {
     gameId: number;
     theme: string;
     themeIcon?: string;
+    tierPrices: number[];
     prizePool?: number;
     username?: string;
     userAvatar?: string;
@@ -126,6 +124,7 @@ function TierCard({
 function PurchaseContent({
     theme,
     themeIcon,
+    tiers,
     selectedTier,
     setSelectedTier,
     potentialPayout,
@@ -136,6 +135,7 @@ function PurchaseContent({
 }: {
     theme: string;
     themeIcon?: string;
+    tiers: { price: number; gradientSelected: string; gradientUnselected: string }[];
     selectedTier: number;
     setSelectedTier: (index: number) => void;
     potentialPayout: number;
@@ -184,7 +184,7 @@ function PurchaseContent({
 
             {/* Tier Cards */}
             <div className="flex w-full max-w-[361px]" style={{ gap: "clamp(8px, 2vw, 14px)" }}>
-                {TIERS.map((tier, index) => (
+                {tiers.map((tier, index) => (
                     <TierCard
                         key={tier.price}
                         price={tier.price}
@@ -383,6 +383,7 @@ export function BuyTicketModal({
     gameId,
     theme,
     themeIcon,
+    tierPrices,
     prizePool = 0,
     username = "Player",
     userAvatar,
@@ -394,7 +395,13 @@ export function BuyTicketModal({
     const [isSyncing, setIsSyncing] = useState(false);
     const [purchaseComplete, setPurchaseComplete] = useState(false);
 
-    const selectedPrice = TIERS[selectedTier].price;
+    // Generate tiers from tierPrices prop with gradients
+    const tiers = tierPrices.map((price, index) => ({
+        price,
+        ...TIER_GRADIENTS[index % TIER_GRADIENTS.length],
+    }));
+
+    const selectedPrice = tiers[selectedTier]?.price ?? tierPrices[0] ?? 0;
     const potentialPayout = Math.round(selectedPrice * 21.1);
 
     // Contract reads
@@ -550,6 +557,7 @@ export function BuyTicketModal({
                         <PurchaseContent
                             theme={theme}
                             themeIcon={themeIcon}
+                            tiers={tiers}
                             selectedTier={selectedTier}
                             setSelectedTier={setSelectedTier}
                             potentialPayout={potentialPayout}

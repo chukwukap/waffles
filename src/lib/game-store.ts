@@ -20,7 +20,7 @@ export interface GameData {
   coverUrl: string | null;
   startsAt: Date;
   endsAt: Date;
-  ticketPrice: number;
+  tierPrices: number[];
   prizePool: number;
   playerCount: number;
   maxPlayers: number;

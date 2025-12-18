@@ -197,8 +197,8 @@ model Game {
   startsAt DateTime
   endsAt   DateTime
 
-  // -- PRICING --
-  ticketPrice Float @default(5)
+  // -- PRICING (3 tier prices) --
+  tierPrices Float[] @default([20, 50, 100])
 
   // -- PRE-COMPUTED STATS (updated atomically) --
   prizePool   Float @default(0) // Sum of ticket prices
@@ -279,8 +279,9 @@ model GameEntry {
   userId Int
 
   // -- PAYMENT --
-  txHash String?   @db.VarChar(66)
-  paidAt DateTime?
+  txHash     String?   @db.VarChar(66)
+  paidAmount Float? // Tier price paid
+  paidAt     DateTime?
 
   // -- PROGRESS (updated per answer) --
   score    Int @default(0)

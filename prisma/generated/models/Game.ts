@@ -28,7 +28,7 @@ export type AggregateGame = {
 
 export type GameAvgAggregateOutputType = {
   id: number | null
-  ticketPrice: number | null
+  tierPrices: number | null
   prizePool: number | null
   playerCount: number | null
   roundBreakSec: number | null
@@ -37,7 +37,7 @@ export type GameAvgAggregateOutputType = {
 
 export type GameSumAggregateOutputType = {
   id: number | null
-  ticketPrice: number | null
+  tierPrices: number[]
   prizePool: number | null
   playerCount: number | null
   roundBreakSec: number | null
@@ -52,7 +52,6 @@ export type GameMinAggregateOutputType = {
   coverUrl: string | null
   startsAt: Date | null
   endsAt: Date | null
-  ticketPrice: number | null
   prizePool: number | null
   playerCount: number | null
   roundBreakSec: number | null
@@ -69,7 +68,6 @@ export type GameMaxAggregateOutputType = {
   coverUrl: string | null
   startsAt: Date | null
   endsAt: Date | null
-  ticketPrice: number | null
   prizePool: number | null
   playerCount: number | null
   roundBreakSec: number | null
@@ -86,7 +84,7 @@ export type GameCountAggregateOutputType = {
   coverUrl: number
   startsAt: number
   endsAt: number
-  ticketPrice: number
+  tierPrices: number
   prizePool: number
   playerCount: number
   roundBreakSec: number
@@ -99,7 +97,7 @@ export type GameCountAggregateOutputType = {
 
 export type GameAvgAggregateInputType = {
   id?: true
-  ticketPrice?: true
+  tierPrices?: true
   prizePool?: true
   playerCount?: true
   roundBreakSec?: true
@@ -108,7 +106,7 @@ export type GameAvgAggregateInputType = {
 
 export type GameSumAggregateInputType = {
   id?: true
-  ticketPrice?: true
+  tierPrices?: true
   prizePool?: true
   playerCount?: true
   roundBreakSec?: true
@@ -123,7 +121,6 @@ export type GameMinAggregateInputType = {
   coverUrl?: true
   startsAt?: true
   endsAt?: true
-  ticketPrice?: true
   prizePool?: true
   playerCount?: true
   roundBreakSec?: true
@@ -140,7 +137,6 @@ export type GameMaxAggregateInputType = {
   coverUrl?: true
   startsAt?: true
   endsAt?: true
-  ticketPrice?: true
   prizePool?: true
   playerCount?: true
   roundBreakSec?: true
@@ -157,7 +153,7 @@ export type GameCountAggregateInputType = {
   coverUrl?: true
   startsAt?: true
   endsAt?: true
-  ticketPrice?: true
+  tierPrices?: true
   prizePool?: true
   playerCount?: true
   roundBreakSec?: true
@@ -261,7 +257,7 @@ export type GameGroupByOutputType = {
   coverUrl: string | null
   startsAt: Date
   endsAt: Date
-  ticketPrice: number
+  tierPrices: number[]
   prizePool: number
   playerCount: number
   roundBreakSec: number
@@ -301,7 +297,7 @@ export type GameWhereInput = {
   coverUrl?: Prisma.StringNullableFilter<"Game"> | string | null
   startsAt?: Prisma.DateTimeFilter<"Game"> | Date | string
   endsAt?: Prisma.DateTimeFilter<"Game"> | Date | string
-  ticketPrice?: Prisma.FloatFilter<"Game"> | number
+  tierPrices?: Prisma.FloatNullableListFilter<"Game">
   prizePool?: Prisma.FloatFilter<"Game"> | number
   playerCount?: Prisma.IntFilter<"Game"> | number
   roundBreakSec?: Prisma.IntFilter<"Game"> | number
@@ -321,7 +317,7 @@ export type GameOrderByWithRelationInput = {
   coverUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   startsAt?: Prisma.SortOrder
   endsAt?: Prisma.SortOrder
-  ticketPrice?: Prisma.SortOrder
+  tierPrices?: Prisma.SortOrder
   prizePool?: Prisma.SortOrder
   playerCount?: Prisma.SortOrder
   roundBreakSec?: Prisma.SortOrder
@@ -344,7 +340,7 @@ export type GameWhereUniqueInput = Prisma.AtLeast<{
   coverUrl?: Prisma.StringNullableFilter<"Game"> | string | null
   startsAt?: Prisma.DateTimeFilter<"Game"> | Date | string
   endsAt?: Prisma.DateTimeFilter<"Game"> | Date | string
-  ticketPrice?: Prisma.FloatFilter<"Game"> | number
+  tierPrices?: Prisma.FloatNullableListFilter<"Game">
   prizePool?: Prisma.FloatFilter<"Game"> | number
   playerCount?: Prisma.IntFilter<"Game"> | number
   roundBreakSec?: Prisma.IntFilter<"Game"> | number
@@ -364,7 +360,7 @@ export type GameOrderByWithAggregationInput = {
   coverUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   startsAt?: Prisma.SortOrder
   endsAt?: Prisma.SortOrder
-  ticketPrice?: Prisma.SortOrder
+  tierPrices?: Prisma.SortOrder
   prizePool?: Prisma.SortOrder
   playerCount?: Prisma.SortOrder
   roundBreakSec?: Prisma.SortOrder
@@ -389,7 +385,7 @@ export type GameScalarWhereWithAggregatesInput = {
   coverUrl?: Prisma.StringNullableWithAggregatesFilter<"Game"> | string | null
   startsAt?: Prisma.DateTimeWithAggregatesFilter<"Game"> | Date | string
   endsAt?: Prisma.DateTimeWithAggregatesFilter<"Game"> | Date | string
-  ticketPrice?: Prisma.FloatWithAggregatesFilter<"Game"> | number
+  tierPrices?: Prisma.FloatNullableListFilter<"Game">
   prizePool?: Prisma.FloatWithAggregatesFilter<"Game"> | number
   playerCount?: Prisma.IntWithAggregatesFilter<"Game"> | number
   roundBreakSec?: Prisma.IntWithAggregatesFilter<"Game"> | number
@@ -405,7 +401,7 @@ export type GameCreateInput = {
   coverUrl?: string | null
   startsAt: Date | string
   endsAt: Date | string
-  ticketPrice?: number
+  tierPrices?: Prisma.GameCreatetierPricesInput | number[]
   prizePool?: number
   playerCount?: number
   roundBreakSec?: number
@@ -425,7 +421,7 @@ export type GameUncheckedCreateInput = {
   coverUrl?: string | null
   startsAt: Date | string
   endsAt: Date | string
-  ticketPrice?: number
+  tierPrices?: Prisma.GameCreatetierPricesInput | number[]
   prizePool?: number
   playerCount?: number
   roundBreakSec?: number
@@ -444,7 +440,7 @@ export type GameUpdateInput = {
   coverUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  ticketPrice?: Prisma.FloatFieldUpdateOperationsInput | number
+  tierPrices?: Prisma.GameUpdatetierPricesInput | number[]
   prizePool?: Prisma.FloatFieldUpdateOperationsInput | number
   playerCount?: Prisma.IntFieldUpdateOperationsInput | number
   roundBreakSec?: Prisma.IntFieldUpdateOperationsInput | number
@@ -464,7 +460,7 @@ export type GameUncheckedUpdateInput = {
   coverUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  ticketPrice?: Prisma.FloatFieldUpdateOperationsInput | number
+  tierPrices?: Prisma.GameUpdatetierPricesInput | number[]
   prizePool?: Prisma.FloatFieldUpdateOperationsInput | number
   playerCount?: Prisma.IntFieldUpdateOperationsInput | number
   roundBreakSec?: Prisma.IntFieldUpdateOperationsInput | number
@@ -484,7 +480,7 @@ export type GameCreateManyInput = {
   coverUrl?: string | null
   startsAt: Date | string
   endsAt: Date | string
-  ticketPrice?: number
+  tierPrices?: Prisma.GameCreatetierPricesInput | number[]
   prizePool?: number
   playerCount?: number
   roundBreakSec?: number
@@ -500,7 +496,7 @@ export type GameUpdateManyMutationInput = {
   coverUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  ticketPrice?: Prisma.FloatFieldUpdateOperationsInput | number
+  tierPrices?: Prisma.GameUpdatetierPricesInput | number[]
   prizePool?: Prisma.FloatFieldUpdateOperationsInput | number
   playerCount?: Prisma.IntFieldUpdateOperationsInput | number
   roundBreakSec?: Prisma.IntFieldUpdateOperationsInput | number
@@ -517,13 +513,21 @@ export type GameUncheckedUpdateManyInput = {
   coverUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  ticketPrice?: Prisma.FloatFieldUpdateOperationsInput | number
+  tierPrices?: Prisma.GameUpdatetierPricesInput | number[]
   prizePool?: Prisma.FloatFieldUpdateOperationsInput | number
   playerCount?: Prisma.IntFieldUpdateOperationsInput | number
   roundBreakSec?: Prisma.IntFieldUpdateOperationsInput | number
   maxPlayers?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type FloatNullableListFilter<$PrismaModel = never> = {
+  equals?: number[] | Prisma.ListFloatFieldRefInput<$PrismaModel> | null
+  has?: number | Prisma.FloatFieldRefInput<$PrismaModel> | null
+  hasEvery?: number[] | Prisma.ListFloatFieldRefInput<$PrismaModel>
+  hasSome?: number[] | Prisma.ListFloatFieldRefInput<$PrismaModel>
+  isEmpty?: boolean
 }
 
 export type GameCountOrderByAggregateInput = {
@@ -534,7 +538,7 @@ export type GameCountOrderByAggregateInput = {
   coverUrl?: Prisma.SortOrder
   startsAt?: Prisma.SortOrder
   endsAt?: Prisma.SortOrder
-  ticketPrice?: Prisma.SortOrder
+  tierPrices?: Prisma.SortOrder
   prizePool?: Prisma.SortOrder
   playerCount?: Prisma.SortOrder
   roundBreakSec?: Prisma.SortOrder
@@ -545,7 +549,7 @@ export type GameCountOrderByAggregateInput = {
 
 export type GameAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  ticketPrice?: Prisma.SortOrder
+  tierPrices?: Prisma.SortOrder
   prizePool?: Prisma.SortOrder
   playerCount?: Prisma.SortOrder
   roundBreakSec?: Prisma.SortOrder
@@ -560,7 +564,6 @@ export type GameMaxOrderByAggregateInput = {
   coverUrl?: Prisma.SortOrder
   startsAt?: Prisma.SortOrder
   endsAt?: Prisma.SortOrder
-  ticketPrice?: Prisma.SortOrder
   prizePool?: Prisma.SortOrder
   playerCount?: Prisma.SortOrder
   roundBreakSec?: Prisma.SortOrder
@@ -577,7 +580,6 @@ export type GameMinOrderByAggregateInput = {
   coverUrl?: Prisma.SortOrder
   startsAt?: Prisma.SortOrder
   endsAt?: Prisma.SortOrder
-  ticketPrice?: Prisma.SortOrder
   prizePool?: Prisma.SortOrder
   playerCount?: Prisma.SortOrder
   roundBreakSec?: Prisma.SortOrder
@@ -588,7 +590,7 @@ export type GameMinOrderByAggregateInput = {
 
 export type GameSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  ticketPrice?: Prisma.SortOrder
+  tierPrices?: Prisma.SortOrder
   prizePool?: Prisma.SortOrder
   playerCount?: Prisma.SortOrder
   roundBreakSec?: Prisma.SortOrder
@@ -600,8 +602,17 @@ export type GameScalarRelationFilter = {
   isNot?: Prisma.GameWhereInput
 }
 
+export type GameCreatetierPricesInput = {
+  set: number[]
+}
+
 export type EnumGameThemeFieldUpdateOperationsInput = {
   set?: $Enums.GameTheme
+}
+
+export type GameUpdatetierPricesInput = {
+  set?: number[]
+  push?: number | number[]
 }
 
 export type FloatFieldUpdateOperationsInput = {
@@ -661,7 +672,7 @@ export type GameCreateWithoutQuestionsInput = {
   coverUrl?: string | null
   startsAt: Date | string
   endsAt: Date | string
-  ticketPrice?: number
+  tierPrices?: Prisma.GameCreatetierPricesInput | number[]
   prizePool?: number
   playerCount?: number
   roundBreakSec?: number
@@ -680,7 +691,7 @@ export type GameUncheckedCreateWithoutQuestionsInput = {
   coverUrl?: string | null
   startsAt: Date | string
   endsAt: Date | string
-  ticketPrice?: number
+  tierPrices?: Prisma.GameCreatetierPricesInput | number[]
   prizePool?: number
   playerCount?: number
   roundBreakSec?: number
@@ -714,7 +725,7 @@ export type GameUpdateWithoutQuestionsInput = {
   coverUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  ticketPrice?: Prisma.FloatFieldUpdateOperationsInput | number
+  tierPrices?: Prisma.GameUpdatetierPricesInput | number[]
   prizePool?: Prisma.FloatFieldUpdateOperationsInput | number
   playerCount?: Prisma.IntFieldUpdateOperationsInput | number
   roundBreakSec?: Prisma.IntFieldUpdateOperationsInput | number
@@ -733,7 +744,7 @@ export type GameUncheckedUpdateWithoutQuestionsInput = {
   coverUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  ticketPrice?: Prisma.FloatFieldUpdateOperationsInput | number
+  tierPrices?: Prisma.GameUpdatetierPricesInput | number[]
   prizePool?: Prisma.FloatFieldUpdateOperationsInput | number
   playerCount?: Prisma.IntFieldUpdateOperationsInput | number
   roundBreakSec?: Prisma.IntFieldUpdateOperationsInput | number
@@ -751,7 +762,7 @@ export type GameCreateWithoutEntriesInput = {
   coverUrl?: string | null
   startsAt: Date | string
   endsAt: Date | string
-  ticketPrice?: number
+  tierPrices?: Prisma.GameCreatetierPricesInput | number[]
   prizePool?: number
   playerCount?: number
   roundBreakSec?: number
@@ -770,7 +781,7 @@ export type GameUncheckedCreateWithoutEntriesInput = {
   coverUrl?: string | null
   startsAt: Date | string
   endsAt: Date | string
-  ticketPrice?: number
+  tierPrices?: Prisma.GameCreatetierPricesInput | number[]
   prizePool?: number
   playerCount?: number
   roundBreakSec?: number
@@ -804,7 +815,7 @@ export type GameUpdateWithoutEntriesInput = {
   coverUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  ticketPrice?: Prisma.FloatFieldUpdateOperationsInput | number
+  tierPrices?: Prisma.GameUpdatetierPricesInput | number[]
   prizePool?: Prisma.FloatFieldUpdateOperationsInput | number
   playerCount?: Prisma.IntFieldUpdateOperationsInput | number
   roundBreakSec?: Prisma.IntFieldUpdateOperationsInput | number
@@ -823,7 +834,7 @@ export type GameUncheckedUpdateWithoutEntriesInput = {
   coverUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  ticketPrice?: Prisma.FloatFieldUpdateOperationsInput | number
+  tierPrices?: Prisma.GameUpdatetierPricesInput | number[]
   prizePool?: Prisma.FloatFieldUpdateOperationsInput | number
   playerCount?: Prisma.IntFieldUpdateOperationsInput | number
   roundBreakSec?: Prisma.IntFieldUpdateOperationsInput | number
@@ -841,7 +852,7 @@ export type GameCreateWithoutChatsInput = {
   coverUrl?: string | null
   startsAt: Date | string
   endsAt: Date | string
-  ticketPrice?: number
+  tierPrices?: Prisma.GameCreatetierPricesInput | number[]
   prizePool?: number
   playerCount?: number
   roundBreakSec?: number
@@ -860,7 +871,7 @@ export type GameUncheckedCreateWithoutChatsInput = {
   coverUrl?: string | null
   startsAt: Date | string
   endsAt: Date | string
-  ticketPrice?: number
+  tierPrices?: Prisma.GameCreatetierPricesInput | number[]
   prizePool?: number
   playerCount?: number
   roundBreakSec?: number
@@ -894,7 +905,7 @@ export type GameUpdateWithoutChatsInput = {
   coverUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  ticketPrice?: Prisma.FloatFieldUpdateOperationsInput | number
+  tierPrices?: Prisma.GameUpdatetierPricesInput | number[]
   prizePool?: Prisma.FloatFieldUpdateOperationsInput | number
   playerCount?: Prisma.IntFieldUpdateOperationsInput | number
   roundBreakSec?: Prisma.IntFieldUpdateOperationsInput | number
@@ -913,7 +924,7 @@ export type GameUncheckedUpdateWithoutChatsInput = {
   coverUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   startsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  ticketPrice?: Prisma.FloatFieldUpdateOperationsInput | number
+  tierPrices?: Prisma.GameUpdatetierPricesInput | number[]
   prizePool?: Prisma.FloatFieldUpdateOperationsInput | number
   playerCount?: Prisma.IntFieldUpdateOperationsInput | number
   roundBreakSec?: Prisma.IntFieldUpdateOperationsInput | number
@@ -981,7 +992,7 @@ export type GameSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   coverUrl?: boolean
   startsAt?: boolean
   endsAt?: boolean
-  ticketPrice?: boolean
+  tierPrices?: boolean
   prizePool?: boolean
   playerCount?: boolean
   roundBreakSec?: boolean
@@ -1002,7 +1013,7 @@ export type GameSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   coverUrl?: boolean
   startsAt?: boolean
   endsAt?: boolean
-  ticketPrice?: boolean
+  tierPrices?: boolean
   prizePool?: boolean
   playerCount?: boolean
   roundBreakSec?: boolean
@@ -1019,7 +1030,7 @@ export type GameSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   coverUrl?: boolean
   startsAt?: boolean
   endsAt?: boolean
-  ticketPrice?: boolean
+  tierPrices?: boolean
   prizePool?: boolean
   playerCount?: boolean
   roundBreakSec?: boolean
@@ -1036,7 +1047,7 @@ export type GameSelectScalar = {
   coverUrl?: boolean
   startsAt?: boolean
   endsAt?: boolean
-  ticketPrice?: boolean
+  tierPrices?: boolean
   prizePool?: boolean
   playerCount?: boolean
   roundBreakSec?: boolean
@@ -1045,7 +1056,7 @@ export type GameSelectScalar = {
   updatedAt?: boolean
 }
 
-export type GameOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "theme" | "coverUrl" | "startsAt" | "endsAt" | "ticketPrice" | "prizePool" | "playerCount" | "roundBreakSec" | "maxPlayers" | "createdAt" | "updatedAt", ExtArgs["result"]["game"]>
+export type GameOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "theme" | "coverUrl" | "startsAt" | "endsAt" | "tierPrices" | "prizePool" | "playerCount" | "roundBreakSec" | "maxPlayers" | "createdAt" | "updatedAt", ExtArgs["result"]["game"]>
 export type GameInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   questions?: boolean | Prisma.Game$questionsArgs<ExtArgs>
   entries?: boolean | Prisma.Game$entriesArgs<ExtArgs>
@@ -1070,7 +1081,7 @@ export type $GamePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     coverUrl: string | null
     startsAt: Date
     endsAt: Date
-    ticketPrice: number
+    tierPrices: number[]
     prizePool: number
     playerCount: number
     roundBreakSec: number
@@ -1510,7 +1521,7 @@ export interface GameFieldRefs {
   readonly coverUrl: Prisma.FieldRef<"Game", 'String'>
   readonly startsAt: Prisma.FieldRef<"Game", 'DateTime'>
   readonly endsAt: Prisma.FieldRef<"Game", 'DateTime'>
-  readonly ticketPrice: Prisma.FieldRef<"Game", 'Float'>
+  readonly tierPrices: Prisma.FieldRef<"Game", 'Float[]'>
   readonly prizePool: Prisma.FieldRef<"Game", 'Float'>
   readonly playerCount: Prisma.FieldRef<"Game", 'Int'>
   readonly roundBreakSec: Prisma.FieldRef<"Game", 'Int'>
