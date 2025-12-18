@@ -5,6 +5,7 @@ import Link from "next/link";
 interface EntryWithRelations {
     id: number;
     paidAt: Date | null;
+    paidAmount: number | null;
     createdAt: Date;
     score: number;
     rank: number | null;
@@ -16,7 +17,6 @@ interface EntryWithRelations {
     game: {
         id: number;
         title: string;
-        ticketPrice: number;
     };
 }
 
@@ -56,7 +56,6 @@ async function getEntries(searchParams: { page?: string; status?: string; game?:
                     select: {
                         id: true,
                         title: true,
-                        ticketPrice: true,
                     },
                 },
             },
@@ -174,7 +173,7 @@ export default async function TicketsPage({
                                     {entry.game.title}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-[#FFC931]">
-                                    ${entry.game.ticketPrice}
+                                    ${entry.paidAmount ?? 0}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span

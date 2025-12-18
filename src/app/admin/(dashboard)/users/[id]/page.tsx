@@ -29,11 +29,11 @@ async function getUser(id: number) {
             entries: {
                 select: {
                     id: true,
+                    paidAmount: true,
                     game: {
                         select: {
                             id: true,
                             title: true,
-                            ticketPrice: true,
                         },
                     },
                     score: true,
@@ -187,7 +187,7 @@ export default async function UserDetailsPage({
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <div className="font-bold text-[#FFC931]">${entry.game.ticketPrice}</div>
+                                            <div className="font-bold text-[#FFC931]">${entry.paidAmount ?? 0}</div>
                                             <div className={`text-xs ${entry.paidAt
                                                 ? "text-[#14B985]"
                                                 : "text-white/50"

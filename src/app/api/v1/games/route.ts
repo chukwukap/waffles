@@ -36,7 +36,7 @@ export async function GET(request: Request) {
         theme: true,
         startsAt: true,
         endsAt: true,
-        ticketPrice: true,
+        tierPrices: true,
         prizePool: true,
         playerCount: true,
         maxPlayers: true,

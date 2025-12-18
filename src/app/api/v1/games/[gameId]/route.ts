@@ -33,7 +33,7 @@ export async function GET(
         coverUrl: true,
         startsAt: true,
         endsAt: true,
-        ticketPrice: true,
+        tierPrices: true,
         prizePool: true,
         roundBreakSec: true,
         maxPlayers: true,

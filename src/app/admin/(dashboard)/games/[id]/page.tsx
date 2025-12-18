@@ -33,7 +33,7 @@ export default async function GameDetailPage({
             coverUrl: true,
             startsAt: true,
             endsAt: true,
-            ticketPrice: true,
+            tierPrices: true,
             prizePool: true,
             playerCount: true,
             maxPlayers: true,

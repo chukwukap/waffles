@@ -43,7 +43,7 @@ async function getGames(searchParams: { search?: string; status?: string }) {
             endsAt: true,
             playerCount: true,
             prizePool: true,
-            ticketPrice: true,
+            tierPrices: true,
             maxPlayers: true,
             _count: {
                 select: {

@@ -97,7 +97,7 @@ async function getOverviewData(start: Date, end: Date) {
                 endsAt: true,
                 playerCount: true,
                 prizePool: true,
-                ticketPrice: true,
+                tierPrices: true,
             },
         }),
         prisma.game.findMany({
@@ -131,7 +131,7 @@ async function getOverviewData(start: Date, end: Date) {
             where: { paidAt: { not: null } },
             include: {
                 user: { select: { username: true } },
-                game: { select: { title: true, ticketPrice: true } }
+                game: { select: { title: true } }
             },
         }),
         prisma.user.findMany({
@@ -238,7 +238,7 @@ async function getOverviewData(start: Date, end: Date) {
             type: "ticket" as const,
             message: `${e.user.username || "User"} bought a ticket for ${e.game.title}`,
             timestamp: e.paidAt!,
-            metadata: { amount: e.game.ticketPrice }
+            metadata: { amount: e.paidAmount ?? 0 }
         })),
         ...recentSignups.map((u) => ({
             type: "signup" as const,
@@ -331,7 +331,7 @@ async function getGameInsights() {
                 endsAt: true,
                 playerCount: true,
                 prizePool: true,
-                ticketPrice: true,
+                tierPrices: true,
                 maxPlayers: true,
             },
         }),

@@ -12,7 +12,7 @@ export type DuplicateGameResult =
 
 /**
  * Duplicate a game with all its questions
- * Updated for new schema (ticketPrice, orderInRound, no status)
+ * Updated for new schema (tierPrices, orderInRound, no status)
  */
 export async function duplicateGameAction(gameId: number): Promise<void> {
   const authResult = await requireAdminSession();
@@ -46,7 +46,7 @@ export async function duplicateGameAction(gameId: number): Promise<void> {
         // Set dates to future (7 days from now)
         startsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         endsAt: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000),
-        ticketPrice: originalGame.ticketPrice,
+        tierPrices: originalGame.tierPrices,
         prizePool: 0, // New game starts with 0
         playerCount: 0,
         roundBreakSec: originalGame.roundBreakSec,

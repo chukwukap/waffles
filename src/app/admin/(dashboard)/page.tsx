@@ -46,7 +46,7 @@ async function getStats() {
             },
             select: {
                 paidAt: true,
-                game: { select: { ticketPrice: true } },
+                paidAmount: true,
             },
         }),
     ]);
@@ -71,7 +71,7 @@ async function getStats() {
         date: new Date(date).toLocaleDateString('en-US', { weekday: 'short' }),
         amount: recentEntries
             .filter((e: { paidAt: Date | null }) => e.paidAt?.toISOString().startsWith(date))
-            .reduce((sum: number, e: { game: { ticketPrice: number } }) => sum + (e.game.ticketPrice || 0), 0)
+            .reduce((sum: number, e: { paidAmount: number | null }) => sum + (e.paidAmount || 0), 0)
     }));
 
     return {
