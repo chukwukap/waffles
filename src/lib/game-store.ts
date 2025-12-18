@@ -52,6 +52,14 @@ export interface GameEvent {
   timestamp: number;
 }
 
+export interface Reaction {
+  id: string;
+  username: string;
+  pfpUrl: string | null;
+  type: string; // e.g., 'cheer'
+  timestamp: number;
+}
+
 // ==========================================
 // STORE INTERFACE
 // ==========================================
@@ -82,6 +90,7 @@ interface GameStore {
   setMessages: (messages: ChatMessage[]) => void;
   addEvent: (event: GameEvent) => void;
   setEvents: (events: GameEvent[]) => void;
+  addReaction: (reaction: Reaction) => void;
 
   // Actions - Score (optimistic updates)
   updateScore: (points: number) => void;
@@ -97,6 +106,13 @@ interface GameStore {
   // Event function (set by useLive)
   sendEvent: (type: string, content: string) => void;
   setSendEvent: (fn: (type: string, content: string) => void) => void;
+
+  // Reaction function (set by useLive)
+  sendReaction: (type?: string) => void;
+  setSendReaction: (fn: (type?: string) => void) => void;
+
+  // Reactions state
+  reactions: Reaction[];
 }
 
 // ==========================================
@@ -111,8 +127,10 @@ const initialState = {
   onlineCount: 0,
   messages: [],
   events: [],
+  reactions: [],
   sendChat: () => {}, // No-op until useLive sets it
   sendEvent: () => {}, // No-op until useLive sets it
+  sendReaction: () => {}, // No-op until useLive sets it
 };
 
 // ==========================================
@@ -157,6 +175,15 @@ export const useGameStore = create<GameStore>()(
 
       setEvents: (events) => set({ events }, false, "setEvents"),
 
+      addReaction: (reaction) =>
+        set(
+          (state) => ({
+            reactions: [...state.reactions.slice(-29), reaction], // Keep last 30
+          }),
+          false,
+          "addReaction"
+        ),
+
       // Score actions (optimistic)
       updateScore: (points) =>
         set(
@@ -186,6 +213,10 @@ export const useGameStore = create<GameStore>()(
       // Event function setter
       setSendEvent: (fn) => set({ sendEvent: fn }, false, "setSendEvent"),
 
+      // Reaction function setter
+      setSendReaction: (fn) =>
+        set({ sendReaction: fn }, false, "setSendReaction"),
+
       // Reset
       reset: () => set(initialState, false, "reset"),
     }),
@@ -209,3 +240,5 @@ export const selectScore = (state: GameStore) => state.entry?.score ?? 0;
 export const selectAnswered = (state: GameStore) => state.entry?.answered ?? 0;
 export const selectSendChat = (state: GameStore) => state.sendChat;
 export const selectSendEvent = (state: GameStore) => state.sendEvent;
+export const selectReactions = (state: GameStore) => state.reactions;
+export const selectSendReaction = (state: GameStore) => state.sendReaction;

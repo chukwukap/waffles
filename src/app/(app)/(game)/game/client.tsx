@@ -1,25 +1,22 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import sdk from "@farcaster/miniapp-sdk";
 
 import { useGameStore, selectPhase, selectEntry, selectOnlineCount } from "@/lib/game-store";
 import { getGamePhase } from "@/lib/game-utils";
-import { formatTime } from "@/lib/utils";
 import { useTimer } from "@/hooks/useTimer";
 import { useLive } from "@/hooks/useLive";
 import { BottomNav } from "@/components/BottomNav";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
 
-import { GameActionButton } from "./_components/GameActionButton";
 import { GameChat } from "./_components/chat/GameChat";
 import { LiveEventFeed } from "./_components/LiveEventFeed";
-import { GameStatusHeader } from "./_components/GameStatusHeader";
-import { PrizePoolDisplay } from "./_components/PrizePoolDisplay";
-import { PlayerCountDisplay } from "./_components/PlayerCountDisplay";
 import { PastGamesCard } from "./_components/PastGamesCard";
+import { NextGameCard } from "./_components/NextGameCard";
+import { CheerOverlay } from "./_components/CheerOverlay";
 
 import type { GamePageData, PastGameData } from "./page";
 
@@ -146,75 +143,6 @@ export function GameHub({ game, pastGames }: GameHubProps) {
     const hasEnded = phase === "ENDED";
     const isEmpty = !game;
 
-    // Prize pool calculation
-    const prizePool = game?.prizePool ?? 0;
-    const formattedPrize = `$${prizePool.toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    })}`;
-
-    // Status helpers
-    const getStatusText = () => {
-        if (!game) return "NO UPCOMING GAMES";
-        if (hasEnded) return "Game has ended";
-        if (isLive) return "Game is LIVE";
-        return "GAME STARTS IN";
-    };
-
-    const renderActionButton = () => {
-        if (!game) return null;
-
-        const pink = "var(--color-neon-pink)";
-
-        if (hasEnded) {
-            return <GameActionButton disabled>ENDED</GameActionButton>;
-        }
-
-        // User already has ticket
-        if (entry) {
-            if (isLive) {
-                return (
-                    <GameActionButton
-                        href={`/game/${game.id}/live`}
-                        backgroundColor={pink}
-                        variant="wide"
-                        textColor="dark"
-                    >
-                        START
-                    </GameActionButton>
-                );
-            }
-            // Has ticket, waiting for game to start - show countdown
-            return (
-                <GameActionButton disabled>
-                    {formatTime(countdown)}
-                </GameActionButton>
-            );
-        }
-
-        // No ticket - show GET TICKET if live, countdown if scheduled
-        if (isLive) {
-            return (
-                <GameActionButton
-                    href={`/game/${game.id}/ticket`}
-                    backgroundColor={pink}
-                    variant="wide"
-                    textColor="dark"
-                >
-                    GET TICKET
-                </GameActionButton>
-            );
-        }
-
-        // Scheduled - show countdown (buy button added separately below)
-        return (
-            <GameActionButton>{formatTime(countdown)}</GameActionButton>
-        );
-    };
-
-    // Show buy ticket CTA when game is scheduled and user has no ticket
-    const showBuyTicketCTA = game && !hasEnded && !isLive && !entry;
-
     // ==========================================
     // RENDER: Access Check Loading
     // ==========================================
@@ -265,43 +193,35 @@ export function GameHub({ game, pastGames }: GameHubProps) {
 
     return (
         <>
-            <section className="flex-1 overflow-y-auto space-y-1 px-3">
-                <GameStatusHeader
-                    statusText={getStatusText()}
-                    actionButton={renderActionButton()}
+            <section className="flex-1 flex flex-col justify-center items-center overflow-hidden px-4 py-4">
+                <NextGameCard
+                    gameId={game.id}
+                    theme={game.theme}
+                    themeIcon={game.coverUrl ?? undefined}
+                    countdown={countdown}
+                    hasTicket={!!entry}
+                    isLive={isLive}
+                    hasEnded={hasEnded}
+                    prizePool={game.prizePool ?? 0}
+                    spotsTotal={game.maxPlayers ?? 100}
+                    spotsTaken={game.playerCount ?? 0}
                 />
-
-                <PrizePoolDisplay formattedPrizePool={formattedPrize} />
-
-                <PlayerCountDisplay
-                    mutualsCount={0}
-                    playerCount={game.playerCount}
-                    avatars={[]}
-                />
-
-                {/* Buy Ticket CTA - shown when game is scheduled and user has no ticket */}
-                {showBuyTicketCTA && (
-                    <div className="flex justify-center py-4">
-                        <a
-                            href={`/game/${game.id}/ticket`}
-                            className="flex items-center gap-2 px-6 py-3 bg-(--color-neon-pink) text-black font-body font-bold text-lg rounded-xl hover:opacity-90 transition-opacity"
-                        >
-                            🎫 GET YOUR TICKET
-                        </a>
-                    </div>
-                )}
-
-                <LiveEventFeed />
             </section>
 
+            {/* Live Event Feed */}
+            <div className="shrink-0 w-full px-4">
+                <LiveEventFeed />
+            </div>
+
             {/* GameChat */}
-            <div className="w-full bg-[#0E0E0E] border-t border-white/10 px-4 py-3">
+            <div className="shrink-0 w-full bg-[#0E0E0E] border-t border-white/10 px-4 py-3">
                 <div className="w-full max-w-lg mx-auto">
                     <GameChat />
                 </div>
             </div>
 
             <BottomNav />
+            <CheerOverlay />
         </>
     );
 }

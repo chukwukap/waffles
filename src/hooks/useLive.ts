@@ -52,11 +52,18 @@ interface EventPayload {
   ts: number;
 }
 
+interface ReactionPayload {
+  u: string; // username
+  p?: string | null; // pfp
+  r: string; // reaction type (e.g. 'cheer')
+}
+
 type IncomingMessage =
   | { t: "s"; d: SyncPayload }
   | { t: "p"; d: PresencePayload }
   | { t: "c"; d: ChatPayload }
   | { t: "e"; d: EventPayload }
+  | { t: "r"; d: ReactionPayload }
   | { t: "a"; d: { u: string; p?: string | null; q: number; c: boolean } };
 
 // ==========================================
@@ -94,6 +101,8 @@ export function useLive({
     setEvents,
     setSendChat,
     setSendEvent,
+    addReaction,
+    setSendReaction,
   } = useGameStore();
 
   // Handle incoming messages
@@ -158,6 +167,16 @@ export function useLive({
               username: msg.d.u,
               pfpUrl: msg.d.p || null,
               content: msg.d.c ? "answered correctly!" : "answered",
+              timestamp: Date.now(),
+            });
+            break;
+
+          case "r": // Reaction (cheers)
+            addReaction({
+              id: `reaction-${Date.now()}-${Math.random()}`,
+              username: msg.d.u,
+              pfpUrl: msg.d.p || null,
+              type: msg.d.r,
               timestamp: Date.now(),
             });
             break;
@@ -262,21 +281,44 @@ export function useLive({
     }
   }, []);
 
-  // Register sendChat and sendEvent with store so other components can use them
+  // Send reaction (e.g., cheer)
+  const sendReaction = useCallback((reactionType: string = "cheer") => {
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      socketRef.current.send(
+        JSON.stringify({
+          t: "r",
+          r: reactionType,
+        })
+      );
+    }
+  }, []);
+
+  // Register sendChat, sendEvent, and sendReaction with store so other components can use them
   useEffect(() => {
     if (enabled && socketRef.current) {
       setSendChat(sendChat);
       setSendEvent(sendEvent);
+      setSendReaction(sendReaction);
     }
     return () => {
       // Clear on unmount
       setSendChat(() => {});
       setSendEvent(() => {});
+      setSendReaction(() => {});
     };
-  }, [enabled, sendChat, sendEvent, setSendChat, setSendEvent]);
+  }, [
+    enabled,
+    sendChat,
+    sendEvent,
+    sendReaction,
+    setSendChat,
+    setSendEvent,
+    setSendReaction,
+  ]);
 
   return {
     sendChat,
     sendEvent,
+    sendReaction,
   };
 }

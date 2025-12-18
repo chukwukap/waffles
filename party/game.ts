@@ -206,6 +206,19 @@ export default class GameServer implements Party.Server {
           });
           break;
         }
+        case "r": {
+          // r = reaction (cheers, etc.) - broadcast directly without storing
+          // This goes to all clients but doesn't pollute the event feed
+          this.broadcast({
+            t: "r",
+            d: {
+              u: user.username,
+              p: user.pfpUrl,
+              r: data.r || "cheer", // reaction type
+            },
+          });
+          break;
+        }
       }
     } catch (e) {
       console.error("Failed to parse message", e);
