@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { motion, AnimatePresence, useAnimation } from "motion/react";
+import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { BuyTicketModal } from "./BuyTicketModal";
 import {

@@ -1,7 +1,7 @@
 "use client";
 
 import { memo } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useGameStore, selectEvents, selectMessages } from "@/lib/game-store";
 import { springs } from "@/lib/animations";
 
