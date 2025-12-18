@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 
 interface ErrorPageProps {
@@ -9,6 +10,8 @@ interface ErrorPageProps {
 }
 
 export default function GameErrorPage({ error, reset }: ErrorPageProps) {
+  const [showDetails, setShowDetails] = useState(false);
+
   useEffect(() => {
     console.error("Game Segment Error:", error);
   }, [error]);
@@ -18,73 +21,62 @@ export default function GameErrorPage({ error, reset }: ErrorPageProps) {
       className="
         flex flex-col items-center justify-center
         min-h-[80dvh]
-        w-full px-4 sm:px-8 py-8
+        w-full px-4
         text-center
-        text-foreground
       "
-      style={{
-        minHeight: "80dvh",
-      }}
     >
-      <h1
-        className="
-          text-[clamp(1.5rem,5vw,2.25rem)]
-          font-body font-bold text-red-500 mb-2 sm:mb-3
-          leading-tight
-        "
-      >
-        Oops! Waffle Down!
-      </h1>
-      <p
-        className="
-          mb-5 sm:mb-6 text-[clamp(1rem,3vw,1.15rem)]
-          text-muted-foreground font-display
-          max-w-[92vw] sm:max-w-md 
-          mx-auto
-          leading-snug
-        "
-      >
-        Sorry, there was a problem loading or running the game. Please try
-        again.
-      </p>
-      {process.env.NODE_ENV === "development" && error?.message && (
-        <pre
-          className="
-            mb-5 sm:mb-6
-            text-xs sm:text-sm
-            text-red-300
-            bg-red-900/20
-            p-2 sm:p-3
-            rounded
-            max-w-full
-            w-full sm:w-auto
-            overflow-x-auto
-            font-mono
-            text-left
-            wrap-break-word
-          "
-          style={{
-            whiteSpace: "pre-wrap",
-            wordBreak: "break-all",
-          }}
+      {/* Error X Icon */}
+      <Image
+        src="/images/icons/error-x.svg"
+        alt="Error"
+        width={68}
+        height={68}
+        className="mb-8"
+      />
+
+      {/* Error Container */}
+      <div className="flex flex-col items-center gap-3 max-w-[350px]">
+        {/* Title */}
+        <h1 className="font-display text-[32px] leading-none text-white uppercase tracking-wide">
+          Unhandled Error
+        </h1>
+
+        {/* Error Details Toggle */}
+        <button
+          onClick={() => setShowDetails(!showDetails)}
+          className="text-sm text-white/60 font-body font-medium tracking-tight hover:text-white/80 transition-colors"
         >
-          {error.message}
-          {error.digest && `\nDigest: ${error.digest}`}
-          {error.stack &&
-            `\n\nStack Trace:\n${error.stack.substring(0, 500)}...`}
-        </pre>
-      )}
-      <div className="w-full flex justify-center">
-        <FancyBorderButton
-          onClick={reset}
-          className="
-            w-full max-w-xs sm:max-w-sm
-            py-3 px-3 sm:px-5
-            text-base sm:text-lg
-          "
-        >
-          Try Again
-        </FancyBorderButton>
+          {showDetails ? "Hide details" : "Error details"}
+        </button>
+
+        {/* Expandable Error Details */}
+        {showDetails && error?.message && (
+          <div
+            className="
+              mt-2 p-3 w-full
+              text-xs text-red-300
+              bg-red-900/20
+              rounded-lg
+              font-mono text-left
+              max-h-[200px] overflow-auto
+            "
+          >
+            <p className="break-words">{error.message}</p>
+            {error.digest && (
+              <p className="mt-2 text-white/40">Digest: {error.digest}</p>
+            )}
+          </div>
+        )}
+
+        {/* Try Again Button */}
+        <div className="w-full flex justify-center mt-6">
+          <FancyBorderButton
+            onClick={reset}
+            className="w-full max-w-[280px] py-3 px-5 text-base"
+          >
+            Try Again
+          </FancyBorderButton>
+        </div>
       </div>
     </div>
   );
