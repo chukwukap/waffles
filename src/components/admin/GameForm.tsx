@@ -277,6 +277,10 @@ export function GameForm({
     if (!pendingFormData) return [];
 
     const themeData = THEMES.find((t) => t.id === pendingFormData.get("theme"));
+    const tier1 = pendingFormData.get("tierPrice1")?.toString() || "0";
+    const tier3 = pendingFormData.get("tierPrice3")?.toString() || "0";
+    const prizePoolValue = pendingFormData.get("prizePool")?.toString() || "0";
+
     return [
       {
         label: "Title",
@@ -288,10 +292,13 @@ export function GameForm({
           ? `${themeData.icon} ${themeData.label}`
           : "Not selected",
       },
-      { label: "Entry Fee", value: `$${pendingFormData.get("entryFee")} USDC` },
+      {
+        label: "Ticket Tiers",
+        value: `$${tier1} - $${tier3} USDC`,
+      },
       {
         label: "Prize Pool",
-        value: `$${pendingFormData.get("prizePool")} USDC`,
+        value: `$${prizePoolValue} USDC`,
       },
       {
         label: "Starts At",

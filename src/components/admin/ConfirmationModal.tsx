@@ -168,17 +168,19 @@ export function ConfirmationModal({
             {previewItems && previewItems.length > 0 && (
               <div className="bg-white/5 rounded-xl p-4 mb-6 border border-white/8">
                 <div className="space-y-2.5">
-                  {previewItems.map((item, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between text-sm admin-table-row py-1.5 last:border-b-0"
-                    >
-                      <span className="text-white/50">{item.label}</span>
-                      <span className="text-white font-medium truncate max-w-[60%] text-right">
-                        {item.value}
-                      </span>
-                    </div>
-                  ))}
+                  {previewItems
+                    .filter((item) => item.value != null && item.value !== "null" && item.value !== "undefined")
+                    .map((item, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between text-sm admin-table-row py-1.5 last:border-b-0"
+                      >
+                        <span className="text-white/50">{item.label}</span>
+                        <span className="text-white font-medium truncate max-w-[60%] text-right">
+                          {item.value || "—"}
+                        </span>
+                      </div>
+                    ))}
                 </div>
               </div>
             )}
