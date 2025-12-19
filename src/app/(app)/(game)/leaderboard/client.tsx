@@ -242,12 +242,8 @@ export default function LeaderboardClient({
 
         {/* Rest of list */}
         <div className="space-y-3">
-          {rest.map((entry, index) => (
-            <div
-              key={`${activeTab}-${entry.rank}-${entry.id}`}
-              className="animate-in fade-in slide-in-from-bottom-2"
-              style={{ animationDelay: `${Math.min(index * 30, 300)}ms` }}
-            >
+          {rest.map((entry) => (
+            <div key={`${activeTab}-${entry.rank}-${entry.id}`}>
               <Row
                 entry={entry}
                 isCurrentUser={userFid != null && entry.fid === userFid}

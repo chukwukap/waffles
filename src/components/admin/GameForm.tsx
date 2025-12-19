@@ -349,7 +349,7 @@ export function GameForm({
       >
         {/* Error Display */}
         {(state && !state.success && "error" in state) || validationError ? (
-          <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center gap-3 text-red-400 animate-in slide-in-from-top-2 duration-300">
+          <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center gap-3 text-red-400">
             <ExclamationCircleIcon className="h-5 w-5 shrink-0" />
             <p className="text-sm font-medium">
               {validationError ||
@@ -404,8 +404,8 @@ export function GameForm({
                       setValidationError(null);
                     }}
                     className={`relative group p-4 rounded-2xl border-2 transition-all duration-300 ${selectedTheme === theme.id
-                        ? `border-white/30 bg-linear-to-br ${theme.color} shadow-lg ${theme.glowColor}`
-                        : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"
+                      ? `border-white/30 bg-linear-to-br ${theme.color} shadow-lg ${theme.glowColor}`
+                      : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"
                       }`}
                   >
                     {selectedTheme === theme.id && (
@@ -598,8 +598,8 @@ export function GameForm({
                       type="button"
                       onClick={() => applyPreset(preset.id)}
                       className={`relative p-4 rounded-xl border transition-all duration-200 text-left ${activePreset === preset.id
-                          ? "border-[#FFC931] bg-[#FFC931]/10"
-                          : "border-white/10 bg-white/5 hover:bg-white/8 hover:border-white/20"
+                        ? "border-[#FFC931] bg-[#FFC931]/10"
+                        : "border-white/10 bg-white/5 hover:bg-white/8 hover:border-white/20"
                         }`}
                     >
                       {activePreset === preset.id && (
@@ -609,8 +609,8 @@ export function GameForm({
                       )}
                       <preset.icon
                         className={`h-5 w-5 mb-2 ${activePreset === preset.id
-                            ? "text-[#FFC931]"
-                            : "text-white/60"
+                          ? "text-[#FFC931]"
+                          : "text-white/60"
                           }`}
                       />
                       <div className="font-bold text-white text-sm">
@@ -851,10 +851,10 @@ export function GameForm({
                 {/* Cover Image / Theme Background */}
                 <div
                   className={`h-32 relative ${coverUrl
-                      ? ""
-                      : currentTheme
-                        ? `bg-linear-to-br ${currentTheme.color}`
-                        : "bg-linear-to-br from-white/10 to-white/5"
+                    ? ""
+                    : currentTheme
+                      ? `bg-linear-to-br ${currentTheme.color}`
+                      : "bg-linear-to-br from-white/10 to-white/5"
                     }`}
                 >
                   {coverUrl && (

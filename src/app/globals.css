@@ -1,7 +1,6 @@
 @layer base, components, utilities;
 
 @import "tailwindcss";
-@import "tw-animate-css";
 
 /* Hide scrollbar for Chrome, Safari, and Opera */
 ::-webkit-scrollbar {
@@ -113,7 +112,7 @@ html {
 }
 
 /* ============================================================
-   UTILITIES
+   TAILWIND UTILITIES
    ============================================================ */
 
 /* Pixel corners clip-path (used by PixelButton) */
@@ -142,38 +141,53 @@ html {
   );
 }
 
-/* ============================================================
-   SIMPLE CSS ANIMATIONS (for non-Framer contexts)
-   ============================================================ */
-
-/* Fade-in (used in leaderboard) */
-.fade-in {
-  animation: fadeIn 0.6s ease forwards;
+/* Admin panel - glassmorphism card */
+@utility admin-panel {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+/* Admin panel hover variant */
+@utility admin-panel-hover {
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
   }
 }
 
-/* Slide-up (used in chat) */
-.slide-up {
-  animation: slideUp 0.5s ease forwards;
+/* Admin table row */
+@utility admin-table-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  &:hover {
+    background: rgba(255, 255, 255, 0.03);
+  }
 }
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+
+/* Admin chart container */
+@utility admin-chart-container {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+}
+
+/* Admin stat glow effects */
+@utility admin-stat-glow {
+  text-shadow: 0 0 10px rgba(255, 201, 49, 0.4),
+    0 0 20px rgba(255, 201, 49, 0.2);
+}
+@utility admin-stat-glow-cyan {
+  text-shadow: 0 0 10px rgba(0, 207, 242, 0.4), 0 0 20px rgba(0, 207, 242, 0.2);
+}
+@utility admin-stat-glow-pink {
+  text-shadow: 0 0 10px rgba(251, 114, 255, 0.4),
+    0 0 20px rgba(251, 114, 255, 0.2);
+}
+@utility admin-stat-glow-success {
+  text-shadow: 0 0 10px rgba(20, 185, 133, 0.4),
+    0 0 20px rgba(20, 185, 133, 0.2);
 }
 
 /* ============================================================
@@ -182,7 +196,6 @@ html {
 .app-background {
   --gradient-color-start: #111111;
   --gradient-color-end: #000000;
-
   position: relative;
   background-color: var(--gradient-color-end);
   background-image: linear-gradient(
@@ -197,24 +210,21 @@ html {
 
 .app-background::after {
   --noise-svg: url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  --noise-opacity: 0.09;
-
   content: "";
   position: absolute;
   inset: 0;
   background-image: var(--noise-svg);
-  opacity: var(--noise-opacity);
+  opacity: 0.09;
   pointer-events: none;
   z-index: -1;
 }
 
 /* ============================================================
-   ADMIN DASHBOARD THEME
+   ADMIN BACKGROUND (with noise texture)
    ============================================================ */
 .admin-background {
   --gradient-color-start: #0a0a0b;
   --gradient-color-end: #000000;
-
   position: relative;
   background-color: var(--gradient-color-end);
   background-image: linear-gradient(
@@ -229,46 +239,13 @@ html {
 
 .admin-background::after {
   --noise-svg: url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  --noise-opacity: 0.06;
-
   content: "";
   position: fixed;
   inset: 0;
   background-image: var(--noise-svg);
-  opacity: var(--noise-opacity);
+  opacity: 0.06;
   pointer-events: none;
   z-index: 0;
-}
-
-/* Admin panel/card with glassmorphism */
-.admin-panel {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-md);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-.admin-panel-hover:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.12);
-}
-
-/* Stat glow effects */
-.admin-stat-glow {
-  text-shadow: 0 0 10px rgba(255, 201, 49, 0.4),
-    0 0 20px rgba(255, 201, 49, 0.2);
-}
-.admin-stat-glow-cyan {
-  text-shadow: 0 0 10px rgba(0, 207, 242, 0.4), 0 0 20px rgba(0, 207, 242, 0.2);
-}
-.admin-stat-glow-pink {
-  text-shadow: 0 0 10px rgba(251, 114, 255, 0.4),
-    0 0 20px rgba(251, 114, 255, 0.2);
-}
-.admin-stat-glow-success {
-  text-shadow: 0 0 10px rgba(20, 185, 133, 0.4),
-    0 0 20px rgba(20, 185, 133, 0.2);
 }
 
 /* Admin sidebar */
@@ -280,14 +257,6 @@ html {
   );
   border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
-.admin-sidebar-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-.admin-sidebar-item-active {
-  background: rgba(255, 201, 49, 0.1);
-  border-left: 3px solid var(--brand-gold);
-  color: var(--brand-gold);
-}
 
 /* Admin header */
 .admin-header {
@@ -295,19 +264,4 @@ html {
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-}
-
-/* Admin chart container */
-.admin-chart-container {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: var(--radius-md);
-}
-
-/* Admin table */
-.admin-table-row {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-}
-.admin-table-row:hover {
-  background: rgba(255, 255, 255, 0.03);
 }
