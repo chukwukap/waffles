@@ -20,8 +20,10 @@ export function Row({ entry, isCurrentUser = false }: RowProps) {
     <div
       className={cn(
         "panel flex h-12 items-center justify-between rounded-xl px-3",
+        "transition-all duration-150 ease-out",
+        "hover:bg-white/8 hover:scale-[1.01] active:scale-[0.99]",
         isCurrentUser &&
-        "bg-blue-900/30 ring-1 ring-blue-500/60"
+        "bg-blue-900/30 ring-1 ring-blue-500/60 hover:bg-blue-900/40"
       )}
     >
       <div className="flex items-center gap-2">

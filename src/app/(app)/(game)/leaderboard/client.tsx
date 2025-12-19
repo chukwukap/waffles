@@ -12,46 +12,28 @@ import { WaffleLoader } from "@/components/ui/WaffleLoader";
 import { LeaderboardEntry } from "@/lib/types";
 
 // ============================================
-// MOCK DATA GENERATOR
+// MOCK DATA - Set to false to disable
 // ============================================
-function generateMockEntries(count: number): LeaderboardEntry[] {
-  const mockNames = [
-    "CryptoKing",
-    "WaffleQueen",
-    "BlockchainBoss",
-    "TokenMaster",
-    "DeFiDegen",
-    "NFTNinja",
-    "ChainChamp",
-    "MintMaster",
-    "GasGuru",
-    "StakeSlayer",
-    "YieldYoda",
-    "SwapSensei",
-    "LiquidityLord",
-    "AirdropAce",
-    "BridgeBaron",
-    "VaultViking",
-    "PoolPirate",
-    "FarmFanatic",
-    "HodlHero",
-    "PumpPrince",
-  ];
+const USE_MOCK_DATA = true; // TODO: Set to false for production
 
+function generateMockEntries(count: number): LeaderboardEntry[] {
+  const names = ["CryptoKing", "WaffleQueen", "BlockchainBoss", "TokenMaster", "DeFiDegen", "NFTNinja", "ChainChamp", "MintMaster", "GasGuru", "StakeSlayer"];
   return Array.from({ length: count }, (_, i) => ({
     id: `mock-${i + 1}`,
     rank: i + 1,
     fid: 100000 + i,
-    username:
-      mockNames[i % mockNames.length] +
-      (i >= mockNames.length ? `_${Math.floor(i / mockNames.length)}` : ""),
-    points: Math.max(10000 - i * 250 + Math.floor(Math.random() * 100), 100),
+    username: names[i % names.length] + (i >= names.length ? `_${Math.floor(i / names.length)}` : ""),
+    points: Math.max(10000 - i * 250, 100),
     pfpUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${i}`,
   }));
 }
 
-// Generate 50 mock entries
-const MOCK_ENTRIES = generateMockEntries(50);
+const MOCK_ENTRIES = generateMockEntries(30);
+
+// ============================================
+// CONSTANTS
+// ============================================
+const CROWN_HEIGHT = 180; // Height at which crown fully fades
 
 // ============================================
 // TYPES
@@ -74,26 +56,26 @@ export default function LeaderboardClient({
   const { context } = useMiniKit();
   const userFid = context?.user?.fid ?? null;
 
-  // Use mock data if initialData is empty
-  const dataToUse =
-    initialData.entries.length > 0 ? initialData.entries : MOCK_ENTRIES;
+  // Use mock data if enabled and real data is empty
+  const effectiveData = USE_MOCK_DATA && initialData.entries.length === 0
+    ? MOCK_ENTRIES
+    : initialData.entries;
 
   // ============================================
   // STATE
   // ============================================
-  const [entries, setEntries] = useState(dataToUse);
-  const [hasMore, setHasMore] = useState(
-    initialData.entries.length > 0 ? initialData.hasMore : false
-  );
-  const [page, setPage] = useState(1); // Page 0 was fetched on server
+  const [entries, setEntries] = useState(effectiveData);
+  const [hasMore, setHasMore] = useState(USE_MOCK_DATA && initialData.entries.length === 0 ? false : initialData.hasMore);
+  const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [crownOpacity, setCrownOpacity] = useState(1);
 
   // ============================================
   // REFS
   // ============================================
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
-  const crownRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   // ============================================
@@ -102,33 +84,18 @@ export default function LeaderboardClient({
 
   // Reset state when tab changes
   useEffect(() => {
-    const newData =
-      initialData.entries.length > 0 ? initialData.entries : MOCK_ENTRIES;
-    setEntries(newData);
-    setHasMore(initialData.entries.length > 0 ? initialData.hasMore : false);
+    const data = USE_MOCK_DATA && initialData.entries.length === 0 ? MOCK_ENTRIES : initialData.entries;
+    setEntries(data);
+    setHasMore(USE_MOCK_DATA && initialData.entries.length === 0 ? false : initialData.hasMore);
     setPage(1);
     setError(null);
+    setCrownOpacity(1);
+
+    // Reset scroll position
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
   }, [activeTab, initialData]);
-
-  // Hero scroll animation
-  useEffect(() => {
-    const el = crownRef.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        const progress = 1 - entry.intersectionRatio;
-        document.documentElement.style.setProperty(
-          "--lb-progress",
-          `${Math.min(Math.max(progress, 0), 1)}`
-        );
-      },
-      { threshold: Array.from({ length: 21 }, (_, i) => i / 20) }
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
 
   // Infinite scroll observer
   useEffect(() => {
@@ -141,7 +108,7 @@ export default function LeaderboardClient({
           loadMore();
         }
       },
-      { rootMargin: "600px" }
+      { rootMargin: "300px" }
     );
 
     observer.observe(el);
@@ -152,10 +119,17 @@ export default function LeaderboardClient({
   // HANDLERS
   // ============================================
 
+  // Simple, rock-solid scroll handler for crown fade
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const scrollTop = e.currentTarget.scrollTop;
+    // Calculate opacity: 1 at top, 0 when scrolled past CROWN_HEIGHT
+    const newOpacity = Math.max(0, Math.min(1, 1 - scrollTop / CROWN_HEIGHT));
+    setCrownOpacity(newOpacity);
+  }, []);
+
   const loadMore = useCallback(async () => {
     if (isLoading || !hasMore) return;
 
-    // Abort previous request
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -214,72 +188,93 @@ export default function LeaderboardClient({
   // RENDER
   // ============================================
   return (
-    <div className="flex-1 overflow-y-auto flex flex-col px-3">
-      {/* HERO SECTION */}
-      <section className="pt-6 md:pt-10 relative">
-        {/* Crown Image */}
-        <div ref={crownRef} className="relative grid place-items-center">
-          <Image
-            src="/images/chest-crown.png"
-            alt=""
-            width={320}
-            height={260}
-            priority
-            className="h-[180px] w-auto md:h-[220px] will-change-transform transition-[opacity,transform] duration-300"
-            style={{
-              opacity: `calc(1 - var(--lb-progress, 0))`,
-              transform: `translateY(calc(-8px * var(--lb-progress, 0))) scale(calc(1 - 0.05 * var(--lb-progress, 0)))`,
-            }}
-          />
+    <div
+      ref={scrollContainerRef}
+      onScroll={handleScroll}
+      className="flex-1 overflow-y-auto flex flex-col px-3"
+    >
+      {/* CROWN IMAGE - fades out on scroll, z-0 so sticky header goes over it */}
+      <div
+        className="pt-6 pb-8 grid place-items-center transition-opacity duration-150 relative z-0"
+        style={{
+          opacity: crownOpacity,
+          pointerEvents: crownOpacity < 0.1 ? "none" : "auto",
+        }}
+      >
+        <Image
+          src="/images/chest-crown.png"
+          alt=""
+          width={320}
+          height={260}
+          priority
+          className="h-[180px] w-auto will-change-[opacity]"
+          style={{
+            transform: `scale(${0.95 + crownOpacity * 0.05})`,
+          }}
+        />
+      </div>
+
+      {/* STICKY HEADER - overlaps crown area to eliminate visible line */}
+      <div
+        className="sticky top-0 z-10 -mx-3 px-3 pt-3 pb-6 -mt-6"
+        style={{
+          background: "linear-gradient(to bottom, #0A0A0C 0%, #0A0A0C 65%, transparent 100%)",
+        }}
+      >
+        <h1 className="text-center font-body text-[36px] tracking-[1px]">
+          LEADERBOARD
+        </h1>
+
+        <div className="mt-4 flex items-center justify-center gap-6">
+          <Tabs activeTab={activeTab as LeaderboardTabKey} fid={userFid} />
         </div>
 
-        {/* Sticky Header */}
-        <div className="sticky top-[61px] z-10 -mx-3 px-3 pb-2 pt-1 backdrop-blur-sm">
-          <h1 className="text-center font-body text-2xl md:text-3xl tracking-wide">
-            LEADERBOARD
-          </h1>
-
-          <div className="mt-5 flex items-center justify-center gap-6">
-            <Tabs activeTab={activeTab as LeaderboardTabKey} fid={userFid} />
-          </div>
-
-          <p className="mt-4 text-center text-muted font-display">
-            {tabDescription}
-          </p>
-        </div>
-      </section>
+        <p className="mt-3 text-center text-muted font-display text-sm">
+          {tabDescription}
+        </p>
+      </div>
 
       {/* LIST SECTION */}
-      <section className="pb-24 pt-4 space-y-4">
+      <section className="pb-24 pt-1 space-y-4">
         {/* Top 3 */}
         {top3.length > 0 && <Top3 entries={top3} currentUserId={userFid} />}
 
         {/* Rest of list */}
         <div className="space-y-3">
-          {rest.map((entry) => (
-            <Row
+          {rest.map((entry, index) => (
+            <div
               key={`${activeTab}-${entry.rank}-${entry.id}`}
-              entry={entry}
-              isCurrentUser={userFid != null && entry.fid === userFid}
-            />
+              className="animate-in fade-in slide-in-from-bottom-2"
+              style={{ animationDelay: `${Math.min(index * 30, 300)}ms` }}
+            >
+              <Row
+                entry={entry}
+                isCurrentUser={userFid != null && entry.fid === userFid}
+              />
+            </div>
           ))}
 
           {/* Loading indicator */}
           {isLoading && (
-            <div className="py-4">
+            <div className="py-4 flex justify-center">
               <WaffleLoader size={60} text="" />
             </div>
           )}
 
           {/* Error message */}
           {error && !isLoading && (
-            <div className="panel px-4 py-3 text-sm text-danger">{error}</div>
+            <div className="panel px-3 py-3 text-sm text-danger text-center rounded-xl">
+              {error}
+            </div>
           )}
 
           {/* Empty state */}
-          {isEmpty && !error && (
-            <div className="panel px-4 py-6 text-center text-sm text-muted">
-              Nothing here yet.
+          {isEmpty && !error && !isLoading && (
+            <div className="flex items-center justify-center py-6 px-4 border border-white/10 rounded-2xl 
+            white/5">
+              <p className="font-display text-sm text-white/40 text-center">
+                No rankings yet
+              </p>
             </div>
           )}
 
@@ -290,8 +285,8 @@ export default function LeaderboardClient({
 
           {/* End of list */}
           {!hasMore && !isEmpty && !error && (
-            <div className="panel px-4 py-3 text-center text-sm text-muted">
-              End of list.
+            <div className="py-3 text-center text-sm text-white/30 font-display">
+              — End of leaderboard —
             </div>
           )}
         </div>
