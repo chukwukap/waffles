@@ -54,7 +54,11 @@ async function main() {
       coverUrl: "/images/covers/movie-quiz.jpg",
       startsAt,
       endsAt,
-      ticketPrice: defaultGameConfig.entryFee,
+      tierPrices: [
+        defaultGameConfig.entryFee,
+        defaultGameConfig.entryFee * 2,
+        defaultGameConfig.entryFee * 3,
+      ],
       prizePool: defaultGameConfig.prizePool,
       roundBreakSec: defaultGameConfig.roundDurationSec,
       maxPlayers: defaultGameConfig.maxPlayers,

@@ -10,11 +10,11 @@ import { ChatDrawer } from "./ChatDrawer";
 
 /**
  * GameChat - Modular chat component
- * 
+ *
  * Composes:
  * - ChatInputBar: Inline trigger with active count and input
  * - ChatDrawer: Full-screen slide-up panel with messages
- * 
+ *
  * Parent component controls layout positioning.
  */
 export function GameChat() {
@@ -28,6 +28,4 @@ export function GameChat() {
   );
 }
 
-// Backwards compatibility
-export const Chat = GameChat;
 export default GameChat;

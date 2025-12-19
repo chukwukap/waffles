@@ -9,11 +9,8 @@ import { useUser } from "@/hooks/useUser";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { redeemInviteCodeAction, type ValidateReferralResult } from "@/actions/invite";
 import {
-  springs,
   shakeX,
-  pulse,
   triggerShake,
-  triggerPulse,
 } from "@/lib/animations";
 import { playSound } from "@/lib/sounds";
 

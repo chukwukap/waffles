@@ -10,7 +10,7 @@ import { useGameStore, selectReactions } from "@/lib/game-store";
 
 interface CheerBubble {
     id: number;
-    x: number; // percentage across viewport (0-100)
+    xOffset: number; // Offset from base position
     scale: number;
     rotation: number;
     drift: number; // horizontal drift during float
@@ -25,7 +25,8 @@ function FloatingBubble({ bubble, onComplete }: { bubble: CheerBubble; onComplet
         <div
             className="fixed pointer-events-none z-50"
             style={{
-                left: `${bubble.x}%`,
+                // Position at bottom-right, where cheer button is
+                right: `calc(20px + ${-bubble.xOffset}px)`,
                 bottom: "80px",
                 animation: `cheer-float-${bubble.drift > 0 ? 'right' : 'left'} 2s ease-out forwards`,
             }}
@@ -56,14 +57,14 @@ export function CheerOverlay() {
     const reactions = useGameStore(selectReactions);
     const lastReactionCount = useRef(reactions.length);
 
-    // Create bubbles when cheer events come in
+    // Create bubbles - always from the same bottom-right position for all players
     const createBubbles = useCallback((count: number = 3) => {
         const newBubbles: CheerBubble[] = [];
 
         for (let i = 0; i < count; i++) {
             newBubbles.push({
                 id: bubbleCounter++,
-                x: 10 + Math.random() * 80, // 10-90% of viewport width
+                xOffset: Math.random() * 60 - 30, // Spread around button position (-30 to +30)
                 scale: 0.8 + Math.random() * 0.5, // 0.8-1.3 scale
                 rotation: Math.random() * 30 - 15, // -15 to 15 degrees
                 drift: Math.random() * 40 - 20, // -20 to 20 px drift
@@ -90,7 +91,9 @@ export function CheerOverlay() {
 
     // Expose createBubbles for local trigger
     useEffect(() => {
-        (window as unknown as { triggerCheer?: () => void }).triggerCheer = () => createBubbles(3);
+        (window as unknown as { triggerCheer?: () => void }).triggerCheer = () => {
+            createBubbles(3);
+        };
         return () => {
             delete (window as unknown as { triggerCheer?: () => void }).triggerCheer;
         };
@@ -123,7 +126,7 @@ export function CheerOverlay() {
                     }
                     100% {
                         opacity: 0;
-                        transform: translateY(-60vh) translateX(30px);
+                        transform: translateY(-200px) translateX(40px);
                     }
                 }
                 
@@ -137,7 +140,7 @@ export function CheerOverlay() {
                     }
                     100% {
                         opacity: 0;
-                        transform: translateY(-60vh) translateX(-30px);
+                        transform: translateY(-200px) translateX(-40px);
                     }
                 }
             `}</style>

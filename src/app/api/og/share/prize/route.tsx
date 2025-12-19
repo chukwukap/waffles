@@ -1,5 +1,14 @@
 // TODO: Convert this to next Image response
 
+export async function GET() {
+
+    return new Response("Hello", {
+        headers: {
+            "Content-Type": "text/plain",
+        },
+    });
+}
+
 
 // import React from 'react';
 

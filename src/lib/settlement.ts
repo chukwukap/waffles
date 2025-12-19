@@ -52,13 +52,24 @@ const getWalletClient = () => {
 // ============================================================================
 
 /**
+ * Generate a random bytes32 game ID for on-chain use
+ * @returns A random 0x-prefixed bytes32 string
+ */
+export function generateOnchainGameId(): `0x${string}` {
+  const randomBytes = crypto.getRandomValues(new Uint8Array(32));
+  return `0x${Array.from(randomBytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("")}` as `0x${string}`;
+}
+
+/**
  * Create a game on-chain
- * @param gameId - The database game ID (must match on-chain ID)
+ * @param onchainId - The bytes32 on-chain game ID
  * @param entryFeeUSDC - Entry fee in USDC (human readable)
  * @returns Transaction hash
  */
 export async function createGameOnChain(
-  gameId: number,
+  onchainId: `0x${string}`,
   entryFeeUSDC: number
 ): Promise<`0x${string}`> {
   const walletClient = getWalletClient();
@@ -68,40 +79,42 @@ export async function createGameOnChain(
     address: WAFFLE_GAME_CONFIG.address,
     abi: waffleGameAbi,
     functionName: "createGame",
-    args: [BigInt(gameId), entryFee],
+    args: [onchainId, entryFee],
   });
 
-  console.log(`[Settlement] Created game ${gameId} on-chain. TX: ${hash}`);
+  console.log(`[Settlement] Created game ${onchainId} on-chain. TX: ${hash}`);
   return hash;
 }
 
 /**
  * End a game on-chain (stops ticket sales)
- * @param gameId - The game ID to end
+ * @param onchainId - The bytes32 on-chain game ID to end
  * @returns Transaction hash
  */
-export async function endGameOnChain(gameId: number): Promise<`0x${string}`> {
+export async function endGameOnChain(
+  onchainId: `0x${string}`
+): Promise<`0x${string}`> {
   const walletClient = getWalletClient();
 
   const hash = await walletClient.writeContract({
     address: WAFFLE_GAME_CONFIG.address,
     abi: waffleGameAbi,
     functionName: "endGame",
-    args: [BigInt(gameId)],
+    args: [onchainId],
   });
 
-  console.log(`[Settlement] Ended game ${gameId} on-chain. TX: ${hash}`);
+  console.log(`[Settlement] Ended game ${onchainId} on-chain. TX: ${hash}`);
   return hash;
 }
 
 /**
  * Submit Merkle root to finalize a game
- * @param gameId - The game ID to settle
+ * @param onchainId - The bytes32 on-chain game ID to settle
  * @param merkleRoot - The Merkle root of winners
  * @returns Transaction hash
  */
 export async function submitResultsOnChain(
-  gameId: number,
+  onchainId: `0x${string}`,
   merkleRoot: `0x${string}`
 ): Promise<`0x${string}`> {
   const walletClient = getWalletClient();
@@ -110,10 +123,12 @@ export async function submitResultsOnChain(
     address: WAFFLE_GAME_CONFIG.address,
     abi: waffleGameAbi,
     functionName: "submitResults",
-    args: [BigInt(gameId), merkleRoot],
+    args: [onchainId, merkleRoot],
   });
 
-  console.log(`[Settlement] Submitted results for game ${gameId}. TX: ${hash}`);
+  console.log(
+    `[Settlement] Submitted results for game ${onchainId}. TX: ${hash}`
+  );
   return hash;
 }
 
@@ -138,11 +153,22 @@ export async function settleGame(gameId: number): Promise<{
     where: { id: gameId },
     select: {
       id: true,
+      onchainId: true,
       startsAt: true,
       endsAt: true,
       prizePool: true,
     },
   });
+
+  if (!game) {
+    throw new Error(`Game ${gameId} not found`);
+  }
+
+  if (!game.onchainId) {
+    throw new Error(`Game ${gameId} has no onchainId - not deployed on-chain`);
+  }
+
+  const onchainId = game.onchainId as `0x${string}`;
 
   if (!game) {
     throw new Error(`Game ${gameId} not found`);
@@ -182,7 +208,7 @@ export async function settleGame(gameId: number): Promise<{
       const amount = parseUnits(amountUSDC.toFixed(6), TOKEN_CONFIG.decimals);
 
       return {
-        gameId,
+        gameId: onchainId, // Use onchainId for Merkle tree
         address: entry.user.wallet as `0x${string}`,
         amount,
       };
@@ -196,7 +222,7 @@ export async function settleGame(gameId: number): Promise<{
   const { root: merkleRoot } = buildMerkleTree(winners);
 
   // 5. Submit to chain
-  const txHash = await submitResultsOnChain(gameId, merkleRoot);
+  const txHash = await submitResultsOnChain(onchainId, merkleRoot);
 
   // 6. Wait for confirmation
   await publicClient.waitForTransactionReceipt({ hash: txHash });
@@ -217,20 +243,30 @@ export async function settleGame(gameId: number): Promise<{
  * Check if a game exists on-chain
  * Returns null if game doesn't exist or contract call fails
  */
-export async function getOnChainGame(gameId: number) {
+export interface OnChainGame {
+  entryFee: bigint;
+  ticketCount: bigint;
+  merkleRoot: `0x${string}`;
+  settledAt: bigint;
+  ended: boolean;
+}
+
+export async function getOnChainGame(
+  onchainId: `0x${string}`
+): Promise<OnChainGame | null> {
   try {
-    const game = await publicClient.readContract({
+    const game = (await publicClient.readContract({
       address: WAFFLE_GAME_CONFIG.address,
       abi: waffleGameAbi,
       functionName: "getGame",
-      args: [BigInt(gameId)],
-    });
+      args: [onchainId],
+    })) as OnChainGame;
 
     return game;
   } catch (error) {
     // Game doesn't exist on-chain yet (only in database)
     console.log(
-      `[Settlement] Game ${gameId} not found on-chain (database-only)`
+      `[Settlement] Game ${onchainId} not found on-chain (database-only)`
     );
     return null;
   }
@@ -240,14 +276,14 @@ export async function getOnChainGame(gameId: number) {
  * Check if a player has a ticket on-chain
  */
 export async function hasTicketOnChain(
-  gameId: number,
+  onchainId: `0x${string}`,
   playerAddress: `0x${string}`
 ): Promise<boolean> {
   const hasTicket = await publicClient.readContract({
     address: WAFFLE_GAME_CONFIG.address,
     abi: waffleGameAbi,
     functionName: "hasTicket",
-    args: [BigInt(gameId), playerAddress],
+    args: [onchainId, playerAddress],
   });
 
   return hasTicket as boolean;
@@ -257,14 +293,14 @@ export async function hasTicketOnChain(
  * Check if a player has claimed their prize on-chain
  */
 export async function hasClaimedOnChain(
-  gameId: number,
+  onchainId: `0x${string}`,
   playerAddress: `0x${string}`
 ): Promise<boolean> {
   const hasClaimed = await publicClient.readContract({
     address: WAFFLE_GAME_CONFIG.address,
     abi: waffleGameAbi,
     functionName: "hasClaimed",
-    args: [BigInt(gameId), playerAddress],
+    args: [onchainId, playerAddress],
   });
 
   return hasClaimed as boolean;

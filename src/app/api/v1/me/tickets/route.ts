@@ -50,7 +50,7 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
             id: true,
             startsAt: true,
             endsAt: true,
-            ticketPrice: true,
+            tierPrices: true,
           },
         },
       },
@@ -60,7 +60,7 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
     const response: EntryResponse[] = entries.map((entry) => ({
       id: entry.id,
       status: entry.paidAt ? "PAID" : "PENDING",
-      amountUSDC: entry.game.ticketPrice,
+      amountUSDC: entry.game.tierPrices[0] ?? 0,
       gameId: entry.gameId,
       paidAt: entry.paidAt,
       createdAt: entry.createdAt,
@@ -71,7 +71,7 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
         startsAt: entry.game.startsAt,
         endsAt: entry.game.endsAt,
         status: getGamePhase(entry.game),
-        ticketPrice: entry.game.ticketPrice,
+        ticketPrice: entry.game.tierPrices[0] ?? 0,
       },
     }));
 

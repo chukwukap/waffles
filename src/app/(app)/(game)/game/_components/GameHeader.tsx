@@ -1,21 +1,19 @@
 "use client";
 import { LeaveGameIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import LeaveGameDrawer from "./LeaveGameDrawer";
-import { usePathname } from "next/navigation";
+import { usePathname, useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { WalletBalance } from "./WalletBalance";
 
 export function GameHeader() {
   const pathname = usePathname();
+  const params = useParams();
 
-  // Extract gameId from pathname (e.g., /game/123/live -> 123)
-  const gameId = useMemo(() => {
-    const match = pathname?.match(/\/game\/(\d+)/);
-    return match ? Number(match[1]) : null;
-  }, [pathname]);
+  // Extract gameId from route params (cleaner than regex)
+  const gameId = params.gameId ? Number(params.gameId) : null;
 
   const [isLeaveGameDrawerOpen, setIsLeaveGameDrawerOpen] = useState(false);
 

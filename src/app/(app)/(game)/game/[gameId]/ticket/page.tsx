@@ -5,6 +5,7 @@ import { cache } from "react";
 // Updated type for new schema (ticketPrice, entries instead of tickets)
 export type TicketPageGameInfo = {
   id: number;
+  onchainId: string | null; // bytes32 for on-chain interactions
   title: string;
   description: string | null;
   coverUrl: string | null;
@@ -23,20 +24,26 @@ const getGameInfo = cache(async (gameIdNum: number): Promise<TicketPageGameInfo 
     where: { id: gameIdNum },
     select: {
       id: true,
+      onchainId: true,
       title: true,
       description: true,
       coverUrl: true,
       startsAt: true,
       endsAt: true,
       theme: true,
-      ticketPrice: true,
+      tierPrices: true,
       prizePool: true,
       maxPlayers: true,
       playerCount: true,
     },
   });
 
-  return game;
+  if (!game) return null;
+
+  return {
+    ...game,
+    ticketPrice: game.tierPrices[0] ?? 0,
+  };
 });
 
 export default async function TicketPage({

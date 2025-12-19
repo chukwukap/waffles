@@ -41,16 +41,29 @@ const erc20Abi = [
 /**
  * Hook to read game data from the contract
  */
-export function useGetGame(gameId: bigint | undefined) {
+export function useGetGame(onchainId: `0x${string}` | undefined) {
   return useReadContract({
     address: WAFFLE_GAME_CONFIG.address,
     abi: waffleGameAbi,
     functionName: "getGame",
-    args: gameId ? [gameId] : undefined,
+    args: onchainId ? [onchainId] : undefined,
     chainId: WAFFLE_GAME_CONFIG.chainId,
     query: {
-      enabled: !!gameId,
+      enabled: !!onchainId,
     },
+  });
+}
+
+/**
+ * Hook to get the payment token address from the WaffleGame contract
+ * This prevents mismatch between hardcoded config and actual contract token
+ */
+export function useContractToken() {
+  return useReadContract({
+    address: WAFFLE_GAME_CONFIG.address,
+    abi: waffleGameAbi,
+    functionName: "token",
+    chainId: WAFFLE_GAME_CONFIG.chainId,
   });
 }
 
@@ -58,17 +71,17 @@ export function useGetGame(gameId: bigint | undefined) {
  * Hook to check if a user has a ticket for a game
  */
 export function useHasTicket(
-  gameId: bigint | undefined,
+  onchainId: `0x${string}` | undefined,
   playerAddress: `0x${string}` | undefined
 ) {
   return useReadContract({
     address: WAFFLE_GAME_CONFIG.address,
     abi: waffleGameAbi,
     functionName: "hasTicket",
-    args: gameId && playerAddress ? [gameId, playerAddress] : undefined,
+    args: onchainId && playerAddress ? [onchainId, playerAddress] : undefined,
     chainId: WAFFLE_GAME_CONFIG.chainId,
     query: {
-      enabled: !!gameId && !!playerAddress,
+      enabled: !!onchainId && !!playerAddress,
     },
   });
 }
@@ -77,17 +90,17 @@ export function useHasTicket(
  * Hook to check if a user has claimed their prize
  */
 export function useHasClaimed(
-  gameId: bigint | undefined,
+  onchainId: `0x${string}` | undefined,
   playerAddress: `0x${string}` | undefined
 ) {
   return useReadContract({
     address: WAFFLE_GAME_CONFIG.address,
     abi: waffleGameAbi,
     functionName: "hasClaimed",
-    args: gameId && playerAddress ? [gameId, playerAddress] : undefined,
+    args: onchainId && playerAddress ? [onchainId, playerAddress] : undefined,
     chainId: WAFFLE_GAME_CONFIG.chainId,
     query: {
-      enabled: !!gameId && !!playerAddress,
+      enabled: !!onchainId && !!playerAddress,
     },
   });
 }
@@ -156,13 +169,13 @@ export function useBuyTicket() {
     hash,
   });
 
-  const buyTicket = (gameId: bigint, amount: string) => {
+  const buyTicket = (onchainId: `0x${string}`, amount: string) => {
     const amountInUnits = parseUnits(amount, TOKEN_CONFIG.decimals);
     writeContract({
       address: WAFFLE_GAME_CONFIG.address,
       abi: waffleGameAbi,
       functionName: "buyTicket",
-      args: [gameId, amountInUnits],
+      args: [onchainId, amountInUnits],
       chainId: WAFFLE_GAME_CONFIG.chainId,
     });
   };
@@ -180,7 +193,7 @@ export function useClaimPrize() {
   });
 
   const claimPrize = (
-    gameId: bigint,
+    onchainId: `0x${string}`,
     amount: bigint,
     proof: `0x${string}`[]
   ) => {
@@ -188,7 +201,7 @@ export function useClaimPrize() {
       address: WAFFLE_GAME_CONFIG.address,
       abi: waffleGameAbi,
       functionName: "claimPrize",
-      args: [gameId, amount, proof],
+      args: [onchainId, amount, proof],
       chainId: WAFFLE_GAME_CONFIG.chainId,
     });
   };
@@ -275,13 +288,13 @@ export function useBuyTicketWithPermit() {
 
   /**
    * Buy ticket with permit signature
-   * @param gameId - Game ID to join
+   * @param onchainId - bytes32 Game ID to join
    * @param amount - Amount in human-readable format (e.g., "5" for $5)
    * @param deadline - Permit deadline (timestamp)
    * @param signature - Signed permit (v, r, s from signTypedData)
    */
   const buyWithPermit = (
-    gameId: bigint,
+    onchainId: `0x${string}`,
     amount: string,
     deadline: bigint,
     v: number,
@@ -293,7 +306,7 @@ export function useBuyTicketWithPermit() {
       address: WAFFLE_GAME_CONFIG.address,
       abi: waffleGameAbi,
       functionName: "buyTicketWithPermit",
-      args: [gameId, amountInUnits, deadline, v, r, s],
+      args: [onchainId, amountInUnits, deadline, v, r, s],
       chainId: WAFFLE_GAME_CONFIG.chainId,
     });
   };

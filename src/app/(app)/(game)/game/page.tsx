@@ -6,6 +6,7 @@ import { env } from "@/lib/env";
 import { getActiveGameWhere, getActiveGameOrderBy } from "@/lib/game-utils";
 
 import { GameHub } from "./client";
+import { GameProvider } from "./GameProvider";
 
 // ==========================================
 // METADATA
@@ -38,6 +39,7 @@ export const metadata: Metadata = {
 
 export interface GamePageData {
   id: number;
+  onchainId: string | null;
   title: string;
   theme: string;
   coverUrl: string | null;
@@ -50,22 +52,12 @@ export interface GamePageData {
   questionCount: number;
 }
 
-export interface PastGameData {
-  id: number;
-  title: string;
-  theme: string;
-  playerCount: number;
-  prizePool: number;
-  endsAt: Date;
-}
-
 // ==========================================
 // DATA FETCHING
 // ==========================================
 
 /**
  * Fetch active game (live or next scheduled).
- * Uses pre-computed counters - no COUNT queries.
  */
 const getActiveGame = cache(async (): Promise<GamePageData | null> => {
   const game = await prisma.game.findFirst({
@@ -73,6 +65,7 @@ const getActiveGame = cache(async (): Promise<GamePageData | null> => {
     orderBy: getActiveGameOrderBy(),
     select: {
       id: true,
+      onchainId: true,
       title: true,
       theme: true,
       coverUrl: true,
@@ -90,6 +83,7 @@ const getActiveGame = cache(async (): Promise<GamePageData | null> => {
 
   return {
     id: game.id,
+    onchainId: game.onchainId,
     title: game.title,
     theme: game.theme,
     coverUrl: game.coverUrl,
@@ -103,47 +97,20 @@ const getActiveGame = cache(async (): Promise<GamePageData | null> => {
   };
 });
 
-/**
- * Fetch recent past games.
- */
-const getPastGames = cache(async (): Promise<PastGameData[]> => {
-  const now = new Date();
-
-  const games = await prisma.game.findMany({
-    where: { endsAt: { lt: now } },
-    orderBy: { endsAt: "desc" },
-    take: 5,
-    select: {
-      id: true,
-      title: true,
-      theme: true,
-      playerCount: true,
-      prizePool: true,
-      endsAt: true,
-    },
-  });
-
-  return games;
-});
-
 // ==========================================
 // PAGE COMPONENT
 // ==========================================
 
 export default async function GamePage() {
-  // Parallel fetches for speed
-  const [game, pastGames] = await Promise.all([
-    getActiveGame(),
-    getPastGames(),
-  ]);
+  const game = await getActiveGame();
 
   return (
-    <GameHub
-      game={game}
-      pastGames={pastGames}
-    />
+    <GameProvider gameId={game?.id}>
+      <GameHub game={game} />
+    </GameProvider>
   );
 }
 
 // Force dynamic rendering for real-time data
 export const dynamic = "force-dynamic";
+

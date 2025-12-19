@@ -1273,6 +1273,7 @@ export type CompletedQuestScalarFieldEnum = (typeof CompletedQuestScalarFieldEnu
 
 export const GameScalarFieldEnum = {
   id: 'id',
+  onchainId: 'onchainId',
   title: 'title',
   description: 'description',
   theme: 'theme',

@@ -1,278 +1,454 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { useAccount } from "wagmi";
-import { parseUnits } from "viem";
+import { useState, useCallback, useEffect, useMemo } from "react";
+import {
+  useAccount,
+  useSendCalls,
+  useCallsStatus,
+  useChainId,
+  useSwitchChain,
+} from "wagmi";
+import { parseUnits, encodeFunctionData } from "viem";
 import sdk from "@farcaster/miniapp-sdk";
 
 import {
-  useBuyTicket,
-  useApproveToken,
-  useTokenBalance,
-  useTokenAllowance,
   useHasTicket,
+  useTokenAllowance,
+  useTokenBalance,
+  useContractToken,
 } from "./waffleContractHooks";
-import { TOKEN_CONFIG } from "@/lib/contracts/config";
+import {
+  TOKEN_CONFIG,
+  WAFFLE_GAME_CONFIG,
+  CHAIN_CONFIG,
+} from "@/lib/contracts/config";
 import { notify } from "@/components/ui/Toaster";
+import { playSound } from "@/lib/sounds";
+import waffleGameAbi from "@/lib/contracts/WaffleGameAbi.json";
 
 // ==========================================
 // TYPES
 // ==========================================
 
-export type PurchaseStatus =
+export type PurchaseStep =
   | "idle"
-  | "checking"
-  | "approving"
-  | "confirming"
-  | "verifying"
-  | "syncing"
+  | "switching-chain"
+  | "pending" // User signing the batch
+  | "confirming" // Waiting for on-chain confirmation
+  | "syncing" // Syncing with backend
   | "success"
   | "error";
 
-export interface PurchaseState {
-  status: PurchaseStatus;
+export interface TicketPurchaseState {
+  step: PurchaseStep;
   error?: string;
   txHash?: string;
 }
 
-interface UseTicketPurchaseResult {
-  state: PurchaseState;
-  purchase: () => Promise<void>;
-  reset: () => void;
-  canPurchase: boolean;
-  balanceError?: string;
-}
+// ERC20 approve ABI
+const erc20ApproveAbi = [
+  {
+    type: "function",
+    name: "approve",
+    inputs: [
+      { name: "spender", type: "address" },
+      { name: "amount", type: "uint256" },
+    ],
+    outputs: [{ name: "", type: "bool" }],
+    stateMutability: "nonpayable",
+  },
+] as const;
 
 // ==========================================
-// HOOK
+// HOOK: useTicketPurchase
+// Uses EIP-5792 useSendCalls for batched approve + buyTicket
+// Optimized for Farcaster MiniApp context
 // ==========================================
 
 export function useTicketPurchase(
   gameId: number,
-  price: number
-): UseTicketPurchaseResult {
+  onchainId: `0x${string}` | null | undefined,
+  price: number,
+  onSuccess?: () => void
+) {
   const { address, isConnected } = useAccount();
+  const currentChainId = useChainId();
+  const { switchChainAsync } = useSwitchChain();
+  const [state, setState] = useState<TicketPurchaseState>({ step: "idle" });
 
-  // State
-  const [state, setState] = useState<PurchaseState>({ status: "idle" });
+  // Derived values
+  const priceInUnits = useMemo(
+    () => parseUnits(price.toString(), TOKEN_CONFIG.decimals),
+    [price]
+  );
+
+  // Target chain check
+  const isCorrectChain = currentChainId === CHAIN_CONFIG.chainId;
 
   // Contract reads
-  const { data: balance } = useTokenBalance(address);
-  const { data: allowance, refetch: refetchAllowance } =
-    useTokenAllowance(address);
   const { data: hasTicket, refetch: refetchHasTicket } = useHasTicket(
-    gameId ? BigInt(gameId) : undefined,
+    onchainId ?? undefined,
     address
   );
 
-  // Contract writes
+  const { data: allowance } = useTokenAllowance(address);
+  const { data: balance } = useTokenBalance(address);
+
+  // Get token address from contract (dynamic, prevents mismatch)
+  const { data: contractTokenAddress } = useContractToken();
+  const tokenAddress =
+    (contractTokenAddress as `0x${string}`) || TOKEN_CONFIG.address;
+
+  // Check if approval is needed
+  const needsApproval = useMemo(() => {
+    if (!allowance) return true;
+    return allowance < priceInUnits;
+  }, [allowance, priceInUnits]);
+
+  // Check if user has sufficient balance
+  const hasSufficientBalance = useMemo(() => {
+    if (!balance) return false;
+    return balance >= priceInUnits;
+  }, [balance, priceInUnits]);
+
+  // ==========================================
+  // BUILD CALLS (approve if needed + buyTicket)
+  // ==========================================
+  const calls = useMemo(() => {
+    if (!onchainId || !address) {
+      return [];
+    }
+
+    const callList: Array<{ to: `0x${string}`; data: `0x${string}` }> = [];
+
+    // Add approve call only if needed
+    if (needsApproval) {
+      // Approve 1000 USDC to avoid repeated approvals
+      const approvalAmount = parseUnits("1000", TOKEN_CONFIG.decimals);
+      console.log(
+        "[useTicketPurchase] Adding approve call for 1000 USDC to",
+        tokenAddress
+      );
+      callList.push({
+        to: tokenAddress as `0x${string}`,
+        data: encodeFunctionData({
+          abi: erc20ApproveAbi,
+          functionName: "approve",
+          args: [WAFFLE_GAME_CONFIG.address, approvalAmount],
+        }),
+      });
+    }
+
+    // Add buyTicket call
+    console.log("[useTicketPurchase] Adding buyTicket call");
+    callList.push({
+      to: WAFFLE_GAME_CONFIG.address as `0x${string}`,
+      data: encodeFunctionData({
+        abi: waffleGameAbi as any,
+        functionName: "buyTicket",
+        args: [onchainId, priceInUnits],
+      }),
+    });
+
+    console.log("[useTicketPurchase] Calls built:", {
+      callCount: callList.length,
+      needsApproval,
+      onchainId,
+      price: priceInUnits.toString(),
+    });
+
+    return callList;
+  }, [onchainId, address, priceInUnits, needsApproval]);
+
+  // ==========================================
+  // useSendCalls for batched transactions
+  // ==========================================
   const {
-    approve,
-    hash: approveHash,
-    isPending: isApprovePending,
-    isConfirming: isApproveConfirming,
-    isSuccess: isApproveSuccess,
-    error: approveError,
-  } = useApproveToken();
+    sendCalls,
+    data: callsId,
+    isPending: isSending,
+    error: sendError,
+    reset: resetSendCalls,
+  } = useSendCalls();
 
-  const {
-    buyTicket,
-    hash: buyHash,
-    isPending: isBuyPending,
-    isConfirming: isBuyConfirming,
-    isSuccess: isBuySuccess,
-    error: buyError,
-  } = useBuyTicket();
-
-  // ==========================================
-  // DERIVED STATE
-  // ==========================================
-
-  const priceInUnits = parseUnits(price.toString(), TOKEN_CONFIG.decimals);
-  const hasEnoughBalance = balance !== undefined && balance >= priceInUnits;
-  const hasEnoughAllowance =
-    allowance !== undefined && allowance >= priceInUnits;
-
-  const balanceError = !isConnected
-    ? "Connect wallet"
-    : !hasEnoughBalance
-    ? "Insufficient USDC"
-    : undefined;
-
-  const canPurchase =
-    isConnected && hasEnoughBalance && !hasTicket && state.status === "idle";
+  // Track batch status
+  const { data: callsStatus } = useCallsStatus({
+    id: callsId?.id ?? "",
+    query: {
+      enabled: !!callsId?.id,
+      refetchInterval: (data) => {
+        if (data.state.data?.status === "success") return false;
+        return 1000; // Poll every second
+      },
+    },
+  });
 
   // ==========================================
-  // PURCHASE FLOW
+  // EFFECTS: Handle status changes
   // ==========================================
 
+  // Update state based on send status
+  useEffect(() => {
+    if (isSending && state.step !== "pending") {
+      console.log("[useTicketPurchase] Transaction pending...");
+      setState({ step: "pending" });
+    }
+  }, [isSending, state.step]);
+
+  // Handle send errors
+  useEffect(() => {
+    if (sendError) {
+      console.error("[useTicketPurchase] Send error:", sendError);
+      const errorMessage = sendError.message.includes("rejected")
+        ? "Transaction rejected by user"
+        : sendError.message.includes("insufficient")
+        ? "Insufficient funds"
+        : "Transaction failed";
+      setState({ step: "error", error: errorMessage });
+      notify.error(errorMessage);
+    }
+  }, [sendError]);
+
+  // Handle calls confirmation
+  useEffect(() => {
+    if (!callsStatus) return;
+
+    console.log(
+      "[useTicketPurchase] Calls status:",
+      callsStatus.status,
+      callsStatus
+    );
+
+    if (callsStatus.status === "pending" && state.step === "pending") {
+      setState({ step: "confirming" });
+    }
+
+    if (callsStatus.status === "failure") {
+      console.error(
+        "[useTicketPurchase] Transaction batch failed:",
+        callsStatus
+      );
+      const errorMessage = "Transaction failed on-chain. Please try again.";
+      setState({ step: "error", error: errorMessage });
+      notify.error(errorMessage);
+    }
+
+    if (callsStatus.status === "success") {
+      // Get transaction hash from receipts
+      const txHash =
+        callsStatus.receipts?.[callsStatus.receipts.length - 1]
+          ?.transactionHash;
+      console.log("[useTicketPurchase] Confirmed! TX:", txHash);
+
+      setState({ step: "syncing", txHash });
+
+      // Sync with backend
+      syncWithBackend(txHash);
+    }
+  }, [callsStatus]);
+
+  // ==========================================
+  // BACKEND SYNC
+  // ==========================================
+  const syncWithBackend = useCallback(
+    async (txHash?: string) => {
+      if (!address) return;
+
+      try {
+        console.log("[useTicketPurchase] Syncing with backend...");
+
+        const response = await fetch(`/api/v1/games/${gameId}/entry`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            walletAddress: address,
+            txHash: txHash || "",
+            paidAmount: price,
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Backend sync failed");
+        }
+
+        console.log("[useTicketPurchase] Backend sync successful");
+
+        // Success!
+        setState({ step: "success", txHash });
+        playSound("purchase");
+        notify.success("Ticket purchased! 🎉");
+
+        // Trigger haptic feedback on mobile
+        sdk.haptics.impactOccurred("medium").catch(() => {});
+
+        // Refetch ticket status
+        refetchHasTicket();
+
+        // Call success callback
+        onSuccess?.();
+      } catch (error: any) {
+        console.error("[useTicketPurchase] Backend sync error:", error);
+        // Don't fail the whole purchase - on-chain tx succeeded
+        // Just notify and mark as success anyway
+        notify.info("Ticket purchased but sync pending. Refresh to update.");
+        setState({ step: "success", txHash });
+        onSuccess?.();
+      }
+    },
+    [address, gameId, price, refetchHasTicket, onSuccess]
+  );
+
+  // ==========================================
+  // PURCHASE FUNCTION
+  // ==========================================
   const purchase = useCallback(async () => {
-    if (!address) {
-      setState({ status: "error", error: "Wallet not connected" });
+    // Pre-flight checks
+    if (!isConnected) {
+      notify.error("Please connect your wallet");
       return;
     }
 
-    // Step 1: Check balance
-    setState({ status: "checking" });
-
-    if (!hasEnoughBalance) {
-      setState({ status: "error", error: "Insufficient USDC balance" });
+    if (!onchainId) {
+      notify.error("Game not available on-chain");
       return;
     }
 
-    // Refetch allowance to ensure it's current
-    const { data: currentAllowance } = await refetchAllowance();
-    const needsApproval =
-      currentAllowance === undefined || currentAllowance < priceInUnits;
+    if (hasTicket) {
+      notify.error("You already have a ticket");
+      return;
+    }
 
+    if (!hasSufficientBalance) {
+      notify.error("Insufficient USDC balance");
+      return;
+    }
+
+    if (calls.length === 0) {
+      notify.error("Unable to build transaction");
+      return;
+    }
+
+    console.log("[useTicketPurchase] Starting purchase...", {
+      gameId,
+      onchainId,
+      price,
+      needsApproval,
+      callCount: calls.length,
+    });
+
+    // Check chain
+    if (!isCorrectChain) {
+      try {
+        console.log("[useTicketPurchase] Switching to correct chain...");
+        setState({ step: "switching-chain" });
+        await switchChainAsync({ chainId: CHAIN_CONFIG.chainId });
+      } catch (error) {
+        console.error("[useTicketPurchase] Chain switch failed:", error);
+        setState({ step: "error", error: "Failed to switch network" });
+        notify.error("Failed to switch to Base Sepolia");
+        return;
+      }
+    }
+
+    // Reset previous state
+    resetSendCalls();
+    setState({ step: "pending" });
+
+    // Send batched calls
     try {
-      if (needsApproval) {
-        // Step 2a: Approve tokens first
-        setState({ status: "approving" });
-        // Approve a large amount to avoid future approvals
-        const approveAmount = (BigInt(price) * BigInt(100)).toString(); // Approve 100x for convenience
-        approve(approveAmount);
-      } else {
-        // Step 2b: Already approved, go straight to buy
-        setState({ status: "confirming" });
-        buyTicket(BigInt(gameId), price.toString());
-      }
-    } catch (error) {
-      console.error("[useTicketPurchase] Transaction failed:", error);
-      const errorMessage = (error as Error).message || "Unknown error";
-
-      if (
-        errorMessage.includes("rejected") ||
-        errorMessage.includes("denied")
-      ) {
-        setState({ status: "error", error: "Transaction rejected by user" });
-      } else {
-        setState({ status: "error", error: "Transaction failed" });
-      }
+      console.log("[useTicketPurchase] Sending batched calls...");
+      sendCalls({
+        calls,
+        capabilities: {
+          // Request atomic execution if available
+          atomicBatch: { supported: true },
+        },
+      });
+    } catch (error: any) {
+      console.error("[useTicketPurchase] Send calls error:", error);
+      setState({ step: "error", error: "Failed to send transaction" });
+      notify.error("Transaction failed");
     }
   }, [
-    address,
-    hasEnoughBalance,
-    refetchAllowance,
-    priceInUnits,
-    price,
+    isConnected,
+    onchainId,
+    hasTicket,
+    hasSufficientBalance,
+    calls,
+    isCorrectChain,
     gameId,
-    approve,
-    buyTicket,
+    price,
+    needsApproval,
+    switchChainAsync,
+    resetSendCalls,
+    sendCalls,
   ]);
 
   // ==========================================
-  // TRANSACTION STATE EFFECTS
+  // RESET FUNCTION
   // ==========================================
-
-  // Handle approval success - proceed to buy
-  useEffect(() => {
-    if (isApproveSuccess && state.status === "approving") {
-      setState({ status: "confirming" });
-      buyTicket(BigInt(gameId), price.toString());
-    }
-  }, [isApproveSuccess, state.status, buyTicket, gameId, price]);
-
-  // Handle approval error
-  useEffect(() => {
-    if (approveError && state.status === "approving") {
-      console.error("[useTicketPurchase] Approval failed:", approveError);
-      setState({
-        status: "error",
-        error: "Approval failed. Please try again.",
-      });
-    }
-  }, [approveError, state.status]);
-
-  // Handle buy success
-  useEffect(() => {
-    if (isBuySuccess && buyHash && state.status === "confirming") {
-      setState({ status: "verifying", txHash: buyHash });
-    }
-  }, [isBuySuccess, buyHash, state.status]);
-
-  // Handle buy error
-  useEffect(() => {
-    if (buyError && state.status === "confirming") {
-      console.error("[useTicketPurchase] Buy failed:", buyError);
-      setState({
-        status: "error",
-        error: "Transaction failed. Please try again.",
-      });
-    }
-  }, [buyError, state.status]);
-
-  // Verify on-chain state and sync with backend
-  useEffect(() => {
-    if (state.status !== "verifying" || !state.txHash) return;
-
-    async function verifyAndSync() {
-      try {
-        // Poll for hasTicket to become true
-        let attempts = 0;
-        const maxAttempts = 10;
-
-        while (attempts < maxAttempts) {
-          const { data: hasTicketNow } = await refetchHasTicket();
-
-          if (hasTicketNow) {
-            // Step 5: Sync with backend
-            setState((prev) => ({ ...prev, status: "syncing" }));
-
-            const res = await sdk.quickAuth.fetch(
-              `/api/v1/games/${gameId}/entry`,
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ txHash: state.txHash }),
-              }
-            );
-
-            if (!res.ok) {
-              const errorData = await res.json();
-              console.error(
-                "[useTicketPurchase] Backend sync failed:",
-                errorData
-              );
-              notify.info(
-                "Ticket purchased, but sync failed. Refresh to see it."
-              );
-            }
-
-            setState({ status: "success", txHash: state.txHash });
-            notify.success("Ticket purchased successfully!");
-            return;
-          }
-
-          await new Promise((resolve) => setTimeout(resolve, 2000));
-          attempts++;
-        }
-
-        setState({ status: "success", txHash: state.txHash });
-        notify.success("Ticket purchased! It may take a moment to appear.");
-      } catch (error) {
-        console.error("[useTicketPurchase] Verification failed:", error);
-        setState({ status: "success", txHash: state.txHash });
-        notify.success("Ticket purchased!");
-      }
-    }
-
-    verifyAndSync();
-  }, [state.status, state.txHash, refetchHasTicket, gameId]);
-
-  // ==========================================
-  // RESET
-  // ==========================================
-
   const reset = useCallback(() => {
-    setState({ status: "idle" });
-  }, []);
+    resetSendCalls();
+    setState({ step: "idle" });
+  }, [resetSendCalls]);
 
+  // ==========================================
+  // RETURN
+  // ==========================================
   return {
+    // State
     state,
+    step: state.step,
+    error: state.error,
+    txHash: state.txHash,
+
+    // Derived state
+    isIdle: state.step === "idle",
+    isPending: state.step === "pending",
+    isConfirming: state.step === "confirming",
+    isSyncing: state.step === "syncing",
+    isSuccess: state.step === "success",
+    isError: state.step === "error",
+    isLoading: ["switching-chain", "pending", "confirming", "syncing"].includes(
+      state.step
+    ),
+
+    // Data
+    hasTicket: !!hasTicket,
+    needsApproval,
+    hasSufficientBalance,
+    balance,
+
+    // Actions
     purchase,
     reset,
-    canPurchase,
-    balanceError,
   };
+}
+
+// ==========================================
+// HELPER: Get button text based on step
+// ==========================================
+export function getPurchaseButtonText(
+  step: PurchaseStep,
+  price: number
+): string {
+  switch (step) {
+    case "idle":
+      return `BUY WAFFLE - $${price}`;
+    case "switching-chain":
+      return "SWITCHING NETWORK...";
+    case "pending":
+      return "CONFIRM IN WALLET...";
+    case "confirming":
+      return "CONFIRMING...";
+    case "syncing":
+      return "FINALIZING...";
+    case "success":
+      return "PURCHASED! ✓";
+    case "error":
+      return "TRY AGAIN";
+    default:
+      return `BUY WAFFLE - $${price}`;
+  }
 }

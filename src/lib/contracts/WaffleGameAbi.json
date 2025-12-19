@@ -153,8 +153,8 @@
     "inputs": [
       {
         "name": "gameId",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "bytes32",
+        "internalType": "bytes32"
       },
       {
         "name": "amount",
@@ -171,8 +171,8 @@
     "inputs": [
       {
         "name": "gameId",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "bytes32",
+        "internalType": "bytes32"
       },
       {
         "name": "amount",
@@ -209,8 +209,8 @@
     "inputs": [
       {
         "name": "gameId",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "bytes32",
+        "internalType": "bytes32"
       },
       {
         "name": "amount",
@@ -232,8 +232,8 @@
     "inputs": [
       {
         "name": "gameId",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "bytes32",
+        "internalType": "bytes32"
       },
       {
         "name": "entryFee",
@@ -250,8 +250,8 @@
     "inputs": [
       {
         "name": "gameId",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "bytes32",
+        "internalType": "bytes32"
       }
     ],
     "outputs": [],
@@ -263,8 +263,8 @@
     "inputs": [
       {
         "name": "gameId",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "bytes32",
+        "internalType": "bytes32"
       }
     ],
     "outputs": [
@@ -346,8 +346,8 @@
     "inputs": [
       {
         "name": "gameId",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "bytes32",
+        "internalType": "bytes32"
       },
       {
         "name": "player",
@@ -394,8 +394,8 @@
     "inputs": [
       {
         "name": "gameId",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "bytes32",
+        "internalType": "bytes32"
       },
       {
         "name": "player",
@@ -564,8 +564,8 @@
     "inputs": [
       {
         "name": "gameId",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "bytes32",
+        "internalType": "bytes32"
       },
       {
         "name": "merkleRoot",
@@ -601,8 +601,8 @@
     "inputs": [
       {
         "name": "gameId",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "bytes32",
+        "internalType": "bytes32"
       },
       {
         "name": "to",
@@ -699,9 +699,9 @@
     "inputs": [
       {
         "name": "gameId",
-        "type": "uint256",
+        "type": "bytes32",
         "indexed": true,
-        "internalType": "uint256"
+        "internalType": "bytes32"
       },
       {
         "name": "to",
@@ -724,9 +724,9 @@
     "inputs": [
       {
         "name": "gameId",
-        "type": "uint256",
+        "type": "bytes32",
         "indexed": true,
-        "internalType": "uint256"
+        "internalType": "bytes32"
       },
       {
         "name": "entryFee",
@@ -743,9 +743,9 @@
     "inputs": [
       {
         "name": "gameId",
-        "type": "uint256",
+        "type": "bytes32",
         "indexed": true,
-        "internalType": "uint256"
+        "internalType": "bytes32"
       }
     ],
     "anonymous": false
@@ -801,9 +801,9 @@
     "inputs": [
       {
         "name": "gameId",
-        "type": "uint256",
+        "type": "bytes32",
         "indexed": true,
-        "internalType": "uint256"
+        "internalType": "bytes32"
       },
       {
         "name": "player",
@@ -826,9 +826,9 @@
     "inputs": [
       {
         "name": "gameId",
-        "type": "uint256",
+        "type": "bytes32",
         "indexed": true,
-        "internalType": "uint256"
+        "internalType": "bytes32"
       },
       {
         "name": "merkleRoot",
@@ -920,9 +920,9 @@
     "inputs": [
       {
         "name": "gameId",
-        "type": "uint256",
+        "type": "bytes32",
         "indexed": true,
-        "internalType": "uint256"
+        "internalType": "bytes32"
       },
       {
         "name": "player",

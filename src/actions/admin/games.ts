@@ -6,7 +6,11 @@ import { requireAdminSession } from "@/lib/admin-auth";
 import { logAdminAction, AdminAction, EntityType } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createGameOnChain } from "@/lib/settlement";
+import {
+  createGameOnChain,
+  generateOnchainGameId,
+  getOnChainGame,
+} from "@/lib/settlement";
 import { getGamePhase } from "@/lib/game-utils";
 
 // ==========================================
@@ -78,6 +82,49 @@ export async function createGameAction(
   const data = validation.data;
 
   try {
+    // Check if there's already an active game (not ended in database)
+    const now = new Date();
+    const existingActiveGame = await prisma.game.findFirst({
+      where: {
+        endsAt: { gt: now }, // Game hasn't ended yet
+      },
+      select: { id: true, title: true, onchainId: true },
+    });
+
+    if (existingActiveGame) {
+      return {
+        success: false,
+        error: `Cannot create a new game while "${existingActiveGame.title}" is still active. Please end it first.`,
+      };
+    }
+
+    // Also check if there's a recently ended game that hasn't been ended on-chain yet
+    const recentEndedGame = await prisma.game.findFirst({
+      where: {
+        endsAt: { lte: now },
+        onchainId: { not: null },
+      },
+      orderBy: { endsAt: "desc" },
+      select: { id: true, title: true, onchainId: true },
+    });
+
+    if (recentEndedGame?.onchainId) {
+      // Import dynamically to avoid circular deps
+      const onChainGame = await getOnChainGame(
+        recentEndedGame.onchainId as `0x${string}`
+      );
+
+      if (onChainGame && !onChainGame.ended) {
+        return {
+          success: false,
+          error: `Cannot create a new game while "${recentEndedGame.title}" is not ended on-chain. Please end it on-chain first via Settlement.`,
+        };
+      }
+    }
+
+    // Generate random bytes32 for on-chain game ID
+    const onchainId = generateOnchainGameId();
+
     // Create game in database (no status field, uses time-based phase)
     const game = await prisma.game.create({
       data: {
@@ -92,14 +139,15 @@ export async function createGameAction(
         playerCount: 0,
         roundBreakSec: data.roundBreakSec,
         maxPlayers: data.maxPlayers,
+        onchainId, // Store the bytes32 on-chain ID
       },
     });
 
-    // Create game on-chain
+    // Create game on-chain using the generated onchainId
     try {
-      const txHash = await createGameOnChain(game.id, data.tierPrice1);
+      const txHash = await createGameOnChain(onchainId, data.tierPrice1);
       console.log(
-        `[CreateGame] Game ${game.id} created on-chain. TX: ${txHash}`
+        `[CreateGame] Game ${game.id} (onchain: ${onchainId}) created. TX: ${txHash}`
       );
 
       await logAdminAction({
@@ -230,6 +278,28 @@ export async function deleteGameAction(gameId: number): Promise<void> {
   }
 
   try {
+    // Get the game to check if it has an onchain ID
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      select: { id: true, onchainId: true, title: true },
+    });
+
+    if (!game) {
+      throw new Error("Game not found");
+    }
+
+    // If game is on-chain, check if it's still active
+    if (game.onchainId) {
+      const { getOnChainGame } = await import("@/lib/settlement");
+      const onChainGame = await getOnChainGame(game.onchainId as `0x${string}`);
+
+      if (onChainGame && !onChainGame.ended) {
+        throw new Error(
+          `Cannot delete "${game.title}" - it is still active on-chain. End it on-chain first via Settlement.`
+        );
+      }
+    }
+
     await prisma.game.delete({
       where: { id: gameId },
     });
@@ -242,6 +312,7 @@ export async function deleteGameAction(gameId: number): Promise<void> {
     });
   } catch (error) {
     console.error("Delete game error:", error);
+    throw error; // Re-throw so UI can handle it
   }
 
   revalidatePath("/admin/games");

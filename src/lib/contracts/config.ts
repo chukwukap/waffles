@@ -25,9 +25,9 @@ const TESTNET_CONFIG: NetworkConfig = {
   name: "Base Sepolia",
   explorerUrl: "https://sepolia.basescan.org",
   contracts: {
-    // WaffleGame proxy on Base Sepolia (deployed with TestUSDC)
-    waffleGame: "0xe969348b8cab4dfdf25e761b435d8bc04d4b615b",
-    // TestUSDC with faucet function (deployed for testing)
+    // WaffleGame v4.0.0 proxy on Base Sepolia (bytes32 gameId)
+    waffleGame: "0x20dC207d530dC231C0B52B921f5f4E49C4b80d5b",
+    // TestUSDC with faucet function (contract updated to use this token)
     usdc: "0x8aAa7ECea87244Ca4062eBce6DA61820f3830233",
   },
 };

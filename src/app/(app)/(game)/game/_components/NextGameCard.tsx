@@ -7,6 +7,7 @@ import { BuyTicketModal } from "./BuyTicketModal";
 
 interface NextGameCardProps {
   gameId: number;
+  onchainId: `0x${string}` | null;
   theme: string;
   themeIcon?: string;
   tierPrices: number[];
@@ -19,10 +20,13 @@ interface NextGameCardProps {
   spotsTaken?: number;
   recentPlayers?: { avatar?: string; name: string }[];
   onPurchaseSuccess?: () => void;
+  username?: string;
+  userAvatar?: string;
 }
 
 export function NextGameCard({
   gameId,
+  onchainId,
   theme,
   themeIcon,
   tierPrices,
@@ -35,43 +39,32 @@ export function NextGameCard({
   spotsTaken = 0,
   recentPlayers = [],
   onPurchaseSuccess,
+  username,
+  userAvatar,
 }: NextGameCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const hours = Math.floor(countdown / 3600);
-  const minutes = Math.floor((countdown % 3600) / 60);
-  const seconds = countdown % 60;
-  const formatPart = (n: number) => String(n).padStart(2, "0");
-  const countdownDisplay = `${formatPart(hours)}H ${formatPart(
-    minutes
-  )}M ${formatPart(seconds)}S`;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const countdownDisplay = `${pad(Math.floor(countdown / 3600))}H ${pad(
+    Math.floor((countdown % 3600) / 60)
+  )}M ${pad(countdown % 60)}S`;
 
-  const getButtonConfig = () => {
-    if (hasEnded)
-      return { text: "ENDED", disabled: true, action: "none" as const };
-    if (isLive) {
-      return hasTicket
-        ? {
-            text: "START GAME",
-            disabled: false,
-            action: "navigate" as const,
-            href: `/game/${gameId}/live`,
-          }
-        : { text: "GET TICKET", disabled: false, action: "modal" as const };
-    }
-    return hasTicket
-      ? { text: "YOU'RE IN!", disabled: true, action: "none" as const }
-      : { text: "BUY WAFFLE", disabled: false, action: "modal" as const };
-  };
-
-  const buttonConfig = getButtonConfig();
+  const buttonConfig = hasEnded
+    ? { text: "ENDED", disabled: true, href: null }
+    : isLive
+      ? hasTicket
+        ? { text: "START GAME", disabled: false, href: `/game/${gameId}/live` }
+        : { text: "GET TICKET", disabled: false, href: null }
+      : hasTicket
+        ? { text: "YOU'RE IN!", disabled: true, href: null }
+        : { text: "BUY WAFFLE", disabled: false, href: null };
 
   const handleButtonClick = () => {
     if (buttonConfig.disabled) return;
-    if (buttonConfig.action === "modal") {
-      setIsModalOpen(true);
-    } else if (buttonConfig.action === "navigate" && "href" in buttonConfig) {
+    if (buttonConfig.href) {
       window.location.href = buttonConfig.href;
+    } else {
+      setIsModalOpen(true);
     }
   };
 
@@ -88,91 +81,43 @@ export function NextGameCard({
       >
         {/* Header */}
         <div
-          className="relative flex justify-center items-center gap-2 shrink-0 z-10"
+          className="relative flex flex-col justify-center items-center shrink-0 z-10 w-full h-[52px] p-0 gap-[17px]"
           style={{
-            height: "clamp(40px, 6vh, 52px)",
             background: "rgba(27, 27, 29, 0.8)",
             backdropFilter: "blur(12px)",
           }}
         >
-          <Image
-            src="/images/icons/game-controller.png"
-            alt="controller"
-            width={24}
-            height={24}
-            className="object-contain"
-            style={{ width: "clamp(20px, 3vh, 30px)", height: "auto" }}
-          />
-          <span
-            className="font-body text-white uppercase"
-            style={{
-              fontSize: "clamp(18px, 3vh, 26px)",
-              lineHeight: "92%",
-              letterSpacing: "-0.03em",
-            }}
-          >
-            NEXT GAME
-          </span>
+          <div className="flex flex-row justify-center items-center self-stretch p-0 gap-3 h-[30px]">
+            <Image
+              src="/images/icons/game-controller.png"
+              alt="controller"
+              width={30}
+              height={30}
+              className="object-contain w-[30px] h-[30px] flex-none"
+            />
+            <span className="font-body text-white uppercase w-[114px] h-6 text-[26px] font-normal leading-[92%] tracking-[-0.03em]">
+              NEXT GAME
+            </span>
+          </div>
         </div>
 
-        {/* Stats Row: Spots + Prize Pool */}
+        {/* Stats Row */}
         <div
-          className="relative flex justify-around items-center z-10 shrink-0"
-          style={{ padding: "clamp(8px, 1.5vh, 16px) 0" }}
+          className="relative flex flex-row items-start z-10 shrink-0"
+          style={{ padding: "12px 10px 0px", gap: "12px" }}
         >
-          {/* Spots */}
-          <div
-            className="flex flex-col items-center"
-            style={{ gap: "clamp(2px, 0.5vh, 4px)" }}
-          >
-            <Image
-              src="/images/illustrations/spots.svg"
-              alt="spots"
-              width={48}
-              height={32}
-              className="object-contain"
-              style={{ width: "clamp(36px, 6vh, 48px)", height: "auto" }}
-            />
-            <span
-              className="font-display text-white"
-              style={{ fontSize: "clamp(10px, 1.5vh, 12px)", opacity: 0.6 }}
-            >
-              Spots
-            </span>
-            <span
-              className="font-body text-white"
-              style={{ fontSize: "clamp(16px, 2.5vh, 24px)" }}
-            >
-              {spotsTaken}/{spotsTotal}
-            </span>
-          </div>
-
-          {/* Prize Pool */}
-          <div
-            className="flex flex-col items-center"
-            style={{ gap: "clamp(2px, 0.5vh, 4px)" }}
-          >
-            <Image
-              src="/images/illustrations/money-stack.svg"
-              alt="prize"
-              width={48}
-              height={32}
-              className="object-contain"
-              style={{ width: "clamp(36px, 6vh, 48px)", height: "auto" }}
-            />
-            <span
-              className="font-display text-white"
-              style={{ fontSize: "clamp(10px, 1.5vh, 12px)", opacity: 0.6 }}
-            >
-              Prize pool
-            </span>
-            <span
-              className="font-body text-white"
-              style={{ fontSize: "clamp(16px, 2.5vh, 24px)" }}
-            >
-              ${prizePool.toLocaleString()}
-            </span>
-          </div>
+          <StatBlock
+            icon="/images/illustrations/spots.svg"
+            iconSize={{ w: 55.12, h: 40 }}
+            label="Spots"
+            value={`${spotsTaken}/${spotsTotal}`}
+          />
+          <StatBlock
+            icon="/images/illustrations/money-stack.svg"
+            iconSize={{ w: 38.32, h: 40 }}
+            label="Prize pool"
+            value={`$${prizePool.toLocaleString()}`}
+          />
         </div>
 
         {/* Button */}
@@ -188,26 +133,28 @@ export function NextGameCard({
           </FancyBorderButton>
         </div>
 
-        {/* Countdown - Always visible */}
+        {/* Countdown */}
         <div
-          className="relative flex flex-col justify-center items-center z-10 shrink-0"
-          style={{
-            gap: "clamp(4px, 0.8vh, 8px)",
-            padding: "clamp(6px, 1vh, 12px) 16px",
-          }}
+          className="flex flex-col justify-center items-center z-10 shrink-0 w-full"
+          style={{ padding: "8px 0px 0px", gap: "6px" }}
         >
           <div
-            className="inline-flex items-center justify-center rounded-full"
+            className="flex flex-row justify-center items-center"
             style={{
+              boxSizing: "border-box",
+              padding: "10px 20px",
+              gap: "4px",
+              minWidth: "158px",
+              height: "44px",
               border: "2px solid #F5BB1B",
-              padding: "clamp(6px, 1vh, 10px) clamp(14px, 2.5vh, 20px)",
-              height: "clamp(36px, 5vh, 44px)",
+              borderRadius: "900px",
             }}
           >
             <span
-              className="font-body"
+              className="font-body text-center whitespace-nowrap"
               style={{
-                fontSize: "clamp(16px, 2.5vh, 21px)",
+                fontWeight: 400,
+                fontSize: "clamp(18px, 2.5vw, 21px)",
                 lineHeight: "115%",
                 color: "#F5BB1B",
               }}
@@ -215,49 +162,53 @@ export function NextGameCard({
               {countdownDisplay}
             </span>
           </div>
-          <p
-            className="font-display text-white"
-            style={{
-              fontSize: "clamp(10px, 1.5vh, 12px)",
-              opacity: 0.5,
-              letterSpacing: "-0.03em",
-            }}
+          <div
+            className="flex flex-row justify-center items-center w-full"
+            style={{ padding: "0px", gap: "8px" }}
           >
-            Until game starts
-          </p>
-        </div>
-
-        {isLive && (
-          <div className="relative flex items-center justify-center gap-2 z-10 shrink-0 py-2">
-            <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
-            <span className="font-body text-red-500 text-lg uppercase">
-              LIVE NOW
+            <span
+              className="font-display text-center"
+              style={{
+                fontWeight: 500,
+                fontSize: "12px",
+                lineHeight: "14px",
+                letterSpacing: "-0.03em",
+                color: "#FFFFFF",
+                opacity: 0.5,
+              }}
+            >
+              Until game starts
             </span>
           </div>
-        )}
+        </div>
 
         {/* Player Avatars Row */}
         <div
-          className="relative flex items-center justify-center z-10 shrink-0"
+          className="relative flex flex-row justify-center items-center z-10 shrink-0"
           style={{
-            gap: "clamp(4px, 0.8vh, 6px)",
-            padding: "clamp(8px, 1.5vh, 12px) 16px",
+            padding: "0px",
+            gap: "6px",
+            width: "353px",
+            height: "25.11px",
           }}
         >
           {spotsTaken > 0 ? (
             <>
-              {/* Stacked Avatars */}
-              <div className="flex items-center" style={{ marginRight: "6px" }}>
+              <div
+                className="flex flex-row items-center"
+                style={{ padding: "0px", width: "70.44px", height: "25.11px" }}
+              >
                 {recentPlayers.slice(0, 4).map((player, idx) => (
                   <div
                     key={idx}
-                    className="rounded-full overflow-hidden shrink-0"
+                    className="rounded-full overflow-hidden shrink-0 box-border"
                     style={{
-                      width: "clamp(20px, 3vh, 25px)",
-                      height: "clamp(20px, 3vh, 25px)",
-                      border: "2px solid #FFFFFF",
+                      width: "25.11px",
+                      height: "25.11px",
+                      border: "2.01px solid #FFFFFF",
                       background: "#F0F3F4",
-                      marginLeft: idx === 0 ? "0" : "-10px",
+                      borderRadius: "900px",
+                      marginLeft: idx === 0 ? "0px" : "-10px",
                     }}
                   >
                     {player.avatar && (
@@ -272,14 +223,14 @@ export function NextGameCard({
                   </div>
                 ))}
               </div>
-              {/* "and X others" text */}
               <span
-                className="font-display"
+                className="font-display text-center"
                 style={{
-                  fontSize: "clamp(11px, 1.6vh, 14px)",
+                  fontWeight: 500,
+                  fontSize: "14px",
                   lineHeight: "130%",
-                  color: "#99A0AE",
                   letterSpacing: "-0.03em",
+                  color: "#99A0AE",
                 }}
               >
                 {othersCount > 0
@@ -289,30 +240,79 @@ export function NextGameCard({
             </>
           ) : (
             <span
-              className="font-display"
+              className="font-display text-center"
               style={{
-                fontSize: "clamp(11px, 1.6vh, 14px)",
+                fontWeight: 500,
+                fontSize: "14px",
+                lineHeight: "130%",
+                letterSpacing: "-0.03em",
                 color: "#99A0AE",
                 opacity: 0.6,
               }}
-            >
-              Be the first to join!
-            </span>
+            />
           )}
         </div>
       </div>
 
-      {/* Buy Ticket Modal */}
       <BuyTicketModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         gameId={gameId}
+        onchainId={onchainId}
         theme={theme}
         themeIcon={themeIcon}
         tierPrices={tierPrices}
         prizePool={prizePool}
         onPurchaseSuccess={onPurchaseSuccess}
+        username={username}
+        userAvatar={userAvatar}
       />
     </>
+  );
+}
+
+function StatBlock({
+  icon,
+  iconSize,
+  label,
+  value,
+}: {
+  icon: string;
+  iconSize: { w: number; h: number };
+  label: string;
+  value: string;
+}) {
+  return (
+    <div
+      className="flex flex-col justify-center items-center flex-1"
+      style={{ padding: "0px", height: "85px" }}
+    >
+      <Image
+        src={icon}
+        alt={label}
+        width={iconSize.w}
+        height={iconSize.h}
+        className="object-contain"
+        style={{ width: `${iconSize.w}px`, height: `${iconSize.h}px` }}
+      />
+      <span
+        className="font-display text-center"
+        style={{
+          fontSize: "16px",
+          fontWeight: 500,
+          lineHeight: "130%",
+          letterSpacing: "-0.03em",
+          color: "#99A0AE",
+        }}
+      >
+        {label}
+      </span>
+      <span
+        className="font-body text-white"
+        style={{ fontSize: "24px", fontWeight: 400, lineHeight: "100%" }}
+      >
+        {value}
+      </span>
+    </div>
   );
 }

@@ -33,6 +33,7 @@ export default class GameServer implements Party.Server {
   };
 
   chatHistory: ChatMessage[] = [];
+  seenFids: Set<number> = new Set(); // Track first-time joins
 
   constructor(readonly room: Party.Room) {}
 
@@ -102,6 +103,9 @@ export default class GameServer implements Party.Server {
   async onStart() {
     this.chatHistory =
       (await this.room.storage.get<ChatMessage[]>("chatHistory")) || [];
+    // Load seenFids from storage for hibernation recovery
+    const savedFids = await this.room.storage.get<number[]>("seenFids");
+    this.seenFids = new Set(savedFids || []);
   }
 
   // Tag connections for targeted messaging (e.g., by fid)
@@ -133,8 +137,12 @@ export default class GameServer implements Party.Server {
       `[Join] ${user.username} (fid:${user.fid}) joined room ${this.room.id}`
     );
 
-    // Broadcast presence update to others
-    this.broadcastPresence(user, "join");
+    // Only broadcast join for first-time connections this session
+    if (!this.seenFids.has(user.fid)) {
+      this.seenFids.add(user.fid);
+      await this.room.storage.put("seenFids", [...this.seenFids]);
+      this.broadcastPresence(user, "join");
+    }
 
     // Send initial sync data to this connection (compact format)
     // s = sync, n = online count, h = history

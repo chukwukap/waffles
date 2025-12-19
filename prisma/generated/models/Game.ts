@@ -46,6 +46,7 @@ export type GameSumAggregateOutputType = {
 
 export type GameMinAggregateOutputType = {
   id: number | null
+  onchainId: string | null
   title: string | null
   description: string | null
   theme: $Enums.GameTheme | null
@@ -62,6 +63,7 @@ export type GameMinAggregateOutputType = {
 
 export type GameMaxAggregateOutputType = {
   id: number | null
+  onchainId: string | null
   title: string | null
   description: string | null
   theme: $Enums.GameTheme | null
@@ -78,6 +80,7 @@ export type GameMaxAggregateOutputType = {
 
 export type GameCountAggregateOutputType = {
   id: number
+  onchainId: number
   title: number
   description: number
   theme: number
@@ -115,6 +118,7 @@ export type GameSumAggregateInputType = {
 
 export type GameMinAggregateInputType = {
   id?: true
+  onchainId?: true
   title?: true
   description?: true
   theme?: true
@@ -131,6 +135,7 @@ export type GameMinAggregateInputType = {
 
 export type GameMaxAggregateInputType = {
   id?: true
+  onchainId?: true
   title?: true
   description?: true
   theme?: true
@@ -147,6 +152,7 @@ export type GameMaxAggregateInputType = {
 
 export type GameCountAggregateInputType = {
   id?: true
+  onchainId?: true
   title?: true
   description?: true
   theme?: true
@@ -251,6 +257,7 @@ export type GameGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
 
 export type GameGroupByOutputType = {
   id: number
+  onchainId: string | null
   title: string
   description: string | null
   theme: $Enums.GameTheme
@@ -291,6 +298,7 @@ export type GameWhereInput = {
   OR?: Prisma.GameWhereInput[]
   NOT?: Prisma.GameWhereInput | Prisma.GameWhereInput[]
   id?: Prisma.IntFilter<"Game"> | number
+  onchainId?: Prisma.StringNullableFilter<"Game"> | string | null
   title?: Prisma.StringFilter<"Game"> | string
   description?: Prisma.StringNullableFilter<"Game"> | string | null
   theme?: Prisma.EnumGameThemeFilter<"Game"> | $Enums.GameTheme
@@ -311,6 +319,7 @@ export type GameWhereInput = {
 
 export type GameOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  onchainId?: Prisma.SortOrderInput | Prisma.SortOrder
   title?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   theme?: Prisma.SortOrder
@@ -331,6 +340,7 @@ export type GameOrderByWithRelationInput = {
 
 export type GameWhereUniqueInput = Prisma.AtLeast<{
   id?: number
+  onchainId?: string
   AND?: Prisma.GameWhereInput | Prisma.GameWhereInput[]
   OR?: Prisma.GameWhereInput[]
   NOT?: Prisma.GameWhereInput | Prisma.GameWhereInput[]
@@ -350,10 +360,11 @@ export type GameWhereUniqueInput = Prisma.AtLeast<{
   questions?: Prisma.QuestionListRelationFilter
   entries?: Prisma.GameEntryListRelationFilter
   chats?: Prisma.ChatListRelationFilter
-}, "id">
+}, "id" | "onchainId">
 
 export type GameOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  onchainId?: Prisma.SortOrderInput | Prisma.SortOrder
   title?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   theme?: Prisma.SortOrder
@@ -379,6 +390,7 @@ export type GameScalarWhereWithAggregatesInput = {
   OR?: Prisma.GameScalarWhereWithAggregatesInput[]
   NOT?: Prisma.GameScalarWhereWithAggregatesInput | Prisma.GameScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"Game"> | number
+  onchainId?: Prisma.StringNullableWithAggregatesFilter<"Game"> | string | null
   title?: Prisma.StringWithAggregatesFilter<"Game"> | string
   description?: Prisma.StringNullableWithAggregatesFilter<"Game"> | string | null
   theme?: Prisma.EnumGameThemeWithAggregatesFilter<"Game"> | $Enums.GameTheme
@@ -395,6 +407,7 @@ export type GameScalarWhereWithAggregatesInput = {
 }
 
 export type GameCreateInput = {
+  onchainId?: string | null
   title: string
   description?: string | null
   theme: $Enums.GameTheme
@@ -415,6 +428,7 @@ export type GameCreateInput = {
 
 export type GameUncheckedCreateInput = {
   id?: number
+  onchainId?: string | null
   title: string
   description?: string | null
   theme: $Enums.GameTheme
@@ -434,6 +448,7 @@ export type GameUncheckedCreateInput = {
 }
 
 export type GameUpdateInput = {
+  onchainId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   theme?: Prisma.EnumGameThemeFieldUpdateOperationsInput | $Enums.GameTheme
@@ -454,6 +469,7 @@ export type GameUpdateInput = {
 
 export type GameUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  onchainId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   theme?: Prisma.EnumGameThemeFieldUpdateOperationsInput | $Enums.GameTheme
@@ -474,6 +490,7 @@ export type GameUncheckedUpdateInput = {
 
 export type GameCreateManyInput = {
   id?: number
+  onchainId?: string | null
   title: string
   description?: string | null
   theme: $Enums.GameTheme
@@ -490,6 +507,7 @@ export type GameCreateManyInput = {
 }
 
 export type GameUpdateManyMutationInput = {
+  onchainId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   theme?: Prisma.EnumGameThemeFieldUpdateOperationsInput | $Enums.GameTheme
@@ -507,6 +525,7 @@ export type GameUpdateManyMutationInput = {
 
 export type GameUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  onchainId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   theme?: Prisma.EnumGameThemeFieldUpdateOperationsInput | $Enums.GameTheme
@@ -532,6 +551,7 @@ export type FloatNullableListFilter<$PrismaModel = never> = {
 
 export type GameCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  onchainId?: Prisma.SortOrder
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
   theme?: Prisma.SortOrder
@@ -558,6 +578,7 @@ export type GameAvgOrderByAggregateInput = {
 
 export type GameMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  onchainId?: Prisma.SortOrder
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
   theme?: Prisma.SortOrder
@@ -574,6 +595,7 @@ export type GameMaxOrderByAggregateInput = {
 
 export type GameMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  onchainId?: Prisma.SortOrder
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
   theme?: Prisma.SortOrder
@@ -666,6 +688,7 @@ export type GameUpdateOneRequiredWithoutChatsNestedInput = {
 }
 
 export type GameCreateWithoutQuestionsInput = {
+  onchainId?: string | null
   title: string
   description?: string | null
   theme: $Enums.GameTheme
@@ -685,6 +708,7 @@ export type GameCreateWithoutQuestionsInput = {
 
 export type GameUncheckedCreateWithoutQuestionsInput = {
   id?: number
+  onchainId?: string | null
   title: string
   description?: string | null
   theme: $Enums.GameTheme
@@ -719,6 +743,7 @@ export type GameUpdateToOneWithWhereWithoutQuestionsInput = {
 }
 
 export type GameUpdateWithoutQuestionsInput = {
+  onchainId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   theme?: Prisma.EnumGameThemeFieldUpdateOperationsInput | $Enums.GameTheme
@@ -738,6 +763,7 @@ export type GameUpdateWithoutQuestionsInput = {
 
 export type GameUncheckedUpdateWithoutQuestionsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  onchainId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   theme?: Prisma.EnumGameThemeFieldUpdateOperationsInput | $Enums.GameTheme
@@ -756,6 +782,7 @@ export type GameUncheckedUpdateWithoutQuestionsInput = {
 }
 
 export type GameCreateWithoutEntriesInput = {
+  onchainId?: string | null
   title: string
   description?: string | null
   theme: $Enums.GameTheme
@@ -775,6 +802,7 @@ export type GameCreateWithoutEntriesInput = {
 
 export type GameUncheckedCreateWithoutEntriesInput = {
   id?: number
+  onchainId?: string | null
   title: string
   description?: string | null
   theme: $Enums.GameTheme
@@ -809,6 +837,7 @@ export type GameUpdateToOneWithWhereWithoutEntriesInput = {
 }
 
 export type GameUpdateWithoutEntriesInput = {
+  onchainId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   theme?: Prisma.EnumGameThemeFieldUpdateOperationsInput | $Enums.GameTheme
@@ -828,6 +857,7 @@ export type GameUpdateWithoutEntriesInput = {
 
 export type GameUncheckedUpdateWithoutEntriesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  onchainId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   theme?: Prisma.EnumGameThemeFieldUpdateOperationsInput | $Enums.GameTheme
@@ -846,6 +876,7 @@ export type GameUncheckedUpdateWithoutEntriesInput = {
 }
 
 export type GameCreateWithoutChatsInput = {
+  onchainId?: string | null
   title: string
   description?: string | null
   theme: $Enums.GameTheme
@@ -865,6 +896,7 @@ export type GameCreateWithoutChatsInput = {
 
 export type GameUncheckedCreateWithoutChatsInput = {
   id?: number
+  onchainId?: string | null
   title: string
   description?: string | null
   theme: $Enums.GameTheme
@@ -899,6 +931,7 @@ export type GameUpdateToOneWithWhereWithoutChatsInput = {
 }
 
 export type GameUpdateWithoutChatsInput = {
+  onchainId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   theme?: Prisma.EnumGameThemeFieldUpdateOperationsInput | $Enums.GameTheme
@@ -918,6 +951,7 @@ export type GameUpdateWithoutChatsInput = {
 
 export type GameUncheckedUpdateWithoutChatsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  onchainId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   theme?: Prisma.EnumGameThemeFieldUpdateOperationsInput | $Enums.GameTheme
@@ -986,6 +1020,7 @@ export type GameCountOutputTypeCountChatsArgs<ExtArgs extends runtime.Types.Exte
 
 export type GameSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  onchainId?: boolean
   title?: boolean
   description?: boolean
   theme?: boolean
@@ -1007,6 +1042,7 @@ export type GameSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
 
 export type GameSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  onchainId?: boolean
   title?: boolean
   description?: boolean
   theme?: boolean
@@ -1024,6 +1060,7 @@ export type GameSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
 
 export type GameSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  onchainId?: boolean
   title?: boolean
   description?: boolean
   theme?: boolean
@@ -1041,6 +1078,7 @@ export type GameSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
 
 export type GameSelectScalar = {
   id?: boolean
+  onchainId?: boolean
   title?: boolean
   description?: boolean
   theme?: boolean
@@ -1056,7 +1094,7 @@ export type GameSelectScalar = {
   updatedAt?: boolean
 }
 
-export type GameOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "theme" | "coverUrl" | "startsAt" | "endsAt" | "tierPrices" | "prizePool" | "playerCount" | "roundBreakSec" | "maxPlayers" | "createdAt" | "updatedAt", ExtArgs["result"]["game"]>
+export type GameOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "onchainId" | "title" | "description" | "theme" | "coverUrl" | "startsAt" | "endsAt" | "tierPrices" | "prizePool" | "playerCount" | "roundBreakSec" | "maxPlayers" | "createdAt" | "updatedAt", ExtArgs["result"]["game"]>
 export type GameInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   questions?: boolean | Prisma.Game$questionsArgs<ExtArgs>
   entries?: boolean | Prisma.Game$entriesArgs<ExtArgs>
@@ -1075,6 +1113,7 @@ export type $GamePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
+    onchainId: string | null
     title: string
     description: string | null
     theme: $Enums.GameTheme
@@ -1515,6 +1554,7 @@ export interface Prisma__GameClient<T, Null = never, ExtArgs extends runtime.Typ
  */
 export interface GameFieldRefs {
   readonly id: Prisma.FieldRef<"Game", 'Int'>
+  readonly onchainId: Prisma.FieldRef<"Game", 'String'>
   readonly title: Prisma.FieldRef<"Game", 'String'>
   readonly description: Prisma.FieldRef<"Game", 'String'>
   readonly theme: Prisma.FieldRef<"Game", 'GameTheme'>

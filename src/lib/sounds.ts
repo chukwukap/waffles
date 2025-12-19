@@ -37,6 +37,9 @@ export const SOUNDS = {
   defeat: "/sounds/defeat.wav",
 } as const;
 
+// Background music (looping)
+export const BG_TRACK = "/sounds/bg-loop.wav";
+
 export type SoundName = keyof typeof SOUNDS;
 
 // ============================================
@@ -76,6 +79,8 @@ class SoundManager {
   private _isMuted: boolean = false;
   private _volume: number = 0.7;
   private _initialized: boolean = false;
+  private _bgAudio: HTMLAudioElement | null = null;
+  private _bgPlaying: boolean = false;
 
   constructor() {
     // Defer initialization to first access (client-side only)
@@ -176,6 +181,58 @@ class SoundManager {
   preload(sounds: SoundName[] = ["click", "chatSend", "answerSubmit"]): void {
     sounds.forEach((name) => getAudio(name));
   }
+
+  // ============================================
+  // BACKGROUND MUSIC
+  // ============================================
+
+  /**
+   * Play looping background music
+   */
+  playBgMusic(): void {
+    this.init();
+    if (this._isMuted) return;
+
+    if (typeof window === "undefined") return;
+
+    if (!this._bgAudio) {
+      this._bgAudio = new Audio(BG_TRACK);
+      this._bgAudio.loop = true;
+      this._bgAudio.preload = "auto";
+    }
+
+    this._bgAudio.volume = this._volume * 0.4; // Lower volume for BG
+    this._bgAudio.play().catch(() => {
+      // Silently fail - user interaction may be required
+    });
+    this._bgPlaying = true;
+  }
+
+  /**
+   * Stop background music
+   */
+  stopBgMusic(): void {
+    if (this._bgAudio) {
+      this._bgAudio.pause();
+      this._bgAudio.currentTime = 0;
+    }
+    this._bgPlaying = false;
+  }
+
+  /**
+   * Pause background music (without resetting)
+   */
+  pauseBgMusic(): void {
+    this._bgAudio?.pause();
+    this._bgPlaying = false;
+  }
+
+  /**
+   * Check if background music is playing
+   */
+  get isBgPlaying(): boolean {
+    return this._bgPlaying;
+  }
 }
 
 // ============================================
@@ -194,4 +251,3 @@ export const soundManager = new SoundManager();
 export function playSound(name: SoundName): void {
   soundManager.play(name);
 }
-

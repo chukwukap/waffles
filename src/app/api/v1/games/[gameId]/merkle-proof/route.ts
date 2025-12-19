@@ -47,6 +47,7 @@ export const GET = withAuth<{ gameId: string }>(
         where: { id: gameId },
         select: {
           id: true,
+          onchainId: true,
           startsAt: true,
           endsAt: true,
           prizePool: true,
@@ -57,6 +58,13 @@ export const GET = withAuth<{ gameId: string }>(
         return NextResponse.json<ApiError>(
           { error: "Game not found", code: "NOT_FOUND" },
           { status: 404 }
+        );
+      }
+
+      if (!game.onchainId) {
+        return NextResponse.json<ApiError>(
+          { error: "Game has no on-chain ID", code: "NO_ONCHAIN_ID" },
+          { status: 400 }
         );
       }
 
@@ -93,6 +101,7 @@ export const GET = withAuth<{ gameId: string }>(
 
       // Calculate prize distribution
       const prizeDistribution = [0.6, 0.3, 0.1]; // 60%, 30%, 10%
+      const onchainId = game.onchainId as `0x${string}`;
       const winners: Winner[] = rankedEntries
         .filter((e) => e.user.wallet) // Only entries with wallets
         .map((entry, index) => {
@@ -104,7 +113,7 @@ export const GET = withAuth<{ gameId: string }>(
           );
 
           return {
-            gameId,
+            gameId: onchainId, // Use onchainId for Merkle tree
             address: entry.user.wallet as `0x${string}`,
             amount,
           };

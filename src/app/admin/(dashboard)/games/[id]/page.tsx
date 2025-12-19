@@ -27,6 +27,7 @@ export default async function GameDetailPage({
         where: { id: gameId },
         select: {
             id: true,
+            onchainId: true,
             title: true,
             description: true,
             theme: true,
@@ -63,24 +64,27 @@ export default async function GameDetailPage({
     };
 
     try {
-        const onChainGame = (await getOnChainGame(gameId)) as {
-            entryFee: bigint;
-            ticketCount: bigint;
-            merkleRoot: `0x${string}`;
-            settledAt: bigint;
-            ended: boolean;
-        };
-
-        if (onChainGame && onChainGame.entryFee > BigInt(0)) {
-            onChainStatus = {
-                exists: true,
-                ended: onChainGame.ended,
-                settled: onChainGame.merkleRoot !== "0x0000000000000000000000000000000000000000000000000000000000000000",
-                merkleRoot:
-                    onChainGame.merkleRoot !== "0x0000000000000000000000000000000000000000000000000000000000000000"
-                        ? onChainGame.merkleRoot
-                        : undefined,
+        // Only lookup if game has onchainId
+        if (game.onchainId) {
+            const onChainGame = (await getOnChainGame(game.onchainId as `0x${string}`)) as {
+                entryFee: bigint;
+                ticketCount: bigint;
+                merkleRoot: `0x${string}`;
+                settledAt: bigint;
+                ended: boolean;
             };
+
+            if (onChainGame && onChainGame.entryFee > BigInt(0)) {
+                onChainStatus = {
+                    exists: true,
+                    ended: onChainGame.ended,
+                    settled: onChainGame.merkleRoot !== "0x0000000000000000000000000000000000000000000000000000000000000000",
+                    merkleRoot:
+                        onChainGame.merkleRoot !== "0x0000000000000000000000000000000000000000000000000000000000000000"
+                            ? onChainGame.merkleRoot
+                            : undefined,
+                };
+            }
         }
     } catch (error) {
         // On-chain lookup failed - likely not deployed yet

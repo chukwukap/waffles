@@ -73,12 +73,37 @@ export async function POST(request: NextRequest) {
             { status: 400 }
           );
         }
-        txHash = await createGameOnChain(gameId, entryFee);
+        // Fetch onchainId from database
+        const createGame = await prisma.game.findUnique({
+          where: { id: gameId },
+          select: { onchainId: true },
+        });
+        if (!createGame?.onchainId) {
+          return NextResponse.json(
+            { error: "Game has no onchainId - cannot create on-chain" },
+            { status: 400 }
+          );
+        }
+        txHash = await createGameOnChain(
+          createGame.onchainId as `0x${string}`,
+          entryFee
+        );
         break;
       }
 
       case "end": {
-        txHash = await endGameOnChain(gameId);
+        // Fetch onchainId from database
+        const endGame = await prisma.game.findUnique({
+          where: { id: gameId },
+          select: { onchainId: true },
+        });
+        if (!endGame?.onchainId) {
+          return NextResponse.json(
+            { error: "Game has no onchainId - cannot end on-chain" },
+            { status: 400 }
+          );
+        }
+        txHash = await endGameOnChain(endGame.onchainId as `0x${string}`);
         break;
       }
 
@@ -142,20 +167,26 @@ export async function GET(request: NextRequest) {
 
     // Import dynamically to avoid issues when env var not set
     const { getOnChainGame } = await import("@/lib/settlement");
-    const onChainGame = await getOnChainGame(gameId);
 
-    // Get database game for comparison
+    // Get database game to get onchainId
     const dbGame = await prisma.game.findUnique({
       where: { id: gameId },
       select: {
         id: true,
+        onchainId: true,
         startsAt: true,
         endsAt: true,
-        ticketPrice: true,
+        tierPrices: true,
         prizePool: true,
         playerCount: true,
       },
     });
+
+    // Get on-chain game using onchainId
+    let onChainGame = null;
+    if (dbGame?.onchainId) {
+      onChainGame = await getOnChainGame(dbGame.onchainId as `0x${string}`);
+    }
 
     return NextResponse.json({
       gameId,

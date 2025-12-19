@@ -7,6 +7,7 @@ import {
     useCallback,
     useMemo,
     useRef,
+    useEffect,
     type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
@@ -71,13 +72,54 @@ interface LiveGameProviderProps {
 export function LiveGameProvider({ game, children }: LiveGameProviderProps) {
     const router = useRouter();
 
+    // Ticket and replay verification state
+    const [verificationState, setVerificationState] = useState<
+        "loading" | "valid" | "no-ticket" | "already-played" | "error"
+    >("loading");
+
+    // Verify ticket and check for replay on mount
+    useEffect(() => {
+        async function verifyAccess() {
+            try {
+                const res = await sdk.quickAuth.fetch(`/api/v1/games/${game.id}/entry`);
+                if (res.ok) {
+                    const entry = await res.json();
+                    // Check if user has already answered questions (replay attempt)
+                    if (entry.answered > 0) {
+                        setVerificationState("already-played");
+                    } else {
+                        setVerificationState("valid");
+                    }
+                } else if (res.status === 404) {
+                    // No entry found = no ticket
+                    setVerificationState("no-ticket");
+                } else {
+                    setVerificationState("error");
+                }
+            } catch (e) {
+                console.error("Access verification failed:", e);
+                setVerificationState("error");
+            }
+        }
+        verifyAccess();
+    }, [game.id]);
+
+    // Redirect based on verification state
+    useEffect(() => {
+        if (verificationState === "no-ticket") {
+            router.replace(`/game/${game.id}/ticket`);
+        } else if (verificationState === "already-played") {
+            router.replace(`/game/${game.id}/score`);
+        }
+    }, [verificationState, game.id, router]);
+
     // State
     const [questionIndex, setQuestionIndex] = useState(0);
     const [isBreak, setIsBreak] = useState(false);
     const [timerTarget, setTimerTarget] = useState(() => {
         // First question timer
         const firstQ = game.questions[0];
-        return Date.now() + (firstQ?.durationSec ?? 10) * 1000;
+        return Date.now() + (firstQ?.durationSec) * 1000;
     });
     const [answers, setAnswers] = useState<Map<number, Answer>>(new Map());
 
@@ -212,6 +254,40 @@ export function LiveGameProvider({ game, children }: LiveGameProviderProps) {
             advance,
         ]
     );
+
+    // Show loading while verifying access
+    if (verificationState === "loading") {
+        return (
+            <div className="flex flex-col items-center justify-center h-screen w-full bg-[#0E0E0E]">
+                <div className="text-white text-lg animate-pulse">Verifying access...</div>
+            </div>
+        );
+    }
+
+    // Show message for redirect states
+    if (verificationState === "no-ticket") {
+        return (
+            <div className="flex flex-col items-center justify-center h-screen w-full bg-[#0E0E0E]">
+                <div className="text-white text-lg">No ticket found. Redirecting...</div>
+            </div>
+        );
+    }
+
+    if (verificationState === "already-played") {
+        return (
+            <div className="flex flex-col items-center justify-center h-screen w-full bg-[#0E0E0E]">
+                <div className="text-white text-lg">You've already played. Redirecting to results...</div>
+            </div>
+        );
+    }
+
+    if (verificationState === "error") {
+        return (
+            <div className="flex flex-col items-center justify-center h-screen w-full bg-[#0E0E0E]">
+                <div className="text-white text-lg">Failed to verify access. Please try again.</div>
+            </div>
+        );
+    }
 
     return (
         <LiveGameContext.Provider value={value}>

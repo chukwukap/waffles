@@ -11,7 +11,7 @@ import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
  * Represents a winner in the Merkle tree
  */
 export interface Winner {
-  gameId: number;
+  gameId: `0x${string}`; // bytes32 on-chain game ID
   address: `0x${string}`;
   amount: bigint; // In token units (e.g., USDC has 6 decimals)
 }
@@ -21,7 +21,7 @@ export interface Winner {
  */
 export interface MerkleTreeResult {
   root: `0x${string}`;
-  tree: StandardMerkleTree<[bigint, string, bigint]>;
+  tree: StandardMerkleTree<[string, string, bigint]>;
 }
 
 /**
@@ -29,20 +29,21 @@ export interface MerkleTreeResult {
  *
  * Leaf format: [gameId, playerAddress, amount]
  * This matches the contract's verification: keccak256(abi.encode(gameId, player, amount))
+ * gameId is bytes32 on-chain
  */
 export function buildMerkleTree(winners: Winner[]): MerkleTreeResult {
   if (winners.length === 0) {
     throw new Error("Cannot build Merkle tree with no winners");
   }
 
-  // Convert winners to leaf format: [gameId, address, amount]
+  // Convert winners to leaf format: [gameId (bytes32), address, amount]
   const leaves = winners.map(
-    (w) => [BigInt(w.gameId), w.address, w.amount] as [bigint, string, bigint]
+    (w) => [w.gameId, w.address, w.amount] as [string, string, bigint]
   );
 
   // Build tree with OpenZeppelin library
   // Uses double hashing internally, matching Solidity's keccak256(bytes.concat(keccak256(...)))
-  const tree = StandardMerkleTree.of(leaves, ["uint256", "address", "uint256"]);
+  const tree = StandardMerkleTree.of(leaves, ["bytes32", "address", "uint256"]);
 
   return {
     root: tree.root as `0x${string}`,
@@ -95,15 +96,15 @@ export function verifyMerkleProof(
   winner: Winner,
   proof: `0x${string}`[]
 ): boolean {
-  const leaf: [bigint, string, bigint] = [
-    BigInt(winner.gameId),
+  const leaf: [string, string, bigint] = [
+    winner.gameId,
     winner.address,
     winner.amount,
   ];
 
   return StandardMerkleTree.verify(
     root,
-    ["uint256", "address", "uint256"],
+    ["bytes32", "address", "uint256"],
     leaf,
     proof
   );

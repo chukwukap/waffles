@@ -172,6 +172,7 @@ export default function TicketPageClientImpl({
             price={gameInfo.ticketPrice}
             maxPlayers={gameInfo.maxPlayers}
             gameId={gameInfo.id}
+            onchainId={gameInfo.onchainId as `0x${string}` | null}
             onPurchaseSuccess={fetchTicket}
           />
         </div>

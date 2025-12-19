@@ -187,6 +187,9 @@ model CompletedQuest {
 model Game {
   id Int @id @default(autoincrement())
 
+  // -- ON-CHAIN IDENTITY (random bytes32, stored as 0x-prefixed hex string) --
+  onchainId String? @unique @db.VarChar(66)
+
   // -- INFO --
   title       String    @db.VarChar(100)
   description String?   @db.VarChar(1000)
@@ -198,15 +201,15 @@ model Game {
   endsAt   DateTime
 
   // -- PRICING (3 tier prices) --
-  tierPrices Float[] @default([20, 50, 100])
+  tierPrices Float[] @default([5, 10, 25])
 
   // -- PRE-COMPUTED STATS (updated atomically) --
   prizePool   Float @default(0) // Sum of ticket prices
   playerCount Int   @default(0) // Count of entries
 
   // -- CONFIGURATION --
-  roundBreakSec Int @default(15) @db.SmallInt
-  maxPlayers    Int @default(100) @db.SmallInt
+  roundBreakSec Int @default(20) @db.SmallInt
+  maxPlayers    Int @default(200) @db.SmallInt
 
   // -- RELATIONS --
   questions Question[]
@@ -327,7 +330,7 @@ model Chat {
 // ==========================================
 // 5. NOTIFICATIONS
 // ==========================================
-
+// TODO: should we include this in the main app aside waitlist?
 model NotificationToken {
   id        Int      @id @default(autoincrement())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)

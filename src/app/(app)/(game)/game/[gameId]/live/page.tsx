@@ -34,7 +34,7 @@ export interface LiveGameData {
 // DATA FETCHING
 // ==========================================
 
-const getLiveGame = cache(async (gameId: number): Promise<LiveGameData | null> => {
+const getGame = cache(async (gameId: number): Promise<LiveGameData | null> => {
   const game = await prisma.game.findUnique({
     where: { id: gameId },
     select: {
@@ -94,7 +94,7 @@ export default async function LiveGamePage({
     notFound();
   }
 
-  const game = await getLiveGame(gameIdNum);
+  const game = await getGame(gameIdNum);
 
   // If game doesn't exist or is not live, redirect to game hub
   if (!game) {

@@ -56,6 +56,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.87.1
         version: 2.87.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      '@tanstack/react-query':
+        specifier: ^5.90.12
+        version: 5.90.12(react@19.1.2)
       '@types/canvas-confetti':
         specifier: ^1.9.0
         version: 1.9.0
@@ -116,9 +119,6 @@ importers:
       partysocket:
         specifier: ^1.1.6
         version: 1.1.6
-      pg:
-        specifier: ^8.16.3
-        version: 8.16.3
       react:
         specifier: 19.1.2
         version: 19.1.2
@@ -192,6 +192,9 @@ importers:
       eslint-config-next:
         specifier: 15.5.6
         version: 15.5.6(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
+      pg:
+        specifier: ^8.16.3
+        version: 8.16.3
       prisma:
         specifier: 7.0.0
         version: 7.0.0(@types/react@19.2.7)(react-dom@19.1.2(react@19.1.2))(react@19.1.2)(typescript@5.9.3)

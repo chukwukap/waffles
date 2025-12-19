@@ -25,6 +25,12 @@ export interface UseSoundsReturn {
   volume: number;
   /** Set volume (0-1) */
   setVolume: (volume: number) => void;
+  /** Play looping background music */
+  playBgMusic: () => void;
+  /** Stop background music */
+  stopBgMusic: () => void;
+  /** Whether background music is playing */
+  isBgPlaying: boolean;
 }
 
 /**
@@ -77,6 +83,19 @@ export function useSounds(): UseSoundsReturn {
     setVolumeState(vol);
   }, []);
 
+  // Background music controls
+  const [isBgPlaying, setIsBgPlaying] = useState(false);
+
+  const playBgMusic = useCallback(() => {
+    soundManager.playBgMusic();
+    setIsBgPlaying(true);
+  }, []);
+
+  const stopBgMusic = useCallback(() => {
+    soundManager.stopBgMusic();
+    setIsBgPlaying(false);
+  }, []);
+
   return {
     play,
     isMuted,
@@ -84,6 +103,9 @@ export function useSounds(): UseSoundsReturn {
     setMuted,
     volume,
     setVolume,
+    playBgMusic,
+    stopBgMusic,
+    isBgPlaying,
   };
 }
 
@@ -107,4 +129,3 @@ export function useSoundEffect(name: SoundName): () => void {
 }
 
 export default useSounds;
-

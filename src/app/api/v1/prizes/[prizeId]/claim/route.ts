@@ -42,7 +42,7 @@ export const POST = withAuth<Params>(
             select: {
               startsAt: true,
               endsAt: true,
-              ticketPrice: true,
+              tierPrices: true,
               prizePool: true,
             },
           },

@@ -18,14 +18,13 @@ export function ProfileCard({
 }: ProfileCardProps) {
   return (
     <div
-      className="relative overflow-hidden group select-none w-full max-w-lg"
+      className="relative overflow-hidden group select-none w-full max-w-lg h-full"
       style={{
-        height: "152px",
         borderRadius: "16px",
-        border: "1px solid rgba(255, 255, 255, 0.08)", // #FFFFFF14
+        border: "1px solid rgba(255, 255, 255, 0.08)",
         background:
           "linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 201, 49, 0.12) 100%)",
-        padding: "12px",
+        padding: "clamp(8px, 2vw, 12px)",
       }}
     >
       {/* Upload Icon (Top Left) */}
@@ -52,15 +51,17 @@ export function ProfileCard({
         className="relative z-10 flex flex-col justify-between h-full"
         style={{
           width: "100%",
-          height: "128px",
           paddingTop: "4px",
           paddingBottom: "4px",
         }}
       >
         {/* Top Row: Avatar & Username */}
-        <div className="flex items-center justify-center gap-3 w-full">
+        <div className="flex items-center justify-center gap-2 w-full">
           {/* Avatar Circle */}
-          <div className="relative w-10 h-10 rounded-full bg-[#4AD2FF] overflow-hidden border border-white/10 shadow-sm shrink-0">
+          <div
+            className="relative rounded-full bg-[#4AD2FF] overflow-hidden border border-white/10 shadow-sm shrink-0"
+            style={{ width: "clamp(32px, 8vw, 40px)", height: "clamp(32px, 8vw, 40px)" }}
+          >
             <img
               src={avatarUrl}
               alt={`${username} avatar`}
@@ -72,7 +73,7 @@ export function ProfileCard({
           <span
             className="font-body text-white uppercase tracking-widest"
             style={{
-              fontSize: "18px",
+              fontSize: "clamp(14px, 4vw, 18px)",
               lineHeight: "130%",
               fontWeight: 400,
               opacity: 0.9,
@@ -83,26 +84,27 @@ export function ProfileCard({
         </div>
 
         {/* Bottom Section: Streak Label + Count */}
-        <div className="flex flex-col items-center justify-end pb-1">
+        <div className="flex flex-col items-center justify-end">
           {/* Label: Streak */}
           <span
-            className="font-display text-white/80 mb-1"
+            className="font-display text-white/80"
             style={{
-              fontSize: "14px",
+              fontSize: "clamp(12px, 2.5vw, 14px)",
               fontWeight: 500,
               lineHeight: "130%",
               letterSpacing: "-0.03em",
+              marginBottom: "clamp(2px, 0.5vh, 4px)",
             }}
           >
             Streak
           </span>
 
           {/* Row: Fire Icon + Number */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             {/* Fire Icon */}
             <div
               className="flex items-center justify-center"
-              style={{ width: "20px", height: "36px" }}
+              style={{ width: "clamp(16px, 4vw, 20px)", height: "clamp(28px, 6vh, 36px)" }}
             >
               <Image
                 src="/images/icons/streak-flame.svg"
@@ -118,7 +120,7 @@ export function ProfileCard({
             <span
               className="font-body text-white"
               style={{
-                fontSize: "34px",
+                fontSize: "clamp(24px, 6vw, 34px)",
                 lineHeight: "90%",
                 fontWeight: 400,
               }}

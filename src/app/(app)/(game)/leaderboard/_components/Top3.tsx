@@ -92,10 +92,13 @@ export function Top3({ entries, currentUserId }: Top3Props) {
                 }}
               >
                 {entry.pfpUrl ? (
-                  <img
+                  <Image
+                    unoptimized
                     src={entry.pfpUrl}
                     alt={entry.username || "Unknown User"}
-                    className="object-cover w-full h-full"
+                    width={28}
+                    height={28}
+                    className="rounded-full bg-[#F0F3F4] object-cover"
                     draggable={false}
                   />
                 ) : (

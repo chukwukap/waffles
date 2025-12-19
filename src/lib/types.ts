@@ -60,6 +60,7 @@ export interface InvitedBy {
 
 export interface GameHistoryEntry {
   id: number | string;
+  onchainId: string | null; // bytes32 for on-chain interactions
   name: string;
   score: number;
   claimedAt: string | Date | null;

@@ -39,7 +39,7 @@ function MuteToggle() {
   return (
     <button
       onClick={toggleMute}
-      className="fixed bottom-24 right-4 z-40 flex items-center justify-center w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 transition-all active:scale-95"
+      className="fixed bottom-0 right-0 z-40 flex items-center justify-center w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 transition-all active:scale-95"
       aria-label={isMuted ? "Unmute sounds" : "Mute sounds"}
     >
       {isMuted ? (
@@ -124,4 +124,3 @@ export function SoundProvider({
 }
 
 export default SoundProvider;
-

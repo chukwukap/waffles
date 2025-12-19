@@ -9,7 +9,7 @@
 
 import { useEffect, useRef, useCallback, useState } from "react";
 import PartySocket from "partysocket";
-import { useGameStore } from "@/lib/game-store";
+import { useGameStore, selectIsConnected } from "@/lib/game-store";
 import sdk from "@farcaster/miniapp-sdk";
 
 // ==========================================
@@ -185,7 +185,7 @@ export function useLive({
         console.error("[useLive] Failed to parse message:", error);
       }
     },
-    [setOnlineCount, setMessages, addMessage, addEvent]
+    [setOnlineCount, setMessages, addMessage, addEvent, addReaction]
   );
 
   // Fetch auth token if not provided
@@ -262,11 +262,19 @@ export function useLive({
     };
   }, [gameId, authToken, enabled, handleMessage, setConnected]);
 
-  // Send chat message
-  const sendChat = useCallback((text: string) => {
+  // Send chat message - returns true if sent successfully
+  const sendChat = useCallback((text: string): boolean => {
     if (socketRef.current?.readyState === WebSocket.OPEN) {
-      socketRef.current.send(JSON.stringify({ t: "c", m: text }));
+      try {
+        socketRef.current.send(JSON.stringify({ t: "c", m: text }));
+        return true;
+      } catch (error) {
+        console.error("[useLive] Failed to send chat:", error);
+        return false;
+      }
     }
+    console.warn("[useLive] Cannot send chat - socket not ready");
+    return false;
   }, []);
 
   // Send game event (type: "answer", content: "answered question 3")
@@ -293,9 +301,13 @@ export function useLive({
     }
   }, []);
 
+  // Get isConnected from store to trigger re-registration when connection state changes
+  const isConnected = useGameStore(selectIsConnected);
+
   // Register sendChat, sendEvent, and sendReaction with store so other components can use them
+  // Depends on isConnected to re-register when socket connects
   useEffect(() => {
-    if (enabled && socketRef.current) {
+    if (enabled && isConnected && socketRef.current) {
       setSendChat(sendChat);
       setSendEvent(sendEvent);
       setSendReaction(sendReaction);
@@ -308,6 +320,7 @@ export function useLive({
     };
   }, [
     enabled,
+    isConnected,
     sendChat,
     sendEvent,
     sendReaction,

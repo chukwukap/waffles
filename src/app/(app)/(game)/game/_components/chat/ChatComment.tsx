@@ -47,7 +47,6 @@ export const ChatComment = ({
   time,
   message,
   avatarUrl,
-  isCurrentUser,
   status = "sent",
 }: {
   name: string;

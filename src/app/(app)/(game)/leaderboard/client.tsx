@@ -9,6 +9,49 @@ import { Tabs, LeaderboardTabKey } from "./_components/Tabs";
 import { Top3 } from "./_components/Top3";
 import { Row } from "./_components/Row";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
+import { LeaderboardEntry } from "@/lib/types";
+
+// ============================================
+// MOCK DATA GENERATOR
+// ============================================
+function generateMockEntries(count: number): LeaderboardEntry[] {
+  const mockNames = [
+    "CryptoKing",
+    "WaffleQueen",
+    "BlockchainBoss",
+    "TokenMaster",
+    "DeFiDegen",
+    "NFTNinja",
+    "ChainChamp",
+    "MintMaster",
+    "GasGuru",
+    "StakeSlayer",
+    "YieldYoda",
+    "SwapSensei",
+    "LiquidityLord",
+    "AirdropAce",
+    "BridgeBaron",
+    "VaultViking",
+    "PoolPirate",
+    "FarmFanatic",
+    "HodlHero",
+    "PumpPrince",
+  ];
+
+  return Array.from({ length: count }, (_, i) => ({
+    id: `mock-${i + 1}`,
+    rank: i + 1,
+    fid: 100000 + i,
+    username:
+      mockNames[i % mockNames.length] +
+      (i >= mockNames.length ? `_${Math.floor(i / mockNames.length)}` : ""),
+    points: Math.max(10000 - i * 250 + Math.floor(Math.random() * 100), 100),
+    pfpUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${i}`,
+  }));
+}
+
+// Generate 50 mock entries
+const MOCK_ENTRIES = generateMockEntries(50);
 
 // ============================================
 // TYPES
@@ -31,11 +74,17 @@ export default function LeaderboardClient({
   const { context } = useMiniKit();
   const userFid = context?.user?.fid ?? null;
 
+  // Use mock data if initialData is empty
+  const dataToUse =
+    initialData.entries.length > 0 ? initialData.entries : MOCK_ENTRIES;
+
   // ============================================
   // STATE
   // ============================================
-  const [entries, setEntries] = useState(initialData.entries);
-  const [hasMore, setHasMore] = useState(initialData.hasMore);
+  const [entries, setEntries] = useState(dataToUse);
+  const [hasMore, setHasMore] = useState(
+    initialData.entries.length > 0 ? initialData.hasMore : false
+  );
   const [page, setPage] = useState(1); // Page 0 was fetched on server
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,8 +102,10 @@ export default function LeaderboardClient({
 
   // Reset state when tab changes
   useEffect(() => {
-    setEntries(initialData.entries);
-    setHasMore(initialData.hasMore);
+    const newData =
+      initialData.entries.length > 0 ? initialData.entries : MOCK_ENTRIES;
+    setEntries(newData);
+    setHasMore(initialData.entries.length > 0 ? initialData.hasMore : false);
     setPage(1);
     setError(null);
   }, [activeTab, initialData]);
@@ -113,7 +164,10 @@ export default function LeaderboardClient({
     setError(null);
 
     try {
-      const params = new URLSearchParams({ tab: activeTab, page: String(page) });
+      const params = new URLSearchParams({
+        tab: activeTab,
+        page: String(page),
+      });
       if (gameId) params.set("gameId", String(gameId));
 
       const res = await fetch(`/api/v1/leaderboard?${params}`, {
@@ -160,7 +214,7 @@ export default function LeaderboardClient({
   // RENDER
   // ============================================
   return (
-    <div className="flex-1 overflow-y-auto flex flex-col mx-auto max-w-sm px-4">
+    <div className="flex-1 overflow-y-auto flex flex-col px-3">
       {/* HERO SECTION */}
       <section className="pt-6 md:pt-10 relative">
         {/* Crown Image */}
@@ -180,7 +234,7 @@ export default function LeaderboardClient({
         </div>
 
         {/* Sticky Header */}
-        <div className="sticky top-[61px] z-10 -mx-4 px-4 pb-2 pt-1 backdrop-blur-sm">
+        <div className="sticky top-[61px] z-10 -mx-3 px-3 pb-2 pt-1 backdrop-blur-sm">
           <h1 className="text-center font-body text-2xl md:text-3xl tracking-wide">
             LEADERBOARD
           </h1>
