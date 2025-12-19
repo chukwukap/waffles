@@ -10,13 +10,13 @@
 
 /* Hide scrollbar for IE, Edge, and Firefox */
 html {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* ------------------------------------------------------------
+/* ============================================================
    GLOBAL BRAND + THEME TOKENS
-   ------------------------------------------------------------ */
+   ============================================================ */
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -26,10 +26,10 @@ html {
   --brand-black: #1e1e1e;
   --brand-pink: oklch(0.73 0.22 342); /* #FB72FF */
 
-  --brand-ink-950: oklch(0.12 0 0); /* Black */
-  --brand-ink-900: oklch(0.19 0 0); /* Dark Gray */
-  --brand-ink-800: oklch(0.24 0 0); /* Medium Gray */
-  --brand-white: oklch(1 0 0); /* White */
+  --brand-ink-950: oklch(0.12 0 0);
+  --brand-ink-900: oklch(0.19 0 0);
+  --brand-ink-800: oklch(0.24 0 0);
+  --brand-white: oklch(1 0 0);
 
   /* ── Alpha Utilities ────────────────────────── */
   --white-a07: #ffffff12;
@@ -38,8 +38,7 @@ html {
   --white-a13: #ffffff21;
   --white-a38: #ffffff61;
 
-  /* ── Base Semantic Colors (light mode) ───────── */
-  --surface-page: linear-gradient(180deg, var(--brand-ink-800) 0%, #000 100%);
+  /* ── Base Semantic Colors ───────────────────── */
   --surface-card: color-mix(in oklch, var(--brand-ink-800) 90%, #000 10%);
   --surface-popover: color-mix(in oklch, var(--brand-ink-800) 92%, #000 8%);
   --surface-tint: var(--white-a10);
@@ -55,33 +54,12 @@ html {
   --success: #14b985;
   --danger: oklch(0.65 0.22 25);
 
-  /* ── Sidebar Colors ─────────────────────────── */
-  --sidebar-bg: var(--brand-white);
-  --sidebar-fg: var(--brand-ink-900);
-  --sidebar-primary: var(--brand-ink-800);
-  --sidebar-primary-fg: var(--brand-white);
-  --sidebar-accent: var(--white-a10);
-  --sidebar-accent-fg: var(--brand-ink-900);
-  --sidebar-border: #eaeaea;
-  --sidebar-ring: #b5b5b5;
-
-  /* ── Radii & Decorative BGs ─────────────────── */
+  /* ── Radii ──────────────────────────────────── */
   --radius-xs: 8px;
   --radius-sm: 12px;
   --radius-md: 16px;
 
-  --gold-overlay: linear-gradient(
-    189.66deg,
-    rgba(0, 0, 0, 0) -6.71%,
-    rgba(0, 0, 0, 0.8) 92.73%
-  );
-  --card-glint: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0%,
-    color-mix(in oklch, var(--brand-gold) 25%, transparent) 100%
-  );
-
-  /* ── Dark Theme Defaults (fallbacks for base) ─ */
+  /* ── Dark Theme Defaults ────────────────────── */
   --background: oklch(0.08 0 0);
   --foreground: oklch(0.98 0 0);
   --card: oklch(0.12 0 0);
@@ -90,33 +68,13 @@ html {
   --popover-foreground: oklch(0.98 0 0);
 }
 
-/* ------------------------------------------------------------
-   DARK THEME OVERRIDES
-   ------------------------------------------------------------ */
-.dark {
-  --surface-page: linear-gradient(180deg, var(--brand-ink-900) 0%, #000 100%);
-  --surface-card: color-mix(in oklch, var(--brand-ink-900) 95%, #000 5%);
-  --surface-popover: color-mix(in oklch, var(--brand-ink-900) 93%, #000 7%);
-  --surface-tint: var(--white-a07);
-  --surface-stroke: var(--white-a08);
-
-  --text-primary: var(--brand-white);
-  --text-muted: oklch(0.72 0 0);
-
-  --accent-solid: var(--brand-gold);
-  --accent-soft: var(--white-a10);
-  --accent-ring: var(--brand-gold);
-}
-
-/* ------------------------------------------------------------
+/* ============================================================
    TAILWIND THEME BRIDGE
-   ------------------------------------------------------------ */
+   ============================================================ */
 @theme inline {
-  /* fonts */
   --font-display: var(--font-display);
   --font-body: var(--font-body);
 
-  /* semantic colors */
   --color-background: var(--brand-black);
   --color-card: var(--surface-card);
   --color-popover: var(--surface-popover);
@@ -129,22 +87,20 @@ html {
   --color-input: var(--surface-tint);
   --color-ring: var(--accent-ring);
 
-  /* brand aliases */
   --color-waffle-gold: var(--brand-gold);
   --color-neon-cyan: var(--brand-cyan);
   --color-neon-pink: var(--brand-pink);
   --color-success: var(--success);
   --color-danger: var(--danger);
 
-  /* radii */
   --radius-sm: var(--radius-xs);
   --radius-md: var(--radius-sm);
   --radius-lg: var(--radius-md);
 }
 
-/* ------------------------------------------------------------
+/* ============================================================
    BASE LAYER
-   ------------------------------------------------------------ */
+   ============================================================ */
 @layer base {
   html,
   body {
@@ -156,106 +112,12 @@ html {
   }
 }
 
-/* ------------------------------------------------------------
+/* ============================================================
    UTILITIES
-   ------------------------------------------------------------ */
+   ============================================================ */
 
-/* Page gradient background */
-@utility app-background {
-  background-color: var(--brand-black);
-  background-attachment: fixed;
-  background-repeat: no-repeat;
-  background-size: cover;
-}
-
-/* Gold overlay card */
-@utility bg-gold-overlay {
-  background: var(--gold-overlay), var(--brand-gold);
-  background-blend-mode: overlay, normal;
-}
-
-/* Card glint */
-@utility bg-card-glint {
-  background-image: var(--card-glint);
-}
-
-/* Subtle panel style */
-@utility panel {
-  background: var(--white-a10);
-  border: 1px solid var(--surface-stroke);
-  border-radius: var(--radius-md);
-}
-
-/* Neon glow */
-@utility neon {
-  text-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
-}
-
-/* Global transition curve */
-@media (prefers-reduced-motion: no-preference) {
-  * {
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  }
-}
-
-/* ------------------------------------------------------------
-   ANIMATIONS
-   ------------------------------------------------------------ */
-@keyframes glow-pulse {
-  0%,
-  100% {
-    opacity: 1;
-    filter: brightness(1);
-  }
-  50% {
-    opacity: 0.85;
-    filter: brightness(1.15);
-  }
-}
-
-@keyframes slide-up {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes slide-in-x {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(100vh) rotate(0deg);
-  }
-  50% {
-    transform: translateY(50vh) rotate(180deg);
-  }
-}
-
-@utility animate-glow {
-  animation: glow-pulse 2s ease-in-out infinite;
-}
-@utility animate-up {
-  animation: slide-up 0.28s ease-out both;
-}
-@utility animate-in-right {
-  animation: slide-in-x 0.28s ease-out both;
-}
+/* Pixel corners clip-path (used by PixelButton) */
 @utility pixel-corners {
-  /* The precise polygon shape for the pixelated corners */
   clip-path: polygon(
     0px 12px,
     6px 12px,
@@ -280,9 +142,11 @@ html {
   );
 }
 
-/* ───────────────────────── Base Interaction Animations ───────────────────────── */
+/* ============================================================
+   SIMPLE CSS ANIMATIONS (for non-Framer contexts)
+   ============================================================ */
 
-/* Fade-in */
+/* Fade-in (used in leaderboard) */
 .fade-in {
   animation: fadeIn 0.6s ease forwards;
 }
@@ -297,7 +161,7 @@ html {
   }
 }
 
-/* Slide-up */
+/* Slide-up (used in chat) */
 .slide-up {
   animation: slideUp 0.5s ease forwards;
 }
@@ -312,22 +176,9 @@ html {
   }
 }
 
-/* Subtle scale pop for tap feedback */
-.tap-pop {
-  transition: transform 0.12s ease;
-}
-.tap-pop:active {
-  transform: scale(0.96);
-}
-
-/*
-================================================================================
-Final Production CSS for Gradient + Noise Background (Revised for Robustness)
-================================================================================
-This implementation uses a pseudo-element for the noise overlay, which is a
-more robust and common pattern for layering effects.
-*/
-
+/* ============================================================
+   APP BACKGROUND (with noise texture)
+   ============================================================ */
 .app-background {
   --gradient-color-start: #111111;
   --gradient-color-end: #000000;
@@ -350,24 +201,16 @@ more robust and common pattern for layering effects.
 
   content: "";
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-
+  inset: 0;
   background-image: var(--noise-svg);
   opacity: var(--noise-opacity);
-
   pointer-events: none;
-
   z-index: -1;
 }
 
-/* ------------------------------------------------------------
+/* ============================================================
    ADMIN DASHBOARD THEME
-   Waffles arcade aesthetic for the admin panel
-   ------------------------------------------------------------ */
-
+   ============================================================ */
 .admin-background {
   --gradient-color-start: #0a0a0b;
   --gradient-color-end: #000000;
@@ -390,19 +233,14 @@ more robust and common pattern for layering effects.
 
   content: "";
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-
+  inset: 0;
   background-image: var(--noise-svg);
   opacity: var(--noise-opacity);
-
   pointer-events: none;
   z-index: 0;
 }
 
-/* Admin panel/card styling with glassmorphism */
+/* Admin panel/card with glassmorphism */
 .admin-panel {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -411,40 +249,29 @@ more robust and common pattern for layering effects.
   -webkit-backdrop-filter: blur(8px);
 }
 
-.admin-panel-hover {
-  transition: all 0.2s ease;
-}
-
 .admin-panel-hover:hover {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 0 20px rgba(255, 201, 49, 0.05);
 }
 
-/* Gold glow effect for important stats */
+/* Stat glow effects */
 .admin-stat-glow {
   text-shadow: 0 0 10px rgba(255, 201, 49, 0.4),
     0 0 20px rgba(255, 201, 49, 0.2);
 }
-
-/* Cyan glow for secondary stats */
 .admin-stat-glow-cyan {
   text-shadow: 0 0 10px rgba(0, 207, 242, 0.4), 0 0 20px rgba(0, 207, 242, 0.2);
 }
-
-/* Pink glow for accent stats */
 .admin-stat-glow-pink {
   text-shadow: 0 0 10px rgba(251, 114, 255, 0.4),
     0 0 20px rgba(251, 114, 255, 0.2);
 }
-
-/* Success glow for positive trends */
 .admin-stat-glow-success {
   text-shadow: 0 0 10px rgba(20, 185, 133, 0.4),
     0 0 20px rgba(20, 185, 133, 0.2);
 }
 
-/* Admin sidebar styling */
+/* Admin sidebar */
 .admin-sidebar {
   background: linear-gradient(
     180deg,
@@ -453,22 +280,16 @@ more robust and common pattern for layering effects.
   );
   border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
-
-.admin-sidebar-item {
-  transition: all 0.2s ease;
-}
-
 .admin-sidebar-item:hover {
   background: rgba(255, 255, 255, 0.05);
 }
-
 .admin-sidebar-item-active {
   background: rgba(255, 201, 49, 0.1);
   border-left: 3px solid var(--brand-gold);
   color: var(--brand-gold);
 }
 
-/* Admin header styling */
+/* Admin header */
 .admin-header {
   background: rgba(10, 10, 11, 0.8);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
@@ -476,19 +297,17 @@ more robust and common pattern for layering effects.
   -webkit-backdrop-filter: blur(12px);
 }
 
-/* Chart container with subtle border */
+/* Admin chart container */
 .admin-chart-container {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-md);
 }
 
-/* Admin table styling */
+/* Admin table */
 .admin-table-row {
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  transition: background 0.15s ease;
 }
-
 .admin-table-row:hover {
   background: rgba(255, 255, 255, 0.03);
 }
