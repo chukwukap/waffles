@@ -26,6 +26,7 @@ export interface LiveGameQuestion {
 
 export interface LiveGameData {
   id: number;
+  endsAt: Date;
   roundBreakSec: number;
   questions: LiveGameQuestion[];
 }
@@ -73,6 +74,7 @@ const getGame = cache(async (gameId: number): Promise<LiveGameData | null> => {
 
   return {
     id: game.id,
+    endsAt: game.endsAt,
     roundBreakSec: game.roundBreakSec,
     questions: game.questions,
   };

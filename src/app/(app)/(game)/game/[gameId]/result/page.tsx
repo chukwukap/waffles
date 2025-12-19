@@ -1,8 +1,8 @@
 import { cache } from "react";
 import { prisma } from "@/lib/db";
-import ScorePageClient from "./client";
+import ResultPageClient from "./client";
 
-export type ScorePagePayload = {
+export type ResultPagePayload = {
   userInfo: {
     username: string;
     pfpUrl: string;
@@ -19,7 +19,7 @@ export type ScorePagePayload = {
   }>;
 };
 
-// Fetch public game data (leaderboard) for the score page
+// Fetch public game data (leaderboard) for the result page
 // Updated to use GameEntry instead of GamePlayer
 const getGameLeaderboard = cache(async (gameId: number) => {
   const [game, allEntriesInGame] = await Promise.all([
@@ -44,7 +44,7 @@ const getGameLeaderboard = cache(async (gameId: number) => {
   return { game, allPlayersInGame: allEntriesInGame };
 });
 
-export default async function ScorePage({
+export default async function ResultPage({
   params,
 }: {
   params: Promise<{ gameId: string }>;
@@ -63,6 +63,6 @@ export default async function ScorePage({
   // Fetch public leaderboard data server-side
   const leaderboardPromise = getGameLeaderboard(gameIdNum);
 
-  // User-specific data (their score, rank) is fetched client-side with auth
-  return <ScorePageClient leaderboardPromise={leaderboardPromise} />;
+  // User-specific data (their result, rank) is fetched client-side with auth
+  return <ResultPageClient leaderboardPromise={leaderboardPromise} />;
 }

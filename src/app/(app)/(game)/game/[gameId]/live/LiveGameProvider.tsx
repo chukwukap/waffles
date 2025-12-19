@@ -84,10 +84,17 @@ export function LiveGameProvider({ game, children }: LiveGameProviderProps) {
                 const res = await sdk.quickAuth.fetch(`/api/v1/games/${game.id}/entry`);
                 if (res.ok) {
                     const entry = await res.json();
-                    // Check if user has already answered questions (replay attempt)
-                    if (entry.answered > 0) {
+                    const totalQuestions = game.questions.length;
+                    const hasAnsweredAll = entry.answered >= totalQuestions;
+                    const gameHasEnded = new Date() >= new Date(game.endsAt);
+
+                    // Only redirect to result if:
+                    // 1. User has answered ALL questions, OR
+                    // 2. Game has ended (time's up)
+                    if (hasAnsweredAll || gameHasEnded) {
                         setVerificationState("already-played");
                     } else {
+                        // User can continue playing - either fresh start or resume
                         setVerificationState("valid");
                     }
                 } else if (res.status === 404) {
@@ -102,14 +109,14 @@ export function LiveGameProvider({ game, children }: LiveGameProviderProps) {
             }
         }
         verifyAccess();
-    }, [game.id]);
+    }, [game.id, game.questions.length, game.endsAt]);
 
     // Redirect based on verification state
     useEffect(() => {
         if (verificationState === "no-ticket") {
             router.replace(`/game/${game.id}/ticket`);
         } else if (verificationState === "already-played") {
-            router.replace(`/game/${game.id}/score`);
+            router.replace(`/game/${game.id}/result`);
         }
     }, [verificationState, game.id, router]);
 
@@ -194,7 +201,7 @@ export function LiveGameProvider({ game, children }: LiveGameProviderProps) {
 
         // Game complete?
         if (nextIndex >= game.questions.length) {
-            router.push(`/game/${game.id}/score`);
+            router.push(`/game/${game.id}/result`);
             return;
         }
 
