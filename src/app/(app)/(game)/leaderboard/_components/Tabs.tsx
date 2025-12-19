@@ -68,11 +68,12 @@ export function Tabs({ activeTab, fid }: TabsProps) {
               "font-body",
               "sm:text-[20px] text-base leading-[1.2]",
               "px-6 sm:px-6 py-1.5 sm:py-1.5",
-              "transition whitespace-nowrap",
+              "transition-all duration-150 ease-out whitespace-nowrap",
               "h-[42px] min-w-[120px] max-w-full justify-center items-center flex",
+              "active:scale-95",
               selected
                 ? "font-medium"
-                : "font-normal opacity-80 hover:opacity-100"
+                : "font-normal opacity-80 hover:opacity-100 hover:scale-105"
             )}
             style={styleOverrides}
           >

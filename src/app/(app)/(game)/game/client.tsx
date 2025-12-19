@@ -86,10 +86,12 @@ export function GameHub({ game }: GameHubProps) {
   }, [hasAccess, hasActiveGame, playBgMusic, stopBgMusic]);
 
   // ==========================================
-  // RENDER: Loading
+  // RENDER: Loading - only show if no access after hydration
   // ==========================================
 
-  if (isLoadingUser || isLoadingEntry || !hasAccess) {
+  // Skip showing loading for initial data fetch - loading.tsx handles that
+  // Only show if user doesn't have access after we know who they are
+  if (!isLoadingUser && (!hasAccess || !user)) {
     return (
       <>
         <main className="flex-1 flex flex-col items-center justify-center min-h-[60vh]">
@@ -98,7 +100,7 @@ export function GameHub({ game }: GameHubProps) {
             animate={{ opacity: 1, scale: 1 }}
             transition={springs.gentle}
           >
-            <WaffleLoader />
+            <WaffleLoader text="Checking access..." />
           </motion.div>
         </main>
         <BottomNav />

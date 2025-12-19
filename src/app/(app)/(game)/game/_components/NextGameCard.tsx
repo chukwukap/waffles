@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { motion, useAnimation, AnimatePresence } from "framer-motion";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { BuyTicketModal } from "./BuyTicketModal";
+import { springs } from "@/lib/animations";
 
 interface NextGameCardProps {
   gameId: number;
@@ -43,6 +45,32 @@ export function NextGameCard({
   userAvatar,
 }: NextGameCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const prevPrizePool = useRef(prizePool);
+  const prevSpotsTaken = useRef(spotsTaken);
+  const prizeControls = useAnimation();
+  const spotsControls = useAnimation();
+
+  // Animate on value changes
+  useEffect(() => {
+    if (prevPrizePool.current !== prizePool) {
+      prizeControls.start({
+        scale: [1, 1.2, 1],
+        color: ["#FFFFFF", "#F5BB1B", "#FFFFFF"],
+        transition: { duration: 0.4, ease: "easeOut" as const }
+      });
+      prevPrizePool.current = prizePool;
+    }
+  }, [prizePool, prizeControls]);
+
+  useEffect(() => {
+    if (prevSpotsTaken.current !== spotsTaken) {
+      spotsControls.start({
+        scale: [1, 1.15, 1],
+        transition: { duration: 0.3, ease: "easeOut" as const }
+      });
+      prevSpotsTaken.current = spotsTaken;
+    }
+  }, [spotsTaken, spotsControls]);
 
   const pad = (n: number) => String(n).padStart(2, "0");
   const countdownDisplay = `${pad(Math.floor(countdown / 3600))}H ${pad(
@@ -72,15 +100,22 @@ export function NextGameCard({
 
   return (
     <>
-      <div
+      <motion.div
+        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={springs.gentle}
+        whileHover={{ scale: 1.01 }}
         className="relative w-full max-w-[361px] mx-auto rounded-2xl overflow-hidden flex flex-col"
         style={{
           background: "rgba(21, 21, 25, 0.5)",
           boxShadow: "0px 5px 5.2px 8px rgba(12, 12, 14, 0.5)",
         }}
       >
-        {/* Header */}
-        <div
+        {/* Header with bounce entrance */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, ...springs.bouncy }}
           className="relative flex flex-col justify-center items-center shrink-0 z-10 w-full h-[52px] p-0 gap-[17px]"
           style={{
             background: "rgba(27, 27, 29, 0.8)",
@@ -88,21 +123,36 @@ export function NextGameCard({
           }}
         >
           <div className="flex flex-row justify-center items-center self-stretch p-0 gap-3 h-[30px]">
-            <Image
-              src="/images/icons/game-controller.png"
-              alt="controller"
-              width={30}
-              height={30}
-              className="object-contain w-[30px] h-[30px] flex-none"
-            />
-            <span className="font-body text-white uppercase w-[114px] h-6 text-[26px] font-normal leading-[92%] tracking-[-0.03em]">
+            {/* Animated controller icon */}
+            <motion.div
+              animate={{ rotate: [0, -5, 5, -3, 3, 0] }}
+              transition={{ delay: 0.5, duration: 0.5 }}
+              whileHover={{ scale: 1.2, rotate: 10 }}
+            >
+              <Image
+                src="/images/icons/game-controller.png"
+                alt="controller"
+                width={30}
+                height={30}
+                className="object-contain w-[30px] h-[30px] flex-none"
+              />
+            </motion.div>
+            <motion.span
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2, ...springs.gentle }}
+              className="font-body text-white uppercase w-[114px] h-6 text-[26px] font-normal leading-[92%] tracking-[-0.03em]"
+            >
               NEXT GAME
-            </span>
+            </motion.span>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Stats Row */}
-        <div
+        {/* Stats Row with staggered entrance */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
           className="relative flex flex-row items-start z-10 shrink-0"
           style={{ padding: "12px 10px 0px", gap: "12px" }}
         >
@@ -111,17 +161,24 @@ export function NextGameCard({
             iconSize={{ w: 55.12, h: 40 }}
             label="Spots"
             value={`${spotsTaken}/${spotsTotal}`}
+            animateControls={spotsControls}
+            delay={0.3}
           />
           <StatBlock
             icon="/images/illustrations/money-stack.svg"
             iconSize={{ w: 38.32, h: 40 }}
             label="Prize pool"
             value={`$${prizePool.toLocaleString()}`}
+            animateControls={prizeControls}
+            delay={0.4}
           />
-        </div>
+        </motion.div>
 
-        {/* Button */}
-        <div
+        {/* Button with entrance animation */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.4, ...springs.bouncy }}
           className="relative flex justify-center items-center px-4 z-10 shrink-0"
           style={{ padding: "clamp(6px, 1vh, 12px) 16px" }}
         >
@@ -131,14 +188,25 @@ export function NextGameCard({
           >
             {buttonConfig.text}
           </FancyBorderButton>
-        </div>
+        </motion.div>
 
-        {/* Countdown */}
-        <div
+        {/* Countdown with pulsing border */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, ...springs.gentle }}
           className="flex flex-col justify-center items-center z-10 shrink-0 w-full"
           style={{ padding: "8px 0px 0px", gap: "6px" }}
         >
-          <div
+          <motion.div
+            animate={{
+              boxShadow: [
+                "0 0 0px rgba(245, 187, 27, 0)",
+                "0 0 15px rgba(245, 187, 27, 0.4)",
+                "0 0 0px rgba(245, 187, 27, 0)"
+              ]
+            }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" as const }}
             className="flex flex-row justify-center items-center"
             style={{
               boxSizing: "border-box",
@@ -150,7 +218,11 @@ export function NextGameCard({
               borderRadius: "900px",
             }}
           >
-            <span
+            <motion.span
+              key={countdown}
+              initial={{ scale: 1.1, opacity: 0.7 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.2 }}
               className="font-body text-center whitespace-nowrap"
               style={{
                 fontWeight: 400,
@@ -160,9 +232,12 @@ export function NextGameCard({
               }}
             >
               {countdownDisplay}
-            </span>
-          </div>
-          <div
+            </motion.span>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
             className="flex flex-row justify-center items-center w-full"
             style={{ padding: "0px", gap: "8px" }}
           >
@@ -179,11 +254,14 @@ export function NextGameCard({
             >
               Until game starts
             </span>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
-        {/* Player Avatars Row */}
-        <div
+        {/* Player Avatars Row with staggered pop-in */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.7 }}
           className="relative flex flex-row justify-center items-center z-10 shrink-0"
           style={{
             padding: "0px",
@@ -199,8 +277,12 @@ export function NextGameCard({
                 style={{ padding: "0px", width: "70.44px", height: "25.11px" }}
               >
                 {recentPlayers.slice(0, 4).map((player, idx) => (
-                  <div
+                  <motion.div
                     key={idx}
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.8 + idx * 0.1, ...springs.bouncy }}
+                    whileHover={{ scale: 1.2, zIndex: 10 }}
                     className="rounded-full overflow-hidden shrink-0 box-border"
                     style={{
                       width: "25.11px",
@@ -220,10 +302,13 @@ export function NextGameCard({
                         className="w-full h-full object-cover"
                       />
                     )}
-                  </div>
+                  </motion.div>
                 ))}
               </div>
-              <span
+              <motion.span
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 1, ...springs.gentle }}
                 className="font-display text-center"
                 style={{
                   fontWeight: 500,
@@ -236,7 +321,7 @@ export function NextGameCard({
                 {othersCount > 0
                   ? `and ${othersCount} others have joined the game`
                   : "have joined the game"}
-              </span>
+              </motion.span>
             </>
           ) : (
             <span
@@ -251,8 +336,8 @@ export function NextGameCard({
               }}
             />
           )}
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       <BuyTicketModal
         isOpen={isModalOpen}
@@ -271,30 +356,48 @@ export function NextGameCard({
   );
 }
 
+// ============================================
+// STAT BLOCK with hover + value change animation
+// ============================================
+
 function StatBlock({
   icon,
   iconSize,
   label,
   value,
+  animateControls,
+  delay = 0,
 }: {
   icon: string;
   iconSize: { w: number; h: number };
   label: string;
   value: string;
+  animateControls?: ReturnType<typeof useAnimation>;
+  delay?: number;
 }) {
   return (
-    <div
-      className="flex flex-col justify-center items-center flex-1"
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, ...springs.gentle }}
+      whileHover={{ scale: 1.05, y: -3 }}
+      className="flex flex-col justify-center items-center flex-1 cursor-default"
       style={{ padding: "0px", height: "85px" }}
     >
-      <Image
-        src={icon}
-        alt={label}
-        width={iconSize.w}
-        height={iconSize.h}
-        className="object-contain"
-        style={{ width: `${iconSize.w}px`, height: `${iconSize.h}px` }}
-      />
+      {/* Icon with bounce on hover */}
+      <motion.div
+        whileHover={{ scale: 1.15, rotate: [0, -5, 5, 0] }}
+        transition={{ duration: 0.3 }}
+      >
+        <Image
+          src={icon}
+          alt={label}
+          width={iconSize.w}
+          height={iconSize.h}
+          className="object-contain"
+          style={{ width: `${iconSize.w}px`, height: `${iconSize.h}px` }}
+        />
+      </motion.div>
       <span
         className="font-display text-center"
         style={{
@@ -307,12 +410,13 @@ function StatBlock({
       >
         {label}
       </span>
-      <span
+      <motion.span
+        animate={animateControls}
         className="font-body text-white"
         style={{ fontSize: "24px", fontWeight: 400, lineHeight: "100%" }}
       >
         {value}
-      </span>
-    </div>
+      </motion.span>
+    </motion.div>
   );
 }

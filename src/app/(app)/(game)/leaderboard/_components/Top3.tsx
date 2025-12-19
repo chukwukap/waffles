@@ -66,7 +66,9 @@ export function Top3({ entries, currentUserId }: Top3Props) {
               "rounded-(--radius) border",
               "p-(--pad) bg-clip-padding",
               "flex flex-col gap-[calc(var(--pad)*0.8)]",
-              "transition-shadow hover:shadow-lg",
+              "transition-all duration-200 ease-out",
+              "hover:scale-[1.03] hover:-translate-y-1 hover:shadow-xl",
+              "active:scale-[0.98] active:translate-y-0",
               styles.bg,
               styles.border,
               isCurrentUser &&

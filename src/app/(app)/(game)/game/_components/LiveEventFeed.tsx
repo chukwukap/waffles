@@ -49,6 +49,7 @@ const FeedItemRow = memo(function FeedItemRow({
           <img
             src={item.pfpUrl}
             alt={item.username}
+
             className="w-5 h-5 rounded-full object-cover shrink-0"
           />
         ) : (
@@ -62,9 +63,8 @@ const FeedItemRow = memo(function FeedItemRow({
 
       {/* Message content */}
       <span
-        className={`text-white/70 text-sm truncate ${
-          item.type === "event" ? "italic" : ""
-        }`}
+        className={`text-white/70 text-sm truncate ${item.type === "event" ? "italic" : ""
+          }`}
       >
         <span className="text-white font-medium">{item.username}</span>{" "}
         <span className="font-display">{item.content}</span>
@@ -146,12 +146,13 @@ export function LiveEventFeed({ maxEvents = 5 }: LiveEventFeedProps) {
   }
 
   return (
-    <div className="relative w-full max-w-full mx-auto h-[136px]">
+    <div className="relative w-screen -mx-4 h-[136px] overflow-hidden">
       {/* Content layer */}
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="absolute inset-0 p-2 px-4 flex flex-col justify-end overflow-hidden"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={springs.gentle}
+        className="absolute inset-0 py-2 px-4 flex flex-col justify-end overflow-hidden"
       >
         <div className="flex flex-col gap-2 pt-4">
           <AnimatePresence mode="popLayout" initial={false}>
@@ -162,12 +163,38 @@ export function LiveEventFeed({ maxEvents = 5 }: LiveEventFeedProps) {
         </div>
       </motion.div>
 
-      {/* Gradient mask overlay - fades content at top (matching design spec) */}
+      {/* Top gradient fade - smooth multi-stop blend */}
       <div
-        className="absolute inset-0 pointer-events-none"
+        className="absolute top-0 left-0 right-0 h-16 pointer-events-none"
         style={{
-          background:
-            "linear-gradient(180deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.8) 6%, rgba(0, 0, 0, 0.4) 100%)",
+          background: `linear-gradient(180deg, 
+            #0A0A0C 0%, 
+            rgba(10, 10, 12, 0.95) 20%, 
+            rgba(10, 10, 12, 0.7) 50%, 
+            rgba(10, 10, 12, 0.3) 75%, 
+            transparent 100%)`,
+        }}
+      />
+
+      {/* Left edge fade - subtle vignette */}
+      <div
+        className="absolute top-0 bottom-0 left-0 w-8 pointer-events-none"
+        style={{
+          background: `linear-gradient(90deg, 
+            #0A0A0C 0%, 
+            rgba(10, 10, 12, 0.6) 40%, 
+            transparent 100%)`,
+        }}
+      />
+
+      {/* Right edge fade - subtle vignette */}
+      <div
+        className="absolute top-0 bottom-0 right-0 w-8 pointer-events-none"
+        style={{
+          background: `linear-gradient(270deg, 
+            #0A0A0C 0%, 
+            rgba(10, 10, 12, 0.6) 40%, 
+            transparent 100%)`,
         }}
       />
     </div>

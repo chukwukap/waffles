@@ -175,8 +175,9 @@ export default function LeaderboardClient({
   // COMPUTED
   // ============================================
   const isEmpty = entries.length === 0;
-  const top3 = entries.slice(0, 3);
-  const rest = entries.slice(3);
+  const showTop3 = entries.length >= 3; // Only show Top3 when at least 3 entries
+  const top3 = showTop3 ? entries.slice(0, 3) : [];
+  const rest = showTop3 ? entries.slice(3) : entries; // If no Top3, show all in normal flow
   const tabDescription =
     activeTab === "game"
       ? initialData.gameTitle ?? "Game Leaderboard"
@@ -236,8 +237,8 @@ export default function LeaderboardClient({
 
       {/* LIST SECTION */}
       <section className="pb-24 pt-1 space-y-4">
-        {/* Top 3 */}
-        {top3.length > 0 && <Top3 entries={top3} currentUserId={userFid} />}
+        {/* Top 3 - only shown when at least 3 entries */}
+        {showTop3 && <Top3 entries={top3} currentUserId={userFid} />}
 
         {/* Rest of list */}
         <div className="space-y-3">

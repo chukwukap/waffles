@@ -7,6 +7,8 @@ import { usePathname, useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { WalletBalance } from "./WalletBalance";
+import { motion } from "framer-motion";
+import { springs } from "@/lib/animations";
 
 export function GameHeader() {
   const pathname = usePathname();
@@ -29,32 +31,65 @@ export function GameHeader() {
       >
         {isLiveRoute ? (
           <div className="flex items-center gap-2">
-            <Link href={`/game`} className="relative w-[29.96px] h-[23.24px]">
-              <Image
-                src="/logo.png"
-                alt="Live game logo"
-                fill
-                sizes="29.96px"
-                priority
-                className="object-contain"
-              />
-            </Link>
-            {/* red glowing point */}
-            <span className="flex items-center gap-1.5 mr-auto">
-              <span
-                className="w-2 h-2 rounded-full bg-[#FC1919] animate-pulse"
-                style={{
-                  boxShadow:
+            {/* Logo with hover wiggle */}
+            <motion.div
+              whileHover={{ rotate: [0, -5, 5, -3, 3, 0] }}
+              whileTap={{ scale: 0.9 }}
+              transition={{ duration: 0.4, ease: "easeInOut" as const }}
+            >
+              <Link href={`/game`} className="relative block w-[29.96px] h-[23.24px]">
+                <Image
+                  src="/logo.png"
+                  alt="Live game logo"
+                  fill
+                  sizes="29.96px"
+                  priority
+                  className="object-contain"
+                />
+              </Link>
+            </motion.div>
+
+            {/* Live indicator with enhanced pulse */}
+            <motion.span
+              className="flex items-center gap-1.5 mr-auto"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={springs.gentle}
+            >
+              {/* Animated pulsing dot */}
+              <motion.span
+                className="w-2 h-2 rounded-full bg-[#FC1919]"
+                animate={{
+                  scale: [1, 1.3, 1],
+                  boxShadow: [
                     "0 0 6px rgba(252, 25, 25, 0.8), 0 0 12px rgba(252, 25, 25, 0.4)",
+                    "0 0 10px rgba(252, 25, 25, 1), 0 0 20px rgba(252, 25, 25, 0.6)",
+                    "0 0 6px rgba(252, 25, 25, 0.8), 0 0 12px rgba(252, 25, 25, 0.4)"
+                  ]
+                }}
+                transition={{
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: "easeInOut" as const
                 }}
               />
-              <span className="text-[#FC1919] text-[18px] not-italic font-normal leading-[92%] tracking-[-0.03em]">
+              <motion.span
+                className="text-[#FC1919] text-[18px] not-italic font-normal leading-[92%] tracking-[-0.03em]"
+                animate={{ opacity: [1, 0.7, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" as const }}
+              >
                 Live
-              </span>
-            </span>
+              </motion.span>
+            </motion.span>
           </div>
         ) : (
-          <div className="relative w-[122.56px] h-[23.29px]">
+          /* Logo with bounce on hover */
+          <motion.div
+            className="relative w-[122.56px] h-[23.29px]"
+            whileHover={{ y: -2, scale: 1.02 }}
+            whileTap={{ scale: 0.95 }}
+            transition={springs.snappy}
+          >
             <Link href="/game">
               <Image
                 src="/logo-onboarding.png"
@@ -65,22 +100,41 @@ export function GameHeader() {
                 className="object-contain"
               />
             </Link>
-          </div>
+          </motion.div>
         )}
 
         {isLiveRoute ? (
-          // Always show the Leave Game button on the /live route
-          <button
+          /* Leave Game button with interactions */
+          <motion.button
             onClick={() => setIsLeaveGameDrawerOpen(true)}
-            className="flex items-center bg-white/10 rounded-full px-[12px] py-[6px] w-[130.9916px] h-[28px] hover:bg-white/20 transition-colors font-body"
+            className="flex items-center bg-white/10 rounded-full px-[12px] py-[6px] w-[130.9916px] h-[28px] transition-colors font-body"
+            whileHover={{
+              backgroundColor: "rgba(255, 255, 255, 0.2)",
+              scale: 1.05,
+              x: 3
+            }}
+            whileTap={{ scale: 0.95 }}
+            transition={springs.snappy}
           >
-            <LeaveGameIcon className="w-[15px] h-[15px] mr-2" />
+            {/* Icon with wiggle on hover */}
+            <motion.div
+              whileHover={{ rotate: [0, -10, 10, -5, 5, 0] }}
+              transition={{ duration: 0.4 }}
+            >
+              <LeaveGameIcon className="w-[15px] h-[15px] mr-2" />
+            </motion.div>
             <span className="text-[16px] leading-[100%] text-center text-white">
               leave game
             </span>
-          </button>
+          </motion.button>
         ) : (
-          <WalletBalance />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={springs.gentle}
+          >
+            <WalletBalance />
+          </motion.div>
         )}
       </header>
 
