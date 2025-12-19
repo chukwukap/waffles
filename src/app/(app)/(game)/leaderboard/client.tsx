@@ -70,6 +70,7 @@ export default function LeaderboardClient({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [crownOpacity, setCrownOpacity] = useState(1);
+  const [isSticky, setIsSticky] = useState(false);
 
   // ============================================
   // REFS
@@ -119,12 +120,14 @@ export default function LeaderboardClient({
   // HANDLERS
   // ============================================
 
-  // Simple, rock-solid scroll handler for crown fade
+  // Simple, rock-solid scroll handler for crown fade + sticky detection
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const scrollTop = e.currentTarget.scrollTop;
     // Calculate opacity: 1 at top, 0 when scrolled past CROWN_HEIGHT
     const newOpacity = Math.max(0, Math.min(1, 1 - scrollTop / CROWN_HEIGHT));
     setCrownOpacity(newOpacity);
+    // Track if header is stuck (when crown is fully faded)
+    setIsSticky(scrollTop >= CROWN_HEIGHT);
   }, []);
 
   const loadMore = useCallback(async () => {
@@ -217,9 +220,11 @@ export default function LeaderboardClient({
 
       {/* STICKY HEADER - overlaps crown area to eliminate visible line */}
       <div
-        className="sticky top-0 z-10 -mx-3 px-3 pt-3 pb-6 -mt-6"
+        className="sticky top-0 z-10 -mx-3 px-3 pt-3 pb-6 -mt-6 transition-[background] duration-200"
         style={{
-          background: "linear-gradient(to bottom, #0A0A0C 0%, #0A0A0C 65%, transparent 100%)",
+          background: isSticky
+            ? "linear-gradient(to bottom, #0A0A0C 0%, #0A0A0C 65%, transparent 100%)"
+            : "transparent",
         }}
       >
         <h1 className="text-center font-body text-[36px] tracking-[1px]">
