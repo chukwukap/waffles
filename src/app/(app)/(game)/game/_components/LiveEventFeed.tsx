@@ -71,14 +71,14 @@ const FeedItemRow = memo(function FeedItemRow({
       </span>
 
       {/* New message indicator dot */}
-      {isNew && (
+      {/* {isNew && (
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: [1, 1.2, 1] }}
           transition={{ duration: 0.3 }}
           className="w-1.5 h-1.5 rounded-full bg-[#F5BB1B] shrink-0"
         />
-      )}
+      )} */}
     </motion.div>
   );
 });
@@ -181,12 +181,16 @@ export function LiveEventFeed({ maxEvents = 5 }: LiveEventFeedProps) {
     <div className="relative w-screen -mx-4 h-[136px] overflow-hidden">
       {/* Connection status indicator */}
       <ConnectionIndicator isConnected={isConnected} onlineCount={onlineCount} />
-      {/* Content layer */}
+      {/* Content layer with mask for smooth fade */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={springs.gentle}
         className="absolute inset-0 py-2 px-4 flex flex-col justify-end overflow-hidden"
+        style={{
+          maskImage: `linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.2) 25%, rgba(0,0,0,0.6) 50%, black 70%)`,
+          WebkitMaskImage: `linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.2) 25%, rgba(0,0,0,0.6) 50%, black 70%)`,
+        }}
       >
         <div className="flex flex-col gap-2 pt-4">
           <AnimatePresence mode="popLayout" initial={false}>
@@ -196,41 +200,6 @@ export function LiveEventFeed({ maxEvents = 5 }: LiveEventFeedProps) {
           </AnimatePresence>
         </div>
       </motion.div>
-
-      {/* Top gradient fade - smooth multi-stop blend */}
-      <div
-        className="absolute top-0 left-0 right-0 h-16 pointer-events-none"
-        style={{
-          background: `linear-gradient(180deg, 
-            #0A0A0C 0%, 
-            rgba(10, 10, 12, 0.95) 20%, 
-            rgba(10, 10, 12, 0.7) 50%, 
-            rgba(10, 10, 12, 0.3) 75%, 
-            transparent 100%)`,
-        }}
-      />
-
-      {/* Left edge fade - subtle vignette */}
-      <div
-        className="absolute top-0 bottom-0 left-0 w-8 pointer-events-none"
-        style={{
-          background: `linear-gradient(90deg, 
-            #0A0A0C 0%, 
-            rgba(10, 10, 12, 0.6) 40%, 
-            transparent 100%)`,
-        }}
-      />
-
-      {/* Right edge fade - subtle vignette */}
-      <div
-        className="absolute top-0 bottom-0 right-0 w-8 pointer-events-none"
-        style={{
-          background: `linear-gradient(270deg, 
-            #0A0A0C 0%, 
-            rgba(10, 10, 12, 0.6) 40%, 
-            transparent 100%)`,
-        }}
-      />
     </div>
   );
 }

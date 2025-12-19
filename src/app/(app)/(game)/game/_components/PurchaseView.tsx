@@ -1,0 +1,426 @@
+"use client";
+
+import Image from "next/image";
+import { useEffect, useState } from "react";
+
+const TIER_GRADIENTS = [
+    {
+        selected:
+            "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(211,77,25,0.52) 100%)",
+        unselected:
+            "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(211,77,25,0.2) 100%)",
+        glow: "rgba(211, 77, 25, 0.4)",
+    },
+    {
+        selected:
+            "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.52) 100%)",
+        unselected:
+            "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.12) 100%)",
+        glow: "rgba(255, 255, 255, 0.3)",
+    },
+    {
+        selected:
+            "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,201,49,0.52) 100%)",
+        unselected:
+            "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,201,49,0.12) 100%)",
+        glow: "rgba(255, 201, 49, 0.4)",
+    },
+];
+
+export type PurchaseStep =
+    | "idle"
+    | "switching-chain"
+    | "pending"
+    | "confirming"
+    | "syncing"
+    | "error";
+
+interface PurchaseViewProps {
+    theme: string;
+    themeIcon?: string;
+    tierPrices: number[];
+    selectedTier: number;
+    onSelectTier: (tier: number) => void;
+    potentialPayout: number;
+    hasSufficientBalance: boolean;
+    isLoading: boolean;
+    isError: boolean;
+    step: PurchaseStep;
+    buttonText: string;
+    isButtonDisabled: boolean;
+    onchainId: `0x${string}` | null;
+    onPurchase: () => void;
+}
+
+export function PurchaseView({
+    theme,
+    themeIcon,
+    tierPrices,
+    selectedTier,
+    onSelectTier,
+    potentialPayout,
+    hasSufficientBalance,
+    isLoading,
+    isError,
+    step,
+    buttonText,
+    isButtonDisabled,
+    onchainId,
+    onPurchase,
+}: PurchaseViewProps) {
+    const [isVisible, setIsVisible] = useState(false);
+    const [showTiers, setShowTiers] = useState(false);
+    const [showButton, setShowButton] = useState(false);
+    const [hoveredTier, setHoveredTier] = useState<number | null>(null);
+
+    // Staggered entrance animations
+    useEffect(() => {
+        const timer1 = setTimeout(() => setIsVisible(true), 50);
+        const timer2 = setTimeout(() => setShowTiers(true), 200);
+        const timer3 = setTimeout(() => setShowButton(true), 400);
+        return () => {
+            clearTimeout(timer1);
+            clearTimeout(timer2);
+            clearTimeout(timer3);
+        };
+    }, []);
+
+    return (
+        <>
+            {/* Theme Section */}
+            <div
+                className="flex flex-col items-center w-full"
+                style={{
+                    gap: "clamp(8px, 2vh, 12px)",
+                    paddingTop: "clamp(12px, 3vh, 20px)",
+                    opacity: isVisible ? 1 : 0,
+                    transform: isVisible ? "translateY(0)" : "translateY(-20px)",
+                    transition: "all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                }}
+            >
+                <span
+                    className="font-display text-white text-center"
+                    style={{
+                        fontSize: "clamp(12px, 2vw, 14px)",
+                        opacity: 0.6,
+                        letterSpacing: "-0.03em",
+                    }}
+                >
+                    Next game theme
+                </span>
+                <div className="flex items-center gap-2.5">
+                    <span
+                        className="font-body text-white"
+                        style={{ fontSize: "clamp(24px, 5vw, 32px)" }}
+                    >
+                        {theme.toUpperCase()}
+                    </span>
+                    {themeIcon && (
+                        <Image
+                            src={themeIcon}
+                            alt={theme}
+                            width={41}
+                            height={40}
+                            className="object-contain"
+                            style={{
+                                width: "clamp(32px, 6vw, 41px)",
+                                height: "auto",
+                                animation: isVisible ? "float 3s ease-in-out infinite" : "none",
+                            }}
+                        />
+                    )}
+                </div>
+            </div>
+
+            {/* Choose Tier Title */}
+            <h2
+                className="font-body text-white text-center w-full"
+                style={{
+                    fontSize: "clamp(18px, 4vw, 22px)",
+                    lineHeight: "92%",
+                    letterSpacing: "-0.03em",
+                    opacity: showTiers ? 1 : 0,
+                    transform: showTiers ? "translateY(0)" : "translateY(10px)",
+                    transition: "all 0.4s ease",
+                }}
+            >
+                CHOOSE YOUR TICKET TIER
+            </h2>
+
+            {/* Tier Cards */}
+            <div
+                className="flex w-full max-w-[361px]"
+                style={{ gap: "clamp(8px, 2vw, 14px)" }}
+            >
+                {tierPrices.map((price, index) => {
+                    const gradient = TIER_GRADIENTS[index % TIER_GRADIENTS.length];
+                    const isSelected = selectedTier === index;
+                    const isHovered = hoveredTier === index;
+                    const delay = index * 100;
+
+                    return (
+                        <button
+                            key={price}
+                            onClick={() => !isLoading && onSelectTier(index)}
+                            disabled={isLoading}
+                            onMouseEnter={() => setHoveredTier(index)}
+                            onMouseLeave={() => setHoveredTier(null)}
+                            className="flex flex-col justify-center items-center flex-1 box-border"
+                            style={{
+                                background: isSelected ? gradient.selected : gradient.unselected,
+                                width: "111px",
+                                height: "100px",
+                                padding: "12px",
+                                gap: "10px",
+                                borderRadius: "24px",
+                                opacity: showTiers ? (isLoading ? 0.6 : 1) : 0,
+                                transform: showTiers
+                                    ? isSelected
+                                        ? "scale(1.05)"
+                                        : isHovered
+                                            ? "scale(1.03) translateY(-4px)"
+                                            : "scale(1)"
+                                    : "translateY(20px) scale(0.9)",
+                                boxShadow: isSelected
+                                    ? `0 8px 30px ${gradient.glow}`
+                                    : isHovered
+                                        ? `0 6px 20px ${gradient.glow}`
+                                        : "none",
+                                transition: `all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`,
+                                cursor: isLoading ? "not-allowed" : "pointer",
+                            }}
+                        >
+                            {/* Inner content wrapper */}
+                            <div
+                                className="flex flex-col justify-center items-center"
+                                style={{
+                                    padding: "0px",
+                                    gap: "8px",
+                                    width: "100%",
+                                    height: "76px",
+                                    alignSelf: "stretch",
+                                }}
+                            >
+                                {/* Waffle icon container */}
+                                <div
+                                    className="flex justify-center items-center"
+                                    style={{
+                                        width: "40px",
+                                        height: "40px",
+                                        background: isSelected
+                                            ? "rgba(255, 255, 255, 0.2)"
+                                            : "rgba(255, 255, 255, 0.1)",
+                                        borderRadius: "200px",
+                                        gap: "10px",
+                                        transition: "all 0.3s ease",
+                                        transform: isSelected ? "rotate(10deg)" : "rotate(0deg)",
+                                    }}
+                                >
+                                    <Image
+                                        src="/images/icons/waffle-small.png"
+                                        alt="waffle"
+                                        width={16}
+                                        height={12}
+                                        className="object-contain"
+                                        style={{
+                                            transition: "transform 0.3s ease",
+                                            transform: isSelected ? "scale(1.1)" : "scale(1)",
+                                        }}
+                                    />
+                                </div>
+                                {/* Price */}
+                                <span
+                                    className="font-body text-white"
+                                    style={{
+                                        fontSize: isSelected ? "30px" : "28px",
+                                        lineHeight: "100%",
+                                        fontWeight: 400,
+                                        transition: "all 0.3s ease",
+                                        textShadow: isSelected ? "0 2px 10px rgba(255,255,255,0.3)" : "none",
+                                    }}
+                                >
+                                    ${price}
+                                </span>
+                            </div>
+                        </button>
+                    );
+                })}
+            </div>
+
+            {/* Balance Warning */}
+            {!hasSufficientBalance && (
+                <p
+                    className="text-amber-400 text-xs text-center px-4"
+                    style={{
+                        animation: "shake 0.5s ease-in-out",
+                    }}
+                >
+                    ⚠️ Insufficient USDC balance. Get tokens from the faucet.
+                </p>
+            )}
+
+            {/* Buy Button */}
+            <div
+                className="w-full max-w-[361px]"
+                style={{
+                    opacity: showButton ? 1 : 0,
+                    transform: showButton ? "translateY(0)" : "translateY(20px)",
+                    transition: "all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                }}
+            >
+                <button
+                    onClick={onPurchase}
+                    disabled={isButtonDisabled}
+                    className="relative flex items-center justify-center px-6 bg-white text-[#191919] font-body font-normal uppercase tracking-[-0.02em] text-center leading-[115%] w-full rounded-[12px] border-[5px] border-t-0 border-l-0 border-(--brand-cyan) disabled:opacity-60 disabled:cursor-not-allowed overflow-hidden"
+                    style={{
+                        height: "clamp(44px, 8vh, 54px)",
+                        fontSize: "clamp(20px, 4vw, 26px)",
+                        transition: "all 0.2s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                        if (!isButtonDisabled) {
+                            e.currentTarget.style.transform = "translateY(-2px)";
+                            e.currentTarget.style.boxShadow = "0 8px 25px rgba(0, 207, 242, 0.3)";
+                        }
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "none";
+                    }}
+                    onMouseDown={(e) => {
+                        if (!isButtonDisabled) {
+                            e.currentTarget.style.transform = "translateY(0) scale(0.98)";
+                        }
+                    }}
+                    onMouseUp={(e) => {
+                        if (!isButtonDisabled) {
+                            e.currentTarget.style.transform = "translateY(-2px) scale(1)";
+                        }
+                    }}
+                >
+                    {/* Shimmer effect on hover */}
+                    <div
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                            background:
+                                "linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)",
+                            transform: "translateX(-100%)",
+                            animation: isLoading ? "button-shimmer 1.5s ease-in-out infinite" : "none",
+                        }}
+                    />
+                    <span style={{ position: "relative", zIndex: 1 }}>
+                        {!onchainId ? "GAME NOT AVAILABLE" : buttonText}
+                    </span>
+                </button>
+            </div>
+
+            {/* Status Message */}
+            {step !== "idle" && step !== "error" && (
+                <p
+                    className="text-white/50 text-xs text-center"
+                    style={{
+                        animation: "pulse-fade 1.5s ease-in-out infinite",
+                    }}
+                >
+                    {step === "switching-chain" && "Switching to Base Sepolia..."}
+                    {step === "pending" && "Please confirm in your wallet..."}
+                    {step === "confirming" && "Waiting for confirmation..."}
+                    {step === "syncing" && "Finalizing purchase..."}
+                </p>
+            )}
+
+            {/* Error Message */}
+            {isError && (
+                <p
+                    className="text-red-400 text-sm text-center"
+                    style={{
+                        animation: "shake 0.5s ease-in-out",
+                    }}
+                >
+                    Transaction failed. Please try again.
+                </p>
+            )}
+
+            {/* Potential Payout */}
+            <div
+                className="flex justify-between items-center w-full max-w-[361px] rounded-2xl"
+                style={{
+                    background:
+                        "linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(27, 245, 176, 0.12) 100%)",
+                    padding: "clamp(8px, 2vh, 12px) clamp(12px, 3vw, 16px)",
+                    opacity: showButton ? 1 : 0,
+                    transform: showButton ? "translateY(0)" : "translateY(10px)",
+                    transition: "all 0.5s ease 100ms",
+                }}
+            >
+                <span
+                    className="font-display text-white"
+                    style={{
+                        fontSize: "clamp(10px, 2vw, 12px)",
+                        opacity: 0.5,
+                    }}
+                >
+                    Potential payout
+                </span>
+                <span
+                    className="font-body"
+                    style={{
+                        fontSize: "clamp(18px, 4vw, 22px)",
+                        color: "#14B985",
+                        transition: "transform 0.3s ease",
+                    }}
+                >
+                    ${potentialPayout}
+                </span>
+            </div>
+
+            {/* Keyframe animations */}
+            <style jsx>{`
+        @keyframes float {
+          0%,
+          100% {
+            transform: translateY(0) rotate(0deg);
+          }
+          50% {
+            transform: translateY(-5px) rotate(5deg);
+          }
+        }
+        @keyframes shake {
+          0%,
+          100% {
+            transform: translateX(0);
+          }
+          20% {
+            transform: translateX(-5px);
+          }
+          40% {
+            transform: translateX(5px);
+          }
+          60% {
+            transform: translateX(-5px);
+          }
+          80% {
+            transform: translateX(5px);
+          }
+        }
+        @keyframes button-shimmer {
+          0% {
+            transform: translateX(-100%);
+          }
+          100% {
+            transform: translateX(100%);
+          }
+        }
+        @keyframes pulse-fade {
+          0%,
+          100% {
+            opacity: 0.5;
+          }
+          50% {
+            opacity: 1;
+          }
+        }
+      `}</style>
+        </>
+    );
+}

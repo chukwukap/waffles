@@ -18,115 +18,122 @@ export function ProfileCard({
 }: ProfileCardProps) {
   return (
     <div
-      className="relative overflow-hidden group select-none w-full max-w-lg h-full"
+      className="relative box-border flex flex-col items-center p-3 gap-3 w-full max-w-[361px] h-[152px] mx-auto overflow-hidden"
       style={{
         borderRadius: "16px",
         border: "1px solid rgba(255, 255, 255, 0.08)",
         background:
           "linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 201, 49, 0.12) 100%)",
-        padding: "clamp(8px, 2vw, 12px)",
       }}
     >
-      {/* Upload Icon (Top Left) */}
-      <div
-        onClick={onUpload}
-        className="absolute top-3 left-3 z-20 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-[2px] border border-white/5 cursor-pointer hover:bg-white/20 transition-colors active:scale-95"
-        role="button"
-        aria-label="Upload"
-      >
-        <UploadIcon className="text-white h-4 w-4" />
-      </div>
-
-      {/* Background PFP Effect - Ghost Image */}
-      <div className="absolute right-[-20px] top-[-20px] w-[200px] h-[200px] z-0 opacity-[0.07] pointer-events-none grayscale contrast-150">
-        <img
+      {/* Background PFP Effect - Ghost Image (Centered) */}
+      <div className="absolute inset-0 flex items-center justify-center z-0 opacity-[0.07] pointer-events-none grayscale contrast-150">
+        <Image
+          width={200}
+          height={200}
           src={avatarUrl}
-          alt={`${username} avatar`}
-          className="w-full h-full object-cover rounded-full blur-xs"
+          alt=""
+          className="w-[200px] h-[200px] object-cover rounded-full blur-xs"
         />
       </div>
 
-      {/* Inner Content Container */}
-      <div
-        className="relative z-10 flex flex-col justify-between h-full"
-        style={{
-          width: "100%",
-          paddingTop: "4px",
-          paddingBottom: "4px",
-        }}
-      >
-        {/* Top Row: Avatar & Username */}
-        <div className="flex items-center justify-center gap-2 w-full">
-          {/* Avatar Circle */}
+      {/* User + Time Row */}
+      <div className="relative z-10 flex flex-row justify-between items-start py-1 gap-1.5 w-full flex-1">
+        {/* User Section */}
+        <div className="flex flex-row justify-between items-start gap-2 w-full flex-1">
+          {/* Upload Button (Left) */}
           <div
-            className="relative rounded-full bg-[#4AD2FF] overflow-hidden border border-white/10 shadow-sm shrink-0"
-            style={{ width: "clamp(32px, 8vw, 40px)", height: "clamp(32px, 8vw, 40px)" }}
+            onClick={onUpload}
+            className="box-border flex flex-row justify-center items-center p-2 gap-2 w-[34px] h-[34px] bg-white/13 rounded-[900px] cursor-pointer hover:bg-white/20 transition-colors active:scale-95"
+            role="button"
+            aria-label="Upload"
           >
-            <img
-              src={avatarUrl}
-              alt={`${username} avatar`}
-              className="w-full h-full object-cover"
-            />
+            <UploadIcon className="text-white w-[18px] h-[18px]" />
           </div>
 
-          {/* Username */}
-          <span
-            className="font-body text-white uppercase tracking-widest"
-            style={{
-              fontSize: "clamp(14px, 4vw, 18px)",
-              lineHeight: "130%",
-              fontWeight: 400,
-              opacity: 0.9,
-            }}
-          >
-            {username}
-          </span>
-        </div>
+          {/* Center Content: Avatar, Username, Streak */}
+          <div className="flex flex-col justify-center items-center gap-[13px] h-[120px]">
+            {/* Avatar + Username Row */}
+            <div className="flex flex-row justify-center items-center gap-2">
+              {/* Avatar Circle */}
+              <div
+                className="w-9 h-9 rounded-full overflow-hidden shrink-0"
+                style={{ background: "#FFF7B8" }}
+              >
+                <Image
+                  width={36}
+                  height={36}
+                  src={avatarUrl}
+                  alt={`${username} avatar`}
+                  className="w-full h-full object-cover"
+                />
+              </div>
 
-        {/* Bottom Section: Streak Label + Count */}
-        <div className="flex flex-col items-center justify-end">
-          {/* Label: Streak */}
-          <span
-            className="font-display text-white/80"
-            style={{
-              fontSize: "clamp(12px, 2.5vw, 14px)",
-              fontWeight: 500,
-              lineHeight: "130%",
-              letterSpacing: "-0.03em",
-              marginBottom: "clamp(2px, 0.5vh, 4px)",
-            }}
-          >
-            Streak
-          </span>
-
-          {/* Row: Fire Icon + Number */}
-          <div className="flex items-center gap-1">
-            {/* Fire Icon */}
-            <div
-              className="flex items-center justify-center"
-              style={{ width: "clamp(16px, 4vw, 20px)", height: "clamp(28px, 6vh, 36px)" }}
-            >
-              <Image
-                src="/images/icons/streak-flame.svg"
-                width={28}
-                height={28}
-                fetchPriority="high"
-                alt="Streak Flame"
-                className="w-full h-full object-contain drop-shadow-[0_0_8px_rgba(255,165,0,0.5)]"
-              />
+              {/* Username */}
+              <span
+                className="font-body text-white uppercase"
+                style={{
+                  fontSize: "18px",
+                  lineHeight: "130%",
+                  fontWeight: 400,
+                }}
+              >
+                {username}
+              </span>
             </div>
 
-            {/* Number */}
-            <span
-              className="font-body text-white"
-              style={{
-                fontSize: "clamp(24px, 6vw, 34px)",
-                lineHeight: "90%",
-                fontWeight: 400,
-              }}
-            >
-              {streak}
-            </span>
+            {/* Streak Section */}
+            <div className="flex flex-col justify-center items-center flex-1">
+              {/* Streak Label */}
+              <span
+                className="font-display text-white text-center"
+                style={{
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  lineHeight: "130%",
+                  letterSpacing: "-0.03em",
+                }}
+              >
+                Streak
+              </span>
+
+              {/* Streak Value Row */}
+              <div className="flex flex-col justify-center items-center gap-1">
+                <div className="flex flex-row justify-center items-center gap-2.5">
+                  {/* Fire Icon */}
+                  <div className="w-5 h-9 flex items-center justify-center">
+                    <Image
+                      src="/images/icons/streak-flame.svg"
+                      width={20}
+                      height={36}
+                      fetchPriority="high"
+                      alt="Streak Flame"
+                      className="object-contain"
+                    />
+                  </div>
+
+                  {/* Number */}
+                  <span
+                    className="font-body text-white"
+                    style={{
+                      fontSize: "34px",
+                      lineHeight: "90%",
+                      fontWeight: 400,
+                    }}
+                  >
+                    {streak}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Invisible placeholder (Right) for symmetry */}
+          <div
+            className="box-border flex flex-row justify-center items-center p-2 gap-2 w-[34px] h-[34px] bg-white/13 opacity-0 rounded-[900px]"
+            aria-hidden="true"
+          >
+            <UploadIcon className="text-white w-[18px] h-[18px]" />
           </div>
         </div>
       </div>

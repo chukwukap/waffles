@@ -30,11 +30,14 @@ interface LiveGameContextValue {
     gameId: number;
     questions: LiveGameQuestion[];
     roundBreakSec: number;
+    prizePool: number;
+    gameTheme: string;
 
     // Current state
     questionIndex: number;
     isBreak: boolean;
     timerTarget: number;
+    isGameComplete: boolean;
 
     // Answers
     answers: Map<number, Answer>;
@@ -123,6 +126,7 @@ export function LiveGameProvider({ game, children }: LiveGameProviderProps) {
     // State
     const [questionIndex, setQuestionIndex] = useState(0);
     const [isBreak, setIsBreak] = useState(false);
+    const [isGameComplete, setIsGameComplete] = useState(false);
     const [timerTarget, setTimerTarget] = useState(() => {
         // First question timer
         const firstQ = game.questions[0];
@@ -201,7 +205,7 @@ export function LiveGameProvider({ game, children }: LiveGameProviderProps) {
 
         // Game complete?
         if (nextIndex >= game.questions.length) {
-            router.push(`/game/${game.id}/result`);
+            setIsGameComplete(true);
             return;
         }
 
@@ -240,9 +244,12 @@ export function LiveGameProvider({ game, children }: LiveGameProviderProps) {
             gameId: game.id,
             questions: game.questions,
             roundBreakSec: game.roundBreakSec,
+            prizePool: game.prizePool,
+            gameTheme: game.theme,
             questionIndex,
             isBreak,
             timerTarget,
+            isGameComplete,
             answers,
             hasAnswered,
             getAnswer,
@@ -254,6 +261,7 @@ export function LiveGameProvider({ game, children }: LiveGameProviderProps) {
             questionIndex,
             isBreak,
             timerTarget,
+            isGameComplete,
             answers,
             hasAnswered,
             getAnswer,

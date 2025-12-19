@@ -2,11 +2,10 @@
 
 import { useProfile } from "../ProfileProvider";
 import { cn } from "@/lib/utils";
-import { IconStatCard } from "./_components/IconStatCard";
-import { LargeStat } from "./_components/LargeStatCard";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
 import { BottomNav } from "@/components/BottomNav";
 import { SubHeader } from "@/components/ui/SubHeader";
+import Image from "next/image";
 
 // ==========================================
 // COMPONENT
@@ -39,11 +38,11 @@ export default function StatsPage() {
   }
 
   const formattedWinnings = `$${stats.totalWon.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   })}`;
 
-  const formattedWinRate = `${stats.winRate.toFixed(1)}%`;
+  const formattedWinRate = `${stats.winRate.toFixed(0)}%`;
 
   return (
     <>
@@ -52,7 +51,7 @@ export default function StatsPage() {
         className={cn(
           "mx-auto w-full max-w-lg flex-1",
           "px-4",
-          "pb-[calc(env(safe-area-inset-bottom)+84px)]",
+          // "pb-[calc(env(safe-area-inset-bottom)+84px)]",
           "flex flex-col gap-5",
           "mt-4"
         )}
@@ -107,3 +106,47 @@ export default function StatsPage() {
     </>
   );
 }
+
+const LargeStat = ({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) => (
+  <div className="flex flex-col items-center justify-center gap-1.5 w-[162.5px] h-[70px]">
+    <p className="text-muted font-display font-medium text-base leading-[1.3] tracking-[-0.03em] text-center">
+      {label}
+    </p>
+    <p className="text-white font-body font-normal text-[38px] leading-[1.3] tracking-normal">
+      {typeof value === "number" ? value.toLocaleString() : value}
+    </p>
+  </div>
+);
+
+const IconStatCard = ({
+  icon,
+  label,
+  value,
+}: {
+  icon: string;
+  label: string;
+  value: string | number;
+}) => (
+  <div className="flex h-[99px] w-[156px] flex-col items-center justify-center gap-1">
+    <Image
+      src={icon}
+      alt=""
+      width={36}
+      height={36}
+      className="h-9 w-9"
+      priority={false}
+    />
+    <p className="font-display font-medium text-base leading-[130%] tracking-[-0.03em] text-center text-[#99A0AE]">
+      {label}
+    </p>
+    <p className="font-body font-normal text-[38px] leading-none tracking-normal text-white">
+      {typeof value === "number" ? value.toLocaleString() : value}
+    </p>
+  </div>
+);

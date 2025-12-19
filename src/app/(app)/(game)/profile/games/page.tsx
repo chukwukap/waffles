@@ -43,7 +43,7 @@ export default function GamesPage() {
         className={cn(
           "mx-auto w-full max-w-lg flex-1",
           "px-4",
-          "pb-[calc(env(safe-area-inset-bottom)+84px)]",
+          // "pb-[calc(env(safe-area-inset-bottom)+84px)]",
           "mt-4"
         )}
       >

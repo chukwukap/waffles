@@ -36,6 +36,7 @@ export function TimerTube({ remaining, duration }: TimerTubeProps) {
 
   // Low time state for visual feedback
   const isLowTime = remaining <= 3;
+  const isTimeUp = remaining === 0;
 
   return (
     <motion.svg
@@ -44,9 +45,27 @@ export function TimerTube({ remaining, duration }: TimerTubeProps) {
       viewBox="0 0 78 12"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      // Subtle pulse when low time
-      animate={isLowTime ? { scale: [1, 1.05, 1] } : { scale: 1 }}
-      transition={isLowTime ? { duration: 0.4, repeat: Infinity } : undefined}
+      // Combined shake + pulse when low time
+      animate={
+        isTimeUp
+          ? { scale: 1, x: 0, opacity: 0.5 }
+          : isLowTime
+            ? {
+              scale: [1, 1.08, 1],
+              x: [-1, 1, -1, 1, 0],
+              rotate: [-1, 1, -1, 1, 0],
+            }
+            : { scale: 1, x: 0, rotate: 0 }
+      }
+      transition={
+        isLowTime
+          ? {
+            duration: 0.4,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }
+          : { duration: 0.2 }
+      }
     >
       <defs>
         {/* Animated clipPath for smooth transition */}

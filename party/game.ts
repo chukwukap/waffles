@@ -259,12 +259,13 @@ export default class GameServer implements Party.Server {
   }
 
   broadcastPresence(user: UserProfile, type: "join" | "leave") {
-    // p = presence, n = online count, j = joined, l = left
+    // p = presence, n = online count, j = joined, l = left, p = pfpUrl
     this.broadcast({
       t: "p",
       d: {
         n: this.getOnlineCount(),
         j: type === "join" ? user.username : undefined,
+        p: type === "join" ? user.pfpUrl : undefined,
         l: type === "leave" ? user.username : undefined,
       },
     });

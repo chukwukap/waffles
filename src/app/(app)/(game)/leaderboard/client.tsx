@@ -197,12 +197,13 @@ export default function LeaderboardClient({
       onScroll={handleScroll}
       className="flex-1 overflow-y-auto flex flex-col px-3"
     >
-      {/* CROWN IMAGE - fades out on scroll, z-0 so sticky header goes over it */}
+      {/* CROWN IMAGE - fades out on scroll, positioned behind header */}
       <div
-        className="pt-6 pb-8 grid place-items-center transition-opacity duration-150 relative z-0"
+        className="pt-6 grid place-items-center transition-opacity duration-150 relative z-0"
         style={{
           opacity: crownOpacity,
           pointerEvents: crownOpacity < 0.1 ? "none" : "auto",
+          marginBottom: "-60px", // Crown overlaps under header
         }}
       >
         <Image
@@ -218,13 +219,13 @@ export default function LeaderboardClient({
         />
       </div>
 
-      {/* STICKY HEADER - overlaps crown area to eliminate visible line */}
+      {/* STICKY HEADER - sits above crown with gradient fade */}
       <div
-        className="sticky top-0 z-10 -mx-3 px-3 pt-3 pb-6 -mt-6 transition-[background] duration-200"
+        className="sticky top-0 z-10 -mx-3 px-3 pt-8 pb-4 transition-[background] duration-200"
         style={{
           background: isSticky
-            ? "linear-gradient(to bottom, #0A0A0C 0%, #0A0A0C 65%, transparent 100%)"
-            : "transparent",
+            ? "linear-gradient(to bottom, #0A0A0C 0%, #0A0A0C 70%, transparent 100%)"
+            : "linear-gradient(to bottom, transparent 0%, #0A0A0C 30%, #0A0A0C 100%)",
         }}
       >
         <h1 className="text-center font-body text-[36px] tracking-[1px]">

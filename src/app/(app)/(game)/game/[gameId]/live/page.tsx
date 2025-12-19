@@ -28,6 +28,8 @@ export interface LiveGameData {
   id: number;
   endsAt: Date;
   roundBreakSec: number;
+  prizePool: number;
+  theme: string;
   questions: LiveGameQuestion[];
 }
 
@@ -43,6 +45,8 @@ const getGame = cache(async (gameId: number): Promise<LiveGameData | null> => {
       startsAt: true,
       endsAt: true,
       roundBreakSec: true,
+      prizePool: true,
+      theme: true,
       questions: {
         select: {
           id: true,
@@ -76,6 +80,8 @@ const getGame = cache(async (gameId: number): Promise<LiveGameData | null> => {
     id: game.id,
     endsAt: game.endsAt,
     roundBreakSec: game.roundBreakSec,
+    prizePool: game.prizePool,
+    theme: game.theme,
     questions: game.questions,
   };
 });

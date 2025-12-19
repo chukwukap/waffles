@@ -64,34 +64,31 @@ export default function ProfilePage() {
     <>
       {/* Main container - flex column, no scroll */}
       <div
-        className="flex-1 flex flex-col overflow-hidden px-3"
-        style={{ maxHeight: "calc(100dvh - 72px)" }}
+        className="flex-1 flex flex-col overflow-hidden px-3 gap-3"
+      // style={{ maxHeight: "calc(100dvh - 72px)" }}
       >
         {/* Header */}
-        <header className="flex items-center justify-between shrink-0 py-3">
-          <div className="h-8 w-8 shrink-0 opacity-0" aria-hidden="true">
-            <UploadIcon className="h-3.5 w-3.5" />
-          </div>
-          <h1
-            className="font-body font-normal tracking-tight text-white leading-[0.92] text-center select-none"
-            style={{
-              fontSize: "clamp(1.2rem, 4vw, 1.375rem)",
-              letterSpacing: "-0.03em",
-            }}
+        <header className="flex flex-row items-center py-3 gap-2 w-full shrink-0">
+          <div
+            className="flex flex-row justify-center items-center p-1 gap-2 w-7 h-7 bg-[#1B8FF5] rounded-[900px] opacity-0"
+            aria-hidden="true"
           >
+            <UploadIcon className="w-3.5 h-3.5 text-white" />
+          </div>
+          <h1 className="flex-1 font-body font-normal text-[22px] leading-[92%] text-center tracking-[-0.03em] text-white select-none">
             PROFILE
           </h1>
           <button
             onClick={() => setInviteOpen(true)}
             aria-label="Invite Friends"
             className={cn(
-              "box-border flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 transition-all duration-200",
+              "box-border flex flex-row justify-center items-center p-2 gap-2 w-[34px] h-[34px] bg-white/13 rounded-[900px] transition-all duration-200",
               "hover:bg-white/25 hover:scale-105 active:scale-95",
               !showReferralButton && "opacity-50 cursor-not-allowed"
             )}
             disabled={!showReferralButton}
           >
-            <InviteFriendsIcon className="h-[18px] w-[18px]" />
+            <InviteFriendsIcon className="w-[18px] h-[18px]" />
           </button>
         </header>
 
@@ -111,7 +108,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Invite Button */}
-        <div className="shrink-0 py-2">
+        <div className="shrink-0">
           <InviteFriendsButton onInvite={() => setInviteOpen(true)} />
         </div>
 
@@ -133,7 +130,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Game History */}
-        <div className="flex-1 min-h-0 mt-2">
+        <div className="flex-1 min-h-0">
           <GameHistory gameHistory={recentGames} fid={user.fid} />
         </div>
       </div>
