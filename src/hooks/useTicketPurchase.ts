@@ -257,15 +257,19 @@ export function useTicketPurchase(
       try {
         console.log("[useTicketPurchase] Syncing with backend...");
 
-        const response = await fetch(`/api/v1/games/${gameId}/entry`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            walletAddress: address,
-            txHash: txHash || "",
-            paidAmount: price,
-          }),
-        });
+        // Use sdk.quickAuth.fetch for proper authentication
+        const response = await sdk.quickAuth.fetch(
+          `/api/v1/games/${gameId}/entry`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              walletAddress: address,
+              txHash: txHash || "",
+              paidAmount: price,
+            }),
+          }
+        );
 
         if (!response.ok) {
           const error = await response.json();
