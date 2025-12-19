@@ -326,14 +326,15 @@ export function BuyTicketModal({
                 style={{ gap: "clamp(8px, 2vw, 14px)" }}
               >
                 {tierPrices.map((price, index) => {
-                  const gradient = TIER_GRADIENTS[index % TIER_GRADIENTS.length];
+                  const gradient =
+                    TIER_GRADIENTS[index % TIER_GRADIENTS.length];
                   const isSelected = selectedTier === index;
                   return (
                     <button
                       key={price}
                       onClick={() => !isLoading && setSelectedTier(index)}
                       disabled={isLoading}
-                      className="flex flex-col justify-center items-start rounded-3xl flex-1 transition-all duration-200"
+                      className="flex flex-col justify-center items-center flex-1 transition-all duration-200 box-border"
                       style={{
                         background: isSelected
                           ? gradient.selected
@@ -346,31 +347,48 @@ export function BuyTicketModal({
                         opacity: isLoading ? 0.6 : 1,
                       }}
                     >
-                      {/* Waffle icon container */}
+                      {/* Inner content wrapper */}
                       <div
-                        className="flex justify-center items-center rounded-full"
+                        className="flex flex-col justify-center items-center"
                         style={{
-                          width: "40px",
-                          height: "40px",
-                          background: "rgba(255, 255, 255, 0.1)",
-                          borderRadius: "200px",
+                          padding: "0px",
+                          gap: "8px",
+                          width: "100%",
+                          height: "76px",
+                          alignSelf: "stretch",
                         }}
                       >
-                        <Image
-                          src="/images/icons/waffle-small.png"
-                          alt="waffle"
-                          width={16}
-                          height={12}
-                          className="object-contain"
-                        />
+                        {/* Waffle icon container */}
+                        <div
+                          className="flex justify-center items-center"
+                          style={{
+                            width: "40px",
+                            height: "40px",
+                            background: "rgba(255, 255, 255, 0.1)",
+                            borderRadius: "200px",
+                            gap: "10px",
+                          }}
+                        >
+                          <Image
+                            src="/images/icons/waffle-small.png"
+                            alt="waffle"
+                            width={16}
+                            height={12}
+                            className="object-contain"
+                          />
+                        </div>
+                        {/* Price */}
+                        <span
+                          className="font-body text-white"
+                          style={{
+                            fontSize: "28px",
+                            lineHeight: "100%",
+                            fontWeight: 400,
+                          }}
+                        >
+                          ${price}
+                        </span>
                       </div>
-                      {/* Price */}
-                      <span
-                        className="font-body text-white"
-                        style={{ fontSize: "28px", lineHeight: "100%" }}
-                      >
-                        ${price}
-                      </span>
                     </button>
                   );
                 })}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
@@ -35,6 +35,7 @@ interface GameHubProps {
 
 export function GameHub({ game }: GameHubProps) {
   const router = useRouter();
+  const hasRefreshedRef = useRef(false);
 
   // User data and access check
   const { user, isLoading: isLoadingUser } = useUser();
@@ -67,8 +68,16 @@ export function GameHub({ game }: GameHubProps) {
   const targetMs = game?.startsAt.getTime() ?? 0;
   const countdown = useTimer(targetMs);
 
-  // Derived state
-  const isLive = phase === "LIVE";
+  // Refresh page when countdown reaches 0 to get fresh server data
+  useEffect(() => {
+    if (countdown <= 0 && phase === "SCHEDULED" && !hasRefreshedRef.current) {
+      hasRefreshedRef.current = true;
+      router.refresh();
+    }
+  }, [countdown, phase, router]);
+
+  // Derived state - also check countdown for immediate transition
+  const isLive = phase === "LIVE" || (countdown <= 0 && phase !== "ENDED");
   const hasEnded = phase === "ENDED";
   const isEmpty = !game;
   const hasActiveGame = !isEmpty && !hasEnded;
