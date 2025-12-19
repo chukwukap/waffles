@@ -40,53 +40,53 @@ export function GameInsights({ data }: GameInsightsProps) {
         <div className="space-y-6">
             {/* Summary Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="admin-panel p-5">
+                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 rounded-xl bg-[#FFC931]/10">
                             <CurrencyDollarIcon className="h-5 w-5 text-[#FFC931]" />
                         </div>
                         <span className="text-sm text-white/50 font-display uppercase tracking-wider">Prize Pool</span>
                     </div>
-                    <div className="text-3xl font-bold text-[#FFC931] font-body admin-stat-glow">
+                    <div className="text-3xl font-bold text-[#FFC931] font-body ">
                         ${data.totalPrizePool.toLocaleString()}
                     </div>
                     <div className="text-xs text-white/40 mt-1">total prizes</div>
                 </div>
 
-                <div className="admin-panel p-5">
+                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 rounded-xl bg-[#14B985]/10">
                             <TrophyIcon className="h-5 w-5 text-[#14B985]" />
                         </div>
                         <span className="text-sm text-white/50 font-display uppercase tracking-wider">Completed</span>
                     </div>
-                    <div className="text-3xl font-bold text-[#14B985] font-body admin-stat-glow-success">
+                    <div className="text-3xl font-bold text-[#14B985] font-body ">
                         {data.gamesCompleted}
                     </div>
                     <div className="text-xs text-white/40 mt-1">games finished</div>
                 </div>
 
-                <div className="admin-panel p-5">
+                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 rounded-xl bg-[#00CFF2]/10">
                             <UserGroupIcon className="h-5 w-5 text-[#00CFF2]" />
                         </div>
                         <span className="text-sm text-white/50 font-display uppercase tracking-wider">Avg Players</span>
                     </div>
-                    <div className="text-3xl font-bold text-[#00CFF2] font-body admin-stat-glow-cyan">
+                    <div className="text-3xl font-bold text-[#00CFF2] font-body ">
                         {data.avgPlayersPerGame.toFixed(1)}
                     </div>
                     <div className="text-xs text-white/40 mt-1">per game</div>
                 </div>
 
-                <div className="admin-panel p-5">
+                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 rounded-xl bg-[#FB72FF]/10">
                             <TicketIcon className="h-5 w-5 text-[#FB72FF]" />
                         </div>
                         <span className="text-sm text-white/50 font-display uppercase tracking-wider">Join Rate</span>
                     </div>
-                    <div className="text-3xl font-bold text-[#FB72FF] font-body admin-stat-glow-pink">
+                    <div className="text-3xl font-bold text-[#FB72FF] font-body ">
                         {data.completionRate.toFixed(0)}%
                     </div>
                     <div className="text-xs text-white/40 mt-1">tickets → played</div>
@@ -94,7 +94,7 @@ export function GameInsights({ data }: GameInsightsProps) {
             </div>
 
             {/* Ticket Funnel */}
-            <div className="admin-panel p-6">
+            <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
                 <div className="flex items-center justify-between mb-6">
                     <div>
                         <h3 className="text-lg font-semibold text-white font-display">Ticket Conversion Funnel</h3>

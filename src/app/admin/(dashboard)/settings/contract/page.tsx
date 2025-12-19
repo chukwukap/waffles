@@ -68,7 +68,7 @@ export default function ContractSettingsPage() {
     if (loading && !state) {
         return (
             <div className="max-w-5xl mx-auto space-y-6">
-                <div className="admin-panel p-8 text-center">
+                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-8 text-center">
                     <ArrowPathIcon className="h-8 w-8 text-[#FFC931] animate-spin mx-auto mb-3" />
                     <p className="text-white/60">Loading contract state...</p>
                 </div>
@@ -79,7 +79,7 @@ export default function ContractSettingsPage() {
     if (error) {
         return (
             <div className="max-w-5xl mx-auto space-y-6">
-                <div className="admin-panel p-8 text-center border-red-500/30 bg-red-500/5">
+                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-8 text-center border-red-500/30 bg-red-500/5">
                     <ExclamationTriangleIcon className="h-8 w-8 text-red-400 mx-auto mb-3" />
                     <p className="text-red-400 font-medium">{error}</p>
                     <button
@@ -142,7 +142,7 @@ export default function ContractSettingsPage() {
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Accumulated Fees */}
-                <div className="admin-panel p-5 relative overflow-hidden group">
+                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-24 h-24 bg-[#14B985]/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:bg-[#14B985]/20 transition-colors" />
                     <div className="relative">
                         <div className="flex items-center gap-2 text-white/50 text-sm mb-2">
@@ -157,7 +157,7 @@ export default function ContractSettingsPage() {
                 </div>
 
                 {/* Active Games */}
-                <div className="admin-panel p-5 relative overflow-hidden group">
+                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-24 h-24 bg-[#00CFF2]/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:bg-[#00CFF2]/20 transition-colors" />
                     <div className="relative">
                         <div className="flex items-center gap-2 text-white/50 text-sm mb-2">
@@ -172,7 +172,7 @@ export default function ContractSettingsPage() {
                 </div>
 
                 {/* Platform Fee */}
-                <div className="admin-panel p-5 relative overflow-hidden group">
+                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-24 h-24 bg-[#FFC931]/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:bg-[#FFC931]/20 transition-colors" />
                     <div className="relative">
                         <div className="flex items-center gap-2 text-white/50 text-sm mb-2">
@@ -188,7 +188,7 @@ export default function ContractSettingsPage() {
             </div>
 
             {/* Contract Details */}
-            <div className="admin-panel p-6">
+            <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
                 <div className="flex items-center gap-2 mb-5">
                     <LinkIcon className="h-5 w-5 text-[#FFC931]" />
                     <h2 className="text-lg font-semibold text-white font-display">Contract Details</h2>
@@ -254,7 +254,7 @@ export default function ContractSettingsPage() {
             </div>
 
             {/* Admin Actions Info */}
-            <div className="admin-panel p-6 border-orange-500/20 bg-orange-500/5">
+            <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6 border-orange-500/20 bg-orange-500/5">
                 <div className="flex items-start gap-4">
                     <div className="p-3 bg-orange-500/20 rounded-xl">
                         <Cog6ToothIcon className="h-6 w-6 text-orange-400" />

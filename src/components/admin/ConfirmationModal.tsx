@@ -121,7 +121,7 @@ export function ConfirmationModal({
           aria-modal="true"
           aria-labelledby="modal-title"
           tabIndex={-1}
-          className="relative w-full max-w-md transform overflow-hidden admin-panel"
+          className="relative w-full max-w-md transform overflow-hidden bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg"
           style={{
             animation: "slideUp 0.3s ease-out forwards",
             boxShadow: `0 0 40px ${styles.glowColor}, 0 25px 50px -12px rgba(0, 0, 0, 0.5)`,
@@ -178,7 +178,7 @@ export function ConfirmationModal({
                     .map((item, index) => (
                       <div
                         key={index}
-                        className="flex items-center justify-between text-sm admin-table-row py-1.5 last:border-b-0"
+                        className="flex items-center justify-between text-sm border-b border-white/[0.04] hover:bg-white/[0.03] py-1.5 last:border-b-0"
                       >
                         <span className="text-white/50">{item.label}</span>
                         <span className="text-white font-medium truncate max-w-[60%] text-right">

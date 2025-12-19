@@ -36,7 +36,7 @@ export default async function AdminLayout({
                 {/* Main content */}
                 <div className="flex flex-1 flex-col overflow-hidden relative z-10">
                     {/* Header */}
-                    <header className="admin-header flex h-16 items-center justify-between px-6">
+                    <header className="bg-[#0a0a0b]/80 border-b border-white/[0.06] backdrop-blur-xl flex h-16 items-center justify-between px-6">
                         <h2 className="text-xl font-semibold text-white font-display">
                             Admin Dashboard
                         </h2>

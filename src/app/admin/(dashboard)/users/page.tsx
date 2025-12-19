@@ -108,7 +108,7 @@ export default async function UsersListPage({
             <UserFilters />
 
             {/* Users Table */}
-            <div className="admin-panel overflow-hidden">
+            <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg overflow-hidden">
                 <table className="min-w-full divide-y divide-white/6">
                     <thead className="bg-white/3">
                         <tr>
@@ -134,7 +134,7 @@ export default async function UsersListPage({
                     </thead>
                     <tbody className="divide-y divide-white/6">
                         {users.map((user) => (
-                            <tr key={user.id} className="admin-table-row">
+                            <tr key={user.id} className="border-b border-white/[0.04] hover:bg-white/[0.03]">
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="flex items-center gap-3">
                                         <div className="h-9 w-9 bg-[#FFC931]/20 rounded-full flex items-center justify-center text-[#FFC931] font-bold text-sm">

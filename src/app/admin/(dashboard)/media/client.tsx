@@ -89,26 +89,26 @@ export default function MediaLibraryClient({ initialFiles }: MediaLibraryClientP
         <div className="space-y-6">
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="admin-panel p-4">
+                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-4">
                     <div className="text-sm text-white/50 font-display">Total Files</div>
                     <div className="text-2xl font-bold text-white mt-1 font-body">{stats.total}</div>
                 </div>
-                <div className="admin-panel p-4">
+                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-4">
                     <div className="text-sm text-white/50 font-display">Images</div>
-                    <div className="text-2xl font-bold text-[#FFC931] mt-1 font-body admin-stat-glow">{stats.images}</div>
+                    <div className="text-2xl font-bold text-[#FFC931] mt-1 font-body ">{stats.images}</div>
                 </div>
-                <div className="admin-panel p-4">
+                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-4">
                     <div className="text-sm text-white/50 font-display">Audio</div>
-                    <div className="text-2xl font-bold text-[#00CFF2] mt-1 font-body admin-stat-glow-cyan">{stats.audio}</div>
+                    <div className="text-2xl font-bold text-[#00CFF2] mt-1 font-body ">{stats.audio}</div>
                 </div>
-                <div className="admin-panel p-4">
+                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-4">
                     <div className="text-sm text-white/50 font-display">Videos</div>
-                    <div className="text-2xl font-bold text-[#FB72FF] mt-1 font-body admin-stat-glow-pink">{stats.videos}</div>
+                    <div className="text-2xl font-bold text-[#FB72FF] mt-1 font-body ">{stats.videos}</div>
                 </div>
             </div>
 
             {/* Filters */}
-            <div className="admin-panel p-4">
+            <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-4">
                 <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                     <div className="flex gap-2">
                         <button
@@ -160,7 +160,7 @@ export default function MediaLibraryClient({ initialFiles }: MediaLibraryClientP
 
             {/* Files Grid */}
             {filteredFiles.length === 0 ? (
-                <div className="admin-panel p-12 text-center">
+                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-12 text-center">
                     <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
                         <PhotoIcon className="h-8 w-8 text-white/30" />
                     </div>
@@ -173,7 +173,7 @@ export default function MediaLibraryClient({ initialFiles }: MediaLibraryClientP
                         return (
                             <div
                                 key={file.url}
-                                className="admin-panel overflow-hidden group hover:border-[#FFC931]/30 transition-colors"
+                                className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg overflow-hidden group hover:border-[#FFC931]/30 transition-colors"
                             >
                                 {/* Preview */}
                                 <div className="aspect-video bg-white/5 relative">

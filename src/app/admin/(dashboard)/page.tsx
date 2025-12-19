@@ -165,7 +165,7 @@ export default async function AdminDashboard() {
             {/* Recent Activity Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Recent Games */}
-                <div className="admin-panel">
+                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg">
                     <div className="px-6 py-4 border-b border-white/6 flex items-center justify-between">
                         <h2 className="text-lg font-semibold text-white font-display">Recent Games</h2>
                         <Link href="/admin/games" className="text-sm text-[#FFC931] hover:underline font-display">View all</Link>
@@ -177,7 +177,7 @@ export default async function AdminDashboard() {
                             activity.games.map((game) => {
                                 const phase = getGamePhase(game);
                                 return (
-                                    <div key={game.id} className="px-6 py-4 flex items-center justify-between admin-table-row">
+                                    <div key={game.id} className="px-6 py-4 flex items-center justify-between border-b border-white/[0.04] hover:bg-white/[0.03]">
                                         <div>
                                             <p className="font-medium text-white">{game.title}</p>
                                             <p className="text-xs text-white/50">{new Date(game.startsAt).toLocaleDateString()}</p>
@@ -198,7 +198,7 @@ export default async function AdminDashboard() {
                 </div>
 
                 {/* New Users */}
-                <div className="admin-panel">
+                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg">
                     <div className="px-6 py-4 border-b border-white/6 flex items-center justify-between">
                         <h2 className="text-lg font-semibold text-white font-display">New Users</h2>
                         <Link href="/admin/users" className="text-sm text-[#FFC931] hover:underline font-display">View all</Link>
@@ -208,7 +208,7 @@ export default async function AdminDashboard() {
                             <div className="p-6 text-center text-white/50">No users yet</div>
                         ) : (
                             activity.users.map((user) => (
-                                <div key={user.id} className="px-6 py-4 flex items-center justify-between admin-table-row">
+                                <div key={user.id} className="px-6 py-4 flex items-center justify-between border-b border-white/[0.04] hover:bg-white/[0.03]">
                                     <div className="flex items-center gap-3">
                                         <div className="h-8 w-8 bg-[#FFC931]/20 rounded-full flex items-center justify-center text-[#FFC931] font-bold text-xs">
                                             {user.username?.[0] || "U"}

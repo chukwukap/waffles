@@ -21,7 +21,7 @@ interface RevenueChartProps {
 
 export function RevenueChart({ data }: RevenueChartProps) {
     return (
-        <div className="admin-panel p-6">
+        <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h3 className="text-lg font-semibold text-white font-display">Revenue Over Time</h3>

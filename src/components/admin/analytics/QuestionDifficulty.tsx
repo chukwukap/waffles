@@ -74,42 +74,42 @@ export function QuestionDifficulty({ questions }: QuestionDifficultyProps) {
         <div className="space-y-6">
             {/* Summary Row */}
             <div className="grid grid-cols-3 gap-4">
-                <div className="admin-panel p-5">
+                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 rounded-xl bg-[#FFC931]/10">
                             <CheckCircleIcon className="h-5 w-5 text-[#FFC931]" />
                         </div>
                         <span className="text-sm text-white/50 font-display uppercase tracking-wider">Avg Accuracy</span>
                     </div>
-                    <div className="text-3xl font-bold text-[#FFC931] font-body admin-stat-glow">
+                    <div className="text-3xl font-bold text-[#FFC931] font-body ">
                         {questions.length > 0
                             ? (questions.reduce((sum, q) => sum + q.accuracy, 0) / questions.length).toFixed(1)
                             : 0}%
                     </div>
                 </div>
 
-                <div className="admin-panel p-5">
+                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 rounded-xl bg-[#00CFF2]/10">
                             <ClockIcon className="h-5 w-5 text-[#00CFF2]" />
                         </div>
                         <span className="text-sm text-white/50 font-display uppercase tracking-wider">Avg Response</span>
                     </div>
-                    <div className="text-3xl font-bold text-[#00CFF2] font-body admin-stat-glow-cyan">
+                    <div className="text-3xl font-bold text-[#00CFF2] font-body ">
                         {questions.length > 0
                             ? formatLatency(questions.reduce((sum, q) => sum + q.avgLatencyMs, 0) / questions.length)
                             : "0s"}
                     </div>
                 </div>
 
-                <div className="admin-panel p-5">
+                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 rounded-xl bg-[#FB72FF]/10">
                             <XCircleIcon className="h-5 w-5 text-[#FB72FF]" />
                         </div>
                         <span className="text-sm text-white/50 font-display uppercase tracking-wider">Questions</span>
                     </div>
-                    <div className="text-3xl font-bold text-[#FB72FF] font-body admin-stat-glow-pink">
+                    <div className="text-3xl font-bold text-[#FB72FF] font-body ">
                         {questions.length}
                     </div>
                 </div>
@@ -117,7 +117,7 @@ export function QuestionDifficulty({ questions }: QuestionDifficultyProps) {
 
             {/* Hardest & Easiest */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="admin-panel p-6">
+                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
                     <div className="flex items-center gap-2 mb-4">
                         <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
                         <h3 className="text-lg font-semibold text-white font-display">Hardest Questions</h3>
@@ -132,7 +132,7 @@ export function QuestionDifficulty({ questions }: QuestionDifficultyProps) {
                     </div>
                 </div>
 
-                <div className="admin-panel p-6">
+                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
                     <div className="flex items-center gap-2 mb-4">
                         <div className="w-3 h-3 rounded-full bg-[#14B985] animate-pulse" />
                         <h3 className="text-lg font-semibold text-white font-display">Easiest Questions</h3>

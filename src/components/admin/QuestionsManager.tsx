@@ -206,7 +206,7 @@ function InlineAddQuestion({ gameId, nextRoundIndex, onSuccess }: { gameId: numb
     }
 
     return (
-        <form onSubmit={handleSubmit} className="admin-panel p-4 space-y-4">
+        <form onSubmit={handleSubmit} className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-4 space-y-4">
             <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-white">New Question</h3>
                 <button type="button" onClick={() => setIsOpen(false)} className="text-white/40 hover:text-white">✕</button>
@@ -365,7 +365,7 @@ export function QuestionsManager({ gameId, initialQuestions }: QuestionsManagerP
                     </SortableContext>
                 </DndContext>
             ) : (
-                <div className="text-center py-12 admin-panel">
+                <div className="text-center py-12 bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg">
                     <div className="text-4xl mb-3">📝</div>
                     <p className="text-white/60 font-medium">No questions yet</p>
                     <p className="text-white/40 text-sm mt-1">Add your first question below</p>

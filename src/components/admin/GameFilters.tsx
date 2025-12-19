@@ -31,7 +31,7 @@ export function GameFilters() {
     };
 
     return (
-        <div className="admin-panel p-4">
+        <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-4">
             <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative flex-1">
                     <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-white/40" />

@@ -39,7 +39,7 @@ export function ReferralFunnel({ funnel, kFactor, topReferrers }: ReferralFunnel
     const maxValue = Math.max(...steps.map(s => s.value), 1);
 
     return (
-        <div className="admin-panel p-6">
+        <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
             {/* Header with K-Factor */}
             <div className="flex items-center justify-between mb-6">
                 <div>
@@ -48,7 +48,7 @@ export function ReferralFunnel({ funnel, kFactor, topReferrers }: ReferralFunnel
                 </div>
                 <div className="text-right">
                     <div className="text-xs text-white/50 font-display uppercase tracking-wider mb-1">K-Factor</div>
-                    <div className={`text-3xl font-bold font-body ${kFactor >= 1 ? "text-[#14B985] admin-stat-glow-success" : "text-[#FFC931] admin-stat-glow"}`}>
+                    <div className={`text-3xl font-bold font-body ${kFactor >= 1 ? "text-[#14B985] " : "text-[#FFC931] "}`}>
                         {kFactor.toFixed(2)}
                     </div>
                     <div className="text-xs text-white/40">{kFactor >= 1 ? "Viral! 🚀" : "Growing 📈"}</div>

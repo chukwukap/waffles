@@ -44,7 +44,7 @@ export default async function AuditLogsPage({
                 </p>
             </div>
 
-            <div className="admin-panel overflow-hidden">
+            <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg overflow-hidden">
                 <table className="min-w-full divide-y divide-white/6">
                     <thead className="bg-white/3">
                         <tr>
@@ -67,7 +67,7 @@ export default async function AuditLogsPage({
                     </thead>
                     <tbody className="divide-y divide-white/6">
                         {logs.map((log) => (
-                            <tr key={log.id} className="admin-table-row">
+                            <tr key={log.id} className="border-b border-white/[0.04] hover:bg-white/[0.03]">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-white/60">
                                     {new Date(log.createdAt).toLocaleString()}
                                 </td>

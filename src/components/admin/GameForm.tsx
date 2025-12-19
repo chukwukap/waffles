@@ -359,7 +359,7 @@ export function GameForm({
         ) : null}
 
         {/* Progress Indicator */}
-        <div className="admin-panel p-4">
+        <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-white/60">Form completion</span>
             <span className="text-sm font-bold text-[#FFC931]">
@@ -379,7 +379,7 @@ export function GameForm({
           {/* Left Column - Main Form */}
           <div className="xl:col-span-2 space-y-6">
             {/* Theme Selection - Full Width Cards */}
-            <section className="admin-panel p-6">
+            <section className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
               <div className="flex items-center gap-3 mb-5">
                 <div className="p-2.5 rounded-xl bg-[#FFC931]/15">
                   <SparklesIcon className="h-5 w-5 text-[#FFC931]" />
@@ -427,7 +427,7 @@ export function GameForm({
             </section>
 
             {/* Title & Description */}
-            <section className="admin-panel p-6">
+            <section className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
               <div className="flex items-center gap-3 mb-5">
                 <div className="p-2.5 rounded-xl bg-[#00CFF2]/15">
                   <PuzzlePieceIcon className="h-5 w-5 text-[#00CFF2]" />
@@ -487,7 +487,7 @@ export function GameForm({
             </section>
 
             {/* Cover Image */}
-            <section className="admin-panel p-6">
+            <section className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
               <div className="flex items-center gap-3 mb-5">
                 <div className="p-2.5 rounded-xl bg-[#FB72FF]/15">
                   <PhotoIcon className="h-5 w-5 text-[#FB72FF]" />
@@ -511,7 +511,7 @@ export function GameForm({
             </section>
 
             {/* Schedule */}
-            <section className="admin-panel p-6">
+            <section className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 rounded-xl bg-[#14B985]/15">
@@ -576,7 +576,7 @@ export function GameForm({
 
             {/* Quick Presets */}
             {!isEdit && (
-              <section className="admin-panel p-6">
+              <section className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
                 <div className="flex items-center gap-3 mb-5">
                   <div className="p-2.5 rounded-xl bg-[#FFC931]/15">
                     <BoltIcon className="h-5 w-5 text-[#FFC931]" />
@@ -628,7 +628,7 @@ export function GameForm({
             {/* Economics & Gameplay */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Economics */}
-              <section className="admin-panel p-6">
+              <section className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
                 <div className="flex items-center gap-3 mb-5">
                   <div className="p-2.5 rounded-xl bg-[#FFC931]/15">
                     <CurrencyDollarIcon className="h-5 w-5 text-[#FFC931]" />
@@ -767,7 +767,7 @@ export function GameForm({
               </section>
 
               {/* Gameplay */}
-              <section className="admin-panel p-6">
+              <section className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
                 <div className="flex items-center gap-3 mb-5">
                   <div className="p-2.5 rounded-xl bg-[#00CFF2]/15">
                     <ClockIcon className="h-5 w-5 text-[#00CFF2]" />
@@ -838,7 +838,7 @@ export function GameForm({
           {/* Right Column - Live Preview & Summary */}
           <div className="space-y-6">
             {/* Live Preview Card */}
-            <div className="admin-panel p-5 sticky top-6">
+            <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5 sticky top-6">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-2 h-2 rounded-full bg-[#14B985] animate-pulse" />
                 <span className="text-sm font-medium text-white/60">

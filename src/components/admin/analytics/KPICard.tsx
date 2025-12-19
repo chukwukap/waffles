@@ -26,10 +26,10 @@ export function KPICard({
     glowVariant = "gold",
 }: KPICardProps) {
     const glowClasses = {
-        gold: "admin-stat-glow",
-        cyan: "admin-stat-glow-cyan",
-        pink: "admin-stat-glow-pink",
-        success: "admin-stat-glow-success",
+        gold: "",
+        cyan: "",
+        pink: "",
+        success: "",
     };
 
     const accentColors = {
@@ -40,7 +40,7 @@ export function KPICard({
     };
 
     return (
-        <div className="admin-panel p-5 relative overflow-hidden group hover:border-white/20 transition-colors">
+        <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5 relative overflow-hidden group hover:border-white/20 transition-colors">
             {/* Background glow effect */}
             <div
                 className="absolute -top-20 -right-20 w-40 h-40 rounded-full opacity-10 blur-3xl transition-opacity group-hover:opacity-20"

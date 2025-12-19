@@ -3,10 +3,10 @@ import { cn } from "@/lib/utils";
 type GlowVariant = "gold" | "cyan" | "pink" | "success";
 
 const glowClasses: Record<GlowVariant, string> = {
-    gold: "admin-stat-glow text-[#FFC931]",
-    cyan: "admin-stat-glow-cyan text-[#00CFF2]",
-    pink: "admin-stat-glow-pink text-[#FB72FF]",
-    success: "admin-stat-glow-success text-[#14B985]",
+    gold: " text-[#FFC931]",
+    cyan: " text-[#00CFF2]",
+    pink: " text-[#FB72FF]",
+    success: " text-[#14B985]",
 };
 
 const iconBgClasses: Record<GlowVariant, string> = {
@@ -32,7 +32,7 @@ export function StatsCard({
     glowVariant?: GlowVariant;
 }) {
     return (
-        <div className="admin-panel admin-panel-hover p-6">
+        <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg hover:bg-white/[0.08] hover:border-white/[0.12] p-6">
             <div className="flex items-start justify-between">
                 <div>
                     <p className="text-sm font-medium text-white/60 font-display">{title}</p>
@@ -51,7 +51,7 @@ export function StatsCard({
                                 className={cn(
                                     "text-sm font-medium font-display",
                                     trend.isPositive
-                                        ? "text-[#14B985] admin-stat-glow-success"
+                                        ? "text-[#14B985] "
                                         : "text-red-400"
                                 )}
                             >

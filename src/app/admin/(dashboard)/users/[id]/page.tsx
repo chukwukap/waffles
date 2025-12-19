@@ -107,7 +107,7 @@ export default async function UserDetailsPage({
             <div className="grid gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2 space-y-6">
                     {/* User Info */}
-                    <div className="admin-panel p-6">
+                    <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
                         <h2 className="text-xl font-bold text-white mb-4 font-display">User Information</h2>
                         <dl className="grid grid-cols-2 gap-4">
                             <div>
@@ -157,23 +157,23 @@ export default async function UserDetailsPage({
 
                     {/* Activity Stats */}
                     <div className="grid grid-cols-3 gap-4">
-                        <div className="admin-panel p-4">
-                            <div className="text-2xl font-bold text-[#FFC931] font-body admin-stat-glow">{user._count.referrals}</div>
+                        <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-4">
+                            <div className="text-2xl font-bold text-[#FFC931] font-body ">{user._count.referrals}</div>
                             <div className="text-sm text-white/50 font-display">Referrals</div>
                         </div>
-                        <div className="admin-panel p-4">
-                            <div className="text-2xl font-bold text-[#00CFF2] font-body admin-stat-glow-cyan">{user._count.entries}</div>
+                        <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-4">
+                            <div className="text-2xl font-bold text-[#00CFF2] font-body ">{user._count.entries}</div>
                             <div className="text-sm text-white/50 font-display">Game Entries</div>
                         </div>
-                        <div className="admin-panel p-4">
-                            <div className="text-2xl font-bold text-[#FB72FF] font-body admin-stat-glow-pink">{paidEntriesCount}</div>
+                        <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-4">
+                            <div className="text-2xl font-bold text-[#FB72FF] font-body ">{paidEntriesCount}</div>
                             <div className="text-sm text-white/50 font-display">Paid Entries</div>
                         </div>
                     </div>
 
                     {/* Recent Game Entries */}
                     {user.entries.length > 0 && (
-                        <div className="admin-panel p-6">
+                        <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
                             <h3 className="text-lg font-semibold text-white mb-4 font-display">
                                 Recent Game Entries
                             </h3>
@@ -202,7 +202,7 @@ export default async function UserDetailsPage({
 
                 {/* Referrals Sidebar */}
                 <div className="space-y-6">
-                    <div className="admin-panel p-6">
+                    <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
                         <h3 className="text-lg font-semibold text-white mb-4 font-display">
                             Referrals ({user._count.referrals})
                         </h3>

@@ -10,7 +10,7 @@ export default function UsersLoading() {
             </div>
 
             {/* Search and Filters Skeleton */}
-            <div className="admin-panel p-4">
+            <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-4">
                 <div className="flex gap-4">
                     <div className="h-11 flex-1 bg-white/5 rounded-xl animate-pulse" />
                     <div className="h-11 w-32 bg-white/5 rounded-xl animate-pulse" />
@@ -21,7 +21,7 @@ export default function UsersLoading() {
             {/* User Cards Grid Skeleton */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="admin-panel p-6">
+                    <div key={i} className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
                         {/* Avatar and Name */}
                         <div className="flex items-center gap-4 mb-4">
                             <div className="h-12 w-12 bg-[#FFC931]/20 rounded-full animate-pulse" />

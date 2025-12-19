@@ -33,7 +33,7 @@ export function AdminSidebar() {
     const pathname = usePathname();
 
     return (
-        <div className="flex h-full flex-col admin-sidebar">
+        <div className="flex h-full flex-col bg-gradient-to-b from-[#0a0a0b]/95 to-black/98 border-r border-white/[0.06]">
             {/* Logo */}
             <div className="flex h-16 items-center gap-3 px-6 border-b border-white/6">
                 <WaffleIcon className="h-6 w-6" />

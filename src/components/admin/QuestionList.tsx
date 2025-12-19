@@ -59,7 +59,7 @@ function SortableQuestionItem({ question, gameId }: { question: Question; gameId
         <div
             ref={setNodeRef}
             style={style}
-            className="admin-panel p-4 flex items-start gap-4 group hover:border-[#FFC931]/30 transition-colors"
+            className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-4 flex items-start gap-4 group hover:border-[#FFC931]/30 transition-colors"
         >
             {/* Drag Handle */}
             <div
@@ -183,7 +183,7 @@ export function QuestionList({ gameId, initialQuestions }: QuestionListProps) {
 
     if (questions.length === 0) {
         return (
-            <div className="text-center py-16 admin-panel">
+            <div className="text-center py-16 bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg">
                 <div className="text-5xl mb-4">📝</div>
                 <p className="text-white/60 font-medium">No questions yet</p>
                 <p className="text-white/40 text-sm mt-1">Add your first question using the form →</p>

@@ -141,55 +141,6 @@ html {
   );
 }
 
-/* Admin panel - glassmorphism card */
-@utility admin-panel {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-md);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-/* Admin panel hover variant */
-@utility admin-panel-hover {
-  &:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.12);
-  }
-}
-
-/* Admin table row */
-@utility admin-table-row {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  &:hover {
-    background: rgba(255, 255, 255, 0.03);
-  }
-}
-
-/* Admin chart container */
-@utility admin-chart-container {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: var(--radius-md);
-}
-
-/* Admin stat glow effects */
-@utility admin-stat-glow {
-  text-shadow: 0 0 10px rgba(255, 201, 49, 0.4),
-    0 0 20px rgba(255, 201, 49, 0.2);
-}
-@utility admin-stat-glow-cyan {
-  text-shadow: 0 0 10px rgba(0, 207, 242, 0.4), 0 0 20px rgba(0, 207, 242, 0.2);
-}
-@utility admin-stat-glow-pink {
-  text-shadow: 0 0 10px rgba(251, 114, 255, 0.4),
-    0 0 20px rgba(251, 114, 255, 0.2);
-}
-@utility admin-stat-glow-success {
-  text-shadow: 0 0 10px rgba(20, 185, 133, 0.4),
-    0 0 20px rgba(20, 185, 133, 0.2);
-}
-
 /* ============================================================
    APP BACKGROUND (with noise texture)
    ============================================================ */
@@ -246,22 +197,4 @@ html {
   opacity: 0.06;
   pointer-events: none;
   z-index: 0;
-}
-
-/* Admin sidebar */
-.admin-sidebar {
-  background: linear-gradient(
-    180deg,
-    rgba(10, 10, 11, 0.95) 0%,
-    rgba(0, 0, 0, 0.98) 100%
-  );
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-/* Admin header */
-.admin-header {
-  background: rgba(10, 10, 11, 0.8);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
 }

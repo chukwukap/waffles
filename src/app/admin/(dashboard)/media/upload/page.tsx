@@ -120,7 +120,7 @@ export default function MediaUploadPage() {
                 )}
             </div>
 
-            <div className="admin-panel p-6 space-y-6">
+            <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6 space-y-6">
                 {/* Upload Area */}
                 <div
                     onDrop={handleDrop}

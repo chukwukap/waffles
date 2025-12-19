@@ -57,7 +57,7 @@ function formatRelativeTime(date: Date): string {
 
 export function ActivityFeed({ activities, liveGamesCount, activePlayersCount }: ActivityFeedProps) {
     return (
-        <div className="admin-panel p-6">
+        <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h3 className="text-lg font-semibold text-white font-display">Live Activity</h3>
@@ -75,7 +75,7 @@ export function ActivityFeed({ activities, liveGamesCount, activePlayersCount }:
                         </span>
                         <span className="text-xs text-white/50 font-display uppercase tracking-wider">Live Games</span>
                     </div>
-                    <div className="text-3xl font-bold text-[#FB72FF] font-body admin-stat-glow-pink">
+                    <div className="text-3xl font-bold text-[#FB72FF] font-body ">
                         {liveGamesCount}
                     </div>
                 </div>
@@ -87,7 +87,7 @@ export function ActivityFeed({ activities, liveGamesCount, activePlayersCount }:
                         </span>
                         <span className="text-xs text-white/50 font-display uppercase tracking-wider">Active Players</span>
                     </div>
-                    <div className="text-3xl font-bold text-[#00CFF2] font-body admin-stat-glow-cyan">
+                    <div className="text-3xl font-bold text-[#00CFF2] font-body ">
                         {activePlayersCount}
                     </div>
                 </div>

@@ -87,7 +87,7 @@ export default async function GamesListPage({
 
             <GameFilters />
 
-            <div className="admin-panel overflow-hidden">
+            <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-white/6">
                         <thead className="bg-white/3">

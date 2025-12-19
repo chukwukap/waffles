@@ -32,7 +32,7 @@ export function ThemeAnalytics({ data }: ThemeAnalyticsProps) {
     const totalPlayers = data.reduce((acc, item) => acc + item.players, 0);
 
     return (
-        <div className="admin-panel p-6">
+        <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h3 className="text-lg font-semibold text-white font-display">Theme Performance</h3>

@@ -133,7 +133,7 @@ export function MediaPicker({ label, name, accept = "all", onSelect, selectedUrl
             {isOpen && (
                 <>
                     <div className="fixed inset-0 bg-black/80 z-40" onClick={() => setIsOpen(false)} />
-                    <div className="fixed inset-4 md:inset-10 admin-panel z-50 flex flex-col border border-white/10 shadow-2xl">
+                    <div className="fixed inset-4 md:inset-10 bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg z-50 flex flex-col border border-white/10 shadow-2xl">
                         {/* Header */}
                         <div className="flex items-center justify-between p-5 border-b border-white/10">
                             <h2 className="text-lg font-semibold text-white font-display">

@@ -11,7 +11,7 @@ export default function GamesLoading() {
             </div>
 
             {/* Filters Skeleton */}
-            <div className="admin-panel p-4">
+            <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-4">
                 <div className="flex gap-4">
                     <div className="h-11 flex-1 bg-white/5 rounded-xl animate-pulse" />
                     <div className="h-11 w-40 bg-white/5 rounded-xl animate-pulse" />
@@ -19,7 +19,7 @@ export default function GamesLoading() {
             </div>
 
             {/* Table Skeleton */}
-            <div className="admin-panel overflow-hidden">
+            <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg overflow-hidden">
                 {/* Table Header */}
                 <div className="bg-white/3 border-b border-white/6 px-6 py-4">
                     <div className="flex gap-6">

@@ -140,38 +140,38 @@ export default async function GameDetailPage({
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="admin-panel p-6">
+                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
                     <h3 className="text-white/50 text-sm font-medium mb-2 font-display">
                         Status
                     </h3>
                     <p
                         className={`text-2xl font-bold font-body ${phase === "LIVE"
-                            ? "text-[#14B985] admin-stat-glow-success"
+                            ? "text-[#14B985] "
                             : phase === "SCHEDULED"
-                                ? "text-[#FFC931] admin-stat-glow"
+                                ? "text-[#FFC931] "
                                 : "text-white"
                             }`}
                     >
                         {phase}
                     </p>
                 </div>
-                <div className="admin-panel p-6">
+                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
                     <h3 className="text-white/50 text-sm font-medium mb-2 font-display">
                         Players
                     </h3>
-                    <p className="text-2xl font-bold text-[#00CFF2] font-body admin-stat-glow-cyan">
+                    <p className="text-2xl font-bold text-[#00CFF2] font-body ">
                         {game.playerCount}
                     </p>
                 </div>
-                <div className="admin-panel p-6">
+                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
                     <h3 className="text-white/50 text-sm font-medium mb-2 font-display">
                         Questions
                     </h3>
-                    <p className="text-2xl font-bold text-[#FB72FF] font-body admin-stat-glow-pink">
+                    <p className="text-2xl font-bold text-[#FB72FF] font-body ">
                         {game._count.questions}
                     </p>
                 </div>
-                <div className="admin-panel p-6">
+                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
                     <h3 className="text-white/50 text-sm font-medium mb-2 font-display">
                         Prize Pool
                     </h3>
@@ -182,7 +182,7 @@ export default async function GameDetailPage({
             </div>
 
             {/* Game Actions */}
-            <div className="admin-panel p-6 space-y-4">
+            <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6 space-y-4">
                 <h2 className="text-xl font-bold text-white font-display">
                     Game Actions
                 </h2>
@@ -221,7 +221,7 @@ export default async function GameDetailPage({
             </div>
 
             {/* On-Chain Settlement Panel */}
-            <div className="admin-panel p-6">
+            <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
                 <SettlementPanel
                     gameId={game.id}
                     gameStatus={phase}
