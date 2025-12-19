@@ -2,7 +2,7 @@
 
 import { memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useGameStore, selectEvents, selectMessages } from "@/lib/game-store";
+import { useGameStore, selectEvents, selectMessages, selectIsConnected, selectOnlineCount } from "@/lib/game-store";
 import { springs } from "@/lib/animations";
 
 // ==========================================
@@ -84,6 +84,35 @@ const FeedItemRow = memo(function FeedItemRow({
 });
 
 // ==========================================
+// CONNECTION INDICATOR
+// ==========================================
+
+function ConnectionIndicator({ isConnected, onlineCount }: { isConnected: boolean; onlineCount: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="absolute top-2 right-4 flex items-center gap-1.5 z-20"
+    >
+      {/* Status dot */}
+      <motion.div
+        animate={
+          isConnected
+            ? { scale: [1, 1.2, 1], opacity: 1 }
+            : { scale: [0.8, 1, 0.8], opacity: [0.5, 1, 0.5] }
+        }
+        transition={{ duration: isConnected ? 2 : 1, repeat: Infinity }}
+        className={`w-2 h-2 rounded-full ${isConnected ? "bg-[#14B985]" : "bg-[#F5BB1B]"}`}
+      />
+      {/* Status text */}
+      <span className="text-[10px] text-white/50 font-display">
+        {isConnected ? `${onlineCount} online` : "connecting..."}
+      </span>
+    </motion.div>
+  );
+}
+
+// ==========================================
 // MAIN COMPONENT
 // ==========================================
 
@@ -94,6 +123,8 @@ interface LiveEventFeedProps {
 export function LiveEventFeed({ maxEvents = 5 }: LiveEventFeedProps) {
   const events = useGameStore(selectEvents);
   const messages = useGameStore(selectMessages);
+  const isConnected = useGameStore(selectIsConnected);
+  const onlineCount = useGameStore(selectOnlineCount);
 
   // Combine events and recent chat messages into a unified feed
   const feedItems: FeedItem[] = [
@@ -134,6 +165,7 @@ export function LiveEventFeed({ maxEvents = 5 }: LiveEventFeedProps) {
         animate={{ opacity: 1 }}
         className="relative w-full max-w-full mx-auto h-[136px] flex flex-col justify-center items-center"
       >
+        <ConnectionIndicator isConnected={isConnected} onlineCount={onlineCount} />
         <motion.p
           animate={{ opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 2, repeat: Infinity }}
@@ -147,6 +179,8 @@ export function LiveEventFeed({ maxEvents = 5 }: LiveEventFeedProps) {
 
   return (
     <div className="relative w-screen -mx-4 h-[136px] overflow-hidden">
+      {/* Connection status indicator */}
+      <ConnectionIndicator isConnected={isConnected} onlineCount={onlineCount} />
       {/* Content layer */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
