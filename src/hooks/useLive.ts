@@ -2,13 +2,13 @@
  * useLive Hook
  *
  * Real-time WebSocket connection to PartyKit for game chat and events.
- * Uses the game store for state management.
+ * Uses the official usePartySocket hook and Zustand for state management.
  */
 
 "use client";
 
-import { useEffect, useRef, useCallback, useState } from "react";
-import PartySocket from "partysocket";
+import { useEffect, useCallback, useState, useRef } from "react";
+import usePartySocket from "partysocket/react";
 import { useGameStore, selectIsConnected } from "@/lib/game-store";
 import sdk from "@farcaster/miniapp-sdk";
 
@@ -85,11 +85,10 @@ export function useLive({
   token: providedToken,
   enabled = true,
 }: UseLiveProps) {
-  const socketRef = useRef<PartySocket | null>(null);
-  const hasConnectedRef = useRef(false);
   const [authToken, setAuthToken] = useState<string | null>(
     providedToken ?? null
   );
+  const tokenFetchedRef = useRef(false);
 
   // Store actions (stable references)
   const {
@@ -195,10 +194,11 @@ export function useLive({
       return;
     }
 
-    if (!enabled || !gameId) return;
+    if (!enabled || !gameId || tokenFetchedRef.current) return;
 
     async function fetchToken() {
       try {
+        tokenFetchedRef.current = true;
         const res = await sdk.quickAuth.fetch("/api/v1/auth/party-token");
         if (res.ok) {
           const data = await res.json();
@@ -208,106 +208,105 @@ export function useLive({
         }
       } catch (error) {
         console.error("[useLive] Error fetching party token:", error);
+        tokenFetchedRef.current = false; // Allow retry
       }
     }
 
     fetchToken();
   }, [providedToken, enabled, gameId]);
 
-  // Connect to PartyKit
-  useEffect(() => {
-    if (!enabled || !gameId || !authToken) {
-      return;
-    }
+  // Get PartyKit host
+  const host = process.env.NEXT_PUBLIC_PARTYKIT_HOST;
 
-    // Prevent duplicate connections
-    if (hasConnectedRef.current && socketRef.current) {
-      return;
-    }
+  // Use official usePartySocket hook
+  const ws = usePartySocket({
+    host: host || "localhost:1999",
+    room: `game-${gameId}`,
+    query: { token: authToken ?? "" },
 
-    const host = process.env.NEXT_PUBLIC_PARTYKIT_HOST;
-    if (!host) {
-      console.error("[useLive] NEXT_PUBLIC_PARTYKIT_HOST not configured");
-      return;
-    }
-
-    const socket = new PartySocket({
-      host,
-      room: `game-${gameId}`,
-      query: { token: authToken },
-    });
-
-    socket.onopen = () => {
-      hasConnectedRef.current = true;
+    // Connection established
+    onOpen() {
       setConnected(true);
-    };
+    },
 
-    socket.onclose = () => {
+    // Connection closed
+    onClose() {
       setConnected(false);
-    };
+    },
 
-    socket.onmessage = handleMessage;
+    // Message received
+    onMessage: handleMessage,
 
-    socket.onerror = (error) => {
+    // Connection error
+    onError(error) {
       console.error("[useLive] WebSocket error:", error);
-    };
+    },
 
-    socketRef.current = socket;
+    // Only connect when we have token and enabled
+    startClosed: !enabled || !authToken || !gameId,
+  });
 
-    return () => {
-      socket.close();
-      socketRef.current = null;
-      hasConnectedRef.current = false;
-      setConnected(false);
-    };
-  }, [gameId, authToken, enabled, handleMessage, setConnected]);
+  // Reconnect when token becomes available
+  useEffect(() => {
+    if (enabled && authToken && gameId && ws) {
+      ws.reconnect();
+    }
+  }, [enabled, authToken, gameId, ws]);
 
   // Send chat message - returns true if sent successfully
-  const sendChat = useCallback((text: string): boolean => {
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      try {
-        socketRef.current.send(JSON.stringify({ t: "c", m: text }));
-        return true;
-      } catch (error) {
-        console.error("[useLive] Failed to send chat:", error);
-        return false;
+  const sendChat = useCallback(
+    (text: string): boolean => {
+      if (ws?.readyState === WebSocket.OPEN) {
+        try {
+          ws.send(JSON.stringify({ t: "c", m: text }));
+          return true;
+        } catch (error) {
+          console.error("[useLive] Failed to send chat:", error);
+          return false;
+        }
       }
-    }
-    console.warn("[useLive] Cannot send chat - socket not ready");
-    return false;
-  }, []);
+      console.warn("[useLive] Cannot send chat - socket not ready");
+      return false;
+    },
+    [ws]
+  );
 
   // Send game event (type: "answer", content: "answered question 3")
-  const sendEvent = useCallback((type: string, content: string) => {
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      socketRef.current.send(
-        JSON.stringify({
-          t: "e",
-          d: { t: type, c: content },
-        })
-      );
-    }
-  }, []);
+  const sendEvent = useCallback(
+    (type: string, content: string) => {
+      if (ws?.readyState === WebSocket.OPEN) {
+        ws.send(
+          JSON.stringify({
+            t: "e",
+            d: { t: type, c: content },
+          })
+        );
+      }
+    },
+    [ws]
+  );
 
   // Send reaction (e.g., cheer)
-  const sendReaction = useCallback((reactionType: string = "cheer") => {
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      socketRef.current.send(
-        JSON.stringify({
-          t: "r",
-          r: reactionType,
-        })
-      );
-    }
-  }, []);
+  const sendReaction = useCallback(
+    (reactionType: string = "cheer") => {
+      if (ws?.readyState === WebSocket.OPEN) {
+        ws.send(
+          JSON.stringify({
+            t: "r",
+            r: reactionType,
+          })
+        );
+      }
+    },
+    [ws]
+  );
 
   // Get isConnected from store to trigger re-registration when connection state changes
   const isConnected = useGameStore(selectIsConnected);
 
   // Register sendChat, sendEvent, and sendReaction with store so other components can use them
-  // Depends on isConnected to re-register when socket connects
   useEffect(() => {
-    if (enabled && isConnected && socketRef.current) {
+    if (enabled && isConnected && ws) {
       setSendChat(sendChat);
       setSendEvent(sendEvent);
       setSendReaction(sendReaction);
@@ -321,6 +320,7 @@ export function useLive({
   }, [
     enabled,
     isConnected,
+    ws,
     sendChat,
     sendEvent,
     sendReaction,
