@@ -13,9 +13,9 @@ html {
   scrollbar-width: none;
 }
 
-/* ============================================================
+/* ------------------------------------------------------------
    GLOBAL BRAND + THEME TOKENS
-   ============================================================ */
+   ------------------------------------------------------------ */
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -65,11 +65,39 @@ html {
   --card-foreground: oklch(0.98 0 0);
   --popover: oklch(0.1 0 0);
   --popover-foreground: oklch(0.98 0 0);
+
+  /* ── Sidebar Colors ─────────────────────────── */
+  --sidebar-bg: var(--brand-white);
+  --sidebar-fg: var(--brand-ink-900);
+  --sidebar-primary: var(--brand-ink-800);
+  --sidebar-primary-fg: var(--brand-white);
+  --sidebar-accent: var(--white-a10);
+  --sidebar-accent-fg: var(--brand-ink-900);
+  --sidebar-border: #eaeaea;
+  --sidebar-ring: #b5b5b5;
 }
 
-/* ============================================================
+/* ------------------------------------------------------------
+   DARK THEME OVERRIDES
+   ------------------------------------------------------------ */
+.dark {
+  --surface-page: linear-gradient(180deg, var(--brand-ink-900) 0%, #000 100%);
+  --surface-card: color-mix(in oklch, var(--brand-ink-900) 95%, #000 5%);
+  --surface-popover: color-mix(in oklch, var(--brand-ink-900) 93%, #000 7%);
+  --surface-tint: var(--white-a07);
+  --surface-stroke: var(--white-a08);
+
+  --text-primary: var(--brand-white);
+  --text-muted: oklch(0.72 0 0);
+
+  --accent-solid: var(--brand-gold);
+  --accent-soft: var(--white-a10);
+  --accent-ring: var(--brand-gold);
+}
+
+/* ------------------------------------------------------------
    TAILWIND THEME BRIDGE
-   ============================================================ */
+   ------------------------------------------------------------ */
 @theme inline {
   --font-display: var(--font-display);
   --font-body: var(--font-body);
@@ -97,9 +125,9 @@ html {
   --radius-lg: var(--radius-md);
 }
 
-/* ============================================================
+/* ------------------------------------------------------------
    BASE LAYER
-   ============================================================ */
+   ------------------------------------------------------------ */
 @layer base {
   html,
   body {
@@ -111,9 +139,9 @@ html {
   }
 }
 
-/* ============================================================
-   TAILWIND UTILITIES
-   ============================================================ */
+/* ------------------------------------------------------------
+   UTILITIES
+   ------------------------------------------------------------ */
 
 /* Pixel corners clip-path (used by PixelButton) */
 @utility pixel-corners {
@@ -141,36 +169,48 @@ html {
   );
 }
 
-/* ============================================================
-   APP BACKGROUND (with noise texture)
-   Gradient: #1E1E1E → #000000
-   Noise: SVG feTurbulence (size 0.5, 25% opacity)
-   ============================================================ */
+/* ------------------------------------------------------------
+   APP BACKGROUND (Gradient + Noise)
+   ------------------------------------------------------------ */
 .app-background {
+  --gradient-color-start: #111111;
+  --gradient-color-end: #000000;
+
   position: relative;
+  background-color: var(--gradient-color-end);
+  background-image: linear-gradient(
+    to bottom,
+    var(--gradient-color-start) 0%,
+    var(--gradient-color-end) 40%
+  );
   min-height: 100vh;
   width: 100%;
-  background: linear-gradient(180deg, #1e1e1e 0%, #000000 100%);
+  isolation: isolate;
 }
 
 .app-background::after {
+  --noise-svg: url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  --noise-opacity: 0.09;
+
   content: "";
-  position: fixed;
-  inset: 0;
-  /* SVG noise with baseFrequency 0.5 matching Figma "size 0.5" */
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-  /* 25% opacity per Figma design */
-  opacity: 0.25;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: var(--noise-svg);
+  opacity: var(--noise-opacity);
   pointer-events: none;
-  z-index: 0;
+  z-index: -1;
 }
 
-/* ============================================================
-   ADMIN BACKGROUND (with noise texture)
-   ============================================================ */
+/* ------------------------------------------------------------
+   ADMIN DASHBOARD THEME
+   ------------------------------------------------------------ */
 .admin-background {
   --gradient-color-start: #0a0a0b;
   --gradient-color-end: #000000;
+
   position: relative;
   background-color: var(--gradient-color-end);
   background-image: linear-gradient(
@@ -185,11 +225,16 @@ html {
 
 .admin-background::after {
   --noise-svg: url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  --noise-opacity: 0.06;
+
   content: "";
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background-image: var(--noise-svg);
-  opacity: 0.06;
+  opacity: var(--noise-opacity);
   pointer-events: none;
   z-index: 0;
 }
