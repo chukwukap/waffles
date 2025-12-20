@@ -11,6 +11,7 @@ import { useEffect, useCallback, useState, useRef } from "react";
 import usePartySocket from "partysocket/react";
 import { useGameStore, selectIsConnected } from "@/lib/game-store";
 import sdk from "@farcaster/miniapp-sdk";
+import { env } from "@/lib/env";
 
 // ==========================================
 // MESSAGE PROTOCOL
@@ -216,7 +217,7 @@ export function useLive({
   }, [providedToken, enabled, gameId]);
 
   // Get PartyKit host
-  const host = process.env.NEXT_PUBLIC_PARTYKIT_HOST;
+  const host = env.partykitHost;
 
   // Use official usePartySocket hook
   const ws = usePartySocket({

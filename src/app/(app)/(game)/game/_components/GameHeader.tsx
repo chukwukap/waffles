@@ -83,22 +83,30 @@ export function GameHeader() {
             </motion.span>
           </div>
         ) : (
-          /* Logo with bounce on hover */
+          /* Logo + Title with bounce on hover */
           <motion.div
-            className="relative w-[122.56px] h-[23.29px]"
             whileHover={{ y: -2, scale: 1.02 }}
             whileTap={{ scale: 0.95 }}
             transition={springs.snappy}
           >
-            <Link href="/game">
-              <Image
-                src="/logo-onboarding.png"
-                alt="Waffles logo icon"
-                fill
-                sizes="122.56px"
-                priority
-                className="object-contain"
-              />
+            <Link href="/game" className="flex items-center gap-2">
+              <motion.div
+                whileHover={{ rotate: [0, -5, 5, -3, 3, 0] }}
+                transition={{ duration: 0.4, ease: "easeInOut" as const }}
+                className="relative w-[30px] h-[24px]"
+              >
+                <Image
+                  src="/logo.png"
+                  alt="Waffles logo"
+                  fill
+                  sizes="30px"
+                  priority
+                  className="object-contain"
+                />
+              </motion.div>
+              <span className="font-body text-[22px] leading-[92%] tracking-[-0.03em] text-white">
+                WAFFLES
+              </span>
             </Link>
           </motion.div>
         )}

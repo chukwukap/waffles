@@ -25,7 +25,7 @@ const getGameLeaderboard = cache(async (gameId: number) => {
   const [game, allEntriesInGame] = await Promise.all([
     prisma.game.findUnique({
       where: { id: gameId },
-      select: { theme: true },
+      select: { theme: true, onchainId: true },
     }),
     prisma.gameEntry.findMany({
       where: { gameId, paidAt: { not: null } },
@@ -34,6 +34,7 @@ const getGameLeaderboard = cache(async (gameId: number) => {
         score: true,
         rank: true,
         prize: true,
+        claimedAt: true,
         user: {
           select: { fid: true, username: true, pfpUrl: true },
         },
@@ -64,5 +65,5 @@ export default async function ResultPage({
   const leaderboardPromise = getGameLeaderboard(gameIdNum);
 
   // User-specific data (their result, rank) is fetched client-side with auth
-  return <ResultPageClient leaderboardPromise={leaderboardPromise} />;
+  return <ResultPageClient leaderboardPromise={leaderboardPromise} gameId={gameIdNum} />;
 }

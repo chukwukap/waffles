@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGameStore, selectEvents, selectMessages, selectIsConnected, selectOnlineCount } from "@/lib/game-store";
 import { springs } from "@/lib/animations";
@@ -125,6 +125,9 @@ export function LiveEventFeed({ maxEvents = 5 }: LiveEventFeedProps) {
   const messages = useGameStore(selectMessages);
   const isConnected = useGameStore(selectIsConnected);
   const onlineCount = useGameStore(selectOnlineCount);
+  const addEvent = useGameStore((s) => s.addEvent);
+
+  // Note: Welcome message removed - feed starts empty until real events arrive
 
   // Combine events and recent chat messages into a unified feed
   const feedItems: FeedItem[] = [

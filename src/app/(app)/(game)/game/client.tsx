@@ -178,6 +178,7 @@ export function GameHub({ game }: GameHubProps) {
           hasTicket={!!entry?.paidAt}
           isLive={isLive}
           hasEnded={hasEnded}
+          hasCompleted={!!entry && entry.answered >= (game.questionCount ?? 0) && entry.answered > 0}
           prizePool={game.prizePool ?? 0}
           spotsTotal={game.maxPlayers ?? 100}
           spotsTaken={game.playerCount ?? 0}

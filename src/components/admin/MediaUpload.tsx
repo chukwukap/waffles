@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { upload } from "@vercel/blob/client";
 import { PhotoIcon, XMarkIcon, ArrowUpTrayIcon, MusicalNoteIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 
@@ -12,6 +11,7 @@ interface MediaUploadProps {
     required?: boolean;
     accept?: string;
     maxSizeMB?: number;
+    folder?: string;
 }
 
 export function MediaUpload({
@@ -21,6 +21,7 @@ export function MediaUpload({
     required = false,
     accept = "image/*",
     maxSizeMB = 5,
+    folder = "uploads",
 }: MediaUploadProps) {
     const [preview, setPreview] = useState<string | null>(defaultValue || null);
     const [uploading, setUploading] = useState(false);
@@ -41,15 +42,26 @@ export function MediaUpload({
         setUploading(true);
 
         try {
-            const newBlob = await upload(file.name, file, {
-                access: "public",
-                handleUploadUrl: "/api/upload",
+            // Upload via our API using FormData
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("folder", folder);
+
+            const response = await fetch("/api/upload", {
+                method: "POST",
+                body: formData,
             });
 
-            setPreview(newBlob.url);
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || "Upload failed");
+            }
+
+            const data = await response.json();
+            setPreview(data.url);
         } catch (err) {
             console.error("Upload failed:", err);
-            setError("Failed to upload file. Please try again.");
+            setError(err instanceof Error ? err.message : "Failed to upload file. Please try again.");
         } finally {
             setUploading(false);
         }

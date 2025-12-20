@@ -17,6 +17,7 @@ interface NextGameCardProps {
   hasTicket: boolean;
   isLive: boolean;
   hasEnded: boolean;
+  hasCompleted?: boolean; // User has finished playing this game
   prizePool?: number;
   spotsTotal?: number;
   spotsTaken?: number;
@@ -36,6 +37,7 @@ export function NextGameCard({
   hasTicket,
   isLive,
   hasEnded,
+  hasCompleted = false,
   prizePool = 0,
   spotsTotal = 100,
   spotsTaken = 0,
@@ -78,11 +80,15 @@ export function NextGameCard({
   )}M ${pad(countdown % 60)}S`;
 
   const buttonConfig = hasEnded
-    ? { text: "ENDED", disabled: true, href: null }
+    ? hasCompleted
+      ? { text: "VIEW RESULTS", disabled: false, href: `/game/${gameId}/result` }
+      : { text: "ENDED", disabled: true, href: null }
     : isLive
-      ? hasTicket
-        ? { text: "START GAME", disabled: false, href: `/game/${gameId}/live` }
-        : { text: "GET TICKET", disabled: false, href: null }
+      ? hasCompleted
+        ? { text: "VIEW RESULTS", disabled: false, href: `/game/${gameId}/result` }
+        : hasTicket
+          ? { text: "START GAME", disabled: false, href: `/game/${gameId}/live` }
+          : { text: "GET TICKET", disabled: false, href: null }
       : hasTicket
         ? { text: "YOU'RE IN!", disabled: true, href: null }
         : { text: "BUY WAFFLE", disabled: false, href: null };

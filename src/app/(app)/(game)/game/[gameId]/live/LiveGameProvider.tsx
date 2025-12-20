@@ -75,6 +75,9 @@ interface LiveGameProviderProps {
 export function LiveGameProvider({ game, children }: LiveGameProviderProps) {
     const router = useRouter();
 
+    // Game complete state (moved early so verification can set it)
+    const [isGameComplete, setIsGameComplete] = useState(false);
+
     // Ticket and replay verification state
     const [verificationState, setVerificationState] = useState<
         "loading" | "valid" | "no-ticket" | "already-played" | "error"
@@ -91,13 +94,12 @@ export function LiveGameProvider({ game, children }: LiveGameProviderProps) {
                     const hasAnsweredAll = entry.answered >= totalQuestions;
                     const gameHasEnded = new Date() >= new Date(game.endsAt);
 
-                    // Only redirect to result if:
-                    // 1. User has answered ALL questions, OR
-                    // 2. Game has ended (time's up)
                     if (hasAnsweredAll || gameHasEnded) {
-                        setVerificationState("already-played");
+                        // Show GameCompleteScreen instead of redirecting
+                        setIsGameComplete(true);
+                        setVerificationState("valid");
                     } else {
-                        // User can continue playing - either fresh start or resume
+                        // User can continue playing
                         setVerificationState("valid");
                     }
                 } else if (res.status === 404) {
@@ -126,7 +128,6 @@ export function LiveGameProvider({ game, children }: LiveGameProviderProps) {
     // State
     const [questionIndex, setQuestionIndex] = useState(0);
     const [isBreak, setIsBreak] = useState(false);
-    const [isGameComplete, setIsGameComplete] = useState(false);
     const [timerTarget, setTimerTarget] = useState(() => {
         // First question timer
         const firstQ = game.questions[0];
@@ -166,6 +167,16 @@ export function LiveGameProvider({ game, children }: LiveGameProviderProps) {
             // Record locally
             const answer: Answer = { selected: selectedIndex, timeMs, synced: false };
             setAnswers((prev) => new Map(prev).set(questionId, answer));
+
+            // Add optimistic event to feed immediately (shows while connecting)
+            useGameStore.getState().addEvent({
+                id: `local-${questionId}-${Date.now()}`,
+                type: "answer",
+                username: "You",
+                pfpUrl: null,
+                content: "answered a question",
+                timestamp: Date.now(),
+            });
 
             // Sync to server (fire and forget with retry)
             syncAnswer(game.id, questionId, selectedIndex, timeMs).then((result) => {

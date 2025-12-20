@@ -22,6 +22,7 @@ export interface GameEntry {
     answers: Record<number, { selectedIndex: number; answeredAt: string }>;
     rank: number | null;
     prize: number | null;
+    claimedAt: Date | null;
 }
 
 interface GameContextValue {
@@ -81,6 +82,7 @@ export function GameProvider({ gameId, children }: GameProviderProps) {
                     answers: data.answers ?? {},
                     rank: data.rank ?? null,
                     prize: data.prize ?? null,
+                    claimedAt: data.claimedAt ? new Date(data.claimedAt) : null,
                 });
             } else {
                 // No entry for this user/game

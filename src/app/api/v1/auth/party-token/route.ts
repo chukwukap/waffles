@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { SignJWT } from "jose";
+import { env } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,7 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
       );
     }
 
-    const secret = process.env.PARTYKIT_SECRET;
+    const secret = env.partykitSecret;
     if (!secret) {
       console.error("PARTYKIT_SECRET is not set");
       return NextResponse.json<ApiError>(

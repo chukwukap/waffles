@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { upload } from "@vercel/blob/client";
 import { ArrowUpTrayIcon, XMarkIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 
@@ -34,21 +33,29 @@ export default function MediaUploadPage() {
             const indexInState = uploadingFiles.length + i;
 
             try {
-                // Generate unique filename with timestamp to avoid conflicts
-                const timestamp = Date.now();
-                const fileName = `${timestamp}-${fileItem.file.name}`;
+                // Upload via our API using FormData
+                const formData = new FormData();
+                formData.append("file", fileItem.file);
+                formData.append("folder", "media");
 
-                const blob = await upload(fileName, fileItem.file, {
-                    access: "public",
-                    handleUploadUrl: "/api/upload",
+                const response = await fetch("/api/upload", {
+                    method: "POST",
+                    body: formData,
                 });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || "Upload failed");
+                }
+
+                const data = await response.json();
 
                 setUploadingFiles(prev => {
                     const updated = [...prev];
                     updated[indexInState] = {
                         ...updated[indexInState],
                         progress: 100,
-                        url: blob.url,
+                        url: data.url,
                     };
                     return updated;
                 });
@@ -204,4 +211,3 @@ export default function MediaUploadPage() {
         </div>
     );
 }
-

@@ -7,6 +7,7 @@ import {
   CHAIN_CONFIG,
 } from "@/lib/contracts/config";
 import waffleGameAbi from "@/lib/contracts/WaffleGameAbi.json";
+import { env } from "@/lib/env";
 
 /**
  * Admin Contract Management API
@@ -93,7 +94,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Check if settlement wallet is configured
-    const settlementWalletConfigured = !!process.env.SETTLEMENT_PRIVATE_KEY;
+    const settlementWalletConfigured = !!env.settlementPrivateKey;
 
     const state: ContractState = {
       address: WAFFLE_GAME_CONFIG.address,

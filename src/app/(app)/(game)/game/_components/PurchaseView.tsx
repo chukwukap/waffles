@@ -9,6 +9,8 @@ const TIER_GRADIENTS = [
             "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(211,77,25,0.52) 100%)",
         unselected:
             "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(211,77,25,0.2) 100%)",
+        border:
+            "linear-gradient(157.31deg, rgba(211, 77, 25, 0.09) 26.56%, #D34D19 114.33%)",
         glow: "rgba(211, 77, 25, 0.4)",
     },
     {
@@ -16,6 +18,8 @@ const TIER_GRADIENTS = [
             "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.52) 100%)",
         unselected:
             "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.12) 100%)",
+        border:
+            "linear-gradient(157.31deg, rgba(255, 255, 255, 0.09) 26.56%, rgba(255, 255, 255, 0.5) 114.33%)",
         glow: "rgba(255, 255, 255, 0.3)",
     },
     {
@@ -23,6 +27,8 @@ const TIER_GRADIENTS = [
             "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,201,49,0.52) 100%)",
         unselected:
             "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,201,49,0.12) 100%)",
+        border:
+            "linear-gradient(157.31deg, rgba(255, 201, 49, 0.09) 26.56%, #FFC931 114.33%)",
         glow: "rgba(255, 201, 49, 0.4)",
     },
 ];
@@ -159,21 +165,18 @@ export function PurchaseView({
                     const delay = index * 100;
 
                     return (
-                        <button
+                        <div
                             key={price}
-                            onClick={() => !isLoading && onSelectTier(index)}
-                            disabled={isLoading}
-                            onMouseEnter={() => setHoveredTier(index)}
-                            onMouseLeave={() => setHoveredTier(null)}
-                            className="flex flex-col justify-center items-center flex-1 box-border"
+                            className="relative flex-1"
                             style={{
-                                background: isSelected ? gradient.selected : gradient.unselected,
-                                width: "111px",
-                                height: "100px",
-                                padding: "12px",
-                                gap: "10px",
-                                borderRadius: "24px",
-                                opacity: showTiers ? (isLoading ? 0.6 : 1) : 0,
+                                // Figma: unselected tiers have 0.7 opacity
+                                opacity: showTiers
+                                    ? isLoading
+                                        ? 0.5
+                                        : isSelected
+                                            ? 1
+                                            : 0.7
+                                    : 0,
                                 transform: showTiers
                                     ? isSelected
                                         ? "scale(1.05)"
@@ -181,68 +184,96 @@ export function PurchaseView({
                                             ? "scale(1.03) translateY(-4px)"
                                             : "scale(1)"
                                     : "translateY(20px) scale(0.9)",
-                                boxShadow: isSelected
-                                    ? `0 8px 30px ${gradient.glow}`
-                                    : isHovered
-                                        ? `0 6px 20px ${gradient.glow}`
-                                        : "none",
                                 transition: `all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`,
-                                cursor: isLoading ? "not-allowed" : "pointer",
                             }}
                         >
-                            {/* Inner content wrapper */}
+                            {/* Gradient border layer */}
                             <div
-                                className="flex flex-col justify-center items-center"
+                                className="absolute inset-0 rounded-[24px] pointer-events-none"
                                 style={{
-                                    padding: "0px",
-                                    gap: "8px",
-                                    width: "100%",
-                                    height: "76px",
-                                    alignSelf: "stretch",
+                                    padding: "1px",
+                                    background: gradient.border,
+                                    WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+                                    WebkitMaskComposite: "xor",
+                                    maskComposite: "exclude",
+                                }}
+                            />
+                            <button
+                                onClick={() => !isLoading && onSelectTier(index)}
+                                disabled={isLoading}
+                                onMouseEnter={() => setHoveredTier(index)}
+                                onMouseLeave={() => setHoveredTier(null)}
+                                className="flex flex-col justify-center items-center w-full h-full box-border"
+                                style={{
+                                    background: isSelected ? gradient.selected : gradient.unselected,
+                                    width: "111px",
+                                    height: "100px",
+                                    padding: "12px",
+                                    gap: "10px",
+                                    borderRadius: "24px",
+                                    boxShadow: isSelected
+                                        ? `0 8px 30px ${gradient.glow}`
+                                        : isHovered
+                                            ? `0 6px 20px ${gradient.glow}`
+                                            : "none",
+                                    transition: "all 0.3s ease",
+                                    cursor: isLoading ? "not-allowed" : "pointer",
                                 }}
                             >
-                                {/* Waffle icon container */}
+                                {/* Inner content wrapper */}
                                 <div
-                                    className="flex justify-center items-center"
+                                    className="flex flex-col justify-center items-center"
                                     style={{
-                                        width: "40px",
-                                        height: "40px",
-                                        background: isSelected
-                                            ? "rgba(255, 255, 255, 0.2)"
-                                            : "rgba(255, 255, 255, 0.1)",
-                                        borderRadius: "200px",
-                                        gap: "10px",
-                                        transition: "all 0.3s ease",
-                                        transform: isSelected ? "rotate(10deg)" : "rotate(0deg)",
+                                        padding: "0px",
+                                        gap: "8px",
+                                        width: "100%",
+                                        height: "76px",
+                                        alignSelf: "stretch",
                                     }}
                                 >
-                                    <Image
-                                        src="/images/icons/waffle-small.png"
-                                        alt="waffle"
-                                        width={16}
-                                        height={12}
-                                        className="object-contain"
+                                    {/* Waffle icon container */}
+                                    <div
+                                        className="flex justify-center items-center"
                                         style={{
-                                            transition: "transform 0.3s ease",
-                                            transform: isSelected ? "scale(1.1)" : "scale(1)",
+                                            width: "40px",
+                                            height: "40px",
+                                            background: isSelected
+                                                ? "rgba(255, 255, 255, 0.2)"
+                                                : "rgba(255, 255, 255, 0.1)",
+                                            borderRadius: "200px",
+                                            gap: "10px",
+                                            transition: "all 0.3s ease",
+                                            transform: isSelected ? "rotate(10deg)" : "rotate(0deg)",
                                         }}
-                                    />
+                                    >
+                                        <Image
+                                            src="/images/icons/waffle-small.png"
+                                            alt="waffle"
+                                            width={16}
+                                            height={12}
+                                            className="object-contain"
+                                            style={{
+                                                transition: "transform 0.3s ease",
+                                                transform: isSelected ? "scale(1.1)" : "scale(1)",
+                                            }}
+                                        />
+                                    </div>
+                                    {/* Price */}
+                                    <span
+                                        className="font-body text-white"
+                                        style={{
+                                            fontSize: isSelected ? "30px" : "28px",
+                                            lineHeight: "100%",
+                                            fontWeight: 400,
+                                            transition: "all 0.3s ease",
+                                            textShadow: isSelected ? "0 2px 10px rgba(255,255,255,0.3)" : "none",
+                                        }}
+                                    >
+                                        ${price}
+                                    </span>
                                 </div>
-                                {/* Price */}
-                                <span
-                                    className="font-body text-white"
-                                    style={{
-                                        fontSize: isSelected ? "30px" : "28px",
-                                        lineHeight: "100%",
-                                        fontWeight: 400,
-                                        transition: "all 0.3s ease",
-                                        textShadow: isSelected ? "0 2px 10px rgba(255,255,255,0.3)" : "none",
-                                    }}
-                                >
-                                    ${price}
-                                </span>
-                            </div>
-                        </button>
+                            </button>
+                        </div>
                     );
                 })}
             </div>

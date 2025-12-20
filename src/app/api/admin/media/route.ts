@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { list } from "@vercel/blob";
 import { getAdminSession } from "@/lib/admin-auth";
+import { listFiles, isBucketConfigured, getFileMetadata } from "@/lib/storage";
 
 export async function GET() {
   try {
@@ -10,17 +10,30 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // List all blobs
-    const { blobs } = await list();
+    // Check bucket config
+    if (!isBucketConfigured()) {
+      return NextResponse.json(
+        { error: "Storage not configured", files: [] },
+        { status: 200 }
+      );
+    }
 
-    // Format the response
-    const files = blobs.map((blob) => ({
-      url: blob.url,
-      pathname: blob.pathname,
-      contentType: (blob as any).contentType || "application/octet-stream",
-      size: blob.size,
-      uploadedAt: blob.uploadedAt,
-    }));
+    // List all files from Railway Bucket
+    const allFiles = await listFiles();
+
+    // Get content types for each file
+    const files = await Promise.all(
+      allFiles.map(async (file) => {
+        const metadata = await getFileMetadata(file.key);
+        return {
+          url: file.url,
+          pathname: file.key,
+          contentType: metadata?.contentType || "application/octet-stream",
+          size: file.size,
+          uploadedAt: file.lastModified,
+        };
+      })
+    );
 
     return NextResponse.json({ files });
   } catch (error) {

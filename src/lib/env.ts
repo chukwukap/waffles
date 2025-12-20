@@ -8,6 +8,35 @@ const envSchema = z.object({
     ? z.string().min(1, "NEYNAR_API_KEY is required")
     : z.string().optional(),
 
+  // Database
+  DATABASE_URL: isServer
+    ? z.string().min(1, "DATABASE_URL is required")
+    : z.string().optional(),
+
+  // Settlement (server-only, optional - only needed for admin)
+  SETTLEMENT_PRIVATE_KEY: z.string().optional(),
+
+  // PartyKit
+  PARTYKIT_SECRET: isServer
+    ? z.string().min(1, "PARTYKIT_SECRET is required")
+    : z.string().optional(),
+  NEXT_PUBLIC_PARTYKIT_HOST: z.string().optional(),
+
+  // Railway Bucket (S3-compatible storage)
+  RAILWAY_BUCKET_NAME: isServer
+    ? z.string().min(1, "RAILWAY_BUCKET_NAME is required")
+    : z.string().optional(),
+  RAILWAY_BUCKET_ACCESS_KEY: isServer
+    ? z.string().min(1, "RAILWAY_BUCKET_ACCESS_KEY is required")
+    : z.string().optional(),
+  RAILWAY_BUCKET_SECRET_KEY: isServer
+    ? z.string().min(1, "RAILWAY_BUCKET_SECRET_KEY is required")
+    : z.string().optional(),
+  RAILWAY_BUCKET_ENDPOINT: z.string().default("https://storage.railway.app"),
+
+  // Blockchain
+  NEXT_PUBLIC_CHAIN_NETWORK: z.enum(["mainnet", "testnet"]).default("testnet"),
+
   // Client
   NEXT_PUBLIC_ONCHAINKIT_API_KEY: z
     .string()
@@ -20,7 +49,7 @@ const envSchema = z.object({
   NEXT_PUBLIC_TREASURY_WALLET: z
     .string()
     .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Treasury Wallet address")
-    .optional(), // Optional because we provide a default in getEnv
+    .optional(),
   NEXT_PUBLIC_HOME_URL_PATH: z
     .string()
     .min(1, "NEXT_PUBLIC_HOME_URL_PATH is required"),
@@ -29,10 +58,6 @@ const envSchema = z.object({
   NEXT_PUBLIC_ACCOUNT_ASSOCIATION_HEADER: z.string().optional(),
   NEXT_PUBLIC_ACCOUNT_ASSOCIATION_PAYLOAD: z.string().optional(),
   NEXT_PUBLIC_ACCOUNT_ASSOCIATION_SIGNATURE: z.string().optional(),
-
-  // Supabase
-  NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
 
   // URLs
   NEXT_PUBLIC_URL: z.string().url().optional(),
@@ -45,9 +70,19 @@ const envSchema = z.object({
 const getEnv = () => {
   const parsed = envSchema.safeParse({
     NEYNAR_API_KEY: process.env.NEYNAR_API_KEY,
+    DATABASE_URL: process.env.DATABASE_URL,
+    SETTLEMENT_PRIVATE_KEY: process.env.SETTLEMENT_PRIVATE_KEY,
+    PARTYKIT_SECRET: process.env.PARTYKIT_SECRET,
+    NEXT_PUBLIC_PARTYKIT_HOST: process.env.NEXT_PUBLIC_PARTYKIT_HOST,
+    RAILWAY_BUCKET_NAME: process.env.RAILWAY_BUCKET_NAME,
+    RAILWAY_BUCKET_ACCESS_KEY: process.env.RAILWAY_BUCKET_ACCESS_KEY,
+    RAILWAY_BUCKET_SECRET_KEY: process.env.RAILWAY_BUCKET_SECRET_KEY,
+    RAILWAY_BUCKET_ENDPOINT: process.env.RAILWAY_BUCKET_ENDPOINT,
+    NEXT_PUBLIC_CHAIN_NETWORK: process.env.NEXT_PUBLIC_CHAIN_NETWORK,
     NEXT_PUBLIC_ONCHAINKIT_API_KEY: process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY,
     NEXT_PUBLIC_LEADERBOARD_PAGE_SIZE:
       process.env.NEXT_PUBLIC_LEADERBOARD_PAGE_SIZE,
+    NEXT_PUBLIC_TREASURY_WALLET: process.env.NEXT_PUBLIC_TREASURY_WALLET,
     NEXT_PUBLIC_HOME_URL_PATH: process.env.NEXT_PUBLIC_HOME_URL_PATH,
     NEXT_PUBLIC_ACCOUNT_ASSOCIATION_HEADER:
       process.env.NEXT_PUBLIC_ACCOUNT_ASSOCIATION_HEADER,
@@ -55,8 +90,6 @@ const getEnv = () => {
       process.env.NEXT_PUBLIC_ACCOUNT_ASSOCIATION_PAYLOAD,
     NEXT_PUBLIC_ACCOUNT_ASSOCIATION_SIGNATURE:
       process.env.NEXT_PUBLIC_ACCOUNT_ASSOCIATION_SIGNATURE,
-    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     NEXT_PUBLIC_URL: process.env.NEXT_PUBLIC_URL,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL,
@@ -82,19 +115,25 @@ const getEnv = () => {
       return {
         rootUrl: "http://localhost:3000",
         neynarApiKey: "",
-        nextPublicOnchainkitApiKey:
-          process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY || "",
+        databaseUrl: "",
+        settlementPrivateKey: undefined,
+        partykitSecret: "",
+        partykitHost: "",
+        railwayBucketName: "",
+        railwayBucketAccessKey: "",
+        railwayBucketSecretKey: "",
+        railwayBucketEndpoint: "https://storage.railway.app",
+        chainNetwork: "testnet" as const,
+        nextPublicOnchainkitApiKey: "",
         nextPublicLeaderboardPageSize: 25,
-        homeUrlPath: process.env.NEXT_PUBLIC_HOME_URL_PATH || "",
-        nextPublicTreasuryWallet: (process.env.NEXT_PUBLIC_TREASURY_WALLET ||
-          "0xd584F8079192E078F0f3237622345E19360384A2") as `0x${string}`,
+        homeUrlPath: "",
+        nextPublicTreasuryWallet:
+          "0xd584F8079192E078F0f3237622345E19360384A2" as `0x${string}`,
         accountAssociation: {
           header: undefined,
           payload: undefined,
           signature: undefined,
         },
-        nextPublicSupabaseUrl: "",
-        nextPublicSupabaseAnonKey: "",
       };
     }
   }
@@ -117,18 +156,31 @@ const getEnv = () => {
   return {
     rootUrl: resolveRootUrl().replace(/\/$/, ""),
     neynarApiKey: data.NEYNAR_API_KEY!,
+    // Database
+    databaseUrl: data.DATABASE_URL,
+    // Settlement
+    settlementPrivateKey: data.SETTLEMENT_PRIVATE_KEY,
+    // PartyKit
+    partykitSecret: data.PARTYKIT_SECRET,
+    partykitHost: data.NEXT_PUBLIC_PARTYKIT_HOST,
+    // Railway Bucket (S3-compatible storage)
+    railwayBucketName: data.RAILWAY_BUCKET_NAME,
+    railwayBucketAccessKey: data.RAILWAY_BUCKET_ACCESS_KEY,
+    railwayBucketSecretKey: data.RAILWAY_BUCKET_SECRET_KEY,
+    railwayBucketEndpoint: data.RAILWAY_BUCKET_ENDPOINT,
+    // Blockchain
+    chainNetwork: data.NEXT_PUBLIC_CHAIN_NETWORK,
+    // Client-side
     nextPublicOnchainkitApiKey: data.NEXT_PUBLIC_ONCHAINKIT_API_KEY,
     nextPublicLeaderboardPageSize: data.NEXT_PUBLIC_LEADERBOARD_PAGE_SIZE,
     homeUrlPath: data.NEXT_PUBLIC_HOME_URL_PATH,
-    nextPublicTreasuryWallet: (process.env.NEXT_PUBLIC_TREASURY_WALLET ||
-      "0xd584F8079192E078F0f3237622345E19360384A2") as `0x${string}`, // Default to demo wallet if missing
+    nextPublicTreasuryWallet: (data.NEXT_PUBLIC_TREASURY_WALLET ||
+      "0xd584F8079192E078F0f3237622345E19360384A2") as `0x${string}`,
     accountAssociation: {
       header: data.NEXT_PUBLIC_ACCOUNT_ASSOCIATION_HEADER,
       payload: data.NEXT_PUBLIC_ACCOUNT_ASSOCIATION_PAYLOAD,
       signature: data.NEXT_PUBLIC_ACCOUNT_ASSOCIATION_SIGNATURE,
     },
-    nextPublicSupabaseUrl: data.NEXT_PUBLIC_SUPABASE_URL,
-    nextPublicSupabaseAnonKey: data.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   };
 };
 

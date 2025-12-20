@@ -14,10 +14,10 @@ export default async function MediaLibraryPage() {
                     <p className="text-white/60 mt-1">Manage your uploaded media files</p>
                 </div>
 
-                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6 border-red-500/30 bg-red-500/10">
+                <div className="bg-white/5 border border-white/8 rounded-2xl backdrop-blur-lg p-6">
                     <p className="text-red-400 font-medium">{result.error}</p>
                     <p className="text-sm text-red-400/70 mt-2">
-                        Make sure <code className="text-xs bg-red-500/20 px-1.5 py-0.5 rounded">BLOB_READ_WRITE_TOKEN</code> is configured in your environment variables.
+                        Make sure <code className="text-xs bg-red-500/20 px-1.5 py-0.5 rounded">RAILWAY_BUCKET_NAME</code>, <code className="text-xs bg-red-500/20 px-1.5 py-0.5 rounded">RAILWAY_BUCKET_ACCESS_KEY</code>, and <code className="text-xs bg-red-500/20 px-1.5 py-0.5 rounded">RAILWAY_BUCKET_SECRET_KEY</code> are configured in your environment variables.
                     </p>
                 </div>
             </div>

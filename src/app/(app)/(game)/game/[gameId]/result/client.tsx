@@ -1,7 +1,7 @@
 "use client";
 
-import { use, useState, useEffect, useMemo, useRef } from "react";
-import StatsCard from "../_component/StatsCard";
+import { use, useState, useEffect, useMemo, useRef, useCallback } from "react";
+import GameResultCard from "../_component/GameResultCard";
 import Leaderboard from "./_components/Leaderboard";
 import Image from "next/image";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
@@ -9,16 +9,29 @@ import { FlashIcon } from "@/components/icons";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
 import { BottomNav } from "@/components/BottomNav";
 import { playSound } from "@/lib/sounds";
+import { notify } from "@/components/ui/Toaster";
 import sdk from "@farcaster/miniapp-sdk";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useSendCalls, useCallsStatus, useAccount } from "wagmi";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
+import { encodeFunctionData } from "viem";
+import { WAFFLE_GAME_CONFIG } from "@/lib/contracts/config";
+import waffleGameAbi from "@/lib/contracts/WaffleGameAbi.json";
+import { Spinner } from "@/components/ui/spinner";
+import { useGame } from "../../GameProvider";
+
+// ==========================================
+// TYPES
+// ==========================================
 
 interface LeaderboardData {
-  game: { theme: string } | null;
+  game: { theme: string; onchainId: string | null } | null;
   allPlayersInGame: Array<{
     score: number;
     rank: number | null;
     prize: number | null;
+    claimedAt: Date | null;
     user: {
       fid: number;
       username: string | null;
@@ -27,29 +40,67 @@ interface LeaderboardData {
   }>;
 }
 
-interface UserScore {
-  score: number;
-  rank: number;
-  winnings: number;
-  percentile: number;
-}
+type ClaimState = "idle" | "fetching" | "confirming" | "success" | "error" | "pending";
 
-// Auth is handled by GameAuthGate in layout
+// ==========================================
+// COMPONENT
+// ==========================================
+
 export default function ScorePageClient({
   leaderboardPromise,
+  gameId,
 }: {
   leaderboardPromise: Promise<LeaderboardData>;
+  gameId: number;
 }) {
   const leaderboardData = use(leaderboardPromise);
+  const { address } = useAccount();
+  const { context } = useMiniKit();
+  const { entry, isLoading: entryLoading, refetchEntry } = useGame();
 
-  const [userInfo, setUserInfo] = useState<{
-    fid: number;
-    username: string;
-    pfpUrl: string;
-  } | null>(null);
-  const [userScore, setUserScore] = useState<UserScore | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const hasPlayedSound = useRef(false);
+
+  // Claim state
+  const [claimState, setClaimState] = useState<ClaimState>("idle");
+  const [claimError, setClaimError] = useState<string | null>(null);
+
+  // Get onchainId
+  const onchainId = leaderboardData.game?.onchainId as `0x${string}` | null;
+
+  // User info from MiniKit context
+  const userInfo = useMemo(() => {
+    if (!context?.user) return null;
+    return {
+      fid: context.user.fid,
+      username: context.user.username ?? "Player",
+      pfpUrl: context.user.pfpUrl ?? "",
+    };
+  }, [context?.user]);
+
+  // User score from GameProvider entry
+  const userScore = useMemo(() => {
+    if (!entry) return null;
+
+    const total = leaderboardData.allPlayersInGame.length;
+    const rank = entry.rank ?? 0;
+    const percentile =
+      total > 1 ? Math.round(((total - rank) / (total - 1)) * 100) : 100;
+
+    return {
+      score: entry.score,
+      rank,
+      winnings: entry.prize ?? 0,
+      percentile: Math.max(0, Math.min(100, percentile)),
+    };
+  }, [entry, leaderboardData.allPlayersInGame.length]);
+
+  // Check if already claimed from entry
+  const hasClaimed = entry?.claimedAt !== null && entry?.claimedAt !== undefined;
+
+  // Is user a winner (rank 1-3)?
+  const isWinner = useMemo(() => {
+    return userScore !== null && userScore.rank <= 3 && userScore.winnings > 0;
+  }, [userScore]);
 
   // Top 3 for leaderboard display
   const leaderboard = useMemo(() => {
@@ -60,56 +111,178 @@ export default function ScorePageClient({
     }));
   }, [leaderboardData]);
 
-  // Fetch user data (auth verified by layout)
+  // Play sound on mount (once)
   useEffect(() => {
-    async function fetchUserScore() {
-      try {
-        const userRes = await sdk.quickAuth.fetch("/api/v1/me");
-        if (!userRes.ok) throw new Error("Failed to fetch user");
-
-        const userData = await userRes.json();
-        setUserInfo({
-          fid: userData.fid,
-          username: userData.username ?? "Player",
-          pfpUrl: userData.pfpUrl ?? "",
-        });
-
-        // Find user's position in leaderboard
-        const userIndex = leaderboardData.allPlayersInGame.findIndex(
-          (p) => p.user?.fid === userData.fid
-        );
-
-        if (userIndex !== -1) {
-          const player = leaderboardData.allPlayersInGame[userIndex];
-          const total = leaderboardData.allPlayersInGame.length;
-          const rank = player.rank ?? userIndex + 1;
-          // Percentile: what % of players you beat
-          const percentile =
-            total > 1 ? Math.round(((total - rank) / (total - 1)) * 100) : 100;
-
-          setUserScore({
-            score: player.score,
-            rank,
-            winnings: player.prize ?? 0,
-            percentile: Math.max(0, Math.min(100, percentile)),
-          });
-
-          // Play victory or defeat sound based on rank (only once)
-          if (!hasPlayedSound.current) {
-            hasPlayedSound.current = true;
-            playSound(rank <= 3 ? "victory" : "defeat");
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching user score:", error);
-      } finally {
-        setIsLoading(false);
-      }
+    if (!hasPlayedSound.current && userScore) {
+      hasPlayedSound.current = true;
+      playSound(userScore.rank <= 3 ? "victory" : "defeat");
     }
-    fetchUserScore();
-  }, [leaderboardData]);
+  }, [userScore]);
 
-  if (isLoading) {
+  // If already claimed, set state
+  useEffect(() => {
+    if (hasClaimed) {
+      setClaimState("success");
+    }
+  }, [hasClaimed]);
+
+  // ==========================================
+  // CLAIM LOGIC
+  // ==========================================
+
+  const {
+    sendCalls,
+    data: callsId,
+    isPending: isSending,
+    error: sendError,
+    reset: resetSendCalls,
+  } = useSendCalls();
+
+  const { data: callsStatus } = useCallsStatus({
+    id: callsId?.id ?? "",
+    query: {
+      enabled: !!callsId?.id,
+      refetchInterval: (data) => {
+        if (data.state.data?.status === "success") return false;
+        if (data.state.data?.status === "failure") return false;
+        return 1000;
+      },
+    },
+  });
+
+  // Handle send errors
+  useEffect(() => {
+    if (sendError) {
+      console.error("[Claim] Send error:", sendError);
+      const errorMessage = sendError.message.includes("rejected")
+        ? "Transaction rejected"
+        : "Claim failed";
+      setClaimError(errorMessage);
+      setClaimState("error");
+      notify.error(errorMessage);
+    }
+  }, [sendError]);
+
+  // Sync claim with backend (defined before the effect that uses it)
+  const syncClaimWithBackend = useCallback(async () => {
+    try {
+      const response = await sdk.quickAuth.fetch("/api/v1/prizes/claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gameId }),
+      });
+
+      if (!response.ok) {
+        console.warn("[Claim] Backend sync failed but on-chain succeeded");
+      }
+    } catch (error) {
+      console.error("[Claim] Backend sync error:", error);
+    } finally {
+      // Always mark as success since on-chain TX succeeded
+      setClaimState("success");
+      refetchEntry(); // Refetch to get updated claimedAt
+      playSound("purchase");
+      notify.success("Prize claimed! 🎉");
+      sdk.haptics.impactOccurred("medium").catch(() => { });
+    }
+  }, [gameId, refetchEntry]);
+
+  // Handle calls status
+  useEffect(() => {
+    if (!callsStatus) return;
+
+    console.log("[Claim] Calls status:", callsStatus.status);
+
+    if (callsStatus.status === "failure") {
+      setClaimError("Transaction failed on-chain");
+      setClaimState("error");
+      notify.error("Claim failed on-chain. Please try again.");
+    }
+
+    if (callsStatus.status === "success") {
+      console.log("[Claim] TX confirmed!");
+      // Sync with backend silently
+      syncClaimWithBackend();
+    }
+  }, [callsStatus, syncClaimWithBackend]);
+
+  // Handle claim button click
+  const handleClaim = useCallback(async () => {
+    if (!onchainId || !address) {
+      notify.error("Cannot claim right now");
+      return;
+    }
+
+    setClaimState("fetching");
+    setClaimError(null);
+
+    try {
+      // 1. Fetch merkle proof
+      console.log("[Claim] Fetching merkle proof...");
+      const proofRes = await sdk.quickAuth.fetch(
+        `/api/v1/games/${gameId}/merkle-proof`
+      );
+
+      if (!proofRes.ok) {
+        const errorData = await proofRes.json();
+        // Check if game not settled yet
+        if (errorData.code === "GAME_NOT_ENDED" || errorData.code === "NO_WINNERS") {
+          setClaimState("pending");
+          return;
+        }
+        throw new Error(errorData.error || "Failed to get proof");
+      }
+
+      const { amount, proof } = await proofRes.json();
+      console.log("[Claim] Got proof, amount:", amount);
+
+      // 2. Send on-chain claim
+      setClaimState("confirming");
+      resetSendCalls();
+
+      sendCalls({
+        calls: [
+          {
+            to: WAFFLE_GAME_CONFIG.address,
+            data: encodeFunctionData({
+              abi: waffleGameAbi as any,
+              functionName: "claimPrize",
+              args: [onchainId, BigInt(amount), proof],
+            }),
+          },
+        ],
+      });
+    } catch (error: any) {
+      console.error("[Claim] Error:", error);
+      setClaimError(error.message || "Claim failed");
+      setClaimState("error");
+      notify.error(error.message || "Failed to claim prize");
+    }
+  }, [onchainId, address, gameId, sendCalls, resetSendCalls]);
+
+  // Get button text based on state
+  const getClaimButtonText = () => {
+    if (hasClaimed || claimState === "success") return "CLAIMED ✓";
+    if (claimState === "pending") return "RESULTS PENDING";
+    if (claimState === "fetching") return "Loading...";
+    if (claimState === "confirming" || isSending) return "Claiming...";
+    if (claimState === "error") return "RETRY";
+    return "CLAIM PRIZE";
+  };
+
+  const isClaimDisabled =
+    hasClaimed ||
+    claimState === "success" ||
+    claimState === "pending" ||
+    claimState === "fetching" ||
+    claimState === "confirming" ||
+    isSending;
+
+  // ==========================================
+  // RENDER
+  // ==========================================
+
+  if (entryLoading) {
     return (
       <>
         <div className="flex-1 flex items-center justify-center">
@@ -158,7 +331,7 @@ export default function ScorePageClient({
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, delay: 0.2 }}
           >
-            GAME OVER
+            WAFFLES #{String(gameId).padStart(3, "0")}
           </motion.h1>
 
           <motion.div
@@ -173,7 +346,7 @@ export default function ScorePageClient({
           </motion.div>
         </div>
 
-        <StatsCard
+        <GameResultCard
           winnings={userScore.winnings}
           score={userScore.score}
           rank={userScore.rank}
@@ -203,27 +376,47 @@ export default function ScorePageClient({
               <FlashIcon className="w-4 h-4 text-[#FFC931]" />
             </motion.div>
             <span className="font-display font-medium text-[12px] leading-[14px] tracking-[-0.03em] text-white">
-              You finished faster than {userScore.percentile}% of your friends
+              You finished faster than {userScore.percentile}% of other players
             </span>
           </motion.div>
 
           {/* Buttons container */}
           <div className="flex flex-col items-start gap-5 w-full">
-            {/* Claim Prize Button */}
-            <motion.div
-              className="w-full"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.7 }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Link href="/profile/games" className="w-full no-underline">
-                <FancyBorderButton className="text-[#14B985] border-[#14B985]">
-                  CLAIM PRIZE
+            {/* Claim Prize Button - Only show for winners */}
+            {isWinner && (
+              <motion.div
+                className="w-full"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.7 }}
+                whileHover={!isClaimDisabled ? { scale: 1.02 } : undefined}
+                whileTap={!isClaimDisabled ? { scale: 0.98 } : undefined}
+              >
+                <FancyBorderButton
+                  onClick={handleClaim}
+                  disabled={isClaimDisabled}
+                  className={
+                    claimState === "success" || hasClaimed
+                      ? "text-[#14B985] border-[#14B985] opacity-80"
+                      : claimState === "pending"
+                        ? "text-amber-400 border-amber-400 opacity-80"
+                        : claimState === "error"
+                          ? "text-red-400 border-red-400"
+                          : "text-[#14B985] border-[#14B985]"
+                  }
+                >
+                  {(claimState === "confirming" || isSending) && (
+                    <Spinner className="w-4 h-4 mr-2" />
+                  )}
+                  {getClaimButtonText()}
                 </FancyBorderButton>
-              </Link>
-            </motion.div>
+                {claimState === "pending" && (
+                  <p className="text-amber-400 text-xs text-center mt-2">
+                    Admin is finalizing results. Check back soon!
+                  </p>
+                )}
+              </motion.div>
+            )}
 
             {/* Share Score & Back to Home row */}
             <motion.div

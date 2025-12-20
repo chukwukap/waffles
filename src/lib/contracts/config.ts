@@ -1,4 +1,5 @@
 import { base, baseSepolia } from "viem/chains";
+import { env } from "@/lib/env";
 
 // ============================================================================
 // NETWORK CONFIGURATION
@@ -46,7 +47,7 @@ const MAINNET_CONFIG: NetworkConfig = {
 };
 
 // Read network from environment variable (default to testnet for safety)
-const network = process.env.NEXT_PUBLIC_CHAIN_NETWORK || "testnet";
+const network = env.chainNetwork || "testnet";
 const isMainnet = network === "mainnet";
 
 // Select the appropriate config based on environment

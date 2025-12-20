@@ -17,6 +17,7 @@ import {
 import waffleGameAbi from "@/lib/contracts/WaffleGameAbi.json";
 import { buildMerkleTree, type Winner } from "@/lib/merkle";
 import { prisma } from "@/lib/db";
+import { env } from "@/lib/env";
 
 // ============================================================================
 // Configuration
@@ -26,7 +27,7 @@ const chain = CHAIN_CONFIG.chain;
 
 // Check for admin private key (should be set as env var in production)
 const getAdminWallet = () => {
-  const privateKey = process.env.SETTLEMENT_PRIVATE_KEY;
+  const privateKey = env.settlementPrivateKey;
   if (!privateKey) {
     throw new Error("SETTLEMENT_PRIVATE_KEY environment variable not set");
   }
