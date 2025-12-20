@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { getAdminSession } from "@/lib/admin-auth";
-import { listFiles, isBucketConfigured, getFileMetadata } from "@/lib/storage";
+import {
+  listFilesWithUrls,
+  isBucketConfigured,
+  getFileMetadata,
+} from "@/lib/storage";
 
 export async function GET() {
   try {
@@ -18,8 +22,8 @@ export async function GET() {
       );
     }
 
-    // List all files from Railway Bucket
-    const allFiles = await listFiles();
+    // List all files from Railway Bucket with presigned URLs
+    const allFiles = await listFilesWithUrls();
 
     // Get content types for each file
     const files = await Promise.all(

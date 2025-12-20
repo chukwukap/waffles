@@ -17,7 +17,7 @@ export default function MediaLibraryClient({ initialFiles }: MediaLibraryClientP
     const [filter, setFilter] = useState<MediaType>("all");
     const [search, setSearch] = useState("");
     const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
-    const [deletingUrl, setDeletingUrl] = useState<string | null>(null);
+    const [deletingPath, setDeletingPath] = useState<string | null>(null);
 
     const inferContentType = (pathname: string, storedContentType: string): string => {
         if (storedContentType && storedContentType !== 'application/octet-stream') {
@@ -53,16 +53,16 @@ export default function MediaLibraryClient({ initialFiles }: MediaLibraryClientP
         setTimeout(() => setCopiedUrl(null), 2000);
     };
 
-    const handleDelete = async (url: string) => {
+    const handleDelete = async (pathname: string) => {
         if (!confirm("Are you sure you want to delete this file?")) return;
-        setDeletingUrl(url);
-        const result = await deleteMediaAction(url);
+        setDeletingPath(pathname);
+        const result = await deleteMediaAction(pathname);
         if (result.success) {
-            setFiles((prev) => prev.filter((f) => f.url !== url));
+            setFiles((prev) => prev.filter((f) => f.pathname !== pathname));
         } else {
             alert(result.error || "Failed to delete file");
         }
-        setDeletingUrl(null);
+        setDeletingPath(null);
     };
 
     const formatFileSize = (bytes: number) => {
@@ -229,8 +229,8 @@ export default function MediaLibraryClient({ initialFiles }: MediaLibraryClientP
                                             )}
                                         </button>
                                         <button
-                                            onClick={() => handleDelete(file.url)}
-                                            disabled={deletingUrl === file.url}
+                                            onClick={() => handleDelete(file.pathname)}
+                                            disabled={deletingPath === file.pathname}
                                             className="px-3 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-xl text-red-400 transition-colors disabled:opacity-50"
                                         >
                                             <TrashIcon className="h-4 w-4" />

@@ -53,8 +53,9 @@ export async function uploadFile({
 
   await s3Client.send(command);
 
-  // Construct public URL
-  const url = `${ENDPOINT}/${BUCKET_NAME}/${key}`;
+  // Railway Buckets are private, so we need to return a presigned URL
+  // Use a long expiry (7 days) for uploaded files
+  const url = await getPresignedDownloadUrl(key, 60 * 60 * 24 * 7);
 
   return { url, key };
 }
@@ -128,10 +129,27 @@ export async function listFiles(prefix = ""): Promise<FileInfo[]> {
 
   return response.Contents.map((item) => ({
     key: item.Key || "",
-    url: `${ENDPOINT}/${BUCKET_NAME}/${item.Key}`,
+    url: item.Key || "", // We'll generate presigned URLs separately
     size: item.Size || 0,
     lastModified: item.LastModified || new Date(),
   }));
+}
+
+/**
+ * List files with presigned URLs for viewing
+ */
+export async function listFilesWithUrls(prefix = ""): Promise<FileInfo[]> {
+  const files = await listFiles(prefix);
+
+  // Generate presigned URLs for each file (7 day expiry)
+  const filesWithUrls = await Promise.all(
+    files.map(async (file) => ({
+      ...file,
+      url: await getPresignedDownloadUrl(file.key, 60 * 60 * 24 * 7),
+    }))
+  );
+
+  return filesWithUrls;
 }
 
 // ==========================================

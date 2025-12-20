@@ -1,10 +1,11 @@
 "use server";
 
 import {
-  listFiles,
+  listFilesWithUrls,
   deleteFile,
   isBucketConfigured,
   getFileMetadata,
+  getPresignedDownloadUrl,
 } from "@/lib/storage";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { revalidatePath } from "next/cache";
@@ -35,7 +36,8 @@ export async function listMediaAction(): Promise<MediaActionResult> {
   }
 
   try {
-    const allFiles = await listFiles();
+    // Use listFilesWithUrls to get presigned URLs
+    const allFiles = await listFilesWithUrls();
 
     const files: MediaFile[] = await Promise.all(
       allFiles.map(async (file) => {
@@ -59,9 +61,10 @@ export async function listMediaAction(): Promise<MediaActionResult> {
 
 /**
  * Delete a media file from Railway Bucket
+ * Pass the file key (pathname), not the presigned URL
  */
 export async function deleteMediaAction(
-  url: string
+  pathname: string
 ): Promise<{ success: boolean; error?: string }> {
   const authResult = await requireAdminSession();
   if (!authResult.authenticated || !authResult.session) {
@@ -73,18 +76,12 @@ export async function deleteMediaAction(
   }
 
   try {
-    // Extract key from URL
-    // URL format: https://storage.railway.app/bucket-name/key
-    const urlObj = new URL(url);
-    const pathParts = urlObj.pathname.split("/").filter(Boolean);
-    // Remove bucket name (first part) and get the rest as key
-    const key = pathParts.slice(1).join("/");
-
-    if (!key) {
-      return { success: false, error: "Invalid file URL" };
+    // pathname is the file key directly (e.g., "media/1766221974734-p4gw4g-football.svg")
+    if (!pathname) {
+      return { success: false, error: "Invalid file path" };
     }
 
-    const deleted = await deleteFile(key);
+    const deleted = await deleteFile(pathname);
     if (!deleted) {
       return { success: false, error: "Failed to delete file" };
     }
@@ -94,5 +91,29 @@ export async function deleteMediaAction(
   } catch (error) {
     console.error("Delete media error:", error);
     return { success: false, error: "Failed to delete media file" };
+  }
+}
+
+/**
+ * Get a presigned URL for a specific file
+ */
+export async function getMediaUrlAction(
+  pathname: string
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  const authResult = await requireAdminSession();
+  if (!authResult.authenticated || !authResult.session) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  if (!isBucketConfigured()) {
+    return { success: false, error: "Storage not configured" };
+  }
+
+  try {
+    const url = await getPresignedDownloadUrl(pathname, 60 * 60 * 24 * 7); // 7 days
+    return { success: true, url };
+  } catch (error) {
+    console.error("Get media URL error:", error);
+    return { success: false, error: "Failed to get media URL" };
   }
 }
