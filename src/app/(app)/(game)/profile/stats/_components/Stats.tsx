@@ -5,11 +5,13 @@ import Link from "next/link";
 import React from "react";
 import { cn } from "@/lib/utils";
 import { ProfileStatsData } from "@/lib/types";
+import { motion } from "framer-motion";
 
 interface StatCardProps {
   icon: React.ReactNode;
   label: string;
   value: number | string;
+  index: number;
 }
 
 interface StatsProps {
@@ -17,55 +19,76 @@ interface StatsProps {
   fid: number;
 }
 
-export const StatCard = ({ icon, label, value }: StatCardProps) => (
-  <div
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: "spring",
+      stiffness: 260,
+      damping: 20
+    }
+  }
+} as const;
+
+export const StatCard = ({ icon, label, value, index }: StatCardProps) => (
+  <motion.div
+    variants={itemVariants}
+    whileHover={{ y: -4, backgroundColor: "rgba(255, 255, 255, 0.05)" }}
+    whileTap={{ scale: 0.98 }}
     className={cn(
-      // Base styles merged with cn
-      "flex flex-1 flex-col justify-between", // Flex layout, takes available space
-      "noise rounded-2xl border border-white/20", // Background, border, radius
-      "p-3 sm:p-4 gap-4 sm:gap-5", // Responsive padding and gap - adjusted gap
-      "min-h-15 sm:min-h-17" // Minimum height for consistency
+      "flex flex-1 flex-col justify-between",
+      "noise rounded-2xl border border-white/20",
+      "p-[1.25vh] px-2.5 gap-[1.25vh]",
+      "min-h-[clamp(65px,9.5vh,85px)] transition-colors duration-300"
     )}
   >
     {/* Label */}
     <p
-      className="font-display font-medium text-muted tracking-[-0.03em]" //
+      className="font-display font-medium text-muted tracking-[-0.03em]"
       style={{
-        fontSize: "clamp(0.8125rem, 1.3vw, 0.875rem)", // Responsive font size
-        lineHeight: "130%", //
+        fontSize: "clamp(0.75rem, 1.4vh, 0.8125rem)",
+        lineHeight: "130%",
       }}
     >
-      {label} {/* */}
+      {label}
     </p>
 
     {/* Icon + Value */}
     <div className="flex items-center gap-1 sm:gap-1.5">
-      {" "}
-      {/* Adjusted gap */}
-      {/* Icon Container */}
-      <span className="shrink-0 text-waffle-yellow" aria-hidden>
-        {" "}
-        {/* */}
-        {icon} {/* */}
-      </span>
-      {/* Value */}
-      <p
-        className="truncate font-body leading-none" // Use font-body, add truncate
-        style={{
-          fontSize: "clamp(1.1rem, 2.1vw, 1.2rem)", // Slightly adjusted responsive font size
-          lineHeight: "100%", //
-          letterSpacing: "-0.03em", //
-        }}
-      // Add title attribute if value might be truncated (unlikely here)
-      // title={typeof value === 'number' ? value.toLocaleString() : value}
+      <motion.span
+        className="shrink-0 text-waffle-yellow"
+        style={{ fontSize: "clamp(1rem, 2vh, 1.2rem)" }}
+        whileHover={{ rotate: 15, scale: 1.2 }}
+        aria-hidden
       >
-        {/* Format number values with commas */}
+        {icon}
+      </motion.span>
+      <p
+        className="truncate font-body leading-none"
+        style={{
+          fontSize: "clamp(0.9rem, 2vh, 1.1rem)",
+          lineHeight: "100%",
+          letterSpacing: "-0.03em",
+        }}
+      >
         {typeof value === "number" ? value.toLocaleString() : value}
-      </p>{" "}
-      {/* */}
+      </p>
     </div>
-  </div>
+  </motion.div>
 );
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.3
+    }
+  }
+} as const;
 
 export function Stats({ stats, fid }: StatsProps) {
   const formattedWinnings = `$${(stats?.totalWon ?? 0).toLocaleString(
@@ -78,41 +101,56 @@ export function Stats({ stats, fid }: StatsProps) {
 
   return (
     <section aria-labelledby="stats-heading" className="w-full">
-      <div className="mb-3.5 flex items-center justify-between font-semibold">
+      <div className="mb-[1.5vh] flex items-center justify-between font-semibold">
         <h2
           id="stats-heading"
           className="font-display font-medium text-muted tracking-[-0.03em]"
           style={{
-            fontSize: "clamp(0.875rem, 1.5vw, 1rem)",
+            fontSize: "clamp(0.8125rem, 1.5vh, 1rem)",
             lineHeight: "130%",
           }}
         >
           Stats
         </h2>
-        <Link
-          href="/profile/stats"
-          className="font-display font-medium text-waffle-gold tracking-[-0.03em] hover:underline"
-          style={{
-            fontSize: "clamp(0.875rem, 1.5vw, 1rem)",
-            lineHeight: "130%",
-          }}
-        >
-          View all
-        </Link>
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <Link
+            href="/profile/stats"
+            className="font-display font-medium text-waffle-gold tracking-[-0.03em] hover:underline"
+            style={{
+              fontSize: "clamp(0.8125rem, 1.4vh, 0.9375rem)",
+              lineHeight: "130%",
+            }}
+          >
+            View all
+          </Link>
+        </motion.div>
       </div>
-      <div className="grid grid-cols-3 gap-2">
+      <motion.div
+        className="grid grid-cols-3 gap-2"
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-50px" }}
+      >
         <StatCard
-          icon={<GamePadIcon />}
+          icon={<GamePadIcon className="w-[clamp(14px,2vh,18px)] h-[clamp(14px,2vh,18px)]" />}
           label="Games"
           value={stats?.totalGames ?? 0}
-        />{" "}
-        <StatCard icon={<WinsIcon />} label="Wins" value={stats?.wins ?? 0} />{" "}
+          index={0}
+        />
         <StatCard
-          icon={<WinningsIcon />}
+          icon={<WinsIcon className="w-[clamp(14px,2vh,18px)] h-[clamp(14px,2vh,18px)]" />}
+          label="Wins"
+          value={stats?.wins ?? 0}
+          index={1}
+        />
+        <StatCard
+          icon={<WinningsIcon className="w-[clamp(14px,2vh,18px)] h-[clamp(14px,2vh,18px)]" />}
           label="Winnings"
           value={formattedWinnings}
+          index={2}
         />
-      </div>
+      </motion.div>
     </section>
   );
 }

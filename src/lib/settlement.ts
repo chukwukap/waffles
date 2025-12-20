@@ -133,6 +133,31 @@ export async function submitResultsOnChain(
   return hash;
 }
 
+/**
+ * Update an existing Merkle root (only if no claims have been made)
+ * @param onchainId - The bytes32 on-chain game ID
+ * @param newMerkleRoot - The new/corrected Merkle root
+ * @returns Transaction hash
+ */
+export async function updateMerkleRootOnChain(
+  onchainId: `0x${string}`,
+  newMerkleRoot: `0x${string}`
+): Promise<`0x${string}`> {
+  const walletClient = getWalletClient();
+
+  const hash = await walletClient.writeContract({
+    address: WAFFLE_GAME_CONFIG.address,
+    abi: waffleGameAbi,
+    functionName: "updateMerkleRoot",
+    args: [onchainId, newMerkleRoot],
+  });
+
+  console.log(
+    `[Settlement] Updated Merkle root for game ${onchainId}. TX: ${hash}`
+  );
+  return hash;
+}
+
 // ============================================================================
 // Full Settlement Flow
 // ============================================================================
@@ -249,6 +274,7 @@ export interface OnChainGame {
   ticketCount: bigint;
   merkleRoot: `0x${string}`;
   settledAt: bigint;
+  claimCount: bigint;
   ended: boolean;
 }
 

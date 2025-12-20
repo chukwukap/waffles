@@ -487,7 +487,7 @@ export function GameForm({
             </section>
 
             {/* Cover Image */}
-            <section className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
+            <section className="bg-white/5 border border-white/8 rounded-2xl backdrop-blur-lg p-6">
               <div className="flex items-center gap-3 mb-5">
                 <div className="p-2.5 rounded-xl bg-[#FB72FF]/15">
                   <PhotoIcon className="h-5 w-5 text-[#FB72FF]" />

@@ -346,13 +346,13 @@ export type GameEntryOrderByWithRelationInput = {
 
 export type GameEntryWhereUniqueInput = Prisma.AtLeast<{
   id?: number
+  txHash?: string
   gameId_userId?: Prisma.GameEntryGameIdUserIdCompoundUniqueInput
   AND?: Prisma.GameEntryWhereInput | Prisma.GameEntryWhereInput[]
   OR?: Prisma.GameEntryWhereInput[]
   NOT?: Prisma.GameEntryWhereInput | Prisma.GameEntryWhereInput[]
   gameId?: Prisma.IntFilter<"GameEntry"> | number
   userId?: Prisma.IntFilter<"GameEntry"> | number
-  txHash?: Prisma.StringNullableFilter<"GameEntry"> | string | null
   paidAmount?: Prisma.FloatNullableFilter<"GameEntry"> | number | null
   paidAt?: Prisma.DateTimeNullableFilter<"GameEntry"> | Date | string | null
   score?: Prisma.IntFilter<"GameEntry"> | number
@@ -366,7 +366,7 @@ export type GameEntryWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"GameEntry"> | Date | string
   game?: Prisma.XOR<Prisma.GameScalarRelationFilter, Prisma.GameWhereInput>
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-}, "id" | "gameId_userId">
+}, "id" | "txHash" | "gameId_userId">
 
 export type GameEntryOrderByWithAggregationInput = {
   id?: Prisma.SortOrder

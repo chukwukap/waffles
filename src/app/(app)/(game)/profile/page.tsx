@@ -12,6 +12,7 @@ import InviteFriendsButton from "./_components/InviteFriendsButton";
 import { InviteDrawer } from "./_components/InviteFriendsDrawer";
 import GameHistory from "./games/_components/GameHistory";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 // ==========================================
 // COMPONENT
@@ -24,24 +25,26 @@ export default function ProfilePage() {
   // Loading state
   if (isLoading) {
     return (
-      <>
-        <div className="flex-1 flex items-center justify-center">
+      <AnimatePresence>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="flex-1 flex items-center justify-center"
+        >
           <WaffleLoader text="LOADING PROFILE..." />
-        </div>
+        </motion.div>
         <BottomNav />
-      </>
+      </AnimatePresence>
     );
   }
 
   // Error state
   if (!user) {
     return (
-      <>
-        <div className="p-4 text-center text-muted">
-          User not identified. Cannot load profile.
-        </div>
-        <BottomNav />
-      </>
+      <div className="p-4 text-center text-muted">
+        User not identified. Cannot load profile.
+      </div>
     );
   }
 
@@ -60,15 +63,44 @@ export default function ProfilePage() {
     winningsColor: g.winnings > 0 ? ("green" as const) : ("gray" as const),
   }));
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15,
+        delayChildren: 0.2
+      }
+    }
+  } as const;
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        type: "spring",
+        stiffness: 260,
+        damping: 20
+      } as const
+    }
+  } as const;
+
   return (
     <>
-      {/* Main container - flex column, no scroll */}
-      <div
-        className="flex-1 flex flex-col overflow-hidden px-3 gap-3"
-      // style={{ maxHeight: "calc(100dvh - 72px)" }}
+      {/* Main container - flex column with gaps, scrolls only when needed */}
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="flex-1 flex flex-col overflow-auto px-3 gap-3 pb-4"
       >
         {/* Header */}
-        <header className="flex flex-row items-center py-3 gap-2 w-full shrink-0">
+        <motion.header
+          variants={itemVariants}
+          className="flex flex-row items-center py-3 gap-2 w-full shrink-0"
+        >
           <div
             className="flex flex-row justify-center items-center p-1 gap-2 w-7 h-7 bg-[#1B8FF5] rounded-[900px] opacity-0"
             aria-hidden="true"
@@ -78,25 +110,23 @@ export default function ProfilePage() {
           <h1 className="flex-1 font-body font-normal text-[22px] leading-[92%] text-center tracking-[-0.03em] text-white select-none">
             PROFILE
           </h1>
-          <button
+          <motion.button
+            whileHover={{ scale: 1.1, backgroundColor: "rgba(255, 255, 255, 0.2)" }}
+            whileTap={{ scale: 0.9 }}
             onClick={() => setInviteOpen(true)}
             aria-label="Invite Friends"
             className={cn(
               "box-border flex flex-row justify-center items-center p-2 gap-2 w-[34px] h-[34px] bg-white/13 rounded-[900px] transition-all duration-200",
-              "hover:bg-white/25 hover:scale-105 active:scale-95",
               !showReferralButton && "opacity-50 cursor-not-allowed"
             )}
             disabled={!showReferralButton}
           >
             <InviteFriendsIcon className="w-[18px] h-[18px]" />
-          </button>
-        </header>
+          </motion.button>
+        </motion.header>
 
         {/* Profile Card */}
-        <div
-          className="shrink-0"
-          style={{ height: "clamp(120px, 20vh, 152px)" }}
-        >
+        <motion.div variants={itemVariants} className="shrink-0">
           <ProfileCard
             username={safeUsername}
             streak={stats?.currentStreak ?? 0}
@@ -105,15 +135,15 @@ export default function ProfilePage() {
               notify.info("Avatar upload coming soon!");
             }}
           />
-        </div>
+        </motion.div>
 
         {/* Invite Button */}
-        <div className="shrink-0">
+        <motion.div variants={itemVariants} className="shrink-0">
           <InviteFriendsButton onInvite={() => setInviteOpen(true)} />
-        </div>
+        </motion.div>
 
         {/* Stats Section */}
-        <div className="shrink-0">
+        <motion.div variants={itemVariants} className="shrink-0">
           <Stats
             stats={{
               totalGames: stats?.totalGames ?? 0,
@@ -127,13 +157,13 @@ export default function ProfilePage() {
             }}
             fid={user.fid}
           />
-        </div>
+        </motion.div>
 
         {/* Game History */}
-        <div className="flex-1 min-h-0">
+        <motion.div variants={itemVariants} className="shrink-0 pb-2">
           <GameHistory gameHistory={recentGames} fid={user.fid} />
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       <BottomNav />
 

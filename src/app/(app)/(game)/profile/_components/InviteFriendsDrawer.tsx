@@ -1,15 +1,10 @@
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { CopyIcon } from "@/components/icons";
 import { Check } from "lucide-react";
-
-// ============================================
-// INVITE DRAWER - Currently showing "Coming Soon"
-// To enable invite link sharing, uncomment the InviteDrawerActive
-// component and use it instead of InviteDrawerComingSoon
-// ============================================
 
 interface InviteDrawerProps {
   isOpen: boolean;
@@ -17,9 +12,6 @@ interface InviteDrawerProps {
   inviteLink: string;
 }
 
-// ============================================
-// COMING SOON VERSION (Currently Active)
-// ============================================
 const InviteDrawerComingSoon = ({ isOpen, onClose }: Omit<InviteDrawerProps, "inviteLink">) => {
   // Handle Escape key to close
   useEffect(() => {
@@ -43,96 +35,113 @@ const InviteDrawerComingSoon = ({ isOpen, onClose }: Omit<InviteDrawerProps, "in
   }, [isOpen]);
 
   return (
-    <>
-      {/* BACKDROP */}
-      <div
-        className={cn(
-          "fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ease-out",
-          isOpen
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none"
-        )}
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* DRAWER PANEL */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-col items-center justify-end pointer-events-none">
-        <div
-          className={cn(
-            "relative w-full max-w-lg mx-auto bg-white shadow-2xl overflow-hidden",
-            "transition-transform duration-500 cubic-bezier(0.32, 0.72, 0, 1)",
-            "border-t-2 border-white/20",
-            isOpen
-              ? "translate-y-0 pointer-events-auto"
-              : "translate-y-full pointer-events-none"
-          )}
-          style={{
-            height: "400px",
-            borderTopLeftRadius: "20px",
-            borderTopRightRadius: "20px",
-          }}
-        >
-          {/* Background Image */}
-          <div className="absolute inset-0 z-0 select-none">
-            <Image
-              src="/images/share/invite-bg.png"
-              alt="Invite Background"
-              fill
-              className="object-cover opacity-90"
-            />
-            <div className="absolute inset-0 bg-white/30 backdrop-blur-[1px]" />
-          </div>
-
-          {/* Drag Handle */}
-          <div
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* BACKDROP */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm pointer-events-auto"
             onClick={onClose}
-            className="absolute z-20 bg-black/20 rounded-full left-1/2 -translate-x-1/2 cursor-pointer hover:bg-black/30 transition-colors"
-            style={{ top: "12px", width: "36px", height: "5px", opacity: 0.4 }}
+            aria-hidden="true"
           />
 
-          {/* Content */}
-          <div className="relative z-10 flex flex-col items-center justify-center h-full px-6 text-center">
-            {/* Chain Icon */}
-            <div
-              className="relative mb-6 select-none"
-              style={{ width: "86.5px", height: "75px" }}
-            >
-              <Image
-                src="/images/illustrations/link-icon.png"
-                alt="Link Icon"
-                fill
-                className="object-contain opacity-50"
-              />
-            </div>
-
-            {/* Title */}
-            <h2
-              className="font-body text-[#110047] uppercase mb-4 select-none"
+          {/* DRAWER PANEL */}
+          <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-col items-center justify-end pointer-events-none">
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="relative w-full max-w-lg mx-auto bg-white shadow-2xl overflow-hidden border-t-2 border-white/20 pointer-events-auto"
               style={{
-                fontSize: "30px",
-                lineHeight: "115%",
-                maxWidth: "300px",
+                height: "400px",
+                borderTopLeftRadius: "20px",
+                borderTopRightRadius: "20px",
               }}
             >
-              INVITE FRIENDS
-            </h2>
+              {/* Background Image */}
+              <div className="absolute inset-0 z-0 select-none">
+                <Image
+                  src="/images/share/invite-bg.png"
+                  alt="Invite Background"
+                  fill
+                  className="object-cover opacity-90"
+                />
+                <div className="absolute inset-0 bg-white/30 backdrop-blur-[1px]" />
+              </div>
 
-            {/* Coming Soon Badge */}
-            <div className="bg-[#110047]/10 border border-[#110047]/20 rounded-full px-6 py-2 mb-4">
-              <span className="font-display font-semibold text-[18px] text-[#110047] uppercase tracking-wide">
-                Coming Soon
-              </span>
-            </div>
+              {/* Drag Handle */}
+              <motion.div
+                onClick={onClose}
+                whileHover={{ scaleX: 1.2, opacity: 0.6 }}
+                className="absolute z-20 bg-black/20 rounded-full left-1/2 -translate-x-1/2 cursor-pointer transition-opacity"
+                style={{ top: "12px", width: "36px", height: "5px", opacity: 0.4 }}
+              />
 
-            {/* Description */}
-            <p className="font-display font-medium text-[16px] leading-[1.3] text-[#110047]/70 max-w-[280px]">
-              Soon you&apos;ll be able to invite friends and earn bonus points!
-            </p>
+              {/* Content */}
+              <div className="relative z-10 flex flex-col items-center justify-center h-full px-6 text-center">
+                {/* Chain Icon */}
+                <motion.div
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.2, type: "spring" }}
+                  className="relative mb-6 select-none"
+                  style={{ width: "86.5px", height: "75px" }}
+                >
+                  <Image
+                    src="/images/illustrations/link-icon.png"
+                    alt="Link Icon"
+                    fill
+                    className="object-contain opacity-50"
+                  />
+                </motion.div>
+
+                {/* Title */}
+                <motion.h2
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="font-body text-[#110047] uppercase mb-4 select-none"
+                  style={{
+                    fontSize: "30px",
+                    lineHeight: "115%",
+                    maxWidth: "300px",
+                  }}
+                >
+                  INVITE FRIENDS
+                </motion.h2>
+
+                {/* Coming Soon Badge */}
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="bg-[#110047]/10 border border-[#110047]/20 rounded-full px-6 py-2 mb-4"
+                >
+                  <span className="font-display font-semibold text-[18px] text-[#110047] uppercase tracking-wide">
+                    Coming Soon
+                  </span>
+                </motion.div>
+
+                {/* Description */}
+                <motion.p
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="font-display font-medium text-[16px] leading-[1.3] text-[#110047]/70 max-w-[280px]"
+                >
+                  Soon you&apos;ll be able to invite friends and earn bonus points!
+                </motion.p>
+              </div>
+            </motion.div>
           </div>
-        </div>
-      </div>
-    </>
+        </>
+      )}
+    </AnimatePresence>
   );
 };
 

@@ -4,6 +4,7 @@ import { TrophyIcon, UsdcIcon } from "@/components/icons";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { LeaderboardEntry } from "@/lib/types";
+import { motion } from "framer-motion";
 
 interface Top3Props {
   entries: LeaderboardEntry[];
@@ -59,39 +60,61 @@ export function Top3({ entries, currentUserId }: Top3Props) {
         });
 
         return (
-          <article
+          <motion.article
             key={entry.rank ?? i}
+            initial={{ opacity: 0, scale: 0.8, y: 30, rotate: i === 0 ? 0 : i === 1 ? -2 : 2 }}
+            animate={{ opacity: 1, scale: 1, y: 0, rotate: 0 }}
+            transition={{
+              type: "spring",
+              stiffness: 260,
+              damping: 20,
+              delay: 0.2 + i * 0.1
+            }}
+            whileHover={{
+              scale: 1.05,
+              y: -8,
+              transition: { type: "spring", stiffness: 400, damping: 10 }
+            }}
+            whileTap={{ scale: 0.95 }}
             className={cn(
-              "basis-1/3 min-w-0 flex-1",
+              "basis-1/3 min-w-0 flex-1 relative overflow-hidden group",
               "rounded-(--radius) border",
               "p-(--pad) bg-clip-padding",
               "flex flex-col gap-[calc(var(--pad)*0.8)]",
               "transition-all duration-200 ease-out",
-              "hover:scale-[1.03] hover:-translate-y-1 hover:shadow-xl",
-              "active:scale-[0.98] active:translate-y-0",
               styles.bg,
               styles.border,
               isCurrentUser &&
               "ring-2 ring-offset-2 ring-offset-black ring-blue-400"
             )}
           >
-            <TrophyIcon
-              color={styles.trophy}
-              className="shrink-0"
-              style={{
-                width: "clamp(14px, 2.8vw, 20px)",
-                height: "clamp(14px, 2.8vw, 20px)",
-              }}
-              aria-label={`Place ${i + 1}`}
-            />
+            {/* Shine effect on hover */}
+            <div className="absolute inset-0 z-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-700 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.05)_50%,transparent_75%)] bg-size-[250%_250%] animate-shimmer" />
 
-            <div className="flex min-w-0 items-center gap-[calc(var(--pad)*0.5)]">
-              <div
+            <motion.div
+              initial={{ rotate: -10 }}
+              animate={{ rotate: 0 }}
+              transition={{ delay: 0.5 + i * 0.1, type: "spring" }}
+            >
+              <TrophyIcon
+                color={styles.trophy}
+                className="shrink-0 relative z-10"
+                style={{
+                  width: "clamp(14px, 2.8vw, 20px)",
+                  height: "clamp(14px, 2.8vw, 20px)",
+                }}
+                aria-label={`Place ${i + 1}`}
+              />
+            </motion.div>
+
+            <div className="flex min-w-0 items-center gap-[calc(var(--pad)*0.5)] relative z-10">
+              <motion.div
                 className="relative rounded-full bg-white/10 overflow-hidden shrink-0"
                 style={{
                   width: "clamp(18px, 3vw, 24px)",
                   height: "clamp(18px, 3vw, 24px)",
                 }}
+                whileHover={{ scale: 1.2 }}
               >
                 {entry.pfpUrl ? (
                   <Image
@@ -108,7 +131,7 @@ export function Top3({ entries, currentUserId }: Top3Props) {
                     {entry.username?.charAt(0)?.toUpperCase() || "U"}
                   </span>
                 )}
-              </div>
+              </motion.div>
               <span
                 title={entry.username || "Unknown User"}
                 className="
@@ -120,14 +143,19 @@ export function Top3({ entries, currentUserId }: Top3Props) {
               </span>
             </div>
 
-            <div className="mt-auto flex items-center gap-[calc(var(--pad)*0.5)]">
-              <UsdcIcon
-                className="shrink-0"
-                style={{
-                  width: "clamp(14px, 2.8vw, 20px)",
-                  height: "clamp(14px, 2.8vw, 20px)",
-                }}
-              />
+            <div className="mt-auto flex items-center gap-[calc(var(--pad)*0.5)] relative z-10">
+              <motion.div
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.5 }}
+              >
+                <UsdcIcon
+                  className="shrink-0"
+                  style={{
+                    width: "clamp(14px, 2.8vw, 20px)",
+                    height: "clamp(14px, 2.8vw, 20px)",
+                  }}
+                />
+              </motion.div>
               <span
                 className="font-display font-medium tracking-tight leading-[1.1]"
                 style={{ fontSize: "clamp(0.85rem, 2.6vw, 1rem)" }}
@@ -135,7 +163,7 @@ export function Top3({ entries, currentUserId }: Top3Props) {
                 {formattedPoints}
               </span>
             </div>
-          </article>
+          </motion.article>
         );
       })}
     </div>

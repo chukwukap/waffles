@@ -6,6 +6,7 @@ import GameHistoryItem from "./_components/GameHistoryItem";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
 import { BottomNav } from "@/components/BottomNav";
 import { SubHeader } from "@/components/ui/SubHeader";
+import { motion, AnimatePresence } from "framer-motion";
 
 // ==========================================
 // COMPONENT
@@ -16,12 +17,17 @@ export default function GamesPage() {
 
   if (isLoading) {
     return (
-      <>
-        <div className="flex-1 flex items-center justify-center">
+      <AnimatePresence>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="flex-1 flex items-center justify-center"
+        >
           <WaffleLoader text="LOADING GAMES..." />
-        </div>
+        </motion.div>
         <BottomNav />
-      </>
+      </AnimatePresence>
     );
   }
 
@@ -36,33 +42,60 @@ export default function GamesPage() {
     winningsColor: g.winnings > 0 ? ("green" as const) : ("gray" as const),
   }));
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.08,
+      }
+    }
+  } as const;
+
   return (
     <>
       <SubHeader title="GAME HISTORY" />
-      <main
+      <motion.main
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
         className={cn(
           "mx-auto w-full max-w-lg flex-1",
           "px-4",
-          // "pb-[calc(env(safe-area-inset-bottom)+84px)]",
           "mt-4"
         )}
       >
         {gameHistory.length > 0 ? (
-          <ul className="flex flex-col gap-3.5">
+          <motion.ul
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="flex flex-col gap-3.5"
+          >
             {gameHistory.map((g) => (
-              <li key={g.id}>
+              <motion.li
+                key={g.id}
+                variants={{
+                  hidden: { opacity: 0, x: -10 },
+                  visible: { opacity: 1, x: 0 }
+                }}
+              >
                 <GameHistoryItem game={g} />
-              </li>
+              </motion.li>
             ))}
-          </ul>
+          </motion.ul>
         ) : (
-          <div className="flex items-center justify-center py-6 px-4 border border-white/10 rounded-2xl bg-white/5">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex items-center justify-center py-6 px-4 border border-white/10 rounded-2xl bg-white/5"
+          >
             <p className="font-display text-sm text-white/40 text-center">
               No games played yet
             </p>
-          </div>
+          </motion.div>
         )}
-      </main>
+      </motion.main>
       <BottomNav />
     </>
   );

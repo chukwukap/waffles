@@ -4,6 +4,7 @@ import {
   createGameOnChain,
   endGameOnChain,
   settleGame,
+  updateMerkleRootOnChain,
 } from "@/lib/settlement";
 import { getAdminSession } from "@/lib/admin-auth";
 
@@ -21,9 +22,10 @@ async function isAuthorized(): Promise<boolean> {
 }
 
 interface SettlementRequestBody {
-  action: "create" | "end" | "settle";
+  action: "create" | "end" | "settle" | "updateMerkleRoot";
   gameId: number;
   entryFee?: number; // Required for 'create' action
+  newMerkleRoot?: string; // Required for 'updateMerkleRoot' action
 }
 
 interface SettlementResponse {
@@ -52,7 +54,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body: SettlementRequestBody = await request.json();
-    const { action, gameId, entryFee } = body;
+    const { action, gameId, entryFee, newMerkleRoot } = body;
 
     if (!action || !gameId) {
       return NextResponse.json(
@@ -112,6 +114,32 @@ export async function POST(request: NextRequest) {
         txHash = result.txHash;
         merkleRoot = result.merkleRoot;
         winnersCount = result.winners.length;
+        break;
+      }
+
+      case "updateMerkleRoot": {
+        if (!newMerkleRoot) {
+          return NextResponse.json(
+            { error: "newMerkleRoot required for updateMerkleRoot action" },
+            { status: 400 }
+          );
+        }
+        // Fetch onchainId from database
+        const updateGame = await prisma.game.findUnique({
+          where: { id: gameId },
+          select: { onchainId: true },
+        });
+        if (!updateGame?.onchainId) {
+          return NextResponse.json(
+            { error: "Game has no onchainId - cannot update on-chain" },
+            { status: 400 }
+          );
+        }
+        txHash = await updateMerkleRootOnChain(
+          updateGame.onchainId as `0x${string}`,
+          newMerkleRoot as `0x${string}`
+        );
+        merkleRoot = newMerkleRoot as `0x${string}`;
         break;
       }
 

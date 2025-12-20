@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -24,22 +25,27 @@ function AnimatedHourglass({ size = 68 }: { size?: number }) {
         times: [0, 0.2, 0.5, 0.7, 1],
       }}
       style={{ width: size, height: size }}
+      className="relative"
     >
+      {/* Main hourglass image using Next.js Image for optimization */}
+      <Image
+        src="/images/icons/hourglass.svg"
+        alt="Loading hourglass"
+        width={size}
+        height={size}
+        priority
+        className="object-contain"
+      />
+
+      {/* Animated sand particles overlay */}
       <svg
         width={size}
         height={size}
         viewBox="0 0 53 68"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
+        className="absolute inset-0"
       >
-        {/* Main hourglass image */}
-        <image
-          href="/images/icons/hourglass.svg"
-          width="53"
-          height="68"
-          preserveAspectRatio="xMidYMid slice"
-        />
-
         {/* Animated sand particles falling */}
         <motion.circle
           cx="26.5"

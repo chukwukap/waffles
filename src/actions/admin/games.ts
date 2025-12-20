@@ -114,7 +114,14 @@ export async function createGameAction(
         recentEndedGame.onchainId as `0x${string}`
       );
 
-      if (onChainGame && !onChainGame.ended) {
+      // Only block if game actually exists on-chain (has tickets or entry fee)
+      // After contract upgrades, old onchainIds may not exist on new contract
+      const gameExistsOnChain =
+        onChainGame &&
+        (onChainGame.ticketCount > BigInt(0) ||
+          onChainGame.entryFee > BigInt(0));
+
+      if (gameExistsOnChain && !onChainGame.ended) {
         return {
           success: false,
           error: `Cannot create a new game while "${recentEndedGame.title}" is not ended on-chain. Please end it on-chain first via Settlement.`,
@@ -293,7 +300,14 @@ export async function deleteGameAction(gameId: number): Promise<void> {
       const { getOnChainGame } = await import("@/lib/settlement");
       const onChainGame = await getOnChainGame(game.onchainId as `0x${string}`);
 
-      if (onChainGame && !onChainGame.ended) {
+      // Only block if game actually exists on-chain (has tickets or entry fee)
+      // After contract upgrades, old onchainIds may not exist on new contract
+      const gameExistsOnChain =
+        onChainGame &&
+        (onChainGame.ticketCount > BigInt(0) ||
+          onChainGame.entryFee > BigInt(0));
+
+      if (gameExistsOnChain && !onChainGame.ended) {
         throw new Error(
           `Cannot delete "${game.title}" - it is still active on-chain. End it on-chain first via Settlement.`
         );

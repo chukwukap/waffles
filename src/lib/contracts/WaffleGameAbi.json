@@ -294,6 +294,11 @@
             "internalType": "uint256"
           },
           {
+            "name": "claimCount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
             "name": "ended",
             "type": "bool",
             "internalType": "bool"
@@ -640,6 +645,24 @@
   },
   {
     "type": "function",
+    "name": "updateMerkleRoot",
+    "inputs": [
+      {
+        "name": "gameId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "newMerkleRoot",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "upgradeToAndCall",
     "inputs": [
       {
@@ -759,6 +782,25 @@
         "type": "uint64",
         "indexed": false,
         "internalType": "uint64"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "MerkleRootUpdated",
+    "inputs": [
+      {
+        "name": "gameId",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "newMerkleRoot",
+        "type": "bytes32",
+        "indexed": false,
+        "internalType": "bytes32"
       }
     ],
     "anonymous": false
@@ -1049,6 +1091,11 @@
   {
     "type": "error",
     "name": "ClaimWindowActive",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ClaimsAlreadyMade",
     "inputs": []
   },
   {

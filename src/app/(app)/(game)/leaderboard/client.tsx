@@ -10,6 +10,7 @@ import { Top3 } from "./_components/Top3";
 import { Row } from "./_components/Row";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
 import { LeaderboardEntry } from "@/lib/types";
+import { motion, AnimatePresence } from "framer-motion";
 
 // ============================================
 // MOCK DATA - Set to false to disable
@@ -220,7 +221,10 @@ export default function LeaderboardClient({
       </div>
 
       {/* STICKY HEADER - sits above crown with gradient fade */}
-      <div
+      <motion.div
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 260, damping: 20 }}
         className="sticky top-0 z-10 -mx-3 px-3 pt-8 pb-4 transition-[background] duration-200"
         style={{
           background: isSticky
@@ -239,46 +243,91 @@ export default function LeaderboardClient({
         <p className="mt-3 text-center text-muted font-display text-sm">
           {tabDescription}
         </p>
-      </div>
+      </motion.div>
 
       {/* LIST SECTION */}
       <section className="pb-24 pt-1 space-y-4">
         {/* Top 3 - only shown when at least 3 entries */}
-        {showTop3 && <Top3 entries={top3} currentUserId={userFid} />}
+        <AnimatePresence mode="wait">
+          {showTop3 && (
+            <motion.div
+              key={`top3-${activeTab}`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.1 }}
+            >
+              <Top3 entries={top3} currentUserId={userFid} />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Rest of list */}
-        <div className="space-y-3">
-          {rest.map((entry) => (
-            <div key={`${activeTab}-${entry.rank}-${entry.id}`}>
+        <motion.div
+          key={`list-${activeTab}`}
+          layout
+          className="space-y-3"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: {
+                staggerChildren: 0.05,
+              }
+            }
+          }}
+          initial="hidden"
+          animate="visible"
+        >
+          {rest.map((entry, index) => (
+            <motion.div
+              key={`${activeTab}-${entry.rank}-${entry.id}`}
+              variants={{
+                hidden: { opacity: 0, x: -20 },
+                visible: { opacity: 1, x: 0 }
+              }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            >
               <Row
                 entry={entry}
                 isCurrentUser={userFid != null && entry.fid === userFid}
               />
-            </div>
+            </motion.div>
           ))}
 
           {/* Loading indicator */}
           {isLoading && (
-            <div className="py-4 flex justify-center">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="py-4 flex justify-center"
+            >
               <WaffleLoader size={60} text="" />
-            </div>
+            </motion.div>
           )}
 
           {/* Error message */}
           {error && !isLoading && (
-            <div className="panel px-3 py-3 text-sm text-danger text-center rounded-xl">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="panel px-3 py-3 text-sm text-danger text-center rounded-xl"
+            >
               {error}
-            </div>
+            </motion.div>
           )}
 
           {/* Empty state */}
           {isEmpty && !error && !isLoading && (
-            <div className="flex items-center justify-center py-6 px-4 border border-white/10 rounded-2xl 
-            white/5">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex items-center justify-center py-6 px-4 border border-white/10 rounded-2xl white/5"
+            >
               <p className="font-display text-sm text-white/40 text-center">
                 No rankings yet
               </p>
-            </div>
+            </motion.div>
           )}
 
           {/* Infinite scroll trigger */}
@@ -288,11 +337,15 @@ export default function LeaderboardClient({
 
           {/* End of list */}
           {!hasMore && !isEmpty && !error && (
-            <div className="py-3 text-center text-sm text-white/30 font-display">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="py-3 text-center text-sm text-white/30 font-display"
+            >
               — End of leaderboard —
-            </div>
+            </motion.div>
           )}
-        </div>
+        </motion.div>
       </section>
     </div>
   );

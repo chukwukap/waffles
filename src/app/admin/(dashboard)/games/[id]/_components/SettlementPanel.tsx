@@ -7,6 +7,7 @@ import {
   ArrowPathIcon,
   CheckCircleIcon,
   XCircleIcon,
+  PencilSquareIcon,
 } from "@heroicons/react/24/outline";
 
 interface SettlementPanelProps {
@@ -17,11 +18,11 @@ interface SettlementPanelProps {
     ended: boolean;
     settled: boolean;
     merkleRoot?: string;
+    claimCount?: number;
   };
 }
 
-// Note: "create" action removed - games are now created on-chain automatically during game creation
-type SettlementAction = "end" | "settle";
+type SettlementAction = "end" | "settle" | "updateMerkleRoot";
 
 export function SettlementPanel({
   gameId,
@@ -34,8 +35,13 @@ export function SettlementPanel({
     message: string;
     txHash?: string;
   } | null>(null);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [newMerkleRoot, setNewMerkleRoot] = useState("");
 
-  const executeSettlement = async (action: SettlementAction) => {
+  const executeSettlement = async (
+    action: SettlementAction,
+    extraParams?: { newMerkleRoot?: string }
+  ) => {
     setIsLoading(action);
     setResult(null);
 
@@ -45,10 +51,11 @@ export function SettlementPanel({
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // Use cookie auth
+        credentials: "include",
         body: JSON.stringify({
           action,
           gameId,
+          ...extraParams,
         }),
       });
 
@@ -63,6 +70,11 @@ export function SettlementPanel({
         message: getSuccessMessage(action, data),
         txHash: data.txHash,
       });
+
+      if (action === "updateMerkleRoot") {
+        setShowUpdateModal(false);
+        setNewMerkleRoot("");
+      }
     } catch (error) {
       setResult({
         success: false,
@@ -82,18 +94,21 @@ export function SettlementPanel({
         return `Game ended on-chain`;
       case "settle":
         return `Game settled! ${data.winnersCount || 0} winners`;
+      case "updateMerkleRoot":
+        return `Merkle root updated successfully!`;
       default:
         return "Action completed";
     }
   };
 
-  // Games are now created on-chain automatically when created in admin
   const canEnd =
     gameStatus === "ENDED" && onChainStatus?.exists && !onChainStatus?.ended;
   const canSettle =
     gameStatus === "ENDED" && onChainStatus?.ended && !onChainStatus?.settled;
   const isSettled = onChainStatus?.settled;
   const isOnChain = onChainStatus?.exists;
+  const canUpdateMerkleRoot =
+    isSettled && (onChainStatus?.claimCount ?? 0) === 0;
 
   return (
     <div className="space-y-4">
@@ -148,6 +163,16 @@ export function SettlementPanel({
           </div>
         )}
 
+        {canUpdateMerkleRoot && (
+          <ActionButton
+            onClick={() => setShowUpdateModal(true)}
+            loading={isLoading === "updateMerkleRoot"}
+            icon={<PencilSquareIcon className="h-4 w-4" />}
+            label="Update Merkle Root"
+            variant="primary"
+          />
+        )}
+
         {/* Status messages when no actions available */}
         {!canEnd && !canSettle && !isSettled && (
           <div className="text-white/50 text-sm space-y-1">
@@ -180,11 +205,10 @@ export function SettlementPanel({
       {/* Result Message */}
       {result && (
         <div
-          className={`flex items-start gap-3 p-4 rounded-xl border ${
-            result.success
+          className={`flex items-start gap-3 p-4 rounded-xl border ${result.success
               ? "bg-[#14B985]/10 border-[#14B985]/30 text-[#14B985]"
               : "bg-red-500/10 border-red-500/30 text-red-400"
-          }`}
+            }`}
         >
           {result.success ? (
             <CheckCircleIcon className="h-5 w-5 shrink-0 mt-0.5" />
@@ -210,10 +234,83 @@ export function SettlementPanel({
       {/* Merkle Root Display */}
       {onChainStatus?.merkleRoot && (
         <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-          <p className="text-white/50 text-sm mb-1">Merkle Root</p>
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-white/50 text-sm">Merkle Root</p>
+            {canUpdateMerkleRoot && (
+              <span className="text-xs text-[#FFC931] bg-[#FFC931]/10 px-2 py-0.5 rounded">
+                Editable (0 claims)
+              </span>
+            )}
+          </div>
           <code className="text-xs text-[#00CFF2] break-all">
             {onChainStatus.merkleRoot}
           </code>
+        </div>
+      )}
+
+      {/* Update Merkle Root Modal */}
+      {showUpdateModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-[#1A1A2E] border border-white/10 rounded-2xl p-6 max-w-lg w-full mx-4 space-y-4">
+            <h3 className="text-xl font-bold text-white font-display">
+              Update Merkle Root
+            </h3>
+            <p className="text-white/60 text-sm">
+              Enter the new Merkle root to replace the current one. This is only
+              possible because no claims have been made yet.
+            </p>
+
+            <div>
+              <label className="block text-white/50 text-sm mb-2">
+                Current Root
+              </label>
+              <code className="block text-xs text-[#00CFF2]/50 break-all p-2 bg-white/5 rounded">
+                {onChainStatus?.merkleRoot}
+              </code>
+            </div>
+
+            <div>
+              <label className="block text-white/50 text-sm mb-2">
+                New Merkle Root
+              </label>
+              <input
+                type="text"
+                value={newMerkleRoot}
+                onChange={(e) => setNewMerkleRoot(e.target.value)}
+                placeholder="0x..."
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-[#FFC931]/50 font-mono text-sm"
+              />
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => {
+                  setShowUpdateModal(false);
+                  setNewMerkleRoot("");
+                }}
+                className="flex-1 px-4 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-white font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() =>
+                  executeSettlement("updateMerkleRoot", { newMerkleRoot })
+                }
+                disabled={
+                  !newMerkleRoot.startsWith("0x") ||
+                  newMerkleRoot.length !== 66 ||
+                  isLoading === "updateMerkleRoot"
+                }
+                className="flex-1 px-4 py-3 bg-[#FFC931] hover:bg-[#FFD966] rounded-xl text-black font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading === "updateMerkleRoot" ? (
+                  <ArrowPathIcon className="h-5 w-5 animate-spin mx-auto" />
+                ) : (
+                  "Update Root"
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -232,13 +329,12 @@ function StatusBadge({
 }) {
   return (
     <div
-      className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
-        pending
+      className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${pending
           ? "bg-[#FFC931]/20 text-[#FFC931]"
           : active
-          ? "bg-[#14B985]/20 text-[#14B985]"
-          : "bg-white/10 text-white/50"
-      }`}
+            ? "bg-[#14B985]/20 text-[#14B985]"
+            : "bg-white/10 text-white/50"
+        }`}
     >
       {pending ? (
         <ArrowPathIcon className="h-3 w-3 animate-spin" />
@@ -282,3 +378,4 @@ function ActionButton({
     </button>
   );
 }
+

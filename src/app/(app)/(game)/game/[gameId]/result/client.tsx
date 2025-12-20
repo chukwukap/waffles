@@ -10,12 +10,13 @@ import { WaffleLoader } from "@/components/ui/WaffleLoader";
 import { BottomNav } from "@/components/BottomNav";
 import { playSound } from "@/lib/sounds";
 import { notify } from "@/components/ui/Toaster";
+import { env } from "@/lib/env";
 import sdk from "@farcaster/miniapp-sdk";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useSendCalls, useCallsStatus, useAccount } from "wagmi";
-import { useMiniKit } from "@coinbase/onchainkit/minikit";
-import { encodeFunctionData } from "viem";
+import { useMiniKit, useComposeCast } from "@coinbase/onchainkit/minikit";
+import { Abi, encodeFunctionData } from "viem";
 import { WAFFLE_GAME_CONFIG } from "@/lib/contracts/config";
 import waffleGameAbi from "@/lib/contracts/WaffleGameAbi.json";
 import { Spinner } from "@/components/ui/spinner";
@@ -40,7 +41,13 @@ interface LeaderboardData {
   }>;
 }
 
-type ClaimState = "idle" | "fetching" | "confirming" | "success" | "error" | "pending";
+type ClaimState =
+  | "idle"
+  | "fetching"
+  | "confirming"
+  | "success"
+  | "error"
+  | "pending";
 
 // ==========================================
 // COMPONENT
@@ -56,6 +63,7 @@ export default function ScorePageClient({
   const leaderboardData = use(leaderboardPromise);
   const { address } = useAccount();
   const { context } = useMiniKit();
+  const { composeCastAsync } = useComposeCast();
   const { entry, isLoading: entryLoading, refetchEntry } = useGame();
 
   const hasPlayedSound = useRef(false);
@@ -95,7 +103,8 @@ export default function ScorePageClient({
   }, [entry, leaderboardData.allPlayersInGame.length]);
 
   // Check if already claimed from entry
-  const hasClaimed = entry?.claimedAt !== null && entry?.claimedAt !== undefined;
+  const hasClaimed =
+    entry?.claimedAt !== null && entry?.claimedAt !== undefined;
 
   // Is user a winner (rank 1-3)?
   const isWinner = useMemo(() => {
@@ -125,6 +134,40 @@ export default function ScorePageClient({
       setClaimState("success");
     }
   }, [hasClaimed]);
+
+  // ==========================================
+  // SHARE SCORE
+  // ==========================================
+
+  const handleShareScore = useCallback(async () => {
+    if (!userInfo || !userScore) return;
+
+    try {
+      const prizeText =
+        userScore.winnings > 0
+          ? `Just won $${userScore.winnings.toLocaleString()} on Waffles! 🧇🏆`
+          : `Just scored ${userScore.score} points on Waffles! 🧇`;
+
+      const shareUrl = `${env.rootUrl}/api/og/share/prize?gameId=${gameId}&fid=${userInfo.fid}`;
+
+      const result = await composeCastAsync({
+        text: prizeText,
+        embeds: [shareUrl],
+      });
+
+      if (result?.cast) {
+        console.log("[Share] Cast created:", result.cast.hash);
+        playSound("purchase");
+        notify.success("Shared to Farcaster! 🎉");
+        sdk.haptics.impactOccurred("light").catch(() => { });
+      } else {
+        console.log("[Share] User cancelled");
+      }
+    } catch (error) {
+      console.error("[Share] Error:", error);
+      notify.error("Failed to share");
+    }
+  }, [composeCastAsync, gameId, userInfo, userScore]);
 
   // ==========================================
   // CLAIM LOGIC
@@ -226,7 +269,10 @@ export default function ScorePageClient({
       if (!proofRes.ok) {
         const errorData = await proofRes.json();
         // Check if game not settled yet
-        if (errorData.code === "GAME_NOT_ENDED" || errorData.code === "NO_WINNERS") {
+        if (
+          errorData.code === "GAME_NOT_ENDED" ||
+          errorData.code === "NO_WINNERS"
+        ) {
           setClaimState("pending");
           return;
         }
@@ -245,18 +291,20 @@ export default function ScorePageClient({
           {
             to: WAFFLE_GAME_CONFIG.address,
             data: encodeFunctionData({
-              abi: waffleGameAbi as any,
+              abi: waffleGameAbi as Abi,
               functionName: "claimPrize",
               args: [onchainId, BigInt(amount), proof],
             }),
           },
         ],
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("[Claim] Error:", error);
-      setClaimError(error.message || "Claim failed");
+      setClaimError(error instanceof Error ? error.message : "Claim failed");
       setClaimState("error");
-      notify.error(error.message || "Failed to claim prize");
+      notify.error(
+        error instanceof Error ? error.message : "Failed to claim prize"
+      );
     }
   }, [onchainId, address, gameId, sendCalls, resetSendCalls]);
 
@@ -428,6 +476,7 @@ export default function ScorePageClient({
               {/* Share Score Button */}
               <motion.button
                 className="flex flex-row justify-center items-center p-3 gap-2 flex-1 bg-white/9 border-2 border-white/40 rounded-[12px]"
+                onClick={handleShareScore}
                 whileHover={{
                   scale: 1.03,
                   backgroundColor: "rgba(255, 255, 255, 0.15)",

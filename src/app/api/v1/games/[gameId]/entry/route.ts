@@ -114,6 +114,7 @@ export const POST = withAuth<Params>(
           endsAt: true,
           playerCount: true,
           maxPlayers: true,
+          tierPrices: true,
         },
       });
 
@@ -121,6 +122,22 @@ export const POST = withAuth<Params>(
         return NextResponse.json<ApiError>(
           { error: "Game not found", code: "NOT_FOUND" },
           { status: 404 }
+        );
+      }
+
+      // Security Check: Validate paidAmount against allowed tiers
+      const isValidTier = game.tierPrices.some(
+        (price) => Math.abs(price - paidAmount) < 0.0001
+      );
+      if (!isValidTier) {
+        return NextResponse.json<ApiError>(
+          {
+            error: `Invalid payment amount. Allowed tiers: ${game.tierPrices.join(
+              ", "
+            )}`,
+            code: "INVALID_INPUT",
+          },
+          { status: 400 }
         );
       }
 

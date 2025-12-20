@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { PhotoIcon, XMarkIcon, MusicalNoteIcon, VideoCameraIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 
@@ -24,6 +25,12 @@ export function MediaPicker({ label, name, accept = "all", onSelect, selectedUrl
     const [files, setFiles] = useState<MediaFile[]>([]);
     const [loading, setLoading] = useState(false);
     const [filter, setFilter] = useState("");
+    const [mounted, setMounted] = useState(false);
+
+    // Ensure we're mounted before using portal
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     useEffect(() => {
         if (isOpen) {
@@ -91,7 +98,8 @@ export function MediaPicker({ label, name, accept = "all", onSelect, selectedUrl
 
             {selectedUrl ? (
                 <div className="relative group">
-                    <div className="aspect-video bg-black/30 rounded-xl overflow-hidden border border-white/10">
+                    {/* Compact image preview with better styling */}
+                    <div className="relative w-full h-40 bg-black/30 rounded-xl overflow-hidden border border-white/10 hover:border-white/20 transition-colors">
                         <Image
                             src={selectedUrl}
                             alt="Selected"
@@ -99,43 +107,56 @@ export function MediaPicker({ label, name, accept = "all", onSelect, selectedUrl
                             className="object-cover"
                             unoptimized
                         />
+                        {/* Gradient overlay for better button visibility */}
+                        <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
-                    <button
-                        type="button"
-                        onClick={() => onSelect("")}
-                        className="absolute top-2 right-2 p-1.5 bg-black/80 backdrop-blur-sm rounded-full text-white/60 hover:text-red-400 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                        <XMarkIcon className="h-4 w-4" />
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setIsOpen(true)}
-                        className="mt-3 w-full px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-medium text-white/70 transition-colors"
-                    >
-                        Change Media
-                    </button>
+
+                    {/* Action buttons */}
+                    <div className="absolute bottom-3 left-3 right-3 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                            type="button"
+                            onClick={() => setIsOpen(true)}
+                            className="flex-1 px-3 py-2 bg-white/90 backdrop-blur-sm rounded-lg text-sm font-medium text-black hover:bg-white transition-colors shadow-lg"
+                        >
+                            Change
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => onSelect("")}
+                            className="p-2 bg-red-500/90 backdrop-blur-sm rounded-lg text-white hover:bg-red-500 transition-colors shadow-lg"
+                        >
+                            <XMarkIcon className="h-4 w-4" />
+                        </button>
+                    </div>
                 </div>
             ) : (
                 <button
                     type="button"
                     onClick={() => setIsOpen(true)}
-                    className="w-full border-2 border-dashed border-white/20 rounded-xl p-8 text-center hover:border-[#FFC931]/50 hover:bg-white/5 transition-colors"
+                    className="w-full border border-dashed border-white/20 rounded-xl p-5 text-center hover:border-[#FFC931]/50 hover:bg-white/5 transition-all group"
                 >
-                    <div className="flex flex-col items-center gap-2">
-                        <PhotoIcon className="h-10 w-10 text-white/40" />
-                        <div className="text-sm font-medium text-white">Select from Library</div>
-                        <div className="text-xs text-white/50">Click to browse uploaded files</div>
+                    <div className="flex items-center gap-3">
+                        <div className="p-3 rounded-xl bg-white/5 group-hover:bg-[#FFC931]/10 transition-colors">
+                            <PhotoIcon className="h-6 w-6 text-white/40 group-hover:text-[#FFC931] transition-colors" />
+                        </div>
+                        <div className="text-left">
+                            <div className="text-sm font-medium text-white">Select from Library</div>
+                            <div className="text-xs text-white/50">Click to browse uploaded files</div>
+                        </div>
                     </div>
                 </button>
             )}
 
-            {/* Media Picker Modal */}
-            {isOpen && (
+            {/* Media Picker Modal - Rendered via Portal to avoid z-index issues */}
+            {mounted && isOpen && createPortal(
                 <>
-                    <div className="fixed inset-0 bg-black/80 z-40" onClick={() => setIsOpen(false)} />
-                    <div className="fixed inset-4 md:inset-10 bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg z-50 flex flex-col border border-white/10 shadow-2xl">
+                    <div
+                        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9998]"
+                        onClick={() => setIsOpen(false)}
+                    />
+                    <div className="fixed left-4 right-4 top-1/2 -translate-y-1/2 md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-4xl bg-[#1a1a1a] border border-white/10 rounded-2xl z-[9999] flex flex-col shadow-2xl max-h-[85vh]">
                         {/* Header */}
-                        <div className="flex items-center justify-between p-5 border-b border-white/10">
+                        <div className="flex items-center justify-between p-5 border-b border-white/10 shrink-0">
                             <h2 className="text-lg font-semibold text-white font-display">
                                 Select {accept === "all" ? "Media" : accept.charAt(0).toUpperCase() + accept.slice(1)}
                             </h2>
@@ -148,7 +169,7 @@ export function MediaPicker({ label, name, accept = "all", onSelect, selectedUrl
                         </div>
 
                         {/* Search */}
-                        <div className="p-4 border-b border-white/10">
+                        <div className="p-4 border-b border-white/10 shrink-0">
                             <input
                                 type="text"
                                 placeholder="Search files..."
@@ -159,7 +180,7 @@ export function MediaPicker({ label, name, accept = "all", onSelect, selectedUrl
                         </div>
 
                         {/* Files Grid */}
-                        <div className="flex-1 overflow-y-auto p-4 bg-black/20">
+                        <div className="flex-1 overflow-y-auto p-4 min-h-0">
                             {loading ? (
                                 <div className="flex items-center justify-center h-full text-white/50">Loading...</div>
                             ) : filteredFiles.length === 0 ? (
@@ -227,7 +248,8 @@ export function MediaPicker({ label, name, accept = "all", onSelect, selectedUrl
                             )}
                         </div>
                     </div>
-                </>
+                </>,
+                document.body
             )}
         </div>
     );

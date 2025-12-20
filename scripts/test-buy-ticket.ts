@@ -18,7 +18,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { baseSepolia } from "viem/chains";
 
 // Contract addresses (Base Sepolia testnet)
-const WAFFLE_GAME_ADDRESS = "0x20dC207d530dC231C0B52B921f5f4E49C4b80d5b";
+const WAFFLE_GAME_ADDRESS = "0xb4De98e6290142626F00A3371D5Ea2cD5B01A0A3";
 // TestUSDC with faucet function (contract updated to use this token)
 const USDC_ADDRESS = "0x8aAa7ECea87244Ca4062eBce6DA61820f3830233";
 

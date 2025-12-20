@@ -22,7 +22,7 @@ export async function GET() {
       );
     }
 
-    // List all files from Railway Bucket with presigned URLs
+    // List all files from Cloudinary with public URLs
     const allFiles = await listFilesWithUrls();
 
     // Get content types for each file

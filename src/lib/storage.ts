@@ -1,29 +1,12 @@
-import {
-  S3Client,
-  PutObjectCommand,
-  GetObjectCommand,
-  DeleteObjectCommand,
-  ListObjectsV2Command,
-  HeadObjectCommand,
-} from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { v2 as cloudinary } from "cloudinary";
 import { env } from "./env";
 
-// Railway Bucket Configuration (from env.ts)
-const BUCKET_NAME = env.railwayBucketName || "";
-const ACCESS_KEY = env.railwayBucketAccessKey || "";
-const SECRET_KEY = env.railwayBucketSecretKey || "";
-const ENDPOINT = env.railwayBucketEndpoint || "https://storage.railway.app";
-
-// Create S3 Client for Railway Buckets
-export const s3Client = new S3Client({
-  endpoint: ENDPOINT,
-  region: "auto", // Railway handles region automatically
-  credentials: {
-    accessKeyId: ACCESS_KEY,
-    secretAccessKey: SECRET_KEY,
-  },
-  forcePathStyle: false, // Railway uses virtual-hosted style
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: env.cloudinaryCloudName,
+  api_key: env.cloudinaryApiKey,
+  api_secret: env.cloudinaryApiSecret,
+  secure: true,
 });
 
 // ==========================================
@@ -31,76 +14,49 @@ export const s3Client = new S3Client({
 // ==========================================
 
 export interface UploadOptions {
-  key: string; // File path/name in bucket
-  body: Buffer | Uint8Array | Blob | string;
+  key: string; // File path/name (becomes public_id)
+  body: Buffer | Uint8Array | string;
   contentType: string;
-  cacheControl?: string;
 }
 
 export async function uploadFile({
   key,
   body,
   contentType,
-  cacheControl = "public, max-age=31536000", // 1 year cache by default
 }: UploadOptions): Promise<{ url: string; key: string }> {
-  const command = new PutObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: key,
-    Body: body,
-    ContentType: contentType,
-    CacheControl: cacheControl,
+  // Determine resource type from content type
+  let resourceType: "image" | "video" | "raw" = "raw";
+  if (contentType.startsWith("image/")) {
+    resourceType = "image";
+  } else if (contentType.startsWith("video/")) {
+    resourceType = "video";
+  } else if (contentType.startsWith("audio/")) {
+    resourceType = "video"; // Cloudinary handles audio as video
+  }
+
+  // Convert body to base64 data URI for upload
+  let dataUri: string;
+  if (typeof body === "string") {
+    dataUri = body;
+  } else {
+    const base64 = Buffer.from(body).toString("base64");
+    dataUri = `data:${contentType};base64,${base64}`;
+  }
+
+  // Remove file extension from key for public_id
+  const publicId = key.replace(/\.[^/.]+$/, "");
+
+  const result = await cloudinary.uploader.upload(dataUri, {
+    public_id: publicId,
+    resource_type: resourceType,
+    folder: "waffles", // All uploads go to waffles folder
+    overwrite: true,
   });
 
-  await s3Client.send(command);
-
-  // Railway Buckets are private, so we need to return a presigned URL
-  // Use a long expiry (7 days) for uploaded files
-  const url = await getPresignedDownloadUrl(key, 60 * 60 * 24 * 7);
-
-  return { url, key };
-}
-
-// ==========================================
-// PRESIGNED UPLOAD URL
-// ==========================================
-
-export interface PresignedUploadOptions {
-  key: string;
-  contentType: string;
-  expiresIn?: number; // seconds, default 1 hour
-}
-
-export async function getPresignedUploadUrl({
-  key,
-  contentType,
-  expiresIn = 3600,
-}: PresignedUploadOptions): Promise<{ uploadUrl: string; publicUrl: string }> {
-  const command = new PutObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: key,
-    ContentType: contentType,
-  });
-
-  const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn });
-  const publicUrl = `${ENDPOINT}/${BUCKET_NAME}/${key}`;
-
-  return { uploadUrl, publicUrl };
-}
-
-// ==========================================
-// PRESIGNED DOWNLOAD URL
-// ==========================================
-
-export async function getPresignedDownloadUrl(
-  key: string,
-  expiresIn = 3600
-): Promise<string> {
-  const command = new GetObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: key,
-  });
-
-  return getSignedUrl(s3Client, command, { expiresIn });
+  return {
+    url: result.secure_url,
+    key: result.public_id,
+  };
 }
 
 // ==========================================
@@ -116,40 +72,69 @@ export interface FileInfo {
 }
 
 export async function listFiles(prefix = ""): Promise<FileInfo[]> {
-  const command = new ListObjectsV2Command({
-    Bucket: BUCKET_NAME,
-    Prefix: prefix,
-  });
+  try {
+    const folderPrefix = prefix ? `waffles/${prefix}` : "waffles";
 
-  const response = await s3Client.send(command);
+    // Note: Cloudinary doesn't support resource_type "all" via Admin API
+    // We query images only since that's our primary use case
+    const result = await cloudinary.api.resources({
+      type: "upload",
+      prefix: folderPrefix,
+      max_results: 100,
+      resource_type: "image",
+    });
 
-  if (!response.Contents) {
+    return result.resources.map(
+      (resource: {
+        public_id: string;
+        secure_url: string;
+        bytes: number;
+        created_at: string;
+        format: string;
+        resource_type: "image" | "video" | "raw"; // Add resource_type
+      }) => {
+        let contentType: string | undefined;
+        if (
+          resource.resource_type === "image" ||
+          resource.resource_type === "video"
+        ) {
+          contentType = `${resource.resource_type}/${resource.format}`;
+        } else if (resource.resource_type === "raw") {
+          // Cloudinary's 'format' for raw files is just the extension (e.g., 'pdf', 'txt')
+          // We can try to map common ones or default to application/octet-stream
+          const formatMap: { [key: string]: string } = {
+            pdf: "application/pdf",
+            txt: "text/plain",
+            csv: "text/csv",
+            xml: "application/xml",
+            json: "application/json",
+            zip: "application/zip",
+            // Add more as needed
+          };
+          contentType =
+            formatMap[resource.format] || "application/octet-stream";
+        }
+
+        return {
+          key: resource.public_id,
+          url: resource.secure_url,
+          size: resource.bytes || 0,
+          lastModified: new Date(resource.created_at),
+          contentType: contentType,
+        };
+      }
+    );
+  } catch (error) {
+    console.error("[Storage] List files error:", error);
     return [];
   }
-
-  return response.Contents.map((item) => ({
-    key: item.Key || "",
-    url: item.Key || "", // We'll generate presigned URLs separately
-    size: item.Size || 0,
-    lastModified: item.LastModified || new Date(),
-  }));
 }
 
 /**
- * List files with presigned URLs for viewing
+ * List files with URLs for viewing (same as listFiles for Cloudinary since URLs are public)
  */
 export async function listFilesWithUrls(prefix = ""): Promise<FileInfo[]> {
-  const files = await listFiles(prefix);
-
-  // Generate presigned URLs for each file (7 day expiry)
-  const filesWithUrls = await Promise.all(
-    files.map(async (file) => ({
-      ...file,
-      url: await getPresignedDownloadUrl(file.key, 60 * 60 * 24 * 7),
-    }))
-  );
-
-  return filesWithUrls;
+  return listFiles(prefix);
 }
 
 // ==========================================
@@ -162,17 +147,28 @@ export async function getFileMetadata(key: string): Promise<{
   lastModified: Date;
 } | null> {
   try {
-    const command = new HeadObjectCommand({
-      Bucket: BUCKET_NAME,
-      Key: key,
-    });
-
-    const response = await s3Client.send(command);
+    const result = await cloudinary.api.resource(key);
+    let contentType: string;
+    if (result.resource_type === "image" || result.resource_type === "video") {
+      contentType = `${result.resource_type}/${result.format}`;
+    } else if (result.resource_type === "raw") {
+      const formatMap: { [key: string]: string } = {
+        pdf: "application/pdf",
+        txt: "text/plain",
+        csv: "text/csv",
+        xml: "application/xml",
+        json: "application/json",
+        zip: "application/zip",
+      };
+      contentType = formatMap[result.format] || "application/octet-stream";
+    } else {
+      contentType = "application/octet-stream"; // Default fallback
+    }
 
     return {
-      contentType: response.ContentType || "application/octet-stream",
-      size: response.ContentLength || 0,
-      lastModified: response.LastModified || new Date(),
+      contentType: contentType,
+      size: result.bytes || 0,
+      lastModified: new Date(result.created_at),
     };
   } catch {
     return null;
@@ -185,12 +181,7 @@ export async function getFileMetadata(key: string): Promise<{
 
 export async function deleteFile(key: string): Promise<boolean> {
   try {
-    const command = new DeleteObjectCommand({
-      Bucket: BUCKET_NAME,
-      Key: key,
-    });
-
-    await s3Client.send(command);
+    await cloudinary.uploader.destroy(key);
     return true;
   } catch (error) {
     console.error("[Storage] Delete error:", error);
@@ -207,7 +198,7 @@ export async function deleteFile(key: string): Promise<boolean> {
  */
 export function generateFileKey(
   originalName: string,
-  folder = "uploads"
+  folder = "media"
 ): string {
   const timestamp = Date.now();
   const random = Math.random().toString(36).substring(2, 8);
@@ -219,15 +210,20 @@ export function generateFileKey(
 }
 
 /**
- * Check if bucket is configured
+ * Check if Cloudinary is configured
  */
 export function isBucketConfigured(): boolean {
-  return Boolean(BUCKET_NAME && ACCESS_KEY && SECRET_KEY);
+  return Boolean(
+    env.cloudinaryCloudName && env.cloudinaryApiKey && env.cloudinaryApiSecret
+  );
 }
 
 /**
- * Get bucket name (for debugging)
+ * Get cloud name (for debugging)
  */
 export function getBucketName(): string {
-  return BUCKET_NAME;
+  return env.cloudinaryCloudName || "";
 }
+
+// Legacy exports for backwards compatibility
+export { cloudinary as s3Client };

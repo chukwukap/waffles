@@ -1,10 +1,26 @@
+"use client";
+
 import { ArrowRightIcon } from "@/components/icons";
 import React from "react";
+import { motion } from "framer-motion";
 
 const InviteFriendsButton = ({ onInvite }: { onInvite: () => void }) => {
   return (
-    <div
-      className="relative flex items-center justify-between cursor-pointer group transition-all duration-300 ease-out hover:-translate-y-0.5 active:scale-[0.98] hover:shadow-[0_8px_24px_rgba(255,201,49,0.25)] w-full max-w-lg"
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{
+        type: "spring",
+        stiffness: 260,
+        damping: 20,
+        delay: 0.2
+      }}
+      whileHover={{
+        y: -4,
+        boxShadow: "0 12px 28px rgba(255,201,49,0.3)"
+      }}
+      whileTap={{ scale: 0.98 }}
+      className="relative flex items-center justify-between cursor-pointer group w-full max-w-lg overflow-hidden"
       onClick={onInvite}
       style={{
         height: "91px",
@@ -17,9 +33,12 @@ const InviteFriendsButton = ({ onInvite }: { onInvite: () => void }) => {
         border: "1px solid rgba(255, 255, 255, 0.38)",
       }}
     >
+      {/* Shine effect overlay */}
+      <div className="absolute inset-0 z-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[linear-gradient(110deg,transparent_20%,rgba(255,255,255,0.15)_50%,transparent_80%)] bg-size-[200%_100%] animate-shimmer" />
+
       {/* Left Content */}
       <div
-        className="flex flex-col justify-center items-start h-full transition-opacity duration-300 group-hover:opacity-100"
+        className="relative z-10 flex flex-col justify-center items-start h-full"
         style={{
           flexGrow: 1,
         }}
@@ -36,7 +55,7 @@ const InviteFriendsButton = ({ onInvite }: { onInvite: () => void }) => {
         </h3>
 
         <p
-          className="font-display text-white group-hover:text-white transition-colors"
+          className="font-display text-white transition-colors"
           style={{
             fontSize: "14px",
             fontWeight: 500,
@@ -52,31 +71,41 @@ const InviteFriendsButton = ({ onInvite }: { onInvite: () => void }) => {
 
       {/* Right Content: Arrow Button */}
       <div
-        className="flex flex-col justify-center items-start"
+        className="relative z-10 flex flex-col justify-center items-start"
         style={{
           gap: "4px",
         }}
       >
-        <div
-          className="flex items-center justify-center rounded-full transition-all duration-300 group-hover:bg-white/30 group-hover:scale-105 group-active:scale-95"
+        <motion.div
+          className="flex items-center justify-center rounded-full bg-white/20"
+          whileHover={{
+            backgroundColor: "rgba(255, 255, 255, 0.4)",
+            scale: 1.1
+          }}
           style={{
             width: "34px",
             height: "34px",
-            backgroundColor: "rgba(255, 255, 255, 0.2)",
             borderRadius: "900px",
             padding: "8px",
           }}
         >
-          <ArrowRightIcon
-            className="text-white transition-transform duration-300 group-hover:translate-x-0.5"
-            style={{
-              width: "18px",
-              height: "18px",
+          <motion.div
+            variants={{
+              hover: { x: 3 }
             }}
-          />
-        </div>
+            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+          >
+            <ArrowRightIcon
+              className="text-white"
+              style={{
+                width: "18px",
+                height: "18px",
+              }}
+            />
+          </motion.div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

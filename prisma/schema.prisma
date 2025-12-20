@@ -282,7 +282,7 @@ model GameEntry {
   userId Int
 
   // -- PAYMENT --
-  txHash     String?   @db.VarChar(66)
+  txHash     String?   @unique @db.VarChar(66)
   paidAmount Float? // Tier price paid
   paidAt     DateTime?
 

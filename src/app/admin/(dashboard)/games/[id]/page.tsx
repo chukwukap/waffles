@@ -61,6 +61,7 @@ export default async function GameDetailPage({
         ended: false,
         settled: false,
         merkleRoot: undefined as string | undefined,
+        claimCount: 0,
     };
 
     try {
@@ -71,6 +72,7 @@ export default async function GameDetailPage({
                 ticketCount: bigint;
                 merkleRoot: `0x${string}`;
                 settledAt: bigint;
+                claimCount: bigint;
                 ended: boolean;
             };
 
@@ -83,6 +85,7 @@ export default async function GameDetailPage({
                         onChainGame.merkleRoot !== "0x0000000000000000000000000000000000000000000000000000000000000000"
                             ? onChainGame.merkleRoot
                             : undefined,
+                    claimCount: Number(onChainGame.claimCount),
                 };
             }
         }

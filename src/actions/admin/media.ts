@@ -5,7 +5,6 @@ import {
   deleteFile,
   isBucketConfigured,
   getFileMetadata,
-  getPresignedDownloadUrl,
 } from "@/lib/storage";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { revalidatePath } from "next/cache";
@@ -23,7 +22,7 @@ export type MediaActionResult =
   | { success: false; error: string };
 
 /**
- * List all uploaded media files from Railway Bucket
+ * List all uploaded media files from Cloudinary
  */
 export async function listMediaAction(): Promise<MediaActionResult> {
   const authResult = await requireAdminSession();
@@ -36,7 +35,6 @@ export async function listMediaAction(): Promise<MediaActionResult> {
   }
 
   try {
-    // Use listFilesWithUrls to get presigned URLs
     const allFiles = await listFilesWithUrls();
 
     const files: MediaFile[] = await Promise.all(
@@ -60,8 +58,7 @@ export async function listMediaAction(): Promise<MediaActionResult> {
 }
 
 /**
- * Delete a media file from Railway Bucket
- * Pass the file key (pathname), not the presigned URL
+ * Delete a media file from Cloudinary
  */
 export async function deleteMediaAction(
   pathname: string
@@ -76,7 +73,6 @@ export async function deleteMediaAction(
   }
 
   try {
-    // pathname is the file key directly (e.g., "media/1766221974734-p4gw4g-football.svg")
     if (!pathname) {
       return { success: false, error: "Invalid file path" };
     }
@@ -95,7 +91,8 @@ export async function deleteMediaAction(
 }
 
 /**
- * Get a presigned URL for a specific file
+ * Get a URL for a specific file
+ * Cloudinary URLs are already public, no presigning needed
  */
 export async function getMediaUrlAction(
   pathname: string
@@ -110,8 +107,14 @@ export async function getMediaUrlAction(
   }
 
   try {
-    const url = await getPresignedDownloadUrl(pathname, 60 * 60 * 24 * 7); // 7 days
-    return { success: true, url };
+    const files = await listFilesWithUrls();
+    const file = files.find((f) => f.key === pathname);
+
+    if (!file) {
+      return { success: false, error: "File not found" };
+    }
+
+    return { success: true, url: file.url };
   } catch (error) {
     console.error("Get media URL error:", error);
     return { success: false, error: "Failed to get media URL" };

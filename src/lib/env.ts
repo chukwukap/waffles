@@ -22,17 +22,16 @@ const envSchema = z.object({
     : z.string().optional(),
   NEXT_PUBLIC_PARTYKIT_HOST: z.string().optional(),
 
-  // Railway Bucket (S3-compatible storage)
-  RAILWAY_BUCKET_NAME: isServer
-    ? z.string().min(1, "RAILWAY_BUCKET_NAME is required")
+  // Cloudinary (media storage with public URLs)
+  CLOUDINARY_CLOUD_NAME: isServer
+    ? z.string().min(1, "CLOUDINARY_CLOUD_NAME is required")
     : z.string().optional(),
-  RAILWAY_BUCKET_ACCESS_KEY: isServer
-    ? z.string().min(1, "RAILWAY_BUCKET_ACCESS_KEY is required")
+  CLOUDINARY_API_KEY: isServer
+    ? z.string().min(1, "CLOUDINARY_API_KEY is required")
     : z.string().optional(),
-  RAILWAY_BUCKET_SECRET_KEY: isServer
-    ? z.string().min(1, "RAILWAY_BUCKET_SECRET_KEY is required")
+  CLOUDINARY_API_SECRET: isServer
+    ? z.string().min(1, "CLOUDINARY_API_SECRET is required")
     : z.string().optional(),
-  RAILWAY_BUCKET_ENDPOINT: z.string().default("https://storage.railway.app"),
 
   // Blockchain
   NEXT_PUBLIC_CHAIN_NETWORK: z.enum(["mainnet", "testnet"]).default("testnet"),
@@ -74,10 +73,9 @@ const getEnv = () => {
     SETTLEMENT_PRIVATE_KEY: process.env.SETTLEMENT_PRIVATE_KEY,
     PARTYKIT_SECRET: process.env.PARTYKIT_SECRET,
     NEXT_PUBLIC_PARTYKIT_HOST: process.env.NEXT_PUBLIC_PARTYKIT_HOST,
-    RAILWAY_BUCKET_NAME: process.env.RAILWAY_BUCKET_NAME,
-    RAILWAY_BUCKET_ACCESS_KEY: process.env.RAILWAY_BUCKET_ACCESS_KEY,
-    RAILWAY_BUCKET_SECRET_KEY: process.env.RAILWAY_BUCKET_SECRET_KEY,
-    RAILWAY_BUCKET_ENDPOINT: process.env.RAILWAY_BUCKET_ENDPOINT,
+    CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
+    CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
+    CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
     NEXT_PUBLIC_CHAIN_NETWORK: process.env.NEXT_PUBLIC_CHAIN_NETWORK,
     NEXT_PUBLIC_ONCHAINKIT_API_KEY: process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY,
     NEXT_PUBLIC_LEADERBOARD_PAGE_SIZE:
@@ -119,10 +117,9 @@ const getEnv = () => {
         settlementPrivateKey: undefined,
         partykitSecret: "",
         partykitHost: "",
-        railwayBucketName: "",
-        railwayBucketAccessKey: "",
-        railwayBucketSecretKey: "",
-        railwayBucketEndpoint: "https://storage.railway.app",
+        cloudinaryCloudName: "",
+        cloudinaryApiKey: "",
+        cloudinaryApiSecret: "",
         chainNetwork: "testnet" as const,
         nextPublicOnchainkitApiKey: "",
         nextPublicLeaderboardPageSize: 25,
@@ -163,11 +160,10 @@ const getEnv = () => {
     // PartyKit
     partykitSecret: data.PARTYKIT_SECRET,
     partykitHost: data.NEXT_PUBLIC_PARTYKIT_HOST,
-    // Railway Bucket (S3-compatible storage)
-    railwayBucketName: data.RAILWAY_BUCKET_NAME,
-    railwayBucketAccessKey: data.RAILWAY_BUCKET_ACCESS_KEY,
-    railwayBucketSecretKey: data.RAILWAY_BUCKET_SECRET_KEY,
-    railwayBucketEndpoint: data.RAILWAY_BUCKET_ENDPOINT,
+    // Cloudinary (media storage with public URLs)
+    cloudinaryCloudName: data.CLOUDINARY_CLOUD_NAME,
+    cloudinaryApiKey: data.CLOUDINARY_API_KEY,
+    cloudinaryApiSecret: data.CLOUDINARY_API_SECRET,
     // Blockchain
     chainNetwork: data.NEXT_PUBLIC_CHAIN_NETWORK,
     // Client-side
