@@ -82,6 +82,7 @@ export function Top3({ entries, currentUserId }: Top3Props) {
               "p-(--pad) bg-clip-padding",
               "flex flex-col gap-[calc(var(--pad)*0.8)]",
               "transition-all duration-200 ease-out",
+              "hover:z-20", // Elevate z-index on hover to prevent overlap
               styles.bg,
               styles.border,
               isCurrentUser &&
