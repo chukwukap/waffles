@@ -17,7 +17,7 @@ export default async function MediaLibraryPage() {
                 <div className="bg-white/5 border border-white/8 rounded-2xl backdrop-blur-lg p-6">
                     <p className="text-red-400 font-medium">{result.error}</p>
                     <p className="text-sm text-red-400/70 mt-2">
-                        Make sure <code className="text-xs bg-red-500/20 px-1.5 py-0.5 rounded">RAILWAY_BUCKET_NAME</code>, <code className="text-xs bg-red-500/20 px-1.5 py-0.5 rounded">RAILWAY_BUCKET_ACCESS_KEY</code>, and <code className="text-xs bg-red-500/20 px-1.5 py-0.5 rounded">RAILWAY_BUCKET_SECRET_KEY</code> are configured in your environment variables.
+                        Make sure <code className="text-xs bg-red-500/20 px-1.5 py-0.5 rounded">CLOUDINARY_CLOUD_NAME</code>, <code className="text-xs bg-red-500/20 px-1.5 py-0.5 rounded">CLOUDINARY_API_KEY</code>, and <code className="text-xs bg-red-500/20 px-1.5 py-0.5 rounded">CLOUDINARY_API_SECRET</code> are configured in your environment variables.
                     </p>
                 </div>
             </div>

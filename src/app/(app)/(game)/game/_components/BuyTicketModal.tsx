@@ -181,7 +181,7 @@ export function BuyTicketModal({
           {isPurchased ? (
             <SuccessView
               gameId={gameId}
-              fid={context?.user?.fid}
+              fid={context?.user?.fid ?? 0}
               displayUsername={displayUsername}
               displayAvatar={displayAvatar}
               prizePool={prizePool}
