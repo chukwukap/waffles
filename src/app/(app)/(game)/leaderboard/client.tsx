@@ -225,7 +225,7 @@ export default function LeaderboardClient({
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 260, damping: 20 }}
-        className="sticky top-0 z-10 -mx-3 px-3 pt-8 pb-4 transition-[background] duration-200"
+        className="sticky top-0 z-10 -mx-3 px-3 pt-8 pb-6 transition-[background] duration-200"
         style={{
           background: isSticky
             ? "linear-gradient(to bottom, #0A0A0C 0%, #0A0A0C 70%, transparent 100%)"
@@ -246,7 +246,7 @@ export default function LeaderboardClient({
       </motion.div>
 
       {/* LIST SECTION */}
-      <section className="pb-24 pt-1 space-y-4">
+      <section className="pb-24 pt-4 space-y-4">
         {/* Top 3 - only shown when at least 3 entries */}
         <AnimatePresence mode="wait">
           {showTop3 && (
@@ -322,7 +322,7 @@ export default function LeaderboardClient({
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex items-center justify-center py-6 px-4 border border-white/10 rounded-2xl white/5"
+              className="flex items-center justify-center py-6 px-4 border border-white/10 rounded-2xl bg-white/5"
             >
               <p className="font-display text-sm text-white/40 text-center">
                 No rankings yet
