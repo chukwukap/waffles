@@ -79,7 +79,7 @@ async function main() {
         mediaUrl: q.mediaUrl,
         options: q.options,
         correctIndex: getCorrectIndex(q.correctAnswer, q.options),
-        durationSec: defaultGameConfig.roundDurationSec,
+        durationSec: defaultGameConfig.questionDurationSec,
       })),
     });
 

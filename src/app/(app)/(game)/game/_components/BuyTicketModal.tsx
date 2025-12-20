@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAccount, useConnect } from "wagmi";
+import { useAccount } from "wagmi";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
 import {
@@ -40,7 +40,6 @@ export function BuyTicketModal({
 }: BuyTicketModalProps) {
   const { context } = useMiniKit();
   const { isConnected } = useAccount();
-  const { connect, connectors } = useConnect();
   const [selectedTier, setSelectedTier] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -64,12 +63,6 @@ export function BuyTicketModal({
     reset,
   } = useTicketPurchase(gameId, onchainId, selectedPrice, onPurchaseSuccess);
 
-  // Auto-connect wallet when modal opens
-  useEffect(() => {
-    if (isOpen && !isConnected && connectors[0]) {
-      connect({ connector: connectors[0] });
-    }
-  }, [isOpen, isConnected, connect, connectors]);
 
   // Handle modal entrance animation
   useEffect(() => {

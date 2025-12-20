@@ -225,7 +225,7 @@ export default function LeaderboardClient({
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 260, damping: 20 }}
-        className="sticky top-0 z-10 -mx-3 px-3 pt-8 pb-6 transition-[background] duration-200"
+        className="sticky top-0 z-30 -mx-3 px-3 pt-8 pb-6 transition-[background] duration-200"
         style={{
           background: isSticky
             ? "linear-gradient(to bottom, #0A0A0C 0%, #0A0A0C 70%, transparent 100%)"

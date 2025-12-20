@@ -193,6 +193,7 @@ export const gameQuestions = rawGameQuestions;
  */
 export const defaultGameConfig = {
   entryFee: 50, // Maps to Game.entryFee
+  questionDurationSec: 10, // Time per question in seconds
   roundDurationSec: 15, // Maps to Game.roundBreakSec (break time between rounds)
   maxPlayers: 200, // Maps to Game.maxPlayers
   prizePool: 0, // Maps to Game.prizePool
