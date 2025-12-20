@@ -32,12 +32,12 @@ export const SuccessCard = ({
   const shareTicket = useCallback(async () => {
     if (!ticket) return;
     try {
-      const message = `Just secured my waffle ticket  🧇`;
+      const shareUrl = `${env.rootUrl}/game`;
+      const ogImageUrl = `${env.rootUrl}/api/og/share/joined?gameId=${gameId}&fid=${fid}`;
+
       const result = await composeCastAsync({
-        text: message,
-        embeds: [
-          `${env.rootUrl}/game/${gameId}/ticket?ticketCode=${ticket.code}`,
-        ].filter(Boolean) as [],
+        text: `I just joined the next Waffles game! 🧇\n\nTheme: ${theme}\nPrize Pool: $${prizePool.toLocaleString()}\n\nJoin me!`,
+        embeds: [shareUrl, ogImageUrl],
       });
 
       if (result?.cast) {
@@ -48,7 +48,7 @@ export const SuccessCard = ({
     } catch (error) {
       console.error("Error sharing cast:", error);
     }
-  }, [composeCastAsync, fid, gameId, ticket]);
+  }, [composeCastAsync, gameId, fid, theme, prizePool, ticket]);
 
   return (
     <div className="flex-1 flex flex-col items-center gap-3 justify-center overflow-y-auto pt-1">

@@ -1,9 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useComposeCast } from "@coinbase/onchainkit/minikit";
+import { env } from "@/lib/env";
+import { notify } from "@/components/ui/Toaster";
 
 interface SuccessViewProps {
+    gameId: number;
+    fid: number;
     displayUsername: string;
     displayAvatar?: string;
     prizePool: number;
@@ -13,6 +18,8 @@ interface SuccessViewProps {
 }
 
 export function SuccessView({
+    gameId,
+    fid,
     displayUsername,
     displayAvatar,
     prizePool,
@@ -23,6 +30,34 @@ export function SuccessView({
     const [isVisible, setIsVisible] = useState(false);
     const [showCard, setShowCard] = useState(false);
     const [showButtons, setShowButtons] = useState(false);
+    const [isSharing, setIsSharing] = useState(false);
+
+    const { composeCastAsync } = useComposeCast();
+
+    // Share handler
+    const handleShare = useCallback(async () => {
+        if (isSharing) return;
+        setIsSharing(true);
+
+        try {
+            const shareUrl = `${env.rootUrl}/game`;
+            const ogImageUrl = `${env.rootUrl}/api/og/share/joined?gameId=${gameId}&fid=${fid}`;
+
+            const result = await composeCastAsync({
+                text: `I just joined the next Waffles game! 🧇\n\nTheme: ${theme}\nPrize Pool: $${prizePool.toLocaleString()}\n\nJoin me!`,
+                embeds: [shareUrl, ogImageUrl],
+            });
+
+            if (result?.cast) {
+                notify.success("Shared to Farcaster! 🎉");
+            }
+        } catch (error) {
+            console.error("Share error:", error);
+            notify.error("Failed to share");
+        } finally {
+            setIsSharing(false);
+        }
+    }, [composeCastAsync, gameId, fid, theme, prizePool, isSharing]);
 
     // Staggered entrance animations
     useEffect(() => {
@@ -308,9 +343,8 @@ export function SuccessView({
                     onMouseUp={(e) => {
                         e.currentTarget.style.transform = "translateY(-2px) scale(1)";
                     }}
-                    onClick={() => {
-                        // TODO: Implement share functionality
-                    }}
+                    disabled={isSharing}
+                    onClick={handleShare}
                 >
                     <span
                         className="font-body text-center w-full"
