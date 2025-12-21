@@ -127,7 +127,7 @@ export default async function InviteCodesPage({
                                 <tr>
                                     <td colSpan={6} className="px-6 py-16 text-center">
                                         <div className="flex flex-col items-center justify-center">
-                                            <div className="w-16 h-16 bg-gradient-to-br from-[#FFC931]/20 to-[#FFC931]/5 rounded-2xl flex items-center justify-center mb-4">
+                                            <div className="w-16 h-16 bg-linear-to-br from-[#FFC931]/20 to-[#FFC931]/5 rounded-2xl flex items-center justify-center mb-4">
                                                 <span className="text-3xl">🎟️</span>
                                             </div>
                                             <p className="text-lg font-medium text-white mb-1 font-display">

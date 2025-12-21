@@ -323,7 +323,7 @@ export function SettlementPanel({
       {/* End Game Confirmation Modal */}
       {showEndConfirm && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="relative bg-gradient-to-br from-[#0F0F15] to-[#0a0a0d] border border-white/10 rounded-3xl p-8 max-w-md w-full shadow-2xl overflow-hidden">
+          <div className="relative bg-linear-to-br from-[#0F0F15] to-[#0a0a0d] border border-white/10 rounded-3xl p-8 max-w-md w-full shadow-2xl overflow-hidden">
             {/* Background glow */}
             <div className="absolute top-0 right-0 w-40 h-40 bg-[#FFC931]/10 rounded-full blur-3xl" />
 
@@ -342,7 +342,7 @@ export function SettlementPanel({
               </div>
 
               {/* Info */}
-              <div className="p-4 bg-white/[0.03] rounded-2xl border border-white/6 space-y-3">
+              <div className="p-4 bg-white/3 rounded-2xl border border-white/6 space-y-3">
                 <p className="text-white/60 text-sm">This will:</p>
                 <div className="space-y-2">
                   <div className="flex items-center gap-3 text-sm">
@@ -370,7 +370,7 @@ export function SettlementPanel({
                   value={endConfirmText}
                   onChange={(e) => setEndConfirmText(e.target.value.toUpperCase())}
                   placeholder="END"
-                  className="w-full px-4 py-3.5 bg-white/[0.03] border border-white/10 rounded-xl text-white placeholder:text-white/20 focus:outline-none focus:border-[#FFC931]/50 focus:ring-2 focus:ring-[#FFC931]/10 font-mono text-center text-xl tracking-widest transition-all"
+                  className="w-full px-4 py-3.5 bg-white/3 border border-white/10 rounded-xl text-white placeholder:text-white/20 focus:outline-none focus:border-[#FFC931]/50 focus:ring-2 focus:ring-[#FFC931]/10 font-mono text-center text-xl tracking-widest transition-all"
                 />
               </div>
 
@@ -409,7 +409,7 @@ export function SettlementPanel({
       {/* Settle Confirmation Modal */}
       {showSettleConfirm && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="relative bg-gradient-to-br from-[#0F0F15] to-[#0a0a0d] border border-white/10 rounded-3xl p-8 max-w-md w-full shadow-2xl overflow-hidden">
+          <div className="relative bg-linear-to-br from-[#0F0F15] to-[#0a0a0d] border border-white/10 rounded-3xl p-8 max-w-md w-full shadow-2xl overflow-hidden">
             {/* Background glow */}
             <div className="absolute top-0 right-0 w-40 h-40 bg-[#14B985]/10 rounded-full blur-3xl" />
 

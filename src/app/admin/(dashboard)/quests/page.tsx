@@ -85,23 +85,23 @@ export default async function AdminQuestsPage() {
 
             {/* Stats */}
             <div className="grid grid-cols-4 gap-4">
-                <div className="bg-gradient-to-br from-white/6 to-white/2 rounded-2xl p-5 border border-white/8">
+                <div className="bg-linear-to-br from-white/6 to-white/2 rounded-2xl p-5 border border-white/8">
                     <p className="text-white/50 text-sm">Total Quests</p>
                     <p className="text-2xl font-bold text-white font-display">{quests.length}</p>
                 </div>
-                <div className="bg-gradient-to-br from-white/6 to-white/2 rounded-2xl p-5 border border-white/8">
+                <div className="bg-linear-to-br from-white/6 to-white/2 rounded-2xl p-5 border border-white/8">
                     <p className="text-white/50 text-sm">Active</p>
                     <p className="text-2xl font-bold text-[#14B985] font-display">
                         {quests.filter(q => q.isActive).length}
                     </p>
                 </div>
-                <div className="bg-gradient-to-br from-white/6 to-white/2 rounded-2xl p-5 border border-white/8">
+                <div className="bg-linear-to-br from-white/6 to-white/2 rounded-2xl p-5 border border-white/8">
                     <p className="text-white/50 text-sm">Total Completions</p>
                     <p className="text-2xl font-bold text-white font-display">
                         {quests.reduce((sum, q) => sum + q._count.completions, 0)}
                     </p>
                 </div>
-                <div className="bg-gradient-to-br from-white/6 to-white/2 rounded-2xl p-5 border border-white/8">
+                <div className="bg-linear-to-br from-white/6 to-white/2 rounded-2xl p-5 border border-white/8">
                     <p className="text-white/50 text-sm">Total Points Available</p>
                     <p className="text-2xl font-bold text-[#FFC931] font-display">
                         {quests.filter(q => q.isActive).reduce((sum, q) => sum + q.points, 0)}
@@ -110,7 +110,7 @@ export default async function AdminQuestsPage() {
             </div>
 
             {/* Quests Table */}
-            <div className="bg-gradient-to-br from-white/6 to-white/2 rounded-2xl border border-white/8 overflow-hidden">
+            <div className="bg-linear-to-br from-white/6 to-white/2 rounded-2xl border border-white/8 overflow-hidden">
                 <table className="w-full">
                     <thead className="bg-white/3 border-b border-white/6">
                         <tr>

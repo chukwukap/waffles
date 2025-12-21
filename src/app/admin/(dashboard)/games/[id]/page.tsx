@@ -53,7 +53,7 @@ function StatCard({
     };
 
     return (
-        <div className="group relative overflow-hidden bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/8 rounded-2xl p-5 hover:border-white/15 transition-all duration-300">
+        <div className="group relative overflow-hidden bg-linear-to-br from-white/6 to-white/2 border border-white/8 rounded-2xl p-5 hover:border-white/15 transition-all duration-300">
             {/* Subtle glow on hover */}
             <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${iconBg[color]} blur-3xl`} />
 
@@ -256,9 +256,9 @@ export default async function GameDetailPage({
             </div>
 
             {/* Hero Section */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-white/[0.06] to-transparent border border-white/8 rounded-3xl p-6 sm:p-8">
+            <div className="relative overflow-hidden bg-linear-to-br from-white/6 to-transparent border border-white/8 rounded-3xl p-6 sm:p-8">
                 {/* Background decoration */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-[#FFC931]/10 to-transparent rounded-full blur-3xl" />
+                <div className="absolute top-0 right-0 w-64 h-64 bg-linear-to-bl from-[#FFC931]/10 to-transparent rounded-full blur-3xl" />
 
                 <div className="relative flex flex-col sm:flex-row sm:items-start justify-between gap-6">
                     <div className="space-y-4">
@@ -334,7 +334,7 @@ export default async function GameDetailPage({
             </div>
 
             {/* Game Actions */}
-            <div className="bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/8 rounded-2xl p-6">
+            <div className="bg-linear-to-br from-white/6 to-white/2 border border-white/8 rounded-2xl p-6">
                 <h2 className="text-lg font-bold text-white font-display mb-4 flex items-center gap-2">
                     <span className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
                         ⚡
@@ -380,7 +380,7 @@ export default async function GameDetailPage({
             {/* Two Column Layout for Results & Settlement */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Game Results */}
-                <div className="bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/8 rounded-2xl p-6">
+                <div className="bg-linear-to-br from-white/6 to-white/2 border border-white/8 rounded-2xl p-6">
                     {phase === "ENDED" ? (
                         game.entries.length > 0 ? (
                             <GameResults
@@ -418,7 +418,7 @@ export default async function GameDetailPage({
                 </div>
 
                 {/* Settlement Panel */}
-                <div className="bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/8 rounded-2xl p-6">
+                <div className="bg-linear-to-br from-white/6 to-white/2 border border-white/8 rounded-2xl p-6">
                     <SettlementPanel
                         gameId={game.id}
                         gameStatus={phase}
@@ -429,7 +429,7 @@ export default async function GameDetailPage({
 
             {/* On-Chain ID (if exists) */}
             {game.onchainId && (
-                <div className="bg-white/[0.03] border border-white/6 rounded-xl p-4">
+                <div className="bg-white/3 border border-white/6 rounded-xl p-4">
                     <p className="text-white/40 text-xs mb-1">On-Chain Game ID</p>
                     <code className="text-xs text-[#00CFF2]/70 break-all font-mono">
                         {game.onchainId}

@@ -237,7 +237,7 @@ export function BulkGenerateButton() {
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
                             className="fixed inset-0 flex items-center justify-center z-50 p-4"
                         >
-                            <div className="bg-gradient-to-br from-[#0F0F15] to-[#0a0a0d] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl">
+                            <div className="bg-linear-to-br from-[#0F0F15] to-[#0a0a0d] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl">
                                 <div className="flex items-center justify-between mb-6">
                                     <h3 className="text-xl font-bold text-white font-display">
                                         Bulk Generate Codes

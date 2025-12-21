@@ -61,7 +61,7 @@ export default function GameErrorPage({ error, reset }: ErrorPageProps) {
               max-h-[200px] overflow-auto
             "
           >
-            <p className="break-words">{error.message}</p>
+            <p className="wrap-break-word">{error.message}</p>
             {error.digest && (
               <p className="mt-2 text-white/40">Digest: {error.digest}</p>
             )}
