@@ -116,7 +116,7 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
               damping: 30,
               stiffness: 300,
             }}
-            className="fixed bottom-0 left-0 right-0 z-50 flex flex-col h-[calc(85vh-138px)] rounded-t-[20px]"
+            className="fixed bottom-0 left-0 right-0 z-50 flex flex-col max-h-[60dvh] rounded-t-[20px]"
             style={{
               background: "linear-gradient(180deg, #1E1E1E 0%, #000000 100%)",
             }}
@@ -182,7 +182,7 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15, ...springs.gentle }}
-              className="shrink-0 px-4 py-3 border-t border-white/10"
+              className="shrink-0 px-4 py-3 pb-[max(12px,env(safe-area-inset-bottom))] border-t border-white/10"
             >
               <motion.form
                 onSubmit={handleSubmit}
