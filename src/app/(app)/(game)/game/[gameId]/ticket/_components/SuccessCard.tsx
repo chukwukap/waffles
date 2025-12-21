@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { useCallback } from "react";
 import { env } from "@/lib/env";
 import { useComposeCast } from "@coinbase/onchainkit/minikit";
+import { buildJoinedOGUrl } from "@/lib/cloudinary-og";
 
 // Simplified ticket type for client-side usage
 interface TicketInfo {
@@ -33,11 +34,15 @@ export const SuccessCard = ({
     if (!ticket) return;
     try {
       const shareUrl = `${env.rootUrl}/game`;
-      const ogImageUrl = `${env.rootUrl}/api/og/share/joined?gameId=${gameId}&fid=${fid}`;
+      const ogImageUrl = buildJoinedOGUrl({
+        username: `Player #${fid}`,
+        prizePool,
+        theme,
+      });
 
       const result = await composeCastAsync({
         text: `I just joined the next Waffles game! 🧇\n\nTheme: ${theme}\nPrize Pool: $${prizePool.toLocaleString()}\n\nJoin me!`,
-        embeds: [shareUrl, ogImageUrl],
+        embeds: ogImageUrl ? [shareUrl, ogImageUrl] : [shareUrl],
       });
 
       if (result?.cast) {
@@ -48,7 +53,7 @@ export const SuccessCard = ({
     } catch (error) {
       console.error("Error sharing cast:", error);
     }
-  }, [composeCastAsync, gameId, fid, theme, prizePool, ticket]);
+  }, [composeCastAsync, fid, theme, prizePool, ticket]);
 
   return (
     <div className="flex-1 flex flex-col items-center gap-3 justify-center overflow-y-auto pt-1">

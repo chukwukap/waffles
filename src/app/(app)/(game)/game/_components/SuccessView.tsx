@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useComposeCast } from "@coinbase/onchainkit/minikit";
 import { env } from "@/lib/env";
 import { notify } from "@/components/ui/Toaster";
+import { buildJoinedOGUrl } from "@/lib/cloudinary-og";
 
 interface SuccessViewProps {
     gameId: number;
@@ -41,11 +42,15 @@ export function SuccessView({
 
         try {
             const shareUrl = `${env.rootUrl}/game`;
-            const ogImageUrl = `${env.rootUrl}/api/og/share/joined?gameId=${gameId}&fid=${fid}`;
+            const ogImageUrl = buildJoinedOGUrl({
+                username: displayUsername,
+                prizePool,
+                theme,
+            });
 
             const result = await composeCastAsync({
                 text: `I just joined the next Waffles game! 🧇\n\nTheme: ${theme}\nPrize Pool: $${prizePool.toLocaleString()}\n\nJoin me!`,
-                embeds: [shareUrl, ogImageUrl],
+                embeds: ogImageUrl ? [shareUrl, ogImageUrl] : [shareUrl],
             });
 
             if (result?.cast) {
@@ -57,7 +62,7 @@ export function SuccessView({
         } finally {
             setIsSharing(false);
         }
-    }, [composeCastAsync, gameId, fid, theme, prizePool, isSharing]);
+    }, [composeCastAsync, displayUsername, theme, prizePool, isSharing]);
 
     // Staggered entrance animations
     useEffect(() => {

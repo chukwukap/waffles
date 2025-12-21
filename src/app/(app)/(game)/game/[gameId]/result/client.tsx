@@ -148,11 +148,17 @@ export default function ScorePageClient({
           ? `Just won $${userScore.winnings.toLocaleString()} on Waffles! 🧇🏆`
           : `Just scored ${userScore.score} points on Waffles! 🧇`;
 
-      const shareUrl = `${env.rootUrl}/api/og/share/prize?gameId=${gameId}&fid=${userInfo.fid}`;
+      // Use Cloudinary URL for OG image
+      const { buildPrizeOGUrl } = await import("@/lib/cloudinary-og");
+      const ogImageUrl = buildPrizeOGUrl({
+        username: userInfo.username,
+        rank: userScore.rank,
+        prizeAmount: userScore.winnings,
+      });
 
       const result = await composeCastAsync({
         text: prizeText,
-        embeds: [shareUrl],
+        embeds: ogImageUrl ? [ogImageUrl] : [`${env.rootUrl}/game`],
       });
 
       if (result?.cast) {
@@ -167,7 +173,7 @@ export default function ScorePageClient({
       console.error("[Share] Error:", error);
       notify.error("Failed to share");
     }
-  }, [composeCastAsync, gameId, userInfo, userScore]);
+  }, [composeCastAsync, userInfo, userScore]);
 
   // ==========================================
   // CLAIM LOGIC

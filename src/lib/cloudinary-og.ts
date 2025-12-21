@@ -1,58 +1,47 @@
 /**
  * Cloudinary OG Image Generation
  *
- * High-quality dynamic Open Graph images using Cloudinary transformations.
- * Works WITHOUT pre-uploaded templates by using Cloudinary's base transformations.
+ * High-quality dynamic Open Graph images using Cloudinary URL transformations.
+ * No API routes needed - just construct the URL and use it directly in metadata.
+ *
+ * SETUP REQUIRED:
+ * 1. Upload a base template image (1200x630, dark background) to Cloudinary
+ * 2. Place it at: waffles/og-templates/base
+ * 3. Update CLOUD_NAME below with your Cloudinary cloud name
  */
 
 import { env } from "./env";
 
 // ==========================================
+// CONFIGURATION
+// ==========================================
+
+// Base template path in Cloudinary (upload a 1200x630 dark PNG here)
+const BASE_TEMPLATE = "waffles/og-templates/base";
+
+// ==========================================
 // TYPES
 // ==========================================
 
-export type OGTemplateType = "joined" | "prize" | "game";
-
 export interface JoinedOGParams {
-  template: "joined";
   username: string;
-  pfpUrl?: string;
   prizePool: number;
   theme: string;
-  themeIconUrl?: string;
   othersCount?: number;
 }
 
 export interface PrizeOGParams {
-  template: "prize";
   username: string;
-  pfpUrl?: string;
   rank: number;
   prizeAmount: number;
 }
 
-export interface GameOGParams {
-  template: "game";
-  title: string;
-  theme: string;
-  prizePool: number;
-  playerCount: number;
-  coverUrl?: string;
+export interface WaitlistOGParams {
+  rank: number;
 }
 
-export type OGImageParams = JoinedOGParams | PrizeOGParams | GameOGParams;
-
 // ==========================================
-// FONT CONFIG (Google Fonts available in Cloudinary)
-// ==========================================
-
-const FONTS = {
-  display: "Roboto%20Mono", // URL-encoded
-  body: "Roboto",
-} as const;
-
-// ==========================================
-// COLORS
+// COLORS (without # prefix for Cloudinary)
 // ==========================================
 
 const COLORS = {
@@ -60,292 +49,194 @@ const COLORS = {
   gold: "FFC931",
   gray: "99A0AE",
   green: "05FF8F",
-  darkBg: "0F0F15",
-  cardBg: "1E1E1E",
 } as const;
 
 // ==========================================
-// BUILD DYNAMIC OG IMAGE URL
+// URL BUILDERS
 // ==========================================
 
 /**
- * Build a Cloudinary URL for a dynamic OG image
- * Uses text overlays and image fetching for dynamic content
- * Works WITHOUT pre-uploaded templates
+ * Get the Cloudinary cloud name from env
  */
-export function buildOGImageUrl(params: OGImageParams): string {
-  const cloudName = env.cloudinaryCloudName;
-
-  if (!cloudName) {
-    console.error("[OG] Cloudinary not configured");
-    return "";
-  }
-
-  switch (params.template) {
-    case "joined":
-      return buildJoinedOGUrl(cloudName, params);
-    case "prize":
-      return buildPrizeOGUrl(cloudName, params);
-    case "game":
-      return buildGameOGUrl(cloudName, params);
-    default:
-      return "";
-  }
+function getCloudName(): string {
+  return env.cloudinaryCloudName || "";
 }
-
-// ==========================================
-// JOINED TEMPLATE
-// "Username has joined the next game"
-// ==========================================
-
-function buildJoinedOGUrl(cloudName: string, params: JoinedOGParams): string {
-  // Build transformation URL with solid background
-  const t: string[] = [];
-
-  // Start with solid background (create from nothing using a 1px placeholder)
-  // We use a sample image and overlay everything
-  t.push("w_1200,h_630,c_fill,b_rgb:0F0F15");
-
-  // Card outline (gold border simulation using a rectangle overlay)
-  // Since we can't draw borders easily, we use layered rectangles
-  t.push(
-    "co_rgb:FFC931,e_colorize:100/w_1000,h_400,c_pad,b_transparent,r_32,bo_4px_solid_FFC931"
-  );
-
-  // Username (large, white, top left of card)
-  const safeUsername = encodeText(params.username.toUpperCase().slice(0, 16));
-  t.push(
-    `l_text:${FONTS.display}_42_bold:${safeUsername},co_rgb:${COLORS.white},g_north_west,x_180,y_180`
-  );
-
-  // "has joined the next game" subtitle
-  t.push(
-    `l_text:${FONTS.body}_24:has%20joined%20the%20next%20game,co_rgb:${COLORS.gray},g_north_west,x_180,y_240`
-  );
-
-  // Prize pool label
-  t.push(
-    `l_text:${FONTS.body}_18:Prize%20pool,co_rgb:${COLORS.gray},g_south_west,x_180,y_180`
-  );
-
-  // Prize pool amount
-  const prizeText = encodeText(`$${params.prizePool.toLocaleString()}`);
-  t.push(
-    `l_text:${FONTS.display}_36_bold:${prizeText},co_rgb:${COLORS.white},g_south_west,x_180,y_130`
-  );
-
-  // Theme label
-  t.push(
-    `l_text:${FONTS.body}_18:Theme,co_rgb:${COLORS.gray},g_south_west,x_420,y_180`
-  );
-
-  // Theme name
-  const themeText = encodeText(params.theme.toUpperCase());
-  t.push(
-    `l_text:${FONTS.display}_36_bold:${themeText},co_rgb:${COLORS.white},g_south_west,x_420,y_130`
-  );
-
-  // Others count (if any)
-  if (params.othersCount && params.othersCount > 0) {
-    const othersText = encodeText(`+${params.othersCount} others`);
-    t.push(
-      `l_text:${FONTS.body}_18:${othersText},co_rgb:${COLORS.white},g_north_east,x_180,y_180`
-    );
-  }
-
-  // Profile picture overlay (circular, fetched from URL)
-  if (params.pfpUrl) {
-    // Use fetch overlay with circular crop
-    const b64Url = toBase64Url(params.pfpUrl);
-    t.push(
-      `l_fetch:${b64Url}/c_fill,w_90,h_90,r_max/fl_layer_apply,g_north_west,x_70,y_170`
-    );
-  }
-
-  // Use a 1x1 transparent pixel as base and apply all transformations
-  return `https://res.cloudinary.com/${cloudName}/image/upload/${t.join(
-    "/"
-  )}/sample.png`;
-}
-
-// ==========================================
-// PRIZE TEMPLATE
-// "Just won $X on Waffles"
-// ==========================================
-
-function buildPrizeOGUrl(cloudName: string, params: PrizeOGParams): string {
-  const t: string[] = [];
-
-  // Start with gradient-like background (dark)
-  t.push("w_1200,h_630,c_fill,b_rgb:0F0F15");
-
-  // Profile picture (centered, top)
-  if (params.pfpUrl) {
-    const b64Url = toBase64Url(params.pfpUrl);
-    t.push(
-      `l_fetch:${b64Url}/c_fill,w_120,h_120,r_max/fl_layer_apply,g_north,y_100`
-    );
-  }
-
-  // Username
-  const safeUsername = encodeText(params.username.toUpperCase().slice(0, 16));
-  t.push(
-    `l_text:${FONTS.display}_32_bold:${safeUsername},co_rgb:${COLORS.white},g_north,y_240`
-  );
-
-  // "JUST WON" text
-  t.push(
-    `l_text:${FONTS.display}_28:JUST%20WON,co_rgb:${COLORS.white},g_center,y_-40`
-  );
-
-  // Prize amount (large, green)
-  const prizeText = encodeText(`$${params.prizeAmount.toLocaleString()}`);
-  t.push(
-    `l_text:${FONTS.display}_72_bold:${prizeText},co_rgb:${COLORS.green},g_center,y_30`
-  );
-
-  // "ON WAFFLES" text
-  t.push(
-    `l_text:${FONTS.display}_28:ON%20WAFFLES,co_rgb:${COLORS.white},g_center,y_100`
-  );
-
-  // Rank badge
-  const rankTextMap: Record<number, string> = {
-    1: "🥇 1ST PLACE",
-    2: "🥈 2ND PLACE",
-    3: "🥉 3RD PLACE",
-  };
-  const rankDisplay = rankTextMap[params.rank] || `#${params.rank}`;
-  const rankColor = params.rank === 1 ? COLORS.gold : COLORS.white;
-  t.push(
-    `l_text:${FONTS.display}_24_bold:${encodeText(
-      rankDisplay
-    )},co_rgb:${rankColor},g_south,y_120`
-  );
-
-  return `https://res.cloudinary.com/${cloudName}/image/upload/${t.join(
-    "/"
-  )}/sample.png`;
-}
-
-// ==========================================
-// GAME TEMPLATE
-// Game promotion card
-// ==========================================
-
-function buildGameOGUrl(cloudName: string, params: GameOGParams): string {
-  const t: string[] = [];
-
-  // Dark background
-  t.push("w_1200,h_630,c_fill,b_rgb:0F0F15");
-
-  // Game title (large, centered)
-  const safeTitle = encodeText(params.title.toUpperCase().slice(0, 25));
-  t.push(
-    `l_text:${FONTS.display}_48_bold:${safeTitle},co_rgb:${COLORS.white},g_center,y_-80`
-  );
-
-  // Theme badge
-  const themeText = encodeText(`${params.theme.toUpperCase()} TRIVIA`);
-  t.push(
-    `l_text:${FONTS.body}_24:${themeText},co_rgb:${COLORS.gray},g_center,y_-20`
-  );
-
-  // Prize pool (gold, prominent)
-  const prizeText = encodeText(
-    `$${params.prizePool.toLocaleString()} PRIZE POOL`
-  );
-  t.push(
-    `l_text:${FONTS.display}_42_bold:${prizeText},co_rgb:${COLORS.gold},g_center,y_60`
-  );
-
-  // Player count
-  const playersText = encodeText(`${params.playerCount} players joined`);
-  t.push(
-    `l_text:${FONTS.body}_20:${playersText},co_rgb:${COLORS.gray},g_center,y_130`
-  );
-
-  // WAFFLES branding at bottom
-  t.push(
-    `l_text:${FONTS.display}_24_bold:WAFFLES,co_rgb:${COLORS.gold},g_south,y_60`
-  );
-
-  return `https://res.cloudinary.com/${cloudName}/image/upload/${t.join(
-    "/"
-  )}/sample.png`;
-}
-
-// ==========================================
-// HELPERS
-// ==========================================
 
 /**
  * Encode text for Cloudinary URL (URL-safe)
  */
 function encodeText(text: string): string {
-  return encodeURIComponent(text).replace(/%20/g, "%20");
+  return encodeURIComponent(text)
+    .replace(/'/g, "%27")
+    .replace(/\(/g, "%28")
+    .replace(/\)/g, "%29");
 }
 
 /**
- * Convert URL to base64url for Cloudinary fetch
+ * Build "Joined Game" OG image URL
+ * Shows: username, prize pool, theme
  */
-function toBase64Url(url: string): string {
-  return Buffer.from(url).toString("base64url");
+export function buildJoinedOGUrl(params: JoinedOGParams): string {
+  const cloudName = getCloudName();
+  if (!cloudName) return "";
+
+  const { username, prizePool, theme, othersCount } = params;
+
+  // Build transformation string
+  const transforms: string[] = [];
+
+  // Username (centered, top)
+  transforms.push(
+    `l_text:Roboto%20Mono_48_bold:${encodeText(
+      username.toUpperCase().slice(0, 16)
+    )},co_rgb:${COLORS.white},g_north,y_160`
+  );
+
+  // "has joined the next game"
+  transforms.push(
+    `l_text:Roboto_28:has%20joined%20the%20next%20game,co_rgb:${COLORS.gray},g_north,y_230`
+  );
+
+  // Prize pool
+  transforms.push(
+    `l_text:Roboto_20:Prize%20pool,co_rgb:${COLORS.gray},g_south_west,x_150,y_180`
+  );
+  transforms.push(
+    `l_text:Roboto%20Mono_40_bold:${encodeText(
+      `$${prizePool.toLocaleString()}`
+    )},co_rgb:${COLORS.gold},g_south_west,x_150,y_120`
+  );
+
+  // Theme
+  transforms.push(
+    `l_text:Roboto_20:Theme,co_rgb:${COLORS.gray},g_south_west,x_450,y_180`
+  );
+  transforms.push(
+    `l_text:Roboto%20Mono_40_bold:${encodeText(theme.toUpperCase())},co_rgb:${
+      COLORS.white
+    },g_south_west,x_450,y_120`
+  );
+
+  // Others count (optional)
+  if (othersCount && othersCount > 0) {
+    transforms.push(
+      `l_text:Roboto_20:${encodeText(`+${othersCount} others`)},co_rgb:${
+        COLORS.gray
+      },g_north_east,x_150,y_180`
+    );
+  }
+
+  // WAFFLES branding
+  transforms.push(
+    `l_text:Roboto%20Mono_24_bold:WAFFLES,co_rgb:${COLORS.gold},g_south,y_40`
+  );
+
+  return `https://res.cloudinary.com/${cloudName}/image/upload/${transforms.join(
+    "/"
+  )}/${BASE_TEMPLATE}`;
 }
 
-// ==========================================
-// FETCH IMAGE (for API routes that proxy)
-// ==========================================
-
 /**
- * Fetch the generated OG image and return as Response
- * Use this in API routes that need to serve the image directly
+ * Build "Prize Won" OG image URL
+ * Shows: username, rank, prize amount
  */
-export async function fetchOGImage(params: OGImageParams): Promise<Response> {
-  const url = buildOGImageUrl(params);
+export function buildPrizeOGUrl(params: PrizeOGParams): string {
+  const cloudName = getCloudName();
+  if (!cloudName) return "";
 
-  if (!url) {
-    return new Response("Failed to generate OG image URL", { status: 500 });
-  }
+  const { username, rank, prizeAmount } = params;
 
-  try {
-    const res = await fetch(url);
+  // Rank display text and color
+  const rankText =
+    rank === 1
+      ? "1ST PLACE"
+      : rank === 2
+      ? "2ND PLACE"
+      : rank === 3
+      ? "3RD PLACE"
+      : `#${rank}`;
+  const rankColor = rank === 1 ? COLORS.gold : COLORS.white;
 
-    if (!res.ok) {
-      console.error(
-        "[OG] Cloudinary fetch error:",
-        res.status,
-        await res.text()
-      );
-      return new Response("Failed to fetch OG image", { status: 500 });
-    }
+  const transforms: string[] = [];
 
-    return new Response(res.body, {
-      headers: {
-        "Content-Type": "image/png",
-        "Cache-Control": "public, max-age=86400, s-maxage=604800",
-      },
-    });
-  } catch (error) {
-    console.error("[OG] Fetch error:", error);
-    return new Response("Failed to fetch OG image", { status: 500 });
-  }
+  // Username
+  transforms.push(
+    `l_text:Roboto%20Mono_36_bold:${encodeText(
+      username.toUpperCase().slice(0, 16)
+    )},co_rgb:${COLORS.white},g_north,y_180`
+  );
+
+  // "JUST WON"
+  transforms.push(
+    `l_text:Roboto%20Mono_32:JUST%20WON,co_rgb:${COLORS.white},g_center,y_-60`
+  );
+
+  // Prize amount (large, green)
+  transforms.push(
+    `l_text:Roboto%20Mono_80_bold:${encodeText(
+      `$${prizeAmount.toLocaleString()}`
+    )},co_rgb:${COLORS.green},g_center,y_20`
+  );
+
+  // "ON WAFFLES"
+  transforms.push(
+    `l_text:Roboto%20Mono_32:ON%20WAFFLES,co_rgb:${COLORS.white},g_center,y_100`
+  );
+
+  // Rank badge
+  transforms.push(
+    `l_text:Roboto%20Mono_28_bold:${encodeText(
+      rankText
+    )},co_rgb:${rankColor},g_south,y_100`
+  );
+
+  return `https://res.cloudinary.com/${cloudName}/image/upload/${transforms.join(
+    "/"
+  )}/${BASE_TEMPLATE}`;
 }
 
-// ==========================================
-// REDIRECT HELPER
-// ==========================================
+/**
+ * Build "Waitlist" OG image URL
+ * Shows: rank position
+ */
+export function buildWaitlistOGUrl(params: WaitlistOGParams): string {
+  const cloudName = getCloudName();
+  if (!cloudName) return "";
+
+  const { rank } = params;
+
+  const transforms: string[] = [];
+
+  // "I'M" text
+  transforms.push(
+    `l_text:Roboto%20Mono_36:I%27M,co_rgb:${COLORS.white},g_center,y_-80`
+  );
+
+  // Rank number (large, gold)
+  transforms.push(
+    `l_text:Roboto%20Mono_120_bold:${encodeText(`#${rank}`)},co_rgb:${
+      COLORS.gold
+    },g_center,y_20`
+  );
+
+  // "ON THE WAITLIST"
+  transforms.push(
+    `l_text:Roboto%20Mono_36:ON%20THE%20WAITLIST,co_rgb:${COLORS.white},g_center,y_120`
+  );
+
+  // WAFFLES branding
+  transforms.push(
+    `l_text:Roboto%20Mono_24_bold:WAFFLES,co_rgb:${COLORS.gold},g_south,y_60`
+  );
+
+  return `https://res.cloudinary.com/${cloudName}/image/upload/${transforms.join(
+    "/"
+  )}/${BASE_TEMPLATE}`;
+}
 
 /**
- * Redirect to the Cloudinary OG image URL
- * Fastest option - no proxy overhead
+ * Check if Cloudinary OG is configured
  */
-export function redirectToOGImage(params: OGImageParams): Response {
-  const url = buildOGImageUrl(params);
-
-  if (!url) {
-    return new Response("Failed to generate OG image URL", { status: 500 });
-  }
-
-  return Response.redirect(url, 302);
+export function isCloudinaryOGConfigured(): boolean {
+  return Boolean(getCloudName());
 }
