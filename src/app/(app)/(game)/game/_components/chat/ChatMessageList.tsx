@@ -123,13 +123,13 @@ export const ChatMessageList = forwardRef<ChatMessageListRef, ChatMessageListPro
         };
 
         return (
-            <div className={`relative flex-1 flex flex-col ${className}`}>
+            <div className={`relative flex-1 flex flex-col min-w-0 overflow-hidden ${className}`}>
                 <div
                     ref={listRef}
                     onScroll={handleScroll}
                     className="scrollbox-transparent flex-1 overflow-y-auto px-4"
                 >
-                    <div className="flex flex-col gap-2 py-4">
+                    <div className="flex flex-col gap-2 py-4 min-w-0">
                         {comments.length === 0 ? (
                             <motion.div
                                 initial={{ opacity: 0 }}

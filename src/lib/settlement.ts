@@ -227,15 +227,19 @@ export async function settleGame(gameId: number): Promise<{
   // 3. Calculate prize distribution
   const prizeDistribution = [0.6, 0.3, 0.1]; // 60%, 30%, 10%
   const winners: Winner[] = rankedEntries
-    .filter((e) => e.user.wallet)
+    // Use payerWallet (wallet that purchased) or fallback to user.wallet for older entries
+    .filter((e) => e.payerWallet || e.user.wallet)
     .map((entry, index) => {
       const prizeShare = prizeDistribution[index] || 0;
       const amountUSDC = game.prizePool * prizeShare;
       const amount = parseUnits(amountUSDC.toFixed(6), TOKEN_CONFIG.decimals);
+      // Prefer payerWallet (the wallet that actually paid), fallback to user.wallet
+      const winnerAddress = (entry.payerWallet ||
+        entry.user.wallet) as `0x${string}`;
 
       return {
         gameId: onchainId, // Use onchainId for Merkle tree
-        address: entry.user.wallet as `0x${string}`,
+        address: winnerAddress,
         amount,
       };
     });

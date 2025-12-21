@@ -204,6 +204,7 @@ export const GameEntryScalarFieldEnum = {
   gameId: 'gameId',
   userId: 'userId',
   txHash: 'txHash',
+  payerWallet: 'payerWallet',
   paidAmount: 'paidAmount',
   paidAt: 'paidAt',
   score: 'score',

@@ -75,7 +75,7 @@ export const POST = withAuth<Params>(
       }
 
       const body = await request.json();
-      const { txHash, paidAmount } = body;
+      const { txHash, paidAmount, payerWallet } = body;
 
       if (!txHash || typeof txHash !== "string") {
         return NextResponse.json<ApiError>(
@@ -163,6 +163,7 @@ export const POST = withAuth<Params>(
             gameId,
             userId: auth.userId,
             txHash,
+            payerWallet: payerWallet || null, // Store the wallet that paid
             paidAmount,
             paidAt: new Date(),
           },

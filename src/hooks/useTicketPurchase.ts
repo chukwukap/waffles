@@ -300,6 +300,7 @@ export function useTicketPurchase(
               walletAddress: address,
               txHash: txHash || "",
               paidAmount: price,
+              payerWallet: address, // Store the wallet that made the purchase
             }),
           }
         );

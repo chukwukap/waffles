@@ -283,9 +283,10 @@ model GameEntry {
   userId Int
 
   // -- PAYMENT --
-  txHash     String?   @unique @db.VarChar(66)
-  paidAmount Float? // Tier price paid
-  paidAt     DateTime?
+  txHash      String?   @unique @db.VarChar(66)
+  payerWallet String?   @db.VarChar(42) // Wallet address used for this purchase
+  paidAmount  Float? // Tier price paid
+  paidAt      DateTime?
 
   // -- PROGRESS (updated per answer) --
   score    Int @default(0)

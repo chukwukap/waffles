@@ -56,7 +56,7 @@ export const ChatComment = ({
   isCurrentUser?: boolean;
   status?: "pending" | "sent" | "error";
 }) => (
-  <div className="flex w-full flex-col items-start gap-2">
+  <div className="flex w-full flex-col items-start gap-2 min-w-0 max-w-full overflow-hidden">
     {/* User + Time */}
     <div className="flex items-center gap-1.5">
       {avatarUrl ? (
@@ -97,8 +97,8 @@ export const ChatComment = ({
       className="flex font-display w-full flex-col justify-center rounded-r-lg rounded-bl-lg border border-white/5 bg-white/10 p-3"
     >
       <p
-        className="text-sm font-medium text-white break-all"
-        style={{ letterSpacing: "-0.03em" }}
+        className="text-sm font-medium text-white wrap-break-word"
+        style={{ letterSpacing: "-0.03em", wordBreak: "break-word" }}
       >
         {message}
       </p>

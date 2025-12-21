@@ -103,7 +103,8 @@ export const GET = withAuth<{ gameId: string }>(
       const prizeDistribution = [0.6, 0.3, 0.1]; // 60%, 30%, 10%
       const onchainId = game.onchainId as `0x${string}`;
       const winners: Winner[] = rankedEntries
-        .filter((e) => e.user.wallet) // Only entries with wallets
+        // Use payerWallet (wallet that purchased) or fallback to user.wallet for older entries
+        .filter((e) => e.payerWallet || e.user.wallet)
         .map((entry, index) => {
           const prizeShare = prizeDistribution[index] || 0;
           const amountUSDC = game.prizePool * prizeShare;
@@ -111,18 +112,34 @@ export const GET = withAuth<{ gameId: string }>(
             amountUSDC.toFixed(6),
             TOKEN_CONFIG.decimals
           );
+          // Prefer payerWallet (the wallet that actually paid), fallback to user.wallet
+          const winnerAddress = (entry.payerWallet ||
+            entry.user.wallet) as `0x${string}`;
 
           return {
             gameId: onchainId, // Use onchainId for Merkle tree
-            address: entry.user.wallet as `0x${string}`,
+            address: winnerAddress,
             amount,
           };
         });
 
-      // Generate proof for this user
+      // Find the user's entry to determine which wallet to use for proof lookup
+      const userEntry = rankedEntries.find((e) => e.userId === auth.userId);
+      const userClaimWallet = userEntry
+        ? userEntry.payerWallet || userEntry.user.wallet
+        : user.wallet;
+
+      if (!userClaimWallet) {
+        return NextResponse.json<ApiError>(
+          { error: "No wallet address to claim with", code: "NO_WALLET" },
+          { status: 400 }
+        );
+      }
+
+      // Generate proof for this user's claim wallet
       const userProof = generateMerkleProof(
         winners,
-        user.wallet as `0x${string}`
+        userClaimWallet as `0x${string}`
       );
 
       if (!userProof) {
@@ -134,7 +151,7 @@ export const GET = withAuth<{ gameId: string }>(
 
       // Find the user's prize info
       const userWinnerIndex = winners.findIndex(
-        (w) => w.address.toLowerCase() === user.wallet!.toLowerCase()
+        (w) => w.address.toLowerCase() === userClaimWallet.toLowerCase()
       );
       const userRank = rankedEntries[userWinnerIndex]?.rank || 0;
       const prizeShare = prizeDistribution[userRank - 1] || 0;
