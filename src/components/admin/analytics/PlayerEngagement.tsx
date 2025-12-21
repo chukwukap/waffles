@@ -26,7 +26,7 @@ export function PlayerEngagement({ data }: PlayerEngagementProps) {
         <div className="space-y-6">
             {/* Summary Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5">
+                <div className="rounded-2xl border border-white/10 p-5">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 rounded-xl bg-[#FFC931]/10">
                             <TrophyIcon className="h-5 w-5 text-[#FFC931]" />
@@ -39,7 +39,7 @@ export function PlayerEngagement({ data }: PlayerEngagementProps) {
                     <div className="text-xs text-white/40 mt-1">points per player</div>
                 </div>
 
-                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5">
+                <div className="rounded-2xl border border-white/10 p-5">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 rounded-xl bg-[#14B985]/10">
                             <CheckCircleIcon className="h-5 w-5 text-[#14B985]" />
@@ -52,7 +52,7 @@ export function PlayerEngagement({ data }: PlayerEngagementProps) {
                     <div className="text-xs text-white/40 mt-1">correct answers</div>
                 </div>
 
-                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5">
+                <div className="rounded-2xl border border-white/10 p-5">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 rounded-xl bg-[#00CFF2]/10">
                             <ClockIcon className="h-5 w-5 text-[#00CFF2]" />
@@ -65,7 +65,7 @@ export function PlayerEngagement({ data }: PlayerEngagementProps) {
                     <div className="text-xs text-white/40 mt-1">per question</div>
                 </div>
 
-                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5">
+                <div className="rounded-2xl border border-white/10 p-5">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 rounded-xl bg-[#FB72FF]/10">
                             <ChartBarIcon className="h-5 w-5 text-[#FB72FF]" />
@@ -80,7 +80,7 @@ export function PlayerEngagement({ data }: PlayerEngagementProps) {
             </div>
 
             {/* Score Distribution */}
-            <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
+            <div className="rounded-2xl border border-white/10 p-6">
                 <div className="flex items-center justify-between mb-6">
                     <div>
                         <h3 className="text-lg font-semibold text-white font-display">Score Distribution</h3>

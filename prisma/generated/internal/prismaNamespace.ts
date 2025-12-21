@@ -393,7 +393,8 @@ export const ModelName = {
   GameEntry: 'GameEntry',
   Chat: 'Chat',
   NotificationToken: 'NotificationToken',
-  AuditLog: 'AuditLog'
+  AuditLog: 'AuditLog',
+  InviteCode: 'InviteCode'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -409,7 +410,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "referralReward" | "quest" | "completedQuest" | "game" | "question" | "gameEntry" | "chat" | "notificationToken" | "auditLog"
+    modelProps: "user" | "referralReward" | "quest" | "completedQuest" | "game" | "question" | "gameEntry" | "chat" | "notificationToken" | "auditLog" | "inviteCode"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1153,6 +1154,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    InviteCode: {
+      payload: Prisma.$InviteCodePayload<ExtArgs>
+      fields: Prisma.InviteCodeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.InviteCodeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InviteCodePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.InviteCodeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InviteCodePayload>
+        }
+        findFirst: {
+          args: Prisma.InviteCodeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InviteCodePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.InviteCodeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InviteCodePayload>
+        }
+        findMany: {
+          args: Prisma.InviteCodeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InviteCodePayload>[]
+        }
+        create: {
+          args: Prisma.InviteCodeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InviteCodePayload>
+        }
+        createMany: {
+          args: Prisma.InviteCodeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.InviteCodeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InviteCodePayload>[]
+        }
+        delete: {
+          args: Prisma.InviteCodeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InviteCodePayload>
+        }
+        update: {
+          args: Prisma.InviteCodeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InviteCodePayload>
+        }
+        deleteMany: {
+          args: Prisma.InviteCodeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.InviteCodeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.InviteCodeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InviteCodePayload>[]
+        }
+        upsert: {
+          args: Prisma.InviteCodeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InviteCodePayload>
+        }
+        aggregate: {
+          args: Prisma.InviteCodeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateInviteCode>
+        }
+        groupBy: {
+          args: Prisma.InviteCodeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.InviteCodeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.InviteCodeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.InviteCodeCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1368,6 +1443,18 @@ export const AuditLogScalarFieldEnum = {
 } as const
 
 export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
+
+
+export const InviteCodeScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  usedById: 'usedById',
+  usedAt: 'usedAt',
+  createdAt: 'createdAt',
+  note: 'note'
+} as const
+
+export type InviteCodeScalarFieldEnum = (typeof InviteCodeScalarFieldEnum)[keyof typeof InviteCodeScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1673,6 +1760,7 @@ export type GlobalOmitConfig = {
   chat?: Prisma.ChatOmit
   notificationToken?: Prisma.NotificationTokenOmit
   auditLog?: Prisma.AuditLogOmit
+  inviteCode?: Prisma.InviteCodeOmit
 }
 
 /* Types for Logging */

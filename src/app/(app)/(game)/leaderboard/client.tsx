@@ -229,7 +229,7 @@ export default function LeaderboardClient({
         style={{
           background: isSticky
             ? "linear-gradient(to bottom, #0A0A0C 0%, #0A0A0C 70%, transparent 100%)"
-            : "linear-gradient(to bottom, transparent 0%, #0A0A0C 30%, #0A0A0C 100%)",
+            : "linear-gradient(to bottom, transparent 0%, #0A0A0C 30%, #0A0A0C 70%, transparent 100%)",
         }}
       >
         <h1 className="text-center font-body text-[36px] tracking-[1px]">

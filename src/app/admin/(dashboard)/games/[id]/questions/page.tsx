@@ -46,7 +46,7 @@ export default async function GameQuestionsPage({ params }: { params: Promise<{ 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                 {/* Questions List - Main Area */}
                 <div className="lg:col-span-3">
-                    <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-4">
+                    <div className="bg-linear-to-br from-[#FFC931]/5 to-transparent rounded-2xl border border-white/10 p-4">
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-2">
                                 <DocumentTextIcon className="h-5 w-5 text-[#FFC931]" />
@@ -62,7 +62,7 @@ export default async function GameQuestionsPage({ params }: { params: Promise<{ 
 
                 {/* Sidebar - Bulk Import */}
                 <div className="lg:col-span-2">
-                    <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-4 sticky top-6">
+                    <div className="bg-linear-to-br from-[#FB72FF]/5 to-transparent rounded-2xl border border-white/10 p-4 sticky top-6">
                         <div className="flex items-center gap-2 mb-4">
                             <ArrowUpTrayIcon className="h-5 w-5 text-[#FB72FF]" />
                             <h2 className="font-semibold text-white">Bulk Import</h2>

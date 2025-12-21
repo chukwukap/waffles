@@ -14,6 +14,7 @@ import {
     ArrowRightOnRectangleIcon,
     PhotoIcon,
     StarIcon,
+    RectangleGroupIcon,
 } from "@heroicons/react/24/outline";
 import { WaffleIcon } from "@/components/icons";
 
@@ -21,8 +22,9 @@ const navigation = [
     { name: "Dashboard", href: "/admin", icon: HomeIcon },
     { name: "Games", href: "/admin/games", icon: TrophyIcon },
     { name: "Users", href: "/admin/users", icon: UsersIcon },
+    { name: "Invite Codes", href: "/admin/invite-codes", icon: TicketIcon },
     { name: "Quests", href: "/admin/quests", icon: StarIcon },
-    { name: "Tickets", href: "/admin/tickets", icon: TicketIcon },
+    { name: "Tickets", href: "/admin/tickets", icon: RectangleGroupIcon },
     { name: "Media Library", href: "/admin/media", icon: PhotoIcon },
     { name: "Analytics", href: "/admin/analytics", icon: ChartBarIcon },
     { name: "Audit Logs", href: "/admin/logs", icon: DocumentTextIcon },
@@ -33,7 +35,7 @@ export function AdminSidebar() {
     const pathname = usePathname();
 
     return (
-        <div className="flex h-full flex-col bg-gradient-to-b from-[#0a0a0b]/95 to-black/98 border-r border-white/[0.06]">
+        <div className="flex h-full flex-col bg-linear-to-b from-[#0a0a0b]/95 to-black/98 border-r border-white/6">
             {/* Logo */}
             <div className="flex h-16 items-center gap-3 px-6 border-b border-white/6">
                 <WaffleIcon className="h-6 w-6" />

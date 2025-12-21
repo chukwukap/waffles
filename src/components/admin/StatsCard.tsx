@@ -32,7 +32,13 @@ export function StatsCard({
     glowVariant?: GlowVariant;
 }) {
     return (
-        <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg hover:bg-white/[0.08] hover:border-white/[0.12] p-6">
+        <div className={cn(
+            "rounded-2xl border border-white/10 backdrop-blur-lg p-6 transition-all duration-300",
+            glowVariant === "gold" && "bg-linear-to-br from-[#FFC931]/5 to-transparent hover:border-[#FFC931]/30",
+            glowVariant === "cyan" && "bg-linear-to-br from-[#00CFF2]/5 to-transparent hover:border-[#00CFF2]/30",
+            glowVariant === "pink" && "bg-linear-to-br from-[#FB72FF]/5 to-transparent hover:border-[#FB72FF]/30",
+            glowVariant === "success" && "bg-linear-to-br from-[#14B985]/5 to-transparent hover:border-[#14B985]/30"
+        )}>
             <div className="flex items-start justify-between">
                 <div>
                     <p className="text-sm font-medium text-white/60 font-display">{title}</p>

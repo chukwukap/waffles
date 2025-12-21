@@ -22,7 +22,7 @@ export function ChatAnalytics({ data }: ChatAnalyticsProps) {
         <div className="space-y-6">
             {/* Summary Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5">
+                <div className="rounded-2xl border border-white/10 p-5">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 rounded-xl bg-[#FFC931]/10">
                             <ChatBubbleLeftRightIcon className="h-5 w-5 text-[#FFC931]" />
@@ -35,7 +35,7 @@ export function ChatAnalytics({ data }: ChatAnalyticsProps) {
                     <div className="text-xs text-white/40 mt-1">total chat messages</div>
                 </div>
 
-                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5">
+                <div className="rounded-2xl border border-white/10 p-5">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 rounded-xl bg-[#00CFF2]/10">
                             <UsersIcon className="h-5 w-5 text-[#00CFF2]" />
@@ -48,7 +48,7 @@ export function ChatAnalytics({ data }: ChatAnalyticsProps) {
                     <div className="text-xs text-white/40 mt-1">unique participants</div>
                 </div>
 
-                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5">
+                <div className="rounded-2xl border border-white/10 p-5">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 rounded-xl bg-[#FB72FF]/10">
                             <UsersIcon className="h-5 w-5 text-[#FB72FF]" />
@@ -61,7 +61,7 @@ export function ChatAnalytics({ data }: ChatAnalyticsProps) {
                     <div className="text-xs text-white/40 mt-1">of players chatted</div>
                 </div>
 
-                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5">
+                <div className="rounded-2xl border border-white/10 p-5">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 rounded-xl bg-[#14B985]/10">
                             <ClockIcon className="h-5 w-5 text-[#14B985]" />
@@ -77,7 +77,7 @@ export function ChatAnalytics({ data }: ChatAnalyticsProps) {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Messages by Round */}
-                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
+                <div className="rounded-2xl border border-white/10 p-6">
                     <div className="mb-6">
                         <h3 className="text-lg font-semibold text-white font-display">Messages by Round</h3>
                         <p className="text-sm text-white/50">Chat activity during game rounds</p>
@@ -112,7 +112,7 @@ export function ChatAnalytics({ data }: ChatAnalyticsProps) {
                 </div>
 
                 {/* Top Keywords (Bubble-like display) */}
-                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
+                <div className="rounded-2xl border border-white/10 p-6">
                     <div className="mb-6">
                         <h3 className="text-lg font-semibold text-white font-display">Popular Topics</h3>
                         <p className="text-sm text-white/50">Most mentioned words in chat</p>

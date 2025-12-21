@@ -23,7 +23,7 @@ export default function SettingsClient() {
 
     return (
         <div className="space-y-6">
-            <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
+            <div className="bg-linear-to-br from-[#00CFF2]/5 to-transparent rounded-2xl border border-white/10 p-6">
                 <h3 className="text-lg font-semibold text-white mb-4 font-display">
                     Change Password
                 </h3>

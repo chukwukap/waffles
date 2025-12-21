@@ -74,7 +74,7 @@ export function QuestionDifficulty({ questions }: QuestionDifficultyProps) {
         <div className="space-y-6">
             {/* Summary Row */}
             <div className="grid grid-cols-3 gap-4">
-                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5">
+                <div className="rounded-2xl border border-white/10 p-5">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 rounded-xl bg-[#FFC931]/10">
                             <CheckCircleIcon className="h-5 w-5 text-[#FFC931]" />
@@ -88,7 +88,7 @@ export function QuestionDifficulty({ questions }: QuestionDifficultyProps) {
                     </div>
                 </div>
 
-                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5">
+                <div className="rounded-2xl border border-white/10 p-5">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 rounded-xl bg-[#00CFF2]/10">
                             <ClockIcon className="h-5 w-5 text-[#00CFF2]" />
@@ -102,7 +102,7 @@ export function QuestionDifficulty({ questions }: QuestionDifficultyProps) {
                     </div>
                 </div>
 
-                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5">
+                <div className="rounded-2xl border border-white/10 p-5">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 rounded-xl bg-[#FB72FF]/10">
                             <XCircleIcon className="h-5 w-5 text-[#FB72FF]" />
@@ -117,7 +117,7 @@ export function QuestionDifficulty({ questions }: QuestionDifficultyProps) {
 
             {/* Hardest & Easiest */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
+                <div className="rounded-2xl border border-white/10 p-6">
                     <div className="flex items-center gap-2 mb-4">
                         <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
                         <h3 className="text-lg font-semibold text-white font-display">Hardest Questions</h3>
@@ -132,7 +132,7 @@ export function QuestionDifficulty({ questions }: QuestionDifficultyProps) {
                     </div>
                 </div>
 
-                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
+                <div className="rounded-2xl border border-white/10 p-6">
                     <div className="flex items-center gap-2 mb-4">
                         <div className="w-3 h-3 rounded-full bg-[#14B985] animate-pulse" />
                         <h3 className="text-lg font-semibold text-white font-display">Easiest Questions</h3>

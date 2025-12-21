@@ -87,11 +87,11 @@ export default async function GamesListPage({
 
             <GameFilters />
 
-            <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg overflow-hidden">
+            <div className="rounded-2xl border border-white/10 overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-white/6">
-                        <thead className="bg-white/3">
-                            <tr>
+                    <table className="min-w-full">
+                        <thead>
+                            <tr className="border-b border-white/10">
                                 <th className="px-6 py-4 text-left text-xs font-medium text-white/50 uppercase tracking-wider font-display">
                                     Game
                                 </th>
@@ -112,7 +112,7 @@ export default async function GamesListPage({
                                 </th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/6">
+                        <tbody>
                             {gamesWithPhase.length === 0 ? (
                                 <tr>
                                     <td colSpan={6} className="px-6 py-16 text-center">

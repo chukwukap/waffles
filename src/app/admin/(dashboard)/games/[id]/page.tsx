@@ -6,10 +6,115 @@ import {
     PencilIcon,
     QuestionMarkCircleIcon,
     StopIcon,
+    CalendarIcon,
+    ClockIcon,
+    UserGroupIcon,
+    CurrencyDollarIcon,
+    LinkIcon,
+    CheckCircleIcon,
+    ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import { SettlementPanel } from "./_components/SettlementPanel";
+import { GameResults } from "./_components/GameResults";
 import { getOnChainGame } from "@/lib/settlement";
 import { getGamePhase } from "@/lib/game-utils";
+
+// ============================================
+// HELPER COMPONENTS
+// ============================================
+
+function StatCard({
+    icon: Icon,
+    label,
+    value,
+    color = "white",
+    subtext,
+}: {
+    icon: React.ElementType;
+    label: string;
+    value: string | number;
+    color?: "white" | "gold" | "green" | "blue" | "pink";
+    subtext?: string;
+}) {
+    const colors = {
+        white: "text-white",
+        gold: "text-[#FFC931]",
+        green: "text-[#14B985]",
+        blue: "text-[#00CFF2]",
+        pink: "text-[#FB72FF]",
+    };
+
+    const iconBg = {
+        white: "bg-white/10",
+        gold: "bg-[#FFC931]/10",
+        green: "bg-[#14B985]/10",
+        blue: "bg-[#00CFF2]/10",
+        pink: "bg-[#FB72FF]/10",
+    };
+
+    return (
+        <div className="group relative overflow-hidden bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/8 rounded-2xl p-5 hover:border-white/15 transition-all duration-300">
+            {/* Subtle glow on hover */}
+            <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${iconBg[color]} blur-3xl`} />
+
+            <div className="relative flex items-start gap-4">
+                <div className={`p-2.5 rounded-xl ${iconBg[color]}`}>
+                    <Icon className={`h-5 w-5 ${colors[color]}`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                    <p className="text-white/50 text-xs font-medium uppercase tracking-wider mb-1">
+                        {label}
+                    </p>
+                    <p className={`text-2xl font-bold ${colors[color]} font-display tracking-tight`}>
+                        {value}
+                    </p>
+                    {subtext && (
+                        <p className="text-white/40 text-xs mt-0.5">{subtext}</p>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function StatusBadge({ phase }: { phase: string }) {
+    const config = {
+        SCHEDULED: {
+            bg: "bg-gradient-to-r from-[#FFC931]/20 to-[#FFC931]/10",
+            border: "border-[#FFC931]/30",
+            text: "text-[#FFC931]",
+            dot: "bg-[#FFC931]",
+            label: "Scheduled",
+        },
+        LIVE: {
+            bg: "bg-gradient-to-r from-[#14B985]/20 to-[#14B985]/10",
+            border: "border-[#14B985]/30",
+            text: "text-[#14B985]",
+            dot: "bg-[#14B985] animate-pulse",
+            label: "Live Now",
+        },
+        ENDED: {
+            bg: "bg-gradient-to-r from-white/10 to-white/5",
+            border: "border-white/20",
+            text: "text-white/70",
+            dot: "bg-white/50",
+            label: "Ended",
+        },
+    };
+
+    const c = config[phase as keyof typeof config] || config.ENDED;
+
+    return (
+        <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${c.bg} ${c.border} ${c.text} border`}>
+            <span className={`w-2 h-2 rounded-full ${c.dot}`} />
+            {c.label}
+        </span>
+    );
+}
+
+// ============================================
+// MAIN PAGE
+// ============================================
 
 export default async function GameDetailPage({
     params,
@@ -45,6 +150,19 @@ export default async function GameDetailPage({
                     entries: true,
                 },
             },
+            entries: {
+                where: { paidAt: { not: null } },
+                orderBy: { score: "desc" },
+                take: 10,
+                select: {
+                    score: true,
+                    rank: true,
+                    prize: true,
+                    user: {
+                        select: { username: true, pfpUrl: true },
+                    },
+                },
+            },
         },
     });
 
@@ -52,10 +170,9 @@ export default async function GameDetailPage({
         notFound();
     }
 
-    // Derive phase from time
     const phase = getGamePhase(game);
 
-    // Get on-chain status (optional, may fail if not deployed)
+    // Get on-chain status
     let onChainStatus = {
         exists: false,
         ended: false,
@@ -65,7 +182,6 @@ export default async function GameDetailPage({
     };
 
     try {
-        // Only lookup if game has onchainId
         if (game.onchainId) {
             const onChainGame = (await getOnChainGame(game.onchainId as `0x${string}`)) as {
                 entryFee: bigint;
@@ -90,106 +206,142 @@ export default async function GameDetailPage({
             }
         }
     } catch (error) {
-        // On-chain lookup failed - likely not deployed yet
         console.log("[Admin] On-chain lookup failed:", error);
     }
 
-    const statusColors: Record<string, string> = {
-        SCHEDULED: "bg-[#FFC931]/20 text-[#FFC931]",
-        LIVE: "bg-[#14B985]/20 text-[#14B985]",
-        ENDED: "bg-white/10 text-white/60",
+    // Format dates
+    const formatDate = (date: Date) => {
+        return new Intl.DateTimeFormat("en-US", {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+        }).format(date);
     };
 
-    return (
-        <div className="space-y-6">
-            <div className="flex items-center gap-4">
-                <Link
-                    href="/admin/games"
-                    className="text-white/50 hover:text-[#FFC931] font-medium transition-colors"
-                >
-                    ← Back
-                </Link>
-            </div>
+    const duration = Math.round((game.endsAt.getTime() - game.startsAt.getTime()) / (1000 * 60));
 
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-white font-display">
-                        {game.title}
-                    </h1>
-                    <span
-                        className={`inline-flex px-3 py-1 rounded-full text-xs font-medium mt-2 ${statusColors[phase] || statusColors.ENDED
-                            }`}
-                    >
-                        {phase}
-                    </span>
-                </div>
+    return (
+        <div className="space-y-8 max-w-6xl">
+            {/* Breadcrumb & Actions Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <Link
+                        href="/admin/games"
+                        className="flex items-center gap-1.5 text-white/40 hover:text-white transition-colors text-sm"
+                    >
+                        <span>←</span>
+                        <span>Games</span>
+                    </Link>
+                    <span className="text-white/20">/</span>
+                    <span className="text-white/60 text-sm truncate max-w-[200px]">{game.title}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Link
                         href={`/admin/games/${game.id}/edit`}
-                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/15 text-white rounded-xl transition-colors font-medium"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white rounded-xl transition-all text-sm font-medium border border-white/8 hover:border-white/15"
                     >
                         <PencilIcon className="h-4 w-4" />
                         Edit
                     </Link>
                     <Link
                         href={`/admin/games/${game.id}/questions`}
-                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#FFC931] hover:bg-[#FFD966] text-black rounded-xl transition-colors font-bold shadow-lg shadow-[#FFC931]/20"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-[#FFC931] hover:bg-[#FFD966] text-black rounded-xl transition-all text-sm font-bold shadow-lg shadow-[#FFC931]/20 hover:shadow-[#FFC931]/30"
                     >
                         <QuestionMarkCircleIcon className="h-4 w-4" />
-                        Manage Questions
+                        Questions
                     </Link>
                 </div>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
-                    <h3 className="text-white/50 text-sm font-medium mb-2 font-display">
-                        Status
-                    </h3>
-                    <p
-                        className={`text-2xl font-bold font-body ${phase === "LIVE"
-                            ? "text-[#14B985] "
-                            : phase === "SCHEDULED"
-                                ? "text-[#FFC931] "
-                                : "text-white"
-                            }`}
-                    >
-                        {phase}
-                    </p>
-                </div>
-                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
-                    <h3 className="text-white/50 text-sm font-medium mb-2 font-display">
-                        Players
-                    </h3>
-                    <p className="text-2xl font-bold text-[#00CFF2] font-body ">
-                        {game.playerCount}
-                    </p>
-                </div>
-                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
-                    <h3 className="text-white/50 text-sm font-medium mb-2 font-display">
-                        Questions
-                    </h3>
-                    <p className="text-2xl font-bold text-[#FB72FF] font-body ">
-                        {game._count.questions}
-                    </p>
-                </div>
-                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
-                    <h3 className="text-white/50 text-sm font-medium mb-2 font-display">
-                        Prize Pool
-                    </h3>
-                    <p className="text-2xl font-bold text-[#14B985] font-body">
-                        ${game.prizePool.toLocaleString()}
-                    </p>
+            {/* Hero Section */}
+            <div className="relative overflow-hidden bg-gradient-to-br from-white/[0.06] to-transparent border border-white/8 rounded-3xl p-6 sm:p-8">
+                {/* Background decoration */}
+                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-[#FFC931]/10 to-transparent rounded-full blur-3xl" />
+
+                <div className="relative flex flex-col sm:flex-row sm:items-start justify-between gap-6">
+                    <div className="space-y-4">
+                        <StatusBadge phase={phase} />
+                        <h1 className="text-3xl sm:text-4xl font-bold text-white font-display tracking-tight">
+                            {game.title}
+                        </h1>
+                        {game.description && (
+                            <p className="text-white/50 text-sm max-w-lg leading-relaxed">
+                                {game.description}
+                            </p>
+                        )}
+
+                        {/* Time Info */}
+                        <div className="flex flex-wrap items-center gap-4 text-sm">
+                            <div className="flex items-center gap-2 text-white/40">
+                                <CalendarIcon className="h-4 w-4" />
+                                <span>{formatDate(game.startsAt)}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-white/40">
+                                <ClockIcon className="h-4 w-4" />
+                                <span>{duration} min</span>
+                            </div>
+                            {game.theme && (
+                                <span className="px-2 py-0.5 bg-white/10 rounded-md text-white/50 text-xs">
+                                    {game.theme}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Cover Image */}
+                    {game.coverUrl && (
+                        <div className="shrink-0">
+                            <img
+                                src={game.coverUrl}
+                                alt={game.title}
+                                className="w-32 h-32 sm:w-40 sm:h-40 object-cover rounded-2xl border border-white/10 shadow-2xl"
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
 
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard
+                    icon={UserGroupIcon}
+                    label="Players"
+                    value={game.playerCount}
+                    color="blue"
+                    subtext={game.maxPlayers ? `of ${game.maxPlayers} max` : undefined}
+                />
+                <StatCard
+                    icon={QuestionMarkCircleIcon}
+                    label="Questions"
+                    value={game._count.questions}
+                    color="pink"
+                />
+                <StatCard
+                    icon={CurrencyDollarIcon}
+                    label="Prize Pool"
+                    value={`$${game.prizePool.toLocaleString()}`}
+                    color="green"
+                />
+                <StatCard
+                    icon={LinkIcon}
+                    label="On-Chain"
+                    value={onChainStatus.exists ? "Deployed" : "Not Found"}
+                    color={onChainStatus.exists ? "gold" : "white"}
+                    subtext={onChainStatus.settled ? "Settled" : onChainStatus.ended ? "Ended" : undefined}
+                />
+            </div>
+
             {/* Game Actions */}
-            <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6 space-y-4">
-                <h2 className="text-xl font-bold text-white font-display">
+            <div className="bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/8 rounded-2xl p-6">
+                <h2 className="text-lg font-bold text-white font-display mb-4 flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+                        ⚡
+                    </span>
                     Game Actions
                 </h2>
-                <div className="flex flex-wrap gap-4">
+                <div className="flex flex-wrap gap-3">
                     {phase === "LIVE" && (
                         <form
                             action={async () => {
@@ -199,38 +351,91 @@ export default async function GameDetailPage({
                         >
                             <button
                                 type="submit"
-                                className="inline-flex items-center gap-2 px-4 py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-xl transition-colors font-medium border border-red-500/30"
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition-all font-medium border border-red-500/20 hover:border-red-500/40"
                             >
                                 <StopIcon className="h-4 w-4" />
-                                End Game (Calculate Ranks)
+                                End Game Now
                             </button>
                         </form>
                     )}
                     {phase === "ENDED" && (
-                        <div className="flex items-center gap-2 text-[#14B985]">
-                            <span className="text-lg">✓</span>
-                            <p className="font-medium">
-                                Game has ended. Ranks have been calculated.
-                            </p>
+                        <div className="flex items-center gap-3 px-4 py-3 bg-[#14B985]/10 rounded-xl border border-[#14B985]/20">
+                            <CheckCircleIcon className="h-5 w-5 text-[#14B985]" />
+                            <span className="text-[#14B985] font-medium">
+                                Game ended • Ranks calculated
+                            </span>
                         </div>
                     )}
                     {phase === "SCHEDULED" && (
-                        <p className="text-white/50">
-                            Game is scheduled. Actions will be available when the game goes
-                            live.
-                        </p>
+                        <div className="flex items-center gap-3 px-4 py-3 bg-[#FFC931]/10 rounded-xl border border-[#FFC931]/20">
+                            <ExclamationTriangleIcon className="h-5 w-5 text-[#FFC931]" />
+                            <span className="text-[#FFC931]/80">
+                                Game is scheduled • Starts {formatDate(game.startsAt)}
+                            </span>
+                        </div>
                     )}
                 </div>
             </div>
 
-            {/* On-Chain Settlement Panel */}
-            <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
-                <SettlementPanel
-                    gameId={game.id}
-                    gameStatus={phase}
-                    onChainStatus={onChainStatus}
-                />
+            {/* Two Column Layout for Results & Settlement */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Game Results */}
+                <div className="bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/8 rounded-2xl p-6">
+                    {phase === "ENDED" ? (
+                        game.entries.length > 0 ? (
+                            <GameResults
+                                gameId={game.id}
+                                gameTitle={game.title}
+                                totalEntries={game._count.entries}
+                                prizePool={game.prizePool}
+                                winners={game.entries.map((e, i) => ({
+                                    rank: e.rank || i + 1,
+                                    username: e.user?.username || null,
+                                    score: e.score,
+                                    prize: e.prize,
+                                    pfpUrl: e.user?.pfpUrl || null,
+                                }))}
+                                totalWinners={game.entries.filter(e => (e.prize || 0) > 0).length}
+                            />
+                        ) : (
+                            <div className="text-center py-12">
+                                <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-4 mx-auto">
+                                    <span className="text-3xl">📊</span>
+                                </div>
+                                <p className="text-white font-medium mb-1">No Entries</p>
+                                <p className="text-white/50 text-sm">No paid entries found for this game.</p>
+                            </div>
+                        )
+                    ) : (
+                        <div className="text-center py-12">
+                            <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-4 mx-auto">
+                                <span className="text-3xl">🏆</span>
+                            </div>
+                            <p className="text-white font-medium mb-1">Results Pending</p>
+                            <p className="text-white/50 text-sm">Results will be available after the game ends.</p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Settlement Panel */}
+                <div className="bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/8 rounded-2xl p-6">
+                    <SettlementPanel
+                        gameId={game.id}
+                        gameStatus={phase}
+                        onChainStatus={onChainStatus}
+                    />
+                </div>
             </div>
+
+            {/* On-Chain ID (if exists) */}
+            {game.onchainId && (
+                <div className="bg-white/[0.03] border border-white/6 rounded-xl p-4">
+                    <p className="text-white/40 text-xs mb-1">On-Chain Game ID</p>
+                    <code className="text-xs text-[#00CFF2]/70 break-all font-mono">
+                        {game.onchainId}
+                    </code>
+                </div>
+            )}
         </div>
     );
 }

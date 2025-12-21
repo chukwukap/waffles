@@ -146,10 +146,9 @@ const InviteDrawerComingSoon = ({ isOpen, onClose }: Omit<InviteDrawerProps, "in
 };
 
 // ============================================
-// ORIGINAL VERSION WITH INVITE LINK (Commented Out)
-// Uncomment this and use it when ready to enable sharing
+// ACTIVE VERSION WITH INVITE LINK
 // ============================================
-/*
+
 const InviteDrawerActive = ({ isOpen, onClose, inviteLink }: InviteDrawerProps) => {
   const [copied, setCopied] = useState(false);
 
@@ -266,12 +265,12 @@ const InviteDrawerActive = ({ isOpen, onClose, inviteLink }: InviteDrawerProps) 
     </>
   );
 };
-*/
+
 
 // ============================================
 // EXPORT - Switch between versions here
 // ============================================
-// To enable invite link sharing, change this to: export { InviteDrawerActive as InviteDrawer }
+// User invite sharing is coming soon
 export { InviteDrawerComingSoon as InviteDrawer };
 
 // Suppress unused import warnings for commented code

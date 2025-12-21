@@ -374,6 +374,7 @@ export type UserWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   referredBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   referrals?: Prisma.UserListRelationFilter
+  redeemedCodes?: Prisma.InviteCodeListRelationFilter
   completedQuests?: Prisma.CompletedQuestListRelationFilter
   rewards?: Prisma.ReferralRewardListRelationFilter
   entries?: Prisma.GameEntryListRelationFilter
@@ -406,6 +407,7 @@ export type UserOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   referredBy?: Prisma.UserOrderByWithRelationInput
   referrals?: Prisma.UserOrderByRelationAggregateInput
+  redeemedCodes?: Prisma.InviteCodeOrderByRelationAggregateInput
   completedQuests?: Prisma.CompletedQuestOrderByRelationAggregateInput
   rewards?: Prisma.ReferralRewardOrderByRelationAggregateInput
   entries?: Prisma.GameEntryOrderByRelationAggregateInput
@@ -441,6 +443,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   referredBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   referrals?: Prisma.UserListRelationFilter
+  redeemedCodes?: Prisma.InviteCodeListRelationFilter
   completedQuests?: Prisma.CompletedQuestListRelationFilter
   rewards?: Prisma.ReferralRewardListRelationFilter
   entries?: Prisma.GameEntryListRelationFilter
@@ -527,6 +530,7 @@ export type UserCreateInput = {
   updatedAt?: Date | string
   referredBy?: Prisma.UserCreateNestedOneWithoutReferralsInput
   referrals?: Prisma.UserCreateNestedManyWithoutReferredByInput
+  redeemedCodes?: Prisma.InviteCodeCreateNestedManyWithoutUsedByInput
   completedQuests?: Prisma.CompletedQuestCreateNestedManyWithoutUserInput
   rewards?: Prisma.ReferralRewardCreateNestedManyWithoutInviterInput
   entries?: Prisma.GameEntryCreateNestedManyWithoutUserInput
@@ -558,6 +562,7 @@ export type UserUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
+  redeemedCodes?: Prisma.InviteCodeUncheckedCreateNestedManyWithoutUsedByInput
   completedQuests?: Prisma.CompletedQuestUncheckedCreateNestedManyWithoutUserInput
   rewards?: Prisma.ReferralRewardUncheckedCreateNestedManyWithoutInviterInput
   entries?: Prisma.GameEntryUncheckedCreateNestedManyWithoutUserInput
@@ -588,6 +593,7 @@ export type UserUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referredBy?: Prisma.UserUpdateOneWithoutReferralsNestedInput
   referrals?: Prisma.UserUpdateManyWithoutReferredByNestedInput
+  redeemedCodes?: Prisma.InviteCodeUpdateManyWithoutUsedByNestedInput
   completedQuests?: Prisma.CompletedQuestUpdateManyWithoutUserNestedInput
   rewards?: Prisma.ReferralRewardUpdateManyWithoutInviterNestedInput
   entries?: Prisma.GameEntryUpdateManyWithoutUserNestedInput
@@ -619,6 +625,7 @@ export type UserUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referrals?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
+  redeemedCodes?: Prisma.InviteCodeUncheckedUpdateManyWithoutUsedByNestedInput
   completedQuests?: Prisma.CompletedQuestUncheckedUpdateManyWithoutUserNestedInput
   rewards?: Prisma.ReferralRewardUncheckedUpdateManyWithoutInviterNestedInput
   entries?: Prisma.GameEntryUncheckedUpdateManyWithoutUserNestedInput
@@ -993,6 +1000,22 @@ export type UserUpdateOneRequiredWithoutAuditLogsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAuditLogsInput, Prisma.UserUpdateWithoutAuditLogsInput>, Prisma.UserUncheckedUpdateWithoutAuditLogsInput>
 }
 
+export type UserCreateNestedOneWithoutRedeemedCodesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutRedeemedCodesInput, Prisma.UserUncheckedCreateWithoutRedeemedCodesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutRedeemedCodesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneWithoutRedeemedCodesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutRedeemedCodesInput, Prisma.UserUncheckedCreateWithoutRedeemedCodesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutRedeemedCodesInput
+  upsert?: Prisma.UserUpsertWithoutRedeemedCodesInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutRedeemedCodesInput, Prisma.UserUpdateWithoutRedeemedCodesInput>, Prisma.UserUncheckedUpdateWithoutRedeemedCodesInput>
+}
+
 export type UserCreateWithoutReferralsInput = {
   fid: number
   username?: string | null
@@ -1014,6 +1037,7 @@ export type UserCreateWithoutReferralsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   referredBy?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  redeemedCodes?: Prisma.InviteCodeCreateNestedManyWithoutUsedByInput
   completedQuests?: Prisma.CompletedQuestCreateNestedManyWithoutUserInput
   rewards?: Prisma.ReferralRewardCreateNestedManyWithoutInviterInput
   entries?: Prisma.GameEntryCreateNestedManyWithoutUserInput
@@ -1044,6 +1068,7 @@ export type UserUncheckedCreateWithoutReferralsInput = {
   waitlistRank?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  redeemedCodes?: Prisma.InviteCodeUncheckedCreateNestedManyWithoutUsedByInput
   completedQuests?: Prisma.CompletedQuestUncheckedCreateNestedManyWithoutUserInput
   rewards?: Prisma.ReferralRewardUncheckedCreateNestedManyWithoutInviterInput
   entries?: Prisma.GameEntryUncheckedCreateNestedManyWithoutUserInput
@@ -1078,6 +1103,7 @@ export type UserCreateWithoutReferredByInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   referrals?: Prisma.UserCreateNestedManyWithoutReferredByInput
+  redeemedCodes?: Prisma.InviteCodeCreateNestedManyWithoutUsedByInput
   completedQuests?: Prisma.CompletedQuestCreateNestedManyWithoutUserInput
   rewards?: Prisma.ReferralRewardCreateNestedManyWithoutInviterInput
   entries?: Prisma.GameEntryCreateNestedManyWithoutUserInput
@@ -1108,6 +1134,7 @@ export type UserUncheckedCreateWithoutReferredByInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
+  redeemedCodes?: Prisma.InviteCodeUncheckedCreateNestedManyWithoutUsedByInput
   completedQuests?: Prisma.CompletedQuestUncheckedCreateNestedManyWithoutUserInput
   rewards?: Prisma.ReferralRewardUncheckedCreateNestedManyWithoutInviterInput
   entries?: Prisma.GameEntryUncheckedCreateNestedManyWithoutUserInput
@@ -1158,6 +1185,7 @@ export type UserUpdateWithoutReferralsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referredBy?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  redeemedCodes?: Prisma.InviteCodeUpdateManyWithoutUsedByNestedInput
   completedQuests?: Prisma.CompletedQuestUpdateManyWithoutUserNestedInput
   rewards?: Prisma.ReferralRewardUpdateManyWithoutInviterNestedInput
   entries?: Prisma.GameEntryUpdateManyWithoutUserNestedInput
@@ -1188,6 +1216,7 @@ export type UserUncheckedUpdateWithoutReferralsInput = {
   waitlistRank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  redeemedCodes?: Prisma.InviteCodeUncheckedUpdateManyWithoutUsedByNestedInput
   completedQuests?: Prisma.CompletedQuestUncheckedUpdateManyWithoutUserNestedInput
   rewards?: Prisma.ReferralRewardUncheckedUpdateManyWithoutInviterNestedInput
   entries?: Prisma.GameEntryUncheckedUpdateManyWithoutUserNestedInput
@@ -1261,6 +1290,7 @@ export type UserCreateWithoutRewardsInput = {
   updatedAt?: Date | string
   referredBy?: Prisma.UserCreateNestedOneWithoutReferralsInput
   referrals?: Prisma.UserCreateNestedManyWithoutReferredByInput
+  redeemedCodes?: Prisma.InviteCodeCreateNestedManyWithoutUsedByInput
   completedQuests?: Prisma.CompletedQuestCreateNestedManyWithoutUserInput
   entries?: Prisma.GameEntryCreateNestedManyWithoutUserInput
   chats?: Prisma.ChatCreateNestedManyWithoutUserInput
@@ -1291,6 +1321,7 @@ export type UserUncheckedCreateWithoutRewardsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
+  redeemedCodes?: Prisma.InviteCodeUncheckedCreateNestedManyWithoutUsedByInput
   completedQuests?: Prisma.CompletedQuestUncheckedCreateNestedManyWithoutUserInput
   entries?: Prisma.GameEntryUncheckedCreateNestedManyWithoutUserInput
   chats?: Prisma.ChatUncheckedCreateNestedManyWithoutUserInput
@@ -1336,6 +1367,7 @@ export type UserUpdateWithoutRewardsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referredBy?: Prisma.UserUpdateOneWithoutReferralsNestedInput
   referrals?: Prisma.UserUpdateManyWithoutReferredByNestedInput
+  redeemedCodes?: Prisma.InviteCodeUpdateManyWithoutUsedByNestedInput
   completedQuests?: Prisma.CompletedQuestUpdateManyWithoutUserNestedInput
   entries?: Prisma.GameEntryUpdateManyWithoutUserNestedInput
   chats?: Prisma.ChatUpdateManyWithoutUserNestedInput
@@ -1366,6 +1398,7 @@ export type UserUncheckedUpdateWithoutRewardsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referrals?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
+  redeemedCodes?: Prisma.InviteCodeUncheckedUpdateManyWithoutUsedByNestedInput
   completedQuests?: Prisma.CompletedQuestUncheckedUpdateManyWithoutUserNestedInput
   entries?: Prisma.GameEntryUncheckedUpdateManyWithoutUserNestedInput
   chats?: Prisma.ChatUncheckedUpdateManyWithoutUserNestedInput
@@ -1395,6 +1428,7 @@ export type UserCreateWithoutCompletedQuestsInput = {
   updatedAt?: Date | string
   referredBy?: Prisma.UserCreateNestedOneWithoutReferralsInput
   referrals?: Prisma.UserCreateNestedManyWithoutReferredByInput
+  redeemedCodes?: Prisma.InviteCodeCreateNestedManyWithoutUsedByInput
   rewards?: Prisma.ReferralRewardCreateNestedManyWithoutInviterInput
   entries?: Prisma.GameEntryCreateNestedManyWithoutUserInput
   chats?: Prisma.ChatCreateNestedManyWithoutUserInput
@@ -1425,6 +1459,7 @@ export type UserUncheckedCreateWithoutCompletedQuestsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
+  redeemedCodes?: Prisma.InviteCodeUncheckedCreateNestedManyWithoutUsedByInput
   rewards?: Prisma.ReferralRewardUncheckedCreateNestedManyWithoutInviterInput
   entries?: Prisma.GameEntryUncheckedCreateNestedManyWithoutUserInput
   chats?: Prisma.ChatUncheckedCreateNestedManyWithoutUserInput
@@ -1470,6 +1505,7 @@ export type UserUpdateWithoutCompletedQuestsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referredBy?: Prisma.UserUpdateOneWithoutReferralsNestedInput
   referrals?: Prisma.UserUpdateManyWithoutReferredByNestedInput
+  redeemedCodes?: Prisma.InviteCodeUpdateManyWithoutUsedByNestedInput
   rewards?: Prisma.ReferralRewardUpdateManyWithoutInviterNestedInput
   entries?: Prisma.GameEntryUpdateManyWithoutUserNestedInput
   chats?: Prisma.ChatUpdateManyWithoutUserNestedInput
@@ -1500,6 +1536,7 @@ export type UserUncheckedUpdateWithoutCompletedQuestsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referrals?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
+  redeemedCodes?: Prisma.InviteCodeUncheckedUpdateManyWithoutUsedByNestedInput
   rewards?: Prisma.ReferralRewardUncheckedUpdateManyWithoutInviterNestedInput
   entries?: Prisma.GameEntryUncheckedUpdateManyWithoutUserNestedInput
   chats?: Prisma.ChatUncheckedUpdateManyWithoutUserNestedInput
@@ -1529,6 +1566,7 @@ export type UserCreateWithoutEntriesInput = {
   updatedAt?: Date | string
   referredBy?: Prisma.UserCreateNestedOneWithoutReferralsInput
   referrals?: Prisma.UserCreateNestedManyWithoutReferredByInput
+  redeemedCodes?: Prisma.InviteCodeCreateNestedManyWithoutUsedByInput
   completedQuests?: Prisma.CompletedQuestCreateNestedManyWithoutUserInput
   rewards?: Prisma.ReferralRewardCreateNestedManyWithoutInviterInput
   chats?: Prisma.ChatCreateNestedManyWithoutUserInput
@@ -1559,6 +1597,7 @@ export type UserUncheckedCreateWithoutEntriesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
+  redeemedCodes?: Prisma.InviteCodeUncheckedCreateNestedManyWithoutUsedByInput
   completedQuests?: Prisma.CompletedQuestUncheckedCreateNestedManyWithoutUserInput
   rewards?: Prisma.ReferralRewardUncheckedCreateNestedManyWithoutInviterInput
   chats?: Prisma.ChatUncheckedCreateNestedManyWithoutUserInput
@@ -1604,6 +1643,7 @@ export type UserUpdateWithoutEntriesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referredBy?: Prisma.UserUpdateOneWithoutReferralsNestedInput
   referrals?: Prisma.UserUpdateManyWithoutReferredByNestedInput
+  redeemedCodes?: Prisma.InviteCodeUpdateManyWithoutUsedByNestedInput
   completedQuests?: Prisma.CompletedQuestUpdateManyWithoutUserNestedInput
   rewards?: Prisma.ReferralRewardUpdateManyWithoutInviterNestedInput
   chats?: Prisma.ChatUpdateManyWithoutUserNestedInput
@@ -1634,6 +1674,7 @@ export type UserUncheckedUpdateWithoutEntriesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referrals?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
+  redeemedCodes?: Prisma.InviteCodeUncheckedUpdateManyWithoutUsedByNestedInput
   completedQuests?: Prisma.CompletedQuestUncheckedUpdateManyWithoutUserNestedInput
   rewards?: Prisma.ReferralRewardUncheckedUpdateManyWithoutInviterNestedInput
   chats?: Prisma.ChatUncheckedUpdateManyWithoutUserNestedInput
@@ -1663,6 +1704,7 @@ export type UserCreateWithoutChatsInput = {
   updatedAt?: Date | string
   referredBy?: Prisma.UserCreateNestedOneWithoutReferralsInput
   referrals?: Prisma.UserCreateNestedManyWithoutReferredByInput
+  redeemedCodes?: Prisma.InviteCodeCreateNestedManyWithoutUsedByInput
   completedQuests?: Prisma.CompletedQuestCreateNestedManyWithoutUserInput
   rewards?: Prisma.ReferralRewardCreateNestedManyWithoutInviterInput
   entries?: Prisma.GameEntryCreateNestedManyWithoutUserInput
@@ -1693,6 +1735,7 @@ export type UserUncheckedCreateWithoutChatsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
+  redeemedCodes?: Prisma.InviteCodeUncheckedCreateNestedManyWithoutUsedByInput
   completedQuests?: Prisma.CompletedQuestUncheckedCreateNestedManyWithoutUserInput
   rewards?: Prisma.ReferralRewardUncheckedCreateNestedManyWithoutInviterInput
   entries?: Prisma.GameEntryUncheckedCreateNestedManyWithoutUserInput
@@ -1738,6 +1781,7 @@ export type UserUpdateWithoutChatsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referredBy?: Prisma.UserUpdateOneWithoutReferralsNestedInput
   referrals?: Prisma.UserUpdateManyWithoutReferredByNestedInput
+  redeemedCodes?: Prisma.InviteCodeUpdateManyWithoutUsedByNestedInput
   completedQuests?: Prisma.CompletedQuestUpdateManyWithoutUserNestedInput
   rewards?: Prisma.ReferralRewardUpdateManyWithoutInviterNestedInput
   entries?: Prisma.GameEntryUpdateManyWithoutUserNestedInput
@@ -1768,6 +1812,7 @@ export type UserUncheckedUpdateWithoutChatsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referrals?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
+  redeemedCodes?: Prisma.InviteCodeUncheckedUpdateManyWithoutUsedByNestedInput
   completedQuests?: Prisma.CompletedQuestUncheckedUpdateManyWithoutUserNestedInput
   rewards?: Prisma.ReferralRewardUncheckedUpdateManyWithoutInviterNestedInput
   entries?: Prisma.GameEntryUncheckedUpdateManyWithoutUserNestedInput
@@ -1797,6 +1842,7 @@ export type UserCreateWithoutNotifsInput = {
   updatedAt?: Date | string
   referredBy?: Prisma.UserCreateNestedOneWithoutReferralsInput
   referrals?: Prisma.UserCreateNestedManyWithoutReferredByInput
+  redeemedCodes?: Prisma.InviteCodeCreateNestedManyWithoutUsedByInput
   completedQuests?: Prisma.CompletedQuestCreateNestedManyWithoutUserInput
   rewards?: Prisma.ReferralRewardCreateNestedManyWithoutInviterInput
   entries?: Prisma.GameEntryCreateNestedManyWithoutUserInput
@@ -1827,6 +1873,7 @@ export type UserUncheckedCreateWithoutNotifsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
+  redeemedCodes?: Prisma.InviteCodeUncheckedCreateNestedManyWithoutUsedByInput
   completedQuests?: Prisma.CompletedQuestUncheckedCreateNestedManyWithoutUserInput
   rewards?: Prisma.ReferralRewardUncheckedCreateNestedManyWithoutInviterInput
   entries?: Prisma.GameEntryUncheckedCreateNestedManyWithoutUserInput
@@ -1872,6 +1919,7 @@ export type UserUpdateWithoutNotifsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referredBy?: Prisma.UserUpdateOneWithoutReferralsNestedInput
   referrals?: Prisma.UserUpdateManyWithoutReferredByNestedInput
+  redeemedCodes?: Prisma.InviteCodeUpdateManyWithoutUsedByNestedInput
   completedQuests?: Prisma.CompletedQuestUpdateManyWithoutUserNestedInput
   rewards?: Prisma.ReferralRewardUpdateManyWithoutInviterNestedInput
   entries?: Prisma.GameEntryUpdateManyWithoutUserNestedInput
@@ -1902,6 +1950,7 @@ export type UserUncheckedUpdateWithoutNotifsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referrals?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
+  redeemedCodes?: Prisma.InviteCodeUncheckedUpdateManyWithoutUsedByNestedInput
   completedQuests?: Prisma.CompletedQuestUncheckedUpdateManyWithoutUserNestedInput
   rewards?: Prisma.ReferralRewardUncheckedUpdateManyWithoutInviterNestedInput
   entries?: Prisma.GameEntryUncheckedUpdateManyWithoutUserNestedInput
@@ -1931,6 +1980,7 @@ export type UserCreateWithoutAuditLogsInput = {
   updatedAt?: Date | string
   referredBy?: Prisma.UserCreateNestedOneWithoutReferralsInput
   referrals?: Prisma.UserCreateNestedManyWithoutReferredByInput
+  redeemedCodes?: Prisma.InviteCodeCreateNestedManyWithoutUsedByInput
   completedQuests?: Prisma.CompletedQuestCreateNestedManyWithoutUserInput
   rewards?: Prisma.ReferralRewardCreateNestedManyWithoutInviterInput
   entries?: Prisma.GameEntryCreateNestedManyWithoutUserInput
@@ -1961,6 +2011,7 @@ export type UserUncheckedCreateWithoutAuditLogsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
+  redeemedCodes?: Prisma.InviteCodeUncheckedCreateNestedManyWithoutUsedByInput
   completedQuests?: Prisma.CompletedQuestUncheckedCreateNestedManyWithoutUserInput
   rewards?: Prisma.ReferralRewardUncheckedCreateNestedManyWithoutInviterInput
   entries?: Prisma.GameEntryUncheckedCreateNestedManyWithoutUserInput
@@ -2006,6 +2057,7 @@ export type UserUpdateWithoutAuditLogsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referredBy?: Prisma.UserUpdateOneWithoutReferralsNestedInput
   referrals?: Prisma.UserUpdateManyWithoutReferredByNestedInput
+  redeemedCodes?: Prisma.InviteCodeUpdateManyWithoutUsedByNestedInput
   completedQuests?: Prisma.CompletedQuestUpdateManyWithoutUserNestedInput
   rewards?: Prisma.ReferralRewardUpdateManyWithoutInviterNestedInput
   entries?: Prisma.GameEntryUpdateManyWithoutUserNestedInput
@@ -2036,11 +2088,150 @@ export type UserUncheckedUpdateWithoutAuditLogsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referrals?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
+  redeemedCodes?: Prisma.InviteCodeUncheckedUpdateManyWithoutUsedByNestedInput
   completedQuests?: Prisma.CompletedQuestUncheckedUpdateManyWithoutUserNestedInput
   rewards?: Prisma.ReferralRewardUncheckedUpdateManyWithoutInviterNestedInput
   entries?: Prisma.GameEntryUncheckedUpdateManyWithoutUserNestedInput
   chats?: Prisma.ChatUncheckedUpdateManyWithoutUserNestedInput
   notifs?: Prisma.NotificationTokenUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutRedeemedCodesInput = {
+  fid: number
+  username?: string | null
+  pfpUrl?: string | null
+  wallet?: string | null
+  role?: $Enums.UserRole
+  password?: string | null
+  inviteCode: string
+  inviteQuota?: number
+  hasGameAccess?: boolean
+  accessGrantedAt?: Date | string | null
+  accessGrantedBy?: number | null
+  isBanned?: boolean
+  bannedAt?: Date | string | null
+  bannedBy?: number | null
+  joinedWaitlistAt?: Date | string | null
+  waitlistPoints?: number
+  waitlistRank?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  referredBy?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferredByInput
+  completedQuests?: Prisma.CompletedQuestCreateNestedManyWithoutUserInput
+  rewards?: Prisma.ReferralRewardCreateNestedManyWithoutInviterInput
+  entries?: Prisma.GameEntryCreateNestedManyWithoutUserInput
+  chats?: Prisma.ChatCreateNestedManyWithoutUserInput
+  notifs?: Prisma.NotificationTokenCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutAdminInput
+}
+
+export type UserUncheckedCreateWithoutRedeemedCodesInput = {
+  id?: number
+  fid: number
+  username?: string | null
+  pfpUrl?: string | null
+  wallet?: string | null
+  role?: $Enums.UserRole
+  password?: string | null
+  referredById?: number | null
+  inviteCode: string
+  inviteQuota?: number
+  hasGameAccess?: boolean
+  accessGrantedAt?: Date | string | null
+  accessGrantedBy?: number | null
+  isBanned?: boolean
+  bannedAt?: Date | string | null
+  bannedBy?: number | null
+  joinedWaitlistAt?: Date | string | null
+  waitlistPoints?: number
+  waitlistRank?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
+  completedQuests?: Prisma.CompletedQuestUncheckedCreateNestedManyWithoutUserInput
+  rewards?: Prisma.ReferralRewardUncheckedCreateNestedManyWithoutInviterInput
+  entries?: Prisma.GameEntryUncheckedCreateNestedManyWithoutUserInput
+  chats?: Prisma.ChatUncheckedCreateNestedManyWithoutUserInput
+  notifs?: Prisma.NotificationTokenUncheckedCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutAdminInput
+}
+
+export type UserCreateOrConnectWithoutRedeemedCodesInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutRedeemedCodesInput, Prisma.UserUncheckedCreateWithoutRedeemedCodesInput>
+}
+
+export type UserUpsertWithoutRedeemedCodesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutRedeemedCodesInput, Prisma.UserUncheckedUpdateWithoutRedeemedCodesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutRedeemedCodesInput, Prisma.UserUncheckedCreateWithoutRedeemedCodesInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutRedeemedCodesInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutRedeemedCodesInput, Prisma.UserUncheckedUpdateWithoutRedeemedCodesInput>
+}
+
+export type UserUpdateWithoutRedeemedCodesInput = {
+  fid?: Prisma.IntFieldUpdateOperationsInput | number
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pfpUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
+  hasGameAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  accessGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessGrantedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  waitlistRank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  referredBy?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferredByNestedInput
+  completedQuests?: Prisma.CompletedQuestUpdateManyWithoutUserNestedInput
+  rewards?: Prisma.ReferralRewardUpdateManyWithoutInviterNestedInput
+  entries?: Prisma.GameEntryUpdateManyWithoutUserNestedInput
+  chats?: Prisma.ChatUpdateManyWithoutUserNestedInput
+  notifs?: Prisma.NotificationTokenUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutAdminNestedInput
+}
+
+export type UserUncheckedUpdateWithoutRedeemedCodesInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  fid?: Prisma.IntFieldUpdateOperationsInput | number
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pfpUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  referredById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  inviteCode?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteQuota?: Prisma.IntFieldUpdateOperationsInput | number
+  hasGameAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  accessGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessGrantedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  waitlistRank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
+  completedQuests?: Prisma.CompletedQuestUncheckedUpdateManyWithoutUserNestedInput
+  rewards?: Prisma.ReferralRewardUncheckedUpdateManyWithoutInviterNestedInput
+  entries?: Prisma.GameEntryUncheckedUpdateManyWithoutUserNestedInput
+  chats?: Prisma.ChatUncheckedUpdateManyWithoutUserNestedInput
+  notifs?: Prisma.NotificationTokenUncheckedUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutAdminNestedInput
 }
 
 export type UserCreateManyReferredByInput = {
@@ -2087,6 +2278,7 @@ export type UserUpdateWithoutReferredByInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referrals?: Prisma.UserUpdateManyWithoutReferredByNestedInput
+  redeemedCodes?: Prisma.InviteCodeUpdateManyWithoutUsedByNestedInput
   completedQuests?: Prisma.CompletedQuestUpdateManyWithoutUserNestedInput
   rewards?: Prisma.ReferralRewardUpdateManyWithoutInviterNestedInput
   entries?: Prisma.GameEntryUpdateManyWithoutUserNestedInput
@@ -2117,6 +2309,7 @@ export type UserUncheckedUpdateWithoutReferredByInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referrals?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
+  redeemedCodes?: Prisma.InviteCodeUncheckedUpdateManyWithoutUsedByNestedInput
   completedQuests?: Prisma.CompletedQuestUncheckedUpdateManyWithoutUserNestedInput
   rewards?: Prisma.ReferralRewardUncheckedUpdateManyWithoutInviterNestedInput
   entries?: Prisma.GameEntryUncheckedUpdateManyWithoutUserNestedInput
@@ -2155,6 +2348,7 @@ export type UserUncheckedUpdateManyWithoutReferredByInput = {
 
 export type UserCountOutputType = {
   referrals: number
+  redeemedCodes: number
   completedQuests: number
   rewards: number
   entries: number
@@ -2165,6 +2359,7 @@ export type UserCountOutputType = {
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   referrals?: boolean | UserCountOutputTypeCountReferralsArgs
+  redeemedCodes?: boolean | UserCountOutputTypeCountRedeemedCodesArgs
   completedQuests?: boolean | UserCountOutputTypeCountCompletedQuestsArgs
   rewards?: boolean | UserCountOutputTypeCountRewardsArgs
   entries?: boolean | UserCountOutputTypeCountEntriesArgs
@@ -2188,6 +2383,13 @@ export type UserCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensi
  */
 export type UserCountOutputTypeCountReferralsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.UserWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountRedeemedCodesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.InviteCodeWhereInput
 }
 
 /**
@@ -2257,6 +2459,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   updatedAt?: boolean
   referredBy?: boolean | Prisma.User$referredByArgs<ExtArgs>
   referrals?: boolean | Prisma.User$referralsArgs<ExtArgs>
+  redeemedCodes?: boolean | Prisma.User$redeemedCodesArgs<ExtArgs>
   completedQuests?: boolean | Prisma.User$completedQuestsArgs<ExtArgs>
   rewards?: boolean | Prisma.User$rewardsArgs<ExtArgs>
   entries?: boolean | Prisma.User$entriesArgs<ExtArgs>
@@ -2344,6 +2547,7 @@ export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = run
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   referredBy?: boolean | Prisma.User$referredByArgs<ExtArgs>
   referrals?: boolean | Prisma.User$referralsArgs<ExtArgs>
+  redeemedCodes?: boolean | Prisma.User$redeemedCodesArgs<ExtArgs>
   completedQuests?: boolean | Prisma.User$completedQuestsArgs<ExtArgs>
   rewards?: boolean | Prisma.User$rewardsArgs<ExtArgs>
   entries?: boolean | Prisma.User$entriesArgs<ExtArgs>
@@ -2364,6 +2568,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   objects: {
     referredBy: Prisma.$UserPayload<ExtArgs> | null
     referrals: Prisma.$UserPayload<ExtArgs>[]
+    redeemedCodes: Prisma.$InviteCodePayload<ExtArgs>[]
     completedQuests: Prisma.$CompletedQuestPayload<ExtArgs>[]
     rewards: Prisma.$ReferralRewardPayload<ExtArgs>[]
     entries: Prisma.$GameEntryPayload<ExtArgs>[]
@@ -2789,6 +2994,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   readonly [Symbol.toStringTag]: "PrismaPromise"
   referredBy<T extends Prisma.User$referredByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$referredByArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   referrals<T extends Prisma.User$referralsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$referralsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  redeemedCodes<T extends Prisma.User$redeemedCodesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$redeemedCodesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InviteCodePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   completedQuests<T extends Prisma.User$completedQuestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$completedQuestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CompletedQuestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   rewards<T extends Prisma.User$rewardsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$rewardsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReferralRewardPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   entries<T extends Prisma.User$entriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$entriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GameEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -3281,6 +3487,30 @@ export type User$referralsArgs<ExtArgs extends runtime.Types.Extensions.Internal
   take?: number
   skip?: number
   distinct?: Prisma.UserScalarFieldEnum | Prisma.UserScalarFieldEnum[]
+}
+
+/**
+ * User.redeemedCodes
+ */
+export type User$redeemedCodesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the InviteCode
+   */
+  select?: Prisma.InviteCodeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the InviteCode
+   */
+  omit?: Prisma.InviteCodeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.InviteCodeInclude<ExtArgs> | null
+  where?: Prisma.InviteCodeWhereInput
+  orderBy?: Prisma.InviteCodeOrderByWithRelationInput | Prisma.InviteCodeOrderByWithRelationInput[]
+  cursor?: Prisma.InviteCodeWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.InviteCodeScalarFieldEnum | Prisma.InviteCodeScalarFieldEnum[]
 }
 
 /**

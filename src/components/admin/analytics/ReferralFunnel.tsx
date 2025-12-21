@@ -39,7 +39,7 @@ export function ReferralFunnel({ funnel, kFactor, topReferrers }: ReferralFunnel
     const maxValue = Math.max(...steps.map(s => s.value), 1);
 
     return (
-        <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
+        <div className="bg-linear-to-br from-[#00CFF2]/5 to-transparent rounded-2xl border border-white/10 p-6">
             {/* Header with K-Factor */}
             <div className="flex items-center justify-between mb-6">
                 <div>
@@ -101,8 +101,8 @@ export function ReferralFunnel({ funnel, kFactor, topReferrers }: ReferralFunnel
                             >
                                 <div className="flex items-center gap-2 mb-2">
                                     <span className={`text-sm font-bold font-body ${index === 0 ? "text-[#FFC931]" :
-                                            index === 1 ? "text-[#C0C0C0]" :
-                                                index === 2 ? "text-[#CD7F32]" : "text-white/40"
+                                        index === 1 ? "text-[#C0C0C0]" :
+                                            index === 2 ? "text-[#CD7F32]" : "text-white/40"
                                         }`}>#{index + 1}</span>
                                     <span className="text-sm text-white truncate">@{referrer.username || `user${referrer.id}`}</span>
                                 </div>

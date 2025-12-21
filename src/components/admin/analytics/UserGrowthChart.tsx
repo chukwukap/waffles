@@ -30,7 +30,7 @@ export function UserGrowthChart({ dailyData, statusData }: UserGrowthChartProps)
     const [viewMode, setViewMode] = useState<"cumulative" | "daily">("cumulative");
 
     return (
-        <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
+        <div className="bg-linear-to-br from-[#00CFF2]/5 to-transparent rounded-2xl border border-white/10 p-6">
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h3 className="text-lg font-semibold text-white font-display">User Growth</h3>
@@ -40,8 +40,8 @@ export function UserGrowthChart({ dailyData, statusData }: UserGrowthChartProps)
                     <button
                         onClick={() => setViewMode("cumulative")}
                         className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${viewMode === "cumulative"
-                                ? "bg-[#00CFF2] text-black font-bold"
-                                : "text-white/60 hover:text-white"
+                            ? "bg-[#00CFF2] text-black font-bold"
+                            : "text-white/60 hover:text-white"
                             }`}
                     >
                         Cumulative
@@ -49,8 +49,8 @@ export function UserGrowthChart({ dailyData, statusData }: UserGrowthChartProps)
                     <button
                         onClick={() => setViewMode("daily")}
                         className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${viewMode === "daily"
-                                ? "bg-[#00CFF2] text-black font-bold"
-                                : "text-white/60 hover:text-white"
+                            ? "bg-[#00CFF2] text-black font-bold"
+                            : "text-white/60 hover:text-white"
                             }`}
                     >
                         Daily

@@ -129,36 +129,36 @@ export function QuestForm({ quest }: QuestFormProps) {
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
             {/* Basic Info */}
-            <div className="bg-[#1A1D21] rounded-lg border border-white/5 p-6 space-y-4">
-                <h2 className="text-lg font-semibold text-white">Basic Information</h2>
+            <div className="bg-gradient-to-br from-white/6 to-white/2 rounded-2xl border border-white/8 p-6 space-y-4">
+                <h2 className="text-lg font-semibold text-white font-display">Basic Information</h2>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-[#99A0AE] mb-1">Title *</label>
+                        <label className="block text-sm font-medium text-white/50 mb-1">Title *</label>
                         <input
                             type="text"
                             value={formData.title}
                             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                             onBlur={() => !formData.slug && generateSlug()}
-                            className="w-full px-3 py-2 bg-[#0D0F11] border border-white/10 rounded-lg text-white focus:border-[#14B985] focus:outline-none"
+                            className="w-full px-4 py-2.5 bg-white/3 border border-white/10 rounded-xl text-white focus:border-[#14B985]/50 focus:ring-2 focus:ring-[#14B985]/10 focus:outline-none transition-all"
                             required
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-[#99A0AE] mb-1">Slug *</label>
+                        <label className="block text-sm font-medium text-white/50 mb-1">Slug *</label>
                         <div className="flex gap-2">
                             <input
                                 type="text"
                                 value={formData.slug}
                                 onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                                className="flex-1 px-3 py-2 bg-[#0D0F11] border border-white/10 rounded-lg text-white focus:border-[#14B985] focus:outline-none font-mono text-sm"
+                                className="flex-1 px-4 py-2.5 bg-white/3 border border-white/10 rounded-xl text-white focus:border-[#14B985]/50 focus:ring-2 focus:ring-[#14B985]/10 focus:outline-none font-mono text-sm transition-all"
                                 pattern="^[a-z0-9-]+$"
                                 required
                             />
                             <button
                                 type="button"
                                 onClick={generateSlug}
-                                className="px-3 py-2 text-sm bg-white/10 text-[#99A0AE] rounded-lg hover:bg-white/20"
+                                className="px-4 py-2.5 text-sm bg-white/5 text-white/60 rounded-xl hover:bg-white/10 hover:text-white border border-white/8 transition-all"
                             >
                                 Generate
                             </button>
@@ -167,12 +167,12 @@ export function QuestForm({ quest }: QuestFormProps) {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-[#99A0AE] mb-1">Description *</label>
+                    <label className="block text-sm font-medium text-white/50 mb-1">Description *</label>
                     <textarea
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         rows={2}
-                        className="w-full px-3 py-2 bg-[#0D0F11] border border-white/10 rounded-lg text-white focus:border-[#14B985] focus:outline-none resize-none"
+                        className="w-full px-4 py-2.5 bg-white/3 border border-white/10 rounded-xl text-white focus:border-[#14B985]/50 focus:ring-2 focus:ring-[#14B985]/10 focus:outline-none resize-none transition-all"
                         required
                     />
                 </div>
@@ -225,8 +225,8 @@ export function QuestForm({ quest }: QuestFormProps) {
             </div>
 
             {/* Quest Type & Action */}
-            <div className="bg-[#1A1D21] rounded-lg border border-white/5 p-6 space-y-4">
-                <h2 className="text-lg font-semibold text-white">Quest Type & Action</h2>
+            <div className="bg-gradient-to-br from-white/6 to-white/2 rounded-2xl border border-white/8 p-6 space-y-4">
+                <h2 className="text-lg font-semibold text-white font-display">Quest Type & Action</h2>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -310,8 +310,8 @@ export function QuestForm({ quest }: QuestFormProps) {
             </div>
 
             {/* Status */}
-            <div className="bg-[#1A1D21] rounded-lg border border-white/5 p-6 space-y-4">
-                <h2 className="text-lg font-semibold text-white">Status</h2>
+            <div className="bg-gradient-to-br from-white/6 to-white/2 rounded-2xl border border-white/8 p-6 space-y-4">
+                <h2 className="text-lg font-semibold text-white font-display">Status</h2>
 
                 <label className="flex items-center gap-3 cursor-pointer">
                     <input
@@ -329,14 +329,14 @@ export function QuestForm({ quest }: QuestFormProps) {
                 <button
                     type="button"
                     onClick={() => router.back()}
-                    className="px-6 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors"
+                    className="px-6 py-2.5 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white rounded-xl border border-white/8 hover:border-white/15 transition-all"
                 >
                     Cancel
                 </button>
                 <button
                     type="submit"
                     disabled={isLoading}
-                    className="px-6 py-2 bg-[#14B985] text-white rounded-lg hover:bg-[#14B985]/80 transition-colors disabled:opacity-50"
+                    className="px-6 py-2.5 bg-[#14B985] hover:bg-[#1BF5B0] text-black font-bold rounded-xl shadow-lg shadow-[#14B985]/20 transition-all disabled:opacity-50"
                 >
                     {isLoading ? "Saving..." : isEditing ? "Update Quest" : "Create Quest"}
                 </button>

@@ -27,7 +27,7 @@ export function GameRow({ game }: { game: any }) {
     const [isActionsOpen, setIsActionsOpen] = useState(false);
 
     return (
-        <tr className={`border-b border-white/[0.04] hover:bg-white/[0.03] hover:bg-white/5 transition-colors ${isActionsOpen ? 'relative z-50' : ''}`}>
+        <tr className={`border-b border-white/5 hover:bg-white/3 transition-colors ${isActionsOpen ? 'relative z-50' : ''}`}>
             <td className="px-6 py-4 whitespace-nowrap">
                 <Link href={`/admin/games/${game.id}`} className="block group">
                     <div className="font-medium text-white text-base group-hover:text-[#FFC931] transition-colors">

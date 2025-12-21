@@ -38,6 +38,12 @@ export function SettlementPanel({
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [newMerkleRoot, setNewMerkleRoot] = useState("");
 
+  // Confirmation states
+  const [showSettleConfirm, setShowSettleConfirm] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [showEndConfirm, setShowEndConfirm] = useState(false);
+  const [endConfirmText, setEndConfirmText] = useState("");
+
   const executeSettlement = async (
     action: SettlementAction,
     extraParams?: { newMerkleRoot?: string }
@@ -138,7 +144,7 @@ export function SettlementPanel({
       <div className="flex flex-wrap gap-3">
         {canEnd && (
           <ActionButton
-            onClick={() => executeSettlement("end")}
+            onClick={() => setShowEndConfirm(true)}
             loading={isLoading === "end"}
             icon={<ArrowPathIcon className="h-4 w-4" />}
             label="End On-Chain"
@@ -148,7 +154,7 @@ export function SettlementPanel({
 
         {canSettle && (
           <ActionButton
-            onClick={() => executeSettlement("settle")}
+            onClick={() => setShowSettleConfirm(true)}
             loading={isLoading === "settle"}
             icon={<ChartPieIcon className="h-4 w-4" />}
             label="Submit Merkle Root"
@@ -206,8 +212,8 @@ export function SettlementPanel({
       {result && (
         <div
           className={`flex items-start gap-3 p-4 rounded-xl border ${result.success
-              ? "bg-[#14B985]/10 border-[#14B985]/30 text-[#14B985]"
-              : "bg-red-500/10 border-red-500/30 text-red-400"
+            ? "bg-[#14B985]/10 border-[#14B985]/30 text-[#14B985]"
+            : "bg-red-500/10 border-red-500/30 text-red-400"
             }`}
         >
           {result.success ? (
@@ -313,6 +319,183 @@ export function SettlementPanel({
           </div>
         </div>
       )}
+
+      {/* End Game Confirmation Modal */}
+      {showEndConfirm && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="relative bg-gradient-to-br from-[#0F0F15] to-[#0a0a0d] border border-white/10 rounded-3xl p-8 max-w-md w-full shadow-2xl overflow-hidden">
+            {/* Background glow */}
+            <div className="absolute top-0 right-0 w-40 h-40 bg-[#FFC931]/10 rounded-full blur-3xl" />
+
+            <div className="relative space-y-6">
+              {/* Header */}
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-[#FFC931]/10 border border-[#FFC931]/20 flex items-center justify-center">
+                  <span className="text-2xl">⚠️</span>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white font-display">
+                    End Game On-Chain
+                  </h3>
+                  <p className="text-white/40 text-sm">Irreversible action</p>
+                </div>
+              </div>
+
+              {/* Info */}
+              <div className="p-4 bg-white/[0.03] rounded-2xl border border-white/6 space-y-3">
+                <p className="text-white/60 text-sm">This will:</p>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 text-sm">
+                    <span className="w-5 h-5 rounded-full bg-[#FFC931]/20 flex items-center justify-center text-xs">✓</span>
+                    <span className="text-white/70">Mark game as ended on-chain</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <span className="w-5 h-5 rounded-full bg-[#FFC931]/20 flex items-center justify-center text-xs">✓</span>
+                    <span className="text-white/70">Prevent new ticket purchases</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <span className="w-5 h-5 rounded-full bg-[#FFC931]/20 flex items-center justify-center text-xs">✓</span>
+                    <span className="text-white/70">Enable settlement to proceed</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Confirm Input */}
+              <div>
+                <label className="block text-white/50 text-sm mb-2 font-medium">
+                  Type <code className="px-1.5 py-0.5 bg-[#FFC931]/10 rounded text-[#FFC931] font-mono">END</code> to confirm
+                </label>
+                <input
+                  type="text"
+                  value={endConfirmText}
+                  onChange={(e) => setEndConfirmText(e.target.value.toUpperCase())}
+                  placeholder="END"
+                  className="w-full px-4 py-3.5 bg-white/[0.03] border border-white/10 rounded-xl text-white placeholder:text-white/20 focus:outline-none focus:border-[#FFC931]/50 focus:ring-2 focus:ring-[#FFC931]/10 font-mono text-center text-xl tracking-widest transition-all"
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowEndConfirm(false);
+                    setEndConfirmText("");
+                  }}
+                  className="flex-1 px-5 py-3.5 bg-white/5 hover:bg-white/10 rounded-xl text-white/70 hover:text-white font-medium transition-all border border-white/8 hover:border-white/15"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowEndConfirm(false);
+                    setEndConfirmText("");
+                    executeSettlement("end");
+                  }}
+                  disabled={endConfirmText !== "END" || isLoading === "end"}
+                  className="flex-1 px-5 py-3.5 bg-[#FFC931] hover:bg-[#FFD966] rounded-xl text-black font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-[#FFC931]/20"
+                >
+                  {isLoading === "end" ? (
+                    <ArrowPathIcon className="h-5 w-5 animate-spin mx-auto" />
+                  ) : (
+                    "End Game"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settle Confirmation Modal */}
+      {showSettleConfirm && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="relative bg-gradient-to-br from-[#0F0F15] to-[#0a0a0d] border border-white/10 rounded-3xl p-8 max-w-md w-full shadow-2xl overflow-hidden">
+            {/* Background glow */}
+            <div className="absolute top-0 right-0 w-40 h-40 bg-[#14B985]/10 rounded-full blur-3xl" />
+
+            <div className="relative space-y-6">
+              {/* Header */}
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-[#14B985]/10 border border-[#14B985]/20 flex items-center justify-center">
+                  <span className="text-2xl">🏆</span>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white font-display">
+                    Confirm Settlement
+                  </h3>
+                  <p className="text-white/40 text-sm">Submit Merkle root on-chain</p>
+                </div>
+              </div>
+
+              {/* Info */}
+              <div className="p-4 bg-white/3 rounded-2xl border border-white/6 space-y-3">
+                <p className="text-white/60 text-sm">This will:</p>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 text-sm">
+                    <span className="w-5 h-5 rounded-full bg-[#14B985]/20 flex items-center justify-center text-xs text-[#14B985]">✓</span>
+                    <span className="text-white/70">Lock winner data permanently</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <span className="w-5 h-5 rounded-full bg-[#14B985]/20 flex items-center justify-center text-xs text-[#14B985]">✓</span>
+                    <span className="text-white/70">Enable winners to claim prizes</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <span className="w-5 h-5 rounded-full bg-[#FFC931]/20 flex items-center justify-center text-xs">⚠</span>
+                    <span className="text-[#FFC931]/80">Cannot be undone once claims start</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Warning */}
+              <p className="text-white/40 text-xs text-center">
+                Make sure you have reviewed the game results before proceeding.
+              </p>
+
+              {/* Confirm Input */}
+              <div>
+                <label className="block text-white/50 text-sm mb-2 font-medium">
+                  Type <code className="px-1.5 py-0.5 bg-[#14B985]/10 rounded text-[#14B985] font-mono">SETTLE</code> to confirm
+                </label>
+                <input
+                  type="text"
+                  value={confirmText}
+                  onChange={(e) => setConfirmText(e.target.value.toUpperCase())}
+                  placeholder="SETTLE"
+                  className="w-full px-4 py-3.5 bg-white/3 border border-white/10 rounded-xl text-white placeholder:text-white/20 focus:outline-none focus:border-[#14B985]/50 focus:ring-2 focus:ring-[#14B985]/10 font-mono text-center text-xl tracking-widest transition-all"
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowSettleConfirm(false);
+                    setConfirmText("");
+                  }}
+                  className="flex-1 px-5 py-3.5 bg-white/5 hover:bg-white/10 rounded-xl text-white/70 hover:text-white font-medium transition-all border border-white/8 hover:border-white/15"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowSettleConfirm(false);
+                    setConfirmText("");
+                    executeSettlement("settle");
+                  }}
+                  disabled={confirmText !== "SETTLE" || isLoading === "settle"}
+                  className="flex-1 px-5 py-3.5 bg-[#14B985] hover:bg-[#1BF5B0] rounded-xl text-black font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-[#14B985]/20"
+                >
+                  {isLoading === "settle" ? (
+                    <ArrowPathIcon className="h-5 w-5 animate-spin mx-auto" />
+                  ) : (
+                    "Settle Game"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -330,10 +513,10 @@ function StatusBadge({
   return (
     <div
       className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${pending
-          ? "bg-[#FFC931]/20 text-[#FFC931]"
-          : active
-            ? "bg-[#14B985]/20 text-[#14B985]"
-            : "bg-white/10 text-white/50"
+        ? "bg-[#FFC931]/20 text-[#FFC931]"
+        : active
+          ? "bg-[#14B985]/20 text-[#14B985]"
+          : "bg-white/10 text-white/50"
         }`}
     >
       {pending ? (

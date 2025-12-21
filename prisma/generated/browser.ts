@@ -67,3 +67,8 @@ export type NotificationToken = Prisma.NotificationTokenModel
  * 
  */
 export type AuditLog = Prisma.AuditLogModel
+/**
+ * Model InviteCode
+ * 
+ */
+export type InviteCode = Prisma.InviteCodeModel

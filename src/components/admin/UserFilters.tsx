@@ -39,20 +39,20 @@ export function UserFilters() {
     };
 
     return (
-        <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-4">
+        <div className="rounded-2xl border border-white/10 p-4">
             <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative flex-1">
                     <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-white/40" />
                     <input
                         type="text"
                         placeholder="Search users by name or wallet..."
-                        className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
+                        className="w-full pl-10 pr-4 py-2.5 bg-transparent border border-white/10 rounded-xl text-white placeholder-white/40 focus:ring-2 focus:ring-[#FFC931]/20 focus:border-[#FFC931]/50 transition-all"
                         defaultValue={searchParams.get("q")?.toString()}
                         onChange={(e) => handleSearch(e.target.value)}
                     />
                 </div>
                 <select
-                    className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
+                    className="px-4 py-2.5 bg-transparent border border-white/10 rounded-xl text-white/60 focus:ring-2 focus:ring-[#FFC931]/20 focus:border-[#FFC931]/50 transition-all"
                     defaultValue={searchParams.get("role")?.toString()}
                     onChange={(e) => handleRoleChange(e.target.value)}
                 >
@@ -61,7 +61,7 @@ export function UserFilters() {
                     <option value="ADMIN" className="bg-[#0a0a0b]">Admin</option>
                 </select>
                 <select
-                    className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
+                    className="px-4 py-2.5 bg-transparent border border-white/10 rounded-xl text-white/60 focus:ring-2 focus:ring-[#FFC931]/20 focus:border-[#FFC931]/50 transition-all"
                     defaultValue={searchParams.get("status")?.toString()}
                     onChange={(e) => handleStatusChange(e.target.value)}
                 >

@@ -50,6 +50,7 @@ export interface GamePageData {
   playerCount: number;
   maxPlayers: number;
   questionCount: number;
+  recentPlayers: { avatar?: string; name: string }[];
 }
 
 // ==========================================
@@ -76,6 +77,19 @@ const getActiveGame = cache(async (): Promise<GamePageData | null> => {
       playerCount: true,
       maxPlayers: true,
       _count: { select: { questions: true } },
+      entries: {
+        where: { paidAt: { not: null } },
+        take: 4,
+        orderBy: { paidAt: "desc" },
+        select: {
+          user: {
+            select: {
+              username: true,
+              pfpUrl: true,
+            },
+          },
+        },
+      },
     },
   });
 
@@ -94,6 +108,10 @@ const getActiveGame = cache(async (): Promise<GamePageData | null> => {
     playerCount: game.playerCount,
     maxPlayers: game.maxPlayers,
     questionCount: game._count.questions,
+    recentPlayers: game.entries.map((e) => ({
+      avatar: e.user.pfpUrl ?? undefined,
+      name: e.user.username ?? "Player",
+    })),
   };
 });
 

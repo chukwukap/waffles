@@ -14,7 +14,7 @@ export default async function AdminSettingsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Link
                     href="/admin/settings/contract"
-                    className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5 group hover:border-[#FFC931]/30 transition-colors"
+                    className="bg-linear-to-br from-[#FFC931]/5 to-transparent rounded-2xl border border-white/10 p-5 group hover:border-[#FFC931]/30 transition-colors"
                 >
                     <div className="flex items-start gap-4">
                         <div className="p-3 bg-[#FFC931]/10 rounded-xl group-hover:bg-[#FFC931]/20 transition-colors">
@@ -31,7 +31,7 @@ export default async function AdminSettingsPage() {
                     </div>
                 </Link>
 
-                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5 opacity-50 cursor-not-allowed">
+                <div className="bg-linear-to-br from-white/5 to-transparent rounded-2xl border border-white/10 p-5 opacity-50 cursor-not-allowed">
                     <div className="flex items-start gap-4">
                         <div className="p-3 bg-white/10 rounded-xl">
                             <Cog6ToothIcon className="h-6 w-6 text-white/50" />

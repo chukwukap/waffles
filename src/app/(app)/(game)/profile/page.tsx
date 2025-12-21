@@ -167,7 +167,11 @@ export default function ProfilePage() {
 
       <BottomNav />
 
-      <InviteDrawer isOpen={inviteOpen} onClose={() => setInviteOpen(false)} />
+      <InviteDrawer
+        isOpen={inviteOpen}
+        onClose={() => setInviteOpen(false)}
+      // inviteLink={`https://waffles.world/redeem?code=${user.inviteCode}`}
+      />
     </>
   );
 }

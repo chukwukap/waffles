@@ -359,7 +359,7 @@ export function GameForm({
         ) : null}
 
         {/* Progress Indicator */}
-        <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-4">
+        <div className="rounded-2xl border border-white/10 p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-white/60">Form completion</span>
             <span className="text-sm font-bold text-[#FFC931]">
@@ -379,7 +379,7 @@ export function GameForm({
           {/* Left Column - Main Form */}
           <div className="xl:col-span-2 space-y-6">
             {/* Theme Selection - Full Width Cards */}
-            <section className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
+            <section className="bg-linear-to-br from-[#FFC931]/5 to-transparent rounded-2xl border border-white/10 p-6">
               <div className="flex items-center gap-3 mb-5">
                 <div className="p-2.5 rounded-xl bg-[#FFC931]/15">
                   <SparklesIcon className="h-5 w-5 text-[#FFC931]" />
@@ -427,7 +427,7 @@ export function GameForm({
             </section>
 
             {/* Title & Description */}
-            <section className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
+            <section className="bg-linear-to-br from-[#00CFF2]/5 to-transparent rounded-2xl border border-white/10 p-6">
               <div className="flex items-center gap-3 mb-5">
                 <div className="p-2.5 rounded-xl bg-[#00CFF2]/15">
                   <PuzzlePieceIcon className="h-5 w-5 text-[#00CFF2]" />
@@ -457,7 +457,7 @@ export function GameForm({
                     required
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white text-lg placeholder-white/30 focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all font-medium"
+                    className="w-full px-4 py-3.5 bg-transparent border border-white/10 rounded-xl text-white text-lg placeholder-white/30 focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all font-medium"
                     placeholder="e.g., Friday Night Football Trivia"
                   />
                   <p className="mt-2 text-xs text-white/40">
@@ -479,7 +479,7 @@ export function GameForm({
                     rows={3}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all resize-none"
+                    className="w-full px-4 py-3 bg-transparent border border-white/10 rounded-xl text-white placeholder-white/30 focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all resize-none"
                     placeholder="Brief description of what players can expect..."
                   />
                 </div>
@@ -487,7 +487,7 @@ export function GameForm({
             </section>
 
             {/* Cover Image */}
-            <section className="bg-white/5 border border-white/8 rounded-2xl backdrop-blur-lg p-6">
+            <section className="bg-linear-to-br from-[#FB72FF]/5 to-transparent rounded-2xl border border-white/10 p-6">
               <div className="flex items-center gap-3 mb-5">
                 <div className="p-2.5 rounded-xl bg-[#FB72FF]/15">
                   <PhotoIcon className="h-5 w-5 text-[#FB72FF]" />
@@ -511,7 +511,7 @@ export function GameForm({
             </section>
 
             {/* Schedule */}
-            <section className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
+            <section className="bg-linear-to-br from-[#14B985]/5 to-transparent rounded-2xl border border-white/10 p-6">
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 rounded-xl bg-[#14B985]/15">
@@ -551,7 +551,7 @@ export function GameForm({
                     required
                     value={startsAt}
                     onChange={(e) => setStartsAt(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all scheme-dark"
+                    className="w-full px-4 py-3 bg-transparent border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all scheme-dark"
                   />
                 </div>
                 <div>
@@ -568,7 +568,7 @@ export function GameForm({
                     required
                     value={endsAt}
                     onChange={(e) => setEndsAt(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all scheme-dark"
+                    className="w-full px-4 py-3 bg-transparent border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all scheme-dark"
                   />
                 </div>
               </div>
@@ -576,7 +576,7 @@ export function GameForm({
 
             {/* Quick Presets */}
             {!isEdit && (
-              <section className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
+              <section className="bg-linear-to-br from-[#FFC931]/5 to-transparent rounded-2xl border border-white/10 p-6">
                 <div className="flex items-center gap-3 mb-5">
                   <div className="p-2.5 rounded-xl bg-[#FFC931]/15">
                     <BoltIcon className="h-5 w-5 text-[#FFC931]" />
@@ -628,7 +628,7 @@ export function GameForm({
             {/* Economics & Gameplay */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Economics */}
-              <section className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
+              <section className="bg-linear-to-br from-[#FFC931]/5 to-transparent rounded-2xl border border-white/10 p-6">
                 <div className="flex items-center gap-3 mb-5">
                   <div className="p-2.5 rounded-xl bg-[#FFC931]/15">
                     <CurrencyDollarIcon className="h-5 w-5 text-[#FFC931]" />
@@ -667,7 +667,7 @@ export function GameForm({
                         }}
                         min={0}
                         step="0.01"
-                        className="w-full pl-8 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
+                        className="w-full pl-8 pr-4 py-3 bg-transparent border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
                         placeholder="20"
                       />
                     </div>
@@ -698,7 +698,7 @@ export function GameForm({
                         }}
                         min={0}
                         step="0.01"
-                        className="w-full pl-8 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
+                        className="w-full pl-8 pr-4 py-3 bg-transparent border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
                         placeholder="50"
                       />
                     </div>
@@ -729,7 +729,7 @@ export function GameForm({
                         }}
                         min={0}
                         step="0.01"
-                        className="w-full pl-8 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
+                        className="w-full pl-8 pr-4 py-3 bg-transparent border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
                         placeholder="100"
                       />
                     </div>
@@ -758,7 +758,7 @@ export function GameForm({
                           setActivePreset(null);
                         }}
                         min={0}
-                        className="w-full pl-8 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
+                        className="w-full pl-8 pr-4 py-3 bg-transparent border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
                         placeholder="0.00"
                       />
                     </div>
@@ -767,7 +767,7 @@ export function GameForm({
               </section>
 
               {/* Gameplay */}
-              <section className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
+              <section className="bg-linear-to-br from-[#00CFF2]/5 to-transparent rounded-2xl border border-white/10 p-6">
                 <div className="flex items-center gap-3 mb-5">
                   <div className="p-2.5 rounded-xl bg-[#00CFF2]/15">
                     <ClockIcon className="h-5 w-5 text-[#00CFF2]" />
@@ -800,7 +800,7 @@ export function GameForm({
                         setActivePreset(null);
                       }}
                       min={5}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
+                      className="w-full px-4 py-3 bg-transparent border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
                       placeholder="15"
                     />
                   </div>
@@ -825,7 +825,7 @@ export function GameForm({
                           setActivePreset(null);
                         }}
                         min={2}
-                        className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
+                        className="w-full pl-12 pr-4 py-3 bg-transparent border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
                         placeholder="100"
                       />
                     </div>
@@ -838,7 +838,7 @@ export function GameForm({
           {/* Right Column - Live Preview & Summary */}
           <div className="space-y-6">
             {/* Live Preview Card */}
-            <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5 sticky top-6">
+            <div className="bg-linear-to-br from-[#14B985]/5 to-transparent rounded-2xl border border-white/10 p-5 sticky top-6">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-2 h-2 rounded-full bg-[#14B985] animate-pulse" />
                 <span className="text-sm font-medium text-white/60">

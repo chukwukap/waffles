@@ -27,7 +27,7 @@ export function AnalyticsTabs({ currentTab }: AnalyticsTabsProps) {
     };
 
     return (
-        <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-1.5 inline-flex items-center gap-1">
+        <div className="rounded-2xl border border-white/10 p-1.5 inline-flex items-center gap-1">
             {TABS.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = currentTab === tab.id;

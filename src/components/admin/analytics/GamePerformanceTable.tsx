@@ -36,7 +36,7 @@ const THEME_ICONS: Record<string, string> = {
 
 export function GamePerformanceTable({ games }: GamePerformanceTableProps) {
     return (
-        <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg overflow-hidden">
+        <div className="bg-linear-to-br from-[#14B985]/5 to-transparent rounded-2xl border border-white/10 overflow-hidden">
             <div className="px-6 py-4 border-b border-white/6 flex items-center justify-between">
                 <div>
                     <h3 className="text-lg font-semibold text-white font-display">Game Performance</h3>
@@ -83,12 +83,12 @@ export function GamePerformanceTable({ games }: GamePerformanceTableProps) {
                             const themeIcon = THEME_ICONS[game.theme] || "🎮";
 
                             return (
-                                <tr key={game.id} className="border-b border-white/[0.04] hover:bg-white/[0.03]">
+                                <tr key={game.id} className="border-b border-white/4 hover:bg-white/3">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span className={`text-xl font-bold font-body ${index === 0 ? "text-[#FFC931] " :
-                                                index === 1 ? "text-[#C0C0C0]" :
-                                                    index === 2 ? "text-[#CD7F32]" :
-                                                        "text-white/40"
+                                            index === 1 ? "text-[#C0C0C0]" :
+                                                index === 2 ? "text-[#CD7F32]" :
+                                                    "text-white/40"
                                             }`}>
                                             #{index + 1}
                                         </span>

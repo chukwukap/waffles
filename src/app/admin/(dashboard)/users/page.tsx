@@ -108,10 +108,10 @@ export default async function UsersListPage({
             <UserFilters />
 
             {/* Users Table */}
-            <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg overflow-hidden">
-                <table className="min-w-full divide-y divide-white/6">
-                    <thead className="bg-white/3">
-                        <tr>
+            <div className="rounded-2xl border border-white/10 overflow-hidden">
+                <table className="min-w-full">
+                    <thead>
+                        <tr className="border-b border-white/10">
                             <th className="px-6 py-4 text-left text-xs font-medium text-white/50 uppercase font-display">
                                 User
                             </th>
@@ -132,9 +132,9 @@ export default async function UsersListPage({
                             </th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/6">
+                    <tbody>
                         {users.map((user) => (
-                            <tr key={user.id} className="border-b border-white/[0.04] hover:bg-white/[0.03]">
+                            <tr key={user.id} className="border-b border-white/5 hover:bg-white/3 transition-colors">
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="flex items-center gap-3">
                                         <div className="h-9 w-9 bg-[#FFC931]/20 rounded-full flex items-center justify-center text-[#FFC931] font-bold text-sm">

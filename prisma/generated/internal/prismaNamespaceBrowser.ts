@@ -60,7 +60,8 @@ export const ModelName = {
   GameEntry: 'GameEntry',
   Chat: 'Chat',
   NotificationToken: 'NotificationToken',
-  AuditLog: 'AuditLog'
+  AuditLog: 'AuditLog',
+  InviteCode: 'InviteCode'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -255,6 +256,18 @@ export const AuditLogScalarFieldEnum = {
 } as const
 
 export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
+
+
+export const InviteCodeScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  usedById: 'usedById',
+  usedAt: 'usedAt',
+  createdAt: 'createdAt',
+  note: 'note'
+} as const
+
+export type InviteCodeScalarFieldEnum = (typeof InviteCodeScalarFieldEnum)[keyof typeof InviteCodeScalarFieldEnum]
 
 
 export const SortOrder = {

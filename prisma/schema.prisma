@@ -28,8 +28,9 @@ model User {
   referrals    User[] @relation("Referrals")
 
   // -- INVITE SYSTEM --
-  inviteCode  String @unique @db.VarChar(25)
-  inviteQuota Int    @default(30) @db.SmallInt
+  inviteCode    String       @unique @db.VarChar(25)
+  inviteQuota   Int          @default(3) @db.SmallInt
+  redeemedCodes InviteCode[]
 
   // -- ACCESS CONTROL --
   hasGameAccess   Boolean   @default(false)
@@ -363,4 +364,21 @@ model AuditLog {
 
   @@index([adminId, createdAt])
   @@index([entityType, entityId])
+}
+
+// ==========================================
+// 7. ADMIN INVITE CODES (One-Time Use)
+// ==========================================
+
+model InviteCode {
+  id        Int       @id @default(autoincrement())
+  code      String    @unique @db.VarChar(6)
+  usedById  Int?
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  note      String?   @db.VarChar(100)
+
+  usedBy User? @relation(fields: [usedById], references: [id])
+
+  @@index([code])
 }

@@ -40,7 +40,7 @@ export function GameInsights({ data }: GameInsightsProps) {
         <div className="space-y-6">
             {/* Summary Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5">
+                <div className="rounded-2xl border border-white/10 p-5">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 rounded-xl bg-[#FFC931]/10">
                             <CurrencyDollarIcon className="h-5 w-5 text-[#FFC931]" />
@@ -53,7 +53,7 @@ export function GameInsights({ data }: GameInsightsProps) {
                     <div className="text-xs text-white/40 mt-1">total prizes</div>
                 </div>
 
-                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5">
+                <div className="rounded-2xl border border-white/10 p-5">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 rounded-xl bg-[#14B985]/10">
                             <TrophyIcon className="h-5 w-5 text-[#14B985]" />
@@ -66,7 +66,7 @@ export function GameInsights({ data }: GameInsightsProps) {
                     <div className="text-xs text-white/40 mt-1">games finished</div>
                 </div>
 
-                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5">
+                <div className="rounded-2xl border border-white/10 p-5">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 rounded-xl bg-[#00CFF2]/10">
                             <UserGroupIcon className="h-5 w-5 text-[#00CFF2]" />
@@ -79,7 +79,7 @@ export function GameInsights({ data }: GameInsightsProps) {
                     <div className="text-xs text-white/40 mt-1">per game</div>
                 </div>
 
-                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5">
+                <div className="rounded-2xl border border-white/10 p-5">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 rounded-xl bg-[#FB72FF]/10">
                             <TicketIcon className="h-5 w-5 text-[#FB72FF]" />
@@ -94,7 +94,7 @@ export function GameInsights({ data }: GameInsightsProps) {
             </div>
 
             {/* Ticket Funnel */}
-            <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
+            <div className="rounded-2xl border border-white/10 p-6">
                 <div className="flex items-center justify-between mb-6">
                     <div>
                         <h3 className="text-lg font-semibold text-white font-display">Ticket Conversion Funnel</h3>

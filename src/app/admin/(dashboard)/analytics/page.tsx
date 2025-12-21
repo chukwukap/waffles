@@ -377,8 +377,8 @@ export default async function AnalyticsPage({
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Analytics</h1>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <h1 className="text-2xl font-bold text-white font-display">Analytics</h1>
+                    <p className="text-sm text-white/60">
                         Track platform performance and user engagement
                     </p>
                 </div>
@@ -518,12 +518,12 @@ function AnalyticsSkeleton() {
         <div className="space-y-6 animate-pulse">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {[...Array(4)].map((_, i) => (
-                    <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+                    <div key={i} className="h-32 bg-white/5 border border-white/10 rounded-2xl" />
                 ))}
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="h-80 bg-gray-200 dark:bg-gray-700 rounded-xl" />
-                <div className="h-80 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+                <div className="h-80 bg-white/5 border border-white/10 rounded-2xl" />
+                <div className="h-80 bg-white/5 border border-white/10 rounded-2xl" />
             </div>
         </div>
     );

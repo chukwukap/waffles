@@ -25,11 +25,11 @@ export function KPICard({
     subtitle,
     glowVariant = "gold",
 }: KPICardProps) {
-    const glowClasses = {
-        gold: "",
-        cyan: "",
-        pink: "",
-        success: "",
+    const gradientClasses = {
+        gold: "bg-linear-to-br from-[#FFC931]/5 to-transparent",
+        cyan: "bg-linear-to-br from-[#00CFF2]/5 to-transparent",
+        pink: "bg-linear-to-br from-[#FB72FF]/5 to-transparent",
+        success: "bg-linear-to-br from-[#14B985]/5 to-transparent",
     };
 
     const accentColors = {
@@ -40,7 +40,7 @@ export function KPICard({
     };
 
     return (
-        <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-5 relative overflow-hidden group hover:border-white/20 transition-colors">
+        <div className={`${gradientClasses[glowVariant]} rounded-2xl border border-white/10 p-5 relative overflow-hidden group hover:border-white/20 transition-colors`}>
             {/* Background glow effect */}
             <div
                 className="absolute -top-20 -right-20 w-40 h-40 rounded-full opacity-10 blur-3xl transition-opacity group-hover:opacity-20"
@@ -59,7 +59,7 @@ export function KPICard({
                 </div>
 
                 {/* Value */}
-                <div className={`text-3xl font-bold font-body mb-1 ${glowClasses[glowVariant]}`}
+                <div className="text-3xl font-bold font-body mb-1"
                     style={{ color: accentColors[glowVariant] }}>
                     {value}
                 </div>

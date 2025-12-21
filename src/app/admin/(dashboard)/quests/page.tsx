@@ -85,51 +85,51 @@ export default async function AdminQuestsPage() {
 
             {/* Stats */}
             <div className="grid grid-cols-4 gap-4">
-                <div className="bg-[#1A1D21] rounded-lg p-4 border border-white/5">
-                    <p className="text-[#99A0AE] text-sm">Total Quests</p>
-                    <p className="text-2xl font-bold text-white">{quests.length}</p>
+                <div className="bg-gradient-to-br from-white/6 to-white/2 rounded-2xl p-5 border border-white/8">
+                    <p className="text-white/50 text-sm">Total Quests</p>
+                    <p className="text-2xl font-bold text-white font-display">{quests.length}</p>
                 </div>
-                <div className="bg-[#1A1D21] rounded-lg p-4 border border-white/5">
-                    <p className="text-[#99A0AE] text-sm">Active</p>
-                    <p className="text-2xl font-bold text-[#14B985]">
+                <div className="bg-gradient-to-br from-white/6 to-white/2 rounded-2xl p-5 border border-white/8">
+                    <p className="text-white/50 text-sm">Active</p>
+                    <p className="text-2xl font-bold text-[#14B985] font-display">
                         {quests.filter(q => q.isActive).length}
                     </p>
                 </div>
-                <div className="bg-[#1A1D21] rounded-lg p-4 border border-white/5">
-                    <p className="text-[#99A0AE] text-sm">Total Completions</p>
-                    <p className="text-2xl font-bold text-white">
+                <div className="bg-gradient-to-br from-white/6 to-white/2 rounded-2xl p-5 border border-white/8">
+                    <p className="text-white/50 text-sm">Total Completions</p>
+                    <p className="text-2xl font-bold text-white font-display">
                         {quests.reduce((sum, q) => sum + q._count.completions, 0)}
                     </p>
                 </div>
-                <div className="bg-[#1A1D21] rounded-lg p-4 border border-white/5">
-                    <p className="text-[#99A0AE] text-sm">Total Points Available</p>
-                    <p className="text-2xl font-bold text-[#FFC931]">
+                <div className="bg-gradient-to-br from-white/6 to-white/2 rounded-2xl p-5 border border-white/8">
+                    <p className="text-white/50 text-sm">Total Points Available</p>
+                    <p className="text-2xl font-bold text-[#FFC931] font-display">
                         {quests.filter(q => q.isActive).reduce((sum, q) => sum + q.points, 0)}
                     </p>
                 </div>
             </div>
 
             {/* Quests Table */}
-            <div className="bg-[#1A1D21] rounded-lg border border-white/5 overflow-hidden">
+            <div className="bg-gradient-to-br from-white/6 to-white/2 rounded-2xl border border-white/8 overflow-hidden">
                 <table className="w-full">
-                    <thead className="bg-[#0D0F11] border-b border-white/5">
+                    <thead className="bg-white/3 border-b border-white/6">
                         <tr>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-[#99A0AE] uppercase tracking-wider">Quest</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-[#99A0AE] uppercase tracking-wider">Type</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-[#99A0AE] uppercase tracking-wider">Category</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-[#99A0AE] uppercase tracking-wider">Points</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-[#99A0AE] uppercase tracking-wider">Completions</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-[#99A0AE] uppercase tracking-wider">Status</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-[#99A0AE] uppercase tracking-wider">Actions</th>
+                            <th className="px-6 py-4 text-left text-xs font-medium text-white/50 uppercase tracking-wider font-display">Quest</th>
+                            <th className="px-6 py-4 text-left text-xs font-medium text-white/50 uppercase tracking-wider font-display">Type</th>
+                            <th className="px-6 py-4 text-left text-xs font-medium text-white/50 uppercase tracking-wider font-display">Category</th>
+                            <th className="px-6 py-4 text-left text-xs font-medium text-white/50 uppercase tracking-wider font-display">Points</th>
+                            <th className="px-6 py-4 text-left text-xs font-medium text-white/50 uppercase tracking-wider font-display">Completions</th>
+                            <th className="px-6 py-4 text-left text-xs font-medium text-white/50 uppercase tracking-wider font-display">Status</th>
+                            <th className="px-6 py-4 text-left text-xs font-medium text-white/50 uppercase tracking-wider font-display">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5">
+                    <tbody className="divide-y divide-white/6">
                         {quests.map((quest) => (
-                            <tr key={quest.id} className="hover:bg-white/5 transition-colors">
-                                <td className="px-4 py-4">
+                            <tr key={quest.id} className="hover:bg-white/3 transition-colors">
+                                <td className="px-6 py-4">
                                     <div>
                                         <p className="text-white font-medium">{quest.title}</p>
-                                        <p className="text-[#99A0AE] text-sm truncate max-w-xs">{quest.description}</p>
+                                        <p className="text-white/50 text-sm truncate max-w-xs">{quest.description}</p>
                                     </div>
                                 </td>
                                 <td className="px-4 py-4">
@@ -153,8 +153,8 @@ export default async function AdminQuestsPage() {
                                         <button
                                             type="submit"
                                             className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${quest.isActive
-                                                    ? "bg-[#14B985]/20 text-[#14B985] hover:bg-[#14B985]/30"
-                                                    : "bg-[#99A0AE]/20 text-[#99A0AE] hover:bg-[#99A0AE]/30"
+                                                ? "bg-[#14B985]/20 text-[#14B985] hover:bg-[#14B985]/30"
+                                                : "bg-[#99A0AE]/20 text-[#99A0AE] hover:bg-[#99A0AE]/30"
                                                 }`}
                                         >
                                             {quest.isActive ? "Active" : "Inactive"}
