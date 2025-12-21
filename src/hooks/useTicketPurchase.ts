@@ -85,19 +85,20 @@ export function useTicketPurchase(
   // Target chain check
   const isCorrectChain = currentChainId === CHAIN_CONFIG.chainId;
 
-  // Contract reads
+  // Get token address from contract FIRST (dynamic, prevents mismatch)
+  const { data: contractTokenAddress } = useContractToken();
+  const tokenAddress =
+    (contractTokenAddress as `0x${string}`) || TOKEN_CONFIG.address;
+
+  // Contract reads - use the contract's actual token address
   const { data: hasTicket, refetch: refetchHasTicket } = useHasTicket(
     onchainId ?? undefined,
     address
   );
 
-  const { data: allowance } = useTokenAllowance(address);
-  const { data: balance } = useTokenBalance(address);
-
-  // Get token address from contract (dynamic, prevents mismatch)
-  const { data: contractTokenAddress } = useContractToken();
-  const tokenAddress =
-    (contractTokenAddress as `0x${string}`) || TOKEN_CONFIG.address;
+  // Use contract token for balance/allowance checks
+  const { data: allowance } = useTokenAllowance(address, tokenAddress);
+  const { data: balance } = useTokenBalance(address, tokenAddress);
 
   // Check if approval is needed
   const needsApproval = useMemo(() => {
@@ -111,7 +112,23 @@ export function useTicketPurchase(
   // BUILD CALLS (approve if needed + buyTicket)
   // ==========================================
   const calls = useMemo(() => {
+    console.log("[useTicketPurchase] BUILD CALLS - Input params:", {
+      onchainId,
+      address,
+      priceInUnits: priceInUnits?.toString(),
+      price,
+      needsApproval,
+      allowance: allowance?.toString(),
+      balance: balance?.toString(),
+      tokenAddress,
+      gameContract: WAFFLE_GAME_CONFIG.address,
+    });
+
     if (!onchainId || !address) {
+      console.log("[useTicketPurchase] BUILD CALLS - Skipping, missing:", {
+        onchainId,
+        address,
+      });
       return [];
     }
 
@@ -121,10 +138,11 @@ export function useTicketPurchase(
     if (needsApproval) {
       // Approve 1000 USDC to avoid repeated approvals
       const approvalAmount = parseUnits("1000", TOKEN_CONFIG.decimals);
-      console.log(
-        "[useTicketPurchase] Adding approve call for 1000 USDC to",
-        tokenAddress
-      );
+      console.log("[useTicketPurchase] Adding approve call:", {
+        tokenAddress,
+        spender: WAFFLE_GAME_CONFIG.address,
+        amount: approvalAmount.toString(),
+      });
       callList.push({
         to: tokenAddress as `0x${string}`,
         data: encodeFunctionData({
@@ -136,7 +154,11 @@ export function useTicketPurchase(
     }
 
     // Add buyTicket call
-    console.log("[useTicketPurchase] Adding buyTicket call");
+    console.log("[useTicketPurchase] Adding buyTicket call:", {
+      gameContract: WAFFLE_GAME_CONFIG.address,
+      onchainId,
+      priceInUnits: priceInUnits.toString(),
+    });
     callList.push({
       to: WAFFLE_GAME_CONFIG.address as `0x${string}`,
       data: encodeFunctionData({
@@ -146,15 +168,22 @@ export function useTicketPurchase(
       }),
     });
 
-    console.log("[useTicketPurchase] Calls built:", {
+    console.log("[useTicketPurchase] Calls built FINAL:", {
       callCount: callList.length,
-      needsApproval,
-      onchainId,
-      price: priceInUnits.toString(),
+      calls: callList.map((c) => ({ to: c.to, dataLength: c.data.length })),
     });
 
     return callList;
-  }, [onchainId, address, priceInUnits, needsApproval]);
+  }, [
+    onchainId,
+    address,
+    priceInUnits,
+    price,
+    needsApproval,
+    allowance,
+    balance,
+    tokenAddress,
+  ]);
 
   // ==========================================
   // useSendCalls for batched transactions
@@ -224,7 +253,15 @@ export function useTicketPurchase(
         "[useTicketPurchase] Transaction batch failed:",
         callsStatus
       );
-      const errorMessage = "Transaction failed on-chain. Please try again.";
+      // Try to determine the cause of failure
+      let errorMessage = "Transaction failed on-chain.";
+
+      // Check statusCode for hints
+      if (callsStatus.statusCode === 500) {
+        errorMessage =
+          "Transaction reverted. Check your USDC balance and try again.";
+      }
+
       setState({ step: "error", error: errorMessage });
       notify.error(errorMessage);
     }
@@ -352,7 +389,22 @@ export function useTicketPurchase(
 
     // Send batched calls
     try {
-      console.log("[useTicketPurchase] Sending batched calls...");
+      console.log(
+        "[useTicketPurchase] ========== SENDING TRANSACTION =========="
+      );
+      console.log(
+        "[useTicketPurchase] Calls to send:",
+        JSON.stringify(calls, null, 2)
+      );
+      console.log(
+        "[useTicketPurchase] Call details:",
+        calls.map((c, i) => ({
+          index: i,
+          to: c.to,
+          dataPreview: c.data.substring(0, 10) + "...", // function selector
+        }))
+      );
+
       sendCalls({
         calls,
         capabilities: {

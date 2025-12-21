@@ -107,10 +107,16 @@ export function useHasClaimed(
 
 /**
  * Hook to get the user's token balance
+ * @param address - User's wallet address
+ * @param tokenAddress - Optional custom token address (defaults to TOKEN_CONFIG.address)
  */
-export function useTokenBalance(address: `0x${string}` | undefined) {
+export function useTokenBalance(
+  address: `0x${string}` | undefined,
+  tokenAddress?: `0x${string}`
+) {
+  const token = tokenAddress || TOKEN_CONFIG.address;
   return useReadContract({
-    address: TOKEN_CONFIG.address,
+    address: token,
     abi: erc20Abi,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
@@ -123,10 +129,16 @@ export function useTokenBalance(address: `0x${string}` | undefined) {
 
 /**
  * Hook to get the user's token allowance for WaffleGame
+ * @param ownerAddress - User's wallet address
+ * @param tokenAddress - Optional custom token address (defaults to TOKEN_CONFIG.address)
  */
-export function useTokenAllowance(ownerAddress: `0x${string}` | undefined) {
+export function useTokenAllowance(
+  ownerAddress: `0x${string}` | undefined,
+  tokenAddress?: `0x${string}`
+) {
+  const token = tokenAddress || TOKEN_CONFIG.address;
   return useReadContract({
-    address: TOKEN_CONFIG.address,
+    address: token,
     abi: erc20Abi,
     functionName: "allowance",
     args: ownerAddress ? [ownerAddress, WAFFLE_GAME_CONFIG.address] : undefined,
