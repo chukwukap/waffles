@@ -166,7 +166,8 @@ export function LiveEventFeed({ maxEvents = 5 }: LiveEventFeedProps) {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="relative w-full max-w-full mx-auto h-[136px] flex flex-col justify-center items-center"
+        className="relative w-full max-w-full mx-auto flex flex-col justify-center items-center"
+        style={{ height: "clamp(60px, 12vh, 140px)" }}
       >
         <ConnectionIndicator isConnected={isConnected} onlineCount={onlineCount} />
         <motion.p
@@ -181,7 +182,10 @@ export function LiveEventFeed({ maxEvents = 5 }: LiveEventFeedProps) {
   }
 
   return (
-    <div className="relative w-screen -mx-4 h-[136px] overflow-hidden">
+    <div
+      className="relative w-screen -mx-4 overflow-hidden"
+      style={{ height: "clamp(60px, 12vh, 140px)" }}
+    >
       {/* Connection status indicator */}
       <ConnectionIndicator isConnected={isConnected} onlineCount={onlineCount} />
       {/* Content layer with mask for smooth fade */}
@@ -191,11 +195,11 @@ export function LiveEventFeed({ maxEvents = 5 }: LiveEventFeedProps) {
         transition={springs.gentle}
         className="absolute inset-0 py-2 px-4 flex flex-col justify-end overflow-hidden"
         style={{
-          maskImage: `linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.2) 25%, rgba(0,0,0,0.6) 50%, black 70%)`,
-          WebkitMaskImage: `linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.2) 25%, rgba(0,0,0,0.6) 50%, black 70%)`,
+          maskImage: `linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.4) 15%, rgba(0,0,0,0.8) 35%, black 55%)`,
+          WebkitMaskImage: `linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.4) 15%, rgba(0,0,0,0.8) 35%, black 55%)`,
         }}
       >
-        <div className="flex flex-col gap-2 pt-4">
+        <div className="flex flex-col gap-1 pt-4">
           <AnimatePresence mode="popLayout" initial={false}>
             {sortedItems.map((item, index) => (
               <FeedItemRow key={item.id} item={item} isNew={isNewest(index)} />

@@ -71,7 +71,7 @@ export function useTicketPurchase(
   price: number,
   onSuccess?: () => void
 ) {
-  const { address, isConnected } = useAccount();
+  const { address } = useAccount();
   const currentChainId = useChainId();
   const { switchChainAsync } = useSwitchChain();
   const [state, setState] = useState<TicketPurchaseState>({ step: "idle" });
@@ -105,11 +105,7 @@ export function useTicketPurchase(
     return allowance < priceInUnits;
   }, [allowance, priceInUnits]);
 
-  // Check if user has sufficient balance
-  const hasSufficientBalance = useMemo(() => {
-    if (!balance) return false;
-    return balance >= priceInUnits;
-  }, [balance, priceInUnits]);
+  // Note: We don't check balance here - Farcaster wallet handles insufficient balance automatically
 
   // ==========================================
   // BUILD CALLS (approve if needed + buyTicket)
@@ -307,11 +303,8 @@ export function useTicketPurchase(
   // PURCHASE FUNCTION
   // ==========================================
   const purchase = useCallback(async () => {
-    // Pre-flight checks
-    if (!isConnected) {
-      notify.error("Please connect your wallet");
-      return;
-    }
+    // Note: In Farcaster MiniApp, wallet is auto-injected - no explicit wallet checks needed
+    // The calls array will be empty if wallet is not ready, which is checked below
 
     if (!onchainId) {
       notify.error("Game not available on-chain");
@@ -323,13 +316,11 @@ export function useTicketPurchase(
       return;
     }
 
-    if (!hasSufficientBalance) {
-      notify.error("Insufficient USDC balance");
-      return;
-    }
+    // Note: Don't check balance - Farcaster wallet handles insufficient balance automatically
 
+    // This check implicitly handles wallet not ready (calls depend on address)
     if (calls.length === 0) {
-      notify.error("Unable to build transaction");
+      notify.error("Transaction not ready. Please try again.");
       return;
     }
 
@@ -375,10 +366,9 @@ export function useTicketPurchase(
       notify.error("Transaction failed");
     }
   }, [
-    isConnected,
+    address,
     onchainId,
     hasTicket,
-    hasSufficientBalance,
     calls,
     isCorrectChain,
     gameId,
@@ -421,7 +411,6 @@ export function useTicketPurchase(
     // Data
     hasTicket: !!hasTicket,
     needsApproval,
-    hasSufficientBalance,
     balance,
 
     // Actions

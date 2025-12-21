@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAccount } from "wagmi";
+import { useAccount, useConnect } from "wagmi";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
 import {
@@ -39,7 +39,8 @@ export function BuyTicketModal({
   onPurchaseSuccess,
 }: BuyTicketModalProps) {
   const { context } = useMiniKit();
-  const { isConnected } = useAccount();
+  const { address, isConnected } = useAccount();
+  const { connect, connectors } = useConnect();
   const [selectedTier, setSelectedTier] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -51,6 +52,13 @@ export function BuyTicketModal({
   const selectedPrice = tierPrices[selectedTier] ?? 0;
   const potentialPayout = Math.round(selectedPrice * 21.1);
 
+  // Auto-connect wallet when modal opens (Farcaster MiniApp pattern)
+  useEffect(() => {
+    if (isOpen && !isConnected && connectors[0]) {
+      connect({ connector: connectors[0] });
+    }
+  }, [isOpen, isConnected, connect, connectors]);
+
   // Use the ticket purchase hook
   const {
     step,
@@ -58,7 +66,6 @@ export function BuyTicketModal({
     isSuccess,
     isError,
     hasTicket,
-    hasSufficientBalance,
     purchase,
     reset,
   } = useTicketPurchase(gameId, onchainId, selectedPrice, onPurchaseSuccess);
@@ -85,9 +92,10 @@ export function BuyTicketModal({
 
   // Computed states
   const isPurchased = hasTicket || isSuccess;
-  const buttonText = getPurchaseButtonText(step, selectedPrice);
-  const isButtonDisabled =
-    isLoading || !onchainId || !hasSufficientBalance || isPurchased;
+  const isWalletReady = isConnected && !!address;
+  const buttonText = !isWalletReady ? "Connecting wallet..." : getPurchaseButtonText(step, selectedPrice);
+  // Note: Don't check balance here - Farcaster wallet handles insufficient balance automatically
+  const isButtonDisabled = isLoading || !onchainId || isPurchased || !isWalletReady;
 
   // Handle purchase button click
   const handlePurchase = () => {
@@ -190,7 +198,6 @@ export function BuyTicketModal({
               selectedTier={selectedTier}
               onSelectTier={setSelectedTier}
               potentialPayout={potentialPayout}
-              hasSufficientBalance={hasSufficientBalance}
               isLoading={isLoading}
               isError={isError}
               step={step as PurchaseStep}

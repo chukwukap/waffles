@@ -166,7 +166,7 @@ export function GameHub({ game }: GameHubProps) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
-        className="flex-1 flex flex-col justify-center items-center overflow-hidden px-4 py-4"
+        className="shrink-0 flex flex-col justify-start items-center overflow-hidden px-4 pt-4"
       >
         <NextGameCard
           gameId={game.id}
@@ -188,11 +188,13 @@ export function GameHub({ game }: GameHubProps) {
         />
       </motion.section>
 
+      {/* Flexible spacer + LiveEventFeed - grows on taller screens */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5, ...springs.gentle }}
-        className="shrink-0 w-full px-4"
+        className="flex-1 flex flex-col justify-end w-full px-4"
+        style={{ minHeight: "clamp(60px, 12vh, 180px)" }}
       >
         <LiveEventFeed />
       </motion.div>

@@ -48,7 +48,6 @@ interface PurchaseViewProps {
     selectedTier: number;
     onSelectTier: (tier: number) => void;
     potentialPayout: number;
-    hasSufficientBalance: boolean;
     isLoading: boolean;
     isError: boolean;
     step: PurchaseStep;
@@ -65,7 +64,6 @@ export function PurchaseView({
     selectedTier,
     onSelectTier,
     potentialPayout,
-    hasSufficientBalance,
     isLoading,
     isError,
     step,
@@ -278,17 +276,8 @@ export function PurchaseView({
                 })}
             </div>
 
-            {/* Balance Warning */}
-            {!hasSufficientBalance && (
-                <p
-                    className="text-amber-400 text-xs text-center px-4"
-                    style={{
-                        animation: "shake 0.5s ease-in-out",
-                    }}
-                >
-                    ⚠️ Insufficient USDC balance. Get tokens from the faucet.
-                </p>
-            )}
+            {/* Note: Farcaster wallet automatically handles insufficient balance detection
+               and prompts users to swap if needed - no manual warning needed */}
 
             {/* Buy Button */}
             <div

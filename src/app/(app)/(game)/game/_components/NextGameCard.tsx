@@ -58,7 +58,7 @@ export function NextGameCard({
       prizeControls.start({
         scale: [1, 1.2, 1],
         color: ["#FFFFFF", "#F5BB1B", "#FFFFFF"],
-        transition: { duration: 0.4, ease: "easeOut" as const }
+        transition: { duration: 0.4, ease: "easeOut" as const },
       });
       prevPrizePool.current = prizePool;
     }
@@ -68,7 +68,7 @@ export function NextGameCard({
     if (prevSpotsTaken.current !== spotsTaken) {
       spotsControls.start({
         scale: [1, 1.15, 1],
-        transition: { duration: 0.3, ease: "easeOut" as const }
+        transition: { duration: 0.3, ease: "easeOut" as const },
       });
       prevSpotsTaken.current = spotsTaken;
     }
@@ -81,11 +81,19 @@ export function NextGameCard({
 
   const buttonConfig = hasEnded
     ? hasCompleted
-      ? { text: "VIEW RESULTS", disabled: false, href: `/game/${gameId}/result` }
+      ? {
+        text: "VIEW RESULTS",
+        disabled: false,
+        href: `/game/${gameId}/result`,
+      }
       : { text: "ENDED", disabled: true, href: null }
     : isLive
       ? hasCompleted
-        ? { text: "VIEW RESULTS", disabled: false, href: `/game/${gameId}/result` }
+        ? {
+          text: "VIEW RESULTS",
+          disabled: false,
+          href: `/game/${gameId}/result`,
+        }
         : hasTicket
           ? { text: "START GAME", disabled: false, href: `/game/${gameId}/live` }
           : { text: "GET TICKET", disabled: false, href: null }
@@ -209,10 +217,14 @@ export function NextGameCard({
               boxShadow: [
                 "0 0 0px rgba(245, 187, 27, 0)",
                 "0 0 15px rgba(245, 187, 27, 0.4)",
-                "0 0 0px rgba(245, 187, 27, 0)"
-              ]
+                "0 0 0px rgba(245, 187, 27, 0)",
+              ],
             }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" as const }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut" as const,
+            }}
             className="flex flex-row justify-center items-center"
             style={{
               boxSizing: "border-box",
@@ -263,24 +275,22 @@ export function NextGameCard({
           </motion.div>
         </motion.div>
 
-        {/* Player Avatars Row with staggered pop-in */}
+        {/* Player Avatars Row - inside card with padding */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}
-          className="relative flex flex-row justify-center items-center z-10 shrink-0"
+          className="flex flex-row justify-center items-center w-full px-4 pb-4"
           style={{
-            padding: "0px",
             gap: "6px",
-            width: "353px",
-            height: "25.11px",
+            minHeight: "25.11px",
           }}
         >
           {spotsTaken > 0 ? (
             <>
               <div
                 className="flex flex-row items-center"
-                style={{ padding: "0px", width: "70.44px", height: "25.11px" }}
+                style={{ height: "25.11px" }}
               >
                 {recentPlayers.slice(0, 4).map((player, idx) => (
                   <motion.div
@@ -299,14 +309,25 @@ export function NextGameCard({
                       marginLeft: idx === 0 ? "0px" : "-10px",
                     }}
                   >
-                    {player.avatar && (
+                    {player.avatar ? (
                       <Image
                         src={player.avatar}
                         alt={player.name}
                         width={25}
                         height={25}
                         className="w-full h-full object-cover"
+                        unoptimized
                       />
+                    ) : (
+                      <div
+                        className="w-full h-full flex items-center justify-center text-xs font-bold"
+                        style={{
+                          background: `hsl(${(idx * 60) % 360}, 60%, 60%)`,
+                          color: "#fff",
+                        }}
+                      >
+                        {player.name?.charAt(0)?.toUpperCase() || "?"}
+                      </div>
                     )}
                   </motion.div>
                 ))}
@@ -340,7 +361,9 @@ export function NextGameCard({
                 color: "#99A0AE",
                 opacity: 0.6,
               }}
-            />
+            >
+              Be the first to join this game!
+            </span>
           )}
         </motion.div>
       </motion.div>
