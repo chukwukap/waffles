@@ -152,6 +152,7 @@ export default function ScorePageClient({
       const { buildPrizeOGUrl } = await import("@/lib/cloudinary-og");
       const ogImageUrl = buildPrizeOGUrl({
         username: userInfo.username,
+        pfpUrl: userInfo.pfpUrl,
         rank: userScore.rank,
         prizeAmount: userScore.winnings,
       });

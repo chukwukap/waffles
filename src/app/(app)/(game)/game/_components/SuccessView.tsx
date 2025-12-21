@@ -44,6 +44,7 @@ export function SuccessView({
             const shareUrl = `${env.rootUrl}/game`;
             const ogImageUrl = buildJoinedOGUrl({
                 username: displayUsername,
+                pfpUrl: displayAvatar,
                 prizePool,
                 theme,
             });
