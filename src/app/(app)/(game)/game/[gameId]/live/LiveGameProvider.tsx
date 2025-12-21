@@ -12,6 +12,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import sdk from "@farcaster/miniapp-sdk";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useGameStore } from "@/lib/game-store";
 import type { LiveGameData, LiveGameQuestion } from "./page";
 
@@ -74,6 +75,10 @@ interface LiveGameProviderProps {
 
 export function LiveGameProvider({ game, children }: LiveGameProviderProps) {
     const router = useRouter();
+    const { context } = useMiniKit();
+
+    // Get current user's pfp URL
+    const userPfpUrl = context?.user?.pfpUrl || null;
 
     // Game complete state (moved early so verification can set it)
     const [isGameComplete, setIsGameComplete] = useState(false);
@@ -173,7 +178,7 @@ export function LiveGameProvider({ game, children }: LiveGameProviderProps) {
                 id: `local-${questionId}-${Date.now()}`,
                 type: "answer",
                 username: "You",
-                pfpUrl: null,
+                pfpUrl: userPfpUrl,
                 content: "answered a question",
                 timestamp: Date.now(),
             });
@@ -195,7 +200,7 @@ export function LiveGameProvider({ game, children }: LiveGameProviderProps) {
             // Advance immediately - no delay
             advanceRef.current();
         },
-        [currentQuestion, answers, game.id]
+        [currentQuestion, answers, game.id, userPfpUrl]
     );
 
     // Advance to next question or break
