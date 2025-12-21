@@ -162,12 +162,8 @@ export function SuccessView({
                         gap: "10px",
                     }}
                 >
-                    {/* Avatar with pulse effect */}
-                    <div
-                        style={{
-                            animation: showCard ? "avatar-pulse 2s ease-in-out infinite" : "none",
-                        }}
-                    >
+                    {/* Avatar */}
+                    <div>
                         {displayAvatar ? (
                             <Image
                                 src={displayAvatar}
@@ -416,17 +412,6 @@ export function SuccessView({
           }
           50% {
             text-shadow: 0 0 20px rgba(255, 201, 49, 0.6);
-          }
-        }
-        @keyframes avatar-pulse {
-          0%,
-          100% {
-            transform: scale(1);
-            box-shadow: 0 0 0 0 rgba(255, 201, 49, 0.4);
-          }
-          50% {
-            transform: scale(1.02);
-            box-shadow: 0 0 15px 5px rgba(255, 201, 49, 0.2);
           }
         }
         @keyframes bounce-subtle {
