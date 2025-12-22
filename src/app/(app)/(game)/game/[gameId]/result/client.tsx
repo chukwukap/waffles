@@ -21,7 +21,6 @@ import { WAFFLE_GAME_CONFIG } from "@/lib/contracts/config";
 import waffleGameAbi from "@/lib/contracts/WaffleGameAbi.json";
 import { Spinner } from "@/components/ui/spinner";
 import { useGame } from "../../GameProvider";
-import { buildPrizeOGUrl } from "@/lib/cloudinary-og";
 
 // ==========================================
 // TYPES
@@ -149,17 +148,18 @@ export default function ScorePageClient({
           ? `Just won $${userScore.winnings.toLocaleString()} on Waffles! 🧇🏆`
           : `Just scored ${userScore.score} points on Waffles! 🧇`;
 
-      // Use Cloudinary URL for OG image
-      const ogImageUrl = buildPrizeOGUrl({
-        username: userInfo.username,
-        pfpUrl: userInfo.pfpUrl,
-        rank: userScore.rank,
-        prizeAmount: userScore.winnings,
-      });
+      // Build frame URL with params - this page has fc:frame metadata
+      const frameParams = new URLSearchParams();
+      frameParams.set("username", userInfo.username);
+      frameParams.set("prizeAmount", userScore.winnings.toString());
+      if (userInfo.pfpUrl) {
+        frameParams.set("pfpUrl", userInfo.pfpUrl);
+      }
+      const frameUrl = `${env.rootUrl}/game/${gameId}/result/success?${frameParams.toString()}`;
 
       const result = await composeCastAsync({
         text: prizeText,
-        embeds: ogImageUrl ? [ogImageUrl] : [`${env.rootUrl}/game`],
+        embeds: [frameUrl],
       });
 
       if (result?.cast) {

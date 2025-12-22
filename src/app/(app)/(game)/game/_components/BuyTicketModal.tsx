@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAccount, useConnect } from "wagmi";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
@@ -8,7 +9,6 @@ import {
   useTicketPurchase,
   getPurchaseButtonText,
 } from "@/hooks/useTicketPurchase";
-import { SuccessView } from "./SuccessView";
 import { PurchaseView, type PurchaseStep } from "./PurchaseView";
 
 interface BuyTicketModalProps {
@@ -38,6 +38,7 @@ export function BuyTicketModal({
   userAvatar,
   onPurchaseSuccess,
 }: BuyTicketModalProps) {
+  const router = useRouter();
   const { context } = useMiniKit();
   const { address, isConnected } = useAccount();
   const { connect, connectors } = useConnect();
@@ -69,6 +70,19 @@ export function BuyTicketModal({
     purchase,
     reset,
   } = useTicketPurchase(gameId, onchainId, selectedPrice, onPurchaseSuccess);
+
+  // Redirect to success page on purchase success
+  useEffect(() => {
+    if (isSuccess || hasTicket) {
+      // Build success page URL with params
+      const successParams = new URLSearchParams();
+      successParams.set("username", displayUsername);
+      if (displayAvatar) {
+        successParams.set("pfpUrl", displayAvatar);
+      }
+      router.push(`/game/${gameId}/ticket/success?${successParams.toString()}`);
+    }
+  }, [isSuccess, hasTicket, gameId, displayUsername, displayAvatar, router]);
 
 
   // Handle modal entrance animation
@@ -179,34 +193,21 @@ export function BuyTicketModal({
             gap: "clamp(12px, 3vh, 20px)",
           }}
         >
-          {isPurchased ? (
-            <SuccessView
-              gameId={gameId}
-              fid={context?.user?.fid ?? 0}
-              displayUsername={displayUsername}
-              displayAvatar={displayAvatar}
-              prizePool={prizePool}
-              theme={theme}
-              themeIcon={themeIcon}
-              onClose={handleClose}
-            />
-          ) : (
-            <PurchaseView
-              theme={theme}
-              themeIcon={themeIcon}
-              tierPrices={tierPrices}
-              selectedTier={selectedTier}
-              onSelectTier={setSelectedTier}
-              potentialPayout={potentialPayout}
-              isLoading={isLoading}
-              isError={isError}
-              step={step as PurchaseStep}
-              buttonText={buttonText}
-              isButtonDisabled={isButtonDisabled}
-              onchainId={onchainId}
-              onPurchase={handlePurchase}
-            />
-          )}
+          <PurchaseView
+            theme={theme}
+            themeIcon={themeIcon}
+            tierPrices={tierPrices}
+            selectedTier={selectedTier}
+            onSelectTier={setSelectedTier}
+            potentialPayout={potentialPayout}
+            isLoading={isLoading}
+            isError={isError}
+            step={step as PurchaseStep}
+            buttonText={buttonText}
+            isButtonDisabled={isButtonDisabled}
+            onchainId={onchainId}
+            onPurchase={handlePurchase}
+          />
         </div>
       </div>
     </>

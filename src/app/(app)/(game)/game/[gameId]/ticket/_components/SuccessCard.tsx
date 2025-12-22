@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 import { useCallback } from "react";
 import { env } from "@/lib/env";
 import { useComposeCast } from "@coinbase/onchainkit/minikit";
-import { buildJoinedOGUrl } from "@/lib/cloudinary-og";
 
 // Simplified ticket type for client-side usage
 interface TicketInfo {
@@ -33,16 +32,16 @@ export const SuccessCard = ({
   const shareTicket = useCallback(async () => {
     if (!ticket) return;
     try {
-      const shareUrl = `${env.rootUrl}/game`;
-      const ogImageUrl = buildJoinedOGUrl({
-        username: `Player #${fid}`,
-        prizePool,
-        theme,
-      });
+      // Build frame URL with params - this page has fc:frame metadata
+      const frameParams = new URLSearchParams();
+      frameParams.set("username", `Player #${fid}`);
+      frameParams.set("prizePool", prizePool.toString());
+      frameParams.set("theme", theme);
+      const frameUrl = `${env.rootUrl}/share/joined?${frameParams.toString()}`;
 
       const result = await composeCastAsync({
         text: `I just joined the next Waffles game! 🧇\n\nTheme: ${theme}\nPrize Pool: $${prizePool.toLocaleString()}\n\nJoin me!`,
-        embeds: ogImageUrl ? [shareUrl, ogImageUrl] : [shareUrl],
+        embeds: [frameUrl],
       });
 
       if (result?.cast) {
@@ -77,7 +76,7 @@ export const SuccessCard = ({
           WAFFLE SECURED!
         </h1>
         <p className="mt-3 text-center text-base font-display text-[#99A0AE]">
-          You&apos;re in. See you Friday.
+          You&apos;re in! Good luck 🍀
         </p>
         <GameSummaryCard theme={theme} coverUrl={coverUrl} prizePool={prizePool} />
         <button

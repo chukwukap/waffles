@@ -5,7 +5,6 @@ import { useEffect, useState, useCallback } from "react";
 import { useComposeCast } from "@coinbase/onchainkit/minikit";
 import { env } from "@/lib/env";
 import { notify } from "@/components/ui/Toaster";
-import { buildJoinedOGUrl } from "@/lib/cloudinary-og";
 
 interface SuccessViewProps {
     gameId: number;
@@ -41,17 +40,19 @@ export function SuccessView({
         setIsSharing(true);
 
         try {
-            const shareUrl = `${env.rootUrl}/game`;
-            const ogImageUrl = buildJoinedOGUrl({
-                username: displayUsername,
-                pfpUrl: displayAvatar,
-                prizePool,
-                theme,
-            });
+            // Build frame URL with params - this page has fc:frame metadata
+            const frameParams = new URLSearchParams();
+            frameParams.set("username", displayUsername);
+            frameParams.set("prizePool", prizePool.toString());
+            frameParams.set("theme", theme);
+            if (displayAvatar) {
+                frameParams.set("pfpUrl", displayAvatar);
+            }
+            const frameUrl = `${env.rootUrl}/share/joined?${frameParams.toString()}`;
 
             const result = await composeCastAsync({
                 text: `I just joined the next Waffles game! 🧇\n\nTheme: ${theme}\nPrize Pool: $${prizePool.toLocaleString()}\n\nJoin me!`,
-                embeds: ogImageUrl ? [shareUrl, ogImageUrl] : [shareUrl],
+                embeds: [frameUrl],
             });
 
             if (result?.cast) {
@@ -63,7 +64,7 @@ export function SuccessView({
         } finally {
             setIsSharing(false);
         }
-    }, [composeCastAsync, displayUsername, theme, prizePool, isSharing]);
+    }, [composeCastAsync, displayUsername, displayAvatar, theme, prizePool, isSharing]);
 
     // Staggered entrance animations
     useEffect(() => {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { CardStack } from "@/components/CardStack";
 import { useMutuals } from "@/hooks/useMutuals";
@@ -10,7 +11,6 @@ import sdk from "@farcaster/miniapp-sdk";
 
 import { TicketPageGameInfo } from "./page";
 import { TicketPurchaseCard } from "./_components/TicketPurchaseCard";
-import { SuccessCard } from "./_components/SuccessCard";
 
 interface UserInfo {
   fid: number;
@@ -34,6 +34,7 @@ type TicketPageClientImplProps = {
 export default function TicketPageClientImpl({
   gameInfo,
 }: TicketPageClientImplProps) {
+  const router = useRouter();
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [ticket, setTicket] = useState<TicketInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -97,17 +98,28 @@ export default function TicketPageClientImpl({
     );
   }
 
-  if (ticket !== null && userInfo) {
+  // Redirect to success page if user already has a ticket
+  useEffect(() => {
+    if (ticket !== null && userInfo) {
+      const successParams = new URLSearchParams();
+      successParams.set("username", userInfo.username || `Player #${userInfo.fid}`);
+      if (userInfo.pfpUrl) {
+        successParams.set("pfpUrl", userInfo.pfpUrl);
+      }
+      if (ticket.code) {
+        successParams.set("ticketCode", ticket.code);
+      }
+      router.push(`/game/${gameInfo.id}/ticket/success?${successParams.toString()}`);
+    }
+  }, [ticket, userInfo, gameInfo.id, router]);
+
+  // Show loading while checking ticket status or redirecting
+  if (isLoading || (ticket !== null && userInfo)) {
     return (
       <>
-        <SuccessCard
-          coverUrl={gameInfo.coverUrl ?? ""}
-          theme={gameInfo.theme}
-          prizePool={prizePool}
-          fid={userInfo.fid}
-          gameId={gameInfo.id}
-          ticket={ticket}
-        />
+        <div className="flex-1 flex items-center justify-center">
+          <WaffleLoader text="LOADING..." />
+        </div>
         <BottomNav />
       </>
     );

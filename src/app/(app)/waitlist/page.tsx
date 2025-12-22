@@ -3,7 +3,6 @@ import { minikitConfig } from "../../../../minikit.config";
 import { Metadata } from "next";
 
 import { env } from "@/lib/env";
-import { buildWaitlistOGUrl } from "@/lib/cloudinary-og";
 
 export async function generateMetadata({
   searchParams,
@@ -14,13 +13,15 @@ export async function generateMetadata({
   const rank = sParams.rank ? parseInt(sParams.rank as string) : null;
   const ref = sParams.ref ? parseInt(sParams.ref as string) : null;
 
-  // Build OG image URL with Cloudinary (or fallback to static image)
+  // Build OG image URL with rank and ref (referrer's fid)
+  // Build OG image URL with rank and ref (referrer's fid)
+  // The ref is the person who shared the link, so their avatar should appear
   let IMAGE_URL_PATH = `${env.rootUrl}/images/hero-image.png`;
-  if (rank) {
-    const cloudinaryUrl = buildWaitlistOGUrl({ rank });
-    if (cloudinaryUrl) {
-      IMAGE_URL_PATH = cloudinaryUrl;
-    }
+  if (rank && ref) {
+    IMAGE_URL_PATH = `${env.rootUrl}/api/og/waitlist?rank=${rank}&fid=${ref}`;
+  } else if (rank) {
+    // Fallback for rank without ref
+    IMAGE_URL_PATH = `${env.rootUrl}/api/og/waitlist?rank=${rank}`;
   }
 
 
