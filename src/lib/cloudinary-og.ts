@@ -3,11 +3,6 @@
  *
  * High-quality dynamic Open Graph images using Cloudinary URL transformations.
  * No API routes needed - just construct the URL and use it directly in metadata.
- *
- * SETUP REQUIRED:
- * 1. Upload a base template image (1200x630, dark background) to Cloudinary
- * 2. Place it at: waffles/og-templates/base
- * 3. Update CLOUD_NAME below with your Cloudinary cloud name
  */
 
 import { env } from "./env";
@@ -75,10 +70,11 @@ function encodeText(text: string): string {
 }
 
 /**
- * Encode URL to base64url for Cloudinary fetch overlay
+ * Encode URL to standard base64 for Cloudinary fetch overlay
+ * Cloudinary requires standard base64 (not base64url)
  */
-function toBase64Url(url: string): string {
-  return Buffer.from(url).toString("base64url");
+function toBase64(url: string): string {
+  return Buffer.from(url).toString("base64");
 }
 
 /**
@@ -94,11 +90,12 @@ export function buildJoinedOGUrl(params: JoinedOGParams): string {
   // Build transformation string
   const transforms: string[] = [];
 
-  // Profile picture (circular, left side) - must come first
+  // Profile picture (circular, left side)
+  // Syntax: l_fetch:<base64>/c_fill,w_80,h_80,r_max/fl_layer_apply,g_north_west,x_100,y_150
   if (pfpUrl) {
-    const b64Url = toBase64Url(pfpUrl);
+    const b64 = toBase64(pfpUrl);
     transforms.push(
-      `l_fetch:${b64Url},c_fill,w_80,h_80,r_max,g_north_west,x_100,y_150`
+      `l_fetch:${b64}/c_fill,w_80,h_80,r_max/fl_layer_apply,g_north_west,x_100,y_150`
     );
   }
 
@@ -177,17 +174,20 @@ export function buildPrizeOGUrl(params: PrizeOGParams): string {
 
   const transforms: string[] = [];
 
-  // Profile picture (centered, top) - must come first
+  // Profile picture (centered, top)
   if (pfpUrl) {
-    const b64Url = toBase64Url(pfpUrl);
-    transforms.push(`l_fetch:${b64Url},c_fill,w_100,h_100,r_max,g_north,y_80`);
+    const b64 = toBase64(pfpUrl);
+    transforms.push(
+      `l_fetch:${b64}/c_fill,w_100,h_100,r_max/fl_layer_apply,g_north,y_80`
+    );
   }
 
   // Username (below pfp)
+  const usernameY = pfpUrl ? 200 : 120;
   transforms.push(
     `l_text:Roboto%20Mono_32_bold:${encodeText(
       username.toUpperCase().slice(0, 16)
-    )},co_rgb:${COLORS.white},g_north,y_${pfpUrl ? 200 : 120}`
+    )},co_rgb:${COLORS.white},g_north,y_${usernameY}`
   );
 
   // "JUST WON"
