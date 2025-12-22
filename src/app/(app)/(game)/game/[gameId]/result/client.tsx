@@ -21,6 +21,7 @@ import { WAFFLE_GAME_CONFIG } from "@/lib/contracts/config";
 import waffleGameAbi from "@/lib/contracts/WaffleGameAbi.json";
 import { Spinner } from "@/components/ui/spinner";
 import { useGame } from "../../GameProvider";
+import { buildPrizeOGUrl } from "@/lib/cloudinary-og";
 
 // ==========================================
 // TYPES
@@ -149,7 +150,6 @@ export default function ScorePageClient({
           : `Just scored ${userScore.score} points on Waffles! 🧇`;
 
       // Use Cloudinary URL for OG image
-      const { buildPrizeOGUrl } = await import("@/lib/cloudinary-og");
       const ogImageUrl = buildPrizeOGUrl({
         username: userInfo.username,
         pfpUrl: userInfo.pfpUrl,

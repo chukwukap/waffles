@@ -11,8 +11,12 @@ import { env } from "./env";
 // CONFIGURATION
 // ==========================================
 
-// Base template path in Cloudinary (1200x630 dark background)
-const BASE_TEMPLATE = "og-base-template_vchiru";
+// Custom template paths in Cloudinary (1200x630 designed templates)
+const TEMPLATES = {
+  joined: "joined_y5kngd",
+  prize: "prize_w8cfzk",
+  waitlist: "waitlist_z1l4jl",
+} as const;
 
 // ==========================================
 // TYPES
@@ -148,7 +152,7 @@ export function buildJoinedOGUrl(params: JoinedOGParams): string {
 
   return `https://res.cloudinary.com/${cloudName}/image/upload/${transforms.join(
     "/"
-  )}/${BASE_TEMPLATE}`;
+  )}/${TEMPLATES.joined}`;
 }
 
 /**
@@ -216,7 +220,7 @@ export function buildPrizeOGUrl(params: PrizeOGParams): string {
 
   return `https://res.cloudinary.com/${cloudName}/image/upload/${transforms.join(
     "/"
-  )}/${BASE_TEMPLATE}`;
+  )}/${TEMPLATES.prize}`;
 }
 
 /**
@@ -255,7 +259,7 @@ export function buildWaitlistOGUrl(params: WaitlistOGParams): string {
 
   return `https://res.cloudinary.com/${cloudName}/image/upload/${transforms.join(
     "/"
-  )}/${BASE_TEMPLATE}`;
+  )}/${TEMPLATES.waitlist}`;
 }
 
 /**
