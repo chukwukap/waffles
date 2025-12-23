@@ -69,13 +69,13 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                     </div>
 
                     {/* ============================================
-              Character images - positions from Figma
+              Character images - numbered 1-12 left to right
               Base: 393x852, positions converted to %
               ============================================ */}
 
-                    {/* tg_image_654184121 - crew-8: left: -21px, top: 710px, rotated 6.78deg */}
+                    {/* 1.png: left: -21px, top: 710px, rotated 6.78deg */}
                     <Image
-                        src="/images/splash/crew-8.png"
+                        src="/images/splash/1.png"
                         alt=""
                         width={109}
                         height={100}
@@ -87,9 +87,9 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                         }}
                     />
 
-                    {/* tg_image_1051967527 - crew-1: left: 34px, top: 778px */}
+                    {/* 2.png: left: 34px, top: 778px */}
                     <Image
-                        src="/images/splash/crew-1.png"
+                        src="/images/splash/2.png"
                         alt=""
                         width={87}
                         height={95}
@@ -100,9 +100,9 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                         }}
                     />
 
-                    {/* IMAGE 2025-10-15 9:24:37 PM - crew-2: left: 85px, top: 777px */}
+                    {/* 3.png: left: 85px, top: 777px */}
                     <Image
-                        src="/images/splash/crew-2.png"
+                        src="/images/splash/3.png"
                         alt=""
                         width={81}
                         height={78}
@@ -113,9 +113,9 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                         }}
                     />
 
-                    {/* tg_image_4053279077 - crew-3: left: 142px, top: 775px, flipped */}
+                    {/* 4.png: left: 142px, top: 775px, flipped */}
                     <Image
-                        src="/images/splash/crew-3.png"
+                        src="/images/splash/4.png"
                         alt=""
                         width={72}
                         height={91}
@@ -127,9 +127,9 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                         }}
                     />
 
-                    {/* tg_image_265292761 - crew-4: left: 178px, top: 783px */}
+                    {/* 5.png: left: 178px, top: 783px */}
                     <Image
-                        src="/images/splash/crew-4.png"
+                        src="/images/splash/5.png"
                         alt=""
                         width={85}
                         height={69}
@@ -140,9 +140,9 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                         }}
                     />
 
-                    {/* tg_image_3737816328 - crew-5: left: 235px, top: 775px */}
+                    {/* 6.png: left: 235px, top: 775px */}
                     <Image
-                        src="/images/splash/crew-5.png"
+                        src="/images/splash/6.png"
                         alt=""
                         width={62}
                         height={76}
@@ -153,9 +153,9 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                         }}
                     />
 
-                    {/* IMAGE 2025-10-15 9:25:04 PM - crew-6: left: 263px, top: 765px */}
+                    {/* 7.png: left: 263px, top: 765px */}
                     <Image
-                        src="/images/splash/crew-6.png"
+                        src="/images/splash/7.png"
                         alt=""
                         width={88}
                         height={88}
@@ -166,9 +166,9 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                         }}
                     />
 
-                    {/* tg_image_1655173376 - crew-9: left: 296px, top: 733px */}
+                    {/* 8.png: left: 296px, top: 733px */}
                     <Image
-                        src="/images/splash/crew-9.png"
+                        src="/images/splash/8.png"
                         alt=""
                         width={85}
                         height={81}
@@ -179,9 +179,9 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                         }}
                     />
 
-                    {/* tg_image_2450170503 - positioned higher: left: 315px, top: 672px */}
+                    {/* 9.png: left: 315px, top: 672px */}
                     <Image
-                        src="/images/splash/12.png"
+                        src="/images/splash/9.png"
                         alt=""
                         width={78}
                         height={83}
@@ -192,9 +192,9 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                         }}
                     />
 
-                    {/* IMAGE 2025-10-15 9:24:49 PM - crew-7: left: 326px, top: 779px */}
+                    {/* 10.png: left: 326px, top: 779px */}
                     <Image
-                        src="/images/splash/crew-7.png"
+                        src="/images/splash/10.png"
                         alt=""
                         width={82}
                         height={74}
@@ -205,9 +205,9 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                         }}
                     />
 
-                    {/* tg_image_254724669 - rotated: left: 337.61px, top: 742.02px, rotate -16.47deg */}
+                    {/* 11.png: left: 337.61px, top: 742.02px, rotate -16.47deg */}
                     <Image
-                        src="/images/splash/13.png"
+                        src="/images/splash/11.png"
                         alt=""
                         width={56}
                         height={72}
@@ -219,9 +219,9 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                         }}
                     />
 
-                    {/* tg_image_2743669260 - bottom left: left: -9px, bottom: 0 */}
+                    {/* 12.png: left: -9px, bottom: 0 */}
                     <Image
-                        src="/images/splash/crew-10.png"
+                        src="/images/splash/12.png"
                         alt=""
                         width={68}
                         height={82}
