@@ -72,20 +72,28 @@ export async function generateMetadata({
   // Extract share params (passed when sharing)
   const username = (sParams.username as string) || "Player";
   const prizeAmount = parseInt((sParams.prizeAmount as string) || "0", 10);
+  const score = parseInt((sParams.score as string) || "0", 10);
   const pfpUrl = sParams.pfpUrl as string | undefined;
 
-  // Build OG image URL - only if prizeAmount is present (share context)
-  const imageUrl = prizeAmount > 0
-    ? buildPrizeOGUrl({ prizeAmount, pfpUrl })
+  // Check if this is a share context (has score or prizeAmount)
+  const isShareContext = score > 0 || prizeAmount > 0;
+
+  // Build OG image URL when in share context
+  const imageUrl = isShareContext
+    ? buildPrizeOGUrl({ prizeAmount, score, pfpUrl })
     : null;
 
-  // Default metadata
+  // Metadata based on context
   const title = prizeAmount > 0
     ? `${username} won on Waffles!`
-    : `Game Results | ${game.title || game.theme}`;
+    : score > 0
+      ? `${username} scored ${score.toLocaleString()} pts on Waffles!`
+      : `Game Results | ${game.title || game.theme}`;
   const description = prizeAmount > 0
     ? `${username} just won $${prizeAmount.toLocaleString()} on Waffles!`
-    : `Check out the results for ${game.title || game.theme}`;
+    : score > 0
+      ? `${username} scored ${score.toLocaleString()} points on Waffles!`
+      : `Check out the results for ${game.title || game.theme}`;
 
   return {
     title,

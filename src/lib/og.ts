@@ -22,6 +22,7 @@ export interface JoinedOGParams {
 
 export interface PrizeOGParams {
   prizeAmount: number;
+  score?: number;
   pfpUrl?: string;
 }
 
@@ -81,6 +82,9 @@ export function buildPrizeOGUrl(params: PrizeOGParams): string {
 
   const searchParams = new URLSearchParams();
   searchParams.set("prizeAmount", params.prizeAmount.toString());
+  if (params.score !== undefined) {
+    searchParams.set("score", params.score.toString());
+  }
   if (params.pfpUrl) {
     searchParams.set("pfpUrl", params.pfpUrl);
   }

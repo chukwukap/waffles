@@ -9,9 +9,14 @@ export const runtime = "nodejs";
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
 
-    // Parse params
-    const prizeAmount = searchParams.get("prizeAmount") || "0";
+    // Parse params - supports both prize and score display
+    const prizeAmount = parseInt(searchParams.get("prizeAmount") || "0", 10);
+    const score = parseInt(searchParams.get("score") || "0", 10);
     const pfpUrlParam = searchParams.get("pfpUrl");
+
+    // Determine display mode
+    const hasPrize = prizeAmount > 0;
+    const hasScore = score > 0;
 
     // Load assets from filesystem
     const publicDir = join(process.cwd(), "public");
@@ -28,8 +33,12 @@ export async function GET(request: Request) {
     const chestImage = `data:image/png;base64,${chestBuffer.toString("base64")}`;
     const bgImage = `data:image/png;base64,${bgBuffer.toString("base64")}`;
 
-    // Format prize amount
-    const formattedPrize = `$${Number(prizeAmount).toLocaleString()}`;
+    // Format display values
+    const displayValue = hasPrize
+        ? `$${prizeAmount.toLocaleString()}`
+        : `${score.toLocaleString()} PTS`;
+    const headlineText = hasPrize ? "JUST WON" : "SCORED";
+    const valueColor = hasPrize ? "#05FF8F" : "#FFC931"; // Green for prize, Gold for score
 
     return new ImageResponse(
         (
@@ -58,7 +67,7 @@ export async function GET(request: Request) {
                     style={{ marginBottom: 50 }}
                 />
 
-                {/* PFP + JUST WON row */}
+                {/* PFP + Headline row */}
                 <div
                     style={{
                         display: "flex",
@@ -82,7 +91,7 @@ export async function GET(request: Request) {
                         />
                     )}
 
-                    {/* JUST WON text */}
+                    {/* Headline text */}
                     <span
                         style={{
                             fontSize: 36,
@@ -90,21 +99,21 @@ export async function GET(request: Request) {
                             letterSpacing: "0.02em",
                         }}
                     >
-                        JUST WON
+                        {headlineText}
                     </span>
                 </div>
 
-                {/* Prize Amount - Large green text */}
+                {/* Value - Large text (green for prize, gold for score) */}
                 <span
                     style={{
                         fontSize: 72,
-                        color: "#05FF8F",
+                        color: valueColor,
                         lineHeight: 1,
                         marginBottom: 4,
                         letterSpacing: "-0.02em",
                     }}
                 >
-                    {formattedPrize}
+                    {displayValue}
                 </span>
 
                 {/* ON WAFFLES */}

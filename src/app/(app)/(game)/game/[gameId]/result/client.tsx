@@ -182,6 +182,7 @@ export default function ScorePageClient({
       const frameParams = new URLSearchParams();
       frameParams.set("username", userInfo.username);
       frameParams.set("prizeAmount", userScore.winnings.toString());
+      frameParams.set("score", userScore.score.toString());
       if (userInfo.pfpUrl) {
         frameParams.set("pfpUrl", userInfo.pfpUrl);
       }
