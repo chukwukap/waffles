@@ -12,6 +12,9 @@ interface SplashScreenProps {
 // Figma design is 393x852. Use percentage for horizontal, bottom-based for vertical
 const toPercentX = (px: number) => `${(px / 393) * 100}%`;
 
+// Scale factor to increase character sizes
+const SCALE = 1.25;
+
 export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps) {
     const [isVisible, setIsVisible] = useState(true);
 
@@ -64,14 +67,14 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                         </span>
                     </div>
 
-                    {/* Character images positioned from left to right */}
+                    {/* Character images positioned from left to right - scaled up 25% */}
 
-                    {/* 1.png: left: -21px, top: 710px → bottom: ~42px, rotated 6.78deg */}
+                    {/* 1.png */}
                     <Image
                         src="/images/splash/1.png"
                         alt=""
-                        width={109}
-                        height={100}
+                        width={Math.round(109 * SCALE)}
+                        height={Math.round(100 * SCALE)}
                         className="absolute"
                         style={{
                             left: toPercentX(-21),
@@ -80,12 +83,12 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                         }}
                     />
 
-                    {/* 2.png: left: 34px, top: 778px → bottom ~0 */}
+                    {/* 2.png */}
                     <Image
                         src="/images/splash/2.png"
                         alt=""
-                        width={87}
-                        height={95}
+                        width={Math.round(87 * SCALE)}
+                        height={Math.round(95 * SCALE)}
                         className="absolute"
                         style={{
                             left: toPercentX(34),
@@ -93,12 +96,12 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                         }}
                     />
 
-                    {/* 3.png: left: 85px, top: 777px */}
+                    {/* 3.png */}
                     <Image
                         src="/images/splash/3.png"
                         alt=""
-                        width={81}
-                        height={78}
+                        width={Math.round(81 * SCALE)}
+                        height={Math.round(78 * SCALE)}
                         className="absolute"
                         style={{
                             left: toPercentX(85),
@@ -106,12 +109,12 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                         }}
                     />
 
-                    {/* 4.png: left: 142px, top: 775px, flipped horizontally */}
+                    {/* 4.png - flipped */}
                     <Image
                         src="/images/splash/4.png"
                         alt=""
-                        width={72}
-                        height={91}
+                        width={Math.round(72 * SCALE)}
+                        height={Math.round(91 * SCALE)}
                         className="absolute"
                         style={{
                             left: toPercentX(142),
@@ -120,12 +123,12 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                         }}
                     />
 
-                    {/* 5.png: left: 178px, top: 783px */}
+                    {/* 5.png */}
                     <Image
                         src="/images/splash/5.png"
                         alt=""
-                        width={85}
-                        height={69}
+                        width={Math.round(85 * SCALE)}
+                        height={Math.round(69 * SCALE)}
                         className="absolute"
                         style={{
                             left: toPercentX(178),
@@ -133,12 +136,12 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                         }}
                     />
 
-                    {/* 6.png: left: 235px, top: 775px */}
+                    {/* 6.png */}
                     <Image
                         src="/images/splash/6.png"
                         alt=""
-                        width={62}
-                        height={76}
+                        width={Math.round(62 * SCALE)}
+                        height={Math.round(76 * SCALE)}
                         className="absolute"
                         style={{
                             left: toPercentX(235),
@@ -146,12 +149,12 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                         }}
                     />
 
-                    {/* 7.png: left: 263px, top: 765px → slightly higher */}
+                    {/* 7.png */}
                     <Image
                         src="/images/splash/7.png"
                         alt=""
-                        width={88}
-                        height={88}
+                        width={Math.round(88 * SCALE)}
+                        height={Math.round(88 * SCALE)}
                         className="absolute"
                         style={{
                             left: toPercentX(263),
@@ -159,12 +162,12 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                         }}
                     />
 
-                    {/* 8.png: left: 296px, top: 733px → higher up */}
+                    {/* 8.png */}
                     <Image
                         src="/images/splash/8.png"
                         alt=""
-                        width={85}
-                        height={81}
+                        width={Math.round(85 * SCALE)}
+                        height={Math.round(81 * SCALE)}
                         className="absolute"
                         style={{
                             left: toPercentX(296),
@@ -172,12 +175,12 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                         }}
                     />
 
-                    {/* 9.png: left: 315px, top: 672px → high up, doge/character jumping */}
+                    {/* 9.png - jumping character */}
                     <Image
                         src="/images/splash/9.png"
                         alt=""
-                        width={78}
-                        height={83}
+                        width={Math.round(78 * SCALE)}
+                        height={Math.round(83 * SCALE)}
                         className="absolute"
                         style={{
                             left: toPercentX(315),
@@ -185,12 +188,12 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                         }}
                     />
 
-                    {/* 10.png: left: 326px, top: 779px */}
+                    {/* 10.png */}
                     <Image
                         src="/images/splash/10.png"
                         alt=""
-                        width={82}
-                        height={74}
+                        width={Math.round(82 * SCALE)}
+                        height={Math.round(74 * SCALE)}
                         className="absolute"
                         style={{
                             left: toPercentX(326),
@@ -198,12 +201,12 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                         }}
                     />
 
-                    {/* 11.png: left: 337.61px, top: 742.02px, rotate -16.47deg */}
+                    {/* 11.png - rotated */}
                     <Image
                         src="/images/splash/11.png"
                         alt=""
-                        width={56}
-                        height={72}
+                        width={Math.round(56 * SCALE)}
+                        height={Math.round(72 * SCALE)}
                         className="absolute"
                         style={{
                             left: toPercentX(337.61),
@@ -212,12 +215,12 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                         }}
                     />
 
-                    {/* 12.png: left: -9px, bottom: 0 */}
+                    {/* 12.png */}
                     <Image
                         src="/images/splash/12.png"
                         alt=""
-                        width={68}
-                        height={82}
+                        width={Math.round(68 * SCALE)}
+                        height={Math.round(82 * SCALE)}
                         className="absolute"
                         style={{
                             left: toPercentX(-9),
