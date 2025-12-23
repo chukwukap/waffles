@@ -147,7 +147,7 @@ export function TicketSuccessClient({
 
     return (
         <>
-            <div className="h-dvh flex flex-col items-center justify-center overflow-hidden px-5">
+            <div className="min-h-dvh flex flex-col items-center justify-center overflow-y-auto px-5 pb-24">
                 <motion.div
                     className="flex flex-col items-center w-full max-w-[420px]"
                     initial={{ opacity: 0 }}
