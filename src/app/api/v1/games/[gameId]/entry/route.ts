@@ -1,8 +1,50 @@
 import { NextResponse } from "next/server";
 import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { sendMiniAppNotification } from "@/lib/notifications";
+import { WAFFLE_FID } from "@/lib/constants";
+import { env } from "@/lib/env";
 
 type Params = { gameId: string };
+
+// Helper: Format game start time nicely
+function formatGameTime(date: Date): string {
+  const now = new Date();
+  const diffMs = date.getTime() - now.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (diffHours > 24) {
+    return date.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
+  } else if (diffHours > 0) {
+    return `in ${diffHours}h ${diffMins}m`;
+  } else if (diffMins > 0) {
+    return `in ${diffMins} minutes`;
+  }
+  return "soon";
+}
+
+// Helper: Send ticket notification
+async function sendTicketNotification(
+  fid: number,
+  gameId: number,
+  game: { startsAt?: Date; title?: string }
+) {
+  const startsAt = game.startsAt ? new Date(game.startsAt) : null;
+  const timeStr = startsAt ? formatGameTime(startsAt) : "soon";
+
+  await sendMiniAppNotification({
+    fid,
+    appFid: WAFFLE_FID,
+    title: "🧇 Ticket Secured!",
+    body: `Game starts ${timeStr}. Don't miss it!`,
+    targetUrl: `${env.rootUrl}/game/${gameId}`,
+  });
+}
 
 /**
  * GET /api/v1/games/:gameId/entry
@@ -111,6 +153,7 @@ export const POST = withAuth<Params>(
         where: { id: gameId },
         select: {
           id: true,
+          startsAt: true,
           endsAt: true,
           playerCount: true,
           maxPlayers: true,
@@ -192,6 +235,11 @@ export const POST = withAuth<Params>(
 
         return newEntry;
       });
+
+      // Send ticket purchase notification (async, don't block response)
+      sendTicketNotification(auth.fid, gameId, game).catch((err) =>
+        console.error("[Entry] Notification error:", err)
+      );
 
       return NextResponse.json(entry, { status: 201 });
     } catch (error) {

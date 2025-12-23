@@ -103,6 +103,7 @@ export function useLive({
     setSendEvent,
     addReaction,
     setSendReaction,
+    addPlayer,
   } = useGameStore();
 
   // Handle incoming messages
@@ -128,6 +129,13 @@ export function useLive({
           case "p": // Presence update
             setOnlineCount(msg.d.n);
             if (msg.d.j) {
+              // Add player to recent players list
+              addPlayer({
+                username: msg.d.j,
+                pfpUrl: msg.d.p || null,
+                timestamp: Date.now(),
+              });
+              // Also add to events feed
               addEvent({
                 id: `join-${Date.now()}`,
                 type: "join",
@@ -185,7 +193,7 @@ export function useLive({
         console.error("[useLive] Failed to parse message:", error);
       }
     },
-    [setOnlineCount, setMessages, addMessage, addEvent, addReaction]
+    [setOnlineCount, setMessages, addMessage, addEvent, addReaction, addPlayer]
   );
 
   // Fetch auth token if not provided
@@ -238,9 +246,12 @@ export function useLive({
     // Message received
     onMessage: handleMessage,
 
-    // Connection error
+    // Connection error (non-critical - chat/events may not work)
     onError(error) {
-      console.error("[useLive] WebSocket error:", error);
+      console.warn(
+        "[useLive] WebSocket connection issue (chat may be unavailable):",
+        error
+      );
     },
 
     // Only connect when we have token and enabled

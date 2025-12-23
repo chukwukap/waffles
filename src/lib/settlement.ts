@@ -18,6 +18,8 @@ import waffleGameAbi from "@/lib/contracts/WaffleGameAbi.json";
 import { buildMerkleTree, type Winner } from "@/lib/merkle";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
+import { sendMiniAppNotification } from "@/lib/notifications";
+import { WAFFLE_FID } from "@/lib/constants";
 
 // ============================================================================
 // Configuration
@@ -159,6 +161,68 @@ export async function updateMerkleRootOnChain(
 }
 
 // ============================================================================
+// Notification Helpers
+// ============================================================================
+
+/**
+ * Send notifications to all players when results are ready.
+ * Winners get a personalized "You won!" message, others get "Results are in!"
+ */
+async function sendSettlementNotifications(gameId: number) {
+  // Get all entries for this game (not just winners)
+  const allEntries = await prisma.gameEntry.findMany({
+    where: { gameId },
+    select: {
+      rank: true,
+      prize: true,
+      user: {
+        select: {
+          fid: true,
+          notifs: {
+            where: { appFid: WAFFLE_FID },
+            take: 1,
+          },
+        },
+      },
+    },
+  });
+
+  // Filter users with notification tokens
+  const usersToNotify = allEntries.filter((e) => e.user.notifs.length > 0);
+
+  console.log(
+    `[Settlement] Sending notifications to ${usersToNotify.length} players for game ${gameId}`
+  );
+
+  // Send notifications
+  await Promise.allSettled(
+    usersToNotify.map(async (entry) => {
+      const isWinner = entry.rank !== null && entry.rank <= 3 && entry.prize;
+
+      if (isWinner) {
+        // Winner notification
+        await sendMiniAppNotification({
+          fid: entry.user.fid,
+          appFid: WAFFLE_FID,
+          title: "🏆 You Won!",
+          body: `You won $${entry.prize?.toFixed(2)}! Claim your prize now.`,
+          targetUrl: `${env.rootUrl}/game/${gameId}/result`,
+        });
+      } else {
+        // Non-winner: results available
+        await sendMiniAppNotification({
+          fid: entry.user.fid,
+          appFid: WAFFLE_FID,
+          title: "📊 Results Ready!",
+          body: "See how you ranked and check out the winners!",
+          targetUrl: `${env.rootUrl}/game/${gameId}/result`,
+        });
+      }
+    })
+  );
+}
+
+// ============================================================================
 // Full Settlement Flow
 // ============================================================================
 
@@ -261,6 +325,11 @@ export async function settleGame(gameId: number): Promise<{
   console.log(`  - Merkle Root: ${merkleRoot}`);
   console.log(`  - Winners: ${winners.length}`);
   console.log(`  - TX: ${txHash}`);
+
+  // Send notifications to all players (async, don't block)
+  sendSettlementNotifications(gameId).catch((err: Error) =>
+    console.error("[Settlement] Notification error:", err)
+  );
 
   return { merkleRoot, winners, txHash };
 }

@@ -71,10 +71,10 @@ export function BuyTicketModal({
     reset,
   } = useTicketPurchase(gameId, onchainId, selectedPrice, onPurchaseSuccess);
 
-  // Redirect to success page on purchase success
+  // Redirect to success page ONLY on fresh purchase success
   useEffect(() => {
-    if (isSuccess || hasTicket) {
-      // Build success page URL with params
+    if (isSuccess) {
+      // Fresh purchase completed → redirect to success page
       const successParams = new URLSearchParams();
       successParams.set("username", displayUsername);
       if (displayAvatar) {
@@ -82,7 +82,14 @@ export function BuyTicketModal({
       }
       router.push(`/game/${gameId}/ticket/success?${successParams.toString()}`);
     }
-  }, [isSuccess, hasTicket, gameId, displayUsername, displayAvatar, router]);
+  }, [isSuccess, gameId, displayUsername, displayAvatar, router]);
+
+  // If user already has a ticket (detected by hook), close modal
+  useEffect(() => {
+    if (hasTicket && !isSuccess) {
+      onClose();
+    }
+  }, [hasTicket, isSuccess, onClose]);
 
 
   // Handle modal entrance animation

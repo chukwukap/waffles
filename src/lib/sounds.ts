@@ -56,9 +56,21 @@ function getAudio(name: SoundName): HTMLAudioElement | null {
   if (typeof window === "undefined") return null;
 
   if (!audioCache.has(name)) {
-    const audio = new Audio(SOUNDS[name]);
-    audio.preload = "auto";
-    audioCache.set(name, audio);
+    try {
+      const audio = new Audio(SOUNDS[name]);
+      audio.preload = "auto";
+
+      // Suppress errors for missing/unsupported audio files
+      audio.onerror = () => {
+        // Silently fail - audio file may not exist or format not supported
+        audioCache.delete(name);
+      };
+
+      audioCache.set(name, audio);
+    } catch {
+      // Audio construction failed
+      return null;
+    }
   }
 
   return audioCache.get(name) ?? null;
@@ -199,7 +211,15 @@ class SoundManager {
       this._bgAudio = new Audio(BG_TRACK);
       this._bgAudio.loop = true;
       this._bgAudio.preload = "auto";
+
+      // Suppress errors for missing/unsupported audio files
+      this._bgAudio.onerror = () => {
+        // Silently fail
+        this._bgAudio = null;
+      };
     }
+
+    if (!this._bgAudio) return;
 
     this._bgAudio.volume = this._volume * 0.4; // Lower volume for BG
     this._bgAudio.play().catch(() => {

@@ -31,6 +31,7 @@ export interface LiveGameData {
   prizePool: number;
   theme: string;
   questions: LiveGameQuestion[];
+  recentPlayers: { pfpUrl: string | null; username: string }[];
 }
 
 // ==========================================
@@ -65,6 +66,18 @@ const getGame = cache(async (gameId: number): Promise<LiveGameData | null> => {
           { orderInRound: "asc" },
         ],
       },
+      entries: {
+        select: {
+          user: {
+            select: {
+              pfpUrl: true,
+              username: true,
+            },
+          },
+        },
+        take: 10,
+        orderBy: { createdAt: "desc" },
+      },
     },
   });
 
@@ -83,6 +96,10 @@ const getGame = cache(async (gameId: number): Promise<LiveGameData | null> => {
     prizePool: game.prizePool,
     theme: game.theme,
     questions: game.questions,
+    recentPlayers: game.entries.map((e) => ({
+      pfpUrl: e.user.pfpUrl,
+      username: e.user.username || `Player`,
+    })),
   };
 });
 

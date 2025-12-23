@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useLiveGame } from "./LiveGameProvider";
 import { useTimer } from "@/hooks/useTimer";
 import { playSound } from "@/lib/sounds";
@@ -16,9 +16,15 @@ import { useGameStore, selectScore } from "@/lib/game-store";
  */
 export default function LiveGameScreen() {
     const [showCountdown, setShowCountdown] = useState(true);
+    const { startGame, recentPlayers } = useLiveGame();
+
+    const handleCountdownComplete = useCallback(() => {
+        startGame(); // Start the timer
+        setShowCountdown(false); // Show the game content
+    }, [startGame]);
 
     if (showCountdown) {
-        return <GameCountdownScreen onComplete={() => setShowCountdown(false)} />;
+        return <GameCountdownScreen onComplete={handleCountdownComplete} recentPlayers={recentPlayers} />;
     }
 
     return <LiveGameContent />;
@@ -38,6 +44,8 @@ function LiveGameContent() {
         gameId,
         gameTheme,
     } = useLiveGame();
+
+
 
     // Get score from global store (synced during gameplay)
     const score = useGameStore(selectScore);
@@ -68,7 +76,18 @@ function LiveGameContent() {
     }
 
     const currentQuestion = questions[questionIndex];
-    if (!currentQuestion) return null;
+
+    // No questions available - show error state instead of blank
+    if (!currentQuestion) {
+        return (
+            <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
+                <p className="font-body text-2xl text-white mb-2">NO QUESTIONS LOADED</p>
+                <p className="font-display text-sm text-white/50">
+                    The game has no questions or they failed to load.
+                </p>
+            </div>
+        );
+    }
 
     if (isBreak) {
         const nextQuestion = questions[questionIndex + 1] ?? questions[0];

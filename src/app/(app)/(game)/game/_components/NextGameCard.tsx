@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { motion, useAnimation, AnimatePresence } from "framer-motion";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { BuyTicketModal } from "./BuyTicketModal";
@@ -46,6 +47,7 @@ export function NextGameCard({
   username,
   userAvatar,
 }: NextGameCardProps) {
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const prevPrizePool = useRef(prizePool);
   const prevSpotsTaken = useRef(spotsTaken);
@@ -90,9 +92,9 @@ export function NextGameCard({
     : isLive
       ? hasCompleted
         ? {
-          text: "VIEW RESULTS",
-          disabled: false,
-          href: `/game/${gameId}/result`,
+          text: "CALCULATING RESULTS",
+          disabled: true,
+          href: null,
         }
         : hasTicket
           ? { text: "START GAME", disabled: false, href: `/game/${gameId}/live` }
@@ -104,7 +106,7 @@ export function NextGameCard({
   const handleButtonClick = () => {
     if (buttonConfig.disabled) return;
     if (buttonConfig.href) {
-      window.location.href = buttonConfig.href;
+      router.push(buttonConfig.href);
     } else {
       setIsModalOpen(true);
     }
@@ -155,9 +157,9 @@ export function NextGameCard({
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2, ...springs.gentle }}
-              className="font-body text-white uppercase w-[114px] h-6 text-[26px] font-normal leading-[92%] tracking-[-0.03em]"
+              className="font-body text-white uppercase h-6 text-[26px] font-normal leading-[92%] tracking-[-0.03em]"
             >
-              NEXT GAME
+              WAFFLES #{gameId.toString().padStart(3, "0")}
             </motion.span>
           </div>
         </motion.div>

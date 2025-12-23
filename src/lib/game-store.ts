@@ -60,6 +60,12 @@ export interface Reaction {
   timestamp: number;
 }
 
+export interface RecentPlayer {
+  username: string;
+  pfpUrl: string | null;
+  timestamp: number;
+}
+
 // ==========================================
 // STORE INTERFACE
 // ==========================================
@@ -77,6 +83,7 @@ interface GameStore {
   onlineCount: number;
   messages: ChatMessage[];
   events: GameEvent[];
+  recentPlayers: RecentPlayer[];
 
   // Actions - Game
   setGame: (game: GameData | null) => void;
@@ -91,6 +98,8 @@ interface GameStore {
   addEvent: (event: GameEvent) => void;
   setEvents: (events: GameEvent[]) => void;
   addReaction: (reaction: Reaction) => void;
+  addPlayer: (player: RecentPlayer) => void;
+  setRecentPlayers: (players: RecentPlayer[]) => void;
 
   // Actions - Score (optimistic updates)
   updateScore: (points: number) => void;
@@ -128,6 +137,7 @@ const initialState = {
   messages: [],
   events: [],
   reactions: [],
+  recentPlayers: [],
   sendChat: () => {}, // No-op until useLive sets it
   sendEvent: () => {}, // No-op until useLive sets it
   sendReaction: () => {}, // No-op until useLive sets it
@@ -183,6 +193,25 @@ export const useGameStore = create<GameStore>()(
           false,
           "addReaction"
         ),
+
+      addPlayer: (player) =>
+        set(
+          (state) => {
+            // Avoid duplicates - check if player already exists
+            const exists = state.recentPlayers.some(
+              (p) => p.username === player.username
+            );
+            if (exists) return state;
+            return {
+              recentPlayers: [...state.recentPlayers.slice(-19), player], // Keep last 20
+            };
+          },
+          false,
+          "addPlayer"
+        ),
+
+      setRecentPlayers: (players) =>
+        set({ recentPlayers: players }, false, "setRecentPlayers"),
 
       // Score actions (optimistic)
       updateScore: (points) =>
@@ -242,3 +271,4 @@ export const selectSendChat = (state: GameStore) => state.sendChat;
 export const selectSendEvent = (state: GameStore) => state.sendEvent;
 export const selectReactions = (state: GameStore) => state.reactions;
 export const selectSendReaction = (state: GameStore) => state.sendReaction;
+export const selectRecentPlayers = (state: GameStore) => state.recentPlayers;

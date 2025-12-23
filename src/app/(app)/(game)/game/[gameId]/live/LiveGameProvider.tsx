@@ -33,12 +33,14 @@ interface LiveGameContextValue {
     roundBreakSec: number;
     prizePool: number;
     gameTheme: string;
+    recentPlayers: { pfpUrl: string | null; username: string }[];
 
     // Current state
     questionIndex: number;
     isBreak: boolean;
     timerTarget: number;
     isGameComplete: boolean;
+    gameStarted: boolean;
 
     // Answers
     answers: Map<number, Answer>;
@@ -48,6 +50,7 @@ interface LiveGameContextValue {
     // Actions
     submitAnswer: (selectedIndex: number) => void;
     advance: () => void;
+    startGame: () => void;
 }
 
 const LiveGameContext = createContext<LiveGameContextValue | null>(null);
@@ -133,11 +136,9 @@ export function LiveGameProvider({ game, children }: LiveGameProviderProps) {
     // State
     const [questionIndex, setQuestionIndex] = useState(0);
     const [isBreak, setIsBreak] = useState(false);
-    const [timerTarget, setTimerTarget] = useState(() => {
-        // First question timer
-        const firstQ = game.questions[0];
-        return Date.now() + (firstQ?.durationSec) * 1000;
-    });
+    const [gameStarted, setGameStarted] = useState(false);
+    // Timer starts far in the future until game is started
+    const [timerTarget, setTimerTarget] = useState(() => Date.now() + 999999999);
     const [answers, setAnswers] = useState<Map<number, Answer>>(new Map());
 
     // Refs for stable callbacks
@@ -243,6 +244,15 @@ export function LiveGameProvider({ game, children }: LiveGameProviderProps) {
     // Keep ref in sync for setTimeout callbacks
     advanceRef.current = advance;
 
+    // Start the game (called when countdown video ends)
+    const startGame = useCallback(() => {
+        if (gameStarted) return;
+        setGameStarted(true);
+        questionStartRef.current = Date.now();
+        const firstQ = game.questions[0];
+        setTimerTarget(Date.now() + (firstQ?.durationSec ?? 10) * 1000);
+    }, [gameStarted, game.questions]);
+
     // Helper methods
     const hasAnswered = useCallback(
         (questionId: number) => answers.has(questionId),
@@ -262,15 +272,18 @@ export function LiveGameProvider({ game, children }: LiveGameProviderProps) {
             roundBreakSec: game.roundBreakSec,
             prizePool: game.prizePool,
             gameTheme: game.theme,
+            recentPlayers: game.recentPlayers,
             questionIndex,
             isBreak,
             timerTarget,
             isGameComplete,
+            gameStarted,
             answers,
             hasAnswered,
             getAnswer,
             submitAnswer,
             advance,
+            startGame,
         }),
         [
             game,
@@ -278,11 +291,13 @@ export function LiveGameProvider({ game, children }: LiveGameProviderProps) {
             isBreak,
             timerTarget,
             isGameComplete,
+            gameStarted,
             answers,
             hasAnswered,
             getAnswer,
             submitAnswer,
             advance,
+            startGame,
         ]
     );
 

@@ -64,8 +64,14 @@ export function GameHub({ game }: GameHubProps) {
   // Background music
   const { playBgMusic, stopBgMusic } = useSounds();
 
-  // Countdown
-  const targetMs = game?.startsAt.getTime() ?? 0;
+  // Determine if game is live based on phase (timer target depends on this)
+  const isLivePhase = phase === "LIVE";
+  const hasEnded = phase === "ENDED";
+
+  // Timer: count down to startsAt when scheduled, to endsAt when live
+  const targetMs = isLivePhase
+    ? game?.endsAt.getTime() ?? 0  // Time remaining in game
+    : game?.startsAt.getTime() ?? 0; // Time until game starts
   const countdown = useTimer(targetMs);
 
   // Refresh page when countdown reaches 0 to get fresh server data
@@ -77,8 +83,7 @@ export function GameHub({ game }: GameHubProps) {
   }, [countdown, phase, router]);
 
   // Derived state - also check countdown for immediate transition
-  const isLive = phase === "LIVE" || (countdown <= 0 && phase !== "ENDED");
-  const hasEnded = phase === "ENDED";
+  const isLive = isLivePhase || (countdown <= 0 && phase !== "ENDED");
   const isEmpty = !game;
   const hasActiveGame = !isEmpty && !hasEnded;
 

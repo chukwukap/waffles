@@ -6,6 +6,7 @@ import { useLiveGame } from "../LiveGameProvider";
 import { QuestionCardHeader } from "./QuestionCardHeader";
 import { QuestionOption } from "./QuestionOption";
 import { playSound } from "@/lib/sounds";
+import { PlayerAvatarStack } from "../../../_components/PlayerAvatarStack";
 import type { LiveGameQuestion } from "../page";
 
 // ==========================================
@@ -160,13 +161,13 @@ export default function QuestionView({
                             animate="visible"
                             exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
                         >
-                            <div className="relative w-full max-w-[299px] h-[158px] rounded-[10px] overflow-hidden bg-[#17171a] border border-[#313136] shadow-[0_8px_0_#000]">
+                            <div className="relative w-full aspect-video rounded-[10px] overflow-hidden bg-[#17171a] border border-[#313136] shadow-[0_8px_0_#000]">
                                 <Image
                                     src={question.mediaUrl}
                                     alt={question.content}
                                     fill
                                     className="object-cover"
-                                    sizes="299px"
+                                    sizes="(max-width: 640px) 100vw, 500px"
                                     priority
                                     loading="eager"
                                     quality={80}
@@ -218,7 +219,22 @@ export default function QuestionView({
                             >
                                 ✓
                             </motion.span>
-                            Answer submitted!
+                            Answer submitted! Wait for the next question...
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Real-time player count at bottom */}
+                <AnimatePresence>
+                    {isAnswered && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ delay: 0.5, duration: 0.4 }}
+                            className="mt-auto pt-4"
+                        >
+                            <PlayerAvatarStack actionText="answered" />
                         </motion.div>
                     )}
                 </AnimatePresence>

@@ -106,6 +106,74 @@ export default class GameServer implements Party.Server {
     // Load seenFids from storage for hibernation recovery
     const savedFids = await this.room.storage.get<number[]>("seenFids");
     this.seenFids = new Set(savedFids || []);
+
+    // Schedule game start alarm if not already scheduled
+    await this.scheduleGameStartAlarm();
+  }
+
+  // Schedule alarm for game start time
+  async scheduleGameStartAlarm() {
+    const gameId = parseInt(this.room.id);
+    if (isNaN(gameId)) return;
+
+    // Check if alarm already scheduled
+    const existingAlarm = await this.room.storage.getAlarm();
+    if (existingAlarm) return;
+
+    // Fetch game start time from API
+    try {
+      const appUrl = this.room.env.NEXT_PUBLIC_URL as string;
+      if (!appUrl) return;
+
+      const res = await fetch(`${appUrl}/api/v1/games/${gameId}`);
+      if (!res.ok) return;
+
+      const game = await res.json();
+      const startsAt = new Date(game.startsAt).getTime();
+      const now = Date.now();
+
+      // Only schedule if game starts in the future
+      if (startsAt > now) {
+        await this.room.storage.setAlarm(startsAt);
+        console.log(
+          `[Alarm] Scheduled game ${gameId} start notification for ${new Date(
+            startsAt
+          ).toISOString()}`
+        );
+      }
+    } catch (e) {
+      console.error("[Alarm] Failed to schedule:", e);
+    }
+  }
+
+  // Called when alarm fires (game start time)
+  async onAlarm() {
+    const gameId = parseInt(this.room.id);
+    console.log(`[Alarm] Game ${gameId} starting - triggering notifications`);
+
+    // Call API to send notifications to all ticket holders
+    try {
+      const appUrl = this.room.env.NEXT_PUBLIC_URL as string;
+      const secret = this.room.env.PARTYKIT_SECRET as string;
+
+      if (!appUrl || !secret) {
+        console.error("[Alarm] Missing env vars");
+        return;
+      }
+
+      const res = await fetch(`${appUrl}/api/v1/games/${gameId}/notify-start`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-PartyKit-Secret": secret,
+        },
+      });
+
+      const result = await res.json();
+      console.log(`[Alarm] Game ${gameId} notifications sent:`, result);
+    } catch (e) {
+      console.error("[Alarm] Failed to send notifications:", e);
+    }
   }
 
   // Tag connections for targeted messaging (e.g., by fid)
@@ -142,6 +210,9 @@ export default class GameServer implements Party.Server {
       this.seenFids.add(user.fid);
       await this.room.storage.put("seenFids", [...this.seenFids]);
       this.broadcastPresence(user, "join");
+    } else {
+      // Reconnection - still broadcast updated count
+      this.broadcastPresence(user, "count");
     }
 
     // Send initial sync data to this connection (compact format)
@@ -258,7 +329,7 @@ export default class GameServer implements Party.Server {
     this.room.broadcast(JSON.stringify(msg), exclude);
   }
 
-  broadcastPresence(user: UserProfile, type: "join" | "leave") {
+  broadcastPresence(user: UserProfile, type: "join" | "leave" | "count") {
     // p = presence, n = online count, j = joined, l = left, p = pfpUrl
     this.broadcast({
       t: "p",
