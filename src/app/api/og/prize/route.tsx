@@ -1,37 +1,24 @@
 /* eslint-disable @next/next/no-img-element */
 import { ImageResponse } from "next/og";
-import { loadOGFonts, OG_WIDTH, OG_HEIGHT, COLORS, safeImageUrl } from "../utils";
+import { OG_WIDTH, OG_HEIGHT, COLORS, safeImageUrl } from "../utils";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 
-// Load chest image as base64 for edge runtime
-async function loadChestImage(): Promise<string> {
-    const response = await fetch(
-        new URL("../../../../public/images/chest-crown.png", import.meta.url)
-    );
-    const buffer = await response.arrayBuffer();
-    const base64 = Buffer.from(buffer).toString("base64");
-    return `data:image/png;base64,${base64}`;
-}
-
-// Load logo image
-async function loadLogoImage(): Promise<string> {
-    const response = await fetch(
-        new URL("../../../../public/images/logo/logo-onboarding.png", import.meta.url)
-    );
-    const buffer = await response.arrayBuffer();
-    const base64 = Buffer.from(buffer).toString("base64");
-    return `data:image/png;base64,${base64}`;
-}
-
-// Load background image (same as waitlist)
-async function loadBgImage(): Promise<string> {
-    const response = await fetch(
-        new URL("../../../../public/images/share/waitlist-bg.png", import.meta.url)
-    );
-    const buffer = await response.arrayBuffer();
-    const base64 = Buffer.from(buffer).toString("base64");
-    return `data:image/png;base64,${base64}`;
+// Load fonts from filesystem
+async function loadFonts() {
+    const publicDir = join(process.cwd(), "public");
+    const fontPath = join(publicDir, "fonts/editundo_bd.ttf");
+    const fontData = await readFile(fontPath);
+    return [
+        {
+            name: "EditUndo",
+            data: fontData.buffer as ArrayBuffer,
+            style: "normal" as const,
+            weight: 700 as const,
+        },
+    ];
 }
 
 export async function GET(request: Request) {
@@ -41,14 +28,20 @@ export async function GET(request: Request) {
     const prizeAmount = searchParams.get("prizeAmount") || "0";
     const pfpUrlParam = searchParams.get("pfpUrl");
 
-    // Load fonts and assets in parallel (including safe fetch of pfpUrl)
-    const [fonts, chestImage, logoImage, bgImage, safePfpUrl] = await Promise.all([
-        loadOGFonts(),
-        loadChestImage(),
-        loadLogoImage(),
-        loadBgImage(),
-        safeImageUrl(pfpUrlParam), // Returns null if fetch fails
+    // Load assets from filesystem
+    const publicDir = join(process.cwd(), "public");
+    const [fonts, chestBuffer, logoBuffer, bgBuffer, safePfpUrl] = await Promise.all([
+        loadFonts(),
+        readFile(join(publicDir, "images/chest-crown.png")),
+        readFile(join(publicDir, "images/logo/logo-onboarding.png")),
+        readFile(join(publicDir, "images/share/waitlist-bg.png")),
+        safeImageUrl(pfpUrlParam),
     ]);
+
+    // Convert to base64
+    const chestImage = `data:image/png;base64,${chestBuffer.toString("base64")}`;
+    const logoImage = `data:image/png;base64,${logoBuffer.toString("base64")}`;
+    const bgImage = `data:image/png;base64,${bgBuffer.toString("base64")}`;
 
     // Format prize amount
     const formattedPrize = `$${Number(prizeAmount).toLocaleString()}`;
