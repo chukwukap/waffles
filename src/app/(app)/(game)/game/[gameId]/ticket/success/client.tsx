@@ -107,8 +107,10 @@ export function TicketSuccessClient({
     );
 
     // Calendar handlers
-    const handleAddToGoogle = useCallback(() => {
-        window.open(getGoogleCalendarUrl(calendarEvent), '_blank');
+    const handleAddToGoogle = useCallback(async () => {
+        const url = getGoogleCalendarUrl(calendarEvent);
+        // Use Farcaster SDK to open in external browser
+        await sdk.actions.openUrl(url);
         setShowCalendarOptions(false);
     }, [calendarEvent]);
 
