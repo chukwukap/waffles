@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { env } from "@/lib/env";
-import { useComposeCast } from "@coinbase/onchainkit/minikit";
+import { useComposeCast, useOpenUrl } from "@coinbase/onchainkit/minikit";
 import sdk from "@farcaster/miniapp-sdk";
 import { GameSummaryCard } from "../_components/GameSummary";
 import { BottomNav } from "@/components/BottomNav";
@@ -37,6 +37,7 @@ export function TicketSuccessClient({
     ticketCode,
 }: TicketSuccessClientProps) {
     const { composeCastAsync } = useComposeCast();
+    const openUrl = useOpenUrl();
     const [showCalendarOptions, setShowCalendarOptions] = useState(false);
     const hasCelebrated = useRef(false);
     const [userInfo, setUserInfo] = useState<{
@@ -107,12 +108,12 @@ export function TicketSuccessClient({
     );
 
     // Calendar handlers
-    const handleAddToGoogle = useCallback(async () => {
+    const handleAddToGoogle = useCallback(() => {
         const url = getGoogleCalendarUrl(calendarEvent);
-        // Use Farcaster SDK to open in external browser
-        await sdk.actions.openUrl(url);
+        // Use MiniKit hook to open in external browser
+        openUrl(url);
         setShowCalendarOptions(false);
-    }, [calendarEvent]);
+    }, [calendarEvent, openUrl]);
 
     const handleAddToApple = useCallback(() => {
         downloadICS(calendarEvent);
