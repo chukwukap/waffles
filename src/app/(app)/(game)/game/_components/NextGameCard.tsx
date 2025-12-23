@@ -282,7 +282,7 @@ export function NextGameCard({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}
-          className="flex flex-row justify-center items-center w-full px-4 pb-4"
+          className="flex flex-row justify-center items-center w-full px-4 pb-4 mt-4"
           style={{
             gap: "6px",
             minHeight: "25.11px",
