@@ -2,6 +2,7 @@ import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { safeImageUrl } from "../utils";
 
 export const runtime = "nodejs";
 
@@ -9,7 +10,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
     const waitlistRank = searchParams.get("rank");
-    const pfpUrl = searchParams.get("pfpUrl"); // Now passed as query param
+    const pfpUrlParam = searchParams.get("pfpUrl"); // Now passed as query param
 
     // If no rank, return default image
     if (!waitlistRank) {
@@ -40,11 +41,13 @@ export async function GET(request: NextRequest) {
     const logoPath = join(publicDir, "logo-onboarding.png");
     const scrollPath = join(publicDir, "images/share/scroll.png");
 
-    const [fontData, bgBuffer, logoBuffer, scrollBuffer] = await Promise.all([
+    // Load assets and safely fetch pfpUrl in parallel
+    const [fontData, bgBuffer, logoBuffer, scrollBuffer, safePfpUrl] = await Promise.all([
       readFile(fontPath),
       readFile(bgPath),
       readFile(logoPath),
       readFile(scrollPath),
+      safeImageUrl(pfpUrlParam), // Returns null if fetch fails
     ]);
 
     // Convert to base64 (required for ImageResponse)
@@ -89,10 +92,10 @@ export async function GET(request: NextRequest) {
             }}
           >
             {/* User Avatar */}
-            {pfpUrl && (
+            {safePfpUrl && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={pfpUrl}
+                src={safePfpUrl}
                 width="120"
                 height="120"
                 alt="User Avatar"

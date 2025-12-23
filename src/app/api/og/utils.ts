@@ -81,3 +81,46 @@ export const COLORS = {
   darkBg: "#1E1E1E",
   black: "#000000",
 } as const;
+
+/**
+ * Safely fetch an external image and convert to base64 data URL.
+ * Returns null if the image can't be fetched (CORS, 404, timeout, etc.)
+ *
+ * Use this for external URLs like Farcaster pfpUrls to prevent
+ * OG image generation from failing due to unreachable images.
+ */
+export async function safeImageUrl(
+  url: string | null | undefined,
+  timeoutMs: number = 3000
+): Promise<string | null> {
+  if (!url) return null;
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        // Some CDNs require User-Agent
+        "User-Agent": "WafflesOGImageGenerator/1.0",
+      },
+    });
+
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      console.warn(`[OG] Failed to fetch image: ${url} (${response.status})`);
+      return null;
+    }
+
+    const contentType = response.headers.get("content-type") || "image/png";
+    const buffer = await response.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString("base64");
+
+    return `data:${contentType};base64,${base64}`;
+  } catch (error) {
+    console.warn(`[OG] Error fetching image: ${url}`, error);
+    return null;
+  }
+}

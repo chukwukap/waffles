@@ -3,7 +3,7 @@ import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { OG_WIDTH, OG_HEIGHT, COLORS } from "../utils";
+import { OG_WIDTH, OG_HEIGHT, COLORS, safeImageUrl } from "../utils";
 
 export const runtime = "nodejs";
 
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
         const username = searchParams.get("username") || "User";
         const prizePool = searchParams.get("prizePool") || "0";
         const theme = searchParams.get("theme") || "General";
-        const pfpUrl = searchParams.get("pfpUrl");
+        const pfpUrlParam = searchParams.get("pfpUrl");
         const themeImageUrl = searchParams.get("themeImageUrl");
 
         // Require themeImageUrl
@@ -30,11 +30,13 @@ export async function GET(request: NextRequest) {
         const fontPath = join(publicDir, "fonts/editundo_bd.ttf");
         const brockmannPath = join(process.cwd(), "src/lib/fonts/brockmann_bd.otf");
 
-        const [bgBuffer, moneyBuffer, fontData, brockmannData] = await Promise.all([
+        // Load assets and safely fetch pfpUrl in parallel
+        const [bgBuffer, moneyBuffer, fontData, brockmannData, safePfpUrl] = await Promise.all([
             readFile(bgPath),
             readFile(moneyPath),
             readFile(fontPath),
             readFile(brockmannPath),
+            safeImageUrl(pfpUrlParam), // Returns null if fetch fails
         ]);
 
         // Convert to base64
@@ -98,9 +100,9 @@ export async function GET(request: NextRequest) {
                                     justifyContent: "center",
                                 }}
                             >
-                                {pfpUrl ? (
+                                {safePfpUrl ? (
                                     <img
-                                        src={pfpUrl}
+                                        src={safePfpUrl}
                                         alt="Avatar"
                                         width={108}
                                         height={108}

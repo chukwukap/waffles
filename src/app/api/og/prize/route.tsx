@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { ImageResponse } from "next/og";
-import { loadOGFonts, OG_WIDTH, OG_HEIGHT, COLORS } from "../utils";
+import { loadOGFonts, OG_WIDTH, OG_HEIGHT, COLORS, safeImageUrl } from "../utils";
 
 export const runtime = "edge";
 
@@ -39,14 +39,15 @@ export async function GET(request: Request) {
 
     // Parse params
     const prizeAmount = searchParams.get("prizeAmount") || "0";
-    const pfpUrl = searchParams.get("pfpUrl");
+    const pfpUrlParam = searchParams.get("pfpUrl");
 
-    // Load fonts and assets in parallel
-    const [fonts, chestImage, logoImage, bgImage] = await Promise.all([
+    // Load fonts and assets in parallel (including safe fetch of pfpUrl)
+    const [fonts, chestImage, logoImage, bgImage, safePfpUrl] = await Promise.all([
         loadOGFonts(),
         loadChestImage(),
         loadLogoImage(),
         loadBgImage(),
+        safeImageUrl(pfpUrlParam), // Returns null if fetch fails
     ]);
 
     // Format prize amount
@@ -89,9 +90,9 @@ export async function GET(request: Request) {
                     }}
                 >
                     {/* Profile Picture */}
-                    {pfpUrl && (
+                    {safePfpUrl && (
                         <img
-                            src={pfpUrl}
+                            src={safePfpUrl}
                             alt="Profile"
                             width={56}
                             height={56}
