@@ -12,16 +12,17 @@ export async function generateMetadata({
   const sParams = await searchParams;
   const rank = sParams.rank ? parseInt(sParams.rank as string) : null;
   const ref = sParams.ref ? parseInt(sParams.ref as string) : null;
+  const pfpUrl = sParams.pfpUrl as string | undefined;
 
-  // Build OG image URL with rank and ref (referrer's fid)
-  // Build OG image URL with rank and ref (referrer's fid)
-  // The ref is the person who shared the link, so their avatar should appear
+  // Build OG image URL with rank and optional pfpUrl
   let IMAGE_URL_PATH = `${env.rootUrl}/images/hero-image.png`;
-  if (rank && ref) {
-    IMAGE_URL_PATH = `${env.rootUrl}/api/og/waitlist?rank=${rank}&fid=${ref}`;
-  } else if (rank) {
-    // Fallback for rank without ref
-    IMAGE_URL_PATH = `${env.rootUrl}/api/og/waitlist?rank=${rank}`;
+  if (rank) {
+    const ogParams = new URLSearchParams();
+    ogParams.set("rank", rank.toString());
+    if (pfpUrl) {
+      ogParams.set("pfpUrl", pfpUrl);
+    }
+    IMAGE_URL_PATH = `${env.rootUrl}/api/og/waitlist?${ogParams.toString()}`;
   }
 
 

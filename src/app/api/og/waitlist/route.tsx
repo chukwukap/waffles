@@ -2,7 +2,6 @@ import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { prisma } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -10,7 +9,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
     const waitlistRank = searchParams.get("rank");
-    const fidParam = searchParams.get("fid");
+    const pfpUrl = searchParams.get("pfpUrl"); // Now passed as query param
 
     // If no rank, return default image
     if (!waitlistRank) {
@@ -33,21 +32,6 @@ export async function GET(request: NextRequest) {
     const validatedRank = waitlistRank.match(/^[0-9]{1,6}$/)
       ? `#${waitlistRank}`
       : "#?";
-
-    // Fetch user avatar
-    let pfpUrl: string | null = null;
-    if (fidParam) {
-      try {
-        const fid = parseInt(fidParam);
-        const user = await prisma.user.findUnique({
-          where: { fid },
-          select: { pfpUrl: true },
-        });
-        pfpUrl = user?.pfpUrl || null;
-      } catch (error) {
-        console.error("Failed to fetch user pfpUrl:", error);
-      }
-    }
 
     // Load assets from filesystem (required for ImageResponse)
     const publicDir = join(process.cwd(), "public");
