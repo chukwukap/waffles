@@ -1,4 +1,5 @@
 import { Providers } from "@/components/providers";
+import { SplashProvider } from "@/components/SplashProvider";
 import { Metadata } from "next";
 import { minikitConfig } from "../../../minikit.config";
 
@@ -31,9 +32,14 @@ export default function AppLayout({
 }: {
     children: React.ReactNode;
 }) {
-    return <Providers>
-        <main className="h-dvh flex flex-col overflow-hidden app-background">
-            {children}
-        </main>
-    </Providers>;
+    return (
+        <Providers>
+            <SplashProvider duration={2000}>
+                <main className="h-dvh flex flex-col overflow-hidden app-background">
+                    {children}
+                </main>
+            </SplashProvider>
+        </Providers>
+    );
 }
+
