@@ -15,16 +15,18 @@ export async function GET(request: Request) {
 
     // Load assets from filesystem
     const publicDir = join(process.cwd(), "public");
-    const [fontData, logoBuffer, chestBuffer, safePfpUrl] = await Promise.all([
+    const [fontData, logoBuffer, chestBuffer, bgBuffer, safePfpUrl] = await Promise.all([
         readFile(join(publicDir, "fonts/editundo_bd.ttf")),
         readFile(join(publicDir, "logo-onboarding.png")),
         readFile(join(publicDir, "images/illustrations/treasure-chest.png")),
+        readFile(join(publicDir, "images/share/waitlist-bg.png")),
         safeImageUrl(pfpUrlParam),
     ]);
 
     // Convert to base64
     const logoImage = `data:image/png;base64,${logoBuffer.toString("base64")}`;
     const chestImage = `data:image/png;base64,${chestBuffer.toString("base64")}`;
+    const bgImage = `data:image/png;base64,${bgBuffer.toString("base64")}`;
 
     // Format prize amount
     const formattedPrize = `$${Number(prizeAmount).toLocaleString()}`;
@@ -39,7 +41,9 @@ export async function GET(request: Request) {
                     justifyContent: "flex-start",
                     width: "100%",
                     height: "100%",
-                    background: "linear-gradient(180deg, #1E1E1E 0%, #000000 100%)",
+                    backgroundImage: `url(${bgImage})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
                     fontFamily: "EditUndo",
                     padding: "40px 0",
                     position: "relative",
