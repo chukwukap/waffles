@@ -34,7 +34,7 @@ export default function AppLayout({
 }) {
     return (
         <Providers>
-            <SplashProvider duration={2000000}> // for testing
+            <SplashProvider duration={2000}> // for testing
                 <main className="h-dvh flex flex-col overflow-hidden app-background">
                     {children}
                 </main>

@@ -220,71 +220,75 @@ export function TicketSuccessClient({
                         SHARE TICKET
                     </motion.button>
 
-                    {/* Add to Calendar Button */}
+                    {/* Add to Calendar & Back to Home row */}
                     <motion.div
-                        className="relative w-full mt-4"
-                        initial={{ opacity: 0, y: 20 }}
+                        className="flex flex-row items-start gap-3 w-full mt-4"
+                        initial={{ opacity: 0, y: 15 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.7, duration: 0.4 }}
+                        transition={{ duration: 0.4, delay: 0.7 }}
                     >
-                        <button
-                            onClick={() => setShowCalendarOptions(!showCalendarOptions)}
-                            className={cn(
-                                "w-full rounded-[14px] bg-[#1E1E1E] px-6 py-4 text-center font-body text-xl text-white",
-                                "border border-white/20 hover:border-white/40 transition-all"
-                            )}
+                        {/* Add to Calendar Button */}
+                        <motion.div
+                            className="relative flex-1"
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.97 }}
+                            transition={{ duration: 0.2 }}
                         >
-                            📅 ADD TO CALENDAR
-                        </button>
-
-                        {/* Calendar Options Dropdown */}
-                        <AnimatePresence>
-                            {showCalendarOptions && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                                    transition={{ duration: 0.2 }}
-                                    className="absolute top-full left-0 right-0 mt-2 bg-[#2A2A2A] rounded-xl border border-white/20 overflow-hidden z-50"
-                                >
-                                    <button
-                                        onClick={handleAddToGoogle}
-                                        className="w-full px-4 py-3 text-left font-body text-white hover:bg-white/10 transition-colors flex items-center gap-3"
-                                    >
-                                        <span className="text-xl">📆</span>
-                                        Google Calendar
-                                    </button>
-                                    <div className="h-px bg-white/10" />
-                                    <button
-                                        onClick={handleAddToApple}
-                                        className="w-full px-4 py-3 text-left font-body text-white hover:bg-white/10 transition-colors flex items-center gap-3"
-                                    >
-                                        <span className="text-xl">🍎</span>
-                                        Apple / Outlook
-                                    </button>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </motion.div>
-
-                    {/* Back to Home Link */}
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.8, duration: 0.4 }}
-                    >
-                        <Link
-                            href="/game"
-                            className="mt-6 inline-block text-sm font-body uppercase text-[#00CFF2] transition hover:text-[#33defa]"
-                        >
-                            <motion.span
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                className="inline-block"
+                            <button
+                                onClick={() => setShowCalendarOptions(!showCalendarOptions)}
+                                className="flex flex-row justify-center items-center p-3 gap-2 w-full bg-white/9 border-2 border-white/40 rounded-[12px] hover:bg-white/15 hover:border-white/60 transition-colors duration-200"
                             >
-                                BACK TO HOME
-                            </motion.span>
-                        </Link>
+                                <span className="font-body font-normal text-[18px] leading-[115%] tracking-[-0.02em] text-white">
+                                    📅 ADD TO CALENDAR
+                                </span>
+                            </button>
+
+                            {/* Calendar Options Dropdown */}
+                            <AnimatePresence>
+                                {showCalendarOptions && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                                        transition={{ duration: 0.2 }}
+                                        className="absolute top-full left-0 right-0 mt-2 bg-[#2A2A2A] rounded-xl border border-white/20 overflow-hidden z-50"
+                                    >
+                                        <button
+                                            onClick={handleAddToGoogle}
+                                            className="w-full px-4 py-3 text-left font-body text-white hover:bg-white/10 transition-colors flex items-center gap-3"
+                                        >
+                                            <span className="text-xl">📆</span>
+                                            Google Calendar
+                                        </button>
+                                        <div className="h-px bg-white/10" />
+                                        <button
+                                            onClick={handleAddToApple}
+                                            className="w-full px-4 py-3 text-left font-body text-white hover:bg-white/10 transition-colors flex items-center gap-3"
+                                        >
+                                            <span className="text-xl">🍎</span>
+                                            Apple / Outlook
+                                        </button>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </motion.div>
+
+                        {/* Back to Home Button */}
+                        <motion.div
+                            className="flex-1"
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.97 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            <Link
+                                href="/game"
+                                className="flex flex-row justify-center items-center p-3 gap-2 w-full bg-white/9 border-2 border-white/40 rounded-[12px] no-underline hover:bg-white/15 hover:border-white/60 transition-colors duration-200"
+                            >
+                                <span className="font-body font-normal text-[18px] leading-[115%] tracking-[-0.02em] text-white">
+                                    BACK TO HOME
+                                </span>
+                            </Link>
+                        </motion.div>
                     </motion.div>
                 </motion.div>
             </div>

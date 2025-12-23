@@ -44,7 +44,7 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                             left: "50%",
                             top: "50%",
                             transform: "translate(-50%, -50%)",
-                            gap: "12px",
+                            gap: "5px",
                         }}
                     >
                         <Image
@@ -58,7 +58,7 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                         <span
                             className="font-body text-white text-center"
                             style={{
-                                fontSize: "clamp(18px, 6vw, 24px)",
+                                fontSize: "clamp(18px, 6vw, 44px)",
                                 letterSpacing: "0.05em",
                             }}
                         >
