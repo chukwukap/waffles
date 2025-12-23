@@ -45,12 +45,11 @@ export async function generateMetadata({
 
     // Build OG image URL using the /api/og/prize route
     const imageUrl = buildPrizeOGUrl({
-        username,
         prizeAmount,
         pfpUrl,
     });
 
-    console.log(imageUrl)
+
     return {
         title: `${username} won on Waffles!`,
         description: `${username} just won $${prizeAmount.toLocaleString()} on Waffles!`,

@@ -21,10 +21,8 @@ export interface JoinedOGParams {
 }
 
 export interface PrizeOGParams {
-  username: string;
-  pfpUrl?: string;
-  rank?: number;
   prizeAmount: number;
+  pfpUrl?: string;
 }
 
 export interface WaitlistOGParams {
@@ -82,10 +80,6 @@ export function buildPrizeOGUrl(params: PrizeOGParams): string {
   if (!baseUrl) return "";
 
   const searchParams = new URLSearchParams();
-  searchParams.set("username", params.username);
-  if (params.rank !== undefined) {
-    searchParams.set("rank", params.rank.toString());
-  }
   searchParams.set("prizeAmount", params.prizeAmount.toString());
   if (params.pfpUrl) {
     searchParams.set("pfpUrl", params.pfpUrl);
