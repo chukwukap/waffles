@@ -185,7 +185,7 @@ export default function ScorePageClient({
       if (userInfo.pfpUrl) {
         frameParams.set("pfpUrl", userInfo.pfpUrl);
       }
-      const frameUrl = `${env.rootUrl}/game/${gameId}/result/success?${frameParams.toString()}`;
+      const frameUrl = `${env.rootUrl}/game/${gameId}/result?${frameParams.toString()}`;
 
       const result = await composeCastAsync({
         text: prizeText,
