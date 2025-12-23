@@ -119,23 +119,23 @@ function NavItem({ item, isActive }: NavItemProps) {
   return (
     <Link
       href={item.href}
-      className={cn(
-        "flex flex-1 flex-col items-center justify-center gap-1 px-4 py-3",
-        isActive ? "text-primary" : "text-muted-foreground"
-      )}
+      className="flex flex-1 flex-col items-center justify-center gap-1 px-4 py-3"
       role="tab"
       aria-selected={isActive}
       aria-label={item.label}
     >
+      {/* Icon - glows when active */}
       <motion.div
+        className={isActive ? "text-primary" : "text-muted-foreground"}
         whileHover={!isActive ? { scale: 1.15, y: -2 } : undefined}
         whileTap={{ scale: 0.9 }}
         transition={springs.snappy}
       >
         <IconComponent isActive={isActive} />
       </motion.div>
+      {/* Label - always muted, no glow */}
       <motion.span
-        className="text-xs font-medium font-display"
+        className="text-xs font-medium font-display text-muted-foreground"
         animate={isActive ? { scale: [1, 1.05, 1] } : { scale: 1 }}
         transition={{ duration: 0.2, ease: "easeOut" as const }}
       >
