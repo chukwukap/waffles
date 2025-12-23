@@ -137,7 +137,7 @@ export default function GameCompleteScreen({
                         transition={{ duration: 0.4, delay: 0.6 }}
                     >
                         <span className="font-body font-medium text-[14px] leading-[130%] tracking-[-0.03em] text-[#99A0AE] mx-auto">
-                            You won
+                            Your Score
                         </span>
                     </motion.div>
 
@@ -159,6 +159,9 @@ export default function GameCompleteScreen({
                         >
                             {score.toLocaleString()}
                         </motion.h2>
+                        <span className="font-display text-[18px] text-[#99A0AE] ml-1">
+                            points
+                        </span>
                     </motion.div>
                 </div>
             </motion.div>
