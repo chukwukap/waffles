@@ -21,6 +21,8 @@ const getGameInfo = cache(async (gameIdNum: number) => {
             theme: true,
             coverUrl: true,
             prizePool: true,
+            startsAt: true,
+            endsAt: true,
         },
     });
     return game;
@@ -108,6 +110,8 @@ export default async function TicketSuccessPage({
             theme={game.theme}
             coverUrl={game.coverUrl || ""}
             prizePool={game.prizePool}
+            startsAt={game.startsAt.toISOString()}
+            endsAt={game.endsAt.toISOString()}
             ticketCode={ticketCode}
         />
     );
