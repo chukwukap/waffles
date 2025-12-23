@@ -9,11 +9,10 @@ interface SplashScreenProps {
     onComplete?: () => void;
 }
 
-// Figma design is 393x852. Use percentage for horizontal, bottom-based for vertical
+// Figma design is 393px wide. Convert to percentage of viewport width
 const toPercentX = (px: number) => `${(px / 393) * 100}%`;
-
-// Scale factor to increase character sizes
-const SCALE = 1.25;
+// Convert pixel size to vw for responsive sizing (393px = 100vw on mobile)
+const toVw = (px: number) => `${(px / 393) * 100}vw`;
 
 export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps) {
     const [isVisible, setIsVisible] = useState(true);
@@ -40,10 +39,11 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                     <div
                         className="absolute flex flex-col items-center"
                         style={{
-                            width: "157px",
-                            height: "82px",
-                            left: "calc(50% - 157px/2)",
-                            top: "calc(50% - 82px/2)",
+                            width: "40vw",
+                            maxWidth: "157px",
+                            left: "50%",
+                            top: "50%",
+                            transform: "translate(-50%, -50%)",
                             gap: "12px",
                         }}
                     >
@@ -53,13 +53,12 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                             width={55}
                             height={43}
                             priority
+                            className="w-[14vw] max-w-[55px] h-auto"
                         />
                         <span
                             className="font-body text-white text-center"
                             style={{
-                                width: "157px",
-                                height: "28px",
-                                fontSize: "24px",
+                                fontSize: "clamp(18px, 6vw, 24px)",
                                 letterSpacing: "0.05em",
                             }}
                         >
@@ -67,18 +66,20 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                         </span>
                     </div>
 
-                    {/* Character images positioned from left to right - scaled up 25% */}
+                    {/* Character images - responsive with vw sizing */}
 
                     {/* 1.png */}
                     <Image
                         src="/images/splash/1.png"
                         alt=""
-                        width={Math.round(109 * SCALE)}
-                        height={Math.round(100 * SCALE)}
+                        width={1000}
+                        height={800}
                         className="absolute"
                         style={{
+                            width: toVw(1000 * 1.25),
+                            height: "auto",
                             left: toPercentX(-21),
-                            bottom: "50px",
+                            bottom: "6vh",
                             transform: "rotate(6.78deg)",
                         }}
                     />
@@ -87,11 +88,14 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                     <Image
                         src="/images/splash/2.png"
                         alt=""
-                        width={Math.round(87 * SCALE)}
-                        height={Math.round(95 * SCALE)}
+                        width={87}
+                        height={95}
                         className="absolute"
                         style={{
-                            left: toPercentX(34),
+                            width: toVw(87 * 1.25),
+                            height: "auto",
+                            zIndex: 1,
+                            left: toPercentX(-9),
                             bottom: "0",
                         }}
                     />
@@ -100,26 +104,30 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                     <Image
                         src="/images/splash/3.png"
                         alt=""
-                        width={Math.round(81 * SCALE)}
-                        height={Math.round(78 * SCALE)}
+                        width={90}
+                        height={85}
                         className="absolute"
                         style={{
-                            left: toPercentX(85),
-                            bottom: "0",
+                            width: toVw(90 * 1.25),
+                            height: "auto",
+                            left: toPercentX(70),
+                            bottom: "-3vh",
                         }}
                     />
 
-                    {/* 4.png - flipped */}
+                    {/* 4.png */}
                     <Image
                         src="/images/splash/4.png"
                         alt=""
-                        width={Math.round(72 * SCALE)}
-                        height={Math.round(91 * SCALE)}
+                        width={130}
+                        height={90}
                         className="absolute"
                         style={{
-                            left: toPercentX(142),
+                            width: toVw(130 * 1.25),
+                            height: "auto",
+                            zIndex: 1,
+                            left: toPercentX(110),
                             bottom: "0",
-                            transform: "scaleX(-1)",
                         }}
                     />
 
@@ -127,12 +135,15 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                     <Image
                         src="/images/splash/5.png"
                         alt=""
-                        width={Math.round(85 * SCALE)}
-                        height={Math.round(69 * SCALE)}
+                        width={75}
+                        height={69}
                         className="absolute"
                         style={{
-                            left: toPercentX(178),
-                            bottom: "0",
+                            width: toVw(75 * 1.25),
+                            height: "auto",
+                            left: toPercentX(200),
+                            bottom: "-2vh",
+                            transform: "scaleX(-1)",
                         }}
                     />
 
@@ -140,23 +151,28 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                     <Image
                         src="/images/splash/6.png"
                         alt=""
-                        width={Math.round(62 * SCALE)}
-                        height={Math.round(76 * SCALE)}
+                        width={90}
+                        height={70}
                         className="absolute"
                         style={{
-                            left: toPercentX(235),
+                            width: toVw(90 * 1.25),
+                            height: "auto",
+                            zIndex: 1,
+                            left: toPercentX(150),
                             bottom: "0",
                         }}
                     />
 
-                    {/* 7.png */}
+                    {/* 7.png (dude) */}
                     <Image
-                        src="/images/splash/7.png"
+                        src="/images/splash/dude.png"
                         alt=""
-                        width={Math.round(88 * SCALE)}
-                        height={Math.round(88 * SCALE)}
+                        width={88}
+                        height={88}
                         className="absolute"
                         style={{
+                            width: toVw(88 * 1.25),
+                            height: "auto",
                             left: toPercentX(263),
                             bottom: "0",
                         }}
@@ -166,12 +182,15 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                     <Image
                         src="/images/splash/8.png"
                         alt=""
-                        width={Math.round(85 * SCALE)}
-                        height={Math.round(81 * SCALE)}
+                        width={100}
+                        height={81}
                         className="absolute"
                         style={{
-                            left: toPercentX(296),
-                            bottom: "40px",
+                            width: toVw(100 * 1.25),
+                            height: "auto",
+                            zIndex: 1,
+                            left: toPercentX(226),
+                            bottom: "0",
                         }}
                     />
 
@@ -179,12 +198,15 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                     <Image
                         src="/images/splash/9.png"
                         alt=""
-                        width={Math.round(78 * SCALE)}
-                        height={Math.round(83 * SCALE)}
+                        width={78}
+                        height={83}
                         className="absolute"
                         style={{
+                            width: toVw(78 * 1.25),
+                            height: "auto",
+                            zIndex: 2,
                             left: toPercentX(315),
-                            bottom: "100px",
+                            bottom: "0",
                         }}
                     />
 
@@ -192,10 +214,12 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                     <Image
                         src="/images/splash/10.png"
                         alt=""
-                        width={Math.round(82 * SCALE)}
-                        height={Math.round(74 * SCALE)}
+                        width={82}
+                        height={74}
                         className="absolute"
                         style={{
+                            width: toVw(82 * 1.25),
+                            height: "auto",
                             left: toPercentX(326),
                             bottom: "0",
                         }}
@@ -205,26 +229,31 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                     <Image
                         src="/images/splash/11.png"
                         alt=""
-                        width={Math.round(56 * SCALE)}
-                        height={Math.round(72 * SCALE)}
+                        width={120}
+                        height={100}
                         className="absolute"
                         style={{
-                            left: toPercentX(337.61),
-                            bottom: "40px",
+                            width: toVw(120 * 1.25),
+                            height: "auto",
+                            zIndex: 1,
+                            left: toPercentX(300),
+                            bottom: "5vh",
                             transform: "rotate(-16.47deg)",
                         }}
                     />
 
-                    {/* 12.png */}
+                    {/* 12.png (joker) */}
                     <Image
-                        src="/images/splash/12.png"
+                        src="/images/splash/joker.png"
                         alt=""
-                        width={Math.round(68 * SCALE)}
-                        height={Math.round(82 * SCALE)}
+                        width={200}
+                        height={120}
                         className="absolute"
                         style={{
-                            left: toPercentX(-9),
-                            bottom: "0",
+                            width: toVw(200 * 1.25),
+                            height: "auto",
+                            right: toPercentX(-100),
+                            bottom: "12vh",
                         }}
                     />
                 </motion.div>
