@@ -362,7 +362,7 @@ export default function ScorePageClient({
   return (
     <>
       <div className="w-full px-4 text-white flex flex-col items-center flex-1 overflow-y-auto">
-        <div className="flex flex-col justify-center items-center gap-2 w-[315px]">
+        <div className="flex flex-col justify-center items-center gap-2 w-[315px] mb-4">
           <motion.div
             initial={{ scale: 0.8, opacity: 0, rotate: -10 }}
             animate={{ scale: 1, opacity: 1, rotate: 0 }}
@@ -390,7 +390,7 @@ export default function ScorePageClient({
           </motion.h1>
 
           <motion.div
-            className="flex flex-row justify-center items-center gap-2.5 w-full"
+            className="flex flex-row justify-center items-center gap-2.5 w-full mt-1"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.3 }}
