@@ -21,6 +21,7 @@ import { WAFFLE_GAME_CONFIG } from "@/lib/contracts/config";
 import waffleGameAbi from "@/lib/contracts/WaffleGameAbi.json";
 import { Spinner } from "@/components/ui/spinner";
 import { useGame } from "../../GameProvider";
+import confetti from "canvas-confetti";
 
 // ==========================================
 // TYPES
@@ -120,11 +121,40 @@ export default function ScorePageClient({
     }));
   }, [leaderboardData]);
 
-  // Play sound on mount (once)
+  // Play sound and confetti on mount (once)
   useEffect(() => {
     if (!hasPlayedSound.current && userScore) {
       hasPlayedSound.current = true;
       playSound(userScore.rank <= 3 ? "victory" : "defeat");
+
+      // Fire confetti for winners (rank 1-3)
+      if (userScore.rank <= 3 && userScore.winnings > 0) {
+        // Initial burst
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ["#FFC931", "#14B985", "#FB72FF"],
+        });
+
+        // Side bursts
+        setTimeout(() => {
+          confetti({
+            particleCount: 50,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0, y: 0.7 },
+            colors: ["#FFC931", "#14B985"],
+          });
+          confetti({
+            particleCount: 50,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1, y: 0.7 },
+            colors: ["#FB72FF", "#00CFF2"],
+          });
+        }, 250);
+      }
     }
   }, [userScore]);
 

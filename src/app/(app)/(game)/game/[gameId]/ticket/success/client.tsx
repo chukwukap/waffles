@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { env } from "@/lib/env";
@@ -10,6 +10,7 @@ import { useComposeCast } from "@coinbase/onchainkit/minikit";
 import sdk from "@farcaster/miniapp-sdk";
 import { GameSummaryCard } from "../_components/GameSummary";
 import { BottomNav } from "@/components/BottomNav";
+import confetti from "canvas-confetti";
 import {
     createGameCalendarEvent,
     getGoogleCalendarUrl,
@@ -37,11 +38,49 @@ export function TicketSuccessClient({
 }: TicketSuccessClientProps) {
     const { composeCastAsync } = useComposeCast();
     const [showCalendarOptions, setShowCalendarOptions] = useState(false);
+    const hasCelebrated = useRef(false);
     const [userInfo, setUserInfo] = useState<{
         fid: number;
         username: string | null;
         pfpUrl: string | null;
     } | null>(null);
+
+    // Celebration confetti on mount
+    useEffect(() => {
+        if (hasCelebrated.current) return;
+        hasCelebrated.current = true;
+
+        // Fire confetti burst
+        const fireConfetti = () => {
+            // Center burst
+            confetti({
+                particleCount: 80,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ["#FFC931", "#14B985", "#FB72FF", "#00CFF2"],
+            });
+
+            // Side bursts with delay
+            setTimeout(() => {
+                confetti({
+                    particleCount: 40,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0, y: 0.7 },
+                    colors: ["#FFC931", "#14B985"],
+                });
+                confetti({
+                    particleCount: 40,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1, y: 0.7 },
+                    colors: ["#FB72FF", "#00CFF2"],
+                });
+            }, 200);
+        };
+
+        fireConfetti();
+    }, []);
 
     // Fetch user info on mount
     useEffect(() => {
