@@ -1,25 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
 import { ImageResponse } from "next/og";
-import { OG_WIDTH, OG_HEIGHT, COLORS, safeImageUrl } from "../utils";
+import { OG_WIDTH, OG_HEIGHT, safeImageUrl } from "../utils";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 export const runtime = "nodejs";
-
-// Load fonts from filesystem
-async function loadFonts() {
-    const publicDir = join(process.cwd(), "public");
-    const fontPath = join(publicDir, "fonts/editundo_bd.ttf");
-    const fontData = await readFile(fontPath);
-    return [
-        {
-            name: "EditUndo",
-            data: fontData.buffer as ArrayBuffer,
-            style: "normal" as const,
-            weight: 700 as const,
-        },
-    ];
-}
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
@@ -30,18 +15,16 @@ export async function GET(request: Request) {
 
     // Load assets from filesystem
     const publicDir = join(process.cwd(), "public");
-    const [fonts, chestBuffer, logoBuffer, bgBuffer, safePfpUrl] = await Promise.all([
-        loadFonts(),
-        readFile(join(publicDir, "images/chest-crown.png")),
-        readFile(join(publicDir, "images/logo/logo-onboarding.png")),
-        readFile(join(publicDir, "images/share/waitlist-bg.png")),
+    const [fontData, logoBuffer, chestBuffer, safePfpUrl] = await Promise.all([
+        readFile(join(publicDir, "fonts/editundo_bd.ttf")),
+        readFile(join(publicDir, "logo-onboarding.png")),
+        readFile(join(publicDir, "images/illustrations/treasure-chest.png")),
         safeImageUrl(pfpUrlParam),
     ]);
 
     // Convert to base64
-    const chestImage = `data:image/png;base64,${chestBuffer.toString("base64")}`;
     const logoImage = `data:image/png;base64,${logoBuffer.toString("base64")}`;
-    const bgImage = `data:image/png;base64,${bgBuffer.toString("base64")}`;
+    const chestImage = `data:image/png;base64,${chestBuffer.toString("base64")}`;
 
     // Format prize amount
     const formattedPrize = `$${Number(prizeAmount).toLocaleString()}`;
@@ -56,20 +39,19 @@ export async function GET(request: Request) {
                     justifyContent: "flex-start",
                     width: "100%",
                     height: "100%",
-                    backgroundImage: `url(${bgImage})`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
+                    background: "linear-gradient(180deg, #1E1E1E 0%, #000000 100%)",
                     fontFamily: "EditUndo",
                     padding: "40px 0",
+                    position: "relative",
                 }}
             >
-                {/* Waffles Logo */}
+                {/* Waffles Logo at top */}
                 <img
                     src={logoImage}
                     alt="Waffles"
                     width={160}
                     height={32}
-                    style={{ marginBottom: 40 }}
+                    style={{ marginBottom: 50 }}
                 />
 
                 {/* PFP + JUST WON row */}
@@ -78,20 +60,20 @@ export async function GET(request: Request) {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        gap: 16,
-                        marginBottom: 12,
+                        gap: 12,
+                        marginBottom: 4,
                     }}
                 >
-                    {/* Profile Picture */}
+                    {/* Profile Picture - circular with border */}
                     {safePfpUrl && (
                         <img
                             src={safePfpUrl}
                             alt="Profile"
-                            width={56}
-                            height={56}
+                            width={50}
+                            height={50}
                             style={{
                                 borderRadius: "50%",
-                                border: `3px solid ${COLORS.gold}`,
+                                border: "3px solid #FFC931",
                             }}
                         />
                     )}
@@ -99,24 +81,23 @@ export async function GET(request: Request) {
                     {/* JUST WON text */}
                     <span
                         style={{
-                            fontSize: 48,
-                            color: COLORS.white,
-                            letterSpacing: "0.05em",
+                            fontSize: 36,
+                            color: "#FFFFFF",
+                            letterSpacing: "0.02em",
                         }}
                     >
                         JUST WON
                     </span>
                 </div>
 
-                {/* Prize Amount - Large and prominent */}
+                {/* Prize Amount - Large green text */}
                 <span
                     style={{
-                        fontSize: 96,
-                        color: COLORS.green,
+                        fontSize: 72,
+                        color: "#05FF8F",
                         lineHeight: 1,
-                        marginBottom: 8,
+                        marginBottom: 4,
                         letterSpacing: "-0.02em",
-                        textShadow: "0 0 40px rgba(5, 255, 143, 0.4)",
                     }}
                 >
                     {formattedPrize}
@@ -125,16 +106,16 @@ export async function GET(request: Request) {
                 {/* ON WAFFLES */}
                 <span
                     style={{
-                        fontSize: 48,
-                        color: COLORS.white,
-                        letterSpacing: "0.05em",
-                        marginBottom: 24,
+                        fontSize: 36,
+                        color: "#FFFFFF",
+                        letterSpacing: "0.02em",
+                        marginBottom: 20,
                     }}
                 >
                     ON WAFFLES
                 </span>
 
-                {/* Treasure Chest */}
+                {/* Treasure Chest - at bottom */}
                 <img
                     src={chestImage}
                     alt="Treasure"
@@ -149,7 +130,14 @@ export async function GET(request: Request) {
         {
             width: OG_WIDTH,
             height: OG_HEIGHT,
-            fonts,
+            fonts: [
+                {
+                    name: "EditUndo",
+                    data: fontData.buffer as ArrayBuffer,
+                    style: "normal",
+                    weight: 700,
+                },
+            ],
         }
     );
 }
