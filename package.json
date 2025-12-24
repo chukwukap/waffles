@@ -19,6 +19,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@farcaster/miniapp-node": "^0.1.11",
     "@farcaster/miniapp-sdk": "^0.2.1",
+    "@farcaster/miniapp-wagmi-connector": "^1.1.0",
     "@farcaster/quick-auth": "^0.0.8",
     "@heroicons/react": "^2.2.0",
     "@neynar/nodejs-sdk": "^3.110.0",

@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount, useConnect } from "wagmi";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
+import { farcasterFrame } from "@farcaster/miniapp-wagmi-connector";
+import { CHAIN_CONFIG } from "@/lib/contracts/config";
 
 import {
   useTicketPurchase,
@@ -41,7 +43,7 @@ export function BuyTicketModal({
   const router = useRouter();
   const { context } = useMiniKit();
   const { address, isConnected } = useAccount();
-  const { connect, connectors } = useConnect();
+  const { connect } = useConnect();
   const [selectedTier, setSelectedTier] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -55,10 +57,13 @@ export function BuyTicketModal({
 
   // Auto-connect wallet when modal opens (Farcaster MiniApp pattern)
   useEffect(() => {
-    if (isOpen && !isConnected && connectors[0]) {
-      connect({ connector: connectors[0] });
+    if (isOpen && !isConnected) {
+      connect({
+        connector: farcasterFrame(),
+        chainId: CHAIN_CONFIG.chain.id
+      });
     }
-  }, [isOpen, isConnected, connect, connectors]);
+  }, [isOpen, isConnected, connect]);
 
   // Use the ticket purchase hook
   const {

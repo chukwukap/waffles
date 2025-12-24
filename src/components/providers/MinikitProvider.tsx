@@ -21,6 +21,9 @@ export function MinikitProvider({ children }: Props) {
         wallet: {
           display: "modal",
           preference: "all",
+          supportedWallets: {
+            frame: true,
+          }
         },
       }}
       miniKit={{
