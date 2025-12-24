@@ -234,7 +234,7 @@ export default function QuestionView({
                             transition={{ delay: 0.5, duration: 0.4 }}
                             className="mt-auto pt-4"
                         >
-                            <PlayerAvatarStack actionText="answered" />
+                            <PlayerAvatarStack actionText="just answered" />
                         </motion.div>
                     )}
                 </AnimatePresence>

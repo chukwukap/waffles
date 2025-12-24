@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import PlayerAvatarStack from "../../../_components/PlayerAvatarStack";
 
 interface GameCountdownScreenProps {
@@ -14,7 +15,7 @@ interface GameCountdownScreenProps {
  *
  * Plays video before entering the live game.
  * Video covers full viewport below header.
- * Shows "X people have joined the game" with avatar stack.
+ * Shows logo at top and "X people have joined the game" with avatar stack.
  */
 export function GameCountdownScreen({ onComplete, recentPlayers = [] }: GameCountdownScreenProps) {
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -68,6 +69,33 @@ export function GameCountdownScreen({ onComplete, recentPlayers = [] }: GameCoun
                 onClick={handleVideoTap}
                 className="absolute inset-0 w-full h-full object-cover cursor-pointer"
             />
+
+            {/* Logo with text at top center */}
+            <AnimatePresence>
+                {!hasEnded && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ delay: 0.3, duration: 0.4 }}
+                        className="absolute top-8 left-0 right-0 flex justify-center z-10"
+                    >
+                        <div className="flex items-center gap-2">
+                            <Image
+                                src="/logo.png"
+                                alt="Waffles"
+                                width={40}
+                                height={40}
+                                className="w-10 h-10"
+                                priority
+                            />
+                            <span className="font-body text-white text-2xl font-bold tracking-wide uppercase">
+                                WAFFLES
+                            </span>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Player count - shows "X people have joined the game" */}
             <AnimatePresence>
