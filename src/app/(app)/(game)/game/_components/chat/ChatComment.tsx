@@ -16,7 +16,7 @@ function AvatarWithFallback({ src, name }: { src: string; name: string }) {
   if (imageError) {
     return (
       <div
-        className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-white text-[10px] font-semibold"
+        className="w-6 h-6 min-w-[24px] rounded-full shrink-0 flex items-center justify-center text-white text-[11px] font-semibold select-none"
         style={{
           backgroundColor: "#4F46E5",
         }}
@@ -33,10 +33,12 @@ function AvatarWithFallback({ src, name }: { src: string; name: string }) {
       transition={springs.bouncy}
       src={src}
       alt={`${name} avatar`}
-      width={20}
-      height={20}
-      className="rounded-full"
+      width={24}
+      height={24}
+      className="rounded-full shrink-0 min-w-[24px] select-none"
+      style={{ width: 24, height: 24 }}
       onError={() => setImageError(true)}
+      draggable={false}
     />
   );
 }
@@ -66,7 +68,7 @@ export const ChatComment = ({
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={springs.bouncy}
-          className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-white text-[10px] font-semibold"
+          className="w-6 h-6 min-w-[24px] rounded-full shrink-0 flex items-center justify-center text-white text-[11px] font-semibold select-none"
           style={{
             backgroundColor: "#4F46E5",
           }}
@@ -75,7 +77,7 @@ export const ChatComment = ({
         </motion.div>
       )}
       <span
-        className="text-sm font-medium text-white"
+        className="text-sm font-medium text-white truncate max-w-[120px]"
         style={{ letterSpacing: "-0.03em" }}
       >
         {name}

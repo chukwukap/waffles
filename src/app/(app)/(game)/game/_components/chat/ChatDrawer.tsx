@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useDragControls, PanInfo } from "framer-motion";
 import { ChatIcon } from "@/components/icons";
 import Backdrop from "@/components/ui/Backdrop";
 import { ChatMessageList } from "./ChatMessageList";
@@ -12,6 +12,7 @@ import {
 } from "@/lib/game-store";
 import { springs } from "@/lib/animations";
 import { playSound } from "@/lib/sounds";
+import { useVisualViewport } from "@/hooks/useVisualViewport";
 
 // ==========================================
 // ANIMATED SEND ICON - Exact Figma SVG with fun animation
@@ -62,16 +63,47 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
   const [inputFocused, setInputFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const messageListRef = useRef<{ scrollToBottom: () => void }>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const dragControls = useDragControls();
 
   const isConnected = useGameStore(selectIsConnected);
   const sendChat = useGameStore(selectSendChat);
+  const { keyboardHeight, isKeyboardOpen } = useVisualViewport();
 
-  // Focus input when drawer opens
+  // Max message length
+  const MAX_MESSAGE_LENGTH = 500;
+
+  // Focus input when drawer opens (with longer delay for mobile)
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 100);
+      // Use longer delay for mobile keyboards
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 150);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
+
+  // Handle keyboard visibility on mobile - scroll to keep input visible
+  useEffect(() => {
+    if (isKeyboardOpen && drawerRef.current) {
+      // Ensure the input stays visible when keyboard opens
+      drawerRef.current.style.transform = `translateY(-${keyboardHeight}px)`;
+    } else if (drawerRef.current) {
+      drawerRef.current.style.transform = 'translateY(0)';
+    }
+  }, [isKeyboardOpen, keyboardHeight]);
+
+  // Handle swipe-to-close gesture
+  const handleDragEnd = useCallback(
+    (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+      // Close if dragged down more than 100px or with fast velocity
+      if (info.offset.y > 100 || info.velocity.y > 500) {
+        onClose();
+      }
+    },
+    [onClose]
+  );
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
@@ -108,9 +140,15 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
       <AnimatePresence>
         {isOpen && (
           <motion.div
+            ref={drawerRef}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
+            drag="y"
+            dragControls={dragControls}
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0, bottom: 0.5 }}
+            onDragEnd={handleDragEnd}
             transition={{
               type: "spring",
               damping: 30,
@@ -119,6 +157,8 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
             className="fixed bottom-0 left-0 right-0 z-50 flex flex-col max-h-[60dvh] rounded-t-[20px]"
             style={{
               background: "linear-gradient(180deg, #1E1E1E 0%, #000000 100%)",
+              touchAction: "none",
+              WebkitOverflowScrolling: "touch",
             }}
           >
             {/* Header */}
@@ -198,6 +238,12 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                 <input
                   ref={inputRef}
                   type="text"
+                  inputMode="text"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="sentences"
+                  enterKeyHint="send"
+                  maxLength={MAX_MESSAGE_LENGTH}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   onFocus={() => setInputFocused(true)}
@@ -206,7 +252,10 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                   disabled={isSubmitting || !isConnected}
                   className="flex-1 font-display bg-transparent text-sm font-medium text-white placeholder:text-white/40
                                  focus:outline-none disabled:opacity-50"
-                  style={{ letterSpacing: "-0.03em" }}
+                  style={{
+                    letterSpacing: "-0.03em",
+                    fontSize: "16px", // Prevents iOS zoom on focus
+                  }}
                 />
 
                 {/* Animated send button with glow */}
@@ -225,6 +274,8 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                       transition={springs.bouncy}
                       onHoverStart={() => setIsSendHovered(true)}
                       onHoverEnd={() => setIsSendHovered(false)}
+                      onTouchStart={() => setIsSendHovered(true)}
+                      onTouchEnd={() => setIsSendHovered(false)}
                       disabled={!hasText || isSubmitting}
                       className="flex items-center justify-center rounded-[38px] transition-colors"
                       style={{
@@ -236,6 +287,8 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                         paddingLeft: 13,
                         gap: 4,
                         background: "#1B8FF5",
+                        touchAction: "manipulation",
+                        WebkitTapHighlightColor: "transparent",
                       }}
                       aria-label="Send message"
                     >

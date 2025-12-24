@@ -166,6 +166,8 @@ export function ChatInputBar({ onOpen }: ChatInputBarProps) {
           padding: "14px 16px",
           background: "rgba(255, 255, 255, 0.05)",
           borderRadius: "900px",
+          touchAction: "manipulation",
+          WebkitTapHighlightColor: "transparent",
         }}
         aria-label="Open chat"
       >
@@ -190,7 +192,11 @@ export function ChatInputBar({ onOpen }: ChatInputBarProps) {
         whileHover={{ scale: 1.05 }}
         transition={springs.bouncy}
         className="relative shrink-0 flex items-center justify-center overflow-visible"
-        style={{ zIndex: 1 }}
+        style={{
+          zIndex: 1,
+          touchAction: "manipulation",
+          WebkitTapHighlightColor: "transparent",
+        }}
         aria-label="Send waffle cheer"
       >
         <Image

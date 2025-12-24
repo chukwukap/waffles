@@ -53,7 +53,7 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                             width={55}
                             height={43}
                             priority
-                            className="w-[14vw] max-w-[55px] h-auto"
+                            className="w-[54] max-w-[55px] h-[42]"
                         />
                         <span
                             className="font-body text-white text-center"

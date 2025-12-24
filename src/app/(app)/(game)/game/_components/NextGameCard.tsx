@@ -92,7 +92,7 @@ export function NextGameCard({
     : isLive
       ? hasCompleted
         ? {
-          text: "CALCULATING RESULTS",
+          text: "CALCULATING RESULTS...",
           disabled: true,
           href: null,
         }

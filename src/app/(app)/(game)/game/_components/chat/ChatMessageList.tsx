@@ -128,6 +128,11 @@ export const ChatMessageList = forwardRef<ChatMessageListRef, ChatMessageListPro
                     ref={listRef}
                     onScroll={handleScroll}
                     className="scrollbox-transparent flex-1 overflow-y-auto px-4"
+                    style={{
+                        WebkitOverflowScrolling: "touch",
+                        overscrollBehavior: "contain",
+                        touchAction: "pan-y",
+                    }}
                 >
                     <div className="flex flex-col gap-2 py-4 min-w-0">
                         {comments.length === 0 ? (
