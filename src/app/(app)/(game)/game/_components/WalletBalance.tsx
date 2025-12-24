@@ -1,11 +1,12 @@
 "use client";
 
-import { useAccount, useChainId } from "wagmi";
+import { useAccount, useChainId, useConnect } from "wagmi";
 import { useGetTokenBalance } from "@coinbase/onchainkit/wallet";
 import { motion, useAnimation } from "framer-motion";
 import { useEffect, useRef } from "react";
+import { farcasterFrame } from "@farcaster/miniapp-wagmi-connector";
 
-import { TOKEN_CONFIG } from "@/lib/contracts/config";
+import { TOKEN_CONFIG, CHAIN_CONFIG } from "@/lib/contracts/config";
 import { springs } from "@/lib/animations";
 
 // Animated Wallet Icon with coin drop effect
@@ -54,8 +55,20 @@ function AnimatedWalletIcon({ triggerAnim }: { triggerAnim: boolean }) {
 }
 
 export function WalletBalance() {
-    const { address } = useAccount();
+    const { address, isConnected } = useAccount();
+    const { connect } = useConnect();
     const chainId = useChainId();
+
+    // Auto-connect with Farcaster connector if not connected
+    useEffect(() => {
+        if (!isConnected) {
+            connect({
+                connector: farcasterFrame(),
+                chainId: CHAIN_CONFIG.chain.id
+            });
+        }
+    }, [isConnected, connect]);
+
     const { roundedBalance } = useGetTokenBalance(address as `0x${string}`, {
         address: TOKEN_CONFIG.address as `0x${string}`,
         decimals: TOKEN_CONFIG.decimals,

@@ -3,9 +3,11 @@
 import { useEffect } from "react";
 import Image from "next/image";
 import { useAccount, useConnect } from "wagmi";
+import { farcasterFrame } from "@farcaster/miniapp-wagmi-connector";
 
 import { useTicketPurchase, getPurchaseButtonText } from "@/hooks/useTicketPurchase";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
+import { CHAIN_CONFIG } from "@/lib/contracts/config";
 
 // --- InfoBox Helper Component ---
 const InfoBox = ({
@@ -61,7 +63,7 @@ export const TicketPurchaseCard = ({
     onPurchaseSuccess?: () => void;
 }) => {
     const { isConnected } = useAccount();
-    const { connect, connectors } = useConnect();
+    const { connect } = useConnect();
 
     // Use consolidated hook
     const {
@@ -75,12 +77,15 @@ export const TicketPurchaseCard = ({
     // Derived state
     const isSoldOut = spots <= 0;
 
-    // Auto-connect if needed
+    // Auto-connect with Farcaster connector
     useEffect(() => {
-        if (!isConnected && connectors[0]) {
-            connect({ connector: connectors[0] });
+        if (!isConnected) {
+            connect({
+                connector: farcasterFrame(),
+                chainId: CHAIN_CONFIG.chain.id
+            });
         }
-    }, [isConnected, connect, connectors]);
+    }, [isConnected, connect]);
 
     // Determine button state
     const getButtonText = () => {
