@@ -78,7 +78,7 @@ export function GameCountdownScreen({ onComplete, recentPlayers = [] }: GameCoun
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                         transition={{ delay: 0.3, duration: 0.4 }}
-                        className="absolute top-8 left-0 right-0 flex justify-center z-10"
+                        className="absolute top-4 left-0 right-0 flex justify-center z-10"
                     >
                         <div className="flex items-center gap-2">
                             <Image
@@ -105,12 +105,14 @@ export function GameCountdownScreen({ onComplete, recentPlayers = [] }: GameCoun
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 10 }}
                         transition={{ delay: 0.5, duration: 0.4 }}
-                        className="absolute bottom-8 left-0 right-0 flex justify-center z-10"
+                        className="absolute bottom-8 left-0 right-0 flex justify-center z-10 px-6"
                     >
-                        <PlayerAvatarStack
-                            initialPlayers={recentPlayers}
-                            actionText="joined the game"
-                        />
+                        <div className="flex items-center gap-3 bg-black/40 backdrop-blur-sm rounded-full px-5 py-3 border border-white/10">
+                            <PlayerAvatarStack
+                                initialPlayers={recentPlayers}
+                                actionText="joined the game"
+                            />
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>

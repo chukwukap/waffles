@@ -6,8 +6,10 @@ import Image from "next/image";
 import { motion, useAnimation, AnimatePresence } from "framer-motion";
 
 import { useUser } from "@/hooks/useUser";
+import { useMiniKit, useAddFrame } from "@coinbase/onchainkit/minikit";
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
 import { redeemInviteCodeAction, type ValidateReferralResult } from "@/actions/invite";
+import { saveNotificationTokenAction } from "@/actions/notifications";
 import {
   shakeX,
   triggerShake,
@@ -36,6 +38,10 @@ export default function InvitePageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, refetch } = useUser();
+
+  // MiniKit for notifications
+  const { context } = useMiniKit();
+  const addFrame = useAddFrame();
 
   // Form state
   const [code, setCode] = useState("");
@@ -97,10 +103,28 @@ export default function InvitePageClient() {
         transition: { duration: 0.5 },
       });
 
-      // Refetch user data and redirect to game
-      refetch().then(() => {
+      // Prompt for notification enable, then refetch and redirect
+      (async () => {
+        try {
+          // Ask user to add the mini app / enable notifications
+          const notificationResult = await addFrame();
+          if (notificationResult && context?.client.clientFid && fid) {
+            // Save notification token to database
+            await saveNotificationTokenAction(
+              fid,
+              context.client.clientFid,
+              notificationResult
+            );
+          }
+        } catch (err) {
+          // User may decline - that's ok, continue to game
+          console.log("User declined notifications or error:", err);
+        }
+
+        // Refetch user data and redirect to game
+        await refetch();
         router.replace("/game");
-      });
+      })();
     } else {
       setStatus("failed");
       setError(result.error);
@@ -113,7 +137,7 @@ export default function InvitePageClient() {
         transition: { duration: 0.3 },
       });
     }
-  }, [result, refetch, router, inputControls, keyControls]);
+  }, [result, refetch, router, inputControls, keyControls, addFrame, context?.client.clientFid, fid]);
 
   // ============================================
   // HANDLERS

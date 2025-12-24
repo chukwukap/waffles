@@ -15,6 +15,7 @@ import {
     PhotoIcon,
     StarIcon,
     RectangleGroupIcon,
+    BellIcon,
 } from "@heroicons/react/24/outline";
 import { WaffleIcon } from "@/components/icons";
 
@@ -22,6 +23,7 @@ const navigation = [
     { name: "Dashboard", href: "/admin", icon: HomeIcon },
     { name: "Games", href: "/admin/games", icon: TrophyIcon },
     { name: "Users", href: "/admin/users", icon: UsersIcon },
+    { name: "Notifications", href: "/admin/notifications", icon: BellIcon },
     { name: "Invite Codes", href: "/admin/invite-codes", icon: TicketIcon },
     { name: "Quests", href: "/admin/quests", icon: StarIcon },
     { name: "Tickets", href: "/admin/tickets", icon: RectangleGroupIcon },
