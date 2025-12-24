@@ -105,20 +105,25 @@ export default function InvitePageClient() {
 
       // Prompt for notification enable, then refetch and redirect
       (async () => {
-        try {
-          // Ask user to add the mini app / enable notifications
-          const notificationResult = await addFrame();
-          if (notificationResult && context?.client.clientFid && fid) {
-            // Save notification token to database
-            await saveNotificationTokenAction(
-              fid,
-              context.client.clientFid,
-              notificationResult
-            );
+        // Only prompt if notifications not already enabled
+        const isAlreadyAdded = context?.client?.added;
+
+        if (!isAlreadyAdded) {
+          try {
+            // Ask user to add the mini app / enable notifications
+            const notificationResult = await addFrame();
+            if (notificationResult && context?.client.clientFid && fid) {
+              // Save notification token to database
+              await saveNotificationTokenAction(
+                fid,
+                context.client.clientFid,
+                notificationResult
+              );
+            }
+          } catch (err) {
+            // User may decline - that's ok, continue to game
+            console.log("User declined notifications or error:", err);
           }
-        } catch (err) {
-          // User may decline - that's ok, continue to game
-          console.log("User declined notifications or error:", err);
         }
 
         // Refetch user data and redirect to game
