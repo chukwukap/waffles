@@ -4,16 +4,18 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 
 const splashImages = [
-  "/images/splash/crew-4.png",
-  "/images/splash/crew-1.png",
-  "/images/splash/crew-8.png",
-  "/images/splash/crew-2.png",
-  "/images/splash/crew-3.png",
-  "/images/splash/crew-6.png",
-  "/images/splash/crew-5.png",
-  "/images/splash/crew-7.png",
-  "/images/splash/crew-9.png",
-  "/images/splash/crew-10.png",
+  "/images/splash/1.png",
+  "/images/splash/2.png",
+  "/images/splash/3.png",
+  "/images/splash/4.png",
+  "/images/splash/5.png",
+  "/images/splash/6.png",
+  "/images/splash/8.png",
+  "/images/splash/9.png",
+  "/images/splash/10.png",
+  "/images/splash/11.png",
+  "/images/splash/dude.png",
+  "/images/splash/joker.png",
 ];
 
 // Container animation - orchestrates the stagger
