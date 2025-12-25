@@ -118,7 +118,7 @@ export function SoundProvider({
   return (
     <SoundContext.Provider value={sounds}>
       {children}
-      {showMuteToggle && <MuteToggle />}
+      {/* {showMuteToggle && <MuteToggle />} */}
     </SoundContext.Provider>
   );
 }
