@@ -4,6 +4,10 @@ import { prisma, QuestType, QuestCategory, RepeatFrequency } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdminSession } from "@/lib/admin-auth";
+import { sendBulkNotifications } from "@/lib/notifications";
+import { logAdminAction, EntityType } from "@/lib/audit";
+import { WAFFLE_FID } from "@/lib/constants";
+import { env } from "@/lib/env";
 
 // ============================================
 // SCHEMAS
@@ -88,6 +92,43 @@ export async function createQuestAction(
         repeatFrequency: validation.data.repeatFrequency ?? "ONCE",
       },
     });
+
+    // Send notifications to waitlist users if quest is active
+    if (quest.isActive) {
+      try {
+        const notificationResults = await sendBulkNotifications({
+          title: "🎯 New Quest Available!",
+          body: `Complete "${quest.title}" to earn ${quest.points} points!`,
+          targetUrl: `${env.rootUrl}/waitlist/quests`,
+          appFid: WAFFLE_FID,
+          filter: "waitlist",
+        });
+
+        // Log the notification action for audit trail
+        await logAdminAction({
+          adminId: auth.session.userId,
+          action: "SEND_QUEST_NOTIFICATION",
+          entityType: EntityType.SYSTEM,
+          entityId: quest.id,
+          details: {
+            questTitle: quest.title,
+            questPoints: quest.points,
+            notificationResults,
+          },
+        });
+
+        console.log(
+          `[QuestNotification] Sent notifications for quest "${quest.title}":`,
+          notificationResults
+        );
+      } catch (notificationError) {
+        // Log but don't fail the quest creation
+        console.error(
+          "[QuestNotification] Failed to send notifications:",
+          notificationError
+        );
+      }
+    }
 
     revalidatePath("/admin/quests");
     return { success: true, data: { id: quest.id } };
