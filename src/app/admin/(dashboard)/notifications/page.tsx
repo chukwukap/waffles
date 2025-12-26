@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { NotificationForm } from "@/components/admin/NotificationForm";
 import { getRecentNotifications } from "@/actions/admin/notifications";
-import { BellIcon, ClockIcon, CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
+import { BellIcon, ClockIcon, CheckCircleIcon, XCircleIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { getNotificationEnabledUserCount } from "@/lib/notifications";
 
@@ -11,10 +11,19 @@ export const metadata: Metadata = {
 };
 
 export default async function NotificationsPage() {
-    const [recentNotifications, totalUsersWithNotifs] = await Promise.all([
-        getRecentNotifications(5),
-        getNotificationEnabledUserCount("all"),
-    ]);
+    let recentNotifications: Awaited<ReturnType<typeof getRecentNotifications>> = [];
+    let totalUsersWithNotifs = 0;
+    let fetchError: string | null = null;
+
+    try {
+        [recentNotifications, totalUsersWithNotifs] = await Promise.all([
+            getRecentNotifications(5),
+            getNotificationEnabledUserCount("all"),
+        ]);
+    } catch (error) {
+        console.error("[NotificationsPage] Failed to fetch data:", error);
+        fetchError = error instanceof Error ? error.message : "Failed to load notification data";
+    }
 
     // Calculate stats from recent notifications
     const totalSent = recentNotifications.reduce((acc, n) => {
@@ -34,6 +43,20 @@ export default async function NotificationsPage() {
                     Send push notifications to your users via Farcaster
                 </p>
             </div>
+
+            {/* Error Banner */}
+            {fetchError && (
+                <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-start gap-3">
+                    <ExclamationTriangleIcon className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
+                    <div>
+                        <p className="font-medium text-red-400">Failed to load notification data</p>
+                        <p className="text-sm text-red-400/70 mt-1">{fetchError}</p>
+                        <p className="text-xs text-red-400/50 mt-2">
+                            Check server logs for more details. The form below may still work.
+                        </p>
+                    </div>
+                </div>
+            )}
 
             {/* Stats Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

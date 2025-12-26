@@ -111,6 +111,7 @@ export async function sendMiniAppNotification({
   const notificationDetails = await getUserNotificationDetails(fid, appFid);
 
   if (!notificationDetails) {
+    console.log(`[Notification] No token for fid ${fid}, appFid ${appFid}`);
     return { state: "no_token" };
   }
 
@@ -173,7 +174,12 @@ export async function sendMiniAppNotification({
         return { state: "error", error: responseJson };
       }
     } catch (error) {
-      console.error("Failed to send notification:", error);
+      console.error("[Notification] Failed to send:", {
+        fid,
+        appFid,
+        error: error instanceof Error ? error.message : error,
+        url: notificationDetails.url,
+      });
       return { state: "error", error };
     }
   }

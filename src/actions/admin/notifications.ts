@@ -84,10 +84,18 @@ export async function sendAdminNotificationAction(
   try {
     let results: { total: number; success: number; failed: number };
 
+    console.log("[AdminNotification] Starting send:", {
+      title,
+      audience,
+      targetFid: audience === "single" ? targetFid : undefined,
+      targetUrl: finalTargetUrl,
+    });
+
     if (audience === "single" && targetFid) {
       // Send to single user
       const fid = parseInt(targetFid, 10);
       if (isNaN(fid)) {
+        console.error("[AdminNotification] Invalid FID:", targetFid);
         return { success: false, error: "Invalid FID" };
       }
 
@@ -121,6 +129,8 @@ export async function sendAdminNotificationAction(
         failed:
           bulkResults.failed + bulkResults.noToken + bulkResults.rateLimited,
       };
+
+      console.log("[AdminNotification] Bulk send complete:", bulkResults);
     }
 
     // Log admin action
@@ -146,7 +156,13 @@ export async function sendAdminNotificationAction(
       failed: results.failed,
     };
   } catch (error) {
-    console.error("[AdminNotification] Error:", error);
+    console.error("[AdminNotification] Error sending notifications:", {
+      error,
+      message: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+      audience,
+      title,
+    });
     return {
       success: false,
       error:
