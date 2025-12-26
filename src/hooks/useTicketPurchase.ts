@@ -354,6 +354,20 @@ export function useTicketPurchase(
       return;
     }
 
+    // ========================================================================
+    // FREE TIER SUPPORT ($0 TICKETS)
+    // ========================================================================
+    // When price is $0, skip blockchain entirely and go straight to backend.
+    // To enable: Create a game with 0 in tierPrices (e.g., [0, 5, 10])
+    // To disable: Remove 0 from the game's tierPrices
+    // ========================================================================
+    if (price === 0) {
+      console.log("[useTicketPurchase] Free tier - skipping blockchain");
+      setState({ step: "syncing" });
+      await syncWithBackend(`free-${Date.now()}`);
+      return;
+    }
+
     // Note: Don't check balance - Farcaster wallet handles insufficient balance automatically
 
     // This check implicitly handles wallet not ready (calls depend on address)
@@ -481,7 +495,8 @@ export function getPurchaseButtonText(
 ): string {
   switch (step) {
     case "idle":
-      return `BUY WAFFLE - $${price}`;
+      // Free tier shows different button text
+      return price === 0 ? "GET FREE TICKET 🎟️" : `BUY WAFFLE - $${price}`;
     case "switching-chain":
       return "SWITCHING NETWORK...";
     case "pending":

@@ -117,14 +117,26 @@ export const POST = withAuth<Params>(
       const body = await request.json();
       const { txHash, paidAmount, payerWallet } = body;
 
-      if (!txHash || typeof txHash !== "string") {
+      // ========================================================================
+      // FREE TIER SUPPORT ($0 TICKETS)
+      // ========================================================================
+      // To enable free tier for demo/testing:
+      //   1. Create/edit a game in admin with tierPrices including 0 (e.g., [0, 5, 10])
+      //   2. Users can select the $0 tier in BuyTicketModal
+      //   3. Frontend skips blockchain, backend creates entry with paidAmount=0
+      // To disable: Remove 0 from tierPrices in the game settings
+      // ========================================================================
+
+      // txHash is only required for paid entries (free tier uses fake hash)
+      if (paidAmount > 0 && (!txHash || typeof txHash !== "string")) {
         return NextResponse.json<ApiError>(
           { error: "Transaction hash is required", code: "INVALID_INPUT" },
           { status: 400 }
         );
       }
 
-      if (typeof paidAmount !== "number" || paidAmount <= 0) {
+      // Allow paidAmount >= 0 to support free tier ($0 tickets)
+      if (typeof paidAmount !== "number" || paidAmount < 0) {
         return NextResponse.json<ApiError>(
           { error: "Valid paidAmount is required", code: "INVALID_INPUT" },
           { status: 400 }
