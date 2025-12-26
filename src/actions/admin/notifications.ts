@@ -7,11 +7,10 @@ import { revalidatePath } from "next/cache";
 import {
   sendBulkNotifications,
   getNotificationEnabledUserCount,
-  sendMiniAppNotification,
+  sendNotificationToUser,
 } from "@/lib/notifications";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
-import { WAFFLE_FID } from "@/lib/constants";
 
 // Validation schema
 const notificationSchema = z.object({
@@ -78,9 +77,6 @@ export async function sendAdminNotificationAction(
   // Default target URL to app home
   const finalTargetUrl = targetUrl || env.rootUrl || "https://waffles.fun";
 
-  // Use Waffle app FID from constants
-  const appFid = WAFFLE_FID;
-
   try {
     let results: { total: number; success: number; failed: number };
 
@@ -99,9 +95,8 @@ export async function sendAdminNotificationAction(
         return { success: false, error: "Invalid FID" };
       }
 
-      const result = await sendMiniAppNotification({
+      const result = await sendNotificationToUser({
         fid,
-        appFid,
         title,
         body,
         targetUrl: finalTargetUrl,
@@ -119,7 +114,6 @@ export async function sendAdminNotificationAction(
         title,
         body,
         targetUrl: finalTargetUrl,
-        appFid,
         filter,
       });
 

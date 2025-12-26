@@ -6,7 +6,6 @@ import { z } from "zod";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { sendBulkNotifications } from "@/lib/notifications";
 import { logAdminAction, EntityType } from "@/lib/audit";
-import { WAFFLE_FID } from "@/lib/constants";
 import { env } from "@/lib/env";
 
 // ============================================
@@ -100,7 +99,6 @@ export async function createQuestAction(
           title: "🎯 New Quest Available!",
           body: `Complete "${quest.title}" to earn ${quest.points} points!`,
           targetUrl: `${env.rootUrl}/waitlist/quests`,
-          appFid: WAFFLE_FID,
           filter: "waitlist",
         });
 

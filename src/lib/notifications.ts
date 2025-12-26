@@ -48,6 +48,7 @@ async function fetchWithTimeout(
 
 /**
  * Save or update user notification details
+ * AppFid is required here because it comes from the webhook
  */
 export async function setUserNotificationDetails(
   fid: number,
@@ -85,6 +86,7 @@ export async function setUserNotificationDetails(
       },
     });
 
+    console.log(`[Notification] Saved token for fid ${fid}, appFid ${appFid}`);
     return true;
   } catch (error) {
     console.error("[Notification] Failed to save notification details:", {
@@ -97,7 +99,7 @@ export async function setUserNotificationDetails(
 }
 
 /**
- * Delete user notification details
+ * Delete user notification details for a specific appFid
  */
 export async function deleteUserNotificationDetails(
   fid: number,
@@ -117,6 +119,9 @@ export async function deleteUserNotificationDetails(
       },
     });
 
+    console.log(
+      `[Notification] Deleted token for fid ${fid}, appFid ${appFid}`
+    );
     return true;
   } catch (error) {
     console.error("[Notification] Failed to delete notification details:", {
@@ -129,7 +134,33 @@ export async function deleteUserNotificationDetails(
 }
 
 /**
- * Get user notification details
+ * Get ALL notification tokens for a user (across all Farcaster clients)
+ * This is the main function used for SENDING notifications
+ */
+export async function getAllUserNotificationTokens(fid: number) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { fid },
+      include: {
+        notifs: true,
+      },
+    });
+
+    if (!user) return [];
+
+    return user.notifs;
+  } catch (error) {
+    console.error("[Notification] Failed to get user tokens:", {
+      fid,
+      error: error instanceof Error ? error.message : error,
+    });
+    return [];
+  }
+}
+
+/**
+ * Get user notification details for a specific appFid (used by webhook)
+ * @deprecated Use getAllUserNotificationTokens for sending notifications
  */
 export async function getUserNotificationDetails(fid: number, appFid: number) {
   try {
@@ -162,44 +193,18 @@ export async function getUserNotificationDetails(fid: number, appFid: number) {
 // ============================================================================
 
 /**
- * Send a notification to a user with retry logic for rate limits
+ * Send a notification to a single token
+ * Internal function - used by sendNotificationToUser
  */
-export async function sendMiniAppNotification({
-  fid,
-  appFid,
-  title,
-  body,
-  targetUrl,
-  maxRetries = DEFAULT_MAX_RETRIES,
-}: {
-  fid: number;
-  appFid: number;
-  title: string;
-  body: string;
-  targetUrl: string;
-  maxRetries?: number;
-}): Promise<SendMiniAppNotificationResult> {
-  // Validate inputs
-  if (!fid || !appFid || !title || !body || !targetUrl) {
-    console.error("[Notification] Invalid input:", {
-      fid,
-      appFid,
-      hasTitle: !!title,
-      hasBody: !!body,
-      hasTargetUrl: !!targetUrl,
-    });
-    return { state: "error", error: "Invalid notification parameters" };
-  }
-
-  const notificationDetails = await getUserNotificationDetails(fid, appFid);
-
-  if (!notificationDetails) {
-    console.log(`[Notification] No token for fid ${fid}, appFid ${appFid}`);
-    return { state: "no_token" };
-  }
-
-  // Validate token data
-  if (!notificationDetails.url || !notificationDetails.token) {
+async function sendToToken(
+  token: { url: string; token: string; appFid: number },
+  fid: number,
+  title: string,
+  body: string,
+  targetUrl: string,
+  maxRetries: number
+): Promise<SendMiniAppNotificationResult> {
+  if (!token.url || !token.token) {
     console.error("[Notification] Invalid token data for fid:", fid);
     return { state: "error", error: "Invalid token data" };
   }
@@ -223,7 +228,7 @@ export async function sendMiniAppNotification({
 
     try {
       const response = await fetchWithTimeout(
-        notificationDetails.url,
+        token.url,
         {
           method: "POST",
           headers: {
@@ -234,7 +239,7 @@ export async function sendMiniAppNotification({
             title,
             body,
             targetUrl,
-            tokens: [notificationDetails.token],
+            tokens: [token.token],
           } satisfies SendNotificationRequest),
         },
         FETCH_TIMEOUT_MS
@@ -260,7 +265,6 @@ export async function sendMiniAppNotification({
         const responseBody =
           sendNotificationResponseSchema.safeParse(responseJson);
         if (responseBody.success === false) {
-          // Malformed response
           console.error("[Notification] Malformed response:", {
             fid,
             errors: responseBody.error.errors,
@@ -269,20 +273,20 @@ export async function sendMiniAppNotification({
         }
 
         if (responseBody.data.result.rateLimitedTokens.length) {
-          // Rate limited - retry if attempts remaining
           lastResult = { state: "rate_limit" };
           continue;
         }
 
-        // Handle invalid tokens if necessary (e.g., delete them)
+        // Handle invalid tokens
         if (responseBody.data.result.invalidTokens.length) {
-          console.log(`[Notification] Removing invalid token for fid ${fid}`);
-          await deleteUserNotificationDetails(fid, appFid);
+          console.log(
+            `[Notification] Removing invalid token for fid ${fid}, appFid ${token.appFid}`
+          );
+          await deleteUserNotificationDetails(fid, token.appFid);
         }
 
         return { state: "success" };
       } else {
-        // Error response
         console.error("[Notification] API error response:", {
           fid,
           status: response.status,
@@ -291,33 +295,88 @@ export async function sendMiniAppNotification({
         return { state: "error", error: responseJson };
       }
     } catch (error) {
-      // Check for abort (timeout)
       if (error instanceof Error && error.name === "AbortError") {
         console.error("[Notification] Request timeout:", {
           fid,
-          appFid,
-          url: notificationDetails.url,
+          url: token.url,
         });
         return { state: "error", error: "Request timeout" };
       }
 
       console.error("[Notification] Failed to send:", {
         fid,
-        appFid,
         error: error instanceof Error ? error.message : error,
-        url: notificationDetails.url,
+        url: token.url,
       });
       return { state: "error", error };
     }
   }
 
-  // Exhausted all retries
   console.warn(
     `[Notification] Rate limit persisted after ${
       maxRetries + 1
     } attempts for fid ${fid}`
   );
   return lastResult;
+}
+
+/**
+ * Send a notification to a user (attempts ALL their registered tokens)
+ * This is the main function to use when sending notifications
+ */
+export async function sendNotificationToUser({
+  fid,
+  title,
+  body,
+  targetUrl,
+  maxRetries = DEFAULT_MAX_RETRIES,
+}: {
+  fid: number;
+  title: string;
+  body: string;
+  targetUrl: string;
+  maxRetries?: number;
+}): Promise<SendMiniAppNotificationResult> {
+  // Validate inputs
+  if (!fid || !title || !body || !targetUrl) {
+    console.error("[Notification] Invalid input:", {
+      fid,
+      hasTitle: !!title,
+      hasBody: !!body,
+      hasTargetUrl: !!targetUrl,
+    });
+    return { state: "error", error: "Invalid notification parameters" };
+  }
+
+  const tokens = await getAllUserNotificationTokens(fid);
+
+  if (tokens.length === 0) {
+    console.log(`[Notification] No tokens for fid ${fid}`);
+    return { state: "no_token" };
+  }
+
+  console.log(
+    `[Notification] Sending to fid ${fid} (${tokens.length} token(s))`
+  );
+
+  // Try each token until one succeeds
+  for (const token of tokens) {
+    const result = await sendToToken(
+      token,
+      fid,
+      title,
+      body,
+      targetUrl,
+      maxRetries
+    );
+
+    if (result.state === "success") {
+      return result;
+    }
+  }
+
+  // All tokens failed
+  return { state: "error", error: "All tokens failed" };
 }
 
 // ============================================================================
@@ -351,7 +410,7 @@ export async function getNotificationEnabledUserCount(
       filter,
       error: error instanceof Error ? error.message : error,
     });
-    return 0; // Return 0 on error instead of throwing
+    return 0;
   }
 }
 
@@ -381,11 +440,7 @@ export async function getUsersWithNotifications(
       select: {
         fid: true,
         username: true,
-        notifs: {
-          select: {
-            appFid: true,
-          },
-        },
+        notifs: true, // Include all tokens
       },
     });
   } catch (error) {
@@ -393,7 +448,7 @@ export async function getUsersWithNotifications(
       filter,
       error: error instanceof Error ? error.message : error,
     });
-    return []; // Return empty array on error instead of throwing
+    return [];
   }
 }
 
@@ -409,7 +464,6 @@ export async function sendBulkNotifications({
   title,
   body,
   targetUrl,
-  appFid,
   filter = "all",
   batchSize = DEFAULT_BATCH_SIZE,
   delayBetweenBatches = DEFAULT_BATCH_DELAY_MS,
@@ -417,7 +471,6 @@ export async function sendBulkNotifications({
   title: string;
   body: string;
   targetUrl: string;
-  appFid: number;
   filter?: "all" | "active" | "waitlist";
   batchSize?: number;
   delayBetweenBatches?: number;
@@ -429,12 +482,11 @@ export async function sendBulkNotifications({
   rateLimited: number;
 }> {
   // Validate inputs
-  if (!title || !body || !targetUrl || !appFid) {
+  if (!title || !body || !targetUrl) {
     console.error("[BulkNotification] Invalid input:", {
       hasTitle: !!title,
       hasBody: !!body,
       hasTargetUrl: !!targetUrl,
-      appFid,
     });
     return {
       total: 0,
@@ -477,9 +529,8 @@ export async function sendBulkNotifications({
       // Send notifications in parallel within batch
       const batchResults = await Promise.all(
         batch.map((user) =>
-          sendMiniAppNotification({
+          sendNotificationToUser({
             fid: user.fid,
-            appFid,
             title,
             body,
             targetUrl,
@@ -514,7 +565,6 @@ export async function sendBulkNotifications({
         }
       );
     } catch (batchError) {
-      // If entire batch fails (shouldn't happen with Promise.all + individual catches)
       console.error(`[BulkNotification] Batch ${batchNumber} failed:`, {
         error: batchError instanceof Error ? batchError.message : batchError,
       });

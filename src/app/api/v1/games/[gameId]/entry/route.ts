@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { sendMiniAppNotification } from "@/lib/notifications";
-import { WAFFLE_FID } from "@/lib/constants";
+import { sendNotificationToUser } from "@/lib/notifications";
 import { env } from "@/lib/env";
 
 type Params = { gameId: string };
@@ -37,9 +36,8 @@ async function sendTicketNotification(
   const startsAt = game.startsAt ? new Date(game.startsAt) : null;
   const timeStr = startsAt ? formatGameTime(startsAt) : "soon";
 
-  await sendMiniAppNotification({
+  await sendNotificationToUser({
     fid,
-    appFid: WAFFLE_FID,
     title: "🧇 Ticket Secured!",
     body: `Game starts ${timeStr}. Don't miss it!`,
     targetUrl: `${env.rootUrl}/game/${gameId}`,

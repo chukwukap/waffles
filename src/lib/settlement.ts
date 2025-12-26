@@ -18,8 +18,7 @@ import waffleGameAbi from "@/lib/contracts/WaffleGameAbi.json";
 import { buildMerkleTree, type Winner } from "@/lib/merkle";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
-import { sendMiniAppNotification } from "@/lib/notifications";
-import { WAFFLE_FID } from "@/lib/constants";
+import { sendNotificationToUser } from "@/lib/notifications";
 
 // ============================================================================
 // Configuration
@@ -169,7 +168,7 @@ export async function updateMerkleRootOnChain(
  * Winners get a personalized "You won!" message, others get "Results are in!"
  */
 async function sendSettlementNotifications(gameId: number) {
-  // Get all entries for this game (not just winners)
+  // Get all entries for this game with user notification info
   const allEntries = await prisma.gameEntry.findMany({
     where: { gameId },
     select: {
@@ -179,8 +178,7 @@ async function sendSettlementNotifications(gameId: number) {
         select: {
           fid: true,
           notifs: {
-            where: { appFid: WAFFLE_FID },
-            take: 1,
+            take: 1, // Just check if they have any token
           },
         },
       },
@@ -201,18 +199,16 @@ async function sendSettlementNotifications(gameId: number) {
 
       if (isWinner) {
         // Winner notification
-        await sendMiniAppNotification({
+        await sendNotificationToUser({
           fid: entry.user.fid,
-          appFid: WAFFLE_FID,
           title: "🏆 You Won!",
           body: `You won $${entry.prize?.toFixed(2)}! Claim your prize now.`,
           targetUrl: `${env.rootUrl}/game/${gameId}/result`,
         });
       } else {
         // Non-winner: results available
-        await sendMiniAppNotification({
+        await sendNotificationToUser({
           fid: entry.user.fid,
-          appFid: WAFFLE_FID,
           title: "📊 Results Ready!",
           body: "See how you ranked and check out the winners!",
           targetUrl: `${env.rootUrl}/game/${gameId}/result`,

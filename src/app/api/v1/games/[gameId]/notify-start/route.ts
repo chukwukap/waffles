@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { sendMiniAppNotification } from "@/lib/notifications";
-import { WAFFLE_FID } from "@/lib/constants";
+import { sendNotificationToUser } from "@/lib/notifications";
 import { env } from "@/lib/env";
 
 type Params = { gameId: string };
@@ -40,7 +39,7 @@ export async function POST(
       return NextResponse.json({ error: "Game not found" }, { status: 404 });
     }
 
-    // Get all entries with user notification tokens
+    // Get all entries with users who have notification tokens
     const entries = await prisma.gameEntry.findMany({
       where: { gameId },
       include: {
@@ -48,8 +47,7 @@ export async function POST(
           select: {
             fid: true,
             notifs: {
-              where: { appFid: WAFFLE_FID },
-              take: 1,
+              take: 1, // Just check if they have any token
             },
           },
         },
@@ -65,9 +63,8 @@ export async function POST(
     // Send notifications (in parallel with limited concurrency)
     const results = await Promise.allSettled(
       usersToNotify.map((entry) =>
-        sendMiniAppNotification({
+        sendNotificationToUser({
           fid: entry.user.fid,
-          appFid: WAFFLE_FID,
           title: "🎮 Game Starting!",
           body: `${game.title || "Your game"} is live now!`,
           targetUrl: `${env.rootUrl}/game/${gameId}/play`,

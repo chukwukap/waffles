@@ -9,7 +9,3 @@ export const EXTRA_TIME_SECONDS = 3; // 3 seconds
 
 export const USDC_ADDRESS_BASE_MAINNET =
   "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
-
-// Warpcast's client FID - used when looking up notification tokens
-// (This is the appFid sent by Warpcast when users enable notifications)
-export const WAFFLE_FID = 9152;
