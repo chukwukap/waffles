@@ -6,7 +6,7 @@ import {
 import {
   setUserNotificationDetails,
   deleteUserNotificationDetails,
-  sendMiniAppNotification,
+  sendNotificationToUser,
 } from "@/lib/notifications";
 import { env } from "@/lib/env";
 
@@ -51,9 +51,8 @@ export async function POST(request: NextRequest) {
           console.log(
             `[WEBHOOK_NOTIFY] Sending welcome notification to FID ${fid}`
           );
-          await sendMiniAppNotification({
+          await sendNotificationToUser({
             fid,
-            appFid,
             title: "Welcome to Waffles!",
             body: "Thanks for adding the app. You will now receive notifications.",
             targetUrl: `${env.rootUrl}${env.homeUrlPath}`,
@@ -91,9 +90,8 @@ export async function POST(request: NextRequest) {
           `[WEBHOOK_NOTIFY] Notification details saved for FID ${fid}`
         );
 
-        await sendMiniAppNotification({
+        await sendNotificationToUser({
           fid,
-          appFid,
           title: "Notifications Enabled",
           body: "You will now receive updates about your games.",
           targetUrl: `${env.rootUrl}${env.homeUrlPath}`,
