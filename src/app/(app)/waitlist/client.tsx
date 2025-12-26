@@ -412,6 +412,7 @@ function JoinCTA({
 // ============================================
 export function WaitlistClient() {
   const { context } = useMiniKit();
+  console.log(JSON.stringify(context, null, 2));
   const addFrame = useAddFrame();
   const searchParams = useSearchParams();
   const { composeCastAsync } = useComposeCast();
