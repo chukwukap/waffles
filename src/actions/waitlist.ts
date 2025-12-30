@@ -6,6 +6,7 @@ import { z } from "zod";
 import { Prisma } from "@/lib/db";
 import { verifyFarcasterFollow } from "@/lib/verifyFarcasterFollow";
 import { verifyFarcasterMention } from "@/lib/verifyFarcasterMention";
+import { REFERRAL_BONUS_POINTS } from "@/lib/constants";
 
 export type JoinWaitlistState = {
   ok: boolean;
@@ -83,13 +84,14 @@ export async function joinWaitlistAction(
         },
       });
 
-      // b. If a referrer was found, increment their quota and log the reward
+      // b. If a referrer was found, reward them with points and log the reward
       if (referrerUser) {
-        // Increment referrer's invite quota by 1 for the successful referral
+        // Add points to referrer's waitlistPoints
         await tx.user.update({
           where: { id: referrerUser.id },
           data: {
             inviteQuota: { increment: 1 },
+            waitlistPoints: { increment: REFERRAL_BONUS_POINTS },
           },
         });
 
@@ -98,8 +100,9 @@ export async function joinWaitlistAction(
           data: {
             inviterId: referrerUser.id,
             inviteeId: user.id,
-            status: "PENDING",
-            amount: 0,
+            status: "UNLOCKED",
+            amount: REFERRAL_BONUS_POINTS,
+            unlockedAt: new Date(),
           },
         });
       }

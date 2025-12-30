@@ -9,3 +9,5 @@ export const EXTRA_TIME_SECONDS = 3; // 3 seconds
 
 export const USDC_ADDRESS_BASE_MAINNET =
   "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+
+export const REFERRAL_BONUS_POINTS = 200;

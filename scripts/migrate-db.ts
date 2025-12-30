@@ -16,11 +16,13 @@ import pg from "pg";
 // ==========================================
 
 // Use port 6543 for direct connection (bypasses pgbouncer to avoid timeout)
-const SUPABASE_URL =
-  process.env.SUPABASE_DATABASE_URL ||
-  "postgres://postgres:WafflesSupremacy%401.0@db.hizkyaqomaburfcsdymo.supabase.co:6543/postgres";
+const SUPABASE_URL = process.env.SUPABASE_DATABASE_URL;
 
 const RAILWAY_URL = process.env.DATABASE_URL;
+
+if (!SUPABASE_URL) {
+  throw new Error("SUPABASE_DATABASE_URL must be set");
+}
 
 if (!RAILWAY_URL) {
   throw new Error("DATABASE_URL (Railway) must be set");

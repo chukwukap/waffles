@@ -5,8 +5,11 @@
 
 import pg from "pg";
 
-const RAILWAY_URL =
-  "postgresql://postgres:aCsolCsflIYcvmETEAjhxwkKeWBHaYWv@switchyard.proxy.rlwy.net:21127/railway";
+const RAILWAY_URL = process.env.DATABASE_URL;
+
+if (!RAILWAY_URL) {
+  throw new Error("DATABASE_URL environment variable is required");
+}
 
 async function debugNotifications() {
   const client = new pg.Client({ connectionString: RAILWAY_URL });

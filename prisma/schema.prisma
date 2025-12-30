@@ -332,7 +332,6 @@ model Chat {
 // ==========================================
 // 5. NOTIFICATIONS
 // ==========================================
-// TODO: should we include this in the main app aside waitlist?
 model NotificationToken {
   id        Int      @id @default(autoincrement())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)

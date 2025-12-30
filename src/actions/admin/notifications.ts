@@ -17,7 +17,7 @@ const notificationSchema = z.object({
   title: z.string().min(1, "Title is required").max(65, "Title max 65 chars"),
   body: z.string().min(1, "Body is required").max(240, "Body max 240 chars"),
   targetUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
-  audience: z.enum(["all", "active", "waitlist", "single"]),
+  audience: z.enum(["all", "active", "waitlist", "single", "no_quests"]),
   targetFid: z.string().optional(),
 });
 
@@ -37,7 +37,7 @@ export type NotificationResult =
  * Get count of users who can receive notifications
  */
 export async function getAudienceCount(
-  audience: "all" | "active" | "waitlist"
+  audience: "all" | "active" | "waitlist" | "no_quests"
 ): Promise<number> {
   return getNotificationEnabledUserCount(audience);
 }

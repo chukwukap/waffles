@@ -13,10 +13,16 @@
 import pg from "pg";
 
 // Database connection strings
-const SUPABASE_URL =
-  "postgres://postgres:WafflesSupremacy@1.0@db.hizkyaqomaburfcsdymo.supabase.co:5432/postgres";
-const RAILWAY_URL =
-  "postgresql://postgres:aCsolCsflIYcvmETEAjhxwkKeWBHaYWv@switchyard.proxy.rlwy.net:21127/railway";
+const SUPABASE_URL = process.env.SUPABASE_DATABASE_URL;
+const RAILWAY_URL = process.env.DATABASE_URL;
+
+if (!SUPABASE_URL) {
+  throw new Error("SUPABASE_DATABASE_URL environment variable is required");
+}
+
+if (!RAILWAY_URL) {
+  throw new Error("DATABASE_URL environment variable is required");
+}
 
 interface SourceNotification {
   id: number;

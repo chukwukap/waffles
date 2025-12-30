@@ -19,7 +19,6 @@ import {
 } from "@/actions/admin/notifications";
 import { ConfirmationModal } from "./ConfirmationModal";
 
-// Audience options
 const AUDIENCES = [
     {
         id: "all",
@@ -42,6 +41,13 @@ const AUDIENCES = [
         icon: UserIcon,
         color: "from-[#00CFF2] to-[#0099B8]",
     },
+    {
+        id: "no_quests",
+        label: "No Quests Completed",
+        description: "Users who haven't done any quests",
+        icon: ExclamationCircleIcon,
+        color: "from-[#FF6B6B] to-[#EE5A5A]",
+    },
 ];
 
 export function NotificationForm() {
@@ -54,7 +60,7 @@ export function NotificationForm() {
     const [title, setTitle] = useState("");
     const [body, setBody] = useState("");
     const [targetUrl, setTargetUrl] = useState("");
-    const [audience, setAudience] = useState<"all" | "active" | "waitlist" | "single">("all");
+    const [audience, setAudience] = useState<"all" | "active" | "waitlist" | "single" | "no_quests">("all");
     const [targetFid, setTargetFid] = useState("");
 
     // UI state

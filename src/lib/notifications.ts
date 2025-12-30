@@ -387,7 +387,7 @@ export async function sendNotificationToUser({
  * Get count of users with notification tokens
  */
 export async function getNotificationEnabledUserCount(
-  filter?: "all" | "active" | "waitlist"
+  filter?: "all" | "active" | "waitlist" | "no_quests"
 ): Promise<number> {
   try {
     const where: any = {
@@ -402,6 +402,8 @@ export async function getNotificationEnabledUserCount(
     } else if (filter === "waitlist") {
       where.hasGameAccess = false;
       where.joinedWaitlistAt = { not: null };
+    } else if (filter === "no_quests") {
+      where.completedQuests = { none: {} };
     }
 
     return await prisma.user.count({ where });
@@ -418,7 +420,7 @@ export async function getNotificationEnabledUserCount(
  * Get all users with notification tokens based on filter
  */
 export async function getUsersWithNotifications(
-  filter?: "all" | "active" | "waitlist"
+  filter?: "all" | "active" | "waitlist" | "no_quests"
 ) {
   try {
     const where: any = {
@@ -433,6 +435,8 @@ export async function getUsersWithNotifications(
     } else if (filter === "waitlist") {
       where.hasGameAccess = false;
       where.joinedWaitlistAt = { not: null };
+    } else if (filter === "no_quests") {
+      where.completedQuests = { none: {} };
     }
 
     return await prisma.user.findMany({
@@ -471,7 +475,7 @@ export async function sendBulkNotifications({
   title: string;
   body: string;
   targetUrl: string;
-  filter?: "all" | "active" | "waitlist";
+  filter?: "all" | "active" | "waitlist" | "no_quests";
   batchSize?: number;
   delayBetweenBatches?: number;
 }): Promise<{
