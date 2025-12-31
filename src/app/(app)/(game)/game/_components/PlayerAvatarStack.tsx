@@ -2,7 +2,8 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { useGameStore, selectRecentPlayers, selectOnlineCount } from "@/lib/game-store";
+import { useGameStore } from "@/components/providers/GameStoreProvider";
+import { selectRecentPlayers, selectOnlineCount } from "@/lib/game-store";
 
 // Avatar rotation angles from design specs
 const AVATAR_ROTATIONS = [-8.71, 5.85, -3.57, 7.56];

@@ -20,7 +20,7 @@ import { Abi, encodeFunctionData } from "viem";
 import { WAFFLE_GAME_CONFIG } from "@/lib/contracts/config";
 import waffleGameAbi from "@/lib/contracts/WaffleGameAbi.json";
 import { Spinner } from "@/components/ui/spinner";
-import { useGame } from "../../GameProvider";
+import { useGameEntry } from "@/hooks/useGameEntry";
 import confetti from "canvas-confetti";
 
 // ==========================================
@@ -65,7 +65,7 @@ export default function ScorePageClient({
   const { address } = useAccount();
   const { context } = useMiniKit();
   const { composeCastAsync } = useComposeCast();
-  const { entry, isLoading: entryLoading, refetchEntry } = useGame();
+  const { entry, isLoading: entryLoading, refetchEntry } = useGameEntry({ gameId });
 
   const hasPlayedSound = useRef(false);
 

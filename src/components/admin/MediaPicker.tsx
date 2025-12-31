@@ -41,7 +41,7 @@ export function MediaPicker({ label, name, accept = "all", onSelect, selectedUrl
     const loadMedia = async () => {
         setLoading(true);
         try {
-            const response = await fetch("/api/admin/media");
+            const response = await fetch("/api/v1/admin/media");
             if (response.ok) {
                 const data = await response.json();
                 setFiles(data.files || []);

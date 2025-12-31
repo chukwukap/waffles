@@ -1,12 +1,11 @@
 import { cache } from "react";
 import { Metadata } from "next";
-import { prisma } from "@/lib/db";
+import { prisma, Prisma } from "@/lib/db";
 import { minikitConfig } from "../../../../../minikit.config";
 import { env } from "@/lib/env";
 import { getActiveGameWhere, getActiveGameOrderBy } from "@/lib/game-utils";
 
 import { GameHub } from "./client";
-import { GameProvider } from "./GameProvider";
 
 // ==========================================
 // METADATA
@@ -34,9 +33,40 @@ export const metadata: Metadata = {
 };
 
 // ==========================================
-// DATA TYPES
+// DATA TYPES - Inferred from Prisma Query
 // ==========================================
 
+const gameSelect = {
+  id: true,
+  onchainId: true,
+  title: true,
+  theme: true,
+  coverUrl: true,
+  startsAt: true,
+  endsAt: true,
+  tierPrices: true,
+  prizePool: true,
+  playerCount: true,
+  maxPlayers: true,
+  _count: { select: { questions: true } },
+  entries: {
+    where: { paidAt: { not: null } },
+    take: 4,
+    orderBy: { paidAt: "desc" as const },
+    select: {
+      user: {
+        select: {
+          username: true,
+          pfpUrl: true,
+        },
+      },
+    },
+  },
+} satisfies Prisma.GameSelect;
+
+type GameQueryResult = Prisma.GameGetPayload<{ select: typeof gameSelect }>;
+
+// Transformed type for component props
 export interface GamePageData {
   id: number;
   onchainId: string | null;
@@ -64,33 +94,7 @@ const getActiveGame = cache(async (): Promise<GamePageData | null> => {
   const game = await prisma.game.findFirst({
     where: getActiveGameWhere(),
     orderBy: getActiveGameOrderBy(),
-    select: {
-      id: true,
-      onchainId: true,
-      title: true,
-      theme: true,
-      coverUrl: true,
-      startsAt: true,
-      endsAt: true,
-      tierPrices: true,
-      prizePool: true,
-      playerCount: true,
-      maxPlayers: true,
-      _count: { select: { questions: true } },
-      entries: {
-        where: { paidAt: { not: null } },
-        take: 4,
-        orderBy: { paidAt: "desc" },
-        select: {
-          user: {
-            select: {
-              username: true,
-              pfpUrl: true,
-            },
-          },
-        },
-      },
-    },
+    select: gameSelect,
   });
 
   if (!game) return null;
@@ -122,13 +126,8 @@ const getActiveGame = cache(async (): Promise<GamePageData | null> => {
 export default async function GamePage() {
   const game = await getActiveGame();
 
-  return (
-    <GameProvider gameId={game?.id}>
-      <GameHub game={game} />
-    </GameProvider>
-  );
+  return <GameHub game={game} />;
 }
 
 // Force dynamic rendering for real-time data
 export const dynamic = "force-dynamic";
-

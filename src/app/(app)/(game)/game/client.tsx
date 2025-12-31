@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
 import { useUser } from "@/hooks/useUser";
-import { useGame } from "./GameProvider";
+import { useGameEntry } from "@/hooks/useGameEntry";
 import { getGamePhase } from "@/lib/game-utils";
 import { useTimer } from "@/hooks/useTimer";
-import { useLive } from "@/hooks/useLive";
+import { LiveConnectionProvider } from "@/components/providers/LiveConnectionProvider";
 import { useSounds } from "@/hooks/useSounds";
 import { BottomNav } from "@/components/BottomNav";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
@@ -40,8 +40,11 @@ export function GameHub({ game }: GameHubProps) {
   // User data and access check
   const { user, isLoading: isLoadingUser } = useUser();
 
-  // Entry from GameProvider context
-  const { entry, isLoading: isLoadingEntry, refetchEntry } = useGame();
+  // Entry from Zustand store via hook (replaces Context)
+  const { entry, isLoading: isLoadingEntry, refetchEntry } = useGameEntry({
+    gameId: game?.id,
+    enabled: !!game,
+  });
 
   // Derive phase from game (not stored)
   const phase = useMemo(() => (game ? getGamePhase(game) : "SCHEDULED"), [game]);
@@ -54,12 +57,8 @@ export function GameHub({ game }: GameHubProps) {
     }
   }, [user, isLoadingUser, router]);
 
-  // Real-time connection
+  // Real-time connection is handled by LiveConnectionProvider wrapper
   const hasAccess = !!user?.hasGameAccess && !user?.isBanned;
-  useLive({
-    gameId: game?.id ?? 0,
-    enabled: !!game && hasAccess,
-  });
 
   // Background music
   const { playBgMusic, stopBgMusic } = useSounds();
@@ -166,7 +165,7 @@ export function GameHub({ game }: GameHubProps) {
   // ==========================================
 
   return (
-    <>
+    <LiveConnectionProvider gameId={game.id} enabled={hasAccess}>
       <motion.section
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -218,7 +217,6 @@ export function GameHub({ game }: GameHubProps) {
 
       <BottomNav />
       <CheerOverlay />
-    </>
+    </LiveConnectionProvider>
   );
 }
-

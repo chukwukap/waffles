@@ -1,62 +1,76 @@
+"use client";
+
+import useSWR from "swr";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import sdk from "@farcaster/miniapp-sdk";
-import { useState, useCallback, useEffect } from "react";
 
-export interface UserData {
-  fid: number;
-  username: string | null;
-  pfpUrl: string | null;
-  wallet: string | null;
-  waitlistPoints: number;
-  rank: number;
-  invitesCount: number;
-  hasGameAccess: boolean;
-  isBanned: boolean;
-  joinedWaitlistAt: Date | null;
+import type { User } from "@/lib/db";
+
+// ==========================================
+// TYPES - Derived from Prisma
+// ==========================================
+
+export type UserData = Pick<
+  User,
+  | "fid"
+  | "username"
+  | "pfpUrl"
+  | "wallet"
+  | "waitlistPoints"
+  | "waitlistRank"
+  | "inviteQuota"
+  | "hasGameAccess"
+  | "isBanned"
+  | "joinedWaitlistAt"
+>;
+
+// ==========================================
+// FETCHER
+// ==========================================
+
+async function fetchUser(url: string): Promise<UserData | null> {
+  const res = await sdk.quickAuth.fetch(url, { cache: "no-store" });
+
+  // 404/401 = user not in DB yet (expected for new users)
+  if (res.status === 404 || res.status === 401) {
+    return null;
+  }
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch user: ${res.status}`);
+  }
+
+  return res.json();
 }
 
+// ==========================================
+// HOOK: useUser
+// ==========================================
+
 /**
- * Simple user data hook.
- * 404/401 = user doesn't exist yet (returns null, not an error).
+ * Fetch current user data with SWR.
+ * - Global cache: all components share the same data
+ * - Deduplication: multiple calls = single request
+ * - Auto refetch on focus (disabled by default)
  */
 export function useUser() {
   const { context } = useMiniKit();
   const fid = context?.user?.fid;
 
-  const [user, setUser] = useState<UserData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchUser = useCallback(async () => {
-    if (!fid) return;
-
-    setIsLoading(true);
-    try {
-      const res = await sdk.quickAuth.fetch("/api/v1/me", {
-        cache: "no-store",
-      });
-
-      // 404/401 = not in DB yet (expected for new users)
-      if (res.status === 404 || res.status === 401) {
-        setUser(null);
-        setError(null);
-      } else if (res.ok) {
-        setUser(await res.json());
-        setError(null);
-      } else {
-        throw new Error("Fetch failed");
-      }
-    } catch (err) {
-      console.error(err);
-      setError("Failed to load user data");
-    } finally {
-      setIsLoading(false);
+  const { data, error, isLoading, mutate } = useSWR<UserData | null>(
+    fid ? "/api/v1/me" : null,
+    fetchUser,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 5000, // Dedupe requests within 5s
     }
-  }, [fid]);
+  );
 
-  useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
-
-  return { user, isLoading, error, refetch: fetchUser };
+  return {
+    user: data ?? null,
+    isLoading,
+    error: error ? "Failed to load user" : null,
+    refetch: mutate,
+  };
 }

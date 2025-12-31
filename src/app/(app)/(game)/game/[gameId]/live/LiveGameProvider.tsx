@@ -1,51 +1,50 @@
 "use client";
 
+/**
+ * LiveGameProvider
+ *
+ * Minimal Context for live game session props from server.
+ * Uses Zustand store for all mutable state (answers, timer, etc.)
+ *
+ * Best practice: Context for static props, Zustand for dynamic state.
+ */
+
 import {
     createContext,
     useContext,
-    useState,
     useCallback,
     useMemo,
     useRef,
     useEffect,
+    useState,
     type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
 import sdk from "@farcaster/miniapp-sdk";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
-import { useGameStore } from "@/lib/game-store";
+import { useGameStoreApi, useGameStore } from "@/components/providers/GameStoreProvider";
+import {
+    selectAnswers,
+    selectQuestionIndex,
+    selectIsBreak,
+    selectTimerTarget,
+    selectGameStarted,
+    selectIsGameComplete,
+} from "@/lib/game-store";
 import type { LiveGameData, LiveGameQuestion } from "./page";
 
 // ==========================================
-// TYPES
+// CONTEXT TYPES (static props only)
 // ==========================================
 
-interface Answer {
-    selected: number;
-    timeMs: number;
-    synced: boolean;
-}
-
 interface LiveGameContextValue {
-    // Game data
+    // Static game data from server
     gameId: number;
     questions: LiveGameQuestion[];
     roundBreakSec: number;
     prizePool: number;
     gameTheme: string;
     recentPlayers: { pfpUrl: string | null; username: string }[];
-
-    // Current state
-    questionIndex: number;
-    isBreak: boolean;
-    timerTarget: number;
-    isGameComplete: boolean;
-    gameStarted: boolean;
-
-    // Answers
-    answers: Map<number, Answer>;
-    hasAnswered: (questionId: number) => boolean;
-    getAnswer: (questionId: number) => Answer | undefined;
 
     // Actions
     submitAnswer: (selectedIndex: number) => void;
@@ -56,7 +55,7 @@ interface LiveGameContextValue {
 const LiveGameContext = createContext<LiveGameContextValue | null>(null);
 
 // ==========================================
-// HOOK
+// HOOK (for static props)
 // ==========================================
 
 export function useLiveGame(): LiveGameContextValue {
@@ -65,6 +64,30 @@ export function useLiveGame(): LiveGameContextValue {
         throw new Error("useLiveGame must be used within LiveGameProvider");
     }
     return ctx;
+}
+
+// ==========================================
+// HOOKS FOR DYNAMIC STATE (from Zustand)
+// ==========================================
+
+export function useLiveGameState() {
+    const questionIndex = useGameStore(selectQuestionIndex);
+    const isBreak = useGameStore(selectIsBreak);
+    const timerTarget = useGameStore(selectTimerTarget);
+    const gameStarted = useGameStore(selectGameStarted);
+    const isGameComplete = useGameStore(selectIsGameComplete);
+    const answers = useGameStore(selectAnswers);
+
+    return {
+        questionIndex,
+        isBreak,
+        timerTarget,
+        gameStarted,
+        isGameComplete,
+        answers,
+        hasAnswered: useCallback((questionId: number) => answers.has(questionId), [answers]),
+        getAnswer: useCallback((questionId: number) => answers.get(questionId), [answers]),
+    };
 }
 
 // ==========================================
@@ -79,17 +102,30 @@ interface LiveGameProviderProps {
 export function LiveGameProvider({ game, children }: LiveGameProviderProps) {
     const router = useRouter();
     const { context } = useMiniKit();
-
-    // Get current user's pfp URL
     const userPfpUrl = context?.user?.pfpUrl || null;
 
-    // Game complete state (moved early so verification can set it)
-    const [isGameComplete, setIsGameComplete] = useState(false);
+    // Get store API for imperative access
+    const store = useGameStoreApi();
 
-    // Ticket and replay verification state
+    // Verification state (local - only used during mount)
     const [verificationState, setVerificationState] = useState<
         "loading" | "valid" | "no-ticket" | "already-played" | "error"
     >("loading");
+
+    // Refs for stable callbacks
+    const questionStartRef = useRef(Date.now());
+    const advanceRef = useRef<() => void>(() => { });
+
+    // Initialize store with game questions on mount
+    useEffect(() => {
+        const state = store.getState();
+        state.setQuestions(game.questions, game.roundBreakSec);
+        state.resetLiveSession();
+
+        return () => {
+            store.getState().resetLiveSession();
+        };
+    }, [game.questions, game.roundBreakSec, store]);
 
     // Verify ticket and check for replay on mount
     useEffect(() => {
@@ -103,15 +139,12 @@ export function LiveGameProvider({ game, children }: LiveGameProviderProps) {
                     const gameHasEnded = new Date() >= new Date(game.endsAt);
 
                     if (hasAnsweredAll || gameHasEnded) {
-                        // Show GameCompleteScreen instead of redirecting
-                        setIsGameComplete(true);
+                        store.getState().setGameComplete(true);
                         setVerificationState("valid");
                     } else {
-                        // User can continue playing
                         setVerificationState("valid");
                     }
                 } else if (res.status === 404) {
-                    // No entry found = no ticket
                     setVerificationState("no-ticket");
                 } else {
                     setVerificationState("error");
@@ -122,7 +155,7 @@ export function LiveGameProvider({ game, children }: LiveGameProviderProps) {
             }
         }
         verifyAccess();
-    }, [game.id, game.questions.length, game.endsAt]);
+    }, [game.id, game.questions.length, game.endsAt, store]);
 
     // Redirect based on verification state
     useEffect(() => {
@@ -133,49 +166,24 @@ export function LiveGameProvider({ game, children }: LiveGameProviderProps) {
         }
     }, [verificationState, game.id, router]);
 
-    // State
-    const [questionIndex, setQuestionIndex] = useState(0);
-    const [isBreak, setIsBreak] = useState(false);
-    const [gameStarted, setGameStarted] = useState(false);
-    // Timer starts far in the future until game is started
-    const [timerTarget, setTimerTarget] = useState(() => Date.now() + 999999999);
-    const [answers, setAnswers] = useState<Map<number, Answer>>(new Map());
-
-    // Refs for stable callbacks
-    const questionStartRef = useRef(Date.now());
-    const advanceRef = useRef<() => void>(() => { });
-
-    // Current question
-    const currentQuestion = game.questions[questionIndex];
-
-    // Check if we need a break (round change)
-    const needsBreak = useCallback(
-        (fromIndex: number): boolean => {
-            const current = game.questions[fromIndex];
-            const next = game.questions[fromIndex + 1];
-            if (!current || !next) return false;
-            return current.roundIndex !== next.roundIndex;
-        },
-        [game.questions]
-    );
-
-    // Submit answer and advance immediately
+    // Submit answer action
     const submitAnswer = useCallback(
         (selectedIndex: number) => {
+            const state = store.getState();
+            const currentQuestion = game.questions[state.questionIndex];
             if (!currentQuestion) return;
 
             const timeMs = Date.now() - questionStartRef.current;
             const questionId = currentQuestion.id;
 
             // Check if already answered
-            if (answers.has(questionId)) return;
+            if (state.answers.has(questionId)) return;
 
-            // Record locally
-            const answer: Answer = { selected: selectedIndex, timeMs, synced: false };
-            setAnswers((prev) => new Map(prev).set(questionId, answer));
+            // Record in store
+            state.submitAnswer(questionId, selectedIndex, timeMs);
 
-            // Add optimistic event to feed immediately (shows while connecting)
-            useGameStore.getState().addEvent({
+            // Add optimistic event to feed
+            state.addEvent({
                 id: `local-${questionId}-${Date.now()}`,
                 type: "answer",
                 username: "You",
@@ -184,87 +192,70 @@ export function LiveGameProvider({ game, children }: LiveGameProviderProps) {
                 timestamp: Date.now(),
             });
 
-            // Sync to server (fire and forget with retry)
+            // Sync to server immediately
             syncAnswer(game.id, questionId, selectedIndex, timeMs).then((result) => {
                 if (result.success) {
-                    setAnswers((prev) => {
-                        const updated = new Map(prev);
-                        const a = updated.get(questionId);
-                        if (a) updated.set(questionId, { ...a, synced: true });
-                        return updated;
-                    });
-                    // Update score in global store
-                    useGameStore.getState().updateScore(result.pointsEarned);
+                    store.getState().updateScore(result.pointsEarned);
                 }
             });
 
-            // Advance immediately - no delay
+            // Advance immediately
             advanceRef.current();
         },
-        [currentQuestion, answers, game.id, userPfpUrl]
+        [game.id, game.questions, userPfpUrl, store]
     );
 
     // Advance to next question or break
     const advance = useCallback(() => {
-        const currentQ = game.questions[questionIndex];
+        const state = store.getState();
+        const currentQ = game.questions[state.questionIndex];
 
         // If current question wasn't answered, submit timeout answer
-        if (currentQ && !answers.has(currentQ.id)) {
-            const timeMs = currentQ.durationSec * 1000; // Max time = timeout
-            const answer: Answer = { selected: -1, timeMs, synced: false };
-            setAnswers((prev) => new Map(prev).set(currentQ.id, answer));
-
-            // Sync timeout to server (0 points for -1 selection)
+        if (currentQ && !state.answers.has(currentQ.id)) {
+            const timeMs = currentQ.durationSec * 1000;
+            state.submitAnswer(currentQ.id, -1, timeMs);
             syncAnswer(game.id, currentQ.id, -1, timeMs);
         }
 
-        const nextIndex = questionIndex + 1;
+        const nextIndex = state.questionIndex + 1;
 
         // Game complete?
         if (nextIndex >= game.questions.length) {
-            setIsGameComplete(true);
+            state.setGameComplete(true);
             return;
         }
 
         // Need break between rounds?
-        if (!isBreak && needsBreak(questionIndex)) {
-            setIsBreak(true);
-            setTimerTarget(Date.now() + game.roundBreakSec * 1000);
+        const current = game.questions[state.questionIndex];
+        const next = game.questions[nextIndex];
+        if (!state.isBreak && current && next && current.roundIndex !== next.roundIndex) {
+            state.setIsBreak(true);
+            state.setTimerTarget(Date.now() + game.roundBreakSec * 1000);
             return;
         }
 
         // Move to next question
-        setIsBreak(false);
-        setQuestionIndex(nextIndex);
+        state.setIsBreak(false);
+        state.setQuestionIndex(nextIndex);
         questionStartRef.current = Date.now();
-        const nextQ = game.questions[nextIndex];
-        setTimerTarget(Date.now() + (nextQ?.durationSec ?? 10) * 1000);
-    }, [questionIndex, isBreak, needsBreak, game, router, answers]);
+        state.setTimerTarget(Date.now() + (next?.durationSec ?? 10) * 1000);
+    }, [game.id, game.questions, game.roundBreakSec, store]);
 
-    // Keep ref in sync for setTimeout callbacks
+    // Keep ref in sync
     advanceRef.current = advance;
 
-    // Start the game (called when countdown video ends)
+    // Start the game
     const startGame = useCallback(() => {
-        if (gameStarted) return;
-        setGameStarted(true);
+        const state = store.getState();
+        if (state.gameStarted) return;
+
+        state.setGameStarted(true);
         questionStartRef.current = Date.now();
         const firstQ = game.questions[0];
-        setTimerTarget(Date.now() + (firstQ?.durationSec ?? 10) * 1000);
-    }, [gameStarted, game.questions]);
+        state.setTimerTarget(Date.now() + (firstQ?.durationSec ?? 10) * 1000);
+    }, [game.questions, store]);
 
-    // Helper methods
-    const hasAnswered = useCallback(
-        (questionId: number) => answers.has(questionId),
-        [answers]
-    );
-
-    const getAnswer = useCallback(
-        (questionId: number) => answers.get(questionId),
-        [answers]
-    );
-
-    // Context value
+    // Context value (static props + actions only)
     const value = useMemo<LiveGameContextValue>(
         () => ({
             gameId: game.id,
@@ -273,35 +264,14 @@ export function LiveGameProvider({ game, children }: LiveGameProviderProps) {
             prizePool: game.prizePool,
             gameTheme: game.theme,
             recentPlayers: game.recentPlayers,
-            questionIndex,
-            isBreak,
-            timerTarget,
-            isGameComplete,
-            gameStarted,
-            answers,
-            hasAnswered,
-            getAnswer,
             submitAnswer,
             advance,
             startGame,
         }),
-        [
-            game,
-            questionIndex,
-            isBreak,
-            timerTarget,
-            isGameComplete,
-            gameStarted,
-            answers,
-            hasAnswered,
-            getAnswer,
-            submitAnswer,
-            advance,
-            startGame,
-        ]
+        [game, submitAnswer, advance, startGame]
     );
 
-    // Show loading while verifying access
+    // Verification UI states
     if (verificationState === "loading") {
         return (
             <div className="flex flex-col items-center justify-center h-screen w-full bg-[#0E0E0E]">
@@ -310,7 +280,6 @@ export function LiveGameProvider({ game, children }: LiveGameProviderProps) {
         );
     }
 
-    // Show message for redirect states
     if (verificationState === "no-ticket") {
         return (
             <div className="flex flex-col items-center justify-center h-screen w-full bg-[#0E0E0E]">
@@ -372,7 +341,6 @@ async function syncAnswer(
         } catch (e) {
             console.error(`Answer sync failed (attempt ${i + 1}):`, e);
         }
-        // Exponential backoff
         if (i < retries - 1) {
             await new Promise((r) => setTimeout(r, Math.pow(2, i) * 1000));
         }

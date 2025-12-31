@@ -1,8 +1,15 @@
 "use client";
 
+/**
+ * QuestionView
+ *
+ * Displays a question with options during live game.
+ * Uses Zustand store for answer state via useLiveGameState.
+ */
+
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { useLiveGame } from "../LiveGameProvider";
+import { useLiveGame, useLiveGameState } from "../LiveGameProvider";
 import { QuestionCardHeader } from "./QuestionCardHeader";
 import { QuestionOption } from "./QuestionOption";
 import { playSound } from "@/lib/sounds";
@@ -44,7 +51,7 @@ const mediaVariants = {
         scale: 1,
         transition: {
             duration: 0.5,
-            ease: [0.34, 1.56, 0.64, 1] as const, // Spring-like overshoot
+            ease: [0.34, 1.56, 0.64, 1] as const,
         },
     },
 };
@@ -96,7 +103,11 @@ export default function QuestionView({
     totalQuestions,
     seconds,
 }: QuestionViewProps) {
-    const { submitAnswer, hasAnswered } = useLiveGame();
+    // Static action from context
+    const { submitAnswer } = useLiveGame();
+
+    // Dynamic state from Zustand store
+    const { hasAnswered } = useLiveGameState();
 
     const isAnswered = hasAnswered(question.id);
     const isLowTime = seconds <= 3 && seconds > 0;
@@ -114,7 +125,7 @@ export default function QuestionView({
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            key={question.id} // Re-animate on question change
+            key={question.id}
         >
             {/* Header with timer */}
             <motion.div
@@ -151,7 +162,7 @@ export default function QuestionView({
                     {question.content}
                 </motion.div>
 
-                {/* Media with spring entrance - optimized for fast loading */}
+                {/* Media with spring entrance */}
                 <AnimatePresence>
                     {question.mediaUrl && (
                         <motion.figure

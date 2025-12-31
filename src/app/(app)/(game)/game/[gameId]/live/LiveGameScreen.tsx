@@ -1,70 +1,77 @@
 "use client";
 
+/**
+ * LiveGameScreen
+ *
+ * Main orchestrator for live game sessions.
+ * Uses Zustand store via provider-based hooks.
+ */
+
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useLiveGame } from "./LiveGameProvider";
+import { useLiveGame, useLiveGameState } from "./LiveGameProvider";
 import { useTimer } from "@/hooks/useTimer";
 import { playSound } from "@/lib/sounds";
+import { useGameStore } from "@/components/providers/GameStoreProvider";
+import { selectScore } from "@/lib/game-store";
 import QuestionView from "./_components/QuestionView";
 import BreakView from "./_components/BreakView";
 import GameCountdownScreen from "./_components/GameCountdownScreen";
 import GameCompleteScreen from "./_components/GameCompleteScreen";
 import { CheerOverlay } from "../../_components/CheerOverlay";
-import { useGameStore, selectScore } from "@/lib/game-store";
 
 /**
- * LiveGameScreen - Main orchestrator
+ * LiveGameScreen - Main entry point
  */
 export default function LiveGameScreen() {
     const [showCountdown, setShowCountdown] = useState(true);
     const { startGame, recentPlayers } = useLiveGame();
 
     const handleCountdownComplete = useCallback(() => {
-        startGame(); // Start the timer
-        setShowCountdown(false); // Show the game content
+        startGame();
+        setShowCountdown(false);
     }, [startGame]);
 
     if (showCountdown) {
-        return <GameCountdownScreen onComplete={handleCountdownComplete} recentPlayers={recentPlayers} />;
+        return (
+            <GameCountdownScreen
+                onComplete={handleCountdownComplete}
+                recentPlayers={recentPlayers}
+            />
+        );
     }
 
     return <LiveGameContent />;
 }
 
 /**
- * LiveGameContent - Actual game logic
+ * LiveGameContent - Game logic with Zustand state
  */
 function LiveGameContent() {
-    const {
-        isBreak,
-        timerTarget,
-        questionIndex,
-        questions,
-        advance,
-        isGameComplete,
-        gameId,
-        gameTheme,
-    } = useLiveGame();
+    // Static props from context
+    const { questions, advance, gameId, gameTheme } = useLiveGame();
 
+    // Dynamic state from Zustand store via provider
+    const { questionIndex, isBreak, timerTarget, isGameComplete } = useLiveGameState();
 
-
-    // Get score from global store (synced during gameplay)
+    // Score from store
     const score = useGameStore(selectScore);
 
+    // Timer with advance callback
     const seconds = useTimer(timerTarget, advance);
-    const prevSeconds = useRef(seconds);
+    const prevSecondsRef = useRef(seconds);
 
-    // Play timer sounds
+    // Timer sound effects
     useEffect(() => {
-        if (!isBreak && prevSeconds.current > 3 && seconds === 3) {
+        if (!isBreak && prevSecondsRef.current > 3 && seconds === 3) {
             playSound("timerFinal");
         }
-        if (prevSeconds.current > 0 && seconds === 0) {
+        if (prevSecondsRef.current > 0 && seconds === 0) {
             playSound("timeUp");
         }
-        prevSeconds.current = seconds;
+        prevSecondsRef.current = seconds;
     }, [seconds, isBreak]);
 
-    // Show game complete screen when finished
+    // Game complete
     if (isGameComplete) {
         return (
             <GameCompleteScreen
@@ -77,7 +84,7 @@ function LiveGameContent() {
 
     const currentQuestion = questions[questionIndex];
 
-    // No questions available - show error state instead of blank
+    // Error state
     if (!currentQuestion) {
         return (
             <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
@@ -89,18 +96,23 @@ function LiveGameContent() {
         );
     }
 
+    // Break between rounds
     if (isBreak) {
         const nextQuestion = questions[questionIndex + 1] ?? questions[0];
         return (
             <>
                 <div className="flex-1 flex flex-col min-h-0">
-                    <BreakView seconds={seconds} nextRoundNumber={nextQuestion?.roundIndex ?? 1} />
+                    <BreakView
+                        seconds={seconds}
+                        nextRoundNumber={nextQuestion?.roundIndex ?? 1}
+                    />
                 </div>
                 <CheerOverlay />
             </>
         );
     }
 
+    // Question view
     return (
         <>
             <QuestionView

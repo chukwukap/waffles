@@ -6,9 +6,9 @@ import { env } from "@/lib/env";
 type Params = { gameId: string };
 
 /**
- * POST /api/v1/games/:gameId/notify-start
- * Send game start notifications to all ticket holders.
- * Called by PartyKit alarm when game starts.
+ * POST /api/v1/games/:gameId/notify
+ * Send notifications to all ticket holders for a game.
+ * Called by PartyKit for game events (starting soon, started, ended).
  */
 export async function POST(
   request: NextRequest,
@@ -22,12 +22,15 @@ export async function POST(
       return NextResponse.json({ error: "Invalid game ID" }, { status: 400 });
     }
 
-    // Verify secret (called from PartyKit)
+    // Verify Authorization header (called from PartyKit)
     const authHeader = request.headers.get("Authorization");
     if (authHeader !== `Bearer ${env.partykitSecret}`) {
-      console.error("[notify-start] Invalid Authorization header");
+      console.error("[notify] Invalid Authorization header");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const body = await request.json();
+    const message = body.message || "Game update";
 
     // Get game info
     const game = await prisma.game.findUnique({
@@ -46,9 +49,7 @@ export async function POST(
         user: {
           select: {
             fid: true,
-            notifs: {
-              take: 1, // Just check if they have any token
-            },
+            notifs: { take: 1 },
           },
         },
       },
@@ -57,7 +58,7 @@ export async function POST(
     // Filter users with notification tokens
     const usersToNotify = entries.filter((e) => e.user.notifs.length > 0);
     console.log(
-      `[notify-start] Game ${gameId}: Notifying ${usersToNotify.length} of ${entries.length} players`
+      `[notify] Game ${gameId}: Notifying ${usersToNotify.length} of ${entries.length} players`
     );
 
     // Send notifications (in parallel with limited concurrency)
@@ -65,9 +66,9 @@ export async function POST(
       usersToNotify.map((entry) =>
         sendNotificationToUser({
           fid: entry.user.fid,
-          title: "🎮 Game Starting!",
-          body: `${game.title || "Your game"} is live now!`,
-          targetUrl: `${env.rootUrl}/game/${gameId}/play`,
+          title: game.title || "Waffle Game",
+          body: message,
+          targetUrl: `${env.rootUrl}/game/${gameId}`,
         })
       )
     );
@@ -76,7 +77,7 @@ export async function POST(
     const failed = results.filter((r) => r.status === "rejected").length;
 
     console.log(
-      `[notify-start] Game ${gameId}: ${successful} sent, ${failed} failed`
+      `[notify] Game ${gameId}: ${successful} sent, ${failed} failed`
     );
 
     return NextResponse.json({
@@ -86,7 +87,7 @@ export async function POST(
       total: usersToNotify.length,
     });
   } catch (error) {
-    console.error("[notify-start] Error:", error);
+    console.error("[notify] Error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

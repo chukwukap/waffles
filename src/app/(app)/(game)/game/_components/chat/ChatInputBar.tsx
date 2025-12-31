@@ -4,11 +4,9 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { UsersIcon } from "@/components/icons";
-import {
-  useGameStore,
-  selectOnlineCount,
-  selectSendReaction,
-} from "@/lib/game-store";
+import { useGameStore } from "@/components/providers/GameStoreProvider";
+import { selectOnlineCount } from "@/lib/game-store";
+import { useLiveConnection } from "@/components/providers/LiveConnectionProvider";
 import { springs } from "@/lib/animations";
 
 // ==========================================
@@ -114,7 +112,7 @@ function AnimatedCount({ value }: { value: number }) {
  */
 export function ChatInputBar({ onOpen }: ChatInputBarProps) {
   const activeCount = useGameStore(selectOnlineCount);
-  const sendReaction = useGameStore(selectSendReaction);
+  const { sendReaction } = useLiveConnection();
   const [bubbles, setBubbles] = useState<WaffleBubble[]>([]);
   const [bubbleIdCounter, setBubbleIdCounter] = useState(0);
 

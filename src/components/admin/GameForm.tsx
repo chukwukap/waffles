@@ -26,6 +26,7 @@ import {
 } from "react";
 import { MediaPicker } from "@/components/admin/MediaPicker";
 import { ConfirmationModal } from "@/components/admin/ConfirmationModal";
+import { THEMES } from "@/lib/constants";
 
 interface GameFormProps {
   action: (
@@ -47,54 +48,6 @@ interface GameFormProps {
   isEdit?: boolean;
 }
 
-// Theme configurations with enhanced styling
-const THEMES = [
-  {
-    id: "FOOTBALL",
-    label: "Football",
-    icon: "⚽",
-    color: "from-green-500 to-emerald-700",
-    bgColor: "bg-green-500",
-    glowColor: "shadow-green-500/30",
-    description: "Sports trivia",
-  },
-  {
-    id: "MOVIES",
-    label: "Movies",
-    icon: "🎬",
-    color: "from-red-500 to-rose-700",
-    bgColor: "bg-red-500",
-    glowColor: "shadow-red-500/30",
-    description: "Cinema & films",
-  },
-  {
-    id: "ANIME",
-    label: "Anime",
-    icon: "🎌",
-    color: "from-pink-500 to-fuchsia-700",
-    bgColor: "bg-pink-500",
-    glowColor: "shadow-pink-500/30",
-    description: "Japanese animation",
-  },
-  {
-    id: "POLITICS",
-    label: "Politics",
-    icon: "🏛️",
-    color: "from-blue-500 to-indigo-700",
-    bgColor: "bg-blue-600",
-    glowColor: "shadow-blue-500/30",
-    description: "World affairs",
-  },
-  {
-    id: "CRYPTO",
-    label: "Crypto",
-    icon: "₿",
-    color: "from-orange-500 to-amber-600",
-    bgColor: "bg-orange-500",
-    glowColor: "shadow-orange-500/30",
-    description: "Web3 & blockchain",
-  },
-];
 
 // Preset configurations for quick setup
 const PRESETS = [

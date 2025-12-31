@@ -3,7 +3,8 @@
 import { useRef, useEffect, useState, useImperativeHandle, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChatComment } from "./ChatComment";
-import { useGameStore, selectMessages, type ChatMessage } from "@/lib/game-store";
+import { useGameStore } from "@/components/providers/GameStoreProvider";
+import { selectMessages, type ChatMessage } from "@/lib/game-store";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { springs } from "@/lib/animations";
 import { playSound } from "@/lib/sounds";

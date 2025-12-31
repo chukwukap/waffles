@@ -2,7 +2,8 @@
 
 import { memo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useGameStore, selectEvents, selectMessages, selectIsConnected, selectOnlineCount } from "@/lib/game-store";
+import { useGameStore } from "@/components/providers/GameStoreProvider";
+import { selectEvents, selectMessages, selectIsConnected, selectOnlineCount, type GameEvent, type ChatMessage } from "@/lib/game-store";
 import { springs } from "@/lib/animations";
 
 // ==========================================

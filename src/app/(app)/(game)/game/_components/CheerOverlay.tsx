@@ -3,7 +3,8 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import Image from "next/image";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
-import { useGameStore, selectReactions } from "@/lib/game-store";
+import { useGameStore } from "@/components/providers/GameStoreProvider";
+import { selectReactions } from "@/lib/game-store";
 
 // ==========================================
 // TYPES

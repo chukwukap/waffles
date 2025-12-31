@@ -191,6 +191,45 @@ export async function createGameAction(
       });
     }
 
+    // Initialize PartyKit room with alarms
+    const partykitHost = process.env.NEXT_PUBLIC_PARTYKIT_HOST;
+    const partykitSecret = process.env.PARTYKIT_SECRET;
+
+    if (partykitHost && partykitSecret) {
+      const partykitUrl = partykitHost.startsWith("http")
+        ? partykitHost
+        : `https://${partykitHost}`;
+
+      try {
+        const res = await fetch(
+          `${partykitUrl}/parties/game/game-${game.id}/init`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${partykitSecret}`,
+            },
+            body: JSON.stringify({
+              gameId: game.id,
+              startsAt: game.startsAt.toISOString(),
+              endsAt: game.endsAt.toISOString(),
+              questions: [], // Questions synced separately when added
+            }),
+          }
+        );
+
+        if (res.ok) {
+          console.log(
+            `[CreateGame] PartyKit room initialized for game ${game.id}`
+          );
+        } else {
+          console.error(`[CreateGame] PartyKit init failed: ${res.status}`);
+        }
+      } catch (err) {
+        console.error(`[CreateGame] PartyKit init error:`, err);
+      }
+    }
+
     revalidatePath("/admin/games");
     redirect(`/admin/games/${game.id}/questions`);
   } catch (error) {

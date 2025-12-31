@@ -2,37 +2,63 @@
  * Game Store
  *
  * Central state management for the game system.
- * Uses Zustand for minimal re-renders via selectors.
+ * Uses Zustand with per-request store factory for SSR safety.
+ *
+ * @see https://docs.pmnd.rs/zustand/guides/nextjs
  */
 
-import { create } from "zustand";
+import { createStore } from "zustand";
 import { devtools } from "zustand/middleware";
-import type { GamePhase } from "./game-utils";
+import type { Game, GameEntry, Question as PrismaQuestion } from "@/lib/db";
 
 // ==========================================
-// TYPES
+// TYPES - Derived from Prisma
 // ==========================================
 
-export interface GameData {
-  id: number;
-  title: string;
-  theme: string;
-  coverUrl: string | null;
-  startsAt: Date;
-  endsAt: Date;
-  tierPrices: number[];
-  prizePool: number;
-  playerCount: number;
-  maxPlayers: number;
-}
+// Subset of Game model used in client state
+export type GameData = Pick<
+  Game,
+  | "id"
+  | "title"
+  | "theme"
+  | "coverUrl"
+  | "startsAt"
+  | "endsAt"
+  | "tierPrices"
+  | "prizePool"
+  | "playerCount"
+  | "maxPlayers"
+>;
 
-export interface GameEntryData {
-  id: number;
-  score: number;
-  answered: number;
-  paidAt: Date | null;
-  rank: number | null;
-  prize: number | null;
+// Subset of GameEntry model used in client state
+export type GameEntryData = Pick<
+  GameEntry,
+  "id" | "score" | "answered" | "paidAt" | "rank" | "prize" | "claimedAt"
+>;
+
+// Subset of Question model used in client state
+export type Question = Pick<
+  PrismaQuestion,
+  | "id"
+  | "content"
+  | "mediaUrl"
+  | "soundUrl"
+  | "options"
+  | "correctIndex"
+  | "durationSec"
+  | "points"
+  | "roundIndex"
+  | "orderInRound"
+>;
+
+// ==========================================
+// TYPES - Runtime only (not in DB)
+// ==========================================
+
+export interface Answer {
+  questionId: number;
+  selected: number;
+  timeMs: number;
 }
 
 export interface ChatMessage {
@@ -56,7 +82,7 @@ export interface Reaction {
   id: string;
   username: string;
   pfpUrl: string | null;
-  type: string; // e.g., 'cheer'
+  type: string;
   timestamp: number;
 }
 
@@ -67,30 +93,48 @@ export interface RecentPlayer {
 }
 
 // ==========================================
-// STORE INTERFACE
+// STATE INTERFACE
 // ==========================================
 
-interface GameStore {
-  // Game data (set from server)
+export interface GameState {
+  // === CORE ===
   game: GameData | null;
-  phase: GamePhase;
-
-  // User's entry (fetched after auth)
   entry: GameEntryData | null;
 
-  // Real-time state
+  // === LIVE SESSION ===
+  questions: Question[];
+  answers: Map<number, Answer>;
+  questionIndex: number;
+  isBreak: boolean;
+  timerTarget: number;
+  gameStarted: boolean;
+  isGameComplete: boolean;
+  roundBreakSec: number;
+
+  // === REAL-TIME ===
   isConnected: boolean;
   onlineCount: number;
   messages: ChatMessage[];
   events: GameEvent[];
+  reactions: Reaction[];
   recentPlayers: RecentPlayer[];
 
-  // Actions - Game
+  // === ACTIONS - CORE ===
   setGame: (game: GameData | null) => void;
-  setPhase: (phase: GamePhase) => void;
   setEntry: (entry: GameEntryData | null) => void;
 
-  // Actions - Real-time
+  // === ACTIONS - LIVE SESSION ===
+  setQuestions: (questions: Question[], roundBreakSec?: number) => void;
+  submitAnswer: (questionId: number, selected: number, timeMs: number) => void;
+  advanceQuestion: () => void;
+  setQuestionIndex: (index: number) => void;
+  setIsBreak: (isBreak: boolean) => void;
+  setTimerTarget: (target: number) => void;
+  setGameStarted: (started: boolean) => void;
+  setGameComplete: (complete: boolean) => void;
+  resetLiveSession: () => void;
+
+  // === ACTIONS - REAL-TIME ===
   setConnected: (connected: boolean) => void;
   setOnlineCount: (count: number) => void;
   addMessage: (message: ChatMessage) => void;
@@ -101,174 +145,242 @@ interface GameStore {
   addPlayer: (player: RecentPlayer) => void;
   setRecentPlayers: (players: RecentPlayer[]) => void;
 
-  // Actions - Score (optimistic updates)
+  // === ACTIONS - SCORE ===
   updateScore: (points: number) => void;
   incrementAnswered: () => void;
 
-  // Actions - Reset
+  // === ACTIONS - RESET ===
   reset: () => void;
-
-  // Chat function (set by useLive)
-  sendChat: (text: string) => void;
-  setSendChat: (fn: (text: string) => void) => void;
-
-  // Event function (set by useLive)
-  sendEvent: (type: string, content: string) => void;
-  setSendEvent: (fn: (type: string, content: string) => void) => void;
-
-  // Reaction function (set by useLive)
-  sendReaction: (type?: string) => void;
-  setSendReaction: (fn: (type?: string) => void) => void;
-
-  // Reactions state
-  reactions: Reaction[];
 }
 
 // ==========================================
 // INITIAL STATE
 // ==========================================
 
-const initialState = {
-  game: null,
-  phase: "SCHEDULED" as GamePhase,
-  entry: null,
+const initialCoreState = {
+  game: null as GameData | null,
+  entry: null as GameEntryData | null,
+};
+
+const initialLiveState = {
+  questions: [] as Question[],
+  answers: new Map<number, Answer>(),
+  questionIndex: 0,
+  isBreak: false,
+  timerTarget: Date.now() + 999999999,
+  gameStarted: false,
+  isGameComplete: false,
+  roundBreakSec: 5,
+};
+
+const initialRealTimeState = {
   isConnected: false,
   onlineCount: 0,
-  messages: [],
-  events: [],
-  reactions: [],
-  recentPlayers: [],
-  sendChat: () => {}, // No-op until useLive sets it
-  sendEvent: () => {}, // No-op until useLive sets it
-  sendReaction: () => {}, // No-op until useLive sets it
+  messages: [] as ChatMessage[],
+  events: [] as GameEvent[],
+  reactions: [] as Reaction[],
+  recentPlayers: [] as RecentPlayer[],
+};
+
+const initialState = {
+  ...initialCoreState,
+  ...initialLiveState,
+  ...initialRealTimeState,
 };
 
 // ==========================================
-// STORE IMPLEMENTATION
+// STORE FACTORY (SSR-safe)
 // ==========================================
 
-export const useGameStore = create<GameStore>()(
-  devtools(
-    (set, get) => ({
-      ...initialState,
+export type GameStore = ReturnType<typeof createGameStore>;
 
-      // Game actions
-      setGame: (game) => set({ game }, false, "setGame"),
-      setPhase: (phase) => set({ phase }, false, "setPhase"),
-      setEntry: (entry) => set({ entry }, false, "setEntry"),
+export const createGameStore = () =>
+  createStore<GameState>()(
+    devtools(
+      (set, get) => ({
+        ...initialState,
 
-      // Real-time actions
-      setConnected: (isConnected) =>
-        set({ isConnected }, false, "setConnected"),
-      setOnlineCount: (onlineCount) =>
-        set({ onlineCount }, false, "setOnlineCount"),
+        // === CORE ACTIONS ===
+        setGame: (game) => set({ game }, false, "setGame"),
+        setEntry: (entry) => set({ entry }, false, "setEntry"),
 
-      addMessage: (message) =>
-        set(
-          (state) => ({
-            messages: [...state.messages.slice(-99), message], // Keep last 100
-          }),
-          false,
-          "addMessage"
-        ),
+        // === LIVE SESSION ACTIONS ===
+        setQuestions: (questions, roundBreakSec = 5) =>
+          set({ questions, roundBreakSec }, false, "setQuestions"),
 
-      setMessages: (messages) => set({ messages }, false, "setMessages"),
+        submitAnswer: (questionId, selected, timeMs) =>
+          set(
+            (state) => {
+              const newAnswers = new Map(state.answers);
+              newAnswers.set(questionId, {
+                questionId,
+                selected,
+                timeMs,
+              });
+              return { answers: newAnswers };
+            },
+            false,
+            "submitAnswer"
+          ),
 
-      addEvent: (event) =>
-        set(
-          (state) => ({
-            events: [...state.events.slice(-19), event], // Keep last 20
-          }),
-          false,
-          "addEvent"
-        ),
+        advanceQuestion: () =>
+          set(
+            (state) => {
+              const nextIndex = state.questionIndex + 1;
+              if (nextIndex >= state.questions.length) {
+                return { isGameComplete: true };
+              }
 
-      setEvents: (events) => set({ events }, false, "setEvents"),
+              // Check if round break needed
+              const current = state.questions[state.questionIndex];
+              const next = state.questions[nextIndex];
+              if (current && next && current.roundIndex !== next.roundIndex) {
+                return {
+                  isBreak: true,
+                  timerTarget: Date.now() + state.roundBreakSec * 1000,
+                };
+              }
 
-      addReaction: (reaction) =>
-        set(
-          (state) => ({
-            reactions: [...state.reactions.slice(-29), reaction], // Keep last 30
-          }),
-          false,
-          "addReaction"
-        ),
+              return {
+                questionIndex: nextIndex,
+                isBreak: false,
+                timerTarget: Date.now() + (next?.durationSec ?? 10) * 1000,
+              };
+            },
+            false,
+            "advanceQuestion"
+          ),
 
-      addPlayer: (player) =>
-        set(
-          (state) => {
-            // Avoid duplicates - check if player already exists
-            const exists = state.recentPlayers.some(
-              (p) => p.username === player.username
-            );
-            if (exists) return state;
-            return {
-              recentPlayers: [...state.recentPlayers.slice(-19), player], // Keep last 20
-            };
-          },
-          false,
-          "addPlayer"
-        ),
+        setQuestionIndex: (index) =>
+          set({ questionIndex: index }, false, "setQuestionIndex"),
+        setIsBreak: (isBreak) => set({ isBreak }, false, "setIsBreak"),
+        setTimerTarget: (target) =>
+          set({ timerTarget: target }, false, "setTimerTarget"),
+        setGameStarted: (started) =>
+          set({ gameStarted: started }, false, "setGameStarted"),
+        setGameComplete: (complete) =>
+          set({ isGameComplete: complete }, false, "setGameComplete"),
 
-      setRecentPlayers: (players) =>
-        set({ recentPlayers: players }, false, "setRecentPlayers"),
+        resetLiveSession: () =>
+          set(initialLiveState, false, "resetLiveSession"),
 
-      // Score actions (optimistic)
-      updateScore: (points) =>
-        set(
-          (state) => ({
-            entry: state.entry
-              ? { ...state.entry, score: state.entry.score + points }
-              : null,
-          }),
-          false,
-          "updateScore"
-        ),
+        // === REAL-TIME ACTIONS ===
+        setConnected: (isConnected) =>
+          set({ isConnected }, false, "setConnected"),
+        setOnlineCount: (onlineCount) =>
+          set({ onlineCount }, false, "setOnlineCount"),
 
-      incrementAnswered: () =>
-        set(
-          (state) => ({
-            entry: state.entry
-              ? { ...state.entry, answered: state.entry.answered + 1 }
-              : null,
-          }),
-          false,
-          "incrementAnswered"
-        ),
+        addMessage: (message) =>
+          set(
+            (state) => ({
+              messages: [...state.messages.slice(-99), message],
+            }),
+            false,
+            "addMessage"
+          ),
 
-      // Chat function setter
-      setSendChat: (fn) => set({ sendChat: fn }, false, "setSendChat"),
+        setMessages: (messages) => set({ messages }, false, "setMessages"),
 
-      // Event function setter
-      setSendEvent: (fn) => set({ sendEvent: fn }, false, "setSendEvent"),
+        addEvent: (event) =>
+          set(
+            (state) => ({
+              events: [...state.events.slice(-19), event],
+            }),
+            false,
+            "addEvent"
+          ),
 
-      // Reaction function setter
-      setSendReaction: (fn) =>
-        set({ sendReaction: fn }, false, "setSendReaction"),
+        setEvents: (events) => set({ events }, false, "setEvents"),
 
-      // Reset
-      reset: () => set(initialState, false, "reset"),
-    }),
-    { name: "game-store" }
-  )
-);
+        addReaction: (reaction) =>
+          set(
+            (state) => ({
+              reactions: [...state.reactions.slice(-29), reaction],
+            }),
+            false,
+            "addReaction"
+          ),
+
+        addPlayer: (player) =>
+          set(
+            (state) => {
+              const exists = state.recentPlayers.some(
+                (p) => p.username === player.username
+              );
+              if (exists) return state;
+              return {
+                recentPlayers: [...state.recentPlayers.slice(-19), player],
+              };
+            },
+            false,
+            "addPlayer"
+          ),
+
+        setRecentPlayers: (players) =>
+          set({ recentPlayers: players }, false, "setRecentPlayers"),
+
+        // === SCORE ACTIONS ===
+        updateScore: (points) =>
+          set(
+            (state) => ({
+              entry: state.entry
+                ? { ...state.entry, score: state.entry.score + points }
+                : null,
+            }),
+            false,
+            "updateScore"
+          ),
+
+        incrementAnswered: () =>
+          set(
+            (state) => ({
+              entry: state.entry
+                ? { ...state.entry, answered: state.entry.answered + 1 }
+                : null,
+            }),
+            false,
+            "incrementAnswered"
+          ),
+
+        // === RESET ===
+        reset: () => set(initialState, false, "reset"),
+      }),
+      { name: "game-store" }
+    )
+  );
+
+// ==========================================
+// NOTE: All store access should go through GameStoreProvider
+// Use useGameStoreContext from game-store-provider.tsx
+// ==========================================
 
 // ==========================================
 // SELECTORS (for performance)
 // ==========================================
 
-export const selectGame = (state: GameStore) => state.game;
-export const selectPhase = (state: GameStore) => state.phase;
-export const selectEntry = (state: GameStore) => state.entry;
-export const selectHasEntry = (state: GameStore) => state.entry !== null;
-export const selectIsConnected = (state: GameStore) => state.isConnected;
-export const selectOnlineCount = (state: GameStore) => state.onlineCount;
-export const selectMessages = (state: GameStore) => state.messages;
-export const selectEvents = (state: GameStore) => state.events;
-export const selectScore = (state: GameStore) => state.entry?.score ?? 0;
-export const selectAnswered = (state: GameStore) => state.entry?.answered ?? 0;
-export const selectSendChat = (state: GameStore) => state.sendChat;
-export const selectSendEvent = (state: GameStore) => state.sendEvent;
-export const selectReactions = (state: GameStore) => state.reactions;
-export const selectSendReaction = (state: GameStore) => state.sendReaction;
-export const selectRecentPlayers = (state: GameStore) => state.recentPlayers;
+export const selectGame = (state: GameState) => state.game;
+export const selectEntry = (state: GameState) => state.entry;
+export const selectHasEntry = (state: GameState) => state.entry !== null;
+export const selectIsConnected = (state: GameState) => state.isConnected;
+export const selectOnlineCount = (state: GameState) => state.onlineCount;
+export const selectMessages = (state: GameState) => state.messages;
+export const selectEvents = (state: GameState) => state.events;
+export const selectScore = (state: GameState) => state.entry?.score ?? 0;
+export const selectAnswered = (state: GameState) => state.entry?.answered ?? 0;
+export const selectReactions = (state: GameState) => state.reactions;
+export const selectRecentPlayers = (state: GameState) => state.recentPlayers;
+
+// Live session selectors
+export const selectQuestions = (state: GameState) => state.questions;
+export const selectAnswers = (state: GameState) => state.answers;
+export const selectQuestionIndex = (state: GameState) => state.questionIndex;
+export const selectCurrentQuestion = (state: GameState) =>
+  state.questions[state.questionIndex] ?? null;
+export const selectIsBreak = (state: GameState) => state.isBreak;
+export const selectTimerTarget = (state: GameState) => state.timerTarget;
+export const selectGameStarted = (state: GameState) => state.gameStarted;
+export const selectIsGameComplete = (state: GameState) => state.isGameComplete;
+export const selectHasAnswered = (questionId: number) => (state: GameState) =>
+  state.answers.has(questionId);
+export const selectAnswer = (questionId: number) => (state: GameState) =>
+  state.answers.get(questionId);
