@@ -6,7 +6,6 @@ import sdk from "@farcaster/miniapp-sdk";
 import CircularProgress from "./CircularProgress";
 import { LiveEventFeed } from "../../../_components/LiveEventFeed";
 import { GameChat } from "../../../_components/chat/GameChat";
-import { useLiveGame } from "../LiveGameProvider";
 import Image from "next/image";
 
 const MAX_LEADERBOARD_ENTRIES = 10;
@@ -19,6 +18,7 @@ interface BreakViewProps {
   seconds: number;
   nextRoundNumber: number;
   totalDuration?: number;
+  gameId: number;
 }
 
 interface LeaderboardEntry {
@@ -36,9 +36,9 @@ interface LeaderboardEntry {
 
 export default function BreakView({
   seconds,
-  totalDuration = 15,
+  totalDuration = 20,
+  gameId,
 }: BreakViewProps) {
-  const { gameId } = useLiveGame();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 

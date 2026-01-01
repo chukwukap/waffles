@@ -6,7 +6,7 @@ import { env } from "@/lib/env";
 type Params = { gameId: string };
 
 /**
- * POST /api/v1/games/:gameId/notify
+ * POST /api/v1/internal/games/:gameId/notify
  * Send notifications to all ticket holders for a game.
  * Called by PartyKit for game events (starting soon, started, ended).
  */

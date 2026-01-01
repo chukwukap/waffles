@@ -16,8 +16,8 @@ import {
 } from "@heroicons/react/24/outline";
 import { SettlementPanel } from "./_components/SettlementPanel";
 import { GameResults } from "./_components/GameResults";
-import { getOnChainGame } from "@/lib/settlement";
-import { getGamePhase } from "@/lib/game-utils";
+import { getOnChainGame } from "@/lib/chain";
+import { getGamePhase } from "@/lib/types";
 
 // ============================================
 // HELPER COMPONENTS

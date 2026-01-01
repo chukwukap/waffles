@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
-import { prisma, Prisma } from "@/lib/db";
+import { prisma } from "@/lib/db";
+import { Prisma } from "@prisma";
 import { z } from "zod";
 import { getScore } from "@/lib/scoring";
 

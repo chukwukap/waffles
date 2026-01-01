@@ -9,7 +9,6 @@
 
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { useLiveGame, useLiveGameState } from "../LiveGameProvider";
 import { QuestionCardHeader } from "./QuestionCardHeader";
 import { QuestionOption } from "./QuestionOption";
 import { playSound } from "@/lib/sounds";
@@ -91,6 +90,8 @@ interface QuestionViewProps {
     questionNumber: number;
     totalQuestions: number;
     seconds: number;
+    onAnswer: (selectedIndex: number) => void;
+    hasAnswered: boolean;
 }
 
 // ==========================================
@@ -102,20 +103,15 @@ export default function QuestionView({
     questionNumber,
     totalQuestions,
     seconds,
+    onAnswer,
+    hasAnswered,
 }: QuestionViewProps) {
-    // Static action from context
-    const { submitAnswer } = useLiveGame();
-
-    // Dynamic state from Zustand store
-    const { hasAnswered } = useLiveGameState();
-
-    const isAnswered = hasAnswered(question.id);
     const isLowTime = seconds <= 3 && seconds > 0;
     const isTimeUp = seconds === 0;
 
     const handleSelect = (index: number) => {
-        if (isAnswered) return;
-        submitAnswer(index);
+        if (hasAnswered) return;
+        onAnswer(index);
         playSound("answerSubmit");
     };
 
@@ -200,16 +196,16 @@ export default function QuestionView({
                             key={idx}
                             option={opt}
                             index={idx}
-                            selectedOptionIndex={isAnswered ? -1 : null}
+                            selectedOptionIndex={hasAnswered ? -1 : null}
                             onSelect={handleSelect}
-                            disabled={isAnswered || isTimeUp}
+                            disabled={hasAnswered || isTimeUp}
                         />
                     ))}
                 </motion.ul>
 
                 {/* Answered status with bounce entrance */}
                 <AnimatePresence>
-                    {isAnswered && (
+                    {hasAnswered && (
                         <motion.div
                             className="mx-auto text-center font-display text-[16px] text-[#99A0AE] flex items-center justify-center gap-2"
                             variants={statusVariants}
@@ -237,7 +233,7 @@ export default function QuestionView({
 
                 {/* Real-time player count at bottom */}
                 <AnimatePresence>
-                    {isAnswered && (
+                    {hasAnswered && (
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}

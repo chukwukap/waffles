@@ -2,8 +2,8 @@
 
 import { OnchainKitProvider } from "@coinbase/onchainkit";
 import { env } from "@/lib/env";
-import { CHAIN_CONFIG } from "@/lib/contracts/config";
-import { minikitConfig } from "../../../minikit.config";
+import { CHAIN_CONFIG } from "@/lib/chain";
+import { minikitConfig } from "@minikit-config";
 
 interface Props {
   children: React.ReactNode;

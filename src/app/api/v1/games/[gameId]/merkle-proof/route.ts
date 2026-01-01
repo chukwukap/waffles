@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { generateMerkleProof, type Winner } from "@/lib/merkle";
+import { generateMerkleProof, type Winner } from "@/lib/chain";
 import { parseUnits } from "viem";
-import { TOKEN_CONFIG } from "@/lib/contracts/config";
-import { getGamePhase } from "@/lib/game-utils";
+import { TOKEN_CONFIG } from "@/lib/chain";
+import { getGamePhase } from "@/lib/types";
 
 interface MerkleProofResponse {
   gameId: number;

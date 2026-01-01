@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getGamePhase } from "@/lib/game-utils";
+import { getGamePhase } from "@/lib/types";
 
 type Params = { gameId: string };
 

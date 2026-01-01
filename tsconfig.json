@@ -19,7 +19,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@minikit-config": ["./minikit.config.ts"],
+      "@prisma": ["./prisma/generated/client"]
     }
   },
   "include": [

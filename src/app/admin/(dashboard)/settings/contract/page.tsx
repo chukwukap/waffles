@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { getExplorerUrl } from "@/lib/contracts/config";
+import { getExplorerUrl } from "@/lib/chain";
 import {
     CurrencyDollarIcon,
     ChartPieIcon,
@@ -202,7 +202,7 @@ export default function ContractSettingsPage() {
                             <p className="text-white font-mono">{state.address}</p>
                         </div>
                         <a
-                            href={getExplorerUrl.address(state.address)}
+                            href={getExplorerUrl(state.address, "address")}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white text-sm transition-colors"
@@ -224,7 +224,7 @@ export default function ContractSettingsPage() {
                             </div>
                         </div>
                         <a
-                            href={getExplorerUrl.address(state.token.address)}
+                            href={getExplorerUrl(state.token.address, "address")}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white text-sm transition-colors"

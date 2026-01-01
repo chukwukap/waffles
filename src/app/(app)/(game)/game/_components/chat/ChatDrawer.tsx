@@ -7,7 +7,7 @@ import Backdrop from "@/components/ui/Backdrop";
 import { ChatMessageList } from "./ChatMessageList";
 import { useGameStore } from "@/components/providers/GameStoreProvider";
 import { selectIsConnected } from "@/lib/game-store";
-import { useLiveConnection } from "@/components/providers/LiveConnectionProvider";
+import { useGameSocket } from "@/hooks/useGameSocket";
 import { springs } from "@/lib/animations";
 import { playSound } from "@/lib/sounds";
 import { useVisualViewport } from "@/hooks/useVisualViewport";
@@ -65,7 +65,7 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
   const dragControls = useDragControls();
 
   const isConnected = useGameStore(selectIsConnected);
-  const { sendChat } = useLiveConnection();
+  const { sendChat } = useGameSocket();
   const { keyboardHeight, isKeyboardOpen } = useVisualViewport();
 
   // Max message length

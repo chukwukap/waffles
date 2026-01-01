@@ -11,11 +11,8 @@ interface UserProfile {
   pfpUrl: string | null;
 }
 
-interface PlayerState extends UserProfile {
-  answers: Record<number, number>;
-  score: number;
-  answeredCount: number;
-}
+// PlayerState is now just UserProfile (no score tracking - DB is source of truth)
+type PlayerState = UserProfile;
 
 interface ChatMessage {
   id: string;
@@ -53,7 +50,7 @@ type ClientMessage =
       data: { questionId: number; selected: number; timeMs: number };
     }
   | { type: "event"; data: { eventType: string; content: string } }
-  | { type: "reaction"; reactionType: string };
+  | { type: "cheer" };
 
 // ==========================================
 // GAME SERVER
@@ -223,14 +220,6 @@ export default class GameServer implements Party.Server {
         );
       }
 
-      case "leaderboard": {
-        const leaderboard = await this.getLeaderboard();
-        return Response.json(
-          { leaderboard: leaderboard.slice(0, 20) },
-          { headers }
-        );
-      }
-
       case "sync-questions": {
         if (req.method !== "POST") {
           return Response.json(
@@ -262,6 +251,55 @@ export default class GameServer implements Party.Server {
           console.error("[sync-questions] Error:", error);
           return Response.json(
             { error: "Failed to sync questions" },
+            { status: 500, headers }
+          );
+        }
+      }
+
+      // ==========================================
+      // STATS-UPDATE - Called when ticket purchased
+      // ==========================================
+      case "stats-update": {
+        if (req.method !== "POST") {
+          return Response.json(
+            { error: "Method not allowed" },
+            { status: 405, headers }
+          );
+        }
+
+        const secret = this.room.env.PARTYKIT_SECRET as string;
+        const authHeader = req.headers.get("Authorization");
+        if (authHeader !== `Bearer ${secret}`) {
+          return Response.json(
+            { error: "Unauthorized" },
+            { status: 401, headers }
+          );
+        }
+
+        try {
+          const body = (await req.json()) as {
+            prizePool: number;
+            playerCount: number;
+          };
+
+          // Broadcast to all connected clients
+          this.broadcast({
+            type: "gameStats",
+            data: {
+              prizePool: body.prizePool,
+              playerCount: body.playerCount,
+            },
+          });
+
+          console.log(
+            `[stats-update] Broadcasted: prizePool=${body.prizePool}, playerCount=${body.playerCount}`
+          );
+
+          return Response.json({ success: true }, { headers });
+        } catch (error) {
+          console.error("[stats-update] Error:", error);
+          return Response.json(
+            { error: "Failed to broadcast stats" },
             { status: 500, headers }
           );
         }
@@ -447,26 +485,29 @@ export default class GameServer implements Party.Server {
       await this.room.storage.put("gameState", gameState);
     }
 
-    // Get final leaderboard
-    const leaderboard = await this.getLeaderboard();
-
-    // Persist results via API
+    // Trigger rank calculation via API (DB is source of truth for scores)
     try {
       const appUrl = this.room.env.NEXT_PUBLIC_URL as string;
       const secret = this.room.env.PARTYKIT_SECRET as string;
 
       if (appUrl && secret) {
-        await fetch(`${appUrl}/api/v1/games/${gameId}/settle`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${secret}`,
-          },
-          body: JSON.stringify({ scores: leaderboard }),
-        });
+        const res = await fetch(
+          `${appUrl}/api/v1/internal/games/${gameId}/finalize`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${secret}`,
+            },
+          }
+        );
+
+        if (!res.ok) {
+          console.error(`[GameEnd] Finalize API failed: ${res.status}`);
+        }
       }
     } catch (error) {
-      console.error("[GameEnd] Failed to persist results:", error);
+      console.error("[GameEnd] Failed to finalize game:", error);
     }
 
     // Send notifications
@@ -475,39 +516,15 @@ export default class GameServer implements Party.Server {
     // Broadcast game end
     this.broadcast({
       type: "gameEnd",
-      data: { leaderboard: leaderboard.slice(0, 10) },
+      data: { gameId },
     });
 
-    console.log(
-      `[GameEnd] Game ${gameId} - ended with ${leaderboard.length} players`
-    );
+    console.log(`[GameEnd] Game ${gameId} - finalized`);
   }
 
   // ==========================================
   // HELPERS
   // ==========================================
-
-  async fetchQuestionsFromAPI(gameId: number): Promise<Question[]> {
-    try {
-      const appUrl = this.room.env.NEXT_PUBLIC_URL as string;
-      const secret = this.room.env.PARTYKIT_SECRET as string;
-
-      const res = await fetch(`${appUrl}/api/v1/games/${gameId}/questions`, {
-        headers: { Authorization: `Bearer ${secret}` },
-      });
-
-      if (!res.ok) {
-        console.error(`[FetchQuestions] Failed: ${res.status}`);
-        return [];
-      }
-
-      const data = await res.json();
-      return data.questions || [];
-    } catch (error) {
-      console.error("[FetchQuestions] Error:", error);
-      return [];
-    }
-  }
 
   async sendNotifications(message: string) {
     try {
@@ -517,7 +534,7 @@ export default class GameServer implements Party.Server {
 
       if (!appUrl || !secret || !gameId) return;
 
-      await fetch(`${appUrl}/api/v1/games/${gameId}/notify`, {
+      await fetch(`${appUrl}/api/v1/internal/games/${gameId}/notify`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -557,21 +574,7 @@ export default class GameServer implements Party.Server {
     const username = ctx.request.headers.get("X-User-Username") || "Unknown";
     const pfpUrl = ctx.request.headers.get("X-User-PfpUrl") || null;
 
-    const existingScore =
-      (await this.room.storage.get<number>(`score:${fid}`)) ?? 0;
-    const existingAnswers =
-      (await this.room.storage.get<Record<number, number>>(`answers:${fid}`)) ||
-      {};
-
-    const player: PlayerState = {
-      fid,
-      username,
-      pfpUrl,
-      answers: existingAnswers,
-      score: existingScore,
-      answeredCount: Object.keys(existingAnswers).length,
-    };
-
+    const player: PlayerState = { fid, username, pfpUrl };
     conn.setState(player);
 
     if (!this.seenFids.has(fid)) {
@@ -582,7 +585,7 @@ export default class GameServer implements Party.Server {
       this.broadcastPresence(player, "count");
     }
 
-    const gameState = await this.room.storage.get<GameState>("gameState");
+    // Send sync data (no scores - DB is source of truth)
     conn.send(
       JSON.stringify({
         type: "sync",
@@ -595,9 +598,6 @@ export default class GameServer implements Party.Server {
             text: msg.text,
             timestamp: msg.timestamp,
           })),
-          gameState: gameState ?? null,
-          score: player.score,
-          answers: player.answers,
         },
       })
     );
@@ -629,15 +629,9 @@ export default class GameServer implements Party.Server {
             },
           });
           break;
-        case "reaction":
-          this.broadcast({
-            type: "reaction",
-            data: {
-              username: player.username,
-              pfpUrl: player.pfpUrl,
-              reactionType: data.reactionType || "cheer",
-            },
-          });
+        case "cheer":
+          // Broadcast to all EXCEPT sender (sender already shows local cheer)
+          this.room.broadcast(JSON.stringify({ type: "cheer" }), [sender.id]);
           break;
       }
     } catch {
@@ -650,76 +644,8 @@ export default class GameServer implements Party.Server {
     player: PlayerState,
     data: { questionId: number; selected: number; timeMs: number }
   ) {
-    const gameState = await this.room.storage.get<GameState>("gameState");
-    if (!gameState?.isLive || gameState.isBreak) {
-      conn.send(
-        JSON.stringify({
-          type: "answerResult",
-          data: { error: "Game not active" },
-        })
-      );
-      return;
-    }
-
-    const question = gameState.questions[gameState.currentQuestionIndex];
-    if (!question || question.id !== data.questionId) {
-      conn.send(
-        JSON.stringify({
-          type: "answerResult",
-          data: { error: "Invalid question" },
-        })
-      );
-      return;
-    }
-
-    if (player.answers[data.questionId] !== undefined) {
-      conn.send(
-        JSON.stringify({
-          type: "answerResult",
-          data: { error: "Already answered" },
-        })
-      );
-      return;
-    }
-
-    const now = Date.now();
-    if (now > gameState.questionEndTime) {
-      conn.send(
-        JSON.stringify({
-          type: "answerResult",
-          data: { error: "Time expired" },
-        })
-      );
-      return;
-    }
-
-    const isCorrect = question.correct === data.selected;
-    const timeElapsed = now - gameState.questionStartTime;
-    const maxTime = question.timeLimit * 1000;
-    const speedBonus = isCorrect
-      ? Math.max(0, Math.floor((1 - timeElapsed / maxTime) * 50))
-      : 0;
-    const points = isCorrect ? 100 + speedBonus : 0;
-
-    player.answers[data.questionId] = data.selected;
-    player.score += points;
-    player.answeredCount++;
-    conn.setState(player);
-
-    await this.room.storage.put(`answers:${player.fid}`, player.answers);
-    await this.room.storage.put(`score:${player.fid}`, player.score);
-
-    conn.send(
-      JSON.stringify({
-        type: "answerResult",
-        data: {
-          correct: isCorrect,
-          points,
-          totalScore: player.score,
-          answeredCount: player.answeredCount,
-        },
-      })
-    );
+    // PartyKit just broadcasts the answer event
+    // Validation and scoring handled by client + /answers API → DB
 
     this.broadcast({
       type: "event",
@@ -728,46 +654,9 @@ export default class GameServer implements Party.Server {
         eventType: "answer",
         username: player.username,
         pfpUrl: player.pfpUrl,
-        content: isCorrect ? "answered correctly! 🎉" : "answered",
+        content: "answered",
         timestamp: Date.now(),
       },
-    });
-
-    await this.broadcastLeaderboard();
-  }
-
-  async getLeaderboard(): Promise<
-    Array<{ fid: number; username: string; score: number }>
-  > {
-    const scores: Array<{ fid: number; username: string; score: number }> = [];
-
-    for (const fid of this.seenFids) {
-      const score = await this.room.storage.get<number>(`score:${fid}`);
-      if (score !== undefined) {
-        let username = "Player";
-        for (const conn of this.room.getConnections()) {
-          const state = conn.state as PlayerState | undefined;
-          if (state?.fid === fid) {
-            username = state.username;
-            break;
-          }
-        }
-        scores.push({ fid, username, score });
-      }
-    }
-
-    return scores.sort((a, b) => b.score - a.score);
-  }
-
-  async broadcastLeaderboard() {
-    const leaderboard = await this.getLeaderboard();
-    this.broadcast({
-      type: "leaderboard",
-      data: leaderboard.slice(0, 10).map((player, index) => ({
-        rank: index + 1,
-        username: player.username,
-        score: player.score,
-      })),
     });
   }
 

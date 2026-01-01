@@ -1,60 +1,70 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { motion, useAnimation, AnimatePresence } from "framer-motion";
+import { motion, useAnimation } from "framer-motion";
+import type { Game } from "@prisma";
+
 import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
-import { BuyTicketModal } from "./BuyTicketModal";
+import { useGameStore } from "@/components/providers/GameStoreProvider";
+import { useUser } from "@/hooks/useUser";
+import { useGameEntry } from "@/hooks/useGameEntry";
+import { useTimer } from "@/hooks/useTimer";
+import { getGamePhase } from "@/lib/types";
 import { springs } from "@/lib/animations";
 
+import { BuyTicketModal } from "./BuyTicketModal";
+
+// ==========================================
+// PROPS - Simplified
+// ==========================================
+
 interface NextGameCardProps {
-  gameId: number;
-  onchainId: `0x${string}` | null;
-  theme: string;
-  themeIcon?: string;
-  tierPrices: number[];
-  countdown: number;
-  hasTicket: boolean;
-  isLive: boolean;
-  hasEnded: boolean;
-  hasCompleted?: boolean; // User has finished playing this game
-  prizePool?: number;
-  spotsTotal?: number;
-  spotsTaken?: number;
-  recentPlayers?: { avatar?: string; name: string }[];
+  game: Game;
   onPurchaseSuccess?: () => void;
-  username?: string;
-  userAvatar?: string;
 }
 
-export function NextGameCard({
-  gameId,
-  onchainId,
-  theme,
-  themeIcon,
-  tierPrices,
-  countdown,
-  hasTicket,
-  isLive,
-  hasEnded,
-  hasCompleted = false,
-  prizePool = 0,
-  spotsTotal = 100,
-  spotsTaken = 0,
-  recentPlayers = [],
-  onPurchaseSuccess,
-  username,
-  userAvatar,
-}: NextGameCardProps) {
+// ==========================================
+// COMPONENT
+// ==========================================
+
+export function NextGameCard({ game, onPurchaseSuccess }: NextGameCardProps) {
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Get user and entry data
+  const { user } = useUser();
+  const { entry, refetchEntry } = useGameEntry({
+    gameId: game.id,
+    enabled: true,
+  });
+
+  // Realtime stats from store (updated via WebSocket), fallback to game prop
+  const storeGame = useGameStore((s) => s.game);
+  const prizePool = storeGame?.prizePool ?? game.prizePool ?? 0;
+  const playerCount = storeGame?.playerCount ?? game.playerCount ?? 0;
+  const spotsTotal = game.maxPlayers ?? 100;
+
+  // Derive phase
+  const phase = useMemo(() => getGamePhase(game), [game]);
+  const isLive = phase === "LIVE";
+  const hasEnded = phase === "ENDED";
+
+  // Timer - countdown to start or end
+  const targetMs = isLive ? game.endsAt.getTime() : game.startsAt.getTime();
+  const countdown = useTimer(targetMs);
+
+  // Derived state
+  const hasTicket = !!entry?.paidAt;
+  const hasCompleted = !!entry && entry.answered > 0;
+
+  // Animation controls
   const prevPrizePool = useRef(prizePool);
-  const prevSpotsTaken = useRef(spotsTaken);
+  const prevSpotsTaken = useRef(playerCount);
   const prizeControls = useAnimation();
   const spotsControls = useAnimation();
 
-  // Animate on value changes
   useEffect(() => {
     if (prevPrizePool.current !== prizePool) {
       prizeControls.start({
@@ -67,37 +77,31 @@ export function NextGameCard({
   }, [prizePool, prizeControls]);
 
   useEffect(() => {
-    if (prevSpotsTaken.current !== spotsTaken) {
+    if (prevSpotsTaken.current !== playerCount) {
       spotsControls.start({
         scale: [1, 1.15, 1],
         transition: { duration: 0.3, ease: "easeOut" as const },
       });
-      prevSpotsTaken.current = spotsTaken;
+      prevSpotsTaken.current = playerCount;
     }
-  }, [spotsTaken, spotsControls]);
+  }, [playerCount, spotsControls]);
 
+  // Format countdown
   const pad = (n: number) => String(n).padStart(2, "0");
   const countdownDisplay = `${pad(Math.floor(countdown / 3600))}H ${pad(
     Math.floor((countdown % 3600) / 60)
   )}M ${pad(countdown % 60)}S`;
 
+  // Button config
   const buttonConfig = hasEnded
     ? hasCompleted
-      ? {
-        text: "VIEW RESULTS",
-        disabled: false,
-        href: `/game/${gameId}/result`,
-      }
+      ? { text: "VIEW RESULTS", disabled: false, href: `/game/${game.id}/result` }
       : { text: "ENDED", disabled: true, href: null }
     : isLive
       ? hasCompleted
-        ? {
-          text: "CALCULATING RESULTS...",
-          disabled: true,
-          href: null,
-        }
+        ? { text: "CALCULATING RESULTS...", disabled: true, href: null }
         : hasTicket
-          ? { text: "START GAME", disabled: false, href: `/game/${gameId}/live` }
+          ? { text: "START GAME", disabled: false, href: `/game/${game.id}/live` }
           : { text: "GET TICKET", disabled: false, href: null }
       : hasTicket
         ? { text: "YOU'RE IN!", disabled: true, href: null }
@@ -112,7 +116,10 @@ export function NextGameCard({
     }
   };
 
-  const othersCount = Math.max(0, spotsTaken - recentPlayers.length);
+  const handlePurchaseSuccess = () => {
+    refetchEntry();
+    onPurchaseSuccess?.();
+  };
 
   return (
     <>
@@ -127,58 +134,37 @@ export function NextGameCard({
           boxShadow: "0px 5px 5.2px 8px rgba(12, 12, 14, 0.5)",
         }}
       >
-        {/* Header with bounce entrance */}
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, ...springs.bouncy }}
-          className="relative flex flex-col justify-center items-center shrink-0 z-10 w-full h-[52px] p-0 gap-[17px]"
-          style={{
-            background: "rgba(27, 27, 29, 0.8)",
-            backdropFilter: "blur(12px)",
-          }}
+          className="relative flex flex-col justify-center items-center shrink-0 z-10 w-full h-[52px]"
+          style={{ background: "rgba(27, 27, 29, 0.8)", backdropFilter: "blur(12px)" }}
         >
-          <div className="flex flex-row justify-center items-center self-stretch p-0 gap-3 h-[30px]">
-            {/* Animated controller icon */}
-            <motion.div
-              animate={{ rotate: [0, -5, 5, -3, 3, 0] }}
-              transition={{ delay: 0.5, duration: 0.5 }}
-              whileHover={{ scale: 1.2, rotate: 10 }}
-            >
-              <Image
-                src="/images/icons/game-controller.png"
-                alt="controller"
-                width={30}
-                height={30}
-                className="object-contain w-[30px] h-[30px] flex-none"
-              />
+          <div className="flex flex-row justify-center items-center gap-3 h-[30px]">
+            <motion.div animate={{ rotate: [0, -5, 5, -3, 3, 0] }} transition={{ delay: 0.5, duration: 0.5 }}>
+              <Image src="/images/icons/game-controller.png" alt="controller" width={30} height={30} />
             </motion.div>
-            <motion.span
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2, ...springs.gentle }}
-              className="font-body text-white uppercase h-6 text-[26px] font-normal leading-[92%] tracking-[-0.03em]"
-            >
-              WAFFLES #{gameId.toString().padStart(3, "0")}
-            </motion.span>
+            <span className="font-body text-white uppercase text-[26px] leading-[92%] tracking-[-0.03em]">
+              WAFFLES #{game.id.toString().padStart(3, "0")}
+            </span>
           </div>
         </motion.div>
 
-        {/* Stats Row with staggered entrance */}
+        {/* Stats Row */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="relative flex flex-row items-start z-10 shrink-0"
-          style={{ padding: "12px 10px 0px", gap: "12px" }}
+          className="relative flex flex-row items-start z-10 shrink-0 px-2.5 pt-3 gap-3"
         >
           <StatBlock
             icon="/images/illustrations/spots.svg"
             iconSize={{ w: 55.12, h: 40 }}
             label="Spots"
-            value={`${spotsTaken}/${spotsTotal}`}
+            value={`${playerCount}/${spotsTotal}`}
             animateControls={spotsControls}
-            delay={0.3}
           />
           <StatBlock
             icon="/images/illustrations/money-stack.svg"
@@ -186,33 +172,27 @@ export function NextGameCard({
             label="Prize pool"
             value={`$${prizePool.toLocaleString()}`}
             animateControls={prizeControls}
-            delay={0.4}
           />
         </motion.div>
 
-        {/* Button with entrance animation */}
+        {/* Button */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.4, ...springs.bouncy }}
-          className="relative flex justify-center items-center px-4 z-10 shrink-0"
-          style={{ padding: "clamp(6px, 1vh, 12px) 16px" }}
+          className="relative flex justify-center items-center px-4 py-2 z-10 shrink-0"
         >
-          <FancyBorderButton
-            disabled={buttonConfig.disabled}
-            onClick={handleButtonClick}
-          >
+          <FancyBorderButton disabled={buttonConfig.disabled} onClick={handleButtonClick}>
             {buttonConfig.text}
           </FancyBorderButton>
         </motion.div>
 
-        {/* Countdown with pulsing border */}
+        {/* Countdown */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, ...springs.gentle }}
-          className="flex flex-col justify-center items-center z-10 shrink-0 w-full"
-          style={{ padding: "8px 0px 0px", gap: "6px" }}
+          className="flex flex-col justify-center items-center z-10 shrink-0 w-full pt-2 gap-1.5"
         >
           <motion.div
             animate={{
@@ -222,174 +202,58 @@ export function NextGameCard({
                 "0 0 0px rgba(245, 187, 27, 0)",
               ],
             }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut" as const,
-            }}
-            className="flex flex-row justify-center items-center"
-            style={{
-              boxSizing: "border-box",
-              padding: "10px 20px",
-              gap: "4px",
-              minWidth: "158px",
-              height: "44px",
-              border: "2px solid #F5BB1B",
-              borderRadius: "900px",
-            }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" as const }}
+            className="flex flex-row justify-center items-center px-5 py-2.5 min-w-[158px] h-[44px] border-2 border-[#F5BB1B] rounded-full"
           >
             <motion.span
               key={countdown}
               initial={{ scale: 1.1, opacity: 0.7 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.2 }}
-              className="font-body text-center whitespace-nowrap"
-              style={{
-                fontWeight: 400,
-                fontSize: "clamp(18px, 2.5vw, 21px)",
-                lineHeight: "115%",
-                color: "#F5BB1B",
-              }}
+              className="font-body text-center text-[#F5BB1B] text-lg"
             >
               {countdownDisplay}
             </motion.span>
           </motion.div>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="flex flex-row justify-center items-center w-full"
-            style={{ padding: "0px", gap: "8px" }}
-          >
-            <span
-              className="font-display text-center"
-              style={{
-                fontWeight: 500,
-                fontSize: "12px",
-                lineHeight: "14px",
-                letterSpacing: "-0.03em",
-                color: "#FFFFFF",
-                opacity: 0.5,
-              }}
-            >
-              Until game starts
-            </span>
-          </motion.div>
+          <span className="font-display text-center text-white/50 text-xs">
+            Until game starts
+          </span>
         </motion.div>
 
-        {/* Player Avatars Row - inside card with padding */}
+        {/* Player count */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}
-          className="flex flex-row justify-center items-center w-full px-4 pb-4 mt-4"
-          style={{
-            gap: "6px",
-            minHeight: "25.11px",
-          }}
+          className="flex flex-row justify-center items-center w-full px-4 pb-4 mt-4 gap-1.5"
         >
-          {spotsTaken > 0 ? (
-            <>
-              <div
-                className="flex flex-row items-center"
-                style={{ height: "25.11px" }}
-              >
-                {recentPlayers.slice(0, 4).map((player, idx) => (
-                  <motion.div
-                    key={idx}
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: 0.8 + idx * 0.1, ...springs.bouncy }}
-                    whileHover={{ scale: 1.2, zIndex: 10 }}
-                    className="rounded-full overflow-hidden shrink-0 box-border"
-                    style={{
-                      width: "25.11px",
-                      height: "25.11px",
-                      border: "2.01px solid #FFFFFF",
-                      background: "#F0F3F4",
-                      borderRadius: "900px",
-                      marginLeft: idx === 0 ? "0px" : "-10px",
-                    }}
-                  >
-                    {player.avatar ? (
-                      <Image
-                        src={player.avatar}
-                        alt={player.name}
-                        width={25}
-                        height={25}
-                        className="w-full h-full object-cover"
-                        unoptimized
-                      />
-                    ) : (
-                      <div
-                        className="w-full h-full flex items-center justify-center text-xs font-bold"
-                        style={{
-                          background: `hsl(${(idx * 60) % 360}, 60%, 60%)`,
-                          color: "#fff",
-                        }}
-                      >
-                        {player.name?.charAt(0)?.toUpperCase() || "?"}
-                      </div>
-                    )}
-                  </motion.div>
-                ))}
-              </div>
-              <motion.span
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 1, ...springs.gentle }}
-                className="font-display text-center"
-                style={{
-                  fontWeight: 500,
-                  fontSize: "14px",
-                  lineHeight: "130%",
-                  letterSpacing: "-0.03em",
-                  color: "#99A0AE",
-                }}
-              >
-                {othersCount > 0
-                  ? `and ${othersCount} others have joined the game`
-                  : "have joined the game"}
-              </motion.span>
-            </>
-          ) : (
-            <span
-              className="font-display text-center"
-              style={{
-                fontWeight: 500,
-                fontSize: "14px",
-                lineHeight: "130%",
-                letterSpacing: "-0.03em",
-                color: "#99A0AE",
-                opacity: 0.6,
-              }}
-            >
-              Be the first to join this game!
-            </span>
-          )}
+          <span className="font-display text-center text-[#99A0AE] text-sm">
+            {playerCount > 0
+              ? `${playerCount} player${playerCount > 1 ? "s" : ""} have joined`
+              : "Be the first to join!"}
+          </span>
         </motion.div>
       </motion.div>
 
       <BuyTicketModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        gameId={gameId}
-        onchainId={onchainId}
-        theme={theme}
-        themeIcon={themeIcon}
-        tierPrices={tierPrices}
+        gameId={game.id}
+        onchainId={game.onchainId as `0x${string}` | null}
+        theme={game.theme}
+        themeIcon={game.coverUrl ?? undefined}
+        tierPrices={game.tierPrices}
         prizePool={prizePool}
-        onPurchaseSuccess={onPurchaseSuccess}
-        username={username}
-        userAvatar={userAvatar}
+        onPurchaseSuccess={handlePurchaseSuccess}
+        username={user?.username ?? undefined}
+        userAvatar={user?.pfpUrl ?? undefined}
       />
     </>
   );
 }
 
-// ============================================
-// STAT BLOCK with hover + value change animation
-// ============================================
+// ==========================================
+// STAT BLOCK
+// ==========================================
 
 function StatBlock({
   icon,
@@ -397,55 +261,23 @@ function StatBlock({
   label,
   value,
   animateControls,
-  delay = 0,
 }: {
   icon: string;
   iconSize: { w: number; h: number };
   label: string;
   value: string;
   animateControls?: ReturnType<typeof useAnimation>;
-  delay?: number;
 }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay, ...springs.gentle }}
       whileHover={{ scale: 1.05, y: -3 }}
-      className="flex flex-col justify-center items-center flex-1 cursor-default"
-      style={{ padding: "0px", height: "85px" }}
+      className="flex flex-col justify-center items-center flex-1 h-[85px]"
     >
-      {/* Icon with bounce on hover */}
-      <motion.div
-        whileHover={{ scale: 1.15, rotate: [0, -5, 5, 0] }}
-        transition={{ duration: 0.3 }}
-      >
-        <Image
-          src={icon}
-          alt={label}
-          width={iconSize.w}
-          height={iconSize.h}
-          className="object-contain"
-          style={{ width: `${iconSize.w}px`, height: `${iconSize.h}px` }}
-        />
-      </motion.div>
-      <span
-        className="font-display text-center"
-        style={{
-          fontSize: "16px",
-          fontWeight: 500,
-          lineHeight: "130%",
-          letterSpacing: "-0.03em",
-          color: "#99A0AE",
-        }}
-      >
-        {label}
-      </span>
-      <motion.span
-        animate={animateControls}
-        className="font-body text-white"
-        style={{ fontSize: "24px", fontWeight: 400, lineHeight: "100%" }}
-      >
+      <Image src={icon} alt={label} width={iconSize.w} height={iconSize.h} />
+      <span className="font-display text-center text-[#99A0AE] text-base">{label}</span>
+      <motion.span animate={animateControls} className="font-body text-white text-2xl">
         {value}
       </motion.span>
     </motion.div>

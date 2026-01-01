@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAccount, useConnect } from "wagmi";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { farcasterFrame } from "@farcaster/miniapp-wagmi-connector";
-import { CHAIN_CONFIG } from "@/lib/contracts/config";
+import { CHAIN_CONFIG } from "@/lib/chain";
 
 import {
   useTicketPurchase,

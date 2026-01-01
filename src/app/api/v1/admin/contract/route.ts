@@ -1,12 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminSession } from "@/lib/admin-auth";
 import { createPublicClient, http, formatUnits } from "viem";
-import {
-  WAFFLE_GAME_CONFIG,
-  TOKEN_CONFIG,
-  CHAIN_CONFIG,
-} from "@/lib/contracts/config";
-import waffleGameAbi from "@/lib/contracts/WaffleGameAbi.json";
+import { WAFFLE_GAME_CONFIG, TOKEN_CONFIG, CHAIN_CONFIG } from "@/lib/chain";
+import waffleGameAbi from "@/lib/chain/abi.json";
 import { env } from "@/lib/env";
 
 /**
@@ -93,8 +89,10 @@ export async function GET(request: NextRequest) {
       }) as Promise<boolean>,
     ]);
 
-    // Check if settlement wallet is configured
-    const settlementWalletConfigured = !!env.settlementPrivateKey;
+    // Check if wallet is configured
+    const isConfigured = !!env.settlementPrivateKey;
+    let address = null;
+    let balance = null;
 
     const state: ContractState = {
       address: WAFFLE_GAME_CONFIG.address,
@@ -114,7 +112,7 @@ export async function GET(request: NextRequest) {
       ),
       activeGameCount: Number(activeGameCount),
       isPaused,
-      settlementWalletConfigured,
+      settlementWalletConfigured: isConfigured,
     };
 
     return NextResponse.json(state);

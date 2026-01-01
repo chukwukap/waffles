@@ -6,7 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { UsersIcon } from "@/components/icons";
 import { useGameStore } from "@/components/providers/GameStoreProvider";
 import { selectOnlineCount } from "@/lib/game-store";
-import { useLiveConnection } from "@/components/providers/LiveConnectionProvider";
+import { useGameSocket } from "@/hooks/useGameSocket";
+import { fireCheer } from "../CheerOverlay";
 import { springs } from "@/lib/animations";
 
 // ==========================================
@@ -112,7 +113,7 @@ function AnimatedCount({ value }: { value: number }) {
  */
 export function ChatInputBar({ onOpen }: ChatInputBarProps) {
   const activeCount = useGameStore(selectOnlineCount);
-  const { sendReaction } = useLiveConnection();
+  const { sendCheer } = useGameSocket();
   const [bubbles, setBubbles] = useState<WaffleBubble[]>([]);
   const [bubbleIdCounter, setBubbleIdCounter] = useState(0);
 
@@ -128,12 +129,12 @@ export function ChatInputBar({ onOpen }: ChatInputBarProps) {
     setBubbleIdCounter((prev) => prev + 1);
     setBubbles((prev) => [...prev, newBubble]);
 
-    // Trigger global bubbles (originates from fixed bottom-right position)
-    (window as unknown as { triggerCheer?: () => void }).triggerCheer?.();
+    // Fire cheer event (shows global bubbles)
+    fireCheer(true);
 
-    // Broadcast cheer reaction to all players via dedicated channel
-    sendReaction("cheer");
-  }, [bubbleIdCounter, sendReaction]);
+    // Broadcast to other players
+    sendCheer();
+  }, [bubbleIdCounter, sendCheer]);
 
   const removeBubble = useCallback((id: number) => {
     setBubbles((prev) => prev.filter((b) => b.id !== id));

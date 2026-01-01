@@ -1,7 +1,7 @@
 import { Providers } from "@/components/providers";
 import { SplashProvider } from "@/components/SplashProvider";
 import { Metadata } from "next";
-import { minikitConfig } from "../../../minikit.config";
+import { minikitConfig } from "@minikit-config";
 
 
 export async function generateMetadata(): Promise<Metadata> {

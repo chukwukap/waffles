@@ -1,6 +1,7 @@
 "use server";
 
-import { prisma, QuestType, QuestCategory, RepeatFrequency } from "@/lib/db";
+import { prisma } from "@/lib/db";
+import { QuestType, QuestCategory, RepeatFrequency } from "@prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdminSession } from "@/lib/admin-auth";

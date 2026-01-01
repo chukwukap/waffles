@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma, type Prisma } from "@/lib/db";
-import { getGamePhase, type GamePhase } from "@/lib/game-utils";
+import { prisma } from "@/lib/db";
+import type { Prisma } from "@prisma";
+import { getGamePhase, type GamePhase } from "@/lib/types";
 
 /**
  * GET /api/v1/games

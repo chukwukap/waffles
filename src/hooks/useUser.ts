@@ -4,7 +4,7 @@ import useSWR from "swr";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import sdk from "@farcaster/miniapp-sdk";
 
-import type { User } from "@/lib/db";
+import type { User } from "@prisma";
 
 // ==========================================
 // TYPES - Derived from Prisma

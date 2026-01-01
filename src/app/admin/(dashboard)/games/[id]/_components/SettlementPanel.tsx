@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { getExplorerUrl } from "@/lib/contracts/config";
+import { getExplorerUrl } from "@/lib/chain";
 import {
   ChartPieIcon,
   ArrowPathIcon,
@@ -225,7 +225,7 @@ export function SettlementPanel({
             <p className="font-medium">{result.message}</p>
             {result.txHash && (
               <a
-                href={getExplorerUrl.tx(result.txHash)}
+                href={getExplorerUrl(result.txHash, "tx")}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm underline opacity-80 hover:opacity-100"

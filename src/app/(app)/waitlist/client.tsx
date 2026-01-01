@@ -511,7 +511,7 @@ export function WaitlistClient() {
   );
 
   const handleShare = useCallback(async () => {
-    const rank = user?.rank;
+    const rank = user?.waitlistRank;
     const message = `Just got in to waffles
 if you need me i'd be knead deep in trivia
 
@@ -527,7 +527,7 @@ think you can beat me? you're on😏`;
       console.error(err);
       notify.error("Failed to share waitlist.");
     }
-  }, [composeCastAsync, fid, user?.rank]);
+  }, [composeCastAsync, fid, user?.waitlistRank]);
 
   const handleJoin = useCallback(() => {
     const formData = new FormData();
@@ -626,7 +626,7 @@ think you can beat me? you're on😏`;
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
             >
-              You&apos;re <InlineRank rank={user.rank} /> on the waitlist.
+              You&apos;re <InlineRank rank={user.waitlistRank} /> on the waitlist.
               <br />
               Move up by completing quests!
             </motion.p>

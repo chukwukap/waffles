@@ -8,6 +8,11 @@ const PAGE_SIZE = env.nextPublicLeaderboardPageSize;
 const querySchema = z.object({
   tab: z.enum(["current", "allTime"]).default("current"),
   page: z.coerce.number().int().nonnegative().default(0),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .default(env.nextPublicLeaderboardPageSize),
 });
 
 interface LeaderboardEntry {

@@ -8,7 +8,7 @@ import {
     TicketIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
-import { getGamePhase } from "@/lib/game-utils";
+import { getGamePhase } from "@/lib/types";
 
 async function getStats() {
     const now = new Date();

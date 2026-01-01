@@ -26,7 +26,7 @@ import {
     AnalyticsTabs,
     type AnalyticsTab,
 } from "@/components/admin/analytics";
-import { getGamePhase } from "@/lib/game-utils";
+import { getGamePhase } from "@/lib/types";
 
 // ============================================================
 // DATA FETCHING (Updated for new schema: GameEntry, no ticket)

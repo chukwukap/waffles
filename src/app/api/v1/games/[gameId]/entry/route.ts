@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { sendNotificationToUser } from "@/lib/notifications";
+import { broadcastGameStats } from "@/lib/partykit";
 import { env } from "@/lib/env";
 
 type Params = { gameId: string };
@@ -157,6 +158,7 @@ export const POST = withAuth<Params>(
           id: true,
           startsAt: true,
           endsAt: true,
+          prizePool: true,
           playerCount: true,
           maxPlayers: true,
           tierPrices: true,
@@ -242,6 +244,12 @@ export const POST = withAuth<Params>(
       sendTicketNotification(auth.fid, gameId, game).catch((err) =>
         console.error("[Entry] Notification error:", err)
       );
+
+      // Broadcast updated stats to connected clients (async, don't block response)
+      broadcastGameStats(gameId, {
+        prizePool: game.prizePool + paidAmount,
+        playerCount: game.playerCount + 1,
+      }).catch((err) => console.error("[Entry] Stats broadcast error:", err));
 
       return NextResponse.json(entry, { status: 201 });
     } catch (error) {

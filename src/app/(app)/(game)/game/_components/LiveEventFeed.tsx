@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect } from "react";
+import { memo, } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGameStore } from "@/components/providers/GameStoreProvider";
 import { selectEvents, selectMessages, selectIsConnected, selectOnlineCount, type GameEvent, type ChatMessage } from "@/lib/game-store";
@@ -25,15 +25,13 @@ interface FeedItem {
 
 const FeedItemRow = memo(function FeedItemRow({
   item,
-  isNew,
 }: {
   item: FeedItem;
-  isNew?: boolean;
 }) {
   return (
     <motion.div
       layout
-      initial={isNew ? { opacity: 0, x: -20, scale: 0.95 } : false}
+      initial={false}
       animate={{ opacity: 1, x: 0, scale: 1 }}
       exit={{ opacity: 0, x: 20, scale: 0.9 }}
       transition={springs.snappy}
@@ -41,7 +39,7 @@ const FeedItemRow = memo(function FeedItemRow({
     >
       {/* Avatar with pop-in effect */}
       <motion.div
-        initial={isNew ? { scale: 0 } : false}
+        initial={false}
         animate={{ scale: 1 }}
         transition={{ ...springs.bouncy, delay: 0.1 }}
       >
@@ -71,15 +69,7 @@ const FeedItemRow = memo(function FeedItemRow({
         <span className="font-display">{item.content}</span>
       </span>
 
-      {/* New message indicator dot */}
-      {/* {isNew && (
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: [1, 1.2, 1] }}
-          transition={{ duration: 0.3 }}
-          className="w-1.5 h-1.5 rounded-full bg-[#F5BB1B] shrink-0"
-        />
-      )} */}
+
     </motion.div>
   );
 });
@@ -203,7 +193,7 @@ export function LiveEventFeed({ maxEvents = 5 }: LiveEventFeedProps) {
         <div className="flex flex-col gap-1 pt-4">
           <AnimatePresence mode="popLayout" initial={false}>
             {sortedItems.map((item, index) => (
-              <FeedItemRow key={item.id} item={item} isNew={isNewest(index)} />
+              <FeedItemRow key={item.id} item={item} />
             ))}
           </AnimatePresence>
         </div>

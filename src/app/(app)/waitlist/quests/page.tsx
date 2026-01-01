@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { QuestsPageClient } from "./client";
-import { minikitConfig } from "../../../../../minikit.config";
+import { minikitConfig } from "@minikit-config";
 import { env } from "@/lib/env";
 
 // ==========================================

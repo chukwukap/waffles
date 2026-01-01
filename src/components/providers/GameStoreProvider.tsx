@@ -90,7 +90,7 @@ export function useGameStore<T>(selector: (state: GameState) => T): T {
 /**
  * useGameStoreApi - Get direct store API for imperative access.
  * Use sparingly - prefer selectors for reactive updates.
- * 
+ *
  * @example
  * const store = useGameStoreApi();
  * store.getState().addEvent({...});
@@ -103,41 +103,3 @@ export function useGameStoreApi(): GameStore {
     return store;
 }
 
-// Legacy alias for backwards compatibility during migration
-export const useGameStoreContext = useGameStore;
-export const useGameStoreActions = () => {
-    const store = useContext(GameStoreContext);
-    if (!store) {
-        throw new Error("useGameStoreActions must be used within GameStoreProvider");
-    }
-    return useStore(store, (s) => ({
-        // Core
-        setGame: s.setGame,
-        setEntry: s.setEntry,
-        // Live session
-        setQuestions: s.setQuestions,
-        submitAnswer: s.submitAnswer,
-        advanceQuestion: s.advanceQuestion,
-        setQuestionIndex: s.setQuestionIndex,
-        setIsBreak: s.setIsBreak,
-        setTimerTarget: s.setTimerTarget,
-        setGameStarted: s.setGameStarted,
-        setGameComplete: s.setGameComplete,
-        // Real-time
-        setConnected: s.setConnected,
-        setOnlineCount: s.setOnlineCount,
-        addMessage: s.addMessage,
-        setMessages: s.setMessages,
-        addEvent: s.addEvent,
-        setEvents: s.setEvents,
-        addReaction: s.addReaction,
-        addPlayer: s.addPlayer,
-        setRecentPlayers: s.setRecentPlayers,
-        // Score
-        updateScore: s.updateScore,
-        incrementAnswered: s.incrementAnswered,
-        // Reset
-        reset: s.reset,
-        resetLiveSession: s.resetLiveSession,
-    }));
-};

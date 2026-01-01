@@ -6,7 +6,7 @@ import { motion, useAnimation } from "framer-motion";
 import { useEffect, useRef } from "react";
 import { farcasterFrame } from "@farcaster/miniapp-wagmi-connector";
 
-import { TOKEN_CONFIG, CHAIN_CONFIG } from "@/lib/contracts/config";
+import { TOKEN_CONFIG, CHAIN_CONFIG } from "@/lib/chain";
 import { springs } from "@/lib/animations";
 
 // Animated Wallet Icon with coin drop effect

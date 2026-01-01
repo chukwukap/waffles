@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { Prisma } from "@/lib/db";
+import { Prisma } from "@prisma";
 import { verifyFarcasterFollow } from "@/lib/verifyFarcasterFollow";
 import { verifyFarcasterMention } from "@/lib/verifyFarcasterMention";
 import { REFERRAL_BONUS_POINTS } from "@/lib/constants";

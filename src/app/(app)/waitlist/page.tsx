@@ -1,5 +1,5 @@
 import { WaitlistClient } from "./client";
-import { minikitConfig } from "../../../../minikit.config";
+import { minikitConfig } from "@minikit-config";
 import { Metadata } from "next";
 
 import { env } from "@/lib/env";

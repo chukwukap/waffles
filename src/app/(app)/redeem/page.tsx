@@ -1,4 +1,4 @@
-import { minikitConfig } from "../../../../minikit.config";
+import { minikitConfig } from "@minikit-config";
 import InvitePageClient from "./client";
 import { Metadata } from "next";
 

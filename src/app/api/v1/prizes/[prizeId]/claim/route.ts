@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { getGamePhase } from "@/lib/game-utils";
+import { getGamePhase } from "@/lib/types";
 
 type Params = { prizeId: string };
 

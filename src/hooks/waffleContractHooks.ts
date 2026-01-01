@@ -8,8 +8,8 @@ import {
   DEFAULT_WAFFLE_GAME_ADDRESS,
   DEFAULT_USDC_ADDRESS,
   TOKEN_DECIMALS,
-} from "@/lib/contracts";
-import waffleGameAbi from "@/lib/contracts/WaffleGameAbi.json";
+} from "@/lib/chain";
+import waffleGameAbi from "@/lib/chain/abi.json";
 import { ERC20_ABI } from "@/lib/constants";
 
 /**
@@ -72,17 +72,20 @@ export function useHasClaimed(
 /**
  * Hook to get the user's token balance
  * @param address - User's wallet address
- * @param tokenAddress - Token address
+ * @param tokenAddress - Token address (optional, defaults to USDC)
  */
 export function useTokenBalance(
-  address: `0x${string}`,
-  tokenAddress: `0x${string}`
+  address: `0x${string}` | undefined,
+  tokenAddress: `0x${string}` = DEFAULT_USDC_ADDRESS
 ) {
   return useReadContract({
     address: tokenAddress,
     abi: ERC20_ABI,
     functionName: "balanceOf",
-    args: [address],
+    args: address ? [address] : undefined,
+    query: {
+      enabled: !!address,
+    },
   });
 }
 

@@ -10,8 +10,8 @@ import { useGameEntry } from "./useGameEntry";
 import { useTokenAllowance, useContractToken } from "./waffleContractHooks";
 import { notify } from "@/components/ui/Toaster";
 import { playSound } from "@/lib/sounds";
-import waffleGameAbi from "@/lib/contracts/WaffleGameAbi.json";
-import { DEFAULT_WAFFLE_GAME_ADDRESS, TOKEN_DECIMALS } from "@/lib/contracts";
+import waffleGameAbi from "@/lib/chain/abi.json";
+import { DEFAULT_WAFFLE_GAME_ADDRESS, TOKEN_DECIMALS } from "@/lib/chain";
 import { ERC20_ABI } from "@/lib/constants";
 
 // ==========================================
@@ -39,7 +39,7 @@ export interface TicketPurchaseState {
 
 export function useTicketPurchase(
   gameId: number,
-  onchainId: `0x${string}`,
+  onchainId: `0x${string}` | null,
   price: number,
   onSuccess?: () => void
 ) {

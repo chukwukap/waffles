@@ -1,14 +1,13 @@
 import { cache } from "react";
-import { redirect, notFound } from "next/navigation";
+import { redirect, } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { getGamePhase } from "@/lib/game-utils";
-import { LiveGameProvider } from "./LiveGameProvider";
+import { getGamePhase } from "@/lib/types";
 import LiveGameScreen from "./LiveGameScreen";
 
 export const dynamic = "force-dynamic";
 
 // ==========================================
-// TYPES
+// TYPES (exported for LiveGameProvider)
 // ==========================================
 
 export interface LiveGameQuestion {
@@ -38,7 +37,7 @@ export interface LiveGameData {
 // DATA FETCHING
 // ==========================================
 
-const getGame = cache(async (gameId: number): Promise<LiveGameData | null> => {
+const getGame = cache(async (gameId: number) => {
   const game = await prisma.game.findUnique({
     where: { id: gameId },
     select: {
@@ -95,12 +94,15 @@ const getGame = cache(async (gameId: number): Promise<LiveGameData | null> => {
     roundBreakSec: game.roundBreakSec,
     prizePool: game.prizePool,
     theme: game.theme,
-    questions: game.questions,
+    questions: game.questions.map((q) => ({
+      ...q,
+      durationSec: q.durationSec ?? 10,
+    })),
     recentPlayers: game.entries.map((e) => ({
       pfpUrl: e.user.pfpUrl,
       username: e.user.username || `Player`,
     })),
-  };
+  } satisfies LiveGameData;
 });
 
 // ==========================================
@@ -116,7 +118,7 @@ export default async function LiveGamePage({
   const gameIdNum = Number(gameId);
 
   if (isNaN(gameIdNum)) {
-    notFound();
+    redirect("/game");
   }
 
   const game = await getGame(gameIdNum);
@@ -127,8 +129,6 @@ export default async function LiveGamePage({
   }
 
   return (
-    <LiveGameProvider game={game}>
-      <LiveGameScreen />
-    </LiveGameProvider>
+    <LiveGameScreen game={game} />
   );
 }

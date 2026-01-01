@@ -2,7 +2,7 @@ import { cache } from "react";
 import { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import ResultPageClient from "./client";
-import { minikitConfig } from "../../../../../../../minikit.config";
+import { minikitConfig } from "@minikit-config";
 import { env } from "@/lib/env";
 import { buildPrizeOGUrl } from "@/lib/og";
 

@@ -10,8 +10,9 @@ import {
   createGameOnChain,
   generateOnchainGameId,
   getOnChainGame,
-} from "@/lib/settlement";
-import { getGamePhase } from "@/lib/game-utils";
+} from "@/lib/chain";
+import { getGamePhase } from "@/lib/types";
+import { env } from "@/lib/env";
 
 // ==========================================
 // SCHEMA (Updated for new model)
@@ -94,7 +95,7 @@ export async function createGameAction(
     if (existingActiveGame) {
       return {
         success: false,
-        error: `Cannot create a new game while "${existingActiveGame.title}" is still active. Please end it first.`,
+        error: `Cannot create a new game while "${existingActiveGame.title} ID: ${existingActiveGame.onchainId}" is still active. Please end it first.`,
       };
     }
 
@@ -109,7 +110,6 @@ export async function createGameAction(
     });
 
     if (recentEndedGame?.onchainId) {
-      // Import dynamically to avoid circular deps
       const onChainGame = await getOnChainGame(
         recentEndedGame.onchainId as `0x${string}`
       );
@@ -124,7 +124,7 @@ export async function createGameAction(
       if (gameExistsOnChain && !onChainGame.ended) {
         return {
           success: false,
-          error: `Cannot create a new game while "${recentEndedGame.title}" is not ended on-chain. Please end it on-chain first via Settlement.`,
+          error: `Cannot create a new game while "${recentEndedGame.title} ID: ${recentEndedGame.onchainId}" is not ended on-chain. Please end it on-chain first via Settlement.`,
         };
       }
     }
@@ -150,7 +150,7 @@ export async function createGameAction(
       },
     });
 
-    // Create game on-chain using the generated onchainId
+    // Create game onchain using the generated onchainId
     try {
       const txHash = await createGameOnChain(onchainId, data.tierPrice1);
       console.log(
@@ -192,13 +192,10 @@ export async function createGameAction(
     }
 
     // Initialize PartyKit room with alarms
-    const partykitHost = process.env.NEXT_PUBLIC_PARTYKIT_HOST;
-    const partykitSecret = process.env.PARTYKIT_SECRET;
-
-    if (partykitHost && partykitSecret) {
-      const partykitUrl = partykitHost.startsWith("http")
-        ? partykitHost
-        : `https://${partykitHost}`;
+    if (env.partykitHost && env.partykitSecret) {
+      const partykitUrl = env.partykitHost.startsWith("http")
+        ? env.partykitHost
+        : `https://${env.partykitHost}`;
 
       try {
         const res = await fetch(
@@ -207,7 +204,7 @@ export async function createGameAction(
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${partykitSecret}`,
+              Authorization: `Bearer ${env.partykitSecret}`,
             },
             body: JSON.stringify({
               gameId: game.id,
@@ -336,7 +333,7 @@ export async function deleteGameAction(gameId: number): Promise<void> {
 
     // If game is on-chain, check if it's still active
     if (game.onchainId) {
-      const { getOnChainGame } = await import("@/lib/settlement");
+      const { getOnChainGame } = await import("@/lib/chain");
       const onChainGame = await getOnChainGame(game.onchainId as `0x${string}`);
 
       // Only block if game actually exists on-chain (has tickets or entry fee)

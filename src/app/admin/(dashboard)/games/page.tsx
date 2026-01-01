@@ -3,7 +3,7 @@ import Link from "next/link";
 import { GameFilters } from "@/components/admin/GameFilters";
 import { GameRow } from "@/components/admin/GameRow";
 import { PlusIcon } from "@heroicons/react/24/outline";
-import { getGamePhase, type GamePhase } from "@/lib/game-utils";
+import { getGamePhase, type GamePhase } from "@/lib/types";
 
 // Phase filtering using time-based logic
 const VALID_PHASES: GamePhase[] = ["SCHEDULED", "LIVE", "ENDED"];

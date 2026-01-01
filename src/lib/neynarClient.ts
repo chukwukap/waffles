@@ -8,5 +8,5 @@ if (!env.neynarApiKey) {
 }
 
 export const neynar = new NeynarAPIClient({
-  apiKey: env.neynarApiKey!,
+  apiKey: env.neynarApiKey,
 });

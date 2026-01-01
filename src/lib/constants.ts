@@ -92,3 +92,5 @@ export const THEMES = [
     description: "Web3 & blockchain",
   },
 ];
+
+export const PRIZE_DISTRIBUTION = [0.6, 0.3, 0.1];

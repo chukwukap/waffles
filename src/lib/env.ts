@@ -20,7 +20,9 @@ const envSchema = z.object({
   PARTYKIT_SECRET: isServer
     ? z.string().min(1, "PARTYKIT_SECRET is required")
     : z.string().optional(),
-  NEXT_PUBLIC_PARTYKIT_HOST: z.string().optional(),
+  NEXT_PUBLIC_PARTYKIT_HOST: isServer
+    ? z.string().min(1, "NEXT_PUBLIC_PARTYKIT_HOST is required")
+    : z.string().optional(),
 
   // Cloudinary (media storage with public URLs)
   CLOUDINARY_CLOUD_NAME: isServer
@@ -71,7 +73,7 @@ const getEnv = () => {
     NEYNAR_API_KEY: process.env.NEYNAR_API_KEY,
     DATABASE_URL: process.env.DATABASE_URL,
     SETTLEMENT_PRIVATE_KEY: process.env.SETTLEMENT_PRIVATE_KEY,
-    PARTYKIT_SECRET: process.env.PARTYKIT_SECRET,
+    PARTYKIT_SECRET: process.env.partykitSecret,
     NEXT_PUBLIC_PARTYKIT_HOST: process.env.NEXT_PUBLIC_PARTYKIT_HOST,
     CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
     CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,

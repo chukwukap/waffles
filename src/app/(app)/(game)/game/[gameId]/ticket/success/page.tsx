@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { cache } from "react";
-import { minikitConfig } from "../../../../../../../../minikit.config";
+import { minikitConfig } from "@minikit-config";
 import { env } from "@/lib/env";
 import { buildJoinedOGUrl } from "@/lib/og";
 import { TicketSuccessClient } from "./client";
@@ -46,7 +46,7 @@ export async function generateMetadata({
     const username = (sParams.username as string) || "Player";
     const pfpUrl = sParams.pfpUrl as string | undefined;
     // themeImageUrl is required - use coverUrl or fallback to a default icon
-    const themeImageUrl = game.coverUrl || `${env.rootUrl}/images/icons/icon-theme-football.png`;
+    const themeImageUrl = game.coverUrl || "/logo.png";
 
     // Build OG image URL using the /api/og/joined route
     const imageUrl = buildJoinedOGUrl({
@@ -62,7 +62,7 @@ export async function generateMetadata({
         description: `${username} just joined the next Waffles game! Theme: ${game.theme}, Prize Pool: $${game.prizePool.toLocaleString()}`,
         openGraph: {
             title: `${username} joined Waffles!`,
-            description: `Theme: ${game.theme} | Prize Pool: $${game.prizePool.toLocaleString()}`,
+            description: `Theme: ${game.theme} | Current Prize Pool: $${game.prizePool.toLocaleString()}`,
             images: imageUrl ? [imageUrl] : [],
         },
         other: {

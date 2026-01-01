@@ -3,13 +3,13 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { useGameStore } from "@/components/providers/GameStoreProvider";
-import { selectRecentPlayers, selectOnlineCount } from "@/lib/game-store";
+import { selectRecentPlayers, selectOnlineCount, selectQuestionAnswerers } from "@/lib/game-store";
 
 // Avatar rotation angles from design specs
 const AVATAR_ROTATIONS = [-8.71, 5.85, -3.57, 7.56];
 
 interface PlayerAvatarStackProps {
-    /** Text to show, e.g., "joined the game" or "have answered" */
+    /** Text to show, e.g., "joined the game" or "just answered" */
     actionText?: string;
     /** Maximum number of avatars to show */
     maxAvatars?: number;
@@ -25,7 +25,7 @@ interface PlayerAvatarStackProps {
  * PlayerAvatarStack - Reusable component for showing real-time player avatars
  * 
  * Uses the game store to get real-time player data from WebSocket.
- * Can be used on countdown screen, question view, or anywhere else.
+ * When actionText is "just answered", shows players who answered the current question.
  */
 export function PlayerAvatarStack({
     actionText = "joined the game",
@@ -36,21 +36,26 @@ export function PlayerAvatarStack({
 }: PlayerAvatarStackProps) {
     // Get real-time data from store
     const recentPlayers = useGameStore(selectRecentPlayers);
+    const questionAnswerers = useGameStore(selectQuestionAnswerers);
     const onlineCount = useGameStore(selectOnlineCount);
+
+    // Use questionAnswerers for "just answered", otherwise recentPlayers
+    const isAnswerContext = actionText === "just answered";
+    const sourcePlayers = isAnswerContext ? questionAnswerers : recentPlayers;
 
     // Merge initial players with real-time players (avoid duplicates)
     const allPlayers = [...initialPlayers];
-    recentPlayers.forEach((p) => {
+    sourcePlayers.forEach((p) => {
         if (!allPlayers.some((ip) => ip.username === p.username)) {
             allPlayers.push({ pfpUrl: p.pfpUrl, username: p.username });
         }
     });
 
-    // Take first N for avatar display
+    // Take first N for avatar display (latest first for answerers)
     const avatars = allPlayers.slice(0, maxAvatars);
 
     // Calculate display count
-    const displayCount = overrideCount ?? (onlineCount > 0 ? onlineCount : allPlayers.length || 1);
+    const displayCount = overrideCount ?? (isAnswerContext ? questionAnswerers.length : (onlineCount > 0 ? onlineCount : allPlayers.length || 1));
 
     // Format text
     const text = formatText

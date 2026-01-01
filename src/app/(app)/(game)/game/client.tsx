@@ -1,110 +1,96 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import type { Game } from "@prisma";
 
 import { useUser } from "@/hooks/useUser";
-import { useGameEntry } from "@/hooks/useGameEntry";
-import { getGamePhase } from "@/lib/game-utils";
-import { useTimer } from "@/hooks/useTimer";
-import { LiveConnectionProvider } from "@/components/providers/LiveConnectionProvider";
+import { useGameSocket } from "@/hooks/useGameSocket";
 import { useSounds } from "@/hooks/useSounds";
+import { useGameStoreApi } from "@/components/providers/GameStoreProvider";
 import { BottomNav } from "@/components/BottomNav";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
 import { springs, staggerContainer, fadeInUp } from "@/lib/animations";
+import { getGamePhase } from "@/lib/types";
 
 import { GameChat } from "./_components/chat/GameChat";
 import { LiveEventFeed } from "./_components/LiveEventFeed";
 import { NextGameCard } from "./_components/NextGameCard";
 import { CheerOverlay } from "./_components/CheerOverlay";
 
-import type { GamePageData } from "./page";
-
 // ==========================================
 // PROPS
 // ==========================================
 
 interface GameHubProps {
-  game: GamePageData | null;
+  currentOrNextGame: Game | null;
 }
 
 // ==========================================
 // COMPONENT
 // ==========================================
 
-export function GameHub({ game }: GameHubProps) {
+export function GameHub({ currentOrNextGame }: GameHubProps) {
   const router = useRouter();
   const hasRefreshedRef = useRef(false);
+  const store = useGameStoreApi();
 
-  // User data and access check
+  // User data
   const { user, isLoading: isLoadingUser } = useUser();
-
-  // Entry from Zustand store via hook (replaces Context)
-  const { entry, isLoading: isLoadingEntry, refetchEntry } = useGameEntry({
-    gameId: game?.id,
-    enabled: !!game,
-  });
-
-  // Derive phase from game (not stored)
-  const phase = useMemo(() => (game ? getGamePhase(game) : "SCHEDULED"), [game]);
-
-  // Access control - redirect if no access
-  useEffect(() => {
-    if (isLoadingUser) return;
-    if (!user || !user.hasGameAccess || user.isBanned) {
-      router.replace("/redeem");
-    }
-  }, [user, isLoadingUser, router]);
-
-  // Real-time connection is handled by LiveConnectionProvider wrapper
   const hasAccess = !!user?.hasGameAccess && !user?.isBanned;
+
+  // Set game in store so useGameSocket can pick up the gameId
+  useEffect(() => {
+    if (currentOrNextGame) {
+      store.getState().setGame(currentOrNextGame);
+    }
+    return () => store.getState().setGame(null);
+  }, [currentOrNextGame, store]);
+
+  // Initialize WebSocket connection (uses gameId from store)
+  useGameSocket({ enabled: hasAccess && !!currentOrNextGame });
 
   // Background music
   const { playBgMusic, stopBgMusic } = useSounds();
 
-  // Determine if game is live based on phase (timer target depends on this)
-  const isLivePhase = phase === "LIVE";
-  const hasEnded = phase === "ENDED";
+  // Derived state
+  const phase = currentOrNextGame ? getGamePhase(currentOrNextGame) : "SCHEDULED";
+  const hasActiveGame = currentOrNextGame && phase !== "ENDED";
 
-  // Timer: count down to startsAt when scheduled, to endsAt when live
-  const targetMs = isLivePhase
-    ? game?.endsAt.getTime() ?? 0  // Time remaining in game
-    : game?.startsAt.getTime() ?? 0; // Time until game starts
-  const countdown = useTimer(targetMs);
-
-  // Refresh page when countdown reaches 0 to get fresh server data
+  // Access control redirect
   useEffect(() => {
-    if (countdown <= 0 && phase === "SCHEDULED" && !hasRefreshedRef.current) {
+    if (!isLoadingUser && (!user || !user.hasGameAccess || user.isBanned)) {
+      router.replace("/redeem");
+    }
+  }, [user, isLoadingUser, router]);
+
+  // Auto-refresh when game should start
+  useEffect(() => {
+    if (!currentOrNextGame || phase !== "SCHEDULED") return;
+
+    const msUntilStart = currentOrNextGame.startsAt.getTime() - Date.now();
+    if (msUntilStart <= 0 && !hasRefreshedRef.current) {
       hasRefreshedRef.current = true;
       router.refresh();
     }
-  }, [countdown, phase, router]);
+  }, [currentOrNextGame, phase, router]);
 
-  // Derived state - also check countdown for immediate transition
-  const isLive = isLivePhase || (countdown <= 0 && phase !== "ENDED");
-  const isEmpty = !game;
-  const hasActiveGame = !isEmpty && !hasEnded;
-
-  // Background music control
+  // Background music
   useEffect(() => {
     if (hasAccess && hasActiveGame) {
       playBgMusic();
     } else {
       stopBgMusic();
     }
-    return () => {
-      stopBgMusic();
-    };
+    return () => stopBgMusic();
   }, [hasAccess, hasActiveGame, playBgMusic, stopBgMusic]);
 
   // ==========================================
-  // RENDER: Loading - only show if no access after hydration
+  // RENDER: Loading
   // ==========================================
 
-  // Skip showing loading for initial data fetch - loading.tsx handles that
-  // Only show if user doesn't have access after we know who they are
-  if (!isLoadingUser && (!hasAccess || !user)) {
+  if (!isLoadingUser && !hasAccess) {
     return (
       <>
         <main className="flex-1 flex flex-col items-center justify-center min-h-[60vh]">
@@ -125,7 +111,7 @@ export function GameHub({ game }: GameHubProps) {
   // RENDER: Empty State
   // ==========================================
 
-  if (isEmpty) {
+  if (!currentOrNextGame) {
     return (
       <>
         <motion.section
@@ -165,35 +151,17 @@ export function GameHub({ game }: GameHubProps) {
   // ==========================================
 
   return (
-    <LiveConnectionProvider gameId={game.id} enabled={hasAccess}>
+    <>
       <motion.section
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
         className="shrink-0 flex flex-col justify-start items-center overflow-hidden px-4 pt-4"
       >
-        <NextGameCard
-          gameId={game.id}
-          onchainId={game.onchainId as `0x${string}` | null}
-          theme={game.theme}
-          themeIcon={game.coverUrl ?? undefined}
-          tierPrices={game.tierPrices}
-          countdown={countdown}
-          hasTicket={!!entry?.paidAt}
-          isLive={isLive}
-          hasEnded={hasEnded}
-          hasCompleted={!!entry && entry.answered >= (game.questionCount ?? 0) && entry.answered > 0}
-          prizePool={game.prizePool ?? 0}
-          spotsTotal={game.maxPlayers ?? 100}
-          spotsTaken={game.playerCount ?? 0}
-          recentPlayers={game.recentPlayers ?? []}
-          username={user?.username ?? undefined}
-          userAvatar={user?.pfpUrl ?? undefined}
-          onPurchaseSuccess={refetchEntry}
-        />
+        <NextGameCard game={currentOrNextGame} />
       </motion.section>
 
-      {/* Flexible spacer + LiveEventFeed - grows on taller screens */}
+      {/* Live Event Feed */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -204,6 +172,7 @@ export function GameHub({ game }: GameHubProps) {
         <LiveEventFeed />
       </motion.div>
 
+      {/* Game Chat */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -217,6 +186,6 @@ export function GameHub({ game }: GameHubProps) {
 
       <BottomNav />
       <CheerOverlay />
-    </LiveConnectionProvider>
+    </>
   );
 }

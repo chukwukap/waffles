@@ -5,7 +5,7 @@ import {
   endGameOnChain,
   settleGame,
   updateMerkleRootOnChain,
-} from "@/lib/settlement";
+} from "@/lib/chain";
 import { getAdminSession } from "@/lib/admin-auth";
 
 /**
@@ -194,7 +194,7 @@ export async function GET(request: NextRequest) {
     const gameId = parseInt(gameIdStr);
 
     // Import dynamically to avoid issues when env var not set
-    const { getOnChainGame } = await import("@/lib/settlement");
+    const { getOnChainGame } = await import("@/lib/chain");
 
     // Get database game to get onchainId
     const dbGame = await prisma.game.findUnique({

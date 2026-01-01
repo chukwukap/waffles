@@ -20,7 +20,8 @@ export const minikitConfig: MiniAppManifest = {
     version: "1",
     name: "Waffles",
     subtitle: "Waffles",
-    description: "Pattern-matching tournaments built for everyone.",
+    description:
+      "The internet's most addictive social pattern recognition game",
     screenshotUrls: [
       `${env.rootUrl}/images/screenshots/1.png`,
       `${env.rootUrl}/images/screenshots/2.png`,
@@ -36,9 +37,9 @@ export const minikitConfig: MiniAppManifest = {
     heroImageUrl: `${env.rootUrl}/images/hero-image.png`,
     tagline: "Play daily social games",
     ogTitle: "Waffles",
-    ogDescription: "Play daily social games",
+    ogDescription:
+      "The internet's most addictive social pattern recognition game",
     ogImageUrl: `${env.rootUrl}/og.png`,
-    noindex: false,
   },
   // @ts-ignore
   baseBuilder: {
