@@ -5,7 +5,7 @@ import { QuestType, QuestCategory, RepeatFrequency } from "@prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdminSession } from "@/lib/admin-auth";
-import { sendBulkNotifications } from "@/lib/notifications";
+import { sendBatch } from "@/lib/notifications";
 import { logAdminAction, EntityType } from "@/lib/audit";
 import { env } from "@/lib/env";
 
@@ -96,12 +96,14 @@ export async function createQuestAction(
     // Send notifications to waitlist users if quest is active
     if (quest.isActive) {
       try {
-        const notificationResults = await sendBulkNotifications({
-          title: "🎯 New Quest Available!",
-          body: `Complete "${quest.title}" to earn ${quest.points} points!`,
-          targetUrl: `${env.rootUrl}/waitlist/quests`,
-          filter: "waitlist",
-        });
+        const notificationResults = await sendBatch(
+          {
+            title: "🎯 New Quest Available!",
+            body: `Complete "${quest.title}" to earn ${quest.points} points!`,
+            targetUrl: `${env.rootUrl}/waitlist/quests`,
+          },
+          "waitlist"
+        );
 
         // Log the notification action for audit trail
         await logAdminAction({

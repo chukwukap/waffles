@@ -1,0 +1,166 @@
+import { prisma } from "@/lib/db";
+import { LOG_PREFIX } from "./constants";
+import type { NotificationDetails, UserWithTokens, UserFilter } from "./types";
+
+/**
+ * Save notification token (MUST be fast for webhook response)
+ * Target: < 50ms
+ */
+export async function saveToken(
+  fid: number,
+  appFid: number,
+  details: NotificationDetails
+): Promise<{ success: boolean; userId?: number }> {
+  const start = Date.now();
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { fid },
+      select: { id: true },
+    });
+
+    if (!user) {
+      console.warn(`${LOG_PREFIX} User not found: fid=${fid}`);
+      return { success: false };
+    }
+
+    await prisma.notificationToken.upsert({
+      where: { userId_appFid: { userId: user.id, appFid } },
+      update: {
+        token: details.token,
+        url: details.url,
+        updatedAt: new Date(),
+      },
+      create: {
+        userId: user.id,
+        appFid,
+        token: details.token,
+        url: details.url,
+      },
+    });
+
+    const duration = Date.now() - start;
+    console.log(
+      `${LOG_PREFIX} Token saved: fid=${fid}, appFid=${appFid} (${duration}ms)`
+    );
+
+    return { success: true, userId: user.id };
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Save token failed:`, { fid, appFid, error });
+    return { success: false };
+  }
+}
+
+/**
+ * Delete notification token
+ */
+export async function deleteToken(
+  fid: number,
+  appFid: number
+): Promise<boolean> {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { fid },
+      select: { id: true },
+    });
+
+    if (!user) return false;
+
+    await prisma.notificationToken.deleteMany({
+      where: { userId: user.id, appFid },
+    });
+
+    console.log(`${LOG_PREFIX} Token deleted: fid=${fid}, appFid=${appFid}`);
+    return true;
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Delete token failed:`, { fid, appFid, error });
+    return false;
+  }
+}
+
+/**
+ * Delete invalid token by token string (used during batch send)
+ */
+export async function deleteInvalidToken(tokenString: string): Promise<void> {
+  try {
+    await prisma.notificationToken.deleteMany({
+      where: { token: tokenString },
+    });
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to delete invalid token`, error);
+  }
+}
+
+/**
+ * Get all tokens for a user
+ */
+export async function getTokensForUser(fid: number) {
+  const user = await prisma.user.findUnique({
+    where: { fid },
+    select: {
+      notifs: {
+        select: { id: true, appFid: true, token: true, url: true },
+      },
+    },
+  });
+  return user?.notifs ?? [];
+}
+
+/**
+ * Get users with tokens (for batch sending)
+ */
+export async function getUsersWithTokens(
+  filter: UserFilter
+): Promise<UserWithTokens[]> {
+  const where: Record<string, unknown> = { notifs: { some: {} } };
+
+  switch (filter) {
+    case "active":
+      where.hasGameAccess = true;
+      where.isBanned = false;
+      break;
+    case "waitlist":
+      where.hasGameAccess = false;
+      where.joinedWaitlistAt = { not: null };
+      break;
+    case "no_quests":
+      where.completedQuests = { none: {} };
+      break;
+  }
+
+  return prisma.user.findMany({
+    where,
+    select: {
+      fid: true,
+      username: true,
+      notifs: {
+        select: { id: true, appFid: true, token: true, url: true },
+      },
+    },
+  });
+}
+
+/**
+ * Count users with tokens
+ */
+export async function countUsersWithTokens(
+  filter: UserFilter
+): Promise<number> {
+  const where: Record<string, unknown> = { notifs: { some: {} } };
+
+  switch (filter) {
+    case "active":
+      where.hasGameAccess = true;
+      where.isBanned = false;
+      break;
+    case "waitlist":
+      where.hasGameAccess = false;
+      where.joinedWaitlistAt = { not: null };
+      break;
+    case "no_quests":
+      where.completedQuests = { none: {} };
+      break;
+  }
+
+  return prisma.user.count({ where });
+}

@@ -4,132 +4,46 @@ import {
   verifyAppKeyWithNeynar,
 } from "@farcaster/miniapp-node";
 import {
-  setUserNotificationDetails,
-  deleteUserNotificationDetails,
-  sendNotificationToUser,
+  handleWebhookEvent,
+  sendWelcomeNotification,
+  LOG_PREFIX,
 } from "@/lib/notifications";
-import { env } from "@/lib/env";
 
 export async function POST(request: NextRequest) {
   const requestJson = await request.json();
 
-  // Parse and verify the webhook event
+  // 1. Verify webhook signature
   let data;
   try {
     data = await parseWebhookEvent(requestJson, verifyAppKeyWithNeynar);
-    console.log("[WEBHOOK_NOTIFY] Event verified successfully");
-  } catch (e: unknown) {
-    console.error("[WEBHOOK_NOTIFY] Verification failed:", e);
-    return NextResponse.json(
-      { error: "Invalid webhook signature" },
-      { status: 401 }
-    );
-  }
-
-  const fid = data.fid;
-  const appFid = data.appFid;
-  const event = data.event;
-
-  console.log(
-    `[WEBHOOK_NOTIFY] Event: ${event.event}, FID: ${fid}, AppFID: ${appFid}`
-  );
-
-  try {
-    switch (event.event) {
-      case "miniapp_added":
-        console.log(`[WEBHOOK_NOTIFY] Processing miniapp_added for FID ${fid}`);
-        if (event.notificationDetails) {
-          console.log(
-            `[WEBHOOK_NOTIFY] Saving notification details for FID ${fid}`
-          );
-          await setUserNotificationDetails(
-            fid,
-            appFid,
-            event.notificationDetails
-          );
-
-          console.log(
-            `[WEBHOOK_NOTIFY] Sending welcome notification to FID ${fid}`
-          );
-          await sendNotificationToUser({
-            fid,
-            title: "Welcome to Waffles!",
-            body: "Thanks for adding the app. You will now receive notifications.",
-            targetUrl: `${env.rootUrl}${env.homeUrlPath}`,
-          });
-          console.log(
-            `[WEBHOOK_NOTIFY] Welcome notification sent to FID ${fid}`
-          );
-        } else {
-          console.log(
-            `[WEBHOOK_NOTIFY] No notification details provided for FID ${fid}`
-          );
-        }
-        break;
-
-      case "miniapp_removed":
-        console.log(
-          `[WEBHOOK_NOTIFY] Processing miniapp_removed for FID ${fid}`
-        );
-        await deleteUserNotificationDetails(fid, appFid);
-        console.log(
-          `[WEBHOOK_NOTIFY] Notification details deleted for FID ${fid}`
-        );
-        break;
-
-      case "notifications_enabled":
-        console.log(
-          `[WEBHOOK_NOTIFY] Processing notifications_enabled for FID ${fid}`
-        );
-        await setUserNotificationDetails(
-          fid,
-          appFid,
-          event.notificationDetails
-        );
-        console.log(
-          `[WEBHOOK_NOTIFY] Notification details saved for FID ${fid}`
-        );
-
-        await sendNotificationToUser({
-          fid,
-          title: "Notifications Enabled",
-          body: "You will now receive updates about your games.",
-          targetUrl: `${env.rootUrl}${env.homeUrlPath}`,
-        });
-        console.log(
-          `[WEBHOOK_NOTIFY] Notification enabled message sent to FID ${fid}`
-        );
-        break;
-
-      case "notifications_disabled":
-        console.log(
-          `[WEBHOOK_NOTIFY] Processing notifications_disabled for FID ${fid}`
-        );
-        await deleteUserNotificationDetails(fid, appFid);
-        console.log(
-          `[WEBHOOK_NOTIFY] Notification details deleted for FID ${fid}`
-        );
-        break;
-
-      default:
-        console.log(
-          `[WEBHOOK_NOTIFY] Unknown event type: ${event} for FID ${fid}`
-        );
-    }
-
-    console.log(
-      `[WEBHOOK_NOTIFY] Successfully processed ${event.event} for FID ${fid}`
-    );
   } catch (error) {
-    console.error(
-      `[WEBHOOK_NOTIFY] Error processing ${event.event} for FID ${fid}:`,
-      error
-    );
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error(`${LOG_PREFIX} Webhook verification failed:`, error);
+    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
-  return NextResponse.json({ success: true });
+  // 2. Handle event (FAST - just save token to DB)
+  const result = await handleWebhookEvent({
+    fid: data.fid,
+    appFid: data.appFid,
+    event: data.event.event,
+    notificationDetails:
+      "notificationDetails" in data.event
+        ? data.event.notificationDetails
+        : undefined,
+  });
+
+  // 3. Return response IMMEDIATELY (critical for Baseapp)
+  const response = NextResponse.json({ success: result.success });
+
+  // 4. Send welcome notification AFTER response (fire-and-forget)
+  if (result.shouldSendWelcome) {
+    // Use setImmediate to ensure this runs after response is sent
+    setImmediate(() => {
+      sendWelcomeNotification(data.fid).catch((e) =>
+        console.error(`${LOG_PREFIX} Async welcome failed:`, e)
+      );
+    });
+  }
+
+  return response;
 }

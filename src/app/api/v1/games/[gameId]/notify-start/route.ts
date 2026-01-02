@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { sendNotificationToUser } from "@/lib/notifications";
+import { sendBatch } from "@/lib/notifications";
 import { env } from "@/lib/env";
 
 type Params = { gameId: string };
@@ -39,51 +39,37 @@ export async function POST(
       return NextResponse.json({ error: "Game not found" }, { status: 404 });
     }
 
-    // Get all entries with users who have notification tokens
+    // Get all FIDs for this game's entries
     const entries = await prisma.gameEntry.findMany({
       where: { gameId },
-      include: {
-        user: {
-          select: {
-            fid: true,
-            notifs: {
-              take: 1, // Just check if they have any token
-            },
-          },
-        },
-      },
+      select: { user: { select: { fid: true } } },
     });
 
-    // Filter users with notification tokens
-    const usersToNotify = entries.filter((e) => e.user.notifs.length > 0);
-    console.log(
-      `[notify-start] Game ${gameId}: Notifying ${usersToNotify.length} of ${entries.length} players`
-    );
-
-    // Send notifications (in parallel with limited concurrency)
-    const results = await Promise.allSettled(
-      usersToNotify.map((entry) =>
-        sendNotificationToUser({
-          fid: entry.user.fid,
-          title: "🎮 Game Starting!",
-          body: `${game.title || "Your game"} is live now!`,
-          targetUrl: `${env.rootUrl}/game/${gameId}/play`,
-        })
-      )
-    );
-
-    const successful = results.filter((r) => r.status === "fulfilled").length;
-    const failed = results.filter((r) => r.status === "rejected").length;
+    const fids = entries.map((e) => e.user.fid);
 
     console.log(
-      `[notify-start] Game ${gameId}: ${successful} sent, ${failed} failed`
+      `[notify-start] Game ${gameId}: Sending batch to ${fids.length} players`
+    );
+
+    // Send batch notification (100 tokens per request)
+    const results = await sendBatch(
+      {
+        title: "🎮 Game Starting!",
+        body: `${game.title || "Your game"} is live now!`,
+        targetUrl: `${env.rootUrl}/game/${gameId}/play`,
+      },
+      { fids }
+    );
+
+    console.log(
+      `[notify-start] Game ${gameId}: ${results.success} sent, ${results.failed} failed`
     );
 
     return NextResponse.json({
       success: true,
-      notified: successful,
-      failed,
-      total: usersToNotify.length,
+      notified: results.success,
+      failed: results.failed + results.invalidTokens + results.rateLimited,
+      total: results.total,
     });
   } catch (error) {
     console.error("[notify-start] Error:", error);

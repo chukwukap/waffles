@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { sendNotificationToUser } from "@/lib/notifications";
+import { sendToUser } from "@/lib/notifications";
 import { broadcastGameStats } from "@/lib/partykit";
 import { env } from "@/lib/env";
 
@@ -37,8 +37,7 @@ async function sendTicketNotification(
   const startsAt = game.startsAt ? new Date(game.startsAt) : null;
   const timeStr = startsAt ? formatGameTime(startsAt) : "soon";
 
-  await sendNotificationToUser({
-    fid,
+  await sendToUser(fid, {
     title: "🧇 Ticket Secured!",
     body: `Game starts ${timeStr}. Don't miss it!`,
     targetUrl: `${env.rootUrl}/game/${gameId}`,

@@ -3,7 +3,7 @@ import { NotificationForm } from "@/components/admin/NotificationForm";
 import { getRecentNotifications } from "@/actions/admin/notifications";
 import { BellIcon, ClockIcon, CheckCircleIcon, XCircleIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { StatsCard } from "@/components/admin/StatsCard";
-import { getNotificationEnabledUserCount } from "@/lib/notifications";
+import { countUsersWithTokens } from "@/lib/notifications";
 
 export const metadata: Metadata = {
     title: "Notifications | Waffles Admin",
@@ -18,7 +18,7 @@ export default async function NotificationsPage() {
     try {
         [recentNotifications, totalUsersWithNotifs] = await Promise.all([
             getRecentNotifications(5),
-            getNotificationEnabledUserCount("all"),
+            countUsersWithTokens("all"),
         ]);
     } catch (error) {
         console.error("[NotificationsPage] Failed to fetch data:", error);

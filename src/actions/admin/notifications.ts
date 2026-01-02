@@ -5,9 +5,10 @@ import { requireAdminSession } from "@/lib/admin-auth";
 import { logAdminAction, EntityType } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 import {
-  sendBulkNotifications,
-  getNotificationEnabledUserCount,
-  sendNotificationToUser,
+  sendBatch,
+  countUsersWithTokens,
+  sendToUser,
+  type UserFilter,
 } from "@/lib/notifications";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
@@ -39,7 +40,7 @@ export type NotificationResult =
 export async function getAudienceCount(
   audience: "all" | "active" | "waitlist" | "no_quests"
 ): Promise<number> {
-  return getNotificationEnabledUserCount(audience);
+  return countUsersWithTokens(audience);
 }
 
 /**
@@ -57,19 +58,16 @@ export async function sendAdminNotificationAction(
 
   // Parse and validate form data
   const rawData = {
-    title: formData.get("title"),
-    body: formData.get("body"),
-    targetUrl: formData.get("targetUrl") || "",
-    audience: formData.get("audience"),
-    targetFid: formData.get("targetFid") || undefined,
+    title: formData.get("title") as string,
+    body: formData.get("body") as string,
+    targetUrl: formData.get("targetUrl") as string,
+    audience: formData.get("audience") as string,
+    targetFid: formData.get("targetFid") as string,
   };
 
   const validation = notificationSchema.safeParse(rawData);
   if (!validation.success) {
-    return {
-      success: false,
-      error: validation.error.issues[0]?.message || "Invalid input",
-    };
+    return { success: false, error: validation.error.issues[0].message };
   }
 
   const { title, body, targetUrl, audience, targetFid } = validation.data;
@@ -95,8 +93,7 @@ export async function sendAdminNotificationAction(
         return { success: false, error: "Invalid FID" };
       }
 
-      const result = await sendNotificationToUser({
-        fid,
+      const result = await sendToUser(fid, {
         title,
         body,
         targetUrl: finalTargetUrl,
@@ -108,23 +105,28 @@ export async function sendAdminNotificationAction(
         failed: result.state !== "success" ? 1 : 0,
       };
     } else {
-      // Send to filtered audience
-      const filter = audience === "single" ? "all" : audience;
-      const bulkResults = await sendBulkNotifications({
-        title,
-        body,
-        targetUrl: finalTargetUrl,
-        filter,
-      });
+      // Send to filtered audience using new batch function
+      const filter: UserFilter =
+        audience === "single" ? "all" : (audience as UserFilter);
+      const bulkResults = await sendBatch(
+        {
+          title,
+          body,
+          targetUrl: finalTargetUrl,
+        },
+        filter
+      );
 
       results = {
         total: bulkResults.total,
         success: bulkResults.success,
         failed:
-          bulkResults.failed + bulkResults.noToken + bulkResults.rateLimited,
+          bulkResults.failed +
+          bulkResults.invalidTokens +
+          bulkResults.rateLimited,
       };
 
-      console.log("[AdminNotification] Bulk send complete:", bulkResults);
+      console.log("[AdminNotification] Batch send complete:", bulkResults);
     }
 
     // Log admin action
@@ -150,39 +152,28 @@ export async function sendAdminNotificationAction(
       failed: results.failed,
     };
   } catch (error) {
-    console.error("[AdminNotification] Error sending notifications:", {
-      error,
-      message: error instanceof Error ? error.message : "Unknown error",
-      stack: error instanceof Error ? error.stack : undefined,
-      audience,
-      title,
-    });
-    return {
-      success: false,
-      error:
-        error instanceof Error ? error.message : "Failed to send notifications",
-    };
+    console.error("[AdminNotification] Error:", error);
+    return { success: false, error: "Failed to send notifications" };
   }
 }
 
 /**
- * Get recent notification sends from audit log
+ * Get recent notifications sent by admins
  */
-export async function getRecentNotifications(limit = 10) {
+export async function getRecentNotifications(limit: number = 10) {
   return prisma.auditLog.findMany({
     where: {
       action: "SEND_NOTIFICATION",
-      details: {
-        path: ["type"],
-        equals: "notification",
-      },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: {
+      createdAt: "desc",
+    },
     take: limit,
     include: {
       admin: {
         select: {
           username: true,
+          pfpUrl: true,
         },
       },
     },

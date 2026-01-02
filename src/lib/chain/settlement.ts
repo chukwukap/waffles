@@ -10,7 +10,7 @@ import { buildMerkleTree, generateAllProofs, type Winner } from "./merkle";
 import waffleGameAbi from "./abi.json";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
-import { sendNotificationToUser } from "@/lib/notifications";
+import { sendToUser, sendBatch } from "@/lib/notifications";
 import { getGamePhase } from "@/lib/types";
 import { PRIZE_DISTRIBUTION } from "@/lib/constants";
 
@@ -89,31 +89,42 @@ async function sendSettlementNotifications(gameId: number) {
 
   const usersToNotify = allEntries.filter((e) => e.user.notifs.length > 0);
 
+  // Separate winners from non-winners
+  const winners = usersToNotify.filter(
+    (e) => e.rank !== null && e.rank <= 3 && e.prize
+  );
+  const nonWinners = usersToNotify.filter(
+    (e) => !(e.rank !== null && e.rank <= 3 && e.prize)
+  );
+
   console.log(
-    `[Settlement] Sending notifications to ${usersToNotify.length} players`
+    `[Settlement] Notifying ${winners.length} winners and ${nonWinners.length} non-winners`
   );
 
+  // Batch send to winners (personalized message)
+  // For now, use individual sends for winners since they have personalized prize amounts
   await Promise.allSettled(
-    usersToNotify.map(async (entry) => {
-      const isWinner = entry.rank !== null && entry.rank <= 3 && entry.prize;
-
-      if (isWinner) {
-        await sendNotificationToUser({
-          fid: entry.user.fid,
-          title: "🏆 You Won!",
-          body: `You won $${entry.prize?.toFixed(2)}! Claim your prize now.`,
-          targetUrl: `${env.rootUrl}/game/${gameId}/result`,
-        });
-      } else {
-        await sendNotificationToUser({
-          fid: entry.user.fid,
-          title: "📊 Results Ready!",
-          body: "See how you ranked and check out the winners!",
-          targetUrl: `${env.rootUrl}/game/${gameId}/result`,
-        });
-      }
-    })
+    winners.map((entry) =>
+      sendToUser(entry.user.fid, {
+        title: "🏆 You Won!",
+        body: `You won $${entry.prize?.toFixed(2)}! Claim your prize now.`,
+        targetUrl: `${env.rootUrl}/game/${gameId}/result`,
+      })
+    )
   );
+
+  // Batch send to non-winners (same message)
+  if (nonWinners.length > 0) {
+    const nonWinnerFids = nonWinners.map((e) => e.user.fid);
+    await sendBatch(
+      {
+        title: "📊 Results Ready!",
+        body: "See how you ranked and check out the winners!",
+        targetUrl: `${env.rootUrl}/game/${gameId}/result`,
+      },
+      { fids: nonWinnerFids }
+    );
+  }
 }
 
 // ============================================================================

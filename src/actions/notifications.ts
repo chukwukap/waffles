@@ -1,6 +1,6 @@
 "use server";
 
-import { setUserNotificationDetails } from "@/lib/notifications";
+import { saveToken } from "@/lib/notifications";
 
 export async function saveNotificationTokenAction(
   fid: number,
@@ -8,8 +8,8 @@ export async function saveNotificationTokenAction(
   notificationDetails: { url: string; token: string }
 ) {
   try {
-    await setUserNotificationDetails(fid, appFid, notificationDetails);
-    return { success: true };
+    const result = await saveToken(fid, appFid, notificationDetails);
+    return result;
   } catch (error) {
     console.error("Failed to save notification token:", error);
     return { success: false, error: "Failed to save notification token" };
