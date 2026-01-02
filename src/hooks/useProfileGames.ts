@@ -13,11 +13,13 @@ export interface ProfileGame {
   gameId: number;
   score: number;
   rank: number;
+  prize: number;
   paidAt: string | null;
   claimedAt: string | null;
   answeredQuestions: number;
   game: {
     id: number;
+    onchainId: string | null;
     title: string;
     theme: string;
     startsAt: string;

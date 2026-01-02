@@ -1,7 +1,7 @@
 "use client";
 
 import { WaffleIcon, FlashIcon, CupIcon } from "@/components/icons";
-import { GameHistoryEntry } from "@/lib/types";
+import { GameHistoryEntry } from "./GameHistory";
 import { cn } from "@/lib/utils";
 import React from "react";
 import Link from "next/link";
@@ -12,14 +12,14 @@ interface GameHistoryItemProps {
 }
 
 export default function GameHistoryItem({ game }: GameHistoryItemProps) {
-  const formattedWinnings = `$${game.winnings.toLocaleString(undefined, {
+  const formattedPrize = `$${game.prizeAmount.toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
 
-  const hasWinnings = game.winnings > 0;
+  const hasPrize = game.prizeAmount > 0;
   const isClaimed = !!game.claimedAt;
-  const isEligibleToClaim = hasWinnings && !isClaimed;
+  const isEligibleToClaim = hasPrize && !isClaimed;
 
   return (
     <motion.div
@@ -63,10 +63,10 @@ export default function GameHistoryItem({ game }: GameHistoryItemProps) {
           <span
             className={cn(
               "font-display font-medium text-[16px] leading-[19px] tracking-[-0.03em]",
-              hasWinnings ? "text-[#14B985]" : "text-[#14B985]"
+              hasPrize ? "text-[#14B985]" : "text-[#14B985]"
             )}
           >
-            {formattedWinnings}
+            {formattedPrize}
           </span>
         </div>
 

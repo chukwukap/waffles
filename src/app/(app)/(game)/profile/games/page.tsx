@@ -34,12 +34,11 @@ export default function GamesPage() {
   // Transform to expected format
   const gameHistory = games.map((g) => ({
     id: g.gameId,
-    onchainId: null,
+    onchainId: g.game.onchainId,
     name: g.game.title,
     score: g.score,
     claimedAt: g.claimedAt ? new Date(g.claimedAt) : null,
-    winnings: g.rank <= 3 ? g.game.prizePool * [0.6, 0.3, 0.1][g.rank - 1] : 0,
-    winningsColor: (g.rank <= 3 ? "green" : "gray") as "green" | "gray",
+    prizeAmount: g.prize,
   }));
 
   const containerVariants = {

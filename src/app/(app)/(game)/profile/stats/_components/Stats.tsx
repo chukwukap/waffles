@@ -4,8 +4,19 @@ import { GamePadIcon, WinningsIcon, WinsIcon } from "@/components/icons";
 import Link from "next/link";
 import React from "react";
 import { cn } from "@/lib/utils";
-import { ProfileStatsData } from "@/lib/types";
 import { motion } from "framer-motion";
+
+// Localized type
+export interface ProfileStatsData {
+  totalGames: number;
+  wins: number;
+  winRate: number;
+  totalWon: number;
+  highestScore: number;
+  avgScore: number;
+  currentStreak: number;
+  bestRank: number | null;
+}
 
 interface StatCardProps {
   icon: React.ReactNode;

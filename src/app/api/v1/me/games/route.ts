@@ -9,69 +9,58 @@ import { getGamePhase } from "@/lib/types";
  */
 export const GET = withAuth(async (request, auth: AuthResult) => {
   try {
-    // Get all entries for the user
+    // Single efficient query - no N+1 problem
     const entries = await prisma.gameEntry.findMany({
-      where: {
-        userId: auth.userId,
-        paidAt: { not: null }, // Only paid entries
-      },
-      include: {
+      where: { userId: auth.userId },
+      select: {
+        id: true,
+        gameId: true,
+        score: true,
+        rank: true,
+        prize: true,
+        paidAt: true,
+        claimedAt: true,
+        answered: true,
         game: {
           select: {
             id: true,
+            onchainId: true,
             title: true,
             theme: true,
             startsAt: true,
             endsAt: true,
             prizePool: true,
             playerCount: true,
-            _count: {
-              select: {
-                questions: true,
-              },
-            },
+            _count: { select: { questions: true } },
           },
         },
       },
       orderBy: { createdAt: "desc" },
     });
 
-    // Calculate rank for each game entry
-    const response = await Promise.all(
-      entries.map(async (entry) => {
-        // Get rank by counting entries with higher scores in the same game
-        const higherScores = await prisma.gameEntry.count({
-          where: {
-            gameId: entry.gameId,
-            paidAt: { not: null },
-            score: { gt: entry.score },
-          },
-        });
-
-        const phase = getGamePhase(entry.game);
-
-        return {
-          id: entry.id,
-          gameId: entry.gameId,
-          score: entry.score,
-          rank: entry.rank ?? higherScores + 1,
-          paidAt: entry.paidAt,
-          claimedAt: entry.claimedAt,
-          answeredQuestions: entry.answered,
-          game: {
-            id: entry.game.id,
-            title: entry.game.title,
-            theme: entry.game.theme,
-            startsAt: entry.game.startsAt,
-            endsAt: entry.game.endsAt,
-            status: phase,
-            prizePool: entry.game.prizePool,
-            totalQuestions: entry.game._count.questions,
-            playersCount: entry.game.playerCount,
-          },
-        };
-      })
-    );
+    // Map to response format (no extra queries needed)
+    const response = entries.map((entry) => ({
+      id: entry.id,
+      gameId: entry.gameId,
+      score: entry.score,
+      rank: entry.rank,
+      prize: entry.prize ?? 0,
+      paidAt: entry.paidAt,
+      claimedAt: entry.claimedAt,
+      answeredQuestions: entry.answered,
+      game: {
+        id: entry.game.id,
+        onchainId: entry.game.onchainId,
+        title: entry.game.title,
+        theme: entry.game.theme,
+        startsAt: entry.game.startsAt,
+        endsAt: entry.game.endsAt,
+        status: getGamePhase(entry.game),
+        prizePool: entry.game.prizePool,
+        totalQuestions: entry.game._count.questions,
+        playersCount: entry.game.playerCount,
+      },
+    }));
 
     return NextResponse.json(response);
   } catch (error) {

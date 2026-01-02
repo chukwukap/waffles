@@ -1,8 +1,17 @@
 "use client";
 import Link from "next/link";
-import { GameHistoryEntry } from "@/lib/types";
 import GameHistoryItem from "./GameHistoryItem";
 import { motion } from "framer-motion";
+
+// Localized type
+export interface GameHistoryEntry {
+  id: number | string;
+  onchainId: string | null;
+  name: string;
+  score: number;
+  claimedAt: string | Date | null;
+  prizeAmount: number;
+}
 
 interface GameHistoryProps {
   gameHistory: GameHistoryEntry[];
