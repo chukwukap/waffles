@@ -24,7 +24,6 @@ export interface ProfileGame {
     theme: string;
     startsAt: string;
     endsAt: string;
-    status: "SCHEDULED" | "LIVE" | "ENDED";
     prizePool: number;
     totalQuestions: number;
     playersCount: number;

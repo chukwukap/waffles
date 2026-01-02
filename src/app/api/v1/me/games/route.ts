@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { getGamePhase } from "@/lib/types";
 
 /**
  * GET /api/v1/me/games
@@ -55,7 +54,6 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
         theme: entry.game.theme,
         startsAt: entry.game.startsAt,
         endsAt: entry.game.endsAt,
-        status: getGamePhase(entry.game),
         prizePool: entry.game.prizePool,
         totalQuestions: entry.game._count.questions,
         playersCount: entry.game.playerCount,
