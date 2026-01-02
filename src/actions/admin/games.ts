@@ -350,6 +350,10 @@ export async function deleteGameAction(gameId: number): Promise<void> {
       }
     }
 
+    // Cleanup PartyKit room before deleting from database
+    const { cleanupGameRoom } = await import("@/lib/partykit");
+    await cleanupGameRoom(gameId);
+
     await prisma.game.delete({
       where: { id: gameId },
     });

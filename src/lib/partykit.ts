@@ -113,3 +113,31 @@ export async function broadcastGameStats(
     console.error(`[broadcastGameStats] Error:`, err);
   }
 }
+
+/**
+ * Cleanup PartyKit room when a game is deleted.
+ * Notifies the PartyKit server to close connections and free resources.
+ */
+export async function cleanupGameRoom(gameId: number): Promise<void> {
+  if (!env.partykitHost || !env.partykitSecret) {
+    console.warn("[cleanupGameRoom] PartyKit not configured");
+    return;
+  }
+
+  try {
+    const res = await partyFetch(gameId, "cleanup", {
+      reason: "game_deleted",
+    });
+
+    if (res.ok) {
+      console.log(`[cleanupGameRoom] Cleaned up room for game ${gameId}`);
+    } else {
+      console.warn(
+        `[cleanupGameRoom] Failed for game ${gameId}: ${res.status}`
+      );
+    }
+  } catch (err) {
+    // Don't throw - cleanup is best-effort
+    console.error(`[cleanupGameRoom] Error for game ${gameId}:`, err);
+  }
+}
