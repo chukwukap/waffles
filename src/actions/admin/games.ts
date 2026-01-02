@@ -505,9 +505,3 @@ export async function forceEndGameAction(
     return { success: false, error: "Failed to end game" };
   }
 }
-
-// Keep old function names as aliases for backwards compatibility
-export const startGameAction = forceStartGameAction;
-export const endGameAction = forceEndGameAction;
-
-// Removed changeGameStatusAction - no longer needed with time-based phases

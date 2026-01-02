@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { EllipsisVerticalIcon, PencilIcon, TrashIcon, PlayIcon, StopIcon, EyeIcon } from "@heroicons/react/24/outline";
-import { startGameAction, endGameAction } from "@/actions/admin/games";
+import { forceStartGameAction, forceEndGameAction } from "@/actions/admin/games";
 import { DeleteGameButton } from "@/components/admin/DeleteGameButton";
 import { notify } from "@/components/ui/Toaster";
 
@@ -48,7 +48,7 @@ export function GameActions({ game, onOpenChange }: GameActionsProps) {
 
         setIsLoading(true);
         try {
-            const result = await startGameAction(game.id);
+            const result = await forceStartGameAction(game.id);
             if (result.success) {
                 notify.success("Game started successfully!");
                 toggleOpen(false);
@@ -69,7 +69,7 @@ export function GameActions({ game, onOpenChange }: GameActionsProps) {
 
         setIsLoading(true);
         try {
-            const result = await endGameAction(game.id);
+            const result = await forceEndGameAction(game.id);
             if (result.success) {
                 notify.success("Game ended successfully!");
                 toggleOpen(false);

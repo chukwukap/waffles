@@ -497,7 +497,7 @@ export function GameForm({
                       htmlFor="tierPrice1"
                       className="flex items-center gap-2 text-sm font-medium text-white/70 mb-2"
                     >
-                      <span className="w-3 h-3 rounded-full bg-gradient-to-br from-orange-600 to-orange-800"></span>
+                      <span className="w-3 h-3 rounded-full bg-linear-to-br from-orange-600 to-orange-800"></span>
                       Tier 1 (Bronze) <span className="text-white/40">(USDC)</span>
                     </label>
                     <div className="relative">
@@ -525,7 +525,7 @@ export function GameForm({
                       htmlFor="tierPrice2"
                       className="flex items-center gap-2 text-sm font-medium text-white/70 mb-2"
                     >
-                      <span className="w-3 h-3 rounded-full bg-gradient-to-br from-gray-300 to-gray-500"></span>
+                      <span className="w-3 h-3 rounded-full bg-linear-to-br from-gray-300 to-gray-500"></span>
                       Tier 2 (Silver) <span className="text-white/40">(USDC)</span>
                     </label>
                     <div className="relative">
@@ -553,7 +553,7 @@ export function GameForm({
                       htmlFor="tierPrice3"
                       className="flex items-center gap-2 text-sm font-medium text-white/70 mb-2"
                     >
-                      <span className="w-3 h-3 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600"></span>
+                      <span className="w-3 h-3 rounded-full bg-linear-to-br from-yellow-400 to-yellow-600"></span>
                       Tier 3 (Gold) <span className="text-white/40">(USDC)</span>
                     </label>
                     <div className="relative">
