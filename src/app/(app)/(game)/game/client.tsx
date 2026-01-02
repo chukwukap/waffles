@@ -34,22 +34,18 @@ interface GameHubProps {
 export function GameHub({ currentOrNextGame }: GameHubProps) {
   const router = useRouter();
   const hasRefreshedRef = useRef(false);
-  const store = useGameStoreApi();
 
   // User data
   const { user, isLoading: isLoadingUser } = useUser();
   const hasAccess = !!user?.hasGameAccess && !user?.isBanned;
 
-  // Set game in store so useGameSocket can pick up the gameId
-  useEffect(() => {
-    if (currentOrNextGame) {
-      store.getState().setGame(currentOrNextGame);
-    }
-    return () => store.getState().setGame(null);
-  }, [currentOrNextGame, store]);
 
-  // Initialize WebSocket connection (uses gameId from store)
-  useGameSocket({ enabled: hasAccess && !!currentOrNextGame });
+
+  // Initialize WebSocket connection
+  useGameSocket({
+    enabled: hasAccess && !!currentOrNextGame,
+    gameId: currentOrNextGame?.id,
+  });
 
   // Background music
   const { playBgMusic, stopBgMusic } = useSounds();

@@ -57,6 +57,9 @@ export type GameMinAggregateOutputType = {
   playerCount: number | null
   roundBreakSec: number | null
   maxPlayers: number | null
+  merkleRoot: string | null
+  settlementTxHash: string | null
+  settledAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -74,6 +77,9 @@ export type GameMaxAggregateOutputType = {
   playerCount: number | null
   roundBreakSec: number | null
   maxPlayers: number | null
+  merkleRoot: string | null
+  settlementTxHash: string | null
+  settledAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -92,6 +98,9 @@ export type GameCountAggregateOutputType = {
   playerCount: number
   roundBreakSec: number
   maxPlayers: number
+  merkleRoot: number
+  settlementTxHash: number
+  settledAt: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -129,6 +138,9 @@ export type GameMinAggregateInputType = {
   playerCount?: true
   roundBreakSec?: true
   maxPlayers?: true
+  merkleRoot?: true
+  settlementTxHash?: true
+  settledAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -146,6 +158,9 @@ export type GameMaxAggregateInputType = {
   playerCount?: true
   roundBreakSec?: true
   maxPlayers?: true
+  merkleRoot?: true
+  settlementTxHash?: true
+  settledAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -164,6 +179,9 @@ export type GameCountAggregateInputType = {
   playerCount?: true
   roundBreakSec?: true
   maxPlayers?: true
+  merkleRoot?: true
+  settlementTxHash?: true
+  settledAt?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -269,6 +287,9 @@ export type GameGroupByOutputType = {
   playerCount: number
   roundBreakSec: number
   maxPlayers: number
+  merkleRoot: string | null
+  settlementTxHash: string | null
+  settledAt: Date | null
   createdAt: Date
   updatedAt: Date
   _count: GameCountAggregateOutputType | null
@@ -310,6 +331,9 @@ export type GameWhereInput = {
   playerCount?: Prisma.IntFilter<"Game"> | number
   roundBreakSec?: Prisma.IntFilter<"Game"> | number
   maxPlayers?: Prisma.IntFilter<"Game"> | number
+  merkleRoot?: Prisma.StringNullableFilter<"Game"> | string | null
+  settlementTxHash?: Prisma.StringNullableFilter<"Game"> | string | null
+  settledAt?: Prisma.DateTimeNullableFilter<"Game"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Game"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Game"> | Date | string
   questions?: Prisma.QuestionListRelationFilter
@@ -331,6 +355,9 @@ export type GameOrderByWithRelationInput = {
   playerCount?: Prisma.SortOrder
   roundBreakSec?: Prisma.SortOrder
   maxPlayers?: Prisma.SortOrder
+  merkleRoot?: Prisma.SortOrderInput | Prisma.SortOrder
+  settlementTxHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  settledAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   questions?: Prisma.QuestionOrderByRelationAggregateInput
@@ -355,6 +382,9 @@ export type GameWhereUniqueInput = Prisma.AtLeast<{
   playerCount?: Prisma.IntFilter<"Game"> | number
   roundBreakSec?: Prisma.IntFilter<"Game"> | number
   maxPlayers?: Prisma.IntFilter<"Game"> | number
+  merkleRoot?: Prisma.StringNullableFilter<"Game"> | string | null
+  settlementTxHash?: Prisma.StringNullableFilter<"Game"> | string | null
+  settledAt?: Prisma.DateTimeNullableFilter<"Game"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Game"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Game"> | Date | string
   questions?: Prisma.QuestionListRelationFilter
@@ -376,6 +406,9 @@ export type GameOrderByWithAggregationInput = {
   playerCount?: Prisma.SortOrder
   roundBreakSec?: Prisma.SortOrder
   maxPlayers?: Prisma.SortOrder
+  merkleRoot?: Prisma.SortOrderInput | Prisma.SortOrder
+  settlementTxHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  settledAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.GameCountOrderByAggregateInput
@@ -402,6 +435,9 @@ export type GameScalarWhereWithAggregatesInput = {
   playerCount?: Prisma.IntWithAggregatesFilter<"Game"> | number
   roundBreakSec?: Prisma.IntWithAggregatesFilter<"Game"> | number
   maxPlayers?: Prisma.IntWithAggregatesFilter<"Game"> | number
+  merkleRoot?: Prisma.StringNullableWithAggregatesFilter<"Game"> | string | null
+  settlementTxHash?: Prisma.StringNullableWithAggregatesFilter<"Game"> | string | null
+  settledAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Game"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Game"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Game"> | Date | string
 }
@@ -419,6 +455,9 @@ export type GameCreateInput = {
   playerCount?: number
   roundBreakSec?: number
   maxPlayers?: number
+  merkleRoot?: string | null
+  settlementTxHash?: string | null
+  settledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   questions?: Prisma.QuestionCreateNestedManyWithoutGameInput
@@ -440,6 +479,9 @@ export type GameUncheckedCreateInput = {
   playerCount?: number
   roundBreakSec?: number
   maxPlayers?: number
+  merkleRoot?: string | null
+  settlementTxHash?: string | null
+  settledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   questions?: Prisma.QuestionUncheckedCreateNestedManyWithoutGameInput
@@ -460,6 +502,9 @@ export type GameUpdateInput = {
   playerCount?: Prisma.IntFieldUpdateOperationsInput | number
   roundBreakSec?: Prisma.IntFieldUpdateOperationsInput | number
   maxPlayers?: Prisma.IntFieldUpdateOperationsInput | number
+  merkleRoot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   questions?: Prisma.QuestionUpdateManyWithoutGameNestedInput
@@ -481,6 +526,9 @@ export type GameUncheckedUpdateInput = {
   playerCount?: Prisma.IntFieldUpdateOperationsInput | number
   roundBreakSec?: Prisma.IntFieldUpdateOperationsInput | number
   maxPlayers?: Prisma.IntFieldUpdateOperationsInput | number
+  merkleRoot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   questions?: Prisma.QuestionUncheckedUpdateManyWithoutGameNestedInput
@@ -502,6 +550,9 @@ export type GameCreateManyInput = {
   playerCount?: number
   roundBreakSec?: number
   maxPlayers?: number
+  merkleRoot?: string | null
+  settlementTxHash?: string | null
+  settledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -519,6 +570,9 @@ export type GameUpdateManyMutationInput = {
   playerCount?: Prisma.IntFieldUpdateOperationsInput | number
   roundBreakSec?: Prisma.IntFieldUpdateOperationsInput | number
   maxPlayers?: Prisma.IntFieldUpdateOperationsInput | number
+  merkleRoot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -537,6 +591,9 @@ export type GameUncheckedUpdateManyInput = {
   playerCount?: Prisma.IntFieldUpdateOperationsInput | number
   roundBreakSec?: Prisma.IntFieldUpdateOperationsInput | number
   maxPlayers?: Prisma.IntFieldUpdateOperationsInput | number
+  merkleRoot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -563,6 +620,9 @@ export type GameCountOrderByAggregateInput = {
   playerCount?: Prisma.SortOrder
   roundBreakSec?: Prisma.SortOrder
   maxPlayers?: Prisma.SortOrder
+  merkleRoot?: Prisma.SortOrder
+  settlementTxHash?: Prisma.SortOrder
+  settledAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -589,6 +649,9 @@ export type GameMaxOrderByAggregateInput = {
   playerCount?: Prisma.SortOrder
   roundBreakSec?: Prisma.SortOrder
   maxPlayers?: Prisma.SortOrder
+  merkleRoot?: Prisma.SortOrder
+  settlementTxHash?: Prisma.SortOrder
+  settledAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -606,6 +669,9 @@ export type GameMinOrderByAggregateInput = {
   playerCount?: Prisma.SortOrder
   roundBreakSec?: Prisma.SortOrder
   maxPlayers?: Prisma.SortOrder
+  merkleRoot?: Prisma.SortOrder
+  settlementTxHash?: Prisma.SortOrder
+  settledAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -700,6 +766,9 @@ export type GameCreateWithoutQuestionsInput = {
   playerCount?: number
   roundBreakSec?: number
   maxPlayers?: number
+  merkleRoot?: string | null
+  settlementTxHash?: string | null
+  settledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   entries?: Prisma.GameEntryCreateNestedManyWithoutGameInput
@@ -720,6 +789,9 @@ export type GameUncheckedCreateWithoutQuestionsInput = {
   playerCount?: number
   roundBreakSec?: number
   maxPlayers?: number
+  merkleRoot?: string | null
+  settlementTxHash?: string | null
+  settledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   entries?: Prisma.GameEntryUncheckedCreateNestedManyWithoutGameInput
@@ -755,6 +827,9 @@ export type GameUpdateWithoutQuestionsInput = {
   playerCount?: Prisma.IntFieldUpdateOperationsInput | number
   roundBreakSec?: Prisma.IntFieldUpdateOperationsInput | number
   maxPlayers?: Prisma.IntFieldUpdateOperationsInput | number
+  merkleRoot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   entries?: Prisma.GameEntryUpdateManyWithoutGameNestedInput
@@ -775,6 +850,9 @@ export type GameUncheckedUpdateWithoutQuestionsInput = {
   playerCount?: Prisma.IntFieldUpdateOperationsInput | number
   roundBreakSec?: Prisma.IntFieldUpdateOperationsInput | number
   maxPlayers?: Prisma.IntFieldUpdateOperationsInput | number
+  merkleRoot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   entries?: Prisma.GameEntryUncheckedUpdateManyWithoutGameNestedInput
@@ -794,6 +872,9 @@ export type GameCreateWithoutEntriesInput = {
   playerCount?: number
   roundBreakSec?: number
   maxPlayers?: number
+  merkleRoot?: string | null
+  settlementTxHash?: string | null
+  settledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   questions?: Prisma.QuestionCreateNestedManyWithoutGameInput
@@ -814,6 +895,9 @@ export type GameUncheckedCreateWithoutEntriesInput = {
   playerCount?: number
   roundBreakSec?: number
   maxPlayers?: number
+  merkleRoot?: string | null
+  settlementTxHash?: string | null
+  settledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   questions?: Prisma.QuestionUncheckedCreateNestedManyWithoutGameInput
@@ -849,6 +933,9 @@ export type GameUpdateWithoutEntriesInput = {
   playerCount?: Prisma.IntFieldUpdateOperationsInput | number
   roundBreakSec?: Prisma.IntFieldUpdateOperationsInput | number
   maxPlayers?: Prisma.IntFieldUpdateOperationsInput | number
+  merkleRoot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   questions?: Prisma.QuestionUpdateManyWithoutGameNestedInput
@@ -869,6 +956,9 @@ export type GameUncheckedUpdateWithoutEntriesInput = {
   playerCount?: Prisma.IntFieldUpdateOperationsInput | number
   roundBreakSec?: Prisma.IntFieldUpdateOperationsInput | number
   maxPlayers?: Prisma.IntFieldUpdateOperationsInput | number
+  merkleRoot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   questions?: Prisma.QuestionUncheckedUpdateManyWithoutGameNestedInput
@@ -888,6 +978,9 @@ export type GameCreateWithoutChatsInput = {
   playerCount?: number
   roundBreakSec?: number
   maxPlayers?: number
+  merkleRoot?: string | null
+  settlementTxHash?: string | null
+  settledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   questions?: Prisma.QuestionCreateNestedManyWithoutGameInput
@@ -908,6 +1001,9 @@ export type GameUncheckedCreateWithoutChatsInput = {
   playerCount?: number
   roundBreakSec?: number
   maxPlayers?: number
+  merkleRoot?: string | null
+  settlementTxHash?: string | null
+  settledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   questions?: Prisma.QuestionUncheckedCreateNestedManyWithoutGameInput
@@ -943,6 +1039,9 @@ export type GameUpdateWithoutChatsInput = {
   playerCount?: Prisma.IntFieldUpdateOperationsInput | number
   roundBreakSec?: Prisma.IntFieldUpdateOperationsInput | number
   maxPlayers?: Prisma.IntFieldUpdateOperationsInput | number
+  merkleRoot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   questions?: Prisma.QuestionUpdateManyWithoutGameNestedInput
@@ -963,6 +1062,9 @@ export type GameUncheckedUpdateWithoutChatsInput = {
   playerCount?: Prisma.IntFieldUpdateOperationsInput | number
   roundBreakSec?: Prisma.IntFieldUpdateOperationsInput | number
   maxPlayers?: Prisma.IntFieldUpdateOperationsInput | number
+  merkleRoot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settlementTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  settledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   questions?: Prisma.QuestionUncheckedUpdateManyWithoutGameNestedInput
@@ -1032,6 +1134,9 @@ export type GameSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   playerCount?: boolean
   roundBreakSec?: boolean
   maxPlayers?: boolean
+  merkleRoot?: boolean
+  settlementTxHash?: boolean
+  settledAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   questions?: boolean | Prisma.Game$questionsArgs<ExtArgs>
@@ -1054,6 +1159,9 @@ export type GameSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   playerCount?: boolean
   roundBreakSec?: boolean
   maxPlayers?: boolean
+  merkleRoot?: boolean
+  settlementTxHash?: boolean
+  settledAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["game"]>
@@ -1072,6 +1180,9 @@ export type GameSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   playerCount?: boolean
   roundBreakSec?: boolean
   maxPlayers?: boolean
+  merkleRoot?: boolean
+  settlementTxHash?: boolean
+  settledAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["game"]>
@@ -1090,11 +1201,14 @@ export type GameSelectScalar = {
   playerCount?: boolean
   roundBreakSec?: boolean
   maxPlayers?: boolean
+  merkleRoot?: boolean
+  settlementTxHash?: boolean
+  settledAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type GameOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "onchainId" | "title" | "description" | "theme" | "coverUrl" | "startsAt" | "endsAt" | "tierPrices" | "prizePool" | "playerCount" | "roundBreakSec" | "maxPlayers" | "createdAt" | "updatedAt", ExtArgs["result"]["game"]>
+export type GameOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "onchainId" | "title" | "description" | "theme" | "coverUrl" | "startsAt" | "endsAt" | "tierPrices" | "prizePool" | "playerCount" | "roundBreakSec" | "maxPlayers" | "merkleRoot" | "settlementTxHash" | "settledAt" | "createdAt" | "updatedAt", ExtArgs["result"]["game"]>
 export type GameInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   questions?: boolean | Prisma.Game$questionsArgs<ExtArgs>
   entries?: boolean | Prisma.Game$entriesArgs<ExtArgs>
@@ -1125,6 +1239,9 @@ export type $GamePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     playerCount: number
     roundBreakSec: number
     maxPlayers: number
+    merkleRoot: string | null
+    settlementTxHash: string | null
+    settledAt: Date | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["game"]>
@@ -1566,6 +1683,9 @@ export interface GameFieldRefs {
   readonly playerCount: Prisma.FieldRef<"Game", 'Int'>
   readonly roundBreakSec: Prisma.FieldRef<"Game", 'Int'>
   readonly maxPlayers: Prisma.FieldRef<"Game", 'Int'>
+  readonly merkleRoot: Prisma.FieldRef<"Game", 'String'>
+  readonly settlementTxHash: Prisma.FieldRef<"Game", 'String'>
+  readonly settledAt: Prisma.FieldRef<"Game", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"Game", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Game", 'DateTime'>
 }

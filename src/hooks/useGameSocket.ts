@@ -18,11 +18,7 @@ import { useParams, useRouter } from "next/navigation";
 import PartySocket from "partysocket";
 import sdk from "@farcaster/miniapp-sdk";
 import { env } from "@/lib/env";
-import {
-  useGameStoreApi,
-  useGameStore,
-} from "@/components/providers/GameStoreProvider";
-import { selectGame } from "@/lib/game-store";
+import { useGameStoreApi } from "@/components/providers/GameStoreProvider";
 
 // ==========================================
 // SINGLETON CONNECTION MANAGER
@@ -109,6 +105,7 @@ type IncomingMessage =
 
 interface UseGameSocketOptions {
   enabled?: boolean;
+  gameId?: number | null;
 }
 
 interface UseGameSocketReturn {
@@ -121,15 +118,14 @@ interface UseGameSocketReturn {
 export function useGameSocket(
   options: UseGameSocketOptions = {}
 ): UseGameSocketReturn {
-  const { enabled = true } = options;
+  const { enabled = true, gameId: explicitGameId } = options;
   const params = useParams();
   const router = useRouter();
   const store = useGameStoreApi();
-  const storeGame = useGameStore(selectGame);
 
-  // Get gameId from URL params or store
+  // Get gameId from URL params or explicit option
   const gameIdParam = params?.gameId;
-  const gameId = gameIdParam ? Number(gameIdParam) : storeGame?.id ?? null;
+  const gameId = gameIdParam ? Number(gameIdParam) : explicitGameId ?? null;
 
   const isConnectedRef = useRef(false);
 
@@ -222,9 +218,7 @@ export function useGameSocket(
             break;
 
           case "answerResult":
-            if (msg.data.totalScore !== undefined) {
-              state.updateScore(msg.data.totalScore);
-            }
+            // Score is tracked locally in LiveGameScreen
             if (msg.data.answeredCount !== undefined) {
               state.incrementAnswered();
             }

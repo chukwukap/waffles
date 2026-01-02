@@ -6,14 +6,14 @@ import { motion, HTMLMotionProps } from "framer-motion";
 import { springs, tapBounce, hoverLift } from "@/lib/animations";
 import { playSound } from "@/lib/sounds";
 
-interface FancyBorderButtonProps extends Omit<HTMLMotionProps<"button">, "children"> {
+interface WaffleButtonProps extends Omit<HTMLMotionProps<"button">, "children"> {
   children: React.ReactNode;
   fullWidth?: boolean;
 }
 
-export const FancyBorderButton = React.forwardRef<
+export const WaffleButton = React.forwardRef<
   HTMLButtonElement,
-  FancyBorderButtonProps
+  WaffleButtonProps
 >(
   (
     {
@@ -66,4 +66,4 @@ export const FancyBorderButton = React.forwardRef<
   }
 );
 
-FancyBorderButton.displayName = "FancyBorderButton";
+WaffleButton.displayName = "WaffleButton";

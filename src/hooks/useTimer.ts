@@ -8,12 +8,14 @@ import { useState, useEffect, useRef } from "react";
  * Returns seconds remaining until target timestamp.
  * Updates exactly once per second, aligned to clock.
  * Returns 0 when expired.
+ * When targetMs is 0, timer is paused (doesn't tick or fire onComplete).
  *
- * @param targetMs - Absolute timestamp when timer ends (Date.now() + duration)
+ * @param targetMs - Absolute timestamp when timer ends (Date.now() + duration). 0 = paused.
  * @param onComplete - Optional callback when timer reaches 0
  */
 export function useTimer(targetMs: number, onComplete?: () => void): number {
   const [seconds, setSeconds] = useState(() => {
+    if (targetMs === 0) return 0; // Paused
     const diff = targetMs - Date.now();
     return Math.max(0, Math.ceil(diff / 1000));
   });
@@ -26,6 +28,12 @@ export function useTimer(targetMs: number, onComplete?: () => void): number {
   useEffect(() => {
     // Reset completion flag when target changes
     hasCompletedRef.current = false;
+
+    // If targetMs is 0, timer is paused - don't tick
+    if (targetMs === 0) {
+      setSeconds(0);
+      return;
+    }
 
     // Calculate initial seconds
     const getSeconds = () => {

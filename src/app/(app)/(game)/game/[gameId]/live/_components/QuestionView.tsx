@@ -4,9 +4,10 @@
  * QuestionView
  *
  * Displays a question with options during live game.
- * Uses Zustand store for answer state via useLiveGameState.
+ * Notifies parent when media is loaded so timer can start.
  */
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { QuestionCardHeader } from "./QuestionCardHeader";
@@ -92,6 +93,7 @@ interface QuestionViewProps {
     seconds: number;
     onAnswer: (selectedIndex: number) => void;
     hasAnswered: boolean;
+    onMediaReady?: () => void; // Called when media is loaded (or if no media)
 }
 
 // ==========================================
@@ -105,9 +107,23 @@ export default function QuestionView({
     seconds,
     onAnswer,
     hasAnswered,
+    onMediaReady,
 }: QuestionViewProps) {
+    const [mediaLoaded, setMediaLoaded] = useState(!question.mediaUrl); // true if no media
     const isLowTime = seconds <= 3 && seconds > 0;
     const isTimeUp = seconds === 0;
+
+    // Notify parent when media is ready
+    useEffect(() => {
+        if (mediaLoaded && onMediaReady) {
+            onMediaReady();
+        }
+    }, [mediaLoaded, onMediaReady]);
+
+    // Reset mediaLoaded when question changes
+    useEffect(() => {
+        setMediaLoaded(!question.mediaUrl);
+    }, [question.id, question.mediaUrl]);
 
     const handleSelect = (index: number) => {
         if (hasAnswered) return;
@@ -169,17 +185,22 @@ export default function QuestionView({
                             exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
                         >
                             <div className="relative w-full aspect-video rounded-[10px] overflow-hidden bg-[#17171a] border border-[#313136] shadow-[0_8px_0_#000]">
+                                {/* Loading spinner overlay */}
+                                {!mediaLoaded && (
+                                    <div className="absolute inset-0 flex items-center justify-center z-10 bg-[#17171a]">
+                                        <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                                    </div>
+                                )}
                                 <Image
                                     src={question.mediaUrl}
                                     alt={question.content}
                                     fill
-                                    className="object-cover"
+                                    className={`object-cover transition-opacity duration-300 ${mediaLoaded ? 'opacity-100' : 'opacity-0'}`}
                                     sizes="(max-width: 640px) 100vw, 500px"
                                     priority
                                     loading="eager"
                                     quality={80}
-                                    placeholder="blur"
-                                    blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+                                    onLoad={() => setMediaLoaded(true)}
                                 />
                             </div>
                         </motion.figure>

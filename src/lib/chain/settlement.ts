@@ -6,7 +6,7 @@
 import { parseUnits } from "viem";
 import { WAFFLE_GAME_CONFIG, TOKEN_CONFIG } from "./config";
 import { publicClient, getWalletClient } from "./client";
-import { buildMerkleTree, type Winner } from "./merkle";
+import { buildMerkleTree, generateAllProofs, type Winner } from "./merkle";
 import waffleGameAbi from "./abi.json";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
@@ -194,14 +194,49 @@ export async function settleGame(gameId: number): Promise<{
     throw new Error(`No winners with wallets for game ${gameId}`);
   }
 
-  // 4. Build Merkle tree
+  // 4. Build Merkle tree and generate all proofs
   const { root: merkleRoot } = buildMerkleTree(winners);
+  const allProofs = generateAllProofs(winners);
 
   // 5. Submit to chain
   const txHash = await submitResultsOnChain(onchainId, merkleRoot);
 
   // 6. Wait for confirmation
   await publicClient.waitForTransactionReceipt({ hash: txHash });
+
+  // 7. Store merkle data in database
+  const now = new Date();
+
+  // Update Game with merkle root
+  await prisma.game.update({
+    where: { id: gameId },
+    data: {
+      merkleRoot,
+      settlementTxHash: txHash,
+      settledAt: now,
+    },
+  });
+
+  // Update winning entries with their proofs
+  await Promise.all(
+    rankedEntries.map(async (entry) => {
+      const winnerAddress = (
+        entry.payerWallet || entry.user.wallet
+      )?.toLowerCase();
+      if (!winnerAddress) return;
+
+      const proofData = allProofs.get(winnerAddress);
+      if (!proofData) return;
+
+      await prisma.gameEntry.update({
+        where: { id: entry.id },
+        data: {
+          merkleProof: proofData.proof,
+          merkleAmount: proofData.amount.toString(),
+        },
+      });
+    })
+  );
 
   console.log(`[Settlement] Game ${gameId} settled successfully`);
   console.log(`  - Merkle Root: ${merkleRoot}`);

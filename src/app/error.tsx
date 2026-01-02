@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
+import { WaffleButton } from "@/components/buttons/WaffleButton";
 
 interface ErrorPageProps {
   error: Error & { digest?: string };
@@ -70,12 +70,12 @@ export default function GameErrorPage({ error, reset }: ErrorPageProps) {
 
         {/* Try Again Button */}
         <div className="w-full flex justify-center mt-6">
-          <FancyBorderButton
+          <WaffleButton
             onClick={reset}
             className="w-full max-w-[280px] py-3 px-5 text-base"
           >
             Try Again
-          </FancyBorderButton>
+          </WaffleButton>
         </div>
       </div>
     </div>

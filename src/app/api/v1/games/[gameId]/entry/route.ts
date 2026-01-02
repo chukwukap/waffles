@@ -72,6 +72,7 @@ export const GET = withAuth<Params>(
           id: true,
           score: true,
           answered: true,
+          answers: true, // JSON field with questionId keys
           paidAt: true,
           paidAmount: true,
           rank: true,
@@ -87,7 +88,15 @@ export const GET = withAuth<Params>(
         );
       }
 
-      return NextResponse.json(entry);
+      // Extract answered question IDs from the answers JSON
+      const answersObj = (entry.answers as Record<string, unknown>) || {};
+      const answeredQuestionIds = Object.keys(answersObj).map(Number);
+
+      return NextResponse.json({
+        ...entry,
+        answers: undefined, // Don't send full answers object
+        answeredQuestionIds,
+      });
     } catch (error) {
       console.error("GET /api/v1/games/:gameId/entry Error:", error);
       return NextResponse.json<ApiError>(

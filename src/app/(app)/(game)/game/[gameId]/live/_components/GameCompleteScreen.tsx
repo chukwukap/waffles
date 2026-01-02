@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useComposeCast } from "@coinbase/onchainkit/minikit";
-import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
+import { WaffleButton } from "@/components/buttons/WaffleButton";
 import { useEffect, useRef } from "react";
 import { playSound } from "@/lib/sounds";
 import { env } from "@/lib/env";

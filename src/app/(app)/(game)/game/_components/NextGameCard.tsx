@@ -6,15 +6,16 @@ import { useRouter } from "next/navigation";
 import { motion, useAnimation } from "framer-motion";
 import type { Game } from "@prisma";
 
-import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
+import { WaffleButton } from "@/components/buttons/WaffleButton";
 import { useGameStore } from "@/components/providers/GameStoreProvider";
+import { selectPrizePool, selectPlayerCount } from "@/lib/game-store";
 import { useUser } from "@/hooks/useUser";
 import { useGameEntry } from "@/hooks/useGameEntry";
 import { useTimer } from "@/hooks/useTimer";
-import { getGamePhase } from "@/lib/types";
 import { springs } from "@/lib/animations";
 
 import { BuyTicketModal } from "./BuyTicketModal";
+import { PlayerAvatarStack } from "./PlayerAvatarStack";
 
 // ==========================================
 // PROPS - Simplified
@@ -22,14 +23,13 @@ import { BuyTicketModal } from "./BuyTicketModal";
 
 interface NextGameCardProps {
   game: Game;
-  onPurchaseSuccess?: () => void;
 }
 
 // ==========================================
 // COMPONENT
 // ==========================================
 
-export function NextGameCard({ game, onPurchaseSuccess }: NextGameCardProps) {
+export function NextGameCard({ game }: NextGameCardProps) {
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -41,15 +41,16 @@ export function NextGameCard({ game, onPurchaseSuccess }: NextGameCardProps) {
   });
 
   // Realtime stats from store (updated via WebSocket), fallback to game prop
-  const storeGame = useGameStore((s) => s.game);
-  const prizePool = storeGame?.prizePool ?? game.prizePool ?? 0;
-  const playerCount = storeGame?.playerCount ?? game.playerCount ?? 0;
-  const spotsTotal = game.maxPlayers ?? 100;
+  const storePrizePool = useGameStore(selectPrizePool);
+  const storePlayerCount = useGameStore(selectPlayerCount);
+  const prizePool = storePrizePool ?? game.prizePool ?? 0;
+  const playerCount = storePlayerCount ?? game.playerCount ?? 0;
+  const spotsTotal = game.maxPlayers ?? 500;
 
   // Derive phase
-  const phase = useMemo(() => getGamePhase(game), [game]);
-  const isLive = phase === "LIVE";
-  const hasEnded = phase === "ENDED";
+  const now = Date.now();
+  const hasEnded = now >= game.endsAt.getTime();
+  const isLive = !hasEnded && now >= game.startsAt.getTime();
 
   // Timer - countdown to start or end
   const targetMs = isLive ? game.endsAt.getTime() : game.startsAt.getTime();
@@ -57,7 +58,6 @@ export function NextGameCard({ game, onPurchaseSuccess }: NextGameCardProps) {
 
   // Derived state
   const hasTicket = !!entry?.paidAt;
-  const hasCompleted = !!entry && entry.answered > 0;
 
   // Animation controls
   const prevPrizePool = useRef(prizePool);
@@ -94,15 +94,11 @@ export function NextGameCard({ game, onPurchaseSuccess }: NextGameCardProps) {
 
   // Button config
   const buttonConfig = hasEnded
-    ? hasCompleted
-      ? { text: "VIEW RESULTS", disabled: false, href: `/game/${game.id}/result` }
-      : { text: "ENDED", disabled: true, href: null }
+    ? { text: "VIEW RESULTS", disabled: false, href: `/game/${game.id}/result` }
     : isLive
-      ? hasCompleted
-        ? { text: "CALCULATING RESULTS...", disabled: true, href: null }
-        : hasTicket
-          ? { text: "START GAME", disabled: false, href: `/game/${game.id}/live` }
-          : { text: "GET TICKET", disabled: false, href: null }
+      ? hasTicket
+        ? { text: "PLAY NOW", disabled: false, href: `/game/${game.id}/live` }
+        : { text: "GET TICKET", disabled: false, href: null }
       : hasTicket
         ? { text: "YOU'RE IN!", disabled: true, href: null }
         : { text: "BUY WAFFLE", disabled: false, href: null };
@@ -116,10 +112,6 @@ export function NextGameCard({ game, onPurchaseSuccess }: NextGameCardProps) {
     }
   };
 
-  const handlePurchaseSuccess = () => {
-    refetchEntry();
-    onPurchaseSuccess?.();
-  };
 
   return (
     <>
@@ -182,9 +174,9 @@ export function NextGameCard({ game, onPurchaseSuccess }: NextGameCardProps) {
           transition={{ delay: 0.4, ...springs.bouncy }}
           className="relative flex justify-center items-center px-4 py-2 z-10 shrink-0"
         >
-          <FancyBorderButton disabled={buttonConfig.disabled} onClick={handleButtonClick}>
+          <WaffleButton disabled={buttonConfig.disabled} onClick={handleButtonClick}>
             {buttonConfig.text}
-          </FancyBorderButton>
+          </WaffleButton>
         </motion.div>
 
         {/* Countdown */}
@@ -219,18 +211,23 @@ export function NextGameCard({ game, onPurchaseSuccess }: NextGameCardProps) {
           </span>
         </motion.div>
 
-        {/* Player count */}
+        {/* Player Avatars Row */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}
-          className="flex flex-row justify-center items-center w-full px-4 pb-4 mt-4 gap-1.5"
+          className="flex flex-row justify-center items-center w-full px-4 pb-4 mt-4"
+          style={{ gap: "6px", minHeight: "25px" }}
         >
-          <span className="font-display text-center text-[#99A0AE] text-sm">
-            {playerCount > 0
-              ? `${playerCount} player${playerCount > 1 ? "s" : ""} have joined`
-              : "Be the first to join!"}
-          </span>
+          <PlayerAvatarStack
+            actionText="joined the game"
+            overrideCount={playerCount}
+            formatText={(count) =>
+              count > 0
+                ? `${count} ${count === 1 ? "person has" : "people have"} joined the game`
+                : "Be the first to join!"
+            }
+          />
         </motion.div>
       </motion.div>
 
@@ -242,8 +239,10 @@ export function NextGameCard({ game, onPurchaseSuccess }: NextGameCardProps) {
         theme={game.theme}
         themeIcon={game.coverUrl ?? undefined}
         tierPrices={game.tierPrices}
-        prizePool={prizePool}
-        onPurchaseSuccess={handlePurchaseSuccess}
+        onPurchaseSuccess={() => {
+          refetchEntry();
+
+        }}
         username={user?.username ?? undefined}
         userAvatar={user?.pfpUrl ?? undefined}
       />

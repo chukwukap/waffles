@@ -6,52 +6,32 @@ import { minikitConfig } from "@minikit-config";
 import { env } from "@/lib/env";
 import { buildPrizeOGUrl } from "@/lib/og";
 
-export type ResultPagePayload = {
-  userInfo: {
-    username: string;
-    pfpUrl: string;
-  };
-  category: string;
-  winnings: number;
-  score: number;
-  rank: number;
-  percentile: number;
-  leaderboard: Array<{
-    username: string;
-    pfpUrl: string;
-    score: number;
-  }>;
-};
-
 interface ResultPageProps {
   params: Promise<{ gameId: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-// Fetch public game data (leaderboard) for the result page
-// Updated to use GameEntry instead of GamePlayer
-const getGameLeaderboard = cache(async (gameId: number) => {
-  const [game, allEntriesInGame] = await Promise.all([
-    prisma.game.findUnique({
-      where: { id: gameId },
-      select: { theme: true, onchainId: true, title: true },
-    }),
-    prisma.gameEntry.findMany({
-      where: { gameId, paidAt: { not: null } },
-      orderBy: { score: "desc" },
-      select: {
-        score: true,
-        rank: true,
-        prize: true,
-        claimedAt: true,
-        user: {
-          select: { fid: true, username: true, pfpUrl: true },
-        },
-      },
-    }),
-  ]);
+// Fetch game info
+const getGame = cache(async (gameId: number) => {
+  return prisma.game.findUnique({
+    where: { id: gameId },
+  });
+});
 
-  return { game, allPlayersInGame: allEntriesInGame };
+// Fetch top 3 entries for leaderboard display
+const getTop3Entries = cache(async (gameId: number) => {
+  return prisma.gameEntry.findMany({
+    where: { gameId, paidAt: { not: null } },
+    orderBy: { score: "desc" },
+    take: 3,
+    select: {
+      score: true,
+      rank: true,
+      user: {
+        select: { fid: true, username: true, pfpUrl: true },
+      },
+    },
+  });
 });
 
 // Generate metadata for Farcaster frame previews
@@ -64,7 +44,7 @@ export async function generateMetadata({
   const gameIdNum = Number(gameId);
 
   // Get game info
-  const { game } = await getGameLeaderboard(gameIdNum);
+  const game = await getGame(gameIdNum);
   if (!game) {
     return { title: "Game Not Found" };
   }
@@ -103,7 +83,7 @@ export async function generateMetadata({
       description,
       images: imageUrl ? [imageUrl] : [],
     },
-    other: prizeAmount > 0 ? {
+    other: {
       "fc:frame": JSON.stringify({
         version: minikitConfig.miniapp.version,
         imageUrl: imageUrl || minikitConfig.miniapp.heroImageUrl,
@@ -118,7 +98,7 @@ export async function generateMetadata({
           },
         },
       }),
-    } : {},
+    },
   };
 }
 
@@ -136,10 +116,11 @@ export default async function ResultPage({
     );
   }
 
-  // Fetch public leaderboard data server-side
-  const leaderboardPromise = getGameLeaderboard(gameIdNum);
+  // Fetch data server-side in parallel
+  const gamePromise = getGame(gameIdNum);
+  const top3Promise = getTop3Entries(gameIdNum);
 
   // User-specific data (their result, rank) is fetched client-side with auth
-  return <ResultPageClient leaderboardPromise={leaderboardPromise} gameId={gameIdNum} />;
+  return <ResultPageClient gamePromise={gamePromise} top3Promise={top3Promise} />;
 }
 

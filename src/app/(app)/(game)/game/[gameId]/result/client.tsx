@@ -2,9 +2,9 @@
 
 import { use, useState, useEffect, useMemo, useRef, useCallback } from "react";
 import GameResultCard from "../_component/GameResultCard";
-import Leaderboard from "./_components/Leaderboard";
+import Top3Leaderboard from "./_components/Top3Leaderboard";
 import Image from "next/image";
-import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
+import { WaffleButton } from "@/components/buttons/WaffleButton";
 import { FlashIcon } from "@/components/icons";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
 import { BottomNav } from "@/components/BottomNav";
@@ -22,25 +22,13 @@ import waffleGameAbi from "@/lib/chain/abi.json";
 import { Spinner } from "@/components/ui/spinner";
 import { useGameEntry } from "@/hooks/useGameEntry";
 import confetti from "canvas-confetti";
+import { Game } from "@prisma";
 
 // ==========================================
 // TYPES
 // ==========================================
 
-interface LeaderboardData {
-  game: { theme: string; onchainId: string | null } | null;
-  allPlayersInGame: Array<{
-    score: number;
-    rank: number | null;
-    prize: number | null;
-    claimedAt: Date | null;
-    user: {
-      fid: number;
-      username: string | null;
-      pfpUrl: string | null;
-    } | null;
-  }>;
-}
+
 
 type ClaimState =
   | "idle"
@@ -54,17 +42,30 @@ type ClaimState =
 // COMPONENT
 // ==========================================
 
-export default function ScorePageClient({
-  leaderboardPromise,
-  gameId,
+
+type Top3Entry = {
+  score: number;
+  rank: number | null;
+  user: {
+    fid: number;
+    username: string | null;
+    pfpUrl: string | null;
+  } | null;
+};
+
+export default function ResultPageClient({
+  gamePromise,
+  top3Promise,
 }: {
-  leaderboardPromise: Promise<LeaderboardData>;
-  gameId: number;
+  gamePromise: Promise<Game | null>;
+  top3Promise: Promise<Top3Entry[]>;
 }) {
-  const leaderboardData = use(leaderboardPromise);
+  const game = use(gamePromise);
+  const top3Entries = use(top3Promise);
   const { address } = useAccount();
   const { context } = useMiniKit();
   const { composeCastAsync } = useComposeCast();
+  const gameId = game?.id as number;
   const { entry, isLoading: entryLoading, refetchEntry } = useGameEntry({ gameId });
 
   const hasPlayedSound = useRef(false);
@@ -74,23 +75,15 @@ export default function ScorePageClient({
   const [claimError, setClaimError] = useState<string | null>(null);
 
   // Get onchainId
-  const onchainId = leaderboardData.game?.onchainId as `0x${string}` | null;
+  const onchainId = game?.onchainId
 
-  // User info from MiniKit context
-  const userInfo = useMemo(() => {
-    if (!context?.user) return null;
-    return {
-      fid: context.user.fid,
-      username: context.user.username ?? "Player",
-      pfpUrl: context.user.pfpUrl ?? "",
-    };
-  }, [context?.user]);
+
 
   // User score from GameProvider entry
   const userScore = useMemo(() => {
     if (!entry) return null;
 
-    const total = leaderboardData.allPlayersInGame.length;
+    const total = game?.playerCount ?? 0;
     const rank = entry.rank ?? 0;
     const percentile =
       total > 1 ? Math.round(((total - rank) / (total - 1)) * 100) : 100;
@@ -101,7 +94,7 @@ export default function ScorePageClient({
       winnings: entry.prize ?? 0,
       percentile: Math.max(0, Math.min(100, percentile)),
     };
-  }, [entry, leaderboardData.allPlayersInGame.length]);
+  }, [entry, game?.playerCount]);
 
   // Check if already claimed from entry
   const hasClaimed =
@@ -112,14 +105,7 @@ export default function ScorePageClient({
     return userScore !== null && userScore.rank <= 3 && userScore.winnings > 0;
   }, [userScore]);
 
-  // Top 3 for leaderboard display
-  const leaderboard = useMemo(() => {
-    return leaderboardData.allPlayersInGame.slice(0, 3).map((p) => ({
-      username: p.user?.username ?? "anon",
-      pfpUrl: p.user?.pfpUrl ?? "",
-      score: p.score,
-    }));
-  }, [leaderboardData]);
+
 
   // Play sound and confetti on mount (once)
   useEffect(() => {
@@ -170,7 +156,7 @@ export default function ScorePageClient({
   // ==========================================
 
   const handleShareScore = useCallback(async () => {
-    if (!userInfo || !userScore) return;
+    if (!context?.user || !userScore) return;
 
     try {
       const prizeText =
@@ -180,11 +166,11 @@ export default function ScorePageClient({
 
       // Build frame URL with params - this page has fc:frame metadata
       const frameParams = new URLSearchParams();
-      frameParams.set("username", userInfo.username);
+      frameParams.set("username", context?.user?.username ?? "Anon");
       frameParams.set("prizeAmount", userScore.winnings.toString());
       frameParams.set("score", userScore.score.toString());
-      if (userInfo.pfpUrl) {
-        frameParams.set("pfpUrl", userInfo.pfpUrl);
+      if (context?.user?.pfpUrl) {
+        frameParams.set("pfpUrl", context.user.pfpUrl);
       }
       const frameUrl = `${env.rootUrl}/game/${gameId}/result?${frameParams.toString()}`;
 
@@ -205,7 +191,7 @@ export default function ScorePageClient({
       console.error("[Share] Error:", error);
       notify.error("Failed to share");
     }
-  }, [composeCastAsync, userInfo, userScore]);
+  }, [composeCastAsync, context?.user, userScore]);
 
   // ==========================================
   // CLAIM LOGIC
@@ -379,7 +365,7 @@ export default function ScorePageClient({
     );
   }
 
-  if (!userInfo || !userScore) {
+  if (!context?.user || !userScore) {
     return (
       <>
         <div className="flex flex-col text-white items-center justify-center min-h-full">
@@ -427,7 +413,7 @@ export default function ScorePageClient({
             transition={{ duration: 0.4, delay: 0.3 }}
           >
             <p className="font-display font-medium text-[16px] leading-[130%] text-center tracking-[-0.03em] text-[#99A0AE] capitalize">
-              {leaderboardData.game?.theme?.toLowerCase() ?? "trivia"}
+              {game?.theme?.toLowerCase() ?? "trivia"}
             </p>
           </motion.div>
         </div>
@@ -436,8 +422,8 @@ export default function ScorePageClient({
           winnings={userScore.winnings}
           score={userScore.score}
           rank={userScore.rank}
-          pfpUrl={userInfo.pfpUrl}
-          username={userInfo.username}
+          pfpUrl={context.user.pfpUrl ?? ""}
+          username={context.user.username ?? "Player"}
         />
         <div className="flex flex-col justify-center items-center gap-3 w-[361px] mt-5">
           {/* Percentile row */}
@@ -478,7 +464,7 @@ export default function ScorePageClient({
                 whileHover={!isClaimDisabled ? { scale: 1.02 } : undefined}
                 whileTap={!isClaimDisabled ? { scale: 0.98 } : undefined}
               >
-                <FancyBorderButton
+                <WaffleButton
                   onClick={handleClaim}
                   disabled={isClaimDisabled}
                   className={
@@ -495,7 +481,7 @@ export default function ScorePageClient({
                     <Spinner className="w-4 h-4 mr-2" />
                   )}
                   {getClaimButtonText()}
-                </FancyBorderButton>
+                </WaffleButton>
                 {claimState === "pending" && (
                   <p className="text-amber-400 text-xs text-center mt-2">
                     Admin is finalizing results. Check back soon!
@@ -548,7 +534,11 @@ export default function ScorePageClient({
           </div>
         </div>
 
-        <Leaderboard entries={leaderboard} />
+        <Top3Leaderboard entries={top3Entries.map((e) => ({
+          username: e.user?.username ?? "anon",
+          pfpUrl: e.user?.pfpUrl ?? "",
+          score: e.score,
+        }))} />
       </div>
       <BottomNav />
     </>

@@ -89,6 +89,30 @@ export function generateMerkleProof(
 }
 
 /**
+ * Generates Merkle proofs for all winners at once
+ * Returns a map of address -> { amount, proof }
+ */
+export function generateAllProofs(
+  winners: Winner[]
+): Map<string, { amount: bigint; proof: `0x${string}`[] }> {
+  if (winners.length === 0) return new Map();
+
+  const { tree } = buildMerkleTree(winners);
+  const proofs = new Map<string, { amount: bigint; proof: `0x${string}`[] }>();
+
+  for (const [i, leaf] of tree.entries()) {
+    const [, leafAddress, leafAmount] = leaf;
+    const proof = tree.getProof(i) as `0x${string}`[];
+    proofs.set(leafAddress.toLowerCase(), {
+      amount: leafAmount as unknown as bigint,
+      proof,
+    });
+  }
+
+  return proofs;
+}
+
+/**
  * Verifies a Merkle proof (for testing)
  */
 export function verifyMerkleProof(

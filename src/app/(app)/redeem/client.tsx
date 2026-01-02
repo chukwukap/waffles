@@ -7,7 +7,7 @@ import { motion, useAnimation, AnimatePresence } from "framer-motion";
 
 import { useUser } from "@/hooks/useUser";
 import { useMiniKit, useAddFrame } from "@coinbase/onchainkit/minikit";
-import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
+import { WaffleButton } from "@/components/buttons/WaffleButton";
 import { redeemInviteCodeAction, type ValidateReferralResult } from "@/actions/invite";
 import { saveNotificationTokenAction } from "@/actions/notifications";
 import {
@@ -312,9 +312,9 @@ export default function InvitePageClient() {
                 }
               }}
             >
-              <FancyBorderButton disabled={isDisabled}>
+              <WaffleButton disabled={isDisabled}>
                 {buttonText}
-              </FancyBorderButton>
+              </WaffleButton>
             </motion.div>
           </motion.div>
 

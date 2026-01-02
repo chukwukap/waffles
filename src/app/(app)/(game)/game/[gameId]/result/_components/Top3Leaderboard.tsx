@@ -39,7 +39,7 @@ interface Props {
   className?: string;
 }
 
-export default function Leaderboard({ entries, className }: Props) {
+export default function Top3Leaderboard({ entries, className }: Props) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   return (
@@ -79,7 +79,7 @@ export default function Leaderboard({ entries, className }: Props) {
         </motion.div>
       </motion.div>
 
-      {/* Leaderboard entries */}
+      {/* Top3Leaderboard entries */}
       {entries.slice(0, 3).map((e, i) => (
         <motion.div
           key={e.username}
@@ -168,9 +168,9 @@ export default function Leaderboard({ entries, className }: Props) {
                   animate={
                     hoveredIndex === i
                       ? {
-                          scale: [1, 1.2, 1],
-                          rotate: [0, 10, -10, 0],
-                        }
+                        scale: [1, 1.2, 1],
+                        rotate: [0, 10, -10, 0],
+                      }
                       : {}
                   }
                   transition={{

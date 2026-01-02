@@ -21,7 +21,6 @@ interface BuyTicketModalProps {
   theme: string;
   themeIcon?: string;
   tierPrices: number[];
-  prizePool?: number;
   username?: string;
   userAvatar?: string;
   onPurchaseSuccess?: () => void;
@@ -35,7 +34,6 @@ export function BuyTicketModal({
   theme,
   themeIcon,
   tierPrices,
-  prizePool = 0,
   username = "Player",
   userAvatar,
   onPurchaseSuccess,

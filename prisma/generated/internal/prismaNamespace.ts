@@ -1360,6 +1360,9 @@ export const GameScalarFieldEnum = {
   playerCount: 'playerCount',
   roundBreakSec: 'roundBreakSec',
   maxPlayers: 'maxPlayers',
+  merkleRoot: 'merkleRoot',
+  settlementTxHash: 'settlementTxHash',
+  settledAt: 'settledAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1400,6 +1403,8 @@ export const GameEntryScalarFieldEnum = {
   rank: 'rank',
   prize: 'prize',
   claimedAt: 'claimedAt',
+  merkleProof: 'merkleProof',
+  merkleAmount: 'merkleAmount',
   leftAt: 'leftAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

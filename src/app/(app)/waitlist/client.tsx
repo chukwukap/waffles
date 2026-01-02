@@ -22,7 +22,7 @@ import { env } from "@/lib/env";
 
 import { WaitlistFooter } from "./_components/Footer";
 import { WaitlistMutuals } from "./_components/WaitlistMutuals";
-import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
+import { WaffleButton } from "@/components/buttons/WaffleButton";
 
 import { useUser } from "@/hooks/useUser";
 import { useMutuals } from "@/hooks/useMutuals";
@@ -273,7 +273,7 @@ function ActionButtons({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.6, type: "spring", stiffness: 200, damping: 20 }}
     >
-      <FancyBorderButton
+      <WaffleButton
         onClick={() => questRouter.push(`/waitlist/quests`)}
         className="mx-auto text-[#191919] text-[22px]"
         disabled={pending}
@@ -284,7 +284,7 @@ function ActionButtons({
         >
           COMPLETE QUESTS
         </motion.span>
-      </FancyBorderButton>
+      </WaffleButton>
 
       {/* Secondary Actions */}
       <div className="flex gap-2 w-full max-w-sm justify-center">
@@ -369,7 +369,7 @@ function JoinCTA({
       </AnimatePresence>
 
       <motion.div animate={buttonControls} className="w-full">
-        <FancyBorderButton
+        <WaffleButton
           onClick={onJoin}
           disabled={pending}
           className="mx-auto text-[#191919] text-[22px] w-full"
@@ -401,7 +401,7 @@ function JoinCTA({
               </motion.span>
             )}
           </AnimatePresence>
-        </FancyBorderButton>
+        </WaffleButton>
       </motion.div>
     </motion.div>
   );

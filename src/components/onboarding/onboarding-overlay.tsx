@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
-import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
+import { WaffleButton } from "@/components/buttons/WaffleButton";
 import confetti from "canvas-confetti";
 
 interface OnboardingOverlayProps {
@@ -253,7 +253,7 @@ export function OnboardingOverlay({ onComplete }: OnboardingOverlayProps) {
                 />
 
                 {/* Button */}
-                <FancyBorderButton
+                <WaffleButton
                   onClick={handleNext}
                   disabled={isLoading}
                   className="text-[26px] text-[#1E1E1E] w-full max-w-full"
@@ -276,7 +276,7 @@ export function OnboardingOverlay({ onComplete }: OnboardingOverlayProps) {
                   ) : (
                     "Next"
                   )}
-                </FancyBorderButton>
+                </WaffleButton>
               </div>
             </div>
           </motion.div>

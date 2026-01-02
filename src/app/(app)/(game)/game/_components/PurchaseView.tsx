@@ -35,7 +35,6 @@ const TIER_GRADIENTS = [
 
 export type PurchaseStep =
     | "idle"
-    | "switching-chain"
     | "pending"
     | "confirming"
     | "syncing"
@@ -342,7 +341,6 @@ export function PurchaseView({
                         animation: "pulse-fade 1.5s ease-in-out infinite",
                     }}
                 >
-                    {step === "switching-chain" && "Switching to Base Sepolia..."}
                     {step === "pending" && "Please confirm in your wallet..."}
                     {step === "confirming" && "Waiting for confirmation..."}
                     {step === "syncing" && "Finalizing purchase..."}

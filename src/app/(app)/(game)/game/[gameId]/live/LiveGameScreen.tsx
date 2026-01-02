@@ -4,7 +4,7 @@
  * LiveGameScreen
  *
  * Main orchestrator for live game sessions.
- * Uses local React state for session + Zustand for score/events only.
+ * Server-driven flow: questionIndex derived from server's answered count.
  */
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -13,8 +13,8 @@ import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useTimer } from "@/hooks/useTimer";
 import { useGameSocket } from "@/hooks/useGameSocket";
 import { playSound } from "@/lib/sounds";
-import { useGameStore, useGameStoreApi } from "@/components/providers/GameStoreProvider";
-import { selectScore } from "@/lib/game-store";
+import { useGameStoreApi } from "@/components/providers/GameStoreProvider";
+import { useGameEntry } from "@/hooks/useGameEntry";
 import QuestionView from "./_components/QuestionView";
 import BreakView from "./_components/BreakView";
 import GameCountdownScreen from "./_components/GameCountdownScreen";
@@ -32,47 +32,79 @@ export default function LiveGameScreen({ game }: { game: LiveGameData }) {
     const store = useGameStoreApi();
     const questionStartRef = useRef(Date.now());
 
-    // Initialize WebSocket connection (gets gameId from URL params)
+    // Initialize WebSocket connection
     useGameSocket();
 
     // ==========================================
-    // LOCAL SESSION STATE (not in store)
+    // SERVER STATE (source of truth)
+    // ==========================================
+    const { entry, refetchEntry } = useGameEntry({ gameId: game.id });
+
+    // Convert to Set for O(1) lookups
+    const answeredIds = new Set(entry?.answeredQuestionIds ?? []);
+    const serverScore = entry?.score ?? 0;
+
+    // ==========================================
+    // LOCAL UI STATE
     // ==========================================
     const [gameStarted, setGameStarted] = useState(false);
-    const [isGameComplete, setIsGameComplete] = useState(false);
-    const [questionIndex, setQuestionIndex] = useState(0);
     const [isBreak, setIsBreak] = useState(false);
     const [timerTarget, setTimerTarget] = useState(0);
-    const [answers, setAnswers] = useState<Map<number, { selected: number; timeMs: number }>>(new Map());
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [mediaReady, setMediaReady] = useState(false); // Track if current question's media is loaded
 
-    // Score still from store (updated via API sync)
-    const score = useGameStore(selectScore);
+    // Tracks which question we're currently viewing (can differ from server during submission)
+    const [currentQuestionId, setCurrentQuestionId] = useState<number | null>(null);
+
+    // ==========================================
+    // DERIVED STATE
+    // ==========================================
+
+    // Find next unanswered question
+    const nextUnansweredQuestion = game.questions.find(q => !answeredIds.has(q.id));
+
+    // Current question: either explicitly set, or next unanswered
+    const currentQuestion = currentQuestionId
+        ? game.questions.find(q => q.id === currentQuestionId)
+        : nextUnansweredQuestion;
+
+    // Calculate current question index for display
+    const currentQuestionIndex = currentQuestion
+        ? game.questions.findIndex(q => q.id === currentQuestion.id)
+        : -1;
+
+    // Game complete conditions
+    const isGameEnded = Date.now() >= game.endsAt.getTime();
+    const allQuestionsAnswered = !nextUnansweredQuestion;
+    const isGameComplete = isGameEnded || allQuestionsAnswered;
+
+    // Has current question been answered?
+    const hasAnsweredCurrent = currentQuestion ? answeredIds.has(currentQuestion.id) : false;
 
     // ==========================================
     // GAME LOGIC
     // ==========================================
 
-    // Advance to next question
+    // Move to next unanswered question
     const advance = useCallback(() => {
-        const currentQ = game.questions[questionIndex];
-
-        // Timeout answer if not answered
-        if (currentQ && !answers.has(currentQ.id)) {
-            const timeMs = currentQ.durationSec * 1000;
-            setAnswers((prev) => new Map(prev).set(currentQ.id, { selected: -1, timeMs }));
-            syncAnswer(game.id, currentQ.id, -1, timeMs);
-        }
-
-        const nextIndex = questionIndex + 1;
-
-        // Game complete?
-        if (nextIndex >= game.questions.length) {
-            setIsGameComplete(true);
+        // Game complete check
+        if (isGameComplete) {
             return;
         }
 
-        const current = game.questions[questionIndex];
-        const next = game.questions[nextIndex];
+        // Find current position in questions array
+        if (currentQuestionIndex === -1) return;
+
+        const nextIdx = currentQuestionIndex + 1;
+
+        // All questions done?
+        if (nextIdx >= game.questions.length) {
+            setCurrentQuestionId(null); // Will trigger isGameComplete
+            return;
+        }
+
+        const current = game.questions[currentQuestionIndex];
+        const next = game.questions[nextIdx];
 
         // Round break?
         if (!isBreak && current && next && current.roundIndex !== next.roundIndex) {
@@ -81,21 +113,36 @@ export default function LiveGameScreen({ game }: { game: LiveGameData }) {
             return;
         }
 
-        // Move to next question
+        // Move to next question (timer starts when media loads via handleMediaReady)
         setIsBreak(false);
-        setQuestionIndex(nextIndex);
-        questionStartRef.current = Date.now();
-        setTimerTarget(Date.now() + (next?.durationSec ?? 10) * 1000);
-    }, [game.id, game.questions, game.roundBreakSec, questionIndex, isBreak, answers]);
+        setCurrentQuestionId(next.id);
+    }, [game.questions, game.roundBreakSec, currentQuestionIndex, isBreak, isGameComplete]);
+
+    // Handle timer expiry
+    const handleTimerExpiry = useCallback(async () => {
+        if (isBreak) {
+            advance();
+            return;
+        }
+
+        // Auto-submit timeout if not answered
+        if (!hasAnsweredCurrent && !isSubmitting && currentQuestion) {
+            setIsSubmitting(true);
+            const timeMs = currentQuestion.durationSec * 1000;
+            await submitAnswerToServer(game.id, currentQuestion.id, -1, timeMs);
+            await refetchEntry(); // Sync server state
+            setIsSubmitting(false);
+        }
+        advance();
+    }, [game.id, currentQuestion, isBreak, hasAnsweredCurrent, isSubmitting, refetchEntry, advance]);
 
     // Submit answer
     const submitAnswer = useCallback(
-        (selectedIndex: number) => {
-            const currentQuestion = game.questions[questionIndex];
-            if (!currentQuestion || answers.has(currentQuestion.id)) return;
+        async (selectedIndex: number) => {
+            if (!currentQuestion || hasAnsweredCurrent || isSubmitting) return;
 
+            setIsSubmitting(true);
             const timeMs = Date.now() - questionStartRef.current;
-            setAnswers((prev) => new Map(prev).set(currentQuestion.id, { selected: selectedIndex, timeMs }));
 
             // Add event to store for feed
             store.getState().addEvent({
@@ -107,29 +154,30 @@ export default function LiveGameScreen({ game }: { game: LiveGameData }) {
                 timestamp: Date.now(),
             });
 
-            // Sync and update score
-            syncAnswer(game.id, currentQuestion.id, selectedIndex, timeMs).then((result) => {
-                if (result.success) {
-                    store.getState().updateScore(result.pointsEarned);
-                }
-            });
+            // Submit to server
+            await submitAnswerToServer(game.id, currentQuestion.id, selectedIndex, timeMs);
 
+            // Refetch to get updated score/answered from server
+            await refetchEntry();
+
+            setIsSubmitting(false);
             advance();
         },
-        [game.id, game.questions, questionIndex, answers, userPfpUrl, store, advance]
+        [game.id, currentQuestion, hasAnsweredCurrent, isSubmitting, userPfpUrl, store, refetchEntry, advance]
     );
 
-    // Start game
+    // Start game - timer will start when media is ready
     const startGame = useCallback(() => {
         if (gameStarted) return;
         setGameStarted(true);
-        questionStartRef.current = Date.now();
-        const firstQ = game.questions[0];
-        setTimerTarget(Date.now() + (firstQ?.durationSec ?? 10) * 1000);
-    }, [gameStarted, game.questions]);
+        // Set to first unanswered question (timer starts when media loads via handleMediaReady)
+        if (nextUnansweredQuestion) {
+            setCurrentQuestionId(nextUnansweredQuestion.id);
+        }
+    }, [gameStarted, nextUnansweredQuestion]);
 
     // Timer
-    const seconds = useTimer(timerTarget, advance);
+    const seconds = useTimer(timerTarget, handleTimerExpiry);
     const prevSecondsRef = useRef(seconds);
 
     // Sound effects
@@ -146,7 +194,7 @@ export default function LiveGameScreen({ game }: { game: LiveGameData }) {
     // Clear answerers when question changes
     useEffect(() => {
         store.getState().clearAnswerers();
-    }, [questionIndex, store]);
+    }, [currentQuestionId, store]);
 
     // ==========================================
     // RENDER
@@ -166,14 +214,12 @@ export default function LiveGameScreen({ game }: { game: LiveGameData }) {
     if (isGameComplete) {
         return (
             <GameCompleteScreen
-                score={score}
+                score={serverScore}
                 gameTheme={game.theme}
                 gameId={game.id}
             />
         );
     }
-
-    const currentQuestion = game.questions[questionIndex];
 
     // Error state
     if (!currentQuestion) {
@@ -189,7 +235,7 @@ export default function LiveGameScreen({ game }: { game: LiveGameData }) {
 
     // Break between rounds
     if (isBreak) {
-        const nextQuestion = game.questions[questionIndex + 1] ?? game.questions[0];
+        const nextQuestion = game.questions[currentQuestionIndex + 1] ?? game.questions[0];
         return (
             <>
                 <div className="flex-1 flex flex-col min-h-0">
@@ -200,16 +246,32 @@ export default function LiveGameScreen({ game }: { game: LiveGameData }) {
         );
     }
 
+    // Callback when media is ready - start timer
+    const handleMediaReady = useCallback(() => {
+        if (!mediaReady && currentQuestion) {
+            setMediaReady(true);
+            // Start timer only after media is loaded
+            questionStartRef.current = Date.now();
+            setTimerTarget(Date.now() + (currentQuestion.durationSec ?? 10) * 1000);
+        }
+    }, [mediaReady, currentQuestion]);
+
+    // Reset mediaReady when question changes
+    useEffect(() => {
+        setMediaReady(false);
+    }, [currentQuestionId]);
+
     // Question view
     return (
         <>
             <QuestionView
                 question={currentQuestion}
-                questionNumber={questionIndex + 1}
+                questionNumber={currentQuestionIndex + 1}
                 totalQuestions={game.questions.length}
-                seconds={seconds}
+                seconds={mediaReady ? seconds : currentQuestion.durationSec}
                 onAnswer={submitAnswer}
-                hasAnswered={answers.has(currentQuestion.id)}
+                hasAnswered={hasAnsweredCurrent || isSubmitting}
+                onMediaReady={handleMediaReady}
             />
             <CheerOverlay />
         </>
@@ -217,21 +279,21 @@ export default function LiveGameScreen({ game }: { game: LiveGameData }) {
 }
 
 // ==========================================
-// API SYNC
+// API - Submit answer to server
 // ==========================================
 
-interface SyncResult {
+interface SubmitResult {
     success: boolean;
     pointsEarned: number;
 }
 
-async function syncAnswer(
+async function submitAnswerToServer(
     gameId: number,
     questionId: number,
     selectedIndex: number,
     timeMs: number,
     retries = 3
-): Promise<SyncResult> {
+): Promise<SubmitResult> {
     for (let i = 0; i < retries; i++) {
         try {
             const res = await sdk.quickAuth.fetch(`/api/v1/games/${gameId}/answers`, {
@@ -244,7 +306,7 @@ async function syncAnswer(
                 return { success: true, pointsEarned: data.pointsEarned ?? 0 };
             }
         } catch (e) {
-            console.error(`Answer sync failed (attempt ${i + 1}):`, e);
+            console.error(`Answer submit failed (attempt ${i + 1}):`, e);
         }
         if (i < retries - 1) {
             await new Promise((r) => setTimeout(r, Math.pow(2, i) * 1000));

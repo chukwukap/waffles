@@ -61,6 +61,7 @@ export type GameEntryMinAggregateOutputType = {
   rank: number | null
   prize: number | null
   claimedAt: Date | null
+  merkleAmount: string | null
   leftAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -79,6 +80,7 @@ export type GameEntryMaxAggregateOutputType = {
   rank: number | null
   prize: number | null
   claimedAt: Date | null
+  merkleAmount: string | null
   leftAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -98,6 +100,8 @@ export type GameEntryCountAggregateOutputType = {
   rank: number
   prize: number
   claimedAt: number
+  merkleProof: number
+  merkleAmount: number
   leftAt: number
   createdAt: number
   updatedAt: number
@@ -140,6 +144,7 @@ export type GameEntryMinAggregateInputType = {
   rank?: true
   prize?: true
   claimedAt?: true
+  merkleAmount?: true
   leftAt?: true
   createdAt?: true
   updatedAt?: true
@@ -158,6 +163,7 @@ export type GameEntryMaxAggregateInputType = {
   rank?: true
   prize?: true
   claimedAt?: true
+  merkleAmount?: true
   leftAt?: true
   createdAt?: true
   updatedAt?: true
@@ -177,6 +183,8 @@ export type GameEntryCountAggregateInputType = {
   rank?: true
   prize?: true
   claimedAt?: true
+  merkleProof?: true
+  merkleAmount?: true
   leftAt?: true
   createdAt?: true
   updatedAt?: true
@@ -283,6 +291,8 @@ export type GameEntryGroupByOutputType = {
   rank: number | null
   prize: number | null
   claimedAt: Date | null
+  merkleProof: runtime.JsonValue | null
+  merkleAmount: string | null
   leftAt: Date | null
   createdAt: Date
   updatedAt: Date
@@ -325,6 +335,8 @@ export type GameEntryWhereInput = {
   rank?: Prisma.IntNullableFilter<"GameEntry"> | number | null
   prize?: Prisma.FloatNullableFilter<"GameEntry"> | number | null
   claimedAt?: Prisma.DateTimeNullableFilter<"GameEntry"> | Date | string | null
+  merkleProof?: Prisma.JsonNullableFilter<"GameEntry">
+  merkleAmount?: Prisma.StringNullableFilter<"GameEntry"> | string | null
   leftAt?: Prisma.DateTimeNullableFilter<"GameEntry"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"GameEntry"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"GameEntry"> | Date | string
@@ -346,6 +358,8 @@ export type GameEntryOrderByWithRelationInput = {
   rank?: Prisma.SortOrderInput | Prisma.SortOrder
   prize?: Prisma.SortOrderInput | Prisma.SortOrder
   claimedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  merkleProof?: Prisma.SortOrderInput | Prisma.SortOrder
+  merkleAmount?: Prisma.SortOrderInput | Prisma.SortOrder
   leftAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -371,6 +385,8 @@ export type GameEntryWhereUniqueInput = Prisma.AtLeast<{
   rank?: Prisma.IntNullableFilter<"GameEntry"> | number | null
   prize?: Prisma.FloatNullableFilter<"GameEntry"> | number | null
   claimedAt?: Prisma.DateTimeNullableFilter<"GameEntry"> | Date | string | null
+  merkleProof?: Prisma.JsonNullableFilter<"GameEntry">
+  merkleAmount?: Prisma.StringNullableFilter<"GameEntry"> | string | null
   leftAt?: Prisma.DateTimeNullableFilter<"GameEntry"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"GameEntry"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"GameEntry"> | Date | string
@@ -392,6 +408,8 @@ export type GameEntryOrderByWithAggregationInput = {
   rank?: Prisma.SortOrderInput | Prisma.SortOrder
   prize?: Prisma.SortOrderInput | Prisma.SortOrder
   claimedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  merkleProof?: Prisma.SortOrderInput | Prisma.SortOrder
+  merkleAmount?: Prisma.SortOrderInput | Prisma.SortOrder
   leftAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -419,6 +437,8 @@ export type GameEntryScalarWhereWithAggregatesInput = {
   rank?: Prisma.IntNullableWithAggregatesFilter<"GameEntry"> | number | null
   prize?: Prisma.FloatNullableWithAggregatesFilter<"GameEntry"> | number | null
   claimedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"GameEntry"> | Date | string | null
+  merkleProof?: Prisma.JsonNullableWithAggregatesFilter<"GameEntry">
+  merkleAmount?: Prisma.StringNullableWithAggregatesFilter<"GameEntry"> | string | null
   leftAt?: Prisma.DateTimeNullableWithAggregatesFilter<"GameEntry"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"GameEntry"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"GameEntry"> | Date | string
@@ -435,6 +455,8 @@ export type GameEntryCreateInput = {
   rank?: number | null
   prize?: number | null
   claimedAt?: Date | string | null
+  merkleProof?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  merkleAmount?: string | null
   leftAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -456,6 +478,8 @@ export type GameEntryUncheckedCreateInput = {
   rank?: number | null
   prize?: number | null
   claimedAt?: Date | string | null
+  merkleProof?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  merkleAmount?: string | null
   leftAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -472,6 +496,8 @@ export type GameEntryUpdateInput = {
   rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   prize?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  merkleProof?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  merkleAmount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -493,6 +519,8 @@ export type GameEntryUncheckedUpdateInput = {
   rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   prize?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  merkleProof?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  merkleAmount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -512,6 +540,8 @@ export type GameEntryCreateManyInput = {
   rank?: number | null
   prize?: number | null
   claimedAt?: Date | string | null
+  merkleProof?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  merkleAmount?: string | null
   leftAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -528,6 +558,8 @@ export type GameEntryUpdateManyMutationInput = {
   rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   prize?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  merkleProof?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  merkleAmount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -547,6 +579,8 @@ export type GameEntryUncheckedUpdateManyInput = {
   rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   prize?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  merkleProof?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  merkleAmount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -581,6 +615,8 @@ export type GameEntryCountOrderByAggregateInput = {
   rank?: Prisma.SortOrder
   prize?: Prisma.SortOrder
   claimedAt?: Prisma.SortOrder
+  merkleProof?: Prisma.SortOrder
+  merkleAmount?: Prisma.SortOrder
   leftAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -610,6 +646,7 @@ export type GameEntryMaxOrderByAggregateInput = {
   rank?: Prisma.SortOrder
   prize?: Prisma.SortOrder
   claimedAt?: Prisma.SortOrder
+  merkleAmount?: Prisma.SortOrder
   leftAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -628,6 +665,7 @@ export type GameEntryMinOrderByAggregateInput = {
   rank?: Prisma.SortOrder
   prize?: Prisma.SortOrder
   claimedAt?: Prisma.SortOrder
+  merkleAmount?: Prisma.SortOrder
   leftAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -747,6 +785,8 @@ export type GameEntryCreateWithoutUserInput = {
   rank?: number | null
   prize?: number | null
   claimedAt?: Date | string | null
+  merkleProof?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  merkleAmount?: string | null
   leftAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -766,6 +806,8 @@ export type GameEntryUncheckedCreateWithoutUserInput = {
   rank?: number | null
   prize?: number | null
   claimedAt?: Date | string | null
+  merkleProof?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  merkleAmount?: string | null
   leftAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -814,6 +856,8 @@ export type GameEntryScalarWhereInput = {
   rank?: Prisma.IntNullableFilter<"GameEntry"> | number | null
   prize?: Prisma.FloatNullableFilter<"GameEntry"> | number | null
   claimedAt?: Prisma.DateTimeNullableFilter<"GameEntry"> | Date | string | null
+  merkleProof?: Prisma.JsonNullableFilter<"GameEntry">
+  merkleAmount?: Prisma.StringNullableFilter<"GameEntry"> | string | null
   leftAt?: Prisma.DateTimeNullableFilter<"GameEntry"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"GameEntry"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"GameEntry"> | Date | string
@@ -830,6 +874,8 @@ export type GameEntryCreateWithoutGameInput = {
   rank?: number | null
   prize?: number | null
   claimedAt?: Date | string | null
+  merkleProof?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  merkleAmount?: string | null
   leftAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -849,6 +895,8 @@ export type GameEntryUncheckedCreateWithoutGameInput = {
   rank?: number | null
   prize?: number | null
   claimedAt?: Date | string | null
+  merkleProof?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  merkleAmount?: string | null
   leftAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -893,6 +941,8 @@ export type GameEntryCreateManyUserInput = {
   rank?: number | null
   prize?: number | null
   claimedAt?: Date | string | null
+  merkleProof?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  merkleAmount?: string | null
   leftAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -909,6 +959,8 @@ export type GameEntryUpdateWithoutUserInput = {
   rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   prize?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  merkleProof?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  merkleAmount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -928,6 +980,8 @@ export type GameEntryUncheckedUpdateWithoutUserInput = {
   rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   prize?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  merkleProof?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  merkleAmount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -946,6 +1000,8 @@ export type GameEntryUncheckedUpdateManyWithoutUserInput = {
   rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   prize?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  merkleProof?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  merkleAmount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -964,6 +1020,8 @@ export type GameEntryCreateManyGameInput = {
   rank?: number | null
   prize?: number | null
   claimedAt?: Date | string | null
+  merkleProof?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  merkleAmount?: string | null
   leftAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -980,6 +1038,8 @@ export type GameEntryUpdateWithoutGameInput = {
   rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   prize?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  merkleProof?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  merkleAmount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -999,6 +1059,8 @@ export type GameEntryUncheckedUpdateWithoutGameInput = {
   rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   prize?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  merkleProof?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  merkleAmount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1017,6 +1079,8 @@ export type GameEntryUncheckedUpdateManyWithoutGameInput = {
   rank?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   prize?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  merkleProof?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  merkleAmount?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1038,6 +1102,8 @@ export type GameEntrySelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   rank?: boolean
   prize?: boolean
   claimedAt?: boolean
+  merkleProof?: boolean
+  merkleAmount?: boolean
   leftAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1059,6 +1125,8 @@ export type GameEntrySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   rank?: boolean
   prize?: boolean
   claimedAt?: boolean
+  merkleProof?: boolean
+  merkleAmount?: boolean
   leftAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1080,6 +1148,8 @@ export type GameEntrySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   rank?: boolean
   prize?: boolean
   claimedAt?: boolean
+  merkleProof?: boolean
+  merkleAmount?: boolean
   leftAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1101,12 +1171,14 @@ export type GameEntrySelectScalar = {
   rank?: boolean
   prize?: boolean
   claimedAt?: boolean
+  merkleProof?: boolean
+  merkleAmount?: boolean
   leftAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type GameEntryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "gameId" | "userId" | "txHash" | "payerWallet" | "paidAmount" | "paidAt" | "score" | "answered" | "answers" | "rank" | "prize" | "claimedAt" | "leftAt" | "createdAt" | "updatedAt", ExtArgs["result"]["gameEntry"]>
+export type GameEntryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "gameId" | "userId" | "txHash" | "payerWallet" | "paidAmount" | "paidAt" | "score" | "answered" | "answers" | "rank" | "prize" | "claimedAt" | "merkleProof" | "merkleAmount" | "leftAt" | "createdAt" | "updatedAt", ExtArgs["result"]["gameEntry"]>
 export type GameEntryInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   game?: boolean | Prisma.GameDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -1140,6 +1212,8 @@ export type $GameEntryPayload<ExtArgs extends runtime.Types.Extensions.InternalA
     rank: number | null
     prize: number | null
     claimedAt: Date | null
+    merkleProof: runtime.JsonValue | null
+    merkleAmount: string | null
     leftAt: Date | null
     createdAt: Date
     updatedAt: Date
@@ -1581,6 +1655,8 @@ export interface GameEntryFieldRefs {
   readonly rank: Prisma.FieldRef<"GameEntry", 'Int'>
   readonly prize: Prisma.FieldRef<"GameEntry", 'Float'>
   readonly claimedAt: Prisma.FieldRef<"GameEntry", 'DateTime'>
+  readonly merkleProof: Prisma.FieldRef<"GameEntry", 'Json'>
+  readonly merkleAmount: Prisma.FieldRef<"GameEntry", 'String'>
   readonly leftAt: Prisma.FieldRef<"GameEntry", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"GameEntry", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"GameEntry", 'DateTime'>

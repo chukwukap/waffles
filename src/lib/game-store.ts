@@ -15,26 +15,13 @@ import type { Game, GameEntry } from "@prisma";
 // TYPES - Derived from Prisma
 // ==========================================
 
-// Subset of Game model used in client state
-export type GameData = Pick<
-  Game,
-  | "id"
-  | "title"
-  | "theme"
-  | "coverUrl"
-  | "startsAt"
-  | "endsAt"
-  | "tierPrices"
-  | "prizePool"
-  | "playerCount"
-  | "maxPlayers"
->;
-
 // Subset of GameEntry model used in client state
 export type GameEntryData = Pick<
   GameEntry,
   "id" | "score" | "answered" | "paidAt" | "rank" | "prize" | "claimedAt"
->;
+> & {
+  answeredQuestionIds: number[]; // IDs of questions already answered
+};
 
 // ==========================================
 // TYPES - Runtime only (not in DB)
@@ -69,8 +56,9 @@ export interface RecentPlayer {
 
 export interface GameState {
   // === CORE ===
-  game: GameData | null;
   entry: GameEntryData | null;
+  prizePool: number | null;
+  playerCount: number | null;
 
   // === REAL-TIME ===
   isConnected: boolean;
@@ -81,7 +69,6 @@ export interface GameState {
   questionAnswerers: RecentPlayer[]; // Players who answered current question
 
   // === ACTIONS - CORE ===
-  setGame: (game: GameData | null) => void;
   setEntry: (entry: GameEntryData | null) => void;
   updateGameStats: (stats: {
     prizePool?: number;
@@ -100,8 +87,7 @@ export interface GameState {
   addAnswerer: (player: RecentPlayer) => void;
   clearAnswerers: () => void;
 
-  // === ACTIONS - SCORE ===
-  updateScore: (points: number) => void;
+  // === ACTIONS - ENTRY ===
   incrementAnswered: () => void;
 
   // === ACTIONS - RESET ===
@@ -113,8 +99,9 @@ export interface GameState {
 // ==========================================
 
 const initialCoreState = {
-  game: null as GameData | null,
   entry: null as GameEntryData | null,
+  prizePool: null as number | null,
+  playerCount: null as number | null,
 };
 
 const initialRealTimeState = {
@@ -144,20 +131,13 @@ export const createGameStore = () =>
         ...initialState,
 
         // === CORE ACTIONS ===
-        setGame: (game) => set({ game }, false, "setGame"),
         setEntry: (entry) => set({ entry }, false, "setEntry"),
         updateGameStats: (stats) =>
           set(
-            (state) => {
-              if (!state.game) return {};
-              return {
-                game: {
-                  ...state.game,
-                  prizePool: stats.prizePool ?? state.game.prizePool,
-                  playerCount: stats.playerCount ?? state.game.playerCount,
-                },
-              };
-            },
+            (state) => ({
+              prizePool: stats.prizePool ?? state.prizePool,
+              playerCount: stats.playerCount ?? state.playerCount,
+            }),
             false,
             "updateGameStats"
           ),
@@ -225,17 +205,7 @@ export const createGameStore = () =>
         clearAnswerers: () =>
           set({ questionAnswerers: [] }, false, "clearAnswerers"),
 
-        // === SCORE ACTIONS ===
-        updateScore: (points) =>
-          set(
-            (state) => ({
-              entry: state.entry
-                ? { ...state.entry, score: state.entry.score + points }
-                : null,
-            }),
-            false,
-            "updateScore"
-          ),
+        // === ENTRY ACTIONS ===
 
         incrementAnswered: () =>
           set(
@@ -264,14 +234,14 @@ export const createGameStore = () =>
 // SELECTORS (for performance)
 // ==========================================
 
-export const selectGame = (state: GameState) => state.game;
 export const selectEntry = (state: GameState) => state.entry;
+export const selectPrizePool = (state: GameState) => state.prizePool;
+export const selectPlayerCount = (state: GameState) => state.playerCount;
 export const selectHasEntry = (state: GameState) => state.entry !== null;
 export const selectIsConnected = (state: GameState) => state.isConnected;
 export const selectOnlineCount = (state: GameState) => state.onlineCount;
 export const selectMessages = (state: GameState) => state.messages;
 export const selectEvents = (state: GameState) => state.events;
-export const selectScore = (state: GameState) => state.entry?.score ?? 0;
 export const selectAnswered = (state: GameState) => state.entry?.answered ?? 0;
 export const selectRecentPlayers = (state: GameState) => state.recentPlayers;
 export const selectQuestionAnswerers = (state: GameState) =>

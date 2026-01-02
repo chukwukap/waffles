@@ -74,6 +74,7 @@ export function useGameEntry({
           id: data.id,
           score: data.score ?? 0,
           answered: data.answered ?? 0,
+          answeredQuestionIds: data.answeredQuestionIds ?? [],
           paidAt: data.paidAt ? new Date(data.paidAt) : null,
           rank: data.rank ?? null,
           prize: data.prize ?? null,

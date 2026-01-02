@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FancyBorderButton } from "@/components/buttons/FancyBorderButton";
+import { WaffleButton } from "@/components/buttons/WaffleButton";
 import { CopyIcon } from "@/components/icons";
 import { Check } from "lucide-react";
 
@@ -239,14 +239,14 @@ const InviteDrawerActive = ({ isOpen, onClose, inviteLink }: InviteDrawerProps) 
               Add your invite link to your Farcaster bio to earn daily bonus points!
             </p>
 
-            <FancyBorderButton onClick={handleCopy} className="w-full max-w-[340px] h-[52px] px-4 mb-6">
+            <WaffleButton onClick={handleCopy} className="w-full max-w-[340px] h-[52px] px-4 mb-6">
               <span className="font-display font-medium text-[15px] leading-[1.15] tracking-[-0.02em] lowercase text-[#110047] truncate select-none text-center">
                 {inviteLink}
               </span>
               <div className="text-[#110047] ml-1">
                 {copied ? <Check size={20} className="text-green-500 animate-bounce" /> : <CopyIcon className="opacity-60 group-hover:opacity-100 transition-opacity" />}
               </div>
-            </FancyBorderButton>
+            </WaffleButton>
 
             <button onClick={handleCopy} className="w-full">
               {copied ? (
@@ -275,6 +275,6 @@ export { InviteDrawerComingSoon as InviteDrawer };
 
 // Suppress unused import warnings for commented code
 void useState;
-void FancyBorderButton;
+void WaffleButton;
 void CopyIcon;
 void Check;
