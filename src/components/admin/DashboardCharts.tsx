@@ -48,7 +48,7 @@ export function DashboardCharts({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* User Growth Chart */}
             <div className="bg-linear-to-br from-[#00CFF2]/5 to-transparent border border-white/10 rounded-2xl p-6">
-                <h3 className="text-lg font-semibold text-white mb-6 font-display">User Growth</h3>
+                <h3 className="text-lg font-semibold text-white mb-6 font-body">User Growth</h3>
                 <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={userGrowth}>
@@ -96,7 +96,7 @@ export function DashboardCharts({
 
             {/* Revenue Chart */}
             <div className="bg-linear-to-br from-[#FFC931]/5 to-transparent border border-white/10 rounded-2xl p-6">
-                <h3 className="text-lg font-semibold text-white mb-6 font-display">Revenue (USDC)</h3>
+                <h3 className="text-lg font-semibold text-white mb-6 font-body">Revenue (USDC)</h3>
                 <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={revenueData}>

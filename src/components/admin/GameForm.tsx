@@ -10,8 +10,6 @@ import {
   SparklesIcon,
   ClockIcon,
   UserGroupIcon,
-  TrophyIcon,
-  BoltIcon,
   CheckIcon,
   ExclamationCircleIcon,
   ArrowRightIcon,
@@ -49,45 +47,6 @@ interface GameFormProps {
 }
 
 
-// Preset configurations for quick setup
-const PRESETS = [
-  {
-    id: "quick",
-    label: "Quick Game",
-    icon: BoltIcon,
-    description: "5 min rounds, 50 players",
-    values: {
-      roundBreakSec: 15,
-      maxPlayers: 50,
-      entryFee: 1,
-      prizePool: 40,
-    },
-  },
-  {
-    id: "standard",
-    label: "Standard",
-    icon: TrophyIcon,
-    description: "10 min rounds, 200 players",
-    values: {
-      roundBreakSec: 20,
-      maxPlayers: 200,
-      entryFee: 5,
-      prizePool: 800,
-    },
-  },
-  {
-    id: "premium",
-    label: "Premium",
-    icon: SparklesIcon,
-    description: "15 min rounds, 500 players",
-    values: {
-      roundBreakSec: 30,
-      maxPlayers: 500,
-      entryFee: 25,
-      prizePool: 10000,
-    },
-  },
-];
 
 export function GameForm({
   action,
@@ -139,7 +98,6 @@ export function GameForm({
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [pendingFormData, setPendingFormData] = useState<FormData | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [activePreset, setActivePreset] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   // Use transition for form submission to avoid React warning
@@ -170,20 +128,7 @@ export function GameForm({
     return mins > 0 ? `${hours}h ${mins}m` : `${hours} hours`;
   }, [startsAt, endsAt]);
 
-  const applyPreset = (presetId: string) => {
-    const preset = PRESETS.find((p) => p.id === presetId);
-    if (preset) {
-      setRoundDuration(preset.values.roundBreakSec.toString());
-      setMaxPlayers(preset.values.maxPlayers.toString());
-      // Set tier prices based on preset entry fee
-      const baseFee = preset.values.entryFee;
-      setTierPrice1((baseFee * 1).toString());
-      setTierPrice2((baseFee * 2.5).toString());
-      setTierPrice3((baseFee * 5).toString());
-      setPrizePool(preset.values.prizePool.toString());
-      setActivePreset(presetId);
-    }
-  };
+
 
   // Form submission handler
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -527,56 +472,7 @@ export function GameForm({
               </div>
             </section>
 
-            {/* Quick Presets */}
-            {!isEdit && (
-              <section className="bg-linear-to-br from-[#FFC931]/5 to-transparent rounded-2xl border border-white/10 p-6">
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="p-2.5 rounded-xl bg-[#FFC931]/15">
-                    <BoltIcon className="h-5 w-5 text-[#FFC931]" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-white font-display">
-                      Quick Presets
-                    </h3>
-                    <p className="text-sm text-white/50">
-                      Start with recommended configurations
-                    </p>
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {PRESETS.map((preset) => (
-                    <button
-                      key={preset.id}
-                      type="button"
-                      onClick={() => applyPreset(preset.id)}
-                      className={`relative p-4 rounded-xl border transition-all duration-200 text-left ${activePreset === preset.id
-                        ? "border-[#FFC931] bg-[#FFC931]/10"
-                        : "border-white/10 bg-white/5 hover:bg-white/8 hover:border-white/20"
-                        }`}
-                    >
-                      {activePreset === preset.id && (
-                        <div className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#FFC931] flex items-center justify-center">
-                          <CheckIcon className="h-3 w-3 text-black" />
-                        </div>
-                      )}
-                      <preset.icon
-                        className={`h-5 w-5 mb-2 ${activePreset === preset.id
-                          ? "text-[#FFC931]"
-                          : "text-white/60"
-                          }`}
-                      />
-                      <div className="font-bold text-white text-sm">
-                        {preset.label}
-                      </div>
-                      <div className="text-xs text-white/50 mt-0.5">
-                        {preset.description}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </section>
-            )}
 
             {/* Economics & Gameplay */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -614,10 +510,7 @@ export function GameForm({
                         name="tierPrice1"
                         required
                         value={tierPrice1}
-                        onChange={(e) => {
-                          setTierPrice1(e.target.value);
-                          setActivePreset(null);
-                        }}
+                        onChange={(e) => setTierPrice1(e.target.value)}
                         min={0}
                         step="0.01"
                         className="w-full pl-8 pr-4 py-3 bg-transparent border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
@@ -645,10 +538,7 @@ export function GameForm({
                         name="tierPrice2"
                         required
                         value={tierPrice2}
-                        onChange={(e) => {
-                          setTierPrice2(e.target.value);
-                          setActivePreset(null);
-                        }}
+                        onChange={(e) => setTierPrice2(e.target.value)}
                         min={0}
                         step="0.01"
                         className="w-full pl-8 pr-4 py-3 bg-transparent border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
@@ -676,10 +566,7 @@ export function GameForm({
                         name="tierPrice3"
                         required
                         value={tierPrice3}
-                        onChange={(e) => {
-                          setTierPrice3(e.target.value);
-                          setActivePreset(null);
-                        }}
+                        onChange={(e) => setTierPrice3(e.target.value)}
                         min={0}
                         step="0.01"
                         className="w-full pl-8 pr-4 py-3 bg-transparent border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
@@ -706,10 +593,7 @@ export function GameForm({
                         name="prizePool"
                         required
                         value={prizePool}
-                        onChange={(e) => {
-                          setPrizePool(e.target.value);
-                          setActivePreset(null);
-                        }}
+                        onChange={(e) => setPrizePool(e.target.value)}
                         min={0}
                         className="w-full pl-8 pr-4 py-3 bg-transparent border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
                         placeholder="0.00"
@@ -748,10 +632,7 @@ export function GameForm({
                       name="roundBreakSec"
                       required
                       value={roundDuration}
-                      onChange={(e) => {
-                        setRoundDuration(e.target.value);
-                        setActivePreset(null);
-                      }}
+                      onChange={(e) => setRoundDuration(e.target.value)}
                       min={5}
                       className="w-full px-4 py-3 bg-transparent border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
                       placeholder="15"
@@ -773,10 +654,7 @@ export function GameForm({
                         name="maxPlayers"
                         required
                         value={maxPlayers}
-                        onChange={(e) => {
-                          setMaxPlayers(e.target.value);
-                          setActivePreset(null);
-                        }}
+                        onChange={(e) => setMaxPlayers(e.target.value)}
                         min={2}
                         className="w-full pl-12 pr-4 py-3 bg-transparent border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
                         placeholder="100"

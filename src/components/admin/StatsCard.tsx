@@ -33,7 +33,7 @@ export function StatsCard({
 }) {
     return (
         <div className={cn(
-            "rounded-2xl border border-white/10 backdrop-blur-lg p-6 transition-all duration-300",
+            "rounded-2xl border border-white/10 backdrop-blur-lg p-6 transition-all duration-300 font-display",
             glowVariant === "gold" && "bg-linear-to-br from-[#FFC931]/5 to-transparent hover:border-[#FFC931]/30",
             glowVariant === "cyan" && "bg-linear-to-br from-[#00CFF2]/5 to-transparent hover:border-[#00CFF2]/30",
             glowVariant === "pink" && "bg-linear-to-br from-[#FB72FF]/5 to-transparent hover:border-[#FB72FF]/30",
@@ -41,7 +41,7 @@ export function StatsCard({
         )}>
             <div className="flex items-start justify-between">
                 <div>
-                    <p className="text-sm font-medium text-white/60 font-display">{title}</p>
+                    <p className="text-sm font-medium text-white/60 font-body">{title}</p>
                     <p className={cn(
                         "mt-2 text-3xl font-bold font-body",
                         glowClasses[glowVariant]

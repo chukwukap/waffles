@@ -27,7 +27,7 @@ export default function CreateGamePage() {
                 <div className="p-2.5 rounded-xl bg-linear-to-br from-[#FFC931] to-[#00CFF2] shadow-lg shadow-[#FFC931]/20">
                   <RocketLaunchIcon className="h-6 w-6 text-black" />
                 </div>
-                <h1 className="text-3xl font-bold text-white font-display">
+                <h1 className="text-3xl font-bold text-white font-body">
                   Create New Game
                 </h1>
               </div>

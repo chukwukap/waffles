@@ -116,8 +116,8 @@ export default async function AdminDashboard() {
     return (
         <div className="space-y-8">
             <div>
-                <h1 className="text-2xl font-bold text-white font-display">Dashboard</h1>
-                <p className="text-white/60 mt-1">
+                <h1 className="text-2xl font-bold text-white font-body">Dashboard</h1>
+                <p className="text-white/60 mt-1 font-display">
                     Overview of your Waffles trivia platform
                 </p>
             </div>
@@ -163,12 +163,12 @@ export default async function AdminDashboard() {
             />
 
             {/* Recent Activity Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 font-display">
                 {/* Recent Games */}
                 <div className="bg-linear-to-br from-[#FB72FF]/5 to-transparent border border-white/10 rounded-2xl overflow-hidden">
                     <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
-                        <h2 className="text-lg font-semibold text-white font-display">Recent Games</h2>
-                        <Link href="/admin/games" className="text-sm text-[#FFC931] hover:underline font-display">View all</Link>
+                        <h2 className="text-lg font-semibold text-white font-body">Recent Games</h2>
+                        <Link href="/admin/games" className="text-sm text-[#FFC931] hover:underline">View all</Link>
                     </div>
                     <div className="divide-y divide-white/10">
                         {activity.games.length === 0 ? (
@@ -198,10 +198,10 @@ export default async function AdminDashboard() {
                 </div>
 
                 {/* New Users */}
-                <div className="bg-linear-to-br from-[#00CFF2]/5 to-transparent border border-white/10 rounded-2xl overflow-hidden">
+                <div className="bg-linear-to-br from-[#00CFF2]/5 to-transparent border border-white/10 rounded-2xl overflow-hidden font-display">
                     <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
-                        <h2 className="text-lg font-semibold text-white font-display">New Users</h2>
-                        <Link href="/admin/users" className="text-sm text-[#FFC931] hover:underline font-display">View all</Link>
+                        <h2 className="text-lg font-semibold text-white font-body">New Users</h2>
+                        <Link href="/admin/users" className="text-sm text-[#FFC931] hover:underline">View all</Link>
                     </div>
                     <div className="divide-y divide-white/10">
                         {activity.users.length === 0 ? (
