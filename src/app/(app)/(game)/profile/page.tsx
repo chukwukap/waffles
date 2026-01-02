@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useProfile } from "./ProfileProvider";
+import { useUser } from "@/hooks/useUser";
+import { useProfileStats } from "@/hooks/useProfileStats";
+import { useProfileGames } from "@/hooks/useProfileGames";
 import { InviteFriendsIcon, UploadIcon } from "@/components/icons";
 import { BottomNav } from "@/components/BottomNav";
 import { ProfileCard } from "./_components/ProfileCard";
@@ -19,8 +21,14 @@ import { motion, AnimatePresence } from "framer-motion";
 // ==========================================
 
 export default function ProfilePage() {
-  const { user, stats, games, isLoading } = useProfile();
+  // SWR-based hooks - each fetches independently
+  const { user, isLoading: userLoading } = useUser();
+  const { stats, isLoading: statsLoading } = useProfileStats();
+  const { games, isLoading: gamesLoading } = useProfileGames(2); // Only 2 for preview
+
   const [inviteOpen, setInviteOpen] = useState(false);
+
+  const isLoading = userLoading || statsLoading || gamesLoading;
 
   // Loading state
   if (isLoading) {
@@ -50,17 +58,17 @@ export default function ProfilePage() {
 
   const safeUsername = user.username || "Player";
   const safeAvatarUrl = user.pfpUrl || "/images/avatars/a.png";
-  const showReferralButton = user.inviteCode !== null;
+  const showReferralButton = user.inviteQuota !== null && user.inviteQuota > 0;
 
-  // Limit to 2 games for compact view
-  const recentGames = games.slice(0, 2).map((g) => ({
-    id: g.id,
-    onchainId: g.onchainId,
-    name: g.title,
+  // Transform games for GameHistory component
+  const recentGames = games.map((g) => ({
+    id: g.gameId,
+    onchainId: null, // Not in games endpoint
+    name: g.game.title,
     score: g.score,
-    claimedAt: g.claimedAt,
-    winnings: g.winnings,
-    winningsColor: g.winnings > 0 ? ("green" as const) : ("gray" as const),
+    claimedAt: g.claimedAt ? new Date(g.claimedAt) : null,
+    winnings: g.rank <= 3 ? g.game.prizePool * [0.6, 0.3, 0.1][g.rank - 1] : 0,
+    winningsColor: (g.rank <= 3 ? "green" : "gray") as "green" | "gray",
   }));
 
   const containerVariants = {
@@ -69,9 +77,9 @@ export default function ProfilePage() {
       opacity: 1,
       transition: {
         staggerChildren: 0.15,
-        delayChildren: 0.2
-      }
-    }
+        delayChildren: 0.2,
+      },
+    },
   } as const;
 
   const itemVariants = {
@@ -82,14 +90,14 @@ export default function ProfilePage() {
       transition: {
         type: "spring",
         stiffness: 260,
-        damping: 20
-      } as const
-    }
+        damping: 20,
+      } as const,
+    },
   } as const;
 
   return (
     <>
-      {/* Main container - flex column with gaps, scrolls only when needed */}
+      {/* Main container */}
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -111,7 +119,10 @@ export default function ProfilePage() {
             PROFILE
           </h1>
           <motion.button
-            whileHover={{ scale: 1.1, backgroundColor: "rgba(255, 255, 255, 0.2)" }}
+            whileHover={{
+              scale: 1.1,
+              backgroundColor: "rgba(255, 255, 255, 0.2)",
+            }}
             whileTap={{ scale: 0.9 }}
             onClick={() => setInviteOpen(true)}
             aria-label="Invite Friends"
@@ -167,11 +178,7 @@ export default function ProfilePage() {
 
       <BottomNav />
 
-      <InviteDrawer
-        isOpen={inviteOpen}
-        onClose={() => setInviteOpen(false)}
-      // inviteLink={`https://waffles.world/redeem?code=${user.inviteCode}`}
-      />
+      <InviteDrawer isOpen={inviteOpen} onClose={() => setInviteOpen(false)} />
     </>
   );
 }

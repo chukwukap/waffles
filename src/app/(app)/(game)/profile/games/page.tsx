@@ -1,6 +1,6 @@
 "use client";
 
-import { useProfile } from "../ProfileProvider";
+import { useProfileGames } from "@/hooks/useProfileGames";
 import { cn } from "@/lib/utils";
 import GameHistoryItem from "./_components/GameHistoryItem";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 // ==========================================
 
 export default function GamesPage() {
-  const { games, isLoading, user } = useProfile();
+  const { games, isLoading } = useProfileGames(); // No limit = all games
 
   if (isLoading) {
     return (
@@ -31,15 +31,15 @@ export default function GamesPage() {
     );
   }
 
-  // Transform games to expected format
+  // Transform to expected format
   const gameHistory = games.map((g) => ({
-    id: g.id,
-    onchainId: g.onchainId,
-    name: g.title,
+    id: g.gameId,
+    onchainId: null,
+    name: g.game.title,
     score: g.score,
-    claimedAt: g.claimedAt,
-    winnings: g.winnings,
-    winningsColor: g.winnings > 0 ? ("green" as const) : ("gray" as const),
+    claimedAt: g.claimedAt ? new Date(g.claimedAt) : null,
+    winnings: g.rank <= 3 ? g.game.prizePool * [0.6, 0.3, 0.1][g.rank - 1] : 0,
+    winningsColor: (g.rank <= 3 ? "green" : "gray") as "green" | "gray",
   }));
 
   const containerVariants = {
@@ -48,8 +48,8 @@ export default function GamesPage() {
       opacity: 1,
       transition: {
         staggerChildren: 0.08,
-      }
-    }
+      },
+    },
   } as const;
 
   return (
@@ -77,7 +77,7 @@ export default function GamesPage() {
                 key={g.id}
                 variants={{
                   hidden: { opacity: 0, x: -10 },
-                  visible: { opacity: 1, x: 0 }
+                  visible: { opacity: 1, x: 0 },
                 }}
               >
                 <GameHistoryItem game={g} />

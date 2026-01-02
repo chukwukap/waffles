@@ -1,6 +1,6 @@
 "use client";
 
-import { useProfile } from "../ProfileProvider";
+import { useProfileStats } from "@/hooks/useProfileStats";
 import { cn } from "@/lib/utils";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
 import { BottomNav } from "@/components/BottomNav";
@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 // ==========================================
 
 export default function StatsPage() {
-  const { stats, isLoading } = useProfile();
+  const { stats, isLoading } = useProfileStats();
 
   if (isLoading) {
     return (
@@ -56,9 +56,9 @@ export default function StatsPage() {
       opacity: 1,
       transition: {
         staggerChildren: 0.1,
-        delayChildren: 0.1
-      }
-    }
+        delayChildren: 0.1,
+      },
+    },
   } as const;
 
   return (
@@ -133,7 +133,7 @@ export default function StatsPage() {
 const LargeStat = ({
   label,
   value,
-  delay
+  delay,
 }: {
   label: string;
   value: string | number;
@@ -165,7 +165,7 @@ const IconStatCard = ({
   icon,
   label,
   value,
-  delay
+  delay,
 }: {
   icon: string;
   label: string;
