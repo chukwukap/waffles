@@ -171,7 +171,7 @@ export default function ProfilePage() {
 
         {/* Game History */}
         <motion.div variants={itemVariants} className="shrink-0 pb-2">
-          <GameHistory gameHistory={recentGames} fid={user.fid} />
+          <GameHistory gameHistory={recentGames} />
         </motion.div>
       </motion.div>
 

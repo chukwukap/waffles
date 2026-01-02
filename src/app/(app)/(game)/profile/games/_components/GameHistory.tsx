@@ -15,7 +15,7 @@ export interface GameHistoryEntry {
 
 interface GameHistoryProps {
   gameHistory: GameHistoryEntry[];
-  fid: number;
+
 }
 
 const containerVariants = {
@@ -29,7 +29,7 @@ const containerVariants = {
   }
 } as const;
 
-export default function GameHistory({ gameHistory, fid }: GameHistoryProps) {
+export default function GameHistory({ gameHistory }: GameHistoryProps) {
   // If on the dashboard snippet, show 3. If on full page, show all.
   // Ideally this component handles the full list rendering logic.
   const displayedGames = gameHistory;
