@@ -511,15 +511,24 @@ export function WaitlistClient() {
   );
 
   const handleShare = useCallback(async () => {
+    if (!fid) return;
+
     const rank = user?.waitlistRank;
+    const pfpUrl = user?.pfpUrl;
     const message = `Just got in to waffles
 if you need me i'd be knead deep in trivia
 
 think you can beat me? you're on😏`;
     try {
+      // Build embed URL with rank and pfpUrl
+      const params = new URLSearchParams();
+      params.set("ref", fid.toString());
+      if (rank) params.set("rank", rank.toString());
+      if (pfpUrl) params.set("pfpUrl", pfpUrl);
+
       const result = await composeCastAsync({
         text: message,
-        embeds: [`${env.rootUrl}/waitlist?ref=${fid}&rank=${rank}`],
+        embeds: [`${env.rootUrl}/waitlist?${params.toString()}`],
       });
       if (result?.cast) notify.success("Shared successfully!");
       else notify.info("Share cancelled.");
@@ -527,7 +536,7 @@ think you can beat me? you're on😏`;
       console.error(err);
       notify.error("Failed to share waitlist.");
     }
-  }, [composeCastAsync, fid, user?.waitlistRank]);
+  }, [composeCastAsync, fid, user?.waitlistRank, user?.pfpUrl]);
 
   const handleJoin = useCallback(() => {
     const formData = new FormData();
