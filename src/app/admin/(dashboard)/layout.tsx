@@ -36,20 +36,28 @@ export default async function AdminLayout({
                 {/* Main content */}
                 <div className="flex flex-1 flex-col overflow-hidden relative z-10">
                     {/* Header */}
-                    <header className="bg-[#0a0a0b]/80 border-b border-white/[0.06] backdrop-blur-xl flex h-16 items-center justify-between px-6">
-                        <h2 className="text-xl font-semibold text-white font-display">
+                    <header className="bg-[#0a0a0b]/80 border-b border-white/6 backdrop-blur-xl flex h-16 items-center justify-between px-6">
+                        <h2 className="text-xl font-semibold text-white font-body">
                             Admin Dashboard
                         </h2>
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-4 font-display">
                             <div className="text-sm text-white/60">
                                 Logged in as:{" "}
                                 <span className="font-semibold text-[#FFC931]">
                                     {session.username}
                                 </span>
                             </div>
-                            <div className="h-9 w-9 rounded-full bg-linear-to-br from-[#FFC931] to-[#00CFF2] flex items-center justify-center text-black font-bold text-sm shadow-lg ring-2 ring-white/10">
-                                {session.username?.[0]?.toUpperCase() || "A"}
-                            </div>
+                            {session.pfpUrl ? (
+                                <img
+                                    src={session.pfpUrl}
+                                    alt={session.username || "Admin"}
+                                    className="h-9 w-9 rounded-full shadow-lg ring-2 ring-white/10 object-cover"
+                                />
+                            ) : (
+                                <div className="h-9 w-9 rounded-full bg-linear-to-br from-[#FFC931] to-[#00CFF2] flex items-center justify-center text-black font-bold text-sm shadow-lg ring-2 ring-white/10">
+                                    {session.username?.[0]?.toUpperCase() || "A"}
+                                </div>
+                            )}
                         </div>
                     </header>
 

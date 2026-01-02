@@ -9,6 +9,7 @@ export interface AdminSession {
   userId: number;
   fid: number;
   username: string | null;
+  pfpUrl: string | null;
   role: "ADMIN";
   expiresAt: number;
 }
@@ -28,6 +29,7 @@ export async function verifyAdminCredentials(
         id: true,
         fid: true,
         username: true,
+        pfpUrl: true,
         role: true,
         password: true,
       },
@@ -61,6 +63,7 @@ export async function verifyAdminCredentials(
       userId: user.id,
       fid: user.fid,
       username: user.username,
+      pfpUrl: user.pfpUrl,
       role: "ADMIN",
       expiresAt: Date.now() + SESSION_DURATION * 1000,
     };

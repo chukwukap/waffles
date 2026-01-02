@@ -9,7 +9,7 @@ export default function AdminLoading() {
             {/* Stats Grid Skeleton */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 {[...Array(4)].map((_, i) => (
-                    <div key={i} className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6 h-32">
+                    <div key={i} className="bg-white/5 border border-white/8 rounded-2xl backdrop-blur-lg p-6 h-32">
                         <div className="flex justify-between items-start h-full">
                             <div className="space-y-3 w-full">
                                 <div className="h-4 w-24 bg-white/10 rounded"></div>
@@ -23,11 +23,11 @@ export default function AdminLoading() {
 
             {/* Charts Skeleton */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6 h-[350px]">
+                <div className="bg-white/3 border border-white/6 rounded-2xl p-6 h-[350px]">
                     <div className="h-6 w-32 bg-white/10 rounded mb-6"></div>
                     <div className="h-[250px] bg-white/5 rounded w-full"></div>
                 </div>
-                <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6 h-[350px]">
+                <div className="bg-white/3 border border-white/6 rounded-2xl p-6 h-[350px]">
                     <div className="h-6 w-32 bg-white/10 rounded mb-6"></div>
                     <div className="h-[250px] bg-white/5 rounded w-full"></div>
                 </div>
@@ -35,7 +35,7 @@ export default function AdminLoading() {
 
             {/* Recent Activity Skeleton */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg h-64">
+                <div className="bg-white/5 border border-white/8 rounded-2xl backdrop-blur-lg h-64">
                     <div className="border-b border-white/6 p-4">
                         <div className="h-6 w-32 bg-white/10 rounded"></div>
                     </div>
@@ -51,7 +51,7 @@ export default function AdminLoading() {
                         ))}
                     </div>
                 </div>
-                <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg h-64">
+                <div className="bg-white/5 border border-white/8 rounded-2xl backdrop-blur-lg h-64">
                     <div className="border-b border-white/6 p-4">
                         <div className="h-6 w-32 bg-white/10 rounded"></div>
                     </div>
