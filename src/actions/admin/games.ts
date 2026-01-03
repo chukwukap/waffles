@@ -52,7 +52,7 @@ export type GameActionResult =
 async function rollbackGame(
   gameId: string,
   reason: string,
-  adminId: number
+  adminId: string
 ): Promise<void> {
   console.error(`[CreateGame] Rolling back game ${gameId}: ${reason}`);
 

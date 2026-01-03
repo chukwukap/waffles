@@ -31,7 +31,7 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
     const { searchParams } = new URL(request.url);
     const gameIdParam = searchParams.get("gameId");
 
-    const whereClause: { userId: number; gameId?: string } = {
+    const whereClause: { userId: string; gameId?: string } = {
       userId: auth.userId,
     };
 

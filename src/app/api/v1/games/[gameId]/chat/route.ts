@@ -6,11 +6,11 @@ import { z } from "zod";
 type Params = { gameId: string };
 
 interface ChatMessage {
-  id: number;
+  id: string;
   text: string;
   createdAt: Date;
   user: {
-    id: number;
+    id: string;
     username: string | null;
     pfpUrl: string | null;
   };

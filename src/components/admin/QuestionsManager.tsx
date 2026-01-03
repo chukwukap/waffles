@@ -26,7 +26,7 @@ import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 
 interface Question {
-    id: number;
+    id: string;
     content: string;
     roundIndex: number;
     mediaUrl?: string | null;

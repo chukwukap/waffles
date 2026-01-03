@@ -314,7 +314,7 @@ interface SubmitResult {
 
 async function submitAnswerToServer(
   gameId: string,
-  questionId: number,
+  questionId: string,
   selectedIndex: number,
   timeMs: number,
   retries = 3

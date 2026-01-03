@@ -28,7 +28,7 @@ const createQuestSchema = z.object({
   type: z.nativeEnum(QuestType),
   actionUrl: z.string().url().nullable().optional(),
   castHash: z.string().nullable().optional(),
-  targetFid: z.number().int().nullable().optional(),
+  targetFid: z.string().nullable().optional(),
   requiredCount: z.number().int().min(1).default(1),
   isActive: z.boolean().default(true),
   startsAt: z.date().nullable().optional(),
@@ -37,7 +37,7 @@ const createQuestSchema = z.object({
 });
 
 const updateQuestSchema = createQuestSchema.partial().extend({
-  id: z.number().int(),
+  id: z.string(),
 });
 
 // ============================================
@@ -60,7 +60,7 @@ type ActionResult<T = void> =
  */
 export async function createQuestAction(
   input: CreateQuestInput
-): Promise<ActionResult<{ id: number }>> {
+): Promise<ActionResult<{ id: string }>> {
   const auth = await requireAdminSession();
   if (!auth.authenticated || !auth.session) {
     return { success: false, error: "Unauthorized" };
@@ -194,7 +194,7 @@ export async function updateQuestAction(
 /**
  * Delete a quest
  */
-export async function deleteQuestAction(id: number): Promise<ActionResult> {
+export async function deleteQuestAction(id: string): Promise<ActionResult> {
   const auth = await requireAdminSession();
   if (!auth.authenticated || !auth.session) {
     return { success: false, error: "Unauthorized" };
@@ -217,7 +217,7 @@ export async function deleteQuestAction(id: number): Promise<ActionResult> {
  * Toggle quest active status
  */
 export async function toggleQuestActiveAction(
-  id: number,
+  id: string,
   isActive: boolean
 ): Promise<ActionResult> {
   const auth = await requireAdminSession();
@@ -244,7 +244,7 @@ export async function toggleQuestActiveAction(
  * Approve a pending custom quest completion
  */
 export async function approveQuestCompletionAction(
-  completedQuestId: number
+  completedQuestId: string
 ): Promise<ActionResult> {
   const auth = await requireAdminSession();
   if (!auth.authenticated || !auth.session) {
@@ -298,7 +298,7 @@ export async function approveQuestCompletionAction(
  * Reject a pending custom quest completion
  */
 export async function rejectQuestCompletionAction(
-  completedQuestId: number
+  completedQuestId: string
 ): Promise<ActionResult> {
   const auth = await requireAdminSession();
   if (!auth.authenticated || !auth.session) {

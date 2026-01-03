@@ -27,23 +27,17 @@ export type AggregateReferralReward = {
 }
 
 export type ReferralRewardAvgAggregateOutputType = {
-  id: number | null
-  inviterId: number | null
-  inviteeId: number | null
   amount: number | null
 }
 
 export type ReferralRewardSumAggregateOutputType = {
-  id: number | null
-  inviterId: number | null
-  inviteeId: number | null
   amount: number | null
 }
 
 export type ReferralRewardMinAggregateOutputType = {
-  id: number | null
-  inviterId: number | null
-  inviteeId: number | null
+  id: string | null
+  inviterId: string | null
+  inviteeId: string | null
   status: $Enums.RewardStatus | null
   amount: number | null
   createdAt: Date | null
@@ -51,9 +45,9 @@ export type ReferralRewardMinAggregateOutputType = {
 }
 
 export type ReferralRewardMaxAggregateOutputType = {
-  id: number | null
-  inviterId: number | null
-  inviteeId: number | null
+  id: string | null
+  inviterId: string | null
+  inviteeId: string | null
   status: $Enums.RewardStatus | null
   amount: number | null
   createdAt: Date | null
@@ -73,16 +67,10 @@ export type ReferralRewardCountAggregateOutputType = {
 
 
 export type ReferralRewardAvgAggregateInputType = {
-  id?: true
-  inviterId?: true
-  inviteeId?: true
   amount?: true
 }
 
 export type ReferralRewardSumAggregateInputType = {
-  id?: true
-  inviterId?: true
-  inviteeId?: true
   amount?: true
 }
 
@@ -204,9 +192,9 @@ export type ReferralRewardGroupByArgs<ExtArgs extends runtime.Types.Extensions.I
 }
 
 export type ReferralRewardGroupByOutputType = {
-  id: number
-  inviterId: number
-  inviteeId: number
+  id: string
+  inviterId: string
+  inviteeId: string
   status: $Enums.RewardStatus
   amount: number
   createdAt: Date
@@ -237,9 +225,9 @@ export type ReferralRewardWhereInput = {
   AND?: Prisma.ReferralRewardWhereInput | Prisma.ReferralRewardWhereInput[]
   OR?: Prisma.ReferralRewardWhereInput[]
   NOT?: Prisma.ReferralRewardWhereInput | Prisma.ReferralRewardWhereInput[]
-  id?: Prisma.IntFilter<"ReferralReward"> | number
-  inviterId?: Prisma.IntFilter<"ReferralReward"> | number
-  inviteeId?: Prisma.IntFilter<"ReferralReward"> | number
+  id?: Prisma.StringFilter<"ReferralReward"> | string
+  inviterId?: Prisma.StringFilter<"ReferralReward"> | string
+  inviteeId?: Prisma.StringFilter<"ReferralReward"> | string
   status?: Prisma.EnumRewardStatusFilter<"ReferralReward"> | $Enums.RewardStatus
   amount?: Prisma.IntFilter<"ReferralReward"> | number
   createdAt?: Prisma.DateTimeFilter<"ReferralReward"> | Date | string
@@ -259,12 +247,12 @@ export type ReferralRewardOrderByWithRelationInput = {
 }
 
 export type ReferralRewardWhereUniqueInput = Prisma.AtLeast<{
-  id?: number
-  inviteeId?: number
+  id?: string
+  inviteeId?: string
   AND?: Prisma.ReferralRewardWhereInput | Prisma.ReferralRewardWhereInput[]
   OR?: Prisma.ReferralRewardWhereInput[]
   NOT?: Prisma.ReferralRewardWhereInput | Prisma.ReferralRewardWhereInput[]
-  inviterId?: Prisma.IntFilter<"ReferralReward"> | number
+  inviterId?: Prisma.StringFilter<"ReferralReward"> | string
   status?: Prisma.EnumRewardStatusFilter<"ReferralReward"> | $Enums.RewardStatus
   amount?: Prisma.IntFilter<"ReferralReward"> | number
   createdAt?: Prisma.DateTimeFilter<"ReferralReward"> | Date | string
@@ -291,9 +279,9 @@ export type ReferralRewardScalarWhereWithAggregatesInput = {
   AND?: Prisma.ReferralRewardScalarWhereWithAggregatesInput | Prisma.ReferralRewardScalarWhereWithAggregatesInput[]
   OR?: Prisma.ReferralRewardScalarWhereWithAggregatesInput[]
   NOT?: Prisma.ReferralRewardScalarWhereWithAggregatesInput | Prisma.ReferralRewardScalarWhereWithAggregatesInput[]
-  id?: Prisma.IntWithAggregatesFilter<"ReferralReward"> | number
-  inviterId?: Prisma.IntWithAggregatesFilter<"ReferralReward"> | number
-  inviteeId?: Prisma.IntWithAggregatesFilter<"ReferralReward"> | number
+  id?: Prisma.StringWithAggregatesFilter<"ReferralReward"> | string
+  inviterId?: Prisma.StringWithAggregatesFilter<"ReferralReward"> | string
+  inviteeId?: Prisma.StringWithAggregatesFilter<"ReferralReward"> | string
   status?: Prisma.EnumRewardStatusWithAggregatesFilter<"ReferralReward"> | $Enums.RewardStatus
   amount?: Prisma.IntWithAggregatesFilter<"ReferralReward"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ReferralReward"> | Date | string
@@ -301,7 +289,8 @@ export type ReferralRewardScalarWhereWithAggregatesInput = {
 }
 
 export type ReferralRewardCreateInput = {
-  inviteeId: number
+  id?: string
+  inviteeId: string
   status?: $Enums.RewardStatus
   amount?: number
   createdAt?: Date | string
@@ -310,9 +299,9 @@ export type ReferralRewardCreateInput = {
 }
 
 export type ReferralRewardUncheckedCreateInput = {
-  id?: number
-  inviterId: number
-  inviteeId: number
+  id?: string
+  inviterId: string
+  inviteeId: string
   status?: $Enums.RewardStatus
   amount?: number
   createdAt?: Date | string
@@ -320,7 +309,8 @@ export type ReferralRewardUncheckedCreateInput = {
 }
 
 export type ReferralRewardUpdateInput = {
-  inviteeId?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteeId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumRewardStatusFieldUpdateOperationsInput | $Enums.RewardStatus
   amount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -329,9 +319,9 @@ export type ReferralRewardUpdateInput = {
 }
 
 export type ReferralRewardUncheckedUpdateInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  inviterId?: Prisma.IntFieldUpdateOperationsInput | number
-  inviteeId?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  inviterId?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteeId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumRewardStatusFieldUpdateOperationsInput | $Enums.RewardStatus
   amount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -339,9 +329,9 @@ export type ReferralRewardUncheckedUpdateInput = {
 }
 
 export type ReferralRewardCreateManyInput = {
-  id?: number
-  inviterId: number
-  inviteeId: number
+  id?: string
+  inviterId: string
+  inviteeId: string
   status?: $Enums.RewardStatus
   amount?: number
   createdAt?: Date | string
@@ -349,7 +339,8 @@ export type ReferralRewardCreateManyInput = {
 }
 
 export type ReferralRewardUpdateManyMutationInput = {
-  inviteeId?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteeId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumRewardStatusFieldUpdateOperationsInput | $Enums.RewardStatus
   amount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -357,9 +348,9 @@ export type ReferralRewardUpdateManyMutationInput = {
 }
 
 export type ReferralRewardUncheckedUpdateManyInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  inviterId?: Prisma.IntFieldUpdateOperationsInput | number
-  inviteeId?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  inviterId?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteeId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumRewardStatusFieldUpdateOperationsInput | $Enums.RewardStatus
   amount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -387,9 +378,6 @@ export type ReferralRewardCountOrderByAggregateInput = {
 }
 
 export type ReferralRewardAvgOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  inviterId?: Prisma.SortOrder
-  inviteeId?: Prisma.SortOrder
   amount?: Prisma.SortOrder
 }
 
@@ -414,9 +402,6 @@ export type ReferralRewardMinOrderByAggregateInput = {
 }
 
 export type ReferralRewardSumOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  inviterId?: Prisma.SortOrder
-  inviteeId?: Prisma.SortOrder
   amount?: Prisma.SortOrder
 }
 
@@ -467,7 +452,8 @@ export type EnumRewardStatusFieldUpdateOperationsInput = {
 }
 
 export type ReferralRewardCreateWithoutInviterInput = {
-  inviteeId: number
+  id?: string
+  inviteeId: string
   status?: $Enums.RewardStatus
   amount?: number
   createdAt?: Date | string
@@ -475,8 +461,8 @@ export type ReferralRewardCreateWithoutInviterInput = {
 }
 
 export type ReferralRewardUncheckedCreateWithoutInviterInput = {
-  id?: number
-  inviteeId: number
+  id?: string
+  inviteeId: string
   status?: $Enums.RewardStatus
   amount?: number
   createdAt?: Date | string
@@ -513,9 +499,9 @@ export type ReferralRewardScalarWhereInput = {
   AND?: Prisma.ReferralRewardScalarWhereInput | Prisma.ReferralRewardScalarWhereInput[]
   OR?: Prisma.ReferralRewardScalarWhereInput[]
   NOT?: Prisma.ReferralRewardScalarWhereInput | Prisma.ReferralRewardScalarWhereInput[]
-  id?: Prisma.IntFilter<"ReferralReward"> | number
-  inviterId?: Prisma.IntFilter<"ReferralReward"> | number
-  inviteeId?: Prisma.IntFilter<"ReferralReward"> | number
+  id?: Prisma.StringFilter<"ReferralReward"> | string
+  inviterId?: Prisma.StringFilter<"ReferralReward"> | string
+  inviteeId?: Prisma.StringFilter<"ReferralReward"> | string
   status?: Prisma.EnumRewardStatusFilter<"ReferralReward"> | $Enums.RewardStatus
   amount?: Prisma.IntFilter<"ReferralReward"> | number
   createdAt?: Prisma.DateTimeFilter<"ReferralReward"> | Date | string
@@ -523,8 +509,8 @@ export type ReferralRewardScalarWhereInput = {
 }
 
 export type ReferralRewardCreateManyInviterInput = {
-  id?: number
-  inviteeId: number
+  id?: string
+  inviteeId: string
   status?: $Enums.RewardStatus
   amount?: number
   createdAt?: Date | string
@@ -532,7 +518,8 @@ export type ReferralRewardCreateManyInviterInput = {
 }
 
 export type ReferralRewardUpdateWithoutInviterInput = {
-  inviteeId?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteeId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumRewardStatusFieldUpdateOperationsInput | $Enums.RewardStatus
   amount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -540,8 +527,8 @@ export type ReferralRewardUpdateWithoutInviterInput = {
 }
 
 export type ReferralRewardUncheckedUpdateWithoutInviterInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  inviteeId?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteeId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumRewardStatusFieldUpdateOperationsInput | $Enums.RewardStatus
   amount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -549,8 +536,8 @@ export type ReferralRewardUncheckedUpdateWithoutInviterInput = {
 }
 
 export type ReferralRewardUncheckedUpdateManyWithoutInviterInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  inviteeId?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  inviteeId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumRewardStatusFieldUpdateOperationsInput | $Enums.RewardStatus
   amount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -619,9 +606,9 @@ export type $ReferralRewardPayload<ExtArgs extends runtime.Types.Extensions.Inte
     inviter: Prisma.$UserPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
-    id: number
-    inviterId: number
-    inviteeId: number
+    id: string
+    inviterId: string
+    inviteeId: string
     status: $Enums.RewardStatus
     amount: number
     createdAt: Date
@@ -1050,9 +1037,9 @@ export interface Prisma__ReferralRewardClient<T, Null = never, ExtArgs extends r
  * Fields of the ReferralReward model
  */
 export interface ReferralRewardFieldRefs {
-  readonly id: Prisma.FieldRef<"ReferralReward", 'Int'>
-  readonly inviterId: Prisma.FieldRef<"ReferralReward", 'Int'>
-  readonly inviteeId: Prisma.FieldRef<"ReferralReward", 'Int'>
+  readonly id: Prisma.FieldRef<"ReferralReward", 'String'>
+  readonly inviterId: Prisma.FieldRef<"ReferralReward", 'String'>
+  readonly inviteeId: Prisma.FieldRef<"ReferralReward", 'String'>
   readonly status: Prisma.FieldRef<"ReferralReward", 'RewardStatus'>
   readonly amount: Prisma.FieldRef<"ReferralReward", 'Int'>
   readonly createdAt: Prisma.FieldRef<"ReferralReward", 'DateTime'>

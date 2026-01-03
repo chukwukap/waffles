@@ -27,40 +27,32 @@ export type AggregateCompletedQuest = {
 }
 
 export type CompletedQuestAvgAggregateOutputType = {
-  id: number | null
-  userId: number | null
-  questId: number | null
   pointsAwarded: number | null
-  approvedBy: number | null
 }
 
 export type CompletedQuestSumAggregateOutputType = {
-  id: number | null
-  userId: number | null
-  questId: number | null
   pointsAwarded: number | null
-  approvedBy: number | null
 }
 
 export type CompletedQuestMinAggregateOutputType = {
-  id: number | null
-  userId: number | null
-  questId: number | null
+  id: string | null
+  userId: string | null
+  questId: string | null
   completedAt: Date | null
   pointsAwarded: number | null
   isApproved: boolean | null
-  approvedBy: number | null
+  approvedBy: string | null
   approvedAt: Date | null
 }
 
 export type CompletedQuestMaxAggregateOutputType = {
-  id: number | null
-  userId: number | null
-  questId: number | null
+  id: string | null
+  userId: string | null
+  questId: string | null
   completedAt: Date | null
   pointsAwarded: number | null
   isApproved: boolean | null
-  approvedBy: number | null
+  approvedBy: string | null
   approvedAt: Date | null
 }
 
@@ -78,19 +70,11 @@ export type CompletedQuestCountAggregateOutputType = {
 
 
 export type CompletedQuestAvgAggregateInputType = {
-  id?: true
-  userId?: true
-  questId?: true
   pointsAwarded?: true
-  approvedBy?: true
 }
 
 export type CompletedQuestSumAggregateInputType = {
-  id?: true
-  userId?: true
-  questId?: true
   pointsAwarded?: true
-  approvedBy?: true
 }
 
 export type CompletedQuestMinAggregateInputType = {
@@ -214,13 +198,13 @@ export type CompletedQuestGroupByArgs<ExtArgs extends runtime.Types.Extensions.I
 }
 
 export type CompletedQuestGroupByOutputType = {
-  id: number
-  userId: number
-  questId: number
+  id: string
+  userId: string
+  questId: string
   completedAt: Date
   pointsAwarded: number
   isApproved: boolean
-  approvedBy: number | null
+  approvedBy: string | null
   approvedAt: Date | null
   _count: CompletedQuestCountAggregateOutputType | null
   _avg: CompletedQuestAvgAggregateOutputType | null
@@ -248,13 +232,13 @@ export type CompletedQuestWhereInput = {
   AND?: Prisma.CompletedQuestWhereInput | Prisma.CompletedQuestWhereInput[]
   OR?: Prisma.CompletedQuestWhereInput[]
   NOT?: Prisma.CompletedQuestWhereInput | Prisma.CompletedQuestWhereInput[]
-  id?: Prisma.IntFilter<"CompletedQuest"> | number
-  userId?: Prisma.IntFilter<"CompletedQuest"> | number
-  questId?: Prisma.IntFilter<"CompletedQuest"> | number
+  id?: Prisma.StringFilter<"CompletedQuest"> | string
+  userId?: Prisma.StringFilter<"CompletedQuest"> | string
+  questId?: Prisma.StringFilter<"CompletedQuest"> | string
   completedAt?: Prisma.DateTimeFilter<"CompletedQuest"> | Date | string
   pointsAwarded?: Prisma.IntFilter<"CompletedQuest"> | number
   isApproved?: Prisma.BoolFilter<"CompletedQuest"> | boolean
-  approvedBy?: Prisma.IntNullableFilter<"CompletedQuest"> | number | null
+  approvedBy?: Prisma.StringNullableFilter<"CompletedQuest"> | string | null
   approvedAt?: Prisma.DateTimeNullableFilter<"CompletedQuest"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   quest?: Prisma.XOR<Prisma.QuestScalarRelationFilter, Prisma.QuestWhereInput>
@@ -274,17 +258,17 @@ export type CompletedQuestOrderByWithRelationInput = {
 }
 
 export type CompletedQuestWhereUniqueInput = Prisma.AtLeast<{
-  id?: number
+  id?: string
   userId_questId?: Prisma.CompletedQuestUserIdQuestIdCompoundUniqueInput
   AND?: Prisma.CompletedQuestWhereInput | Prisma.CompletedQuestWhereInput[]
   OR?: Prisma.CompletedQuestWhereInput[]
   NOT?: Prisma.CompletedQuestWhereInput | Prisma.CompletedQuestWhereInput[]
-  userId?: Prisma.IntFilter<"CompletedQuest"> | number
-  questId?: Prisma.IntFilter<"CompletedQuest"> | number
+  userId?: Prisma.StringFilter<"CompletedQuest"> | string
+  questId?: Prisma.StringFilter<"CompletedQuest"> | string
   completedAt?: Prisma.DateTimeFilter<"CompletedQuest"> | Date | string
   pointsAwarded?: Prisma.IntFilter<"CompletedQuest"> | number
   isApproved?: Prisma.BoolFilter<"CompletedQuest"> | boolean
-  approvedBy?: Prisma.IntNullableFilter<"CompletedQuest"> | number | null
+  approvedBy?: Prisma.StringNullableFilter<"CompletedQuest"> | string | null
   approvedAt?: Prisma.DateTimeNullableFilter<"CompletedQuest"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   quest?: Prisma.XOR<Prisma.QuestScalarRelationFilter, Prisma.QuestWhereInput>
@@ -310,85 +294,88 @@ export type CompletedQuestScalarWhereWithAggregatesInput = {
   AND?: Prisma.CompletedQuestScalarWhereWithAggregatesInput | Prisma.CompletedQuestScalarWhereWithAggregatesInput[]
   OR?: Prisma.CompletedQuestScalarWhereWithAggregatesInput[]
   NOT?: Prisma.CompletedQuestScalarWhereWithAggregatesInput | Prisma.CompletedQuestScalarWhereWithAggregatesInput[]
-  id?: Prisma.IntWithAggregatesFilter<"CompletedQuest"> | number
-  userId?: Prisma.IntWithAggregatesFilter<"CompletedQuest"> | number
-  questId?: Prisma.IntWithAggregatesFilter<"CompletedQuest"> | number
+  id?: Prisma.StringWithAggregatesFilter<"CompletedQuest"> | string
+  userId?: Prisma.StringWithAggregatesFilter<"CompletedQuest"> | string
+  questId?: Prisma.StringWithAggregatesFilter<"CompletedQuest"> | string
   completedAt?: Prisma.DateTimeWithAggregatesFilter<"CompletedQuest"> | Date | string
   pointsAwarded?: Prisma.IntWithAggregatesFilter<"CompletedQuest"> | number
   isApproved?: Prisma.BoolWithAggregatesFilter<"CompletedQuest"> | boolean
-  approvedBy?: Prisma.IntNullableWithAggregatesFilter<"CompletedQuest"> | number | null
+  approvedBy?: Prisma.StringNullableWithAggregatesFilter<"CompletedQuest"> | string | null
   approvedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CompletedQuest"> | Date | string | null
 }
 
 export type CompletedQuestCreateInput = {
+  id?: string
   completedAt?: Date | string
   pointsAwarded?: number
   isApproved?: boolean
-  approvedBy?: number | null
+  approvedBy?: string | null
   approvedAt?: Date | string | null
   user: Prisma.UserCreateNestedOneWithoutCompletedQuestsInput
   quest: Prisma.QuestCreateNestedOneWithoutCompletionsInput
 }
 
 export type CompletedQuestUncheckedCreateInput = {
-  id?: number
-  userId: number
-  questId: number
+  id?: string
+  userId: string
+  questId: string
   completedAt?: Date | string
   pointsAwarded?: number
   isApproved?: boolean
-  approvedBy?: number | null
+  approvedBy?: string | null
   approvedAt?: Date | string | null
 }
 
 export type CompletedQuestUpdateInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   completedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pointsAwarded?: Prisma.IntFieldUpdateOperationsInput | number
   isApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  approvedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  approvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutCompletedQuestsNestedInput
   quest?: Prisma.QuestUpdateOneRequiredWithoutCompletionsNestedInput
 }
 
 export type CompletedQuestUncheckedUpdateInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
-  questId?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  questId?: Prisma.StringFieldUpdateOperationsInput | string
   completedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pointsAwarded?: Prisma.IntFieldUpdateOperationsInput | number
   isApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  approvedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  approvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type CompletedQuestCreateManyInput = {
-  id?: number
-  userId: number
-  questId: number
+  id?: string
+  userId: string
+  questId: string
   completedAt?: Date | string
   pointsAwarded?: number
   isApproved?: boolean
-  approvedBy?: number | null
+  approvedBy?: string | null
   approvedAt?: Date | string | null
 }
 
 export type CompletedQuestUpdateManyMutationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   completedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pointsAwarded?: Prisma.IntFieldUpdateOperationsInput | number
   isApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  approvedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  approvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type CompletedQuestUncheckedUpdateManyInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
-  questId?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  questId?: Prisma.StringFieldUpdateOperationsInput | string
   completedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pointsAwarded?: Prisma.IntFieldUpdateOperationsInput | number
   isApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  approvedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  approvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
@@ -403,8 +390,8 @@ export type CompletedQuestOrderByRelationAggregateInput = {
 }
 
 export type CompletedQuestUserIdQuestIdCompoundUniqueInput = {
-  userId: number
-  questId: number
+  userId: string
+  questId: string
 }
 
 export type CompletedQuestCountOrderByAggregateInput = {
@@ -419,11 +406,7 @@ export type CompletedQuestCountOrderByAggregateInput = {
 }
 
 export type CompletedQuestAvgOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
-  questId?: Prisma.SortOrder
   pointsAwarded?: Prisma.SortOrder
-  approvedBy?: Prisma.SortOrder
 }
 
 export type CompletedQuestMaxOrderByAggregateInput = {
@@ -449,11 +432,7 @@ export type CompletedQuestMinOrderByAggregateInput = {
 }
 
 export type CompletedQuestSumOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
-  questId?: Prisma.SortOrder
   pointsAwarded?: Prisma.SortOrder
-  approvedBy?: Prisma.SortOrder
 }
 
 export type CompletedQuestCreateNestedManyWithoutUserInput = {
@@ -541,21 +520,22 @@ export type CompletedQuestUncheckedUpdateManyWithoutQuestNestedInput = {
 }
 
 export type CompletedQuestCreateWithoutUserInput = {
+  id?: string
   completedAt?: Date | string
   pointsAwarded?: number
   isApproved?: boolean
-  approvedBy?: number | null
+  approvedBy?: string | null
   approvedAt?: Date | string | null
   quest: Prisma.QuestCreateNestedOneWithoutCompletionsInput
 }
 
 export type CompletedQuestUncheckedCreateWithoutUserInput = {
-  id?: number
-  questId: number
+  id?: string
+  questId: string
   completedAt?: Date | string
   pointsAwarded?: number
   isApproved?: boolean
-  approvedBy?: number | null
+  approvedBy?: string | null
   approvedAt?: Date | string | null
 }
 
@@ -589,32 +569,33 @@ export type CompletedQuestScalarWhereInput = {
   AND?: Prisma.CompletedQuestScalarWhereInput | Prisma.CompletedQuestScalarWhereInput[]
   OR?: Prisma.CompletedQuestScalarWhereInput[]
   NOT?: Prisma.CompletedQuestScalarWhereInput | Prisma.CompletedQuestScalarWhereInput[]
-  id?: Prisma.IntFilter<"CompletedQuest"> | number
-  userId?: Prisma.IntFilter<"CompletedQuest"> | number
-  questId?: Prisma.IntFilter<"CompletedQuest"> | number
+  id?: Prisma.StringFilter<"CompletedQuest"> | string
+  userId?: Prisma.StringFilter<"CompletedQuest"> | string
+  questId?: Prisma.StringFilter<"CompletedQuest"> | string
   completedAt?: Prisma.DateTimeFilter<"CompletedQuest"> | Date | string
   pointsAwarded?: Prisma.IntFilter<"CompletedQuest"> | number
   isApproved?: Prisma.BoolFilter<"CompletedQuest"> | boolean
-  approvedBy?: Prisma.IntNullableFilter<"CompletedQuest"> | number | null
+  approvedBy?: Prisma.StringNullableFilter<"CompletedQuest"> | string | null
   approvedAt?: Prisma.DateTimeNullableFilter<"CompletedQuest"> | Date | string | null
 }
 
 export type CompletedQuestCreateWithoutQuestInput = {
+  id?: string
   completedAt?: Date | string
   pointsAwarded?: number
   isApproved?: boolean
-  approvedBy?: number | null
+  approvedBy?: string | null
   approvedAt?: Date | string | null
   user: Prisma.UserCreateNestedOneWithoutCompletedQuestsInput
 }
 
 export type CompletedQuestUncheckedCreateWithoutQuestInput = {
-  id?: number
-  userId: number
+  id?: string
+  userId: string
   completedAt?: Date | string
   pointsAwarded?: number
   isApproved?: boolean
-  approvedBy?: number | null
+  approvedBy?: string | null
   approvedAt?: Date | string | null
 }
 
@@ -645,80 +626,82 @@ export type CompletedQuestUpdateManyWithWhereWithoutQuestInput = {
 }
 
 export type CompletedQuestCreateManyUserInput = {
-  id?: number
-  questId: number
+  id?: string
+  questId: string
   completedAt?: Date | string
   pointsAwarded?: number
   isApproved?: boolean
-  approvedBy?: number | null
+  approvedBy?: string | null
   approvedAt?: Date | string | null
 }
 
 export type CompletedQuestUpdateWithoutUserInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   completedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pointsAwarded?: Prisma.IntFieldUpdateOperationsInput | number
   isApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  approvedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  approvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   quest?: Prisma.QuestUpdateOneRequiredWithoutCompletionsNestedInput
 }
 
 export type CompletedQuestUncheckedUpdateWithoutUserInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  questId?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  questId?: Prisma.StringFieldUpdateOperationsInput | string
   completedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pointsAwarded?: Prisma.IntFieldUpdateOperationsInput | number
   isApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  approvedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  approvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type CompletedQuestUncheckedUpdateManyWithoutUserInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  questId?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  questId?: Prisma.StringFieldUpdateOperationsInput | string
   completedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pointsAwarded?: Prisma.IntFieldUpdateOperationsInput | number
   isApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  approvedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  approvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type CompletedQuestCreateManyQuestInput = {
-  id?: number
-  userId: number
+  id?: string
+  userId: string
   completedAt?: Date | string
   pointsAwarded?: number
   isApproved?: boolean
-  approvedBy?: number | null
+  approvedBy?: string | null
   approvedAt?: Date | string | null
 }
 
 export type CompletedQuestUpdateWithoutQuestInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   completedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pointsAwarded?: Prisma.IntFieldUpdateOperationsInput | number
   isApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  approvedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  approvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutCompletedQuestsNestedInput
 }
 
 export type CompletedQuestUncheckedUpdateWithoutQuestInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
   completedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pointsAwarded?: Prisma.IntFieldUpdateOperationsInput | number
   isApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  approvedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  approvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type CompletedQuestUncheckedUpdateManyWithoutQuestInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
   completedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pointsAwarded?: Prisma.IntFieldUpdateOperationsInput | number
   isApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  approvedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  approvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
@@ -795,13 +778,13 @@ export type $CompletedQuestPayload<ExtArgs extends runtime.Types.Extensions.Inte
     quest: Prisma.$QuestPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
-    id: number
-    userId: number
-    questId: number
+    id: string
+    userId: string
+    questId: string
     completedAt: Date
     pointsAwarded: number
     isApproved: boolean
-    approvedBy: number | null
+    approvedBy: string | null
     approvedAt: Date | null
   }, ExtArgs["result"]["completedQuest"]>
   composites: {}
@@ -1228,13 +1211,13 @@ export interface Prisma__CompletedQuestClient<T, Null = never, ExtArgs extends r
  * Fields of the CompletedQuest model
  */
 export interface CompletedQuestFieldRefs {
-  readonly id: Prisma.FieldRef<"CompletedQuest", 'Int'>
-  readonly userId: Prisma.FieldRef<"CompletedQuest", 'Int'>
-  readonly questId: Prisma.FieldRef<"CompletedQuest", 'Int'>
+  readonly id: Prisma.FieldRef<"CompletedQuest", 'String'>
+  readonly userId: Prisma.FieldRef<"CompletedQuest", 'String'>
+  readonly questId: Prisma.FieldRef<"CompletedQuest", 'String'>
   readonly completedAt: Prisma.FieldRef<"CompletedQuest", 'DateTime'>
   readonly pointsAwarded: Prisma.FieldRef<"CompletedQuest", 'Int'>
   readonly isApproved: Prisma.FieldRef<"CompletedQuest", 'Boolean'>
-  readonly approvedBy: Prisma.FieldRef<"CompletedQuest", 'Int'>
+  readonly approvedBy: Prisma.FieldRef<"CompletedQuest", 'String'>
   readonly approvedAt: Prisma.FieldRef<"CompletedQuest", 'DateTime'>
 }
     

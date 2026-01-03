@@ -23,7 +23,7 @@ import { TrashIcon, Bars3Icon, MusicalNoteIcon, PhotoIcon, CheckCircleIcon } fro
 import Image from "next/image";
 
 interface Question {
-    id: number;
+    id: string;
     content: string;
     roundIndex: number;
     mediaUrl?: string | null;

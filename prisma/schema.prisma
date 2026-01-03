@@ -12,7 +12,7 @@ datasource db {
 // ==========================================
 
 model User {
-  id       Int     @id @default(autoincrement())
+  id       String  @id @default(cuid())
   fid      Int     @unique
   username String? @db.VarChar(100)
   pfpUrl   String? @db.VarChar(500)
@@ -23,9 +23,9 @@ model User {
   password String?
 
   // -- REFERRAL (who brought them into the system) --
-  referredBy   User?  @relation("Referrals", fields: [referredById], references: [id])
-  referredById Int?
-  referrals    User[] @relation("Referrals")
+  referredBy   User?   @relation("Referrals", fields: [referredById], references: [id])
+  referredById String?
+  referrals    User[]  @relation("Referrals")
 
   // -- INVITE SYSTEM --
   inviteCode    String       @unique @db.VarChar(25)
@@ -35,12 +35,12 @@ model User {
   // -- ACCESS CONTROL --
   hasGameAccess   Boolean   @default(false)
   accessGrantedAt DateTime?
-  accessGrantedBy Int?
+  accessGrantedBy String?
 
   // -- BAN --
   isBanned Boolean   @default(false)
   bannedAt DateTime?
-  bannedBy Int?
+  bannedBy String?
 
   // -- WAITLIST --
   joinedWaitlistAt DateTime?
@@ -70,11 +70,11 @@ enum UserRole {
 }
 
 model ReferralReward {
-  id        Int  @id @default(autoincrement())
-  inviter   User @relation("InviterRewards", fields: [inviterId], references: [id])
-  inviterId Int
+  id        String @id @default(cuid())
+  inviter   User   @relation("InviterRewards", fields: [inviterId], references: [id])
+  inviterId String
 
-  inviteeId Int @unique
+  inviteeId String @unique
 
   status RewardStatus @default(PENDING)
   amount Int          @default(0) @db.SmallInt
@@ -120,7 +120,7 @@ enum RepeatFrequency {
 }
 
 model Quest {
-  id   Int    @id @default(autoincrement())
+  id   String @id @default(cuid())
   slug String @unique @db.VarChar(50)
 
   // -- DISPLAY --
@@ -161,19 +161,19 @@ model Quest {
 }
 
 model CompletedQuest {
-  id Int @id @default(autoincrement())
+  id String @id @default(cuid())
 
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId Int
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
 
-  quest   Quest @relation(fields: [questId], references: [id], onDelete: Cascade)
-  questId Int
+  quest   Quest  @relation(fields: [questId], references: [id], onDelete: Cascade)
+  questId String
 
   completedAt   DateTime @default(now())
   pointsAwarded Int      @default(0) @db.SmallInt
 
   isApproved Boolean   @default(true)
-  approvedBy Int?
+  approvedBy String?
   approvedAt DateTime?
 
   @@unique([userId, questId])
@@ -247,7 +247,7 @@ enum GameTheme {
 // - now >= endsAt => ENDED
 
 model Question {
-  id     Int    @id @default(autoincrement())
+  id     String @id @default(cuid())
   game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
   gameId String
 
@@ -279,13 +279,13 @@ model Question {
 // Single record per user per game: payment + progress + results
 
 model GameEntry {
-  id Int @id @default(autoincrement())
+  id String @id @default(cuid())
 
   game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
   gameId String
 
-  user   User @relation(fields: [userId], references: [id])
-  userId Int
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
 
   // -- PAYMENT --
   txHash      String?   @unique @db.VarChar(66)
@@ -328,11 +328,11 @@ model GameEntry {
 // ==========================================
 
 model Chat {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(cuid())
   game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
   gameId    String
   user      User     @relation(fields: [userId], references: [id])
-  userId    Int
+  userId    String
   text      String   @db.VarChar(500)
   createdAt DateTime @default(now())
 
@@ -343,9 +343,9 @@ model Chat {
 // 5. NOTIFICATIONS
 // ==========================================
 model NotificationToken {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(cuid())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    Int
+  userId    String
   appFid    Int
   token     String   @db.VarChar(255)
   url       String   @db.VarChar(500)
@@ -361,9 +361,9 @@ model NotificationToken {
 // ==========================================
 
 model AuditLog {
-  id      Int  @id @default(autoincrement())
-  admin   User @relation(fields: [adminId], references: [id])
-  adminId Int
+  id      String @id @default(cuid())
+  admin   User   @relation(fields: [adminId], references: [id])
+  adminId String
 
   action     String   @db.VarChar(50)
   entityType String   @db.VarChar(50)
@@ -381,9 +381,9 @@ model AuditLog {
 // ==========================================
 
 model InviteCode {
-  id        Int       @id @default(autoincrement())
+  id        String    @id @default(cuid())
   code      String    @unique @db.VarChar(6)
-  usedById  Int?
+  usedById  String?
   usedAt    DateTime?
   createdAt DateTime  @default(now())
   note      String?   @db.VarChar(100)

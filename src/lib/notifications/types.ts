@@ -60,7 +60,7 @@ export interface TokenGroup {
     token: string;
     fid: number;
     appFid: number;
-    userId: number;
+    userId: string;
   }>;
 }
 

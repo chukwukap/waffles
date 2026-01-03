@@ -8,7 +8,7 @@ import { getScore } from "@/lib/scoring";
 type Params = { gameId: string };
 
 const submitAnswerSchema = z.object({
-  questionId: z.number().int().positive("Invalid Question ID"),
+  questionId: z.string().min(1, "Invalid Question ID"),
   selectedIndex: z.number().int().nullable().optional(),
   timeTakenMs: z.number().nonnegative("Time taken cannot be negative"),
 });

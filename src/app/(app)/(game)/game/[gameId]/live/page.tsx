@@ -11,7 +11,8 @@ export const dynamic = "force-dynamic";
 // ==========================================
 
 export interface LiveGameQuestion {
-  id: number;
+  id: string;
+
   content: string;
   mediaUrl: string | null;
   soundUrl: string | null;

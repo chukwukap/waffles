@@ -22,7 +22,7 @@ const QuestionSchema = z.object({
 });
 
 export type QuestionActionResult =
-  | { success: true; questionId?: number }
+  | { success: true; questionId?: string }
   | { success: false; error: string };
 
 /**
@@ -100,7 +100,7 @@ export async function createQuestionAction(
  * Delete a question (form action - returns void)
  */
 export async function deleteQuestionAction(
-  questionId: number,
+  questionId: string,
   gameId: string
 ): Promise<void> {
   const authResult = await requireAdminSession();
@@ -136,7 +136,7 @@ export async function deleteQuestionAction(
  */
 export async function reorderQuestionsAction(
   gameId: string,
-  orderedQuestionIds: number[]
+  orderedQuestionIds: string[]
 ): Promise<{ success: boolean; error?: string }> {
   const authResult = await requireAdminSession();
   if (!authResult.authenticated || !authResult.session) {

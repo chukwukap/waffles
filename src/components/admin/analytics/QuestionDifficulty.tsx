@@ -3,7 +3,7 @@
 import { ClockIcon, CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
 
 interface QuestionData {
-    id: number;
+    id: string;
     content: string;
     gameTitle: string;
     totalAnswers: number;

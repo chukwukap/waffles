@@ -36,7 +36,7 @@ type ActionResult<T = void> =
  */
 export async function generateInviteCodeAction(
   note?: string
-): Promise<ActionResult<{ code: string; id: number }>> {
+): Promise<ActionResult<{ code: string; id: string }>> {
   const auth = await requireAdminSession();
   if (!auth.authenticated || !auth.session) {
     return { success: false, error: "Unauthorized" };
@@ -114,7 +114,7 @@ export async function generateInviteCodesAction(
  * Delete an unused invite code
  */
 export async function deleteInviteCodeAction(
-  id: number
+  id: string
 ): Promise<ActionResult> {
   const auth = await requireAdminSession();
   if (!auth.authenticated || !auth.session) {

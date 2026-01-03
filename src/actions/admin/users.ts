@@ -23,7 +23,7 @@ export type UserActionResult =
  * Grant game access to a user
  */
 export async function grantGameAccessAction(
-  userId: number
+  userId: string
 ): Promise<UserActionResult> {
   const authResult = await requireAdminSession();
   if (!authResult.authenticated || !authResult.session) {
@@ -66,7 +66,7 @@ export async function grantGameAccessAction(
 /**
  * Ban a user
  */
-export async function banUserAction(userId: number): Promise<UserActionResult> {
+export async function banUserAction(userId: string): Promise<UserActionResult> {
   const authResult = await requireAdminSession();
   if (!authResult.authenticated || !authResult.session) {
     return { success: false, error: "Unauthorized" };
@@ -109,7 +109,7 @@ export async function banUserAction(userId: number): Promise<UserActionResult> {
  * Unban a user
  */
 export async function unbanUserAction(
-  userId: number
+  userId: string
 ): Promise<UserActionResult> {
   const authResult = await requireAdminSession();
   if (!authResult.authenticated || !authResult.session) {
@@ -153,7 +153,7 @@ export async function unbanUserAction(
  * Adjust user's invite quota
  */
 export async function adjustInviteQuotaAction(
-  userId: number,
+  userId: string,
   quota: number
 ): Promise<UserActionResult> {
   const authResult = await requireAdminSession();
@@ -194,7 +194,7 @@ export async function adjustInviteQuotaAction(
  * Promote user to admin
  */
 export async function promoteToAdminAction(
-  userId: number
+  userId: string
 ): Promise<UserActionResult> {
   const authResult = await requireAdminSession();
   if (!authResult.authenticated || !authResult.session) {

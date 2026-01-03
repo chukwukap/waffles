@@ -64,7 +64,7 @@ export async function joinWaitlistAction(
     }
 
     // 3. Find referrer if one is provided
-    let referrerUser: { id: number } | null = null;
+    let referrerUser: { id: string } | null = null;
     if (ref && ref !== fid) {
       referrerUser = await prisma.user.findUnique({
         where: { fid: ref },

@@ -27,7 +27,6 @@ export type AggregateQuest = {
 }
 
 export type QuestAvgAggregateOutputType = {
-  id: number | null
   sortOrder: number | null
   points: number | null
   targetFid: number | null
@@ -35,7 +34,6 @@ export type QuestAvgAggregateOutputType = {
 }
 
 export type QuestSumAggregateOutputType = {
-  id: number | null
   sortOrder: number | null
   points: number | null
   targetFid: number | null
@@ -43,7 +41,7 @@ export type QuestSumAggregateOutputType = {
 }
 
 export type QuestMinAggregateOutputType = {
-  id: number | null
+  id: string | null
   slug: string | null
   title: string | null
   description: string | null
@@ -65,7 +63,7 @@ export type QuestMinAggregateOutputType = {
 }
 
 export type QuestMaxAggregateOutputType = {
-  id: number | null
+  id: string | null
   slug: string | null
   title: string | null
   description: string | null
@@ -111,7 +109,6 @@ export type QuestCountAggregateOutputType = {
 
 
 export type QuestAvgAggregateInputType = {
-  id?: true
   sortOrder?: true
   points?: true
   targetFid?: true
@@ -119,7 +116,6 @@ export type QuestAvgAggregateInputType = {
 }
 
 export type QuestSumAggregateInputType = {
-  id?: true
   sortOrder?: true
   points?: true
   targetFid?: true
@@ -280,7 +276,7 @@ export type QuestGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
 }
 
 export type QuestGroupByOutputType = {
-  id: number
+  id: string
   slug: string
   title: string
   description: string
@@ -325,7 +321,7 @@ export type QuestWhereInput = {
   AND?: Prisma.QuestWhereInput | Prisma.QuestWhereInput[]
   OR?: Prisma.QuestWhereInput[]
   NOT?: Prisma.QuestWhereInput | Prisma.QuestWhereInput[]
-  id?: Prisma.IntFilter<"Quest"> | number
+  id?: Prisma.StringFilter<"Quest"> | string
   slug?: Prisma.StringFilter<"Quest"> | string
   title?: Prisma.StringFilter<"Quest"> | string
   description?: Prisma.StringFilter<"Quest"> | string
@@ -371,7 +367,7 @@ export type QuestOrderByWithRelationInput = {
 }
 
 export type QuestWhereUniqueInput = Prisma.AtLeast<{
-  id?: number
+  id?: string
   slug?: string
   AND?: Prisma.QuestWhereInput | Prisma.QuestWhereInput[]
   OR?: Prisma.QuestWhereInput[]
@@ -427,7 +423,7 @@ export type QuestScalarWhereWithAggregatesInput = {
   AND?: Prisma.QuestScalarWhereWithAggregatesInput | Prisma.QuestScalarWhereWithAggregatesInput[]
   OR?: Prisma.QuestScalarWhereWithAggregatesInput[]
   NOT?: Prisma.QuestScalarWhereWithAggregatesInput | Prisma.QuestScalarWhereWithAggregatesInput[]
-  id?: Prisma.IntWithAggregatesFilter<"Quest"> | number
+  id?: Prisma.StringWithAggregatesFilter<"Quest"> | string
   slug?: Prisma.StringWithAggregatesFilter<"Quest"> | string
   title?: Prisma.StringWithAggregatesFilter<"Quest"> | string
   description?: Prisma.StringWithAggregatesFilter<"Quest"> | string
@@ -449,6 +445,7 @@ export type QuestScalarWhereWithAggregatesInput = {
 }
 
 export type QuestCreateInput = {
+  id?: string
   slug: string
   title: string
   description: string
@@ -471,7 +468,7 @@ export type QuestCreateInput = {
 }
 
 export type QuestUncheckedCreateInput = {
-  id?: number
+  id?: string
   slug: string
   title: string
   description: string
@@ -494,6 +491,7 @@ export type QuestUncheckedCreateInput = {
 }
 
 export type QuestUpdateInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
@@ -516,7 +514,7 @@ export type QuestUpdateInput = {
 }
 
 export type QuestUncheckedUpdateInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
@@ -539,7 +537,7 @@ export type QuestUncheckedUpdateInput = {
 }
 
 export type QuestCreateManyInput = {
-  id?: number
+  id?: string
   slug: string
   title: string
   description: string
@@ -561,6 +559,7 @@ export type QuestCreateManyInput = {
 }
 
 export type QuestUpdateManyMutationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
@@ -582,7 +581,7 @@ export type QuestUpdateManyMutationInput = {
 }
 
 export type QuestUncheckedUpdateManyInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
@@ -626,7 +625,6 @@ export type QuestCountOrderByAggregateInput = {
 }
 
 export type QuestAvgOrderByAggregateInput = {
-  id?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
   points?: Prisma.SortOrder
   targetFid?: Prisma.SortOrder
@@ -678,7 +676,6 @@ export type QuestMinOrderByAggregateInput = {
 }
 
 export type QuestSumOrderByAggregateInput = {
-  id?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
   points?: Prisma.SortOrder
   targetFid?: Prisma.SortOrder
@@ -717,6 +714,7 @@ export type QuestUpdateOneRequiredWithoutCompletionsNestedInput = {
 }
 
 export type QuestCreateWithoutCompletionsInput = {
+  id?: string
   slug: string
   title: string
   description: string
@@ -738,7 +736,7 @@ export type QuestCreateWithoutCompletionsInput = {
 }
 
 export type QuestUncheckedCreateWithoutCompletionsInput = {
-  id?: number
+  id?: string
   slug: string
   title: string
   description: string
@@ -776,6 +774,7 @@ export type QuestUpdateToOneWithWhereWithoutCompletionsInput = {
 }
 
 export type QuestUpdateWithoutCompletionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
@@ -797,7 +796,7 @@ export type QuestUpdateWithoutCompletionsInput = {
 }
 
 export type QuestUncheckedUpdateWithoutCompletionsInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
@@ -953,7 +952,7 @@ export type $QuestPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     completions: Prisma.$CompletedQuestPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
-    id: number
+    id: string
     slug: string
     title: string
     description: string
@@ -1396,7 +1395,7 @@ export interface Prisma__QuestClient<T, Null = never, ExtArgs extends runtime.Ty
  * Fields of the Quest model
  */
 export interface QuestFieldRefs {
-  readonly id: Prisma.FieldRef<"Quest", 'Int'>
+  readonly id: Prisma.FieldRef<"Quest", 'String'>
   readonly slug: Prisma.FieldRef<"Quest", 'String'>
   readonly title: Prisma.FieldRef<"Quest", 'String'>
   readonly description: Prisma.FieldRef<"Quest", 'String'>

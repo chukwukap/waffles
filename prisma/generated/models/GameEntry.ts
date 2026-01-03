@@ -27,8 +27,6 @@ export type AggregateGameEntry = {
 }
 
 export type GameEntryAvgAggregateOutputType = {
-  id: number | null
-  userId: number | null
   paidAmount: number | null
   score: number | null
   answered: number | null
@@ -37,8 +35,6 @@ export type GameEntryAvgAggregateOutputType = {
 }
 
 export type GameEntrySumAggregateOutputType = {
-  id: number | null
-  userId: number | null
   paidAmount: number | null
   score: number | null
   answered: number | null
@@ -47,9 +43,9 @@ export type GameEntrySumAggregateOutputType = {
 }
 
 export type GameEntryMinAggregateOutputType = {
-  id: number | null
+  id: string | null
   gameId: string | null
-  userId: number | null
+  userId: string | null
   txHash: string | null
   payerWallet: string | null
   paidAmount: number | null
@@ -66,9 +62,9 @@ export type GameEntryMinAggregateOutputType = {
 }
 
 export type GameEntryMaxAggregateOutputType = {
-  id: number | null
+  id: string | null
   gameId: string | null
-  userId: number | null
+  userId: string | null
   txHash: string | null
   payerWallet: string | null
   paidAmount: number | null
@@ -108,8 +104,6 @@ export type GameEntryCountAggregateOutputType = {
 
 
 export type GameEntryAvgAggregateInputType = {
-  id?: true
-  userId?: true
   paidAmount?: true
   score?: true
   answered?: true
@@ -118,8 +112,6 @@ export type GameEntryAvgAggregateInputType = {
 }
 
 export type GameEntrySumAggregateInputType = {
-  id?: true
-  userId?: true
   paidAmount?: true
   score?: true
   answered?: true
@@ -274,9 +266,9 @@ export type GameEntryGroupByArgs<ExtArgs extends runtime.Types.Extensions.Intern
 }
 
 export type GameEntryGroupByOutputType = {
-  id: number
+  id: string
   gameId: string
-  userId: number
+  userId: string
   txHash: string | null
   payerWallet: string | null
   paidAmount: number | null
@@ -318,9 +310,9 @@ export type GameEntryWhereInput = {
   AND?: Prisma.GameEntryWhereInput | Prisma.GameEntryWhereInput[]
   OR?: Prisma.GameEntryWhereInput[]
   NOT?: Prisma.GameEntryWhereInput | Prisma.GameEntryWhereInput[]
-  id?: Prisma.IntFilter<"GameEntry"> | number
+  id?: Prisma.StringFilter<"GameEntry"> | string
   gameId?: Prisma.StringFilter<"GameEntry"> | string
-  userId?: Prisma.IntFilter<"GameEntry"> | number
+  userId?: Prisma.StringFilter<"GameEntry"> | string
   txHash?: Prisma.StringNullableFilter<"GameEntry"> | string | null
   payerWallet?: Prisma.StringNullableFilter<"GameEntry"> | string | null
   paidAmount?: Prisma.FloatNullableFilter<"GameEntry"> | number | null
@@ -364,14 +356,14 @@ export type GameEntryOrderByWithRelationInput = {
 }
 
 export type GameEntryWhereUniqueInput = Prisma.AtLeast<{
-  id?: number
+  id?: string
   txHash?: string
   gameId_userId?: Prisma.GameEntryGameIdUserIdCompoundUniqueInput
   AND?: Prisma.GameEntryWhereInput | Prisma.GameEntryWhereInput[]
   OR?: Prisma.GameEntryWhereInput[]
   NOT?: Prisma.GameEntryWhereInput | Prisma.GameEntryWhereInput[]
   gameId?: Prisma.StringFilter<"GameEntry"> | string
-  userId?: Prisma.IntFilter<"GameEntry"> | number
+  userId?: Prisma.StringFilter<"GameEntry"> | string
   payerWallet?: Prisma.StringNullableFilter<"GameEntry"> | string | null
   paidAmount?: Prisma.FloatNullableFilter<"GameEntry"> | number | null
   paidAt?: Prisma.DateTimeNullableFilter<"GameEntry"> | Date | string | null
@@ -420,9 +412,9 @@ export type GameEntryScalarWhereWithAggregatesInput = {
   AND?: Prisma.GameEntryScalarWhereWithAggregatesInput | Prisma.GameEntryScalarWhereWithAggregatesInput[]
   OR?: Prisma.GameEntryScalarWhereWithAggregatesInput[]
   NOT?: Prisma.GameEntryScalarWhereWithAggregatesInput | Prisma.GameEntryScalarWhereWithAggregatesInput[]
-  id?: Prisma.IntWithAggregatesFilter<"GameEntry"> | number
+  id?: Prisma.StringWithAggregatesFilter<"GameEntry"> | string
   gameId?: Prisma.StringWithAggregatesFilter<"GameEntry"> | string
-  userId?: Prisma.IntWithAggregatesFilter<"GameEntry"> | number
+  userId?: Prisma.StringWithAggregatesFilter<"GameEntry"> | string
   txHash?: Prisma.StringNullableWithAggregatesFilter<"GameEntry"> | string | null
   payerWallet?: Prisma.StringNullableWithAggregatesFilter<"GameEntry"> | string | null
   paidAmount?: Prisma.FloatNullableWithAggregatesFilter<"GameEntry"> | number | null
@@ -441,6 +433,7 @@ export type GameEntryScalarWhereWithAggregatesInput = {
 }
 
 export type GameEntryCreateInput = {
+  id?: string
   txHash?: string | null
   payerWallet?: string | null
   paidAmount?: number | null
@@ -461,9 +454,9 @@ export type GameEntryCreateInput = {
 }
 
 export type GameEntryUncheckedCreateInput = {
-  id?: number
+  id?: string
   gameId: string
-  userId: number
+  userId: string
   txHash?: string | null
   payerWallet?: string | null
   paidAmount?: number | null
@@ -482,6 +475,7 @@ export type GameEntryUncheckedCreateInput = {
 }
 
 export type GameEntryUpdateInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   txHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   payerWallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAmount?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -502,9 +496,9 @@ export type GameEntryUpdateInput = {
 }
 
 export type GameEntryUncheckedUpdateInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   gameId?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
   txHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   payerWallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAmount?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -523,9 +517,9 @@ export type GameEntryUncheckedUpdateInput = {
 }
 
 export type GameEntryCreateManyInput = {
-  id?: number
+  id?: string
   gameId: string
-  userId: number
+  userId: string
   txHash?: string | null
   payerWallet?: string | null
   paidAmount?: number | null
@@ -544,6 +538,7 @@ export type GameEntryCreateManyInput = {
 }
 
 export type GameEntryUpdateManyMutationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   txHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   payerWallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAmount?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -562,9 +557,9 @@ export type GameEntryUpdateManyMutationInput = {
 }
 
 export type GameEntryUncheckedUpdateManyInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   gameId?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
   txHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   payerWallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAmount?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -594,7 +589,7 @@ export type GameEntryOrderByRelationAggregateInput = {
 
 export type GameEntryGameIdUserIdCompoundUniqueInput = {
   gameId: string
-  userId: number
+  userId: string
 }
 
 export type GameEntryCountOrderByAggregateInput = {
@@ -619,8 +614,6 @@ export type GameEntryCountOrderByAggregateInput = {
 }
 
 export type GameEntryAvgOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
   paidAmount?: Prisma.SortOrder
   score?: Prisma.SortOrder
   answered?: Prisma.SortOrder
@@ -667,8 +660,6 @@ export type GameEntryMinOrderByAggregateInput = {
 }
 
 export type GameEntrySumOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
   paidAmount?: Prisma.SortOrder
   score?: Prisma.SortOrder
   answered?: Prisma.SortOrder
@@ -769,6 +760,7 @@ export type NullableFloatFieldUpdateOperationsInput = {
 }
 
 export type GameEntryCreateWithoutUserInput = {
+  id?: string
   txHash?: string | null
   payerWallet?: string | null
   paidAmount?: number | null
@@ -788,7 +780,7 @@ export type GameEntryCreateWithoutUserInput = {
 }
 
 export type GameEntryUncheckedCreateWithoutUserInput = {
-  id?: number
+  id?: string
   gameId: string
   txHash?: string | null
   payerWallet?: string | null
@@ -837,9 +829,9 @@ export type GameEntryScalarWhereInput = {
   AND?: Prisma.GameEntryScalarWhereInput | Prisma.GameEntryScalarWhereInput[]
   OR?: Prisma.GameEntryScalarWhereInput[]
   NOT?: Prisma.GameEntryScalarWhereInput | Prisma.GameEntryScalarWhereInput[]
-  id?: Prisma.IntFilter<"GameEntry"> | number
+  id?: Prisma.StringFilter<"GameEntry"> | string
   gameId?: Prisma.StringFilter<"GameEntry"> | string
-  userId?: Prisma.IntFilter<"GameEntry"> | number
+  userId?: Prisma.StringFilter<"GameEntry"> | string
   txHash?: Prisma.StringNullableFilter<"GameEntry"> | string | null
   payerWallet?: Prisma.StringNullableFilter<"GameEntry"> | string | null
   paidAmount?: Prisma.FloatNullableFilter<"GameEntry"> | number | null
@@ -858,6 +850,7 @@ export type GameEntryScalarWhereInput = {
 }
 
 export type GameEntryCreateWithoutGameInput = {
+  id?: string
   txHash?: string | null
   payerWallet?: string | null
   paidAmount?: number | null
@@ -877,8 +870,8 @@ export type GameEntryCreateWithoutGameInput = {
 }
 
 export type GameEntryUncheckedCreateWithoutGameInput = {
-  id?: number
-  userId: number
+  id?: string
+  userId: string
   txHash?: string | null
   payerWallet?: string | null
   paidAmount?: number | null
@@ -923,7 +916,7 @@ export type GameEntryUpdateManyWithWhereWithoutGameInput = {
 }
 
 export type GameEntryCreateManyUserInput = {
-  id?: number
+  id?: string
   gameId: string
   txHash?: string | null
   payerWallet?: string | null
@@ -943,6 +936,7 @@ export type GameEntryCreateManyUserInput = {
 }
 
 export type GameEntryUpdateWithoutUserInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   txHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   payerWallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAmount?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -962,7 +956,7 @@ export type GameEntryUpdateWithoutUserInput = {
 }
 
 export type GameEntryUncheckedUpdateWithoutUserInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   gameId?: Prisma.StringFieldUpdateOperationsInput | string
   txHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   payerWallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -982,7 +976,7 @@ export type GameEntryUncheckedUpdateWithoutUserInput = {
 }
 
 export type GameEntryUncheckedUpdateManyWithoutUserInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   gameId?: Prisma.StringFieldUpdateOperationsInput | string
   txHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   payerWallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1002,8 +996,8 @@ export type GameEntryUncheckedUpdateManyWithoutUserInput = {
 }
 
 export type GameEntryCreateManyGameInput = {
-  id?: number
-  userId: number
+  id?: string
+  userId: string
   txHash?: string | null
   payerWallet?: string | null
   paidAmount?: number | null
@@ -1022,6 +1016,7 @@ export type GameEntryCreateManyGameInput = {
 }
 
 export type GameEntryUpdateWithoutGameInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   txHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   payerWallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAmount?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1041,8 +1036,8 @@ export type GameEntryUpdateWithoutGameInput = {
 }
 
 export type GameEntryUncheckedUpdateWithoutGameInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
   txHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   payerWallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAmount?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1061,8 +1056,8 @@ export type GameEntryUncheckedUpdateWithoutGameInput = {
 }
 
 export type GameEntryUncheckedUpdateManyWithoutGameInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
   txHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   payerWallet?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAmount?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1193,9 +1188,9 @@ export type $GameEntryPayload<ExtArgs extends runtime.Types.Extensions.InternalA
     user: Prisma.$UserPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
-    id: number
+    id: string
     gameId: string
-    userId: number
+    userId: string
     txHash: string | null
     payerWallet: string | null
     paidAmount: number | null
@@ -1636,9 +1631,9 @@ export interface Prisma__GameEntryClient<T, Null = never, ExtArgs extends runtim
  * Fields of the GameEntry model
  */
 export interface GameEntryFieldRefs {
-  readonly id: Prisma.FieldRef<"GameEntry", 'Int'>
+  readonly id: Prisma.FieldRef<"GameEntry", 'String'>
   readonly gameId: Prisma.FieldRef<"GameEntry", 'String'>
-  readonly userId: Prisma.FieldRef<"GameEntry", 'Int'>
+  readonly userId: Prisma.FieldRef<"GameEntry", 'String'>
   readonly txHash: Prisma.FieldRef<"GameEntry", 'String'>
   readonly payerWallet: Prisma.FieldRef<"GameEntry", 'String'>
   readonly paidAmount: Prisma.FieldRef<"GameEntry", 'Float'>

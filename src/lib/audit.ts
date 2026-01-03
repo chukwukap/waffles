@@ -4,7 +4,7 @@ import { prisma } from "./db";
  * Logs an admin action to the audit trail
  */
 export async function logAdminAction(params: {
-  adminId: number;
+  adminId: string;
   action: string;
   entityType: string;
   entityId?: number | string;

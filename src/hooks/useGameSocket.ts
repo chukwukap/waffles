@@ -112,7 +112,7 @@ interface UseGameSocketReturn {
   isConnected: boolean;
   sendChat: (text: string) => boolean;
   sendCheer: () => void;
-  sendAnswer: (questionId: number, selected: number, timeMs: number) => void;
+  sendAnswer: (questionId: string, selected: number, timeMs: number) => void;
 }
 
 export function useGameSocket(
@@ -342,7 +342,7 @@ export function useGameSocket(
   }, []);
 
   const sendAnswer = useCallback(
-    (questionId: number, selected: number, timeMs: number) => {
+    (questionId: string, selected: number, timeMs: number) => {
       if (instance.socket?.readyState === WebSocket.OPEN) {
         instance.socket.send(
           JSON.stringify({

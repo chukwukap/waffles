@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 interface AuthResponse {
   authenticated: boolean;
   fid: number;
-  userId: number;
+  userId: string;
 }
 
 /**

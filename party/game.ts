@@ -22,7 +22,7 @@ interface ChatMessage {
 }
 
 interface Question {
-  id: number;
+  id: string;
   text: string;
   options: string[];
   correct: number;

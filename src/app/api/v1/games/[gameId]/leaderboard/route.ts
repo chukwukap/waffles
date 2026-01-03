@@ -5,7 +5,7 @@ type Params = { gameId: string };
 
 interface LeaderboardEntry {
   rank: number;
-  userId: number;
+  userId: string;
   fid: number;
   username: string | null;
   pfpUrl: string | null;

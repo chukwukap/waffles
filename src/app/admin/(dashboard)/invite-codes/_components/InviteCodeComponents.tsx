@@ -62,7 +62,7 @@ export function CopyButton({ code }: { code: string }) {
 // DELETE BUTTON WITH CONFIRMATION
 // ============================================
 
-export function DeleteButton({ id, code }: { id: number; code: string }) {
+export function DeleteButton({ id, code }: { id: string; code: string }) {
     const [confirming, setConfirming] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const router = useRouter();
@@ -338,9 +338,9 @@ export function CodeRow({
     index,
 }: {
     code: {
-        id: number;
+        id: string;
         code: string;
-        usedById: number | null;
+        usedById: string | null;
         usedAt: Date | null;
         createdAt: Date;
         note: string | null;

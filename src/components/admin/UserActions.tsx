@@ -3,7 +3,7 @@
 import { grantGameAccessAction, banUserAction, unbanUserAction, adjustInviteQuotaAction, promoteToAdminAction } from "@/actions/admin/users";
 import { useState } from "react";
 
-export function UserActions({ user }: { user: { id: number; username: string | null; inviteQuota: number; hasGameAccess: boolean; isBanned: boolean; role: string } }) {
+export function UserActions({ user }: { user: { id: string; username: string | null; inviteQuota: number; hasGameAccess: boolean; isBanned: boolean; role: string } }) {
     const [loading, setLoading] = useState(false);
 
     const handleGrantAccess = async () => {

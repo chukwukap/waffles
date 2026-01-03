@@ -27,7 +27,6 @@ export type AggregateQuestion = {
 }
 
 export type QuestionAvgAggregateOutputType = {
-  id: number | null
   roundIndex: number | null
   orderInRound: number | null
   correctIndex: number | null
@@ -36,7 +35,6 @@ export type QuestionAvgAggregateOutputType = {
 }
 
 export type QuestionSumAggregateOutputType = {
-  id: number | null
   roundIndex: number | null
   orderInRound: number | null
   correctIndex: number | null
@@ -45,7 +43,7 @@ export type QuestionSumAggregateOutputType = {
 }
 
 export type QuestionMinAggregateOutputType = {
-  id: number | null
+  id: string | null
   gameId: string | null
   roundIndex: number | null
   orderInRound: number | null
@@ -60,7 +58,7 @@ export type QuestionMinAggregateOutputType = {
 }
 
 export type QuestionMaxAggregateOutputType = {
-  id: number | null
+  id: string | null
   gameId: string | null
   roundIndex: number | null
   orderInRound: number | null
@@ -93,7 +91,6 @@ export type QuestionCountAggregateOutputType = {
 
 
 export type QuestionAvgAggregateInputType = {
-  id?: true
   roundIndex?: true
   orderInRound?: true
   correctIndex?: true
@@ -102,7 +99,6 @@ export type QuestionAvgAggregateInputType = {
 }
 
 export type QuestionSumAggregateInputType = {
-  id?: true
   roundIndex?: true
   orderInRound?: true
   correctIndex?: true
@@ -244,7 +240,7 @@ export type QuestionGroupByArgs<ExtArgs extends runtime.Types.Extensions.Interna
 }
 
 export type QuestionGroupByOutputType = {
-  id: number
+  id: string
   gameId: string
   roundIndex: number
   orderInRound: number
@@ -283,7 +279,7 @@ export type QuestionWhereInput = {
   AND?: Prisma.QuestionWhereInput | Prisma.QuestionWhereInput[]
   OR?: Prisma.QuestionWhereInput[]
   NOT?: Prisma.QuestionWhereInput | Prisma.QuestionWhereInput[]
-  id?: Prisma.IntFilter<"Question"> | number
+  id?: Prisma.StringFilter<"Question"> | string
   gameId?: Prisma.StringFilter<"Question"> | string
   roundIndex?: Prisma.IntFilter<"Question"> | number
   orderInRound?: Prisma.IntFilter<"Question"> | number
@@ -317,7 +313,7 @@ export type QuestionOrderByWithRelationInput = {
 }
 
 export type QuestionWhereUniqueInput = Prisma.AtLeast<{
-  id?: number
+  id?: string
   AND?: Prisma.QuestionWhereInput | Prisma.QuestionWhereInput[]
   OR?: Prisma.QuestionWhereInput[]
   NOT?: Prisma.QuestionWhereInput | Prisma.QuestionWhereInput[]
@@ -361,7 +357,7 @@ export type QuestionScalarWhereWithAggregatesInput = {
   AND?: Prisma.QuestionScalarWhereWithAggregatesInput | Prisma.QuestionScalarWhereWithAggregatesInput[]
   OR?: Prisma.QuestionScalarWhereWithAggregatesInput[]
   NOT?: Prisma.QuestionScalarWhereWithAggregatesInput | Prisma.QuestionScalarWhereWithAggregatesInput[]
-  id?: Prisma.IntWithAggregatesFilter<"Question"> | number
+  id?: Prisma.StringWithAggregatesFilter<"Question"> | string
   gameId?: Prisma.StringWithAggregatesFilter<"Question"> | string
   roundIndex?: Prisma.IntWithAggregatesFilter<"Question"> | number
   orderInRound?: Prisma.IntWithAggregatesFilter<"Question"> | number
@@ -377,6 +373,7 @@ export type QuestionScalarWhereWithAggregatesInput = {
 }
 
 export type QuestionCreateInput = {
+  id?: string
   roundIndex?: number
   orderInRound?: number
   content: string
@@ -392,7 +389,7 @@ export type QuestionCreateInput = {
 }
 
 export type QuestionUncheckedCreateInput = {
-  id?: number
+  id?: string
   gameId: string
   roundIndex?: number
   orderInRound?: number
@@ -408,6 +405,7 @@ export type QuestionUncheckedCreateInput = {
 }
 
 export type QuestionUpdateInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   roundIndex?: Prisma.IntFieldUpdateOperationsInput | number
   orderInRound?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
@@ -423,7 +421,7 @@ export type QuestionUpdateInput = {
 }
 
 export type QuestionUncheckedUpdateInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   gameId?: Prisma.StringFieldUpdateOperationsInput | string
   roundIndex?: Prisma.IntFieldUpdateOperationsInput | number
   orderInRound?: Prisma.IntFieldUpdateOperationsInput | number
@@ -439,7 +437,7 @@ export type QuestionUncheckedUpdateInput = {
 }
 
 export type QuestionCreateManyInput = {
-  id?: number
+  id?: string
   gameId: string
   roundIndex?: number
   orderInRound?: number
@@ -455,6 +453,7 @@ export type QuestionCreateManyInput = {
 }
 
 export type QuestionUpdateManyMutationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   roundIndex?: Prisma.IntFieldUpdateOperationsInput | number
   orderInRound?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
@@ -469,7 +468,7 @@ export type QuestionUpdateManyMutationInput = {
 }
 
 export type QuestionUncheckedUpdateManyInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   gameId?: Prisma.StringFieldUpdateOperationsInput | string
   roundIndex?: Prisma.IntFieldUpdateOperationsInput | number
   orderInRound?: Prisma.IntFieldUpdateOperationsInput | number
@@ -519,7 +518,6 @@ export type QuestionCountOrderByAggregateInput = {
 }
 
 export type QuestionAvgOrderByAggregateInput = {
-  id?: Prisma.SortOrder
   roundIndex?: Prisma.SortOrder
   orderInRound?: Prisma.SortOrder
   correctIndex?: Prisma.SortOrder
@@ -558,7 +556,6 @@ export type QuestionMinOrderByAggregateInput = {
 }
 
 export type QuestionSumOrderByAggregateInput = {
-  id?: Prisma.SortOrder
   roundIndex?: Prisma.SortOrder
   orderInRound?: Prisma.SortOrder
   correctIndex?: Prisma.SortOrder
@@ -618,6 +615,7 @@ export type QuestionUpdateoptionsInput = {
 }
 
 export type QuestionCreateWithoutGameInput = {
+  id?: string
   roundIndex?: number
   orderInRound?: number
   content: string
@@ -632,7 +630,7 @@ export type QuestionCreateWithoutGameInput = {
 }
 
 export type QuestionUncheckedCreateWithoutGameInput = {
-  id?: number
+  id?: string
   roundIndex?: number
   orderInRound?: number
   content: string
@@ -676,7 +674,7 @@ export type QuestionScalarWhereInput = {
   AND?: Prisma.QuestionScalarWhereInput | Prisma.QuestionScalarWhereInput[]
   OR?: Prisma.QuestionScalarWhereInput[]
   NOT?: Prisma.QuestionScalarWhereInput | Prisma.QuestionScalarWhereInput[]
-  id?: Prisma.IntFilter<"Question"> | number
+  id?: Prisma.StringFilter<"Question"> | string
   gameId?: Prisma.StringFilter<"Question"> | string
   roundIndex?: Prisma.IntFilter<"Question"> | number
   orderInRound?: Prisma.IntFilter<"Question"> | number
@@ -692,7 +690,7 @@ export type QuestionScalarWhereInput = {
 }
 
 export type QuestionCreateManyGameInput = {
-  id?: number
+  id?: string
   roundIndex?: number
   orderInRound?: number
   content: string
@@ -707,6 +705,7 @@ export type QuestionCreateManyGameInput = {
 }
 
 export type QuestionUpdateWithoutGameInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   roundIndex?: Prisma.IntFieldUpdateOperationsInput | number
   orderInRound?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
@@ -721,7 +720,7 @@ export type QuestionUpdateWithoutGameInput = {
 }
 
 export type QuestionUncheckedUpdateWithoutGameInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   roundIndex?: Prisma.IntFieldUpdateOperationsInput | number
   orderInRound?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
@@ -736,7 +735,7 @@ export type QuestionUncheckedUpdateWithoutGameInput = {
 }
 
 export type QuestionUncheckedUpdateManyWithoutGameInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   roundIndex?: Prisma.IntFieldUpdateOperationsInput | number
   orderInRound?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
@@ -836,7 +835,7 @@ export type $QuestionPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     game: Prisma.$GamePayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
-    id: number
+    id: string
     gameId: string
     roundIndex: number
     orderInRound: number
@@ -1273,7 +1272,7 @@ export interface Prisma__QuestionClient<T, Null = never, ExtArgs extends runtime
  * Fields of the Question model
  */
 export interface QuestionFieldRefs {
-  readonly id: Prisma.FieldRef<"Question", 'Int'>
+  readonly id: Prisma.FieldRef<"Question", 'String'>
   readonly gameId: Prisma.FieldRef<"Question", 'String'>
   readonly roundIndex: Prisma.FieldRef<"Question", 'Int'>
   readonly orderInRound: Prisma.FieldRef<"Question", 'Int'>

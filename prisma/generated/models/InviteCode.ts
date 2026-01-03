@@ -20,35 +20,23 @@ export type InviteCodeModel = runtime.Types.Result.DefaultSelection<Prisma.$Invi
 
 export type AggregateInviteCode = {
   _count: InviteCodeCountAggregateOutputType | null
-  _avg: InviteCodeAvgAggregateOutputType | null
-  _sum: InviteCodeSumAggregateOutputType | null
   _min: InviteCodeMinAggregateOutputType | null
   _max: InviteCodeMaxAggregateOutputType | null
 }
 
-export type InviteCodeAvgAggregateOutputType = {
-  id: number | null
-  usedById: number | null
-}
-
-export type InviteCodeSumAggregateOutputType = {
-  id: number | null
-  usedById: number | null
-}
-
 export type InviteCodeMinAggregateOutputType = {
-  id: number | null
+  id: string | null
   code: string | null
-  usedById: number | null
+  usedById: string | null
   usedAt: Date | null
   createdAt: Date | null
   note: string | null
 }
 
 export type InviteCodeMaxAggregateOutputType = {
-  id: number | null
+  id: string | null
   code: string | null
-  usedById: number | null
+  usedById: string | null
   usedAt: Date | null
   createdAt: Date | null
   note: string | null
@@ -64,16 +52,6 @@ export type InviteCodeCountAggregateOutputType = {
   _all: number
 }
 
-
-export type InviteCodeAvgAggregateInputType = {
-  id?: true
-  usedById?: true
-}
-
-export type InviteCodeSumAggregateInputType = {
-  id?: true
-  usedById?: true
-}
 
 export type InviteCodeMinAggregateInputType = {
   id?: true
@@ -141,18 +119,6 @@ export type InviteCodeAggregateArgs<ExtArgs extends runtime.Types.Extensions.Int
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
-   * Select which fields to average
-  **/
-  _avg?: InviteCodeAvgAggregateInputType
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-   * 
-   * Select which fields to sum
-  **/
-  _sum?: InviteCodeSumAggregateInputType
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-   * 
    * Select which fields to find the minimum value
   **/
   _min?: InviteCodeMinAggregateInputType
@@ -183,22 +149,18 @@ export type InviteCodeGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inter
   take?: number
   skip?: number
   _count?: InviteCodeCountAggregateInputType | true
-  _avg?: InviteCodeAvgAggregateInputType
-  _sum?: InviteCodeSumAggregateInputType
   _min?: InviteCodeMinAggregateInputType
   _max?: InviteCodeMaxAggregateInputType
 }
 
 export type InviteCodeGroupByOutputType = {
-  id: number
+  id: string
   code: string
-  usedById: number | null
+  usedById: string | null
   usedAt: Date | null
   createdAt: Date
   note: string | null
   _count: InviteCodeCountAggregateOutputType | null
-  _avg: InviteCodeAvgAggregateOutputType | null
-  _sum: InviteCodeSumAggregateOutputType | null
   _min: InviteCodeMinAggregateOutputType | null
   _max: InviteCodeMaxAggregateOutputType | null
 }
@@ -222,9 +184,9 @@ export type InviteCodeWhereInput = {
   AND?: Prisma.InviteCodeWhereInput | Prisma.InviteCodeWhereInput[]
   OR?: Prisma.InviteCodeWhereInput[]
   NOT?: Prisma.InviteCodeWhereInput | Prisma.InviteCodeWhereInput[]
-  id?: Prisma.IntFilter<"InviteCode"> | number
+  id?: Prisma.StringFilter<"InviteCode"> | string
   code?: Prisma.StringFilter<"InviteCode"> | string
-  usedById?: Prisma.IntNullableFilter<"InviteCode"> | number | null
+  usedById?: Prisma.StringNullableFilter<"InviteCode"> | string | null
   usedAt?: Prisma.DateTimeNullableFilter<"InviteCode"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"InviteCode"> | Date | string
   note?: Prisma.StringNullableFilter<"InviteCode"> | string | null
@@ -242,12 +204,12 @@ export type InviteCodeOrderByWithRelationInput = {
 }
 
 export type InviteCodeWhereUniqueInput = Prisma.AtLeast<{
-  id?: number
+  id?: string
   code?: string
   AND?: Prisma.InviteCodeWhereInput | Prisma.InviteCodeWhereInput[]
   OR?: Prisma.InviteCodeWhereInput[]
   NOT?: Prisma.InviteCodeWhereInput | Prisma.InviteCodeWhereInput[]
-  usedById?: Prisma.IntNullableFilter<"InviteCode"> | number | null
+  usedById?: Prisma.StringNullableFilter<"InviteCode"> | string | null
   usedAt?: Prisma.DateTimeNullableFilter<"InviteCode"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"InviteCode"> | Date | string
   note?: Prisma.StringNullableFilter<"InviteCode"> | string | null
@@ -262,25 +224,24 @@ export type InviteCodeOrderByWithAggregationInput = {
   createdAt?: Prisma.SortOrder
   note?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.InviteCodeCountOrderByAggregateInput
-  _avg?: Prisma.InviteCodeAvgOrderByAggregateInput
   _max?: Prisma.InviteCodeMaxOrderByAggregateInput
   _min?: Prisma.InviteCodeMinOrderByAggregateInput
-  _sum?: Prisma.InviteCodeSumOrderByAggregateInput
 }
 
 export type InviteCodeScalarWhereWithAggregatesInput = {
   AND?: Prisma.InviteCodeScalarWhereWithAggregatesInput | Prisma.InviteCodeScalarWhereWithAggregatesInput[]
   OR?: Prisma.InviteCodeScalarWhereWithAggregatesInput[]
   NOT?: Prisma.InviteCodeScalarWhereWithAggregatesInput | Prisma.InviteCodeScalarWhereWithAggregatesInput[]
-  id?: Prisma.IntWithAggregatesFilter<"InviteCode"> | number
+  id?: Prisma.StringWithAggregatesFilter<"InviteCode"> | string
   code?: Prisma.StringWithAggregatesFilter<"InviteCode"> | string
-  usedById?: Prisma.IntNullableWithAggregatesFilter<"InviteCode"> | number | null
+  usedById?: Prisma.StringNullableWithAggregatesFilter<"InviteCode"> | string | null
   usedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"InviteCode"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"InviteCode"> | Date | string
   note?: Prisma.StringNullableWithAggregatesFilter<"InviteCode"> | string | null
 }
 
 export type InviteCodeCreateInput = {
+  id?: string
   code: string
   usedAt?: Date | string | null
   createdAt?: Date | string
@@ -289,15 +250,16 @@ export type InviteCodeCreateInput = {
 }
 
 export type InviteCodeUncheckedCreateInput = {
-  id?: number
+  id?: string
   code: string
-  usedById?: number | null
+  usedById?: string | null
   usedAt?: Date | string | null
   createdAt?: Date | string
   note?: string | null
 }
 
 export type InviteCodeUpdateInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
   usedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -306,24 +268,25 @@ export type InviteCodeUpdateInput = {
 }
 
 export type InviteCodeUncheckedUpdateInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
-  usedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  usedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   usedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type InviteCodeCreateManyInput = {
-  id?: number
+  id?: string
   code: string
-  usedById?: number | null
+  usedById?: string | null
   usedAt?: Date | string | null
   createdAt?: Date | string
   note?: string | null
 }
 
 export type InviteCodeUpdateManyMutationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
   usedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -331,9 +294,9 @@ export type InviteCodeUpdateManyMutationInput = {
 }
 
 export type InviteCodeUncheckedUpdateManyInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
-  usedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  usedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   usedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -358,11 +321,6 @@ export type InviteCodeCountOrderByAggregateInput = {
   note?: Prisma.SortOrder
 }
 
-export type InviteCodeAvgOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  usedById?: Prisma.SortOrder
-}
-
 export type InviteCodeMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   code?: Prisma.SortOrder
@@ -379,11 +337,6 @@ export type InviteCodeMinOrderByAggregateInput = {
   usedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   note?: Prisma.SortOrder
-}
-
-export type InviteCodeSumOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  usedById?: Prisma.SortOrder
 }
 
 export type InviteCodeCreateNestedManyWithoutUsedByInput = {
@@ -429,6 +382,7 @@ export type InviteCodeUncheckedUpdateManyWithoutUsedByNestedInput = {
 }
 
 export type InviteCodeCreateWithoutUsedByInput = {
+  id?: string
   code: string
   usedAt?: Date | string | null
   createdAt?: Date | string
@@ -436,7 +390,7 @@ export type InviteCodeCreateWithoutUsedByInput = {
 }
 
 export type InviteCodeUncheckedCreateWithoutUsedByInput = {
-  id?: number
+  id?: string
   code: string
   usedAt?: Date | string | null
   createdAt?: Date | string
@@ -473,16 +427,16 @@ export type InviteCodeScalarWhereInput = {
   AND?: Prisma.InviteCodeScalarWhereInput | Prisma.InviteCodeScalarWhereInput[]
   OR?: Prisma.InviteCodeScalarWhereInput[]
   NOT?: Prisma.InviteCodeScalarWhereInput | Prisma.InviteCodeScalarWhereInput[]
-  id?: Prisma.IntFilter<"InviteCode"> | number
+  id?: Prisma.StringFilter<"InviteCode"> | string
   code?: Prisma.StringFilter<"InviteCode"> | string
-  usedById?: Prisma.IntNullableFilter<"InviteCode"> | number | null
+  usedById?: Prisma.StringNullableFilter<"InviteCode"> | string | null
   usedAt?: Prisma.DateTimeNullableFilter<"InviteCode"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"InviteCode"> | Date | string
   note?: Prisma.StringNullableFilter<"InviteCode"> | string | null
 }
 
 export type InviteCodeCreateManyUsedByInput = {
-  id?: number
+  id?: string
   code: string
   usedAt?: Date | string | null
   createdAt?: Date | string
@@ -490,6 +444,7 @@ export type InviteCodeCreateManyUsedByInput = {
 }
 
 export type InviteCodeUpdateWithoutUsedByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
   usedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -497,7 +452,7 @@ export type InviteCodeUpdateWithoutUsedByInput = {
 }
 
 export type InviteCodeUncheckedUpdateWithoutUsedByInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
   usedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -505,7 +460,7 @@ export type InviteCodeUncheckedUpdateWithoutUsedByInput = {
 }
 
 export type InviteCodeUncheckedUpdateManyWithoutUsedByInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
+  id?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
   usedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -570,9 +525,9 @@ export type $InviteCodePayload<ExtArgs extends runtime.Types.Extensions.Internal
     usedBy: Prisma.$UserPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
-    id: number
+    id: string
     code: string
-    usedById: number | null
+    usedById: string | null
     usedAt: Date | null
     createdAt: Date
     note: string | null
@@ -1000,9 +955,9 @@ export interface Prisma__InviteCodeClient<T, Null = never, ExtArgs extends runti
  * Fields of the InviteCode model
  */
 export interface InviteCodeFieldRefs {
-  readonly id: Prisma.FieldRef<"InviteCode", 'Int'>
+  readonly id: Prisma.FieldRef<"InviteCode", 'String'>
   readonly code: Prisma.FieldRef<"InviteCode", 'String'>
-  readonly usedById: Prisma.FieldRef<"InviteCode", 'Int'>
+  readonly usedById: Prisma.FieldRef<"InviteCode", 'String'>
   readonly usedAt: Prisma.FieldRef<"InviteCode", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"InviteCode", 'DateTime'>
   readonly note: Prisma.FieldRef<"InviteCode", 'String'>

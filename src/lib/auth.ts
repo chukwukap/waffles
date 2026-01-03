@@ -26,7 +26,7 @@ const domain = getDomain();
 
 export interface AuthResult {
   fid: number;
-  userId: number;
+  userId: string;
 }
 
 export interface ApiError {

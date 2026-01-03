@@ -12,7 +12,7 @@ interface ReferralFunnelProps {
     };
     kFactor: number;
     topReferrers: Array<{
-        id: number;
+        id: string;
         username: string;
         referralCount: number;
         revenueGenerated: number;

@@ -6,7 +6,7 @@ const SESSION_COOKIE_NAME = "admin-session";
 const SESSION_DURATION = 60 * 60 * 24 * 7; // 7 days in seconds
 
 export interface AdminSession {
-  userId: number;
+  userId: string;
   fid: number;
   username: string | null;
   pfpUrl: string | null;

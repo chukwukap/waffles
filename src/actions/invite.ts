@@ -7,8 +7,8 @@ import { validateReferralSchema } from "@/lib/schemas";
 
 interface ValidationSuccess {
   valid: true;
-  inviterId: number;
-  inviteeId: number;
+  inviterId: string;
+  inviteeId: string;
   code: string;
 }
 
@@ -57,7 +57,7 @@ export async function redeemInviteCodeAction(
     if (invitee.hasGameAccess) {
       return {
         valid: true,
-        inviterId: invitee.accessGrantedBy ?? 0,
+        inviterId: invitee.accessGrantedBy ?? "",
         inviteeId: invitee.id,
         code: code,
       };
@@ -151,7 +151,7 @@ export async function redeemInviteCodeAction(
 
       return {
         valid: true,
-        inviterId: 0, // No referrer for admin codes
+        inviterId: "", // No referrer for admin codes
         inviteeId: invitee.id,
         code,
       };

@@ -7,7 +7,7 @@ import { notify } from "@/components/ui/Toaster";
 
 interface QuestFormProps {
     quest?: {
-        id: number;
+        id: string;
         slug: string;
         title: string;
         description: string;

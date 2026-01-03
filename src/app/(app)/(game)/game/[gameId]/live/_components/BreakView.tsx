@@ -23,7 +23,7 @@ interface BreakViewProps {
 
 interface LeaderboardEntry {
   rank: number;
-  userId: number;
+  userId: string;
   fid: number;
   username: string | null;
   pfpUrl: string | null;
