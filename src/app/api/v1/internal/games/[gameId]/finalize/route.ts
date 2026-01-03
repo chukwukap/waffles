@@ -191,12 +191,8 @@ export async function POST(
       `[finalize] Game ${gameId}: Ranked ${entries.length} entries, distributed ${winners.length} prizes`
     );
 
-    // ==========================================
-    // STEP 5: Send Winner Notifications (async, don't block response)
-    // ==========================================
-    sendWinnerNotifications(gameId, winners).catch((err) => {
-      console.error(`[finalize] Notification error:`, err);
-    });
+    // NOTE: Notifications are sent when admin submits results on-chain (settlement.ts)
+    // This keeps finalize focused on DB operations only
 
     // ==========================================
     // STEP 6: Return Success
@@ -221,75 +217,5 @@ export async function POST(
       { error: "Internal server error" },
       { status: 500 }
     );
-  }
-}
-
-/**
- * Send personalized notifications to winners
- */
-async function sendWinnerNotifications(
-  gameId: string,
-  winners: Array<{ rank: number; prize: number; userId: string }>
-) {
-  if (winners.length === 0) return;
-
-  try {
-    // Get users with notification tokens
-    const users = await prisma.user.findMany({
-      where: { id: { in: winners.map((w) => w.userId) } },
-      select: {
-        id: true,
-        fid: true,
-        notifs: {
-          select: { token: true, url: true },
-        },
-      },
-    });
-
-    const userMap = new Map(users.map((u) => [u.id, u]));
-
-    // Send notifications to each winner
-    for (const winner of winners) {
-      const user = userMap.get(winner.userId);
-      if (!user?.notifs?.length) continue;
-
-      const prizeFormatted = winner.prize.toLocaleString("en-US", {
-        style: "currency",
-        currency: "USD",
-        minimumFractionDigits: 2,
-      });
-
-      const rankEmoji =
-        winner.rank === 1 ? "🥇" : winner.rank === 2 ? "🥈" : "🥉";
-      const message = {
-        title: `${rankEmoji} Congratulations!`,
-        body: `You placed #${winner.rank} and won ${prizeFormatted}!`,
-        targetUrl: `${env.rootUrl}/game/${gameId}/result`,
-      };
-
-      // Send to all user's notification tokens
-      for (const token of user.notifs) {
-        try {
-          await fetch(token.url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              recipientFid: user.fid,
-              notification: {
-                title: message.title,
-                body: message.body,
-                targetUrl: message.targetUrl,
-              },
-            }),
-          });
-        } catch (err) {
-          console.error(`[finalize] Failed to notify fid ${user.fid}:`, err);
-        }
-      }
-    }
-
-    console.log(`[finalize] Sent ${winners.length} winner notifications`);
-  } catch (error) {
-    console.error("[finalize] Notification error:", error);
   }
 }
