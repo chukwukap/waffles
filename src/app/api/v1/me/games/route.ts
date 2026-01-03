@@ -23,6 +23,7 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
         game: {
           select: {
             id: true,
+            gameNumber: true,
             onchainId: true,
             title: true,
             theme: true,
@@ -49,6 +50,7 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
       answeredQuestions: entry.answered,
       game: {
         id: entry.game.id,
+        gameNumber: entry.game.gameNumber,
         onchainId: entry.game.onchainId,
         title: entry.game.title,
         theme: entry.game.theme,

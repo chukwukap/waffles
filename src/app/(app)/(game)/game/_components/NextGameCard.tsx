@@ -141,7 +141,7 @@ export function NextGameCard({ game }: NextGameCardProps) {
               <Image src="/images/icons/game-controller.png" alt="controller" width={30} height={30} />
             </motion.div>
             <span className="font-body text-white uppercase text-[26px] leading-[92%] tracking-[-0.03em]">
-              WAFFLES #{game.id.toString().padStart(3, "0")}
+              WAFFLES #{game.gameNumber.toString().padStart(3, "0")}
             </span>
           </div>
         </motion.div>

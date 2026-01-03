@@ -27,6 +27,7 @@ export type AggregateGame = {
 }
 
 export type GameAvgAggregateOutputType = {
+  gameNumber: number | null
   tierPrices: number | null
   prizePool: number | null
   playerCount: number | null
@@ -35,6 +36,7 @@ export type GameAvgAggregateOutputType = {
 }
 
 export type GameSumAggregateOutputType = {
+  gameNumber: number | null
   tierPrices: number[]
   prizePool: number | null
   playerCount: number | null
@@ -44,6 +46,7 @@ export type GameSumAggregateOutputType = {
 
 export type GameMinAggregateOutputType = {
   id: string | null
+  gameNumber: number | null
   onchainId: string | null
   title: string | null
   description: string | null
@@ -64,6 +67,7 @@ export type GameMinAggregateOutputType = {
 
 export type GameMaxAggregateOutputType = {
   id: string | null
+  gameNumber: number | null
   onchainId: string | null
   title: string | null
   description: string | null
@@ -84,6 +88,7 @@ export type GameMaxAggregateOutputType = {
 
 export type GameCountAggregateOutputType = {
   id: number
+  gameNumber: number
   onchainId: number
   title: number
   description: number
@@ -106,6 +111,7 @@ export type GameCountAggregateOutputType = {
 
 
 export type GameAvgAggregateInputType = {
+  gameNumber?: true
   tierPrices?: true
   prizePool?: true
   playerCount?: true
@@ -114,6 +120,7 @@ export type GameAvgAggregateInputType = {
 }
 
 export type GameSumAggregateInputType = {
+  gameNumber?: true
   tierPrices?: true
   prizePool?: true
   playerCount?: true
@@ -123,6 +130,7 @@ export type GameSumAggregateInputType = {
 
 export type GameMinAggregateInputType = {
   id?: true
+  gameNumber?: true
   onchainId?: true
   title?: true
   description?: true
@@ -143,6 +151,7 @@ export type GameMinAggregateInputType = {
 
 export type GameMaxAggregateInputType = {
   id?: true
+  gameNumber?: true
   onchainId?: true
   title?: true
   description?: true
@@ -163,6 +172,7 @@ export type GameMaxAggregateInputType = {
 
 export type GameCountAggregateInputType = {
   id?: true
+  gameNumber?: true
   onchainId?: true
   title?: true
   description?: true
@@ -271,6 +281,7 @@ export type GameGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
 
 export type GameGroupByOutputType = {
   id: string
+  gameNumber: number
   onchainId: string | null
   title: string
   description: string | null
@@ -315,6 +326,7 @@ export type GameWhereInput = {
   OR?: Prisma.GameWhereInput[]
   NOT?: Prisma.GameWhereInput | Prisma.GameWhereInput[]
   id?: Prisma.StringFilter<"Game"> | string
+  gameNumber?: Prisma.IntFilter<"Game"> | number
   onchainId?: Prisma.StringNullableFilter<"Game"> | string | null
   title?: Prisma.StringFilter<"Game"> | string
   description?: Prisma.StringNullableFilter<"Game"> | string | null
@@ -339,6 +351,7 @@ export type GameWhereInput = {
 
 export type GameOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  gameNumber?: Prisma.SortOrder
   onchainId?: Prisma.SortOrderInput | Prisma.SortOrder
   title?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -363,6 +376,7 @@ export type GameOrderByWithRelationInput = {
 
 export type GameWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  gameNumber?: number
   onchainId?: string
   AND?: Prisma.GameWhereInput | Prisma.GameWhereInput[]
   OR?: Prisma.GameWhereInput[]
@@ -386,10 +400,11 @@ export type GameWhereUniqueInput = Prisma.AtLeast<{
   questions?: Prisma.QuestionListRelationFilter
   entries?: Prisma.GameEntryListRelationFilter
   chats?: Prisma.ChatListRelationFilter
-}, "id" | "onchainId">
+}, "id" | "gameNumber" | "onchainId">
 
 export type GameOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  gameNumber?: Prisma.SortOrder
   onchainId?: Prisma.SortOrderInput | Prisma.SortOrder
   title?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -419,6 +434,7 @@ export type GameScalarWhereWithAggregatesInput = {
   OR?: Prisma.GameScalarWhereWithAggregatesInput[]
   NOT?: Prisma.GameScalarWhereWithAggregatesInput | Prisma.GameScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Game"> | string
+  gameNumber?: Prisma.IntWithAggregatesFilter<"Game"> | number
   onchainId?: Prisma.StringNullableWithAggregatesFilter<"Game"> | string | null
   title?: Prisma.StringWithAggregatesFilter<"Game"> | string
   description?: Prisma.StringNullableWithAggregatesFilter<"Game"> | string | null
@@ -440,6 +456,7 @@ export type GameScalarWhereWithAggregatesInput = {
 
 export type GameCreateInput = {
   id?: string
+  gameNumber?: number
   onchainId?: string | null
   title: string
   description?: string | null
@@ -464,6 +481,7 @@ export type GameCreateInput = {
 
 export type GameUncheckedCreateInput = {
   id?: string
+  gameNumber?: number
   onchainId?: string | null
   title: string
   description?: string | null
@@ -512,6 +530,7 @@ export type GameUpdateInput = {
 
 export type GameUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  gameNumber?: Prisma.IntFieldUpdateOperationsInput | number
   onchainId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -536,6 +555,7 @@ export type GameUncheckedUpdateInput = {
 
 export type GameCreateManyInput = {
   id?: string
+  gameNumber?: number
   onchainId?: string | null
   title: string
   description?: string | null
@@ -578,6 +598,7 @@ export type GameUpdateManyMutationInput = {
 
 export type GameUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  gameNumber?: Prisma.IntFieldUpdateOperationsInput | number
   onchainId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -607,6 +628,7 @@ export type FloatNullableListFilter<$PrismaModel = never> = {
 
 export type GameCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  gameNumber?: Prisma.SortOrder
   onchainId?: Prisma.SortOrder
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
@@ -627,6 +649,7 @@ export type GameCountOrderByAggregateInput = {
 }
 
 export type GameAvgOrderByAggregateInput = {
+  gameNumber?: Prisma.SortOrder
   tierPrices?: Prisma.SortOrder
   prizePool?: Prisma.SortOrder
   playerCount?: Prisma.SortOrder
@@ -636,6 +659,7 @@ export type GameAvgOrderByAggregateInput = {
 
 export type GameMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  gameNumber?: Prisma.SortOrder
   onchainId?: Prisma.SortOrder
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
@@ -656,6 +680,7 @@ export type GameMaxOrderByAggregateInput = {
 
 export type GameMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  gameNumber?: Prisma.SortOrder
   onchainId?: Prisma.SortOrder
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
@@ -675,6 +700,7 @@ export type GameMinOrderByAggregateInput = {
 }
 
 export type GameSumOrderByAggregateInput = {
+  gameNumber?: Prisma.SortOrder
   tierPrices?: Prisma.SortOrder
   prizePool?: Prisma.SortOrder
   playerCount?: Prisma.SortOrder
@@ -752,6 +778,7 @@ export type GameUpdateOneRequiredWithoutChatsNestedInput = {
 
 export type GameCreateWithoutQuestionsInput = {
   id?: string
+  gameNumber?: number
   onchainId?: string | null
   title: string
   description?: string | null
@@ -775,6 +802,7 @@ export type GameCreateWithoutQuestionsInput = {
 
 export type GameUncheckedCreateWithoutQuestionsInput = {
   id?: string
+  gameNumber?: number
   onchainId?: string | null
   title: string
   description?: string | null
@@ -837,6 +865,7 @@ export type GameUpdateWithoutQuestionsInput = {
 
 export type GameUncheckedUpdateWithoutQuestionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  gameNumber?: Prisma.IntFieldUpdateOperationsInput | number
   onchainId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -860,6 +889,7 @@ export type GameUncheckedUpdateWithoutQuestionsInput = {
 
 export type GameCreateWithoutEntriesInput = {
   id?: string
+  gameNumber?: number
   onchainId?: string | null
   title: string
   description?: string | null
@@ -883,6 +913,7 @@ export type GameCreateWithoutEntriesInput = {
 
 export type GameUncheckedCreateWithoutEntriesInput = {
   id?: string
+  gameNumber?: number
   onchainId?: string | null
   title: string
   description?: string | null
@@ -945,6 +976,7 @@ export type GameUpdateWithoutEntriesInput = {
 
 export type GameUncheckedUpdateWithoutEntriesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  gameNumber?: Prisma.IntFieldUpdateOperationsInput | number
   onchainId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -968,6 +1000,7 @@ export type GameUncheckedUpdateWithoutEntriesInput = {
 
 export type GameCreateWithoutChatsInput = {
   id?: string
+  gameNumber?: number
   onchainId?: string | null
   title: string
   description?: string | null
@@ -991,6 +1024,7 @@ export type GameCreateWithoutChatsInput = {
 
 export type GameUncheckedCreateWithoutChatsInput = {
   id?: string
+  gameNumber?: number
   onchainId?: string | null
   title: string
   description?: string | null
@@ -1053,6 +1087,7 @@ export type GameUpdateWithoutChatsInput = {
 
 export type GameUncheckedUpdateWithoutChatsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  gameNumber?: Prisma.IntFieldUpdateOperationsInput | number
   onchainId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1125,6 +1160,7 @@ export type GameCountOutputTypeCountChatsArgs<ExtArgs extends runtime.Types.Exte
 
 export type GameSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  gameNumber?: boolean
   onchainId?: boolean
   title?: boolean
   description?: boolean
@@ -1150,6 +1186,7 @@ export type GameSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
 
 export type GameSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  gameNumber?: boolean
   onchainId?: boolean
   title?: boolean
   description?: boolean
@@ -1171,6 +1208,7 @@ export type GameSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
 
 export type GameSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  gameNumber?: boolean
   onchainId?: boolean
   title?: boolean
   description?: boolean
@@ -1192,6 +1230,7 @@ export type GameSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
 
 export type GameSelectScalar = {
   id?: boolean
+  gameNumber?: boolean
   onchainId?: boolean
   title?: boolean
   description?: boolean
@@ -1211,7 +1250,7 @@ export type GameSelectScalar = {
   updatedAt?: boolean
 }
 
-export type GameOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "onchainId" | "title" | "description" | "theme" | "coverUrl" | "startsAt" | "endsAt" | "tierPrices" | "prizePool" | "playerCount" | "roundBreakSec" | "maxPlayers" | "merkleRoot" | "settlementTxHash" | "settledAt" | "createdAt" | "updatedAt", ExtArgs["result"]["game"]>
+export type GameOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "gameNumber" | "onchainId" | "title" | "description" | "theme" | "coverUrl" | "startsAt" | "endsAt" | "tierPrices" | "prizePool" | "playerCount" | "roundBreakSec" | "maxPlayers" | "merkleRoot" | "settlementTxHash" | "settledAt" | "createdAt" | "updatedAt", ExtArgs["result"]["game"]>
 export type GameInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   questions?: boolean | Prisma.Game$questionsArgs<ExtArgs>
   entries?: boolean | Prisma.Game$entriesArgs<ExtArgs>
@@ -1230,6 +1269,7 @@ export type $GamePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
+    gameNumber: number
     onchainId: string | null
     title: string
     description: string | null
@@ -1674,6 +1714,7 @@ export interface Prisma__GameClient<T, Null = never, ExtArgs extends runtime.Typ
  */
 export interface GameFieldRefs {
   readonly id: Prisma.FieldRef<"Game", 'String'>
+  readonly gameNumber: Prisma.FieldRef<"Game", 'Int'>
   readonly onchainId: Prisma.FieldRef<"Game", 'String'>
   readonly title: Prisma.FieldRef<"Game", 'String'>
   readonly description: Prisma.FieldRef<"Game", 'String'>

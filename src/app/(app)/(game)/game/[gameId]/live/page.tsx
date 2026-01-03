@@ -26,6 +26,7 @@ export interface LiveGameQuestion {
 
 export interface LiveGameData {
   id: string;
+  gameNumber: number;
   endsAt: Date;
   roundBreakSec: number;
   prizePool: number;
@@ -43,6 +44,7 @@ const getGame = cache(async (gameId: string) => {
     where: { id: gameId },
     select: {
       id: true,
+      gameNumber: true,
       startsAt: true,
       endsAt: true,
       roundBreakSec: true,
@@ -91,6 +93,7 @@ const getGame = cache(async (gameId: string) => {
 
   return {
     id: game.id,
+    gameNumber: game.gameNumber,
     endsAt: game.endsAt,
     roundBreakSec: game.roundBreakSec,
     prizePool: game.prizePool,

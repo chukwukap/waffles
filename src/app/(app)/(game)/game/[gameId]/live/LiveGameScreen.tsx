@@ -97,6 +97,7 @@ export default function LiveGameScreen({ game }: { game: LiveGameData }) {
                     score={score}
                     gameTheme={game.theme}
                     gameId={game.id}
+                    gameNumber={game.gameNumber}
                 />
             );
     }

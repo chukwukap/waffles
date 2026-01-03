@@ -34,6 +34,7 @@ export default function GamesPage() {
   // Transform to expected format
   const gameHistory = games.map((g) => ({
     id: g.gameId,
+    gameNumber: g.game.gameNumber,
     onchainId: g.game.onchainId,
     name: g.game.title,
     score: g.score,

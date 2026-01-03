@@ -15,12 +15,14 @@ interface GameCompleteScreenProps {
     score: number;
     gameTheme: string;
     gameId: string;
+    gameNumber: number;
 }
 
 export default function GameCompleteScreen({
     score,
     gameTheme,
     gameId,
+    gameNumber,
 }: GameCompleteScreenProps) {
     const hasPlayedSound = useRef(false);
 
@@ -82,7 +84,7 @@ export default function GameCompleteScreen({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.2 }}
                 >
-                    WAFFLES #{String(gameId).padStart(3, "0")}
+                    WAFFLES #{String(gameNumber).padStart(3, "0")}
                 </motion.h1>
 
                 <motion.div

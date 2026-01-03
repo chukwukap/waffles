@@ -66,6 +66,7 @@ export default function ResultPageClient({
   const { context } = useMiniKit();
   const { composeCastAsync } = useComposeCast();
   const gameId = game?.id
+  const gameNumber = game?.gameNumber ?? 0
   const { entry, isLoading: entryLoading, refetchEntry } = useGameEntry({ gameId });
 
   const hasPlayedSound = useRef(false);
@@ -403,7 +404,7 @@ export default function ResultPageClient({
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, delay: 0.2 }}
           >
-            WAFFLES #{String(gameId).padStart(3, "0")}
+            WAFFLES #{String(gameNumber).padStart(3, "0")}
           </motion.h1>
 
           <motion.div

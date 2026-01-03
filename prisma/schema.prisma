@@ -186,7 +186,8 @@ model CompletedQuest {
 // ==========================================
 
 model Game {
-  id String @id @default(cuid())
+  id         String @id @default(cuid())
+  gameNumber Int    @unique @default(autoincrement()) // Human-readable: WAFFLES #001
 
   // -- ON-CHAIN IDENTITY (random bytes32, stored as 0x-prefixed hex string) --
   onchainId String? @unique @db.VarChar(66)

@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 // Localized type
 export interface GameHistoryEntry {
   id: number | string;
+  gameNumber: number;
   onchainId: string | null;
   name: string;
   score: number;

@@ -19,6 +19,7 @@ export interface ProfileGame {
   answeredQuestions: number;
   game: {
     id: number;
+    gameNumber: number;
     onchainId: string | null;
     title: string;
     theme: string;
