@@ -3,17 +3,13 @@ import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { z } from "zod";
 
-const PAGE_SIZE = env.nextPublicLeaderboardPageSize;
+const PAGE_SIZE = env.nextPublicLeaderboardPageSize || 25;
 
 const querySchema = z.object({
   tab: z.enum(["current", "allTime", "game"]).optional(),
   gameId: z.coerce.number().int().positive().optional(),
   page: z.coerce.number().int().nonnegative().default(0),
-  limit: z.coerce
-    .number()
-    .int()
-    .min(1)
-    .default(env.nextPublicLeaderboardPageSize),
+  limit: z.coerce.number().int().min(1).default(25),
 });
 
 interface LeaderboardEntry {
@@ -43,6 +39,7 @@ export async function GET(request: NextRequest) {
       tab: searchParams.get("tab"),
       gameId: searchParams.get("gameId"),
       page: searchParams.get("page") || "0",
+      limit: searchParams.get("limit") || String(PAGE_SIZE),
     });
 
     if (!validation.success) {
