@@ -12,7 +12,7 @@ interface RowProps {
 }
 
 export function Row({ entry, isCurrentUser = false }: RowProps) {
-  const formattedPoints = entry.points.toLocaleString(undefined, {
+  const formattedPoints = entry.winnings.toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });

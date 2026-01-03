@@ -20,7 +20,7 @@ interface LeaderboardEntry {
   fid: number;
   rank: number;
   username: string | null;
-  points: number;
+  winnings: number; // USDC winnings, not points
   pfpUrl: string | null;
 }
 
@@ -28,7 +28,7 @@ interface LeaderboardResponse {
   users: LeaderboardEntry[];
   hasMore: boolean;
   totalPlayers?: number;
-  totalPoints?: number;
+  totalWinnings?: number; // Total USDC winnings
 }
 
 /**
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
 
     let entries: LeaderboardEntry[] = [];
     let totalCount = 0;
-    let totalPoints = 0;
+    let totalWinnings = 0;
 
     if (tab === "current") {
       // --- Query for "Current Game" Tab ---
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
           users: [],
           hasMore: false,
           totalPlayers: 0,
-          totalPoints: 0,
+          totalWinnings: 0,
         });
       }
 
@@ -82,12 +82,12 @@ export async function GET(request: NextRequest) {
         prisma.gameEntry.findMany({
           where: { gameId: currentGame.id, paidAt: { not: null } },
           select: {
-            score: true,
+            prize: true,
             user: {
               select: { id: true, fid: true, username: true, pfpUrl: true },
             },
           },
-          orderBy: { score: "desc" },
+          orderBy: { prize: "desc" },
           take: PAGE_SIZE,
           skip: page * PAGE_SIZE,
         }),
@@ -102,17 +102,17 @@ export async function GET(request: NextRequest) {
         fid: p.user.fid,
         rank: page * PAGE_SIZE + index + 1,
         username: p.user.username,
-        points: p.score,
+        winnings: p.prize ?? 0,
         pfpUrl: p.user.pfpUrl,
       }));
     } else {
       // --- Query for "All Time" Tab ---
-      const [aggregatedScores, totalCountResult] = await prisma.$transaction([
+      const [aggregatedPrizes, totalCountResult] = await prisma.$transaction([
         prisma.gameEntry.groupBy({
           by: ["userId"],
           where: { paidAt: { not: null } },
-          _sum: { score: true },
-          orderBy: { _sum: { score: "desc" } },
+          _sum: { prize: true },
+          orderBy: { _sum: { prize: "desc" } },
           take: PAGE_SIZE,
           skip: page * PAGE_SIZE,
         }),
@@ -124,7 +124,7 @@ export async function GET(request: NextRequest) {
       ]);
 
       totalCount = totalCountResult.length;
-      const userIds = aggregatedScores.map((s) => s.userId);
+      const userIds = aggregatedPrizes.map((s) => s.userId);
 
       if (userIds.length > 0) {
         const users = await prisma.user.findMany({
@@ -133,16 +133,16 @@ export async function GET(request: NextRequest) {
         });
         const usersMap = new Map(users.map((u) => [u.id, u]));
 
-        entries = aggregatedScores.map((s, index) => {
+        entries = aggregatedPrizes.map((s, index) => {
           const user = usersMap.get(s.userId);
-          const points = s._sum?.score ?? 0;
-          totalPoints += points;
+          const winnings = s._sum?.prize ?? 0;
+          totalWinnings += winnings;
           return {
-            id: user?.id ?? '',
+            id: user?.id ?? "",
             fid: user?.fid ?? 0,
             rank: page * PAGE_SIZE + index + 1,
             username: user?.username ?? "Unknown",
-            points: points,
+            winnings: winnings,
             pfpUrl: user?.pfpUrl ?? null,
           };
         });
@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
       users: entries,
       hasMore: (page + 1) * PAGE_SIZE < totalCount,
       totalPlayers: totalCount,
-      totalPoints: totalPoints,
+      totalWinnings: totalWinnings,
     });
   } catch (error) {
     console.error("GET /api/v1/leaderboard Error:", error);

@@ -7,7 +7,7 @@ import { farcasterFrame } from "@farcaster/miniapp-wagmi-connector";
 import sdk from "@farcaster/miniapp-sdk";
 
 import { useGameEntry } from "./useGameEntry";
-import { useTokenAllowance, useContractToken } from "./waffleContractHooks";
+import { useTokenAllowance } from "./waffleContractHooks";
 import { notify } from "@/components/ui/Toaster";
 import { playSound } from "@/lib/sounds";
 import waffleGameAbi from "@/lib/chain/abi.json";
@@ -70,9 +70,7 @@ export function useTicketPurchase(
     [price]
   );
 
-  const { data: tokenAddress } = useContractToken() as {
-    data: `0x${string}`;
-  };
+  const tokenAddress = TOKEN_CONFIG.address;
   const { data: allowance } = useTokenAllowance(
     address as `0x${string}`,
     tokenAddress

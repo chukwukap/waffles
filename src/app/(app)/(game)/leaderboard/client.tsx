@@ -24,7 +24,7 @@ function generateMockEntries(count: number): LeaderboardEntry[] {
     rank: i + 1,
     fid: 100000 + i,
     username: names[i % names.length] + (i >= names.length ? `_${Math.floor(i / names.length)}` : ""),
-    points: Math.max(10000 - i * 250, 100),
+    winnings: Math.max(10000 - i * 250, 100),
     pfpUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${i}`,
   }));
 }

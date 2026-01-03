@@ -65,13 +65,13 @@ async function getGameLeaderboardById(
     prisma.gameEntry.findMany({
       where: { gameId, paidAt: { not: null } }, // Only paid entries
       select: {
-        score: true,
+        prize: true,
         rank: true,
         user: {
           select: { id: true, fid: true, username: true, pfpUrl: true },
         },
       },
-      orderBy: { score: "desc" },
+      orderBy: { prize: "desc" },
       take: PAGE_SIZE,
       skip: page * PAGE_SIZE,
     }),
@@ -83,7 +83,7 @@ async function getGameLeaderboardById(
     fid: e.user.fid,
     rank: e.rank ?? (page * PAGE_SIZE + index + 1),
     username: e.user.username,
-    points: e.score,
+    winnings: e.prize ?? 0,
     pfpUrl: e.user.pfpUrl,
   }));
 
@@ -96,12 +96,12 @@ async function getGameLeaderboardById(
 }
 
 async function getAllTimeLeaderboard(page: number): Promise<LeaderboardData> {
-  // Get aggregated scores grouped by user (using GameEntry)
-  const aggregatedScores = await prisma.gameEntry.groupBy({
+  // Get aggregated prizes grouped by user (using GameEntry)
+  const aggregatedPrizes = await prisma.gameEntry.groupBy({
     by: ["userId"],
     where: { paidAt: { not: null } }, // Only count paid entries
-    _sum: { score: true },
-    orderBy: { _sum: { score: "desc" } },
+    _sum: { prize: true },
+    orderBy: { _sum: { prize: "desc" } },
     take: PAGE_SIZE,
     skip: page * PAGE_SIZE,
   });
@@ -114,12 +114,12 @@ async function getAllTimeLeaderboard(page: number): Promise<LeaderboardData> {
   });
   const total = totalResult.length;
 
-  if (aggregatedScores.length === 0) {
+  if (aggregatedPrizes.length === 0) {
     return { entries: [], hasMore: false, totalPlayers: total };
   }
 
   // Fetch user details
-  const userIds = aggregatedScores.map((s) => s.userId);
+  const userIds = aggregatedPrizes.map((s) => s.userId);
   const users = await prisma.user.findMany({
     where: { id: { in: userIds } },
     select: { id: true, fid: true, username: true, pfpUrl: true },
@@ -127,14 +127,14 @@ async function getAllTimeLeaderboard(page: number): Promise<LeaderboardData> {
 
   const userMap = new Map(users.map((u) => [u.id, u]));
 
-  const entries: LeaderboardEntry[] = aggregatedScores.map((s, index) => {
+  const entries: LeaderboardEntry[] = aggregatedPrizes.map((s, index) => {
     const user = userMap.get(s.userId);
     return {
       id: user?.id ?? 0,
       fid: user?.fid ?? 0,
       rank: page * PAGE_SIZE + index + 1,
       username: user?.username ?? "Unknown",
-      points: s._sum?.score ?? 0,
+      winnings: s._sum?.prize ?? 0,
       pfpUrl: user?.pfpUrl ?? null,
     };
   });
