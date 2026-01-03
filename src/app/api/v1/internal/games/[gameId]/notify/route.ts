@@ -59,7 +59,7 @@ export async function POST(
       {
         title: game.title || "Waffle Game",
         body: message,
-        targetUrl: `${env.rootUrl}/game/${gameId}`,
+        targetUrl: `${env.rootUrl}/game`,
       },
       { fids }
     );

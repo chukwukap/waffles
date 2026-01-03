@@ -105,7 +105,7 @@ async function initializePartyKitRoom(game: {
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
     const res = await fetch(
-      `${partykitUrl}/parties/game/game-${game.id}/init`,
+      `${partykitUrl}/parties/main/game-${game.id}/init`,
       {
         method: "POST",
         headers: {
@@ -379,6 +379,14 @@ export async function updateGameAction(
       entityId: game.id,
       details: { title: game.title },
     });
+
+    // Sync timing to PartyKit (async, don't block response)
+    const { updateGameTiming } = await import("@/lib/partykit");
+    updateGameTiming(
+      game.id,
+      new Date(data.startsAt),
+      new Date(data.endsAt)
+    ).catch((err) => console.error("[UpdateGame] PartyKit sync error:", err));
 
     revalidatePath("/admin/games");
     revalidatePath(`/admin/games/${game.id}`);

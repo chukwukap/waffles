@@ -56,7 +56,7 @@ export async function POST(
       {
         title: "🎮 Game Starting!",
         body: `${game.title || "Your game"} is live now!`,
-        targetUrl: `${env.rootUrl}/game/${gameId}/play`,
+        targetUrl: `${env.rootUrl}/game`,
       },
       { fids }
     );

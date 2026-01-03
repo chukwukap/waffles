@@ -44,3 +44,6 @@ next-env.d.ts
 
 # llm context files
 llm-context.txt
+
+# partykit local state
+.partykit/

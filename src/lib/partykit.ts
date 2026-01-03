@@ -141,3 +141,37 @@ export async function cleanupGameRoom(gameId: number): Promise<void> {
     console.error(`[cleanupGameRoom] Error for game ${gameId}:`, err);
   }
 }
+
+/**
+ * Update game timing in PartyKit storage and reschedule alarms.
+ * Called when admin updates startsAt or endsAt.
+ */
+export async function updateGameTiming(
+  gameId: number,
+  startsAt: Date,
+  endsAt: Date
+): Promise<void> {
+  if (!env.partykitHost || !env.partykitSecret) {
+    console.warn("[updateGameTiming] PartyKit not configured");
+    return;
+  }
+
+  try {
+    const res = await partyFetch(gameId, "update-timing", {
+      startsAt: startsAt.toISOString(),
+      endsAt: endsAt.toISOString(),
+    });
+
+    if (res.ok) {
+      console.log(`[updateGameTiming] Updated timing for game ${gameId}`);
+    } else {
+      const error = await res.text();
+      console.warn(
+        `[updateGameTiming] Failed for game ${gameId}: ${res.status} - ${error}`
+      );
+    }
+  } catch (err) {
+    // Don't throw - sync is best-effort
+    console.error(`[updateGameTiming] Error for game ${gameId}:`, err);
+  }
+}

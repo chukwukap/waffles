@@ -70,7 +70,9 @@ export function useTicketPurchase(
     [price]
   );
 
-  const { data: tokenAddress } = useContractToken() as { data: `0x${string}` };
+  const { data: tokenAddress } = useContractToken() as {
+    data: `0x${string}`;
+  };
   const { data: allowance } = useTokenAllowance(
     address as `0x${string}`,
     tokenAddress

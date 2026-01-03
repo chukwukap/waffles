@@ -40,7 +40,7 @@ async function sendTicketNotification(
   await sendToUser(fid, {
     title: "🧇 Ticket Secured!",
     body: `Game starts ${timeStr}. Don't miss it!`,
-    targetUrl: `${env.rootUrl}/game/${gameId}`,
+    targetUrl: `${env.rootUrl}/game`,
   });
 }
 

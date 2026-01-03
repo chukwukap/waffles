@@ -104,7 +104,7 @@ export function TicketSuccessClient({
         prizePool,
         new Date(startsAt),
         new Date(endsAt),
-        `${env.rootUrl}/game/${gameId}`
+        `${env.rootUrl}/game`
     );
 
     // Calendar handlers

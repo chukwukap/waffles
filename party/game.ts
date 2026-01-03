@@ -305,6 +305,80 @@ export default class GameServer implements Party.Server {
         }
       }
 
+      // ==========================================
+      // UPDATE-TIMING - Called when admin updates game
+      // ==========================================
+      case "update-timing": {
+        if (req.method !== "POST") {
+          return Response.json(
+            { error: "Method not allowed" },
+            { status: 405, headers }
+          );
+        }
+
+        const secret = this.room.env.PARTYKIT_SECRET as string;
+        const authHeader = req.headers.get("Authorization");
+        if (authHeader !== `Bearer ${secret}`) {
+          return Response.json(
+            { error: "Unauthorized" },
+            { status: 401, headers }
+          );
+        }
+
+        try {
+          const body = (await req.json()) as {
+            startsAt: string;
+            endsAt: string;
+          };
+
+          const startsAt = new Date(body.startsAt).getTime();
+          const endsAt = new Date(body.endsAt).getTime();
+          const notifyTime = startsAt - 60 * 1000;
+          const now = Date.now();
+
+          // Check if game is already live
+          const gameState = await this.room.storage.get<GameState>("gameState");
+          if (gameState?.isLive) {
+            // Can't change timing while game is live
+            return Response.json(
+              { error: "Cannot update timing for live game" },
+              { status: 400, headers }
+            );
+          }
+
+          // Update stored timing
+          await this.room.storage.put("startsAt", startsAt);
+          await this.room.storage.put("endsAt", endsAt);
+
+          // Reschedule alarms
+          if (notifyTime > now) {
+            await this.room.storage.put("alarmPhase", "notify" as AlarmPhase);
+            await this.room.storage.setAlarm(notifyTime);
+            console.log(
+              `[update-timing] Rescheduled notify alarm for ${new Date(
+                notifyTime
+              ).toISOString()}`
+            );
+          } else if (startsAt > now) {
+            await this.room.storage.put("alarmPhase", "start" as AlarmPhase);
+            await this.room.storage.setAlarm(startsAt);
+            console.log(
+              `[update-timing] Rescheduled start alarm for ${new Date(
+                startsAt
+              ).toISOString()}`
+            );
+          }
+
+          return Response.json({ success: true }, { headers });
+        } catch (error) {
+          console.error("[update-timing] Error:", error);
+          return Response.json(
+            { error: "Failed to update timing" },
+            { status: 500, headers }
+          );
+        }
+      }
+
       default:
         return Response.json({ error: "Not found" }, { status: 404, headers });
     }

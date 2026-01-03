@@ -35,7 +35,7 @@ export function NextGameCard({ game }: NextGameCardProps) {
 
   // Get user and entry data
   const { user } = useUser();
-  const { entry, refetchEntry } = useGameEntry({
+  const { entry, isLoading: isLoadingEntry, refetchEntry } = useGameEntry({
     gameId: game.id,
     enabled: true,
   });
@@ -92,16 +92,18 @@ export function NextGameCard({ game }: NextGameCardProps) {
     Math.floor((countdown % 3600) / 60)
   )}M ${pad(countdown % 60)}S`;
 
-  // Button config
-  const buttonConfig = hasEnded
-    ? { text: "VIEW RESULTS", disabled: false, href: `/game/${game.id}/result` }
-    : isLive
-      ? hasTicket
-        ? { text: "PLAY NOW", disabled: false, href: `/game/${game.id}/live` }
-        : { text: "GET TICKET", disabled: false, href: null }
-      : hasTicket
-        ? { text: "YOU'RE IN!", disabled: true, href: null }
-        : { text: "BUY WAFFLE", disabled: false, href: null };
+  // Button config - show loading while checking entry to prevent flash
+  const buttonConfig = isLoadingEntry
+    ? { text: "LOADING...", disabled: true, href: null }
+    : hasEnded
+      ? { text: "VIEW RESULTS", disabled: false, href: `/game/${game.id}/result` }
+      : isLive
+        ? hasTicket
+          ? { text: "PLAY NOW", disabled: false, href: `/game/${game.id}/live` }
+          : { text: "GET TICKET", disabled: false, href: null }
+        : hasTicket
+          ? { text: "YOU'RE IN!", disabled: true, href: null }
+          : { text: "BUY WAFFLE", disabled: false, href: null };
 
   const handleButtonClick = () => {
     if (buttonConfig.disabled) return;
