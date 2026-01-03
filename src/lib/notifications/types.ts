@@ -44,7 +44,7 @@ export interface UserWithTokens {
   fid: number;
   username: string | null;
   notifs: Array<{
-    id: number;
+    id: string;
     appFid: number;
     token: string;
     url: string;

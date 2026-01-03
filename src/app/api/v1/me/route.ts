@@ -22,7 +22,7 @@ interface ApiError {
 }
 
 interface MeResponse {
-  id: number;
+  id: string;
   fid: number;
   username: string | null;
   pfpUrl: string | null;
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
     let fid: number;
     try {
       const payload = await client.verifyJwt({ token, domain });
-      fid = payload.sub;
+      fid = Number(payload.sub);
     } catch (e) {
       if (e instanceof Errors.InvalidTokenError) {
         return NextResponse.json<ApiError>(

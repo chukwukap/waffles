@@ -3,7 +3,7 @@ import Link from "next/link";
 import { UserActions } from "@/components/admin/UserActions";
 import { notFound } from "next/navigation";
 
-async function getUser(id: number) {
+async function getUser(id: string) {
     return prisma.user.findUnique({
         where: { id },
         include: {
@@ -59,7 +59,7 @@ export default async function UserDetailsPage({
     params: Promise<{ id: string }>;
 }) {
     const { id } = await params;
-    const user = await getUser(parseInt(id));
+    const user = await getUser(id);
 
     if (!user) {
         notFound();

@@ -3,7 +3,7 @@ import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 interface QuestResponse {
-  id: number;
+  id: string;
   slug: string;
   title: string;
   description: string;

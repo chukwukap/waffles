@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 
 interface Question {
-  id: number;
+  id: string;
   text: string;
   options: string[];
   correct: number;

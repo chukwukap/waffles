@@ -7,7 +7,7 @@ interface GameInsightsProps {
     data: {
         ticketConversion: {
             pending: number;
-            paid: string;
+            paid: number;
             redeemed: number;
             failed: number;
         };

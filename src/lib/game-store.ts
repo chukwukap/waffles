@@ -20,7 +20,7 @@ export type GameEntryData = Pick<
   GameEntry,
   "id" | "score" | "answered" | "paidAt" | "rank" | "prize" | "claimedAt"
 > & {
-  answeredQuestionIds: number[]; // IDs of questions already answered
+  answeredQuestionIds: string[]; // IDs of questions already answered
 };
 
 // ==========================================

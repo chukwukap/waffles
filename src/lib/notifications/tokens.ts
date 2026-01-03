@@ -10,7 +10,7 @@ export async function saveToken(
   fid: number,
   appFid: number,
   details: NotificationDetails
-): Promise<{ success: boolean; userId?: number }> {
+): Promise<{ success: boolean; userId?: string }> {
   const start = Date.now();
 
   try {

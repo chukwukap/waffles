@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { getGamePhase } from "@/lib/types";
 
 interface EntryResponse {
-  id: number;
+  id: string;
   status: string;
   amountUSDC: number;
   gameId: string;

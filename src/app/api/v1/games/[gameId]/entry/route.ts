@@ -89,7 +89,7 @@ export const GET = withAuth<Params>(
 
       // Extract answered question IDs from the answers JSON
       const answersObj = (entry.answers as Record<string, unknown>) || {};
-      const answeredQuestionIds = Object.keys(answersObj).map(Number);
+      const answeredQuestionIds = Object.keys(answersObj);
 
       return NextResponse.json({
         ...entry,

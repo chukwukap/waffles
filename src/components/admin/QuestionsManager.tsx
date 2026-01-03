@@ -297,7 +297,7 @@ function InlineAddQuestion({ gameId, nextRoundIndex, onSuccess }: { gameId: stri
 export function QuestionsManager({ gameId, initialQuestions }: QuestionsManagerProps) {
     const router = useRouter();
     const [questions, setQuestions] = useState(initialQuestions);
-    const [expandedId, setExpandedId] = useState<number | null>(null);
+    const [expandedId, setExpandedId] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
     const sensors = useSensors(

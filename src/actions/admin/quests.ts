@@ -28,7 +28,7 @@ const createQuestSchema = z.object({
   type: z.nativeEnum(QuestType),
   actionUrl: z.string().url().nullable().optional(),
   castHash: z.string().nullable().optional(),
-  targetFid: z.string().nullable().optional(),
+  targetFid: z.number().int().nullable().optional(),
   requiredCount: z.number().int().min(1).default(1),
   isActive: z.boolean().default(true),
   startsAt: z.date().nullable().optional(),

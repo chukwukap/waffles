@@ -16,7 +16,7 @@ const querySchema = z.object({
 });
 
 interface LeaderboardEntry {
-  id: number;
+  id: string;
   fid: number;
   rank: number;
   username: string | null;
@@ -138,7 +138,7 @@ export async function GET(request: NextRequest) {
           const points = s._sum?.score ?? 0;
           totalPoints += points;
           return {
-            id: user?.id ?? 0,
+            id: user?.id ?? '',
             fid: user?.fid ?? 0,
             rank: page * PAGE_SIZE + index + 1,
             username: user?.username ?? "Unknown",

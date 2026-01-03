@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { QuestForm } from "@/components/admin/QuestForm";
 import Link from "next/link";
 
-async function getQuest(id: number) {
+async function getQuest(id: string) {
     const quest = await prisma.quest.findUnique({
         where: { id },
     });
@@ -16,13 +16,13 @@ export default async function EditQuestPage({
     params: Promise<{ id: string }>;
 }) {
     const { id } = await params;
-    const questId = parseInt(id != null ? String(id) : "");
+    
 
-    if (isNaN(questId)) {
+    if (!id) {
         notFound();
     }
 
-    const quest = await getQuest(questId);
+    const quest = await getQuest(id);
 
     if (!quest) {
         notFound();
