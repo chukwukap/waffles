@@ -3,13 +3,16 @@ import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { z } from "zod";
 
-const PAGE_SIZE = env.nextPublicLeaderboardPageSize || 25;
+const PAGE_SIZE = env.nextPublicLeaderboardPageSize;
 
 const querySchema = z.object({
-  tab: z.enum(["current", "allTime", "game"]).optional(),
-  gameId: z.coerce.number().int().positive().optional(),
+  tab: z.enum(["current", "allTime"]).default("current"),
   page: z.coerce.number().int().nonnegative().default(0),
-  limit: z.coerce.number().int().min(1).default(25),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .default(env.nextPublicLeaderboardPageSize),
 });
 
 interface LeaderboardEntry {
@@ -36,10 +39,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const validation = querySchema.safeParse({
-      tab: searchParams.get("tab"),
-      gameId: searchParams.get("gameId"),
+      tab: searchParams.get("tab") || "current",
       page: searchParams.get("page") || "0",
-      limit: searchParams.get("limit") || String(PAGE_SIZE),
     });
 
     if (!validation.success) {
@@ -49,44 +50,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { tab, gameId, page } = validation.data;
+    const { tab, page } = validation.data;
 
     let entries: LeaderboardEntry[] = [];
     let totalCount = 0;
     let totalPoints = 0;
 
-    // If gameId is provided, fetch that specific game
-    if (gameId) {
-      const [players, total] = await prisma.$transaction([
-        prisma.gameEntry.findMany({
-          where: { gameId, paidAt: { not: null } },
-          select: {
-            score: true,
-            rank: true,
-            user: {
-              select: { id: true, fid: true, username: true, pfpUrl: true },
-            },
-          },
-          orderBy: { score: "desc" },
-          take: PAGE_SIZE,
-          skip: page * PAGE_SIZE,
-        }),
-        prisma.gameEntry.count({
-          where: { gameId, paidAt: { not: null } },
-        }),
-      ]);
-
-      totalCount = total;
-      entries = players.map((p, index) => ({
-        id: p.user.id,
-        fid: p.user.fid,
-        rank: p.rank ?? page * PAGE_SIZE + index + 1,
-        username: p.user.username,
-        points: p.score,
-        pfpUrl: p.user.pfpUrl,
-      }));
-    } else if (!tab || tab === "current") {
+    if (tab === "current") {
       // --- Query for "Current Game" Tab ---
+      // Find a live game (startsAt <= now < endsAt)
       const now = new Date();
       const currentGame = await prisma.game.findFirst({
         where: {
