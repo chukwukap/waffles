@@ -42,7 +42,7 @@ export default async function EditGamePage({ params }: { params: Promise<{ id: s
     };
 
     return (
-        <div className="max-w-4xl space-y-6">
+        <div className="max-w-7xl space-y-6">
             <div className="flex items-center gap-4">
                 <Link
                     href={`/admin/games/${game.id}`}

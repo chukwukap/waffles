@@ -98,6 +98,7 @@ export function GameForm({
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [pendingFormData, setPendingFormData] = useState<FormData | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
   // Use transition for form submission to avoid React warning
@@ -132,8 +133,6 @@ export function GameForm({
 
   // Form submission handler
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    if (isEdit) return;
-
     e.preventDefault();
 
     // Validation
@@ -152,6 +151,24 @@ export function GameForm({
 
     setValidationError(null);
     const formData = new FormData(e.currentTarget);
+
+    // For edit mode, submit directly with loading state
+    if (isEdit) {
+      startTransition(async () => {
+        try {
+          const result = await action(null, formData);
+          if (result?.success) {
+            setShowSuccess(true);
+            setTimeout(() => setShowSuccess(false), 3000);
+          }
+        } catch (err) {
+          console.error("Update failed:", err);
+        }
+      });
+      return;
+    }
+
+    // For create mode, show confirmation modal
     setPendingFormData(formData);
     setShowConfirmation(true);
   };
@@ -255,6 +272,16 @@ export function GameForm({
             </p>
           </div>
         ) : null}
+
+        {/* Success Display */}
+        {showSuccess && (
+          <div className="p-4 bg-[#14B985]/10 border border-[#14B985]/30 rounded-2xl flex items-center gap-3 text-[#14B985]">
+            <CheckIcon className="h-5 w-5 shrink-0" />
+            <p className="text-sm font-medium">
+              Game updated successfully!
+            </p>
+          </div>
+        )}
 
         {/* Progress Indicator */}
         <div className="rounded-2xl border border-white/10 p-4">
@@ -795,8 +822,20 @@ export function GameForm({
             disabled={isPending || completionPercentage < 100}
             className="group inline-flex items-center gap-3 px-8 py-4 bg-linear-to-r from-[#FFC931] to-[#FFD966] text-black font-bold rounded-2xl hover:shadow-lg hover:shadow-[#FFC931]/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black focus:ring-[#FFC931] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-display text-lg"
           >
-            {isEdit ? "Save Changes" : "Create Game"}
-            <ArrowRightIcon className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+            {isPending ? (
+              <>
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                {isEdit ? "Saving..." : "Creating..."}
+              </>
+            ) : (
+              <>
+                {isEdit ? "Save Changes" : "Create Game"}
+                <ArrowRightIcon className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </>
+            )}
           </button>
         </div>
       </form>

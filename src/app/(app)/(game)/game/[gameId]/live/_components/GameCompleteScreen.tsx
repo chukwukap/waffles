@@ -9,6 +9,7 @@ import { WaffleButton } from "@/components/buttons/WaffleButton";
 import { useEffect, useRef } from "react";
 import { playSound } from "@/lib/sounds";
 import { env } from "@/lib/env";
+import { FlashIcon } from "@/components/icons";
 
 interface GameCompleteScreenProps {
     score: number;
@@ -96,54 +97,71 @@ export default function GameCompleteScreen({
                 </motion.div>
             </motion.div>
 
-            {/* Points Card */}
+            {/* Points Card with gradient border */}
             <motion.div
-                className="flex flex-col justify-center items-start p-3 gap-2.5 w-full max-w-[361px] mt-[27px] bg-linear-to-b from-transparent to-[rgba(27,245,176,0.12)] rounded-[24px]"
+                className="relative w-full max-w-[361px] mt-[27px] rounded-[24px]"
                 initial={{ opacity: 0, y: 20, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ duration: 0.5, delay: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
             >
-                <div className="flex flex-col justify-center items-center w-full">
-                    {/* Trophy icon */}
+                {/* Gradient border layer */}
+                <div
+                    className="absolute inset-0 rounded-[24px] pointer-events-none"
+                    style={{
+                        padding: "1px",
+                        background: "linear-gradient(104.25deg, rgba(20, 185, 133, 0.09) 11.91%, #14B985 120.13%)",
+                        WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+                        WebkitMaskComposite: "xor",
+                        maskComposite: "exclude",
+                    }}
+                />
+
+                {/* Content with transparent gradient background */}
+                <div
+                    className="relative flex flex-col justify-center items-center p-3 gap-2.5 w-full rounded-[24px]"
+                    style={{
+                        background: "linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(27, 245, 176, 0.12) 100%)",
+                    }}
+                >
+                    {/* Money bag icon */}
                     <motion.div
-                        className="relative w-[40px] h-[48px]"
                         initial={{ scale: 0, rotate: -20 }}
-                        animate={{ scale: 1, rotate: 0 }}
+                        animate={{
+                            scale: 1,
+                            rotate: 0,
+                            y: [0, -3, 0],
+                        }}
                         transition={{
-                            duration: 0.6,
-                            delay: 0.5,
-                            ease: [0.34, 1.56, 0.64, 1],
+                            scale: { duration: 0.6, delay: 0.5, ease: [0.34, 1.56, 0.64, 1] },
+                            rotate: { duration: 0.6, delay: 0.5, ease: [0.34, 1.56, 0.64, 1] },
+                            y: { duration: 2, repeat: Infinity, ease: "easeInOut", delay: 1.1 },
                         }}
                         whileHover={{ scale: 1.1, rotate: 5 }}
                     >
-                        <motion.div
-                            animate={{ y: [0, -3, 0] }}
-                            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                        >
-                            <Image
-                                src="/images/trophies/gold.svg"
-                                alt="Trophy"
-                                fill
-                                className="object-contain drop-shadow-[0_4px_8px_rgba(20,185,133,0.3)]"
-                            />
-                        </motion.div>
+                        <Image
+                            src="/images/illustrations/money-bag.png"
+                            alt="Money Bag"
+                            width={40}
+                            height={48}
+                            className="object-contain drop-shadow-[0_4px_8px_rgba(20,185,133,0.3)]"
+                        />
                     </motion.div>
 
-                    {/* You won label */}
+                    {/* Your Score label */}
                     <motion.div
                         className="flex flex-row justify-between items-center px-2 py-[7px] gap-2.5 w-full"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.4, delay: 0.6 }}
                     >
-                        <span className="font-body font-medium text-[14px] leading-[130%] tracking-[-0.03em] text-[#99A0AE] mx-auto">
+                        <span className="font-display font-medium text-[14px] leading-[130%] tracking-[-0.03em] text-[#99A0AE] mx-auto">
                             Your Score
                         </span>
                     </motion.div>
 
                     {/* Points amount */}
                     <motion.div
-                        className="flex flex-row justify-center items-center gap-3 w-full"
+                        className="flex flex-row justify-center items-center gap-1 w-full"
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{
@@ -152,16 +170,14 @@ export default function GameCompleteScreen({
                             ease: [0.34, 1.56, 0.64, 1],
                         }}
                     >
+                        <FlashIcon className="w-7 h-7" />
                         <motion.h2
-                            className="font-body text-[48px] leading-[90%] text-[#14B985]"
+                            className="font-body text-[48px] leading-[90%] text-white"
                             animate={{ scale: [1, 1.02, 1] }}
                             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", repeatDelay: 1 }}
                         >
                             {score.toLocaleString()}
                         </motion.h2>
-                        <span className="font-display text-[18px] text-[#99A0AE] ml-1">
-                            points
-                        </span>
                     </motion.div>
                 </div>
             </motion.div>
