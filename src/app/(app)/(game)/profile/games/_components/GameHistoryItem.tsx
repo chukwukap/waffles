@@ -48,7 +48,7 @@ export default function GameHistoryItem({ game }: GameHistoryItemProps) {
 
             <div className="flex flex-col gap-1">
               <span className="font-body text-[20px] leading-none text-white">
-                #Waffles #{game.gameNumber.toString().padStart(3, "0")}
+                Waffles #{game.gameNumber.toString().padStart(3, "0")}
               </span>
               <div className="flex items-center gap-1">
                 <FlashIcon className="w-4 h-4 text-[#FFC931]" />
