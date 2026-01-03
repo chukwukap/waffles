@@ -65,17 +65,22 @@ export async function loginAdminAction(
  * Admin logout action
  */
 export async function logoutAdminAction(): Promise<void> {
-  const authResult = await requireAdminSession();
-
-  if (authResult.authenticated && authResult.session) {
-    // Log logout action
-    await logAdminAction({
-      adminId: authResult.session.userId,
-      action: AdminAction.LOGOUT,
-      entityType: EntityType.SYSTEM,
-    });
+  // Try to log the logout, but don't fail if session is invalid/stale
+  try {
+    const authResult = await requireAdminSession();
+    if (authResult.authenticated && authResult.session) {
+      await logAdminAction({
+        adminId: authResult.session.userId,
+        action: AdminAction.LOGOUT,
+        entityType: EntityType.SYSTEM,
+      });
+    }
+  } catch {
+    // Session may be stale/invalid after migration - that's okay
+    console.log("Logout: session validation failed, destroying cookie anyway");
   }
 
+  // Always destroy the session cookie
   await destroyAdminSession();
   redirect("/admin/login");
 }

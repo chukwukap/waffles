@@ -66,13 +66,13 @@ export function GameForm({
     initialData?.description || ""
   );
   const [tierPrice1, setTierPrice1] = useState(
-    initialData?.tierPrices?.[0]?.toString() || "20"
+    initialData?.tierPrices?.[0]?.toString() || "5"
   );
   const [tierPrice2, setTierPrice2] = useState(
-    initialData?.tierPrices?.[1]?.toString() || "50"
+    initialData?.tierPrices?.[1]?.toString() || "25"
   );
   const [tierPrice3, setTierPrice3] = useState(
-    initialData?.tierPrices?.[2]?.toString() || "100"
+    initialData?.tierPrices?.[2]?.toString() || "50"
   );
   const [prizePool, setPrizePool] = useState(
     initialData?.prizePool?.toString() || ""

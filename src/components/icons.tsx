@@ -743,7 +743,7 @@ export function Clock({
         alt="Clock"
         fill
         style={{ objectFit: "contain" }}
-        className="!relative w-full h-full"
+        className="relative! w-full h-full"
         draggable={false}
         priority={false}
       />

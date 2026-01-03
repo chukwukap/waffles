@@ -74,7 +74,7 @@ function QuestionRow({
     return (
         <div ref={setNodeRef} style={style} className="group">
             {/* Main Row */}
-            <div className={`flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl transition-all ${isExpanded ? 'rounded-b-none border-b-0' : 'hover:bg-white/[0.08]'}`}>
+            <div className={`flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl transition-all ${isExpanded ? 'rounded-b-none border-b-0' : 'hover:bg-white/8'}`}>
                 {/* Drag Handle */}
                 <div
                     {...attributes}
@@ -124,7 +124,7 @@ function QuestionRow({
 
             {/* Expanded Details */}
             {isExpanded && (
-                <div className="p-4 bg-white/[0.03] border border-white/10 border-t-0 rounded-b-xl space-y-3">
+                <div className="p-4 bg-white/3 border border-white/10 border-t-0 rounded-b-xl space-y-3">
                     {/* Options */}
                     <div className="grid grid-cols-2 gap-2">
                         {question.options.map((opt, idx) => (
@@ -206,7 +206,7 @@ function InlineAddQuestion({ gameId, nextRoundIndex, onSuccess }: { gameId: stri
     }
 
     return (
-        <form onSubmit={handleSubmit} className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-4 space-y-4">
+        <form onSubmit={handleSubmit} className="bg-white/5 border border-white/8 rounded-2xl backdrop-blur-lg p-4 space-y-4">
             <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-white">New Question</h3>
                 <button type="button" onClick={() => setIsOpen(false)} className="text-white/40 hover:text-white">✕</button>
@@ -365,7 +365,7 @@ export function QuestionsManager({ gameId, initialQuestions }: QuestionsManagerP
                     </SortableContext>
                 </DndContext>
             ) : (
-                <div className="text-center py-12 bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg">
+                <div className="text-center py-12 bg-white/5 border border-white/8 rounded-2xl backdrop-blur-lg">
                     <div className="text-4xl mb-3">📝</div>
                     <p className="text-white/60 font-medium">No questions yet</p>
                     <p className="text-white/40 text-sm mt-1">Add your first question below</p>
