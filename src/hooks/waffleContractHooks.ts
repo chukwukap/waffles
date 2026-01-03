@@ -4,11 +4,7 @@ import {
   useWaitForTransactionReceipt,
 } from "wagmi";
 import { parseUnits } from "viem";
-import {
-  DEFAULT_WAFFLE_GAME_ADDRESS,
-  DEFAULT_USDC_ADDRESS,
-  TOKEN_DECIMALS,
-} from "@/lib/chain";
+import { WAFFLE_GAME_CONFIG, TOKEN_CONFIG } from "@/lib/chain";
 import waffleGameAbi from "@/lib/chain/abi.json";
 import { ERC20_ABI } from "@/lib/constants";
 
@@ -17,7 +13,7 @@ import { ERC20_ABI } from "@/lib/constants";
  */
 export function useGetGame(onchainId: `0x${string}`) {
   return useReadContract({
-    address: DEFAULT_WAFFLE_GAME_ADDRESS,
+    address: WAFFLE_GAME_CONFIG.address,
     abi: waffleGameAbi,
     functionName: "getGame",
     args: [onchainId],
@@ -30,7 +26,7 @@ export function useGetGame(onchainId: `0x${string}`) {
  */
 export function useContractToken() {
   return useReadContract({
-    address: DEFAULT_WAFFLE_GAME_ADDRESS,
+    address: WAFFLE_GAME_CONFIG.address,
     abi: waffleGameAbi,
     functionName: "token",
   });
@@ -44,7 +40,7 @@ export function useHasTicket(
   playerAddress: `0x${string}`
 ) {
   return useReadContract({
-    address: DEFAULT_WAFFLE_GAME_ADDRESS,
+    address: WAFFLE_GAME_CONFIG.address,
     abi: waffleGameAbi,
     functionName: "hasTicket",
     args: [onchainId, playerAddress],
@@ -62,7 +58,7 @@ export function useHasClaimed(
   playerAddress: `0x${string}`
 ) {
   return useReadContract({
-    address: DEFAULT_WAFFLE_GAME_ADDRESS,
+    address: WAFFLE_GAME_CONFIG.address,
     abi: waffleGameAbi,
     functionName: "hasClaimed",
     args: [onchainId, playerAddress],
@@ -76,7 +72,7 @@ export function useHasClaimed(
  */
 export function useTokenBalance(
   address: `0x${string}` | undefined,
-  tokenAddress: `0x${string}` = DEFAULT_USDC_ADDRESS
+  tokenAddress: `0x${string}` = TOKEN_CONFIG.address
 ) {
   return useReadContract({
     address: tokenAddress,
@@ -102,7 +98,7 @@ export function useTokenAllowance(
     address: tokenAddress,
     abi: ERC20_ABI,
     functionName: "allowance",
-    args: [ownerAddress, DEFAULT_WAFFLE_GAME_ADDRESS],
+    args: [ownerAddress, WAFFLE_GAME_CONFIG.address],
   });
 }
 
@@ -116,12 +112,12 @@ export function useApproveToken() {
   });
 
   const approve = (amount: string) => {
-    const amountInUnits = parseUnits(amount, TOKEN_DECIMALS);
+    const amountInUnits = parseUnits(amount, TOKEN_CONFIG.decimals);
     writeContract({
-      address: DEFAULT_USDC_ADDRESS,
+      address: TOKEN_CONFIG.address,
       abi: ERC20_ABI,
       functionName: "approve",
-      args: [DEFAULT_WAFFLE_GAME_ADDRESS, amountInUnits],
+      args: [WAFFLE_GAME_CONFIG.address, amountInUnits],
     });
   };
 
@@ -138,9 +134,9 @@ export function useBuyTicket() {
   });
 
   const buyTicket = (onchainId: `0x${string}`, amount: string) => {
-    const amountInUnits = parseUnits(amount, TOKEN_DECIMALS);
+    const amountInUnits = parseUnits(amount, TOKEN_CONFIG.decimals);
     writeContract({
-      address: DEFAULT_WAFFLE_GAME_ADDRESS,
+      address: WAFFLE_GAME_CONFIG.address,
       abi: waffleGameAbi,
       functionName: "buyTicket",
       args: [onchainId, amountInUnits],
@@ -165,7 +161,7 @@ export function useClaimPrize() {
     proof: `0x${string}`[]
   ) => {
     writeContract({
-      address: DEFAULT_WAFFLE_GAME_ADDRESS,
+      address: WAFFLE_GAME_CONFIG.address,
       abi: waffleGameAbi,
       functionName: "claimPrize",
       args: [onchainId, amount, proof],

@@ -15,7 +15,7 @@ import { getGamePhase } from "@/lib/types";
 import { env } from "@/lib/env";
 
 // ==========================================
-// SCHEMA (Updated for new model)
+// SCHEMA
 // ==========================================
 
 const gameSchema = z.object({
@@ -46,7 +46,106 @@ export type GameActionResult =
   | { success: false; error: string };
 
 // ==========================================
-// CREATE GAME
+// HELPER: Rollback game on failure
+// ==========================================
+
+async function rollbackGame(
+  gameId: number,
+  reason: string,
+  adminId: number
+): Promise<void> {
+  console.error(`[CreateGame] Rolling back game ${gameId}: ${reason}`);
+
+  try {
+    await prisma.game.delete({ where: { id: gameId } });
+    console.log(`[CreateGame] Rollback complete for game ${gameId}`);
+
+    await logAdminAction({
+      adminId,
+      action: AdminAction.DELETE_GAME,
+      entityType: EntityType.GAME,
+      entityId: gameId,
+      details: { reason: `Rollback: ${reason}` },
+    });
+  } catch (error) {
+    console.error(`[CreateGame] Rollback failed for game ${gameId}:`, error);
+    // If rollback fails, we have an orphaned game - log for manual cleanup
+    await logAdminAction({
+      adminId,
+      action: AdminAction.DELETE_GAME,
+      entityType: EntityType.GAME,
+      entityId: gameId,
+      details: {
+        reason: `ROLLBACK_FAILED: ${reason}`,
+        requiresManualCleanup: true,
+      },
+    });
+  }
+}
+
+// ==========================================
+// HELPER: Initialize PartyKit room
+// ==========================================
+
+async function initializePartyKitRoom(game: {
+  id: number;
+  startsAt: Date;
+  endsAt: Date;
+}): Promise<{ success: boolean; error?: string }> {
+  if (!env.partykitHost || !env.partykitSecret) {
+    return { success: false, error: "PartyKit not configured" };
+  }
+
+  const partykitUrl = env.partykitHost.startsWith("http")
+    ? env.partykitHost
+    : `https://${env.partykitHost}`;
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+    const res = await fetch(
+      `${partykitUrl}/parties/game/game-${game.id}/init`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${env.partykitSecret}`,
+        },
+        body: JSON.stringify({
+          gameId: game.id,
+          startsAt: game.startsAt.toISOString(),
+          endsAt: game.endsAt.toISOString(),
+          questions: [],
+        }),
+        signal: controller.signal,
+      }
+    );
+
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      return {
+        success: false,
+        error: `PartyKit returned ${res.status}: ${res.statusText}`,
+      };
+    }
+
+    console.log(`[CreateGame] PartyKit room initialized for game ${game.id}`);
+    return { success: true };
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      return { success: false, error: "PartyKit request timed out" };
+    }
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+// ==========================================
+// CREATE GAME - Rock Solid Flow
 // ==========================================
 
 export async function createGameAction(
@@ -58,6 +157,9 @@ export async function createGameAction(
     return { success: false, error: "Unauthorized" };
   }
 
+  const adminId = authResult.session.userId;
+
+  // 1. Validate form data
   const rawData = {
     title: formData.get("title"),
     description: formData.get("description"),
@@ -82,24 +184,24 @@ export async function createGameAction(
 
   const data = validation.data;
 
+  // 2. Pre-flight checks (before any mutations)
   try {
-    // Check if there's already an active game (not ended in database)
     const now = new Date();
+
+    // Check no active games
     const existingActiveGame = await prisma.game.findFirst({
-      where: {
-        endsAt: { gt: now }, // Game hasn't ended yet
-      },
+      where: { endsAt: { gt: now } },
       select: { id: true, title: true, onchainId: true },
     });
 
     if (existingActiveGame) {
       return {
         success: false,
-        error: `Cannot create a new game while "${existingActiveGame.title} ID: ${existingActiveGame.onchainId}" is still active. Please end it first.`,
+        error: `Cannot create game while "${existingActiveGame.title}" is still active.`,
       };
     }
 
-    // Also check if there's a recently ended game that hasn't been ended on-chain yet
+    // Check recently ended game is finalized on-chain
     const recentEndedGame = await prisma.game.findFirst({
       where: {
         endsAt: { lte: now },
@@ -114,8 +216,6 @@ export async function createGameAction(
         recentEndedGame.onchainId as `0x${string}`
       );
 
-      // Only block if game actually exists on-chain (has tickets or entry fee)
-      // After contract upgrades, old onchainIds may not exist on new contract
       const gameExistsOnChain =
         onChainGame &&
         (onChainGame.ticketCount > BigInt(0) ||
@@ -124,16 +224,26 @@ export async function createGameAction(
       if (gameExistsOnChain && !onChainGame.ended) {
         return {
           success: false,
-          error: `Cannot create a new game while "${recentEndedGame.title} ID: ${recentEndedGame.onchainId}" is not ended on-chain. Please end it on-chain first via Settlement.`,
+          error: `Previous game "${recentEndedGame.title}" not ended on-chain. End it first via Settlement.`,
         };
       }
     }
+  } catch (error) {
+    console.error("[CreateGame] Pre-flight check failed:", error);
+    return {
+      success: false,
+      error: "Failed to verify game prerequisites. Please try again.",
+    };
+  }
 
-    // Generate random bytes32 for on-chain game ID
-    const onchainId = generateOnchainGameId();
+  // 3. Generate on-chain ID upfront
+  const onchainId = generateOnchainGameId();
 
-    // Create game in database (no status field, uses time-based phase)
-    const game = await prisma.game.create({
+  // 4. Create game in database
+  let game: { id: number; startsAt: Date; endsAt: Date; title: string };
+
+  try {
+    game = await prisma.game.create({
       data: {
         title: data.title,
         description: data.description || null,
@@ -142,100 +252,70 @@ export async function createGameAction(
         startsAt: new Date(data.startsAt),
         endsAt: new Date(data.endsAt),
         tierPrices: [data.tierPrice1, data.tierPrice2, data.tierPrice3],
-        prizePool: 0, // Start at 0, incremented when entries are created
+        prizePool: 0,
         playerCount: 0,
         roundBreakSec: data.roundBreakSec,
         maxPlayers: data.maxPlayers,
-        onchainId, // Store the bytes32 on-chain ID
+        onchainId,
       },
     });
-
-    // Create game onchain using the generated onchainId
-    try {
-      const txHash = await createGameOnChain(onchainId, data.tierPrice1);
-      console.log(
-        `[CreateGame] Game ${game.id} (onchain: ${onchainId}) created. TX: ${txHash}`
-      );
-
-      await logAdminAction({
-        adminId: authResult.session.userId,
-        action: AdminAction.CREATE_GAME,
-        entityType: EntityType.GAME,
-        entityId: game.id,
-        details: {
-          title: game.title,
-          theme: game.theme,
-          onChainTx: txHash,
-          tierPrices: [data.tierPrice1, data.tierPrice2, data.tierPrice3],
-        },
-      });
-    } catch (onChainError) {
-      console.error(
-        `[CreateGame] On-chain creation failed for game ${game.id}:`,
-        onChainError
-      );
-
-      await logAdminAction({
-        adminId: authResult.session.userId,
-        action: AdminAction.CREATE_GAME,
-        entityType: EntityType.GAME,
-        entityId: game.id,
-        details: {
-          title: game.title,
-          theme: game.theme,
-          onChainError:
-            onChainError instanceof Error
-              ? onChainError.message
-              : "Unknown error",
-        },
-      });
-    }
-
-    // Initialize PartyKit room with alarms
-    if (env.partykitHost && env.partykitSecret) {
-      const partykitUrl = env.partykitHost.startsWith("http")
-        ? env.partykitHost
-        : `https://${env.partykitHost}`;
-
-      try {
-        const res = await fetch(
-          `${partykitUrl}/parties/game/game-${game.id}/init`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${env.partykitSecret}`,
-            },
-            body: JSON.stringify({
-              gameId: game.id,
-              startsAt: game.startsAt.toISOString(),
-              endsAt: game.endsAt.toISOString(),
-              questions: [], // Questions synced separately when added
-            }),
-          }
-        );
-
-        if (res.ok) {
-          console.log(
-            `[CreateGame] PartyKit room initialized for game ${game.id}`
-          );
-        } else {
-          console.error(`[CreateGame] PartyKit init failed: ${res.status}`);
-        }
-      } catch (err) {
-        console.error(`[CreateGame] PartyKit init error:`, err);
-      }
-    }
-
-    revalidatePath("/admin/games");
-    redirect(`/admin/games/${game.id}/questions`);
+    console.log(`[CreateGame] Database record created: game ${game.id}`);
   } catch (error) {
-    if (error instanceof Error && error.message === "NEXT_REDIRECT") {
-      throw error;
-    }
-    console.error("Create game error:", error);
-    return { success: false, error: "Failed to create game" };
+    console.error("[CreateGame] Database creation failed:", error);
+    return {
+      success: false,
+      error: "Failed to create game in database. Please try again.",
+    };
   }
+
+  // 5. Create on-chain (with rollback on failure)
+  try {
+    const txHash = await createGameOnChain(onchainId, data.tierPrice1);
+    console.log(`[CreateGame] On-chain creation success. TX: ${txHash}`);
+
+    await logAdminAction({
+      adminId,
+      action: AdminAction.CREATE_GAME,
+      entityType: EntityType.GAME,
+      entityId: game.id,
+      details: {
+        title: game.title,
+        theme: data.theme,
+        onchainId,
+        onChainTx: txHash,
+        tierPrices: [data.tierPrice1, data.tierPrice2, data.tierPrice3],
+      },
+    });
+  } catch (error) {
+    console.error("[CreateGame] On-chain creation failed:", error);
+    await rollbackGame(game.id, "On-chain creation failed", adminId);
+
+    const errorMsg =
+      error instanceof Error ? error.message : "Unknown blockchain error";
+    return {
+      success: false,
+      error: `On-chain creation failed: ${errorMsg}. Game was not created.`,
+    };
+  }
+
+  // 6. Initialize PartyKit room (with rollback on failure)
+  const partykitResult = await initializePartyKitRoom(game);
+
+  if (!partykitResult.success) {
+    console.error("[CreateGame] PartyKit init failed:", partykitResult.error);
+    await rollbackGame(game.id, "PartyKit initialization failed", adminId);
+
+    return {
+      success: false,
+      error: `Game server initialization failed: ${partykitResult.error}. Game was not created.`,
+    };
+  }
+
+  // 7. All systems go - redirect to questions page
+  console.log(`[CreateGame] Game ${game.id} created successfully`);
+
+  revalidatePath("/admin/games");
+  redirect(`/admin/games/${game.id}/questions`);
 }
 
 // ==========================================
@@ -321,7 +401,6 @@ export async function deleteGameAction(gameId: number): Promise<void> {
   }
 
   try {
-    // Get the game to check if it has an onchain ID
     const game = await prisma.game.findUnique({
       where: { id: gameId },
       select: { id: true, onchainId: true, title: true },
@@ -336,8 +415,6 @@ export async function deleteGameAction(gameId: number): Promise<void> {
       const { getOnChainGame } = await import("@/lib/chain");
       const onChainGame = await getOnChainGame(game.onchainId as `0x${string}`);
 
-      // Only block if game actually exists on-chain (has tickets or entry fee)
-      // After contract upgrades, old onchainIds may not exist on new contract
       const gameExistsOnChain =
         onChainGame &&
         (onChainGame.ticketCount > BigInt(0) ||
@@ -345,12 +422,12 @@ export async function deleteGameAction(gameId: number): Promise<void> {
 
       if (gameExistsOnChain && !onChainGame.ended) {
         throw new Error(
-          `Cannot delete "${game.title}" - it is still active on-chain. End it on-chain first via Settlement.`
+          `Cannot delete "${game.title}" - it is still active on-chain. End it first via Settlement.`
         );
       }
     }
 
-    // Cleanup PartyKit room before deleting from database
+    // Cleanup PartyKit room before deleting
     const { cleanupGameRoom } = await import("@/lib/partykit");
     await cleanupGameRoom(gameId);
 
@@ -366,7 +443,7 @@ export async function deleteGameAction(gameId: number): Promise<void> {
     });
   } catch (error) {
     console.error("Delete game error:", error);
-    throw error; // Re-throw so UI can handle it
+    throw error;
   }
 
   revalidatePath("/admin/games");
@@ -374,12 +451,9 @@ export async function deleteGameAction(gameId: number): Promise<void> {
 }
 
 // ==========================================
-// CHANGE GAME TIMING (replaces status actions)
+// CHANGE GAME TIMING
 // ==========================================
 
-/**
- * Force start a game by setting startsAt to now.
- */
 export async function forceStartGameAction(
   gameId: number
 ): Promise<GameActionResult> {
@@ -414,7 +488,6 @@ export async function forceStartGameAction(
       return { success: false, error: "Cannot start game without questions" };
     }
 
-    // Set startsAt to now
     await prisma.game.update({
       where: { id: gameId },
       data: { startsAt: new Date() },
@@ -437,9 +510,6 @@ export async function forceStartGameAction(
   }
 }
 
-/**
- * Force end a game by setting endsAt to now and calculating ranks.
- */
 export async function forceEndGameAction(
   gameId: number
 ): Promise<GameActionResult> {
@@ -463,7 +533,6 @@ export async function forceEndGameAction(
       return { success: false, error: "Game has already ended" };
     }
 
-    // Set endsAt to now
     await prisma.game.update({
       where: { id: gameId },
       data: { endsAt: new Date() },
@@ -472,14 +541,10 @@ export async function forceEndGameAction(
     // Calculate ranks for all entries
     const entries = await prisma.gameEntry.findMany({
       where: { gameId, paidAt: { not: null } },
-      orderBy: [
-        { score: "desc" },
-        { createdAt: "asc" }, // Tie-breaker: earlier entry wins
-      ],
+      orderBy: [{ score: "desc" }, { createdAt: "asc" }],
       select: { id: true },
     });
 
-    // Update ranks in transaction
     await prisma.$transaction(
       entries.map((entry, index) =>
         prisma.gameEntry.update({

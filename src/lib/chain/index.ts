@@ -7,10 +7,7 @@
 export {
   CHAIN_CONFIG,
   TOKEN_CONFIG,
-  TOKEN_DECIMALS,
   WAFFLE_GAME_CONFIG,
-  DEFAULT_USDC_ADDRESS,
-  DEFAULT_WAFFLE_GAME_ADDRESS,
   getExplorerUrl,
 } from "./config";
 

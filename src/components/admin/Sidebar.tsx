@@ -39,10 +39,10 @@ export function AdminSidebar() {
     return (
         <div className="flex h-full flex-col bg-linear-to-b from-[#0a0a0b]/95 to-black/98 border-r border-white/6">
             {/* Logo */}
-            <div className="flex h-16 items-center gap-3 px-6 border-b border-white/6">
+            <div className="flex h-16 items-center gap-3 px-6 border-b border-white/6 font-body">
                 <WaffleIcon className="h-6 w-6" />
-                <span className="text-lg font-bold text-white font-display tracking-wide">
-                    WAFFLES ADMIN
+                <span className="text-2xl font-bold text-white tracking-wide">
+                    WAFFLES
                 </span>
             </div>
 

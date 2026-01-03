@@ -1,9 +1,7 @@
 /**
  * Chain Configuration
- * Provides typed configuration for chain, token, and contract settings.
  *
- * All values are derived from the network configuration in networks.ts,
- * which is controlled by the NEXT_PUBLIC_TEST_MODE env var.
+ * All values derive from networks.ts, controlled by NEXT_PUBLIC_TEST_MODE.
  */
 import { networkConfig, isTestMode } from "./networks";
 
@@ -23,11 +21,9 @@ export const CHAIN_CONFIG = {
 // Token Configuration
 // ============================================================================
 
-export const TOKEN_DECIMALS = 6;
-
 export const TOKEN_CONFIG = {
   address: networkConfig.contracts.usdc,
-  decimals: TOKEN_DECIMALS,
+  decimals: 6,
   symbol: "USDC",
 } as const;
 
@@ -35,11 +31,8 @@ export const TOKEN_CONFIG = {
 // Contract Configuration
 // ============================================================================
 
-export const DEFAULT_USDC_ADDRESS = TOKEN_CONFIG.address;
-export const DEFAULT_WAFFLE_GAME_ADDRESS = networkConfig.contracts.waffleGame;
-
 export const WAFFLE_GAME_CONFIG = {
-  address: DEFAULT_WAFFLE_GAME_ADDRESS,
+  address: networkConfig.contracts.waffleGame,
   chainId: networkConfig.chain.id,
 } as const;
 
@@ -47,9 +40,6 @@ export const WAFFLE_GAME_CONFIG = {
 // Utilities
 // ============================================================================
 
-/**
- * Get explorer URL for a transaction or address
- */
 export function getExplorerUrl(
   hashOrAddress: string,
   type: "tx" | "address" = "tx"

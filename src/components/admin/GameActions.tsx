@@ -37,11 +37,6 @@ export function GameActions({ game, onOpenChange }: GameActionsProps) {
             });
         }
     }, [isOpen]);
-
-
-
-
-
     return (
         <>
             <button

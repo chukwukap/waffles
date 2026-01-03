@@ -11,7 +11,7 @@ import { useTokenAllowance, useContractToken } from "./waffleContractHooks";
 import { notify } from "@/components/ui/Toaster";
 import { playSound } from "@/lib/sounds";
 import waffleGameAbi from "@/lib/chain/abi.json";
-import { DEFAULT_WAFFLE_GAME_ADDRESS, TOKEN_DECIMALS } from "@/lib/chain";
+import { WAFFLE_GAME_CONFIG, TOKEN_CONFIG } from "@/lib/chain";
 import { ERC20_ABI } from "@/lib/constants";
 
 // ==========================================
@@ -66,7 +66,7 @@ export function useTicketPurchase(
   // TOKEN & ALLOWANCE
   // ==========================================
   const priceInUnits = useMemo(
-    () => parseUnits(price.toString(), TOKEN_DECIMALS),
+    () => parseUnits(price.toString(), TOKEN_CONFIG.decimals),
     [price]
   );
 
@@ -96,15 +96,15 @@ export function useTicketPurchase(
           abi: ERC20_ABI,
           functionName: "approve",
           args: [
-            DEFAULT_WAFFLE_GAME_ADDRESS,
-            parseUnits("1000", TOKEN_DECIMALS),
+            WAFFLE_GAME_CONFIG.address,
+            parseUnits("5000", TOKEN_CONFIG.decimals),
           ],
         }),
       });
     }
 
     callList.push({
-      to: DEFAULT_WAFFLE_GAME_ADDRESS,
+      to: WAFFLE_GAME_CONFIG.address,
       data: encodeFunctionData({
         abi: waffleGameAbi,
         functionName: "buyTicket",
