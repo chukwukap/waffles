@@ -1,34 +1,22 @@
 /**
  * Chain Configuration
- * Provides typed configuration for chain, token, and contract settings
+ * Provides typed configuration for chain, token, and contract settings.
+ *
+ * All values are derived from the network configuration in networks.ts,
+ * which is controlled by the NEXT_PUBLIC_TEST_MODE env var.
  */
-
-import { base, baseSepolia } from "viem/chains";
-
-// ============================================================================
-// Contract Addresses
-// ============================================================================
-
-const TEST_USDC_ADDRESS = "0x8aAa7ECea87244Ca4062eBce6DA61820f3830233";
-const TEST_WAFFLE_GAME_ADDRESS = "0xbD20Be151F655aC17048d331bA5a6C0093c99d34";
-
-const MAINNET_USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
-const MAINNET_WAFFLE_GAME_ADDRESS =
-  "0x0000000000000000000000000000000000000000"; // TODO: Deploy mainnet
+import { networkConfig, isTestMode } from "./networks";
 
 // ============================================================================
 // Chain Configuration
 // ============================================================================
 
-const isTestnet = process.env.NEXT_PUBLIC_CHAIN_NETWORK === "testnet";
-const chain = isTestnet ? baseSepolia : base;
-
 export const CHAIN_CONFIG = {
-  chain,
-  chainId: chain.id,
-  isTestnet,
-  name: chain.name,
-  explorerUrl: chain.blockExplorers.default.url,
+  chain: networkConfig.chain,
+  chainId: networkConfig.chain.id,
+  isTestnet: isTestMode,
+  name: networkConfig.chain.name,
+  explorerUrl: networkConfig.chain.blockExplorers?.default.url ?? "",
 } as const;
 
 // ============================================================================
@@ -38,9 +26,7 @@ export const CHAIN_CONFIG = {
 export const TOKEN_DECIMALS = 6;
 
 export const TOKEN_CONFIG = {
-  address: (isTestnet
-    ? TEST_USDC_ADDRESS
-    : MAINNET_USDC_ADDRESS) as `0x${string}`,
+  address: networkConfig.contracts.usdc,
   decimals: TOKEN_DECIMALS,
   symbol: "USDC",
 } as const;
@@ -50,13 +36,11 @@ export const TOKEN_CONFIG = {
 // ============================================================================
 
 export const DEFAULT_USDC_ADDRESS = TOKEN_CONFIG.address;
-export const DEFAULT_WAFFLE_GAME_ADDRESS = (
-  isTestnet ? TEST_WAFFLE_GAME_ADDRESS : MAINNET_WAFFLE_GAME_ADDRESS
-) as `0x${string}`;
+export const DEFAULT_WAFFLE_GAME_ADDRESS = networkConfig.contracts.waffleGame;
 
 export const WAFFLE_GAME_CONFIG = {
   address: DEFAULT_WAFFLE_GAME_ADDRESS,
-  chainId: chain.id,
+  chainId: networkConfig.chain.id,
 } as const;
 
 // ============================================================================

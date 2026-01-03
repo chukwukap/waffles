@@ -35,8 +35,11 @@ const envSchema = z.object({
     ? z.string().min(1, "CLOUDINARY_API_SECRET is required")
     : z.string().optional(),
 
-  // Blockchain
-  NEXT_PUBLIC_CHAIN_NETWORK: z.enum(["mainnet", "testnet"]).default("testnet"),
+  // Test Mode
+  NEXT_PUBLIC_TEST_MODE: z
+    .enum(["true", "false", ""])
+    .optional()
+    .transform((val) => val === "true"),
 
   // Client
   NEXT_PUBLIC_ONCHAINKIT_API_KEY: z
@@ -73,12 +76,12 @@ const getEnv = () => {
     NEYNAR_API_KEY: process.env.NEYNAR_API_KEY,
     DATABASE_URL: process.env.DATABASE_URL,
     SETTLEMENT_PRIVATE_KEY: process.env.SETTLEMENT_PRIVATE_KEY,
-    PARTYKIT_SECRET: process.env.partykitSecret,
+    PARTYKIT_SECRET: process.env.PARTYKIT_SECRET,
     NEXT_PUBLIC_PARTYKIT_HOST: process.env.NEXT_PUBLIC_PARTYKIT_HOST,
     CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
     CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
     CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
-    NEXT_PUBLIC_CHAIN_NETWORK: process.env.NEXT_PUBLIC_CHAIN_NETWORK,
+    NEXT_PUBLIC_TEST_MODE: process.env.NEXT_PUBLIC_TEST_MODE,
     NEXT_PUBLIC_ONCHAINKIT_API_KEY: process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY,
     NEXT_PUBLIC_LEADERBOARD_PAGE_SIZE:
       process.env.NEXT_PUBLIC_LEADERBOARD_PAGE_SIZE,
@@ -122,7 +125,7 @@ const getEnv = () => {
         cloudinaryCloudName: "",
         cloudinaryApiKey: "",
         cloudinaryApiSecret: "",
-        chainNetwork: "testnet" as const,
+        isTestMode: false,
         nextPublicOnchainkitApiKey: "",
         nextPublicLeaderboardPageSize: 25,
         homeUrlPath: "",
@@ -166,8 +169,8 @@ const getEnv = () => {
     cloudinaryCloudName: data.CLOUDINARY_CLOUD_NAME,
     cloudinaryApiKey: data.CLOUDINARY_API_KEY,
     cloudinaryApiSecret: data.CLOUDINARY_API_SECRET,
-    // Blockchain
-    chainNetwork: data.NEXT_PUBLIC_CHAIN_NETWORK,
+    // Test Mode
+    isTestMode: data.NEXT_PUBLIC_TEST_MODE,
     // Client-side
     nextPublicOnchainkitApiKey: data.NEXT_PUBLIC_ONCHAINKIT_API_KEY,
     nextPublicLeaderboardPageSize: data.NEXT_PUBLIC_LEADERBOARD_PAGE_SIZE,
