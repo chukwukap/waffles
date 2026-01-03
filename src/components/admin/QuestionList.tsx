@@ -34,11 +34,11 @@ interface Question {
 }
 
 interface QuestionListProps {
-    gameId: number;
+    gameId: string;
     initialQuestions: Question[];
 }
 
-function SortableQuestionItem({ question, gameId }: { question: Question; gameId: number }) {
+function SortableQuestionItem({ question, gameId }: { question: Question; gameId: string }) {
     const {
         attributes,
         listeners,

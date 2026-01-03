@@ -186,7 +186,7 @@ model CompletedQuest {
 // ==========================================
 
 model Game {
-  id Int @id @default(autoincrement())
+  id String @id @default(cuid())
 
   // -- ON-CHAIN IDENTITY (random bytes32, stored as 0x-prefixed hex string) --
   onchainId String? @unique @db.VarChar(66)
@@ -247,9 +247,9 @@ enum GameTheme {
 // - now >= endsAt => ENDED
 
 model Question {
-  id     Int  @id @default(autoincrement())
-  game   Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  gameId Int
+  id     Int    @id @default(autoincrement())
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gameId String
 
   // -- ORDERING --
   roundIndex   Int @default(1) @db.SmallInt
@@ -281,8 +281,8 @@ model Question {
 model GameEntry {
   id Int @id @default(autoincrement())
 
-  game   Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  gameId Int
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gameId String
 
   user   User @relation(fields: [userId], references: [id])
   userId Int
@@ -330,7 +330,7 @@ model GameEntry {
 model Chat {
   id        Int      @id @default(autoincrement())
   game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  gameId    Int
+  gameId    String
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
   text      String   @db.VarChar(500)
@@ -367,7 +367,7 @@ model AuditLog {
 
   action     String   @db.VarChar(50)
   entityType String   @db.VarChar(50)
-  entityId   Int?
+  entityId   String?  @db.VarChar(50)
   details    Json?
   ip         String?  @db.VarChar(45)
   createdAt  DateTime @default(now())

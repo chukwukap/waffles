@@ -12,9 +12,9 @@ interface SuccessPageProps {
 }
 
 // Cache game data fetch
-const getGameInfo = cache(async (gameIdNum: number) => {
+const getGameInfo = cache(async (gameId: string) => {
     const game = await prisma.game.findUnique({
-        where: { id: gameIdNum },
+        where: { id: gameId },
         select: {
             id: true,
             title: true,
@@ -34,10 +34,9 @@ export async function generateMetadata({
 }: SuccessPageProps): Promise<Metadata> {
     const { gameId } = await params;
     const sParams = await searchParams;
-    const gameIdNum = Number(gameId);
 
     // Get game info
-    const game = await getGameInfo(gameIdNum);
+    const game = await getGameInfo(gameId);
     if (!game) {
         return { title: "Game Not Found" };
     }
@@ -90,13 +89,8 @@ export default async function TicketSuccessPage({
 }: SuccessPageProps) {
     const { gameId } = await params;
     const sParams = await searchParams;
-    const gameIdNum = Number(gameId);
 
-    if (isNaN(gameIdNum)) {
-        throw new Error("Invalid game ID");
-    }
-
-    const game = await getGameInfo(gameIdNum);
+    const game = await getGameInfo(gameId);
     if (!game) {
         throw new Error("Game not found");
     }

@@ -37,7 +37,7 @@ export type BulkImportResult =
  * Import multiple questions at once
  */
 export async function bulkImportQuestionsAction(
-  gameId: number,
+  gameId: string,
   questions: BulkImportQuestion[]
 ): Promise<BulkImportResult> {
   const authResult = await requireAdminSession();

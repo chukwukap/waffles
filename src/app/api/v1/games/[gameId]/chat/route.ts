@@ -32,9 +32,8 @@ export async function GET(
 ) {
   try {
     const { gameId } = await context.params;
-    const gameIdNum = parseInt(gameId, 10);
 
-    if (isNaN(gameIdNum)) {
+    if (gameId) {
       return NextResponse.json(
         { error: "Invalid game ID", code: "INVALID_PARAM" },
         { status: 400 }
@@ -48,7 +47,7 @@ export async function GET(
     );
 
     const messages = await prisma.chat.findMany({
-      where: { gameId: gameIdNum },
+      where: { gameId: gameId },
       take: limit,
       orderBy: { createdAt: "desc" },
       include: {
@@ -87,9 +86,9 @@ export async function GET(
 export const POST = withAuth<Params>(
   async (request, auth: AuthResult, params) => {
     try {
-      const gameIdNum = parseInt(params.gameId, 10);
+      const gameId = params.gameId;
 
-      if (isNaN(gameIdNum)) {
+      if (gameId) {
         return NextResponse.json<ApiError>(
           { error: "Invalid game ID", code: "INVALID_PARAM" },
           { status: 400 }
@@ -111,7 +110,7 @@ export const POST = withAuth<Params>(
 
       // Check if game exists
       const game = await prisma.game.findUnique({
-        where: { id: gameIdNum },
+        where: { id: gameId },
         select: { id: true },
       });
 
@@ -125,7 +124,7 @@ export const POST = withAuth<Params>(
       // Create the message
       const message = await prisma.chat.create({
         data: {
-          gameId: gameIdNum,
+          gameId: gameId,
           userId: auth.userId,
           text: validation.data.text,
         },

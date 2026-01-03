@@ -15,7 +15,7 @@ export function GameHeader() {
   const params = useParams();
 
   // Extract gameId from route params (cleaner than regex)
-  const gameId = params.gameId ? Number(params.gameId) : null;
+  const gameId = params.gameId ? (params.gameId as string) : null;
 
   const [isLeaveGameDrawerOpen, setIsLeaveGameDrawerOpen] = useState(false);
 

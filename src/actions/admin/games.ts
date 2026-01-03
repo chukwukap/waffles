@@ -42,7 +42,7 @@ const gameSchema = z.object({
 });
 
 export type GameActionResult =
-  | { success: true; gameId?: number }
+  | { success: true; gameId?: string }
   | { success: false; error: string };
 
 // ==========================================
@@ -50,7 +50,7 @@ export type GameActionResult =
 // ==========================================
 
 async function rollbackGame(
-  gameId: number,
+  gameId: string,
   reason: string,
   adminId: number
 ): Promise<void> {
@@ -88,7 +88,7 @@ async function rollbackGame(
 // ==========================================
 
 async function initializePartyKitRoom(game: {
-  id: number;
+  id: string;
   startsAt: Date;
   endsAt: Date;
 }): Promise<{ success: boolean; error?: string }> {
@@ -240,7 +240,7 @@ export async function createGameAction(
   const onchainId = generateOnchainGameId();
 
   // 4. Create game in database
-  let game: { id: number; startsAt: Date; endsAt: Date; title: string };
+  let game: { id: string; startsAt: Date; endsAt: Date; title: string };
 
   try {
     game = await prisma.game.create({
@@ -323,7 +323,7 @@ export async function createGameAction(
 // ==========================================
 
 export async function updateGameAction(
-  gameId: number,
+  gameId: string,
   _prevState: GameActionResult | null,
   formData: FormData
 ): Promise<GameActionResult> {
@@ -402,7 +402,7 @@ export async function updateGameAction(
 // DELETE GAME
 // ==========================================
 
-export async function deleteGameAction(gameId: number): Promise<void> {
+export async function deleteGameAction(gameId: string): Promise<void> {
   const authResult = await requireAdminSession();
   if (!authResult.authenticated || !authResult.session) {
     redirect("/admin/login");
@@ -463,7 +463,7 @@ export async function deleteGameAction(gameId: number): Promise<void> {
 // ==========================================
 
 export async function forceStartGameAction(
-  gameId: number
+  gameId: string
 ): Promise<GameActionResult> {
   const authResult = await requireAdminSession();
   if (!authResult.authenticated || !authResult.session) {
@@ -519,7 +519,7 @@ export async function forceStartGameAction(
 }
 
 export async function forceEndGameAction(
-  gameId: number
+  gameId: string
 ): Promise<GameActionResult> {
   const authResult = await requireAdminSession();
   if (!authResult.authenticated || !authResult.session) {

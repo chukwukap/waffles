@@ -7,13 +7,13 @@ interface EntryResponse {
   id: number;
   status: string;
   amountUSDC: number;
-  gameId: number;
+  gameId: string;
   paidAt: Date | null;
   createdAt: Date;
   score: number;
   answered: number;
   game: {
-    id: number;
+    id: string;
     startsAt: Date;
     endsAt: Date;
     status: string;
@@ -31,14 +31,13 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
     const { searchParams } = new URL(request.url);
     const gameIdParam = searchParams.get("gameId");
 
-    const whereClause: { userId: number; gameId?: number } = {
+    const whereClause: { userId: number; gameId?: string } = {
       userId: auth.userId,
     };
 
     if (gameIdParam) {
-      const gameId = parseInt(gameIdParam, 10);
-      if (!isNaN(gameId)) {
-        whereClause.gameId = gameId;
+      if (gameIdParam) {
+        whereClause.gameId = gameIdParam;
       }
     }
 
@@ -60,18 +59,18 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
     const response: EntryResponse[] = entries.map((entry) => ({
       id: entry.id,
       status: entry.paidAt ? "PAID" : "PENDING",
-      amountUSDC: entry.game.tierPrices[0] ?? 0,
+      amountUSDC: entry.paidAmount ?? 0,
       gameId: entry.gameId,
       paidAt: entry.paidAt,
       createdAt: entry.createdAt,
       score: entry.score,
       answered: entry.answered,
       game: {
-        id: entry.game.id,
+        id: entry.gameId,
         startsAt: entry.game.startsAt,
         endsAt: entry.game.endsAt,
         status: getGamePhase(entry.game),
-        ticketPrice: entry.game.tierPrices[0] ?? 0,
+        ticketPrice: entry.paidAmount ?? 0,
       },
     }));
 

@@ -15,9 +15,9 @@ type Params = { gameId: string };
 export const POST = withAuth<Params>(
   async (request, auth: AuthResult, params) => {
     try {
-      const gameIdNum = parseInt(params.gameId, 10);
+      const gameId = params.gameId;
 
-      if (isNaN(gameIdNum)) {
+      if (gameId) {
         return NextResponse.json<ApiError>(
           { error: "Invalid game ID", code: "INVALID_PARAM" },
           { status: 400 }
@@ -26,7 +26,7 @@ export const POST = withAuth<Params>(
 
       // Check if game exists and is joinable
       const game = await prisma.game.findUnique({
-        where: { id: gameIdNum },
+        where: { id: gameId },
         select: { id: true, startsAt: true, endsAt: true },
       });
 
@@ -50,7 +50,7 @@ export const POST = withAuth<Params>(
       const entry = await prisma.gameEntry.findUnique({
         where: {
           gameId_userId: {
-            gameId: gameIdNum,
+            gameId: gameId,
             userId: auth.userId,
           },
         },
@@ -71,7 +71,7 @@ export const POST = withAuth<Params>(
         );
       }
 
-      return NextResponse.json({ success: true, gameId: gameIdNum });
+      return NextResponse.json({ success: true, gameId: gameId });
     } catch (error) {
       console.error("POST /api/v1/games/[gameId]/join Error:", error);
       return NextResponse.json<ApiError>(

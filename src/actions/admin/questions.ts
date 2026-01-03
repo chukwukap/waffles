@@ -29,7 +29,7 @@ export type QuestionActionResult =
  * Create a question for a game
  */
 export async function createQuestionAction(
-  gameId: number,
+  gameId: string,
   _prevState: QuestionActionResult | null,
   formData: FormData
 ): Promise<QuestionActionResult> {
@@ -101,7 +101,7 @@ export async function createQuestionAction(
  */
 export async function deleteQuestionAction(
   questionId: number,
-  gameId: number
+  gameId: string
 ): Promise<void> {
   const authResult = await requireAdminSession();
   if (!authResult.authenticated || !authResult.session) {
@@ -135,7 +135,7 @@ export async function deleteQuestionAction(
  * Reorder questions
  */
 export async function reorderQuestionsAction(
-  gameId: number,
+  gameId: string,
   orderedQuestionIds: number[]
 ): Promise<{ success: boolean; error?: string }> {
   const authResult = await requireAdminSession();

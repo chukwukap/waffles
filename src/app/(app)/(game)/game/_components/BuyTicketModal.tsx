@@ -16,7 +16,7 @@ import { PurchaseView, type PurchaseStep } from "./PurchaseView";
 interface BuyTicketModalProps {
   isOpen: boolean;
   onClose: () => void;
-  gameId: number;
+  gameId: string;
   onchainId: `0x${string}` | null;
   theme: string;
   themeIcon?: string;

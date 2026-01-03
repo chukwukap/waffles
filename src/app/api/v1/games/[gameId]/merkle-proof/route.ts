@@ -3,7 +3,7 @@ import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 interface MerkleProofResponse {
-  gameId: number;
+  gameId: string;
   address: string;
   amount: string; // Amount in token units as string
   amountUSDC: number; // Amount in human-readable USDC
@@ -18,8 +18,8 @@ interface MerkleProofResponse {
 export const GET = withAuth<{ gameId: string }>(
   async (request, auth: AuthResult, params) => {
     try {
-      const gameId = parseInt(params.gameId);
-      if (isNaN(gameId)) {
+      const gameId = params.gameId;
+      if (!gameId) {
         return NextResponse.json<ApiError>(
           { error: "Invalid game ID", code: "INVALID_ID" },
           { status: 400 }

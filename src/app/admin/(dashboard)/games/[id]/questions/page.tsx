@@ -7,7 +7,7 @@ import { ChevronLeftIcon, DocumentTextIcon, ArrowUpTrayIcon } from "@heroicons/r
 
 export default async function GameQuestionsPage({ params }: { params: Promise<{ id: string }> }) {
     const resolvedParams = await params;
-    const gameId = parseInt(resolvedParams.id);
+    const gameId = resolvedParams.id;
 
     const game = await prisma.game.findUnique({
         where: { id: gameId },

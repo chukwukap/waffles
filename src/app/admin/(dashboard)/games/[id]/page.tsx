@@ -122,14 +122,9 @@ export default async function GameDetailPage({
     params: Promise<{ id: string }>;
 }) {
     const { id } = await params;
-    const gameId = Number(id);
-
-    if (isNaN(gameId)) {
-        notFound();
-    }
 
     const game = await prisma.game.findUnique({
-        where: { id: gameId },
+        where: { id },
         select: {
             id: true,
             onchainId: true,

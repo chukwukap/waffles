@@ -21,9 +21,9 @@ interface ClaimResponse {
 export const POST = withAuth<Params>(
   async (request, auth: AuthResult, params) => {
     try {
-      const gameIdNum = parseInt(params.prizeId, 10);
+      const gameId = params.prizeId;
 
-      if (isNaN(gameIdNum)) {
+      if (gameId) {
         return NextResponse.json<ApiError>(
           { error: "Invalid prize ID", code: "INVALID_PARAM" },
           { status: 400 }
@@ -32,7 +32,7 @@ export const POST = withAuth<Params>(
 
       // Find game entry
       const entry = await prisma.gameEntry.findUnique({
-        where: { gameId_userId: { gameId: gameIdNum, userId: auth.userId } },
+        where: { gameId_userId: { gameId, userId: auth.userId } },
         select: {
           claimedAt: true,
           rank: true,
@@ -94,7 +94,7 @@ export const POST = withAuth<Params>(
       // Update entry with claim timestamp
       const claimedAt = new Date();
       await prisma.gameEntry.update({
-        where: { gameId_userId: { gameId: gameIdNum, userId: auth.userId } },
+        where: { gameId_userId: { gameId: gameId, userId: auth.userId } },
         data: { claimedAt },
       });
 

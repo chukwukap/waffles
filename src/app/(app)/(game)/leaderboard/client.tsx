@@ -42,7 +42,7 @@ const CROWN_HEIGHT = 180; // Height at which crown fully fades
 interface LeaderboardClientProps {
   initialData: LeaderboardData;
   activeTab: TabKey;
-  gameId?: number;
+  gameId?: string;
 }
 
 // ============================================

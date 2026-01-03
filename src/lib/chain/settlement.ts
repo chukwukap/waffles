@@ -72,7 +72,7 @@ export async function updateMerkleRootOnChain(
  * Send notifications to all players when results are ready.
  * Winners get a personalized "You won!" message, others get "Results are in!"
  */
-async function sendSettlementNotifications(gameId: number) {
+async function sendSettlementNotifications(gameId: string) {
   const allEntries = await prisma.gameEntry.findMany({
     where: { gameId },
     select: {
@@ -135,7 +135,7 @@ async function sendSettlementNotifications(gameId: number) {
  * Calculate winners and submit Merkle root for a game
  * This is the main function called by admin/cron after a game ends
  */
-export async function settleGame(gameId: number): Promise<{
+export async function settleGame(gameId: string): Promise<{
   merkleRoot: `0x${string}`;
   winners: Winner[];
   txHash: `0x${string}`;

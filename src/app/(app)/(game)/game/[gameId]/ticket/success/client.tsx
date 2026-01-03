@@ -18,7 +18,7 @@ import {
 } from "@/lib/calendar";
 
 interface TicketSuccessClientProps {
-    gameId: number;
+    gameId: string;
     theme: string;
     coverUrl: string;
     prizePool: number;

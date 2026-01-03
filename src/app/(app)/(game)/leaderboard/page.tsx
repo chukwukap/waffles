@@ -46,7 +46,7 @@ async function getCurrentGameLeaderboard(page: number): Promise<LeaderboardData>
 }
 
 async function getGameLeaderboardById(
-  gameId: number,
+  gameId: string,
   page: number,
   gameTitle?: string
 ): Promise<LeaderboardData> {
@@ -149,7 +149,7 @@ async function getAllTimeLeaderboard(page: number): Promise<LeaderboardData> {
 export async function getLeaderboardData(
   tab: TabKey,
   page: number = 0,
-  gameId?: number
+  gameId?: string
 ): Promise<LeaderboardData> {
   try {
     if (tab === "game" && gameId) {
@@ -175,7 +175,7 @@ export default async function LeaderboardPage({
   const { tab, gameId: gameIdParam } = await searchParams;
 
   // Determine which tab to show
-  const gameId = gameIdParam ? parseInt(gameIdParam, 10) : undefined;
+  const gameId = gameIdParam ? gameIdParam : undefined;
   const activeTab: TabKey = gameId ? "game" : (tab === "allTime" ? "allTime" : "current");
 
   // Fetch initial data on the server

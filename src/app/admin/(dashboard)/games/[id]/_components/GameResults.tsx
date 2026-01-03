@@ -12,7 +12,7 @@ import {
 // ============================================
 
 interface GameResultsProps {
-    gameId: number;
+    gameId: string;
     gameTitle: string;
     totalEntries: number;
     prizePool: number;

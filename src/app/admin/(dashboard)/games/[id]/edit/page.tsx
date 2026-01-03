@@ -7,7 +7,7 @@ import { notFound } from "next/navigation";
 export default async function EditGamePage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const game = await prisma.game.findUnique({
-        where: { id: parseInt(id) },
+        where: { id },
         select: {
             id: true,
             title: true,

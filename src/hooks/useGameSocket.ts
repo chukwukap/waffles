@@ -26,7 +26,7 @@ import { useGameStoreApi } from "@/components/providers/GameStoreProvider";
 
 interface SocketInstance {
   socket: PartySocket | null;
-  gameId: number | null;
+  gameId: string | null;
   refCount: number;
   token: string | null;
 }
@@ -83,7 +83,7 @@ interface GameStatsData {
 }
 
 interface GameEndData {
-  gameId: number;
+  gameId: string;
 }
 
 type IncomingMessage =
@@ -105,7 +105,7 @@ type IncomingMessage =
 
 interface UseGameSocketOptions {
   enabled?: boolean;
-  gameId?: number | null;
+  gameId?: string | null;
 }
 
 interface UseGameSocketReturn {
@@ -125,7 +125,7 @@ export function useGameSocket(
 
   // Get gameId from URL params or explicit option
   const gameIdParam = params?.gameId;
-  const gameId = gameIdParam ? Number(gameIdParam) : explicitGameId ?? null;
+  const gameId = gameIdParam ? (gameIdParam as string) : explicitGameId ?? null;
 
   const isConnectedRef = useRef(false);
 

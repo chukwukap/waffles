@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { z } from "zod";
 
 const claimSchema = z.object({
-  gameId: z.number().int().positive("Invalid Game ID"),
+  gameId: z.string().min(1, "Invalid Game ID"),
 });
 
 interface ClaimResponse {

@@ -38,7 +38,7 @@ export interface TicketPurchaseState {
 // ==========================================
 
 export function useTicketPurchase(
-  gameId: number,
+  gameId: string,
   onchainId: `0x${string}` | null,
   price: number,
   onSuccess?: () => void

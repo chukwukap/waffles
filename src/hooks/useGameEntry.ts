@@ -15,7 +15,7 @@ import { useGameStoreApi } from "@/components/providers/GameStoreProvider";
 import type { GameEntryData } from "@/lib/game-store";
 
 interface UseGameEntryOptions {
-  gameId: number | undefined;
+  gameId: string | undefined;
   initialEntry?: GameEntryData | null;
   enabled?: boolean;
 }

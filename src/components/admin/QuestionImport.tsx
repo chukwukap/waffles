@@ -7,7 +7,7 @@ import { bulkImportQuestionsAction, BulkImportQuestion } from "@/actions/admin/b
 import { ArrowUpTrayIcon, DocumentArrowDownIcon, CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
 
 interface QuestionImportProps {
-    gameId: number;
+    gameId: string;
 }
 
 export function QuestionImport({ gameId }: QuestionImportProps) {

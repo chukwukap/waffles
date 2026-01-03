@@ -14,9 +14,8 @@ export async function GET(
 ) {
   try {
     const { gameId } = await context.params;
-    const gameIdNum = parseInt(gameId, 10);
 
-    if (isNaN(gameIdNum)) {
+    if (gameId) {
       return NextResponse.json(
         { error: "Invalid game ID", code: "INVALID_PARAM" },
         { status: 400 }
@@ -24,7 +23,7 @@ export async function GET(
     }
 
     const game = await prisma.game.findUnique({
-      where: { id: gameIdNum },
+      where: { id: gameId },
       select: {
         id: true,
         title: true,

@@ -37,7 +37,7 @@ interface Question {
 }
 
 interface QuestionsManagerProps {
-    gameId: number;
+    gameId: string;
     initialQuestions: Question[];
 }
 
@@ -49,7 +49,7 @@ function QuestionRow({
     onToggle
 }: {
     question: Question;
-    gameId: number;
+    gameId: string;
     isExpanded: boolean;
     onToggle: () => void;
 }) {
@@ -164,7 +164,7 @@ function QuestionRow({
 }
 
 // Add Question Form - Inline compact version
-function InlineAddQuestion({ gameId, nextRoundIndex, onSuccess }: { gameId: number; nextRoundIndex: number; onSuccess: () => void }) {
+function InlineAddQuestion({ gameId, nextRoundIndex, onSuccess }: { gameId: string; nextRoundIndex: number; onSuccess: () => void }) {
     const [isOpen, setIsOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);

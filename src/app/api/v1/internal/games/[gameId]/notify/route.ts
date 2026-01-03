@@ -15,10 +15,9 @@ export async function POST(
   context: { params: Promise<Params> }
 ) {
   try {
-    const { gameId: gameIdStr } = await context.params;
-    const gameId = parseInt(gameIdStr, 10);
+    const { gameId } = await context.params;
 
-    if (isNaN(gameId)) {
+    if (!gameId) {
       return NextResponse.json({ error: "Invalid game ID" }, { status: 400 });
     }
 

@@ -34,9 +34,9 @@ interface AnswerEntry {
 export const POST = withAuth<Params>(
   async (request, auth: AuthResult, params) => {
     try {
-      const gameIdNum = parseInt(params.gameId, 10);
+      const gameId = params.gameId;
 
-      if (isNaN(gameIdNum)) {
+      if (!gameId) {
         return NextResponse.json<ApiError>(
           { error: "Invalid game ID", code: "INVALID_PARAM" },
           { status: 400 }
@@ -62,7 +62,7 @@ export const POST = withAuth<Params>(
 
       // Check if game has ended
       const game = await prisma.game.findUnique({
-        where: { id: gameIdNum },
+        where: { id: gameId },
         select: { endsAt: true },
       });
 
@@ -84,7 +84,7 @@ export const POST = withAuth<Params>(
       const entry = await prisma.gameEntry.findUnique({
         where: {
           gameId_userId: {
-            gameId: gameIdNum,
+            gameId,
             userId: auth.userId,
           },
         },
@@ -129,7 +129,7 @@ export const POST = withAuth<Params>(
         );
       }
 
-      if (question.gameId !== gameIdNum) {
+      if (question.gameId !== gameId) {
         return NextResponse.json<ApiError>(
           {
             error: "Question does not belong to this game",

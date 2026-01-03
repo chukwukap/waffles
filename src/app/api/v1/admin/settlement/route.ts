@@ -19,7 +19,7 @@ async function isAuthorized(): Promise<boolean> {
 
 interface SettlementRequestBody {
   action: "create" | "end" | "settle" | "updateMerkleRoot";
-  gameId: number;
+  gameId: string;
   entryFee?: number; // Required for 'create' action
   newMerkleRoot?: string; // Required for 'updateMerkleRoot' action
 }
@@ -27,7 +27,7 @@ interface SettlementRequestBody {
 interface SettlementResponse {
   success: boolean;
   action: string;
-  gameId: number;
+  gameId: string;
   txHash?: string;
   error?: string;
   merkleRoot?: string;
@@ -187,7 +187,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "gameId required" }, { status: 400 });
     }
 
-    const gameId = parseInt(gameIdStr);
+    const gameId = gameIdStr;
 
     // Import dynamically to avoid issues when env var not set
     const { getOnChainGame } = await import("@/lib/chain");

@@ -24,7 +24,7 @@ export const SuccessCard = ({
   prizePool: number;
   coverUrl: string;
   fid: number;
-  gameId: number;
+  gameId: string;
   ticket: TicketInfo;
 }) => {
   const { composeCastAsync } = useComposeCast();

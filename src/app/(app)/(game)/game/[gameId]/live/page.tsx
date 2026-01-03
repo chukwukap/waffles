@@ -24,7 +24,7 @@ export interface LiveGameQuestion {
 }
 
 export interface LiveGameData {
-  id: number;
+  id: string;
   endsAt: Date;
   roundBreakSec: number;
   prizePool: number;
@@ -37,7 +37,7 @@ export interface LiveGameData {
 // DATA FETCHING
 // ==========================================
 
-const getGame = cache(async (gameId: number) => {
+const getGame = cache(async (gameId: string) => {
   const game = await prisma.game.findUnique({
     where: { id: gameId },
     select: {
@@ -115,13 +115,8 @@ export default async function LiveGamePage({
   params: Promise<{ gameId: string }>;
 }) {
   const { gameId } = await params;
-  const gameIdNum = Number(gameId);
 
-  if (isNaN(gameIdNum)) {
-    redirect("/game");
-  }
-
-  const game = await getGame(gameIdNum);
+  const game = await getGame(gameId);
 
   // If game doesn't exist or is not live, redirect to game hub
   if (!game) {

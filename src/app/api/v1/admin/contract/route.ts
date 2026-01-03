@@ -91,8 +91,8 @@ export async function GET(request: NextRequest) {
 
     // Check if wallet is configured
     const isConfigured = !!env.settlementPrivateKey;
-    let address = null;
-    let balance = null;
+    // let address = null;
+    // let balance = null;
 
     const state: ContractState = {
       address: WAFFLE_GAME_CONFIG.address,

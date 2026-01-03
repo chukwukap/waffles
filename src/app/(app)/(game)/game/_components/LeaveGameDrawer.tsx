@@ -12,7 +12,7 @@ import { playSound } from "@/lib/sounds";
 interface LeaveGameDrawerProps {
   open: boolean;
   setIsLeaveGameDrawerOpen: Dispatch<SetStateAction<boolean>>;
-  gameId: number;
+  gameId: string;
 }
 
 // Animation variants for staggered content

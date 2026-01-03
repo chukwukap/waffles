@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 
-export function GameFilter({ games }: { games: { id: number; title: string }[] }) {
+export function GameFilter({ games }: { games: { id: string; title: string }[] }) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const currentGame = searchParams.get("game") || "";

@@ -31,7 +31,7 @@ function formatGameTime(date: Date): string {
 // Helper: Send ticket notification
 async function sendTicketNotification(
   fid: number,
-  gameId: number,
+  gameId: string,
   game: { startsAt?: Date; title?: string }
 ) {
   const startsAt = game.startsAt ? new Date(game.startsAt) : null;
@@ -51,9 +51,9 @@ async function sendTicketNotification(
 export const GET = withAuth<Params>(
   async (request, auth: AuthResult, params) => {
     try {
-      const gameId = parseInt(params.gameId, 10);
+      const gameId = params.gameId;
 
-      if (isNaN(gameId)) {
+      if (!gameId) {
         return NextResponse.json<ApiError>(
           { error: "Invalid game ID", code: "INVALID_INPUT" },
           { status: 400 }
@@ -114,9 +114,9 @@ export const GET = withAuth<Params>(
 export const POST = withAuth<Params>(
   async (request, auth: AuthResult, params) => {
     try {
-      const gameId = parseInt(params.gameId, 10);
+      const gameId = params.gameId;
 
-      if (isNaN(gameId)) {
+      if (!gameId) {
         return NextResponse.json<ApiError>(
           { error: "Invalid game ID", code: "INVALID_INPUT" },
           { status: 400 }

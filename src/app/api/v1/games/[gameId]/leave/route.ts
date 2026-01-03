@@ -12,9 +12,9 @@ type Params = { gameId: string };
 export const POST = withAuth<Params>(
   async (request, auth: AuthResult, params) => {
     try {
-      const gameId = parseInt(params.gameId, 10);
+      const gameId = params.gameId;
 
-      if (isNaN(gameId)) {
+      if (!gameId) {
         return NextResponse.json<ApiError>(
           { error: "Invalid game ID", code: "INVALID_PARAM" },
           { status: 400 }

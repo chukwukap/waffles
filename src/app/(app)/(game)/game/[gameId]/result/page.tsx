@@ -12,14 +12,14 @@ interface ResultPageProps {
 }
 
 // Fetch game info
-const getGame = cache(async (gameId: number) => {
+const getGame = cache(async (gameId: string) => {
   return prisma.game.findUnique({
     where: { id: gameId },
   });
 });
 
 // Fetch top 3 entries for leaderboard display
-const getTop3Entries = cache(async (gameId: number) => {
+const getTop3Entries = cache(async (gameId: string) => {
   return prisma.gameEntry.findMany({
     where: { gameId, paidAt: { not: null } },
     orderBy: { score: "desc" },
@@ -41,10 +41,9 @@ export async function generateMetadata({
 }: ResultPageProps): Promise<Metadata> {
   const { gameId } = await params;
   const sParams = await searchParams;
-  const gameIdNum = Number(gameId);
 
   // Get game info
-  const game = await getGame(gameIdNum);
+  const game = await getGame(gameId);
   if (!game) {
     return { title: "Game Not Found" };
   }
@@ -106,19 +105,10 @@ export default async function ResultPage({
   params,
 }: ResultPageProps) {
   const { gameId } = await params;
-  const gameIdNum = Number(gameId);
-
-  if (isNaN(gameIdNum)) {
-    return (
-      <div className="flex flex-col text-white items-center justify-center min-h-full">
-        <p className="text-lg">Invalid game ID</p>
-      </div>
-    );
-  }
 
   // Fetch data server-side in parallel
-  const gamePromise = getGame(gameIdNum);
-  const top3Promise = getTop3Entries(gameIdNum);
+  const gamePromise = getGame(gameId);
+  const top3Promise = getTop3Entries(gameId);
 
   // User-specific data (their result, rank) is fetched client-side with auth
   return <ResultPageClient gamePromise={gamePromise} top3Promise={top3Promise} />;

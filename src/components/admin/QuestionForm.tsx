@@ -5,7 +5,7 @@ import { useActionState, useRef, useState, useEffect } from "react";
 import { MediaPicker } from "@/components/admin/MediaPicker";
 
 interface QuestionFormProps {
-    gameId: number;
+    gameId: string;
     action: (prevState: QuestionActionResult | null, formData: FormData) => Promise<QuestionActionResult>;
     nextRoundIndex: number;
 }

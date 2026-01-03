@@ -4,7 +4,7 @@ import { TrophyIcon, UsersIcon, TicketIcon, CurrencyDollarIcon } from "@heroicon
 import Link from "next/link";
 
 interface GameData {
-    id: number;
+    id: string;
     title: string;
     theme: string;
     status: string;

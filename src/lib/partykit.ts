@@ -16,7 +16,7 @@ interface Question {
 // HELPER
 // ==========================================
 
-function partyFetch(gameId: number, path: string, body: unknown) {
+function partyFetch(gameId: string, path: string, body: unknown) {
   return PartySocket.fetch(
     {
       host: env.partykitHost || "localhost:1999",
@@ -43,7 +43,7 @@ function partyFetch(gameId: number, path: string, body: unknown) {
  * Sync game questions to PartyKit storage.
  * Called when questions are created, deleted, or reordered.
  */
-export async function syncQuestionsToPartyKit(gameId: number): Promise<void> {
+export async function syncQuestionsToPartyKit(gameId: string): Promise<void> {
   if (!env.partykitHost || !env.partykitSecret) {
     console.warn("[syncQuestions] PartyKit not configured");
     return;
@@ -91,7 +91,7 @@ export async function syncQuestionsToPartyKit(gameId: number): Promise<void> {
  * Called when a ticket is purchased.
  */
 export async function broadcastGameStats(
-  gameId: number,
+  gameId: string,
   stats: { prizePool: number; playerCount: number }
 ): Promise<void> {
   if (!env.partykitHost || !env.partykitSecret) {
@@ -118,7 +118,7 @@ export async function broadcastGameStats(
  * Cleanup PartyKit room when a game is deleted.
  * Notifies the PartyKit server to close connections and free resources.
  */
-export async function cleanupGameRoom(gameId: number): Promise<void> {
+export async function cleanupGameRoom(gameId: string): Promise<void> {
   if (!env.partykitHost || !env.partykitSecret) {
     console.warn("[cleanupGameRoom] PartyKit not configured");
     return;
@@ -147,7 +147,7 @@ export async function cleanupGameRoom(gameId: number): Promise<void> {
  * Called when admin updates startsAt or endsAt.
  */
 export async function updateGameTiming(
-  gameId: number,
+  gameId: string,
   startsAt: Date,
   endsAt: Date
 ): Promise<void> {

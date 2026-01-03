@@ -65,7 +65,7 @@ export default function ResultPageClient({
   const { address } = useAccount();
   const { context } = useMiniKit();
   const { composeCastAsync } = useComposeCast();
-  const gameId = game?.id as number;
+  const gameId = game?.id
   const { entry, isLoading: entryLoading, refetchEntry } = useGameEntry({ gameId });
 
   const hasPlayedSound = useRef(false);

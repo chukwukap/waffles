@@ -30,7 +30,7 @@ async function getTickets(searchParams: {
 
     // Filter by game
     if (searchParams.game) {
-        where.gameId = parseInt(searchParams.game);
+        where.gameId = searchParams.game;
     }
 
     // Search by username or tx hash

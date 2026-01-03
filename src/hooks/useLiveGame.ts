@@ -313,7 +313,7 @@ interface SubmitResult {
 }
 
 async function submitAnswerToServer(
-  gameId: number,
+  gameId: string,
   questionId: number,
   selectedIndex: number,
   timeMs: number,

@@ -18,7 +18,7 @@ interface BreakViewProps {
   seconds: number;
   nextRoundNumber: number;
   totalDuration?: number;
-  gameId: number;
+  gameId: string;
 }
 
 interface LeaderboardEntry {

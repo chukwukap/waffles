@@ -4,7 +4,7 @@ import { TrashIcon } from "@heroicons/react/24/outline";
 import { deleteGameAction } from "@/actions/admin/games";
 
 interface DeleteGameButtonProps {
-    gameId: number;
+    gameId: string;
     gameTitle: string;
     onSuccess?: () => void;
     variant?: "button" | "dropdown";

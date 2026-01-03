@@ -150,7 +150,7 @@ export default class GameServer implements Party.Server {
 
         try {
           const body = (await req.json()) as {
-            gameId: number;
+            gameId: string;
             startsAt: string;
             endsAt: string;
             questions: Question[];
@@ -390,7 +390,7 @@ export default class GameServer implements Party.Server {
 
   async onAlarm() {
     const phase = await this.room.storage.get<AlarmPhase>("alarmPhase");
-    const gameId = await this.room.storage.get<number>("gameId");
+    const gameId = await this.room.storage.get<string>("gameId");
     console.log(`[Alarm] Game ${gameId} - phase: ${phase}`);
 
     switch (phase) {
@@ -412,7 +412,7 @@ export default class GameServer implements Party.Server {
   }
 
   async handleNotifyAlarm() {
-    const gameId = await this.room.storage.get<number>("gameId");
+    const gameId = await this.room.storage.get<string>("gameId");
     const startsAt = await this.room.storage.get<number>("startsAt");
 
     // Send "starting soon" notifications
@@ -431,7 +431,7 @@ export default class GameServer implements Party.Server {
   }
 
   async handleStartAlarm() {
-    const gameId = await this.room.storage.get<number>("gameId");
+    const gameId = await this.room.storage.get<string>("gameId");
     const endsAt = await this.room.storage.get<number>("endsAt");
 
     // Get questions from storage (sent during init)
@@ -551,7 +551,7 @@ export default class GameServer implements Party.Server {
   }
 
   async handleGameEndAlarm() {
-    const gameId = await this.room.storage.get<number>("gameId");
+    const gameId = await this.room.storage.get<string>("gameId");
     const gameState = await this.room.storage.get<GameState>("gameState");
 
     if (gameState) {
@@ -604,7 +604,7 @@ export default class GameServer implements Party.Server {
     try {
       const appUrl = this.room.env.NEXT_PUBLIC_URL as string;
       const secret = this.room.env.PARTYKIT_SECRET as string;
-      const gameId = await this.room.storage.get<number>("gameId");
+      const gameId = await this.room.storage.get<string>("gameId");
 
       if (!appUrl || !secret || !gameId) return;
 

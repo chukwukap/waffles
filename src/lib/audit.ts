@@ -7,7 +7,7 @@ export async function logAdminAction(params: {
   adminId: number;
   action: string;
   entityType: string;
-  entityId?: number;
+  entityId?: number | string;
   details?: Record<string, any>;
   ip?: string;
 }): Promise<void> {
@@ -17,7 +17,7 @@ export async function logAdminAction(params: {
         adminId: params.adminId,
         action: params.action,
         entityType: params.entityType,
-        entityId: params.entityId,
+        entityId: params.entityId?.toString(),
         details: params.details || undefined,
         ip: params.ip || undefined,
       },

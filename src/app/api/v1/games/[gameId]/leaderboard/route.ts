@@ -25,9 +25,8 @@ export async function GET(
 ) {
   try {
     const { gameId } = await context.params;
-    const gameIdNum = parseInt(gameId, 10);
 
-    if (isNaN(gameIdNum)) {
+    if (gameId) {
       return NextResponse.json(
         { error: "Invalid game ID", code: "INVALID_PARAM" },
         { status: 400 }
@@ -43,7 +42,7 @@ export async function GET(
 
     // Check if game exists
     const game = await prisma.game.findUnique({
-      where: { id: gameIdNum },
+      where: { id: gameId },
       select: { id: true },
     });
 
@@ -57,7 +56,7 @@ export async function GET(
     // Get leaderboard from game entries (paid entries only)
     const entries = await prisma.gameEntry.findMany({
       where: {
-        gameId: gameIdNum,
+        gameId: gameId,
         paidAt: { not: null },
       },
       include: {
@@ -87,7 +86,7 @@ export async function GET(
     // Get total count for pagination
     const totalCount = await prisma.gameEntry.count({
       where: {
-        gameId: gameIdNum,
+        gameId: gameId,
         paidAt: { not: null },
       },
     });

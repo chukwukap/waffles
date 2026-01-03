@@ -10,7 +10,7 @@ import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
 export interface ProfileGame {
   id: number;
-  gameId: number;
+  gameId: string;
   score: number;
   rank: number;
   prize: number;

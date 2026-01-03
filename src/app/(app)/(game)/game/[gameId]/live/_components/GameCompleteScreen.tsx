@@ -14,7 +14,7 @@ import { FlashIcon } from "@/components/icons";
 interface GameCompleteScreenProps {
     score: number;
     gameTheme: string;
-    gameId: number;
+    gameId: string;
 }
 
 export default function GameCompleteScreen({

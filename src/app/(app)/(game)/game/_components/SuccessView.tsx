@@ -7,7 +7,7 @@ import { env } from "@/lib/env";
 import { notify } from "@/components/ui/Toaster";
 
 interface SuccessViewProps {
-    gameId: number;
+    gameId: string;
     fid: number;
     displayUsername: string;
     displayAvatar?: string;

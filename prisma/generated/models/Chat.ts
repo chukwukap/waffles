@@ -28,19 +28,17 @@ export type AggregateChat = {
 
 export type ChatAvgAggregateOutputType = {
   id: number | null
-  gameId: number | null
   userId: number | null
 }
 
 export type ChatSumAggregateOutputType = {
   id: number | null
-  gameId: number | null
   userId: number | null
 }
 
 export type ChatMinAggregateOutputType = {
   id: number | null
-  gameId: number | null
+  gameId: string | null
   userId: number | null
   text: string | null
   createdAt: Date | null
@@ -48,7 +46,7 @@ export type ChatMinAggregateOutputType = {
 
 export type ChatMaxAggregateOutputType = {
   id: number | null
-  gameId: number | null
+  gameId: string | null
   userId: number | null
   text: string | null
   createdAt: Date | null
@@ -66,13 +64,11 @@ export type ChatCountAggregateOutputType = {
 
 export type ChatAvgAggregateInputType = {
   id?: true
-  gameId?: true
   userId?: true
 }
 
 export type ChatSumAggregateInputType = {
   id?: true
-  gameId?: true
   userId?: true
 }
 
@@ -189,7 +185,7 @@ export type ChatGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
 
 export type ChatGroupByOutputType = {
   id: number
-  gameId: number
+  gameId: string
   userId: number
   text: string
   createdAt: Date
@@ -220,7 +216,7 @@ export type ChatWhereInput = {
   OR?: Prisma.ChatWhereInput[]
   NOT?: Prisma.ChatWhereInput | Prisma.ChatWhereInput[]
   id?: Prisma.IntFilter<"Chat"> | number
-  gameId?: Prisma.IntFilter<"Chat"> | number
+  gameId?: Prisma.StringFilter<"Chat"> | string
   userId?: Prisma.IntFilter<"Chat"> | number
   text?: Prisma.StringFilter<"Chat"> | string
   createdAt?: Prisma.DateTimeFilter<"Chat"> | Date | string
@@ -243,7 +239,7 @@ export type ChatWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.ChatWhereInput | Prisma.ChatWhereInput[]
   OR?: Prisma.ChatWhereInput[]
   NOT?: Prisma.ChatWhereInput | Prisma.ChatWhereInput[]
-  gameId?: Prisma.IntFilter<"Chat"> | number
+  gameId?: Prisma.StringFilter<"Chat"> | string
   userId?: Prisma.IntFilter<"Chat"> | number
   text?: Prisma.StringFilter<"Chat"> | string
   createdAt?: Prisma.DateTimeFilter<"Chat"> | Date | string
@@ -269,7 +265,7 @@ export type ChatScalarWhereWithAggregatesInput = {
   OR?: Prisma.ChatScalarWhereWithAggregatesInput[]
   NOT?: Prisma.ChatScalarWhereWithAggregatesInput | Prisma.ChatScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"Chat"> | number
-  gameId?: Prisma.IntWithAggregatesFilter<"Chat"> | number
+  gameId?: Prisma.StringWithAggregatesFilter<"Chat"> | string
   userId?: Prisma.IntWithAggregatesFilter<"Chat"> | number
   text?: Prisma.StringWithAggregatesFilter<"Chat"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Chat"> | Date | string
@@ -284,7 +280,7 @@ export type ChatCreateInput = {
 
 export type ChatUncheckedCreateInput = {
   id?: number
-  gameId: number
+  gameId: string
   userId: number
   text: string
   createdAt?: Date | string
@@ -299,7 +295,7 @@ export type ChatUpdateInput = {
 
 export type ChatUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  gameId?: Prisma.IntFieldUpdateOperationsInput | number
+  gameId?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   text?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -307,7 +303,7 @@ export type ChatUncheckedUpdateInput = {
 
 export type ChatCreateManyInput = {
   id?: number
-  gameId: number
+  gameId: string
   userId: number
   text: string
   createdAt?: Date | string
@@ -320,7 +316,7 @@ export type ChatUpdateManyMutationInput = {
 
 export type ChatUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  gameId?: Prisma.IntFieldUpdateOperationsInput | number
+  gameId?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   text?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -346,7 +342,6 @@ export type ChatCountOrderByAggregateInput = {
 
 export type ChatAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  gameId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
 }
 
@@ -368,7 +363,6 @@ export type ChatMinOrderByAggregateInput = {
 
 export type ChatSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  gameId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
 }
 
@@ -464,7 +458,7 @@ export type ChatCreateWithoutUserInput = {
 
 export type ChatUncheckedCreateWithoutUserInput = {
   id?: number
-  gameId: number
+  gameId: string
   text: string
   createdAt?: Date | string
 }
@@ -500,7 +494,7 @@ export type ChatScalarWhereInput = {
   OR?: Prisma.ChatScalarWhereInput[]
   NOT?: Prisma.ChatScalarWhereInput | Prisma.ChatScalarWhereInput[]
   id?: Prisma.IntFilter<"Chat"> | number
-  gameId?: Prisma.IntFilter<"Chat"> | number
+  gameId?: Prisma.StringFilter<"Chat"> | string
   userId?: Prisma.IntFilter<"Chat"> | number
   text?: Prisma.StringFilter<"Chat"> | string
   createdAt?: Prisma.DateTimeFilter<"Chat"> | Date | string
@@ -547,7 +541,7 @@ export type ChatUpdateManyWithWhereWithoutGameInput = {
 
 export type ChatCreateManyUserInput = {
   id?: number
-  gameId: number
+  gameId: string
   text: string
   createdAt?: Date | string
 }
@@ -560,14 +554,14 @@ export type ChatUpdateWithoutUserInput = {
 
 export type ChatUncheckedUpdateWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  gameId?: Prisma.IntFieldUpdateOperationsInput | number
+  gameId?: Prisma.StringFieldUpdateOperationsInput | string
   text?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ChatUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  gameId?: Prisma.IntFieldUpdateOperationsInput | number
+  gameId?: Prisma.StringFieldUpdateOperationsInput | string
   text?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -661,7 +655,7 @@ export type $ChatPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
-    gameId: number
+    gameId: string
     userId: number
     text: string
     createdAt: Date
@@ -1091,7 +1085,7 @@ export interface Prisma__ChatClient<T, Null = never, ExtArgs extends runtime.Typ
  */
 export interface ChatFieldRefs {
   readonly id: Prisma.FieldRef<"Chat", 'Int'>
-  readonly gameId: Prisma.FieldRef<"Chat", 'Int'>
+  readonly gameId: Prisma.FieldRef<"Chat", 'String'>
   readonly userId: Prisma.FieldRef<"Chat", 'Int'>
   readonly text: Prisma.FieldRef<"Chat", 'String'>
   readonly createdAt: Prisma.FieldRef<"Chat", 'DateTime'>
