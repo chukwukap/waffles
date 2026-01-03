@@ -100,8 +100,8 @@ async function sendSettlementNotifications(gameId: string) {
     `[Settlement] Notifying ${winners.length} winners and ${nonWinners.length} non-winners`
   );
 
-  // Batch send to winners (personalized message)
-  // For now, use individual sends for winners since they have personalized prize amounts
+  // Winners get individual sends (each has different prize amount in message)
+  // sendBatch only supports one message for all recipients
   await Promise.allSettled(
     winners.map((entry) =>
       sendToUser(entry.user.fid, {
