@@ -113,8 +113,10 @@ export function SettlementPanel({
 
   const canEnd =
     gameStatus === "ENDED" && onChainStatus?.exists && !onChainStatus?.ended;
+  // Allow settling if game ended (DB status) and not yet settled on-chain
+  // Don't require onChainStatus.ended as it may not read correctly from chain
   const canSettle =
-    gameStatus === "ENDED" && onChainStatus?.ended && !onChainStatus?.settled;
+    gameStatus === "ENDED" && onChainStatus?.exists && !onChainStatus?.settled;
   const isSettled = onChainStatus?.settled;
   const isOnChain = onChainStatus?.exists;
   const canUpdateMerkleRoot =
