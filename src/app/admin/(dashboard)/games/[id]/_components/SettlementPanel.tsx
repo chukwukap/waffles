@@ -22,7 +22,7 @@ interface SettlementPanelProps {
   };
 }
 
-type SettlementAction = "end" | "settle" | "updateMerkleRoot";
+type SettlementAction = "end" | "settle" | "updateMerkleRoot" | "finalize";
 
 export function SettlementPanel({
   gameId,
@@ -93,9 +93,13 @@ export function SettlementPanel({
 
   const getSuccessMessage = (
     action: SettlementAction,
-    data: { txHash?: string; winnersCount?: number }
+    data: { txHash?: string; winnersCount?: number; entriesRanked?: number; alreadyFinalized?: boolean }
   ) => {
     switch (action) {
+      case "finalize":
+        return data.alreadyFinalized
+          ? "Already finalized - no changes made"
+          : `Finalized! ${data.entriesRanked} entries ranked, ${data.winnersCount} winners`;
       case "end":
         return `Game ended on-chain`;
       case "settle":
@@ -115,6 +119,8 @@ export function SettlementPanel({
   const isOnChain = onChainStatus?.exists;
   const canUpdateMerkleRoot =
     isSettled && (onChainStatus?.claimCount ?? 0) === 0;
+  // Show finalize button if game ended but not yet on-chain settled
+  const canFinalize = gameStatus === "ENDED" && !isSettled;
 
   return (
     <div className="space-y-4">
@@ -142,6 +148,16 @@ export function SettlementPanel({
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-3">
+        {canFinalize && (
+          <ActionButton
+            onClick={() => executeSettlement("finalize")}
+            loading={isLoading === "finalize"}
+            icon={<ChartPieIcon className="h-4 w-4" />}
+            label="Finalize Results"
+            variant="primary"
+          />
+        )}
+
         {canEnd && (
           <ActionButton
             onClick={() => setShowEndConfirm(true)}

@@ -18,7 +18,7 @@ async function isAuthorized(): Promise<boolean> {
 }
 
 interface SettlementRequestBody {
-  action: "create" | "end" | "settle" | "updateMerkleRoot";
+  action: "create" | "end" | "settle" | "updateMerkleRoot" | "finalize";
   gameId: string;
   entryFee?: number; // Required for 'create' action
   newMerkleRoot?: string; // Required for 'updateMerkleRoot' action
@@ -32,15 +32,18 @@ interface SettlementResponse {
   error?: string;
   merkleRoot?: string;
   winnersCount?: number;
+  entriesRanked?: number;
+  alreadyFinalized?: boolean;
 }
 
 /**
  * POST /api/v1/admin/settlement
  *
  * Actions:
+ * - finalize: Calculate ranks and prizes in DB (if PartyKit failed to do this)
  * - create: Create game on-chain (gameId, entryFee required)
  * - end: End game on-chain (stop ticket sales)
- * - settle: Calculate winners and submit Merkle root
+ * - settle: Build Merkle tree from DB data and submit on-chain
  */
 export async function POST(request: NextRequest) {
   // Auth check
@@ -64,6 +67,40 @@ export async function POST(request: NextRequest) {
     let winnersCount: number | undefined;
 
     switch (action) {
+      case "finalize": {
+        // Manual trigger for finalize (if PartyKit failed)
+        // This is idempotent - safe to call even if PartyKit already succeeded
+        const { env } = await import("@/lib/env");
+        const internalRes = await fetch(
+          `${env.rootUrl}/api/v1/internal/games/${gameId}/finalize`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${env.partykitSecret}`,
+            },
+          }
+        );
+
+        if (!internalRes.ok) {
+          const errorData = await internalRes.json();
+          return NextResponse.json(
+            { error: errorData.error || "Finalize failed" },
+            { status: internalRes.status }
+          );
+        }
+
+        const finalizeResult = await internalRes.json();
+        return NextResponse.json<SettlementResponse>({
+          success: true,
+          action: "finalize",
+          gameId,
+          winnersCount: finalizeResult.prizesDistributed,
+          entriesRanked: finalizeResult.entriesRanked,
+          alreadyFinalized: finalizeResult.alreadyFinalized,
+        });
+      }
+
       case "create": {
         if (!entryFee) {
           return NextResponse.json(
