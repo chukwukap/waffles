@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import {
-  createGameOnChain,
-  endGameOnChain,
-  settleGame,
-  updateMerkleRootOnChain,
-} from "@/lib/chain";
+import { createGameOnChain, endGameOnChain } from "@/lib/chain";
+import { settleGame, updateMerkleRootOnChain } from "@/lib/chain/settlement";
 import { getAdminSession } from "@/lib/admin-auth";
 
 /**

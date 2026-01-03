@@ -28,12 +28,8 @@ export {
   type OnChainGame,
 } from "./game";
 
-// Settlement
-export {
-  submitResultsOnChain,
-  updateMerkleRootOnChain,
-  settleGame,
-} from "./settlement";
+// Settlement - NOT exported here because it's server-only (uses Prisma)
+// Import directly from "@/lib/chain/settlement" in server components/actions
 
 // Merkle tree
 export {
