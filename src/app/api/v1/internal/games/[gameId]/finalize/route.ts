@@ -1,18 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
+import { PRIZE_DISTRIBUTION } from "@/lib/constants";
 
 type Params = { gameId: string };
-
-/**
- * Prize distribution percentages for top 3
- * Total = 100% of prize pool
- */
-const PRIZE_DISTRIBUTION = [
-  { rank: 1, percentage: 0.5 }, // 50%
-  { rank: 2, percentage: 0.3 }, // 30%
-  { rank: 3, percentage: 0.2 }, // 20%
-];
 
 interface FinalizeResult {
   success: boolean;
@@ -158,9 +149,10 @@ export async function POST(
     const updateData = entries.map((entry, index) => {
       const rank = index + 1;
 
-      // Calculate prize for top 3
-      const prizeConfig = PRIZE_DISTRIBUTION.find((p) => p.rank === rank);
-      const prize = prizeConfig ? prizePool * prizeConfig.percentage : 0;
+      // Calculate prize for top 3 (PRIZE_DISTRIBUTION is [0.6, 0.3, 0.1])
+      const prizePercent =
+        index < PRIZE_DISTRIBUTION.length ? PRIZE_DISTRIBUTION[index] : 0;
+      const prize = prizePool * prizePercent;
 
       if (prize > 0) {
         winners.push({ rank, prize, userId: entry.userId, entryId: entry.id });

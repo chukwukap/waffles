@@ -12,7 +12,6 @@ import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { sendToUser, sendBatch } from "@/lib/notifications";
 import { getGamePhase } from "@/lib/types";
-import { PRIZE_DISTRIBUTION } from "@/lib/constants";
 
 // ============================================================================
 // On-Chain Settlement Operations
@@ -167,11 +166,12 @@ export async function settleGame(gameId: string): Promise<{
     throw new Error(`Game ${gameId} has not ended yet (phase: ${phase})`);
   }
 
-  // 2. Get ranked entries (top 3 get prizes)
+  // 2. Get ranked entries with prizes (already calculated by finalize route)
   const rankedEntries = await prisma.gameEntry.findMany({
     where: {
       gameId,
       rank: { not: null, lte: 3 },
+      prize: { not: null, gt: 0 }, // Must have prize set by finalize
       paidAt: { not: null },
     },
     include: {
@@ -181,16 +181,21 @@ export async function settleGame(gameId: string): Promise<{
   });
 
   if (rankedEntries.length === 0) {
-    throw new Error(`No ranked entries for game ${gameId}`);
+    throw new Error(
+      `No ranked entries with prizes for game ${gameId}. ` +
+        `Make sure finalize has been called first.`
+    );
   }
 
-  // 3. Calculate prize distribution
+  // 3. Build winners from existing DB data (no recalculation)
   const winners: Winner[] = rankedEntries
     .filter((e) => e.payerWallet || e.user.wallet)
-    .map((entry, index) => {
-      const prizeShare = PRIZE_DISTRIBUTION[index] || 0;
-      const amountUSDC = game.prizePool * prizeShare;
-      const amount = parseUnits(amountUSDC.toFixed(6), TOKEN_CONFIG.decimals);
+    .map((entry) => {
+      // Use prize already calculated by finalize route
+      const amount = parseUnits(
+        (entry.prize ?? 0).toFixed(6),
+        TOKEN_CONFIG.decimals
+      );
       const winnerAddress = (entry.payerWallet ||
         entry.user.wallet) as `0x${string}`;
 
