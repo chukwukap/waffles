@@ -36,7 +36,7 @@ export const POST = withAuth(async (request, auth: AuthResult) => {
 
     const { gameId } = validation.data;
 
-    // Find game entry with user fid and prize
+    // Find game entry with user fid, prize, and access status
     const entry = await prisma.gameEntry.findUnique({
       where: { gameId_userId: { gameId, userId: auth.userId } },
       select: {
@@ -45,7 +45,7 @@ export const POST = withAuth(async (request, auth: AuthResult) => {
         score: true,
         paidAt: true,
         prize: true,
-        user: { select: { fid: true } },
+        user: { select: { fid: true, hasGameAccess: true, isBanned: true } },
       },
     });
 
@@ -89,15 +89,19 @@ export const POST = withAuth(async (request, auth: AuthResult) => {
       data: { claimedAt },
     });
 
-    // Send congratulations notification (async, don't block response)
-    const prizeAmount = entry.prize ?? 0;
-    sendToUser(entry.user.fid, {
-      title: "💰 Prize Claimed!",
-      body: `Congratulations! $${prizeAmount.toFixed(
-        2
-      )} has been sent to your wallet.`,
-      targetUrl: `${env.rootUrl}/profile`,
-    }).catch((err) => console.error("[Claim] Notification error:", err));
+    // Send congratulations notification (only if user has access)
+    if (entry.user.hasGameAccess && !entry.user.isBanned) {
+      const prizeAmount = entry.prize ?? 0;
+      sendToUser(entry.user.fid, {
+        title: "💰 Prize Claimed!",
+        body: `Congratulations! $${prizeAmount.toFixed(
+          2
+        )} has been sent to your wallet.`,
+        targetUrl: `${env.rootUrl}/profile`,
+      }).catch((err: Error) =>
+        console.error("[Claim] Notification error:", err)
+      );
+    }
 
     return NextResponse.json<ClaimResponse>({
       success: true,

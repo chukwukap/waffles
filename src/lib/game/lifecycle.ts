@@ -470,7 +470,13 @@ export async function publishResults(gameId: string): Promise<PublishResult> {
 
 async function sendResultNotifications(gameId: string) {
   const allEntries = await prisma.gameEntry.findMany({
-    where: { gameId },
+    where: {
+      gameId,
+      user: {
+        hasGameAccess: true,
+        isBanned: false,
+      },
+    },
     select: {
       rank: true,
       prize: true,

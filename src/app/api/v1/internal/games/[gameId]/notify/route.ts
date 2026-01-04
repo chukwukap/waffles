@@ -41,9 +41,15 @@ export async function POST(
       return NextResponse.json({ error: "Game not found" }, { status: 404 });
     }
 
-    // Get all FIDs for this game's entries
+    // Get all FIDs for this game's entries (only users with game access)
     const entries = await prisma.gameEntry.findMany({
-      where: { gameId },
+      where: {
+        gameId,
+        user: {
+          hasGameAccess: true,
+          isBanned: false,
+        },
+      },
       select: { user: { select: { fid: true } } },
     });
 
