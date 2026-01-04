@@ -349,6 +349,7 @@ export default function ResultPageClient({
 
   // Get button text based on state
   const getClaimButtonText = () => {
+    if (entryLoading) return "Loading...";
     if (hasClaimed || claimState === "success") return "CLAIMED ✓";
     if (claimState === "pending") return "RESULTS PENDING";
     if (claimState === "fetching") return "Loading...";
@@ -358,6 +359,7 @@ export default function ResultPageClient({
   };
 
   const isClaimDisabled =
+    entryLoading ||
     hasClaimed ||
     claimState === "success" ||
     claimState === "pending" ||
