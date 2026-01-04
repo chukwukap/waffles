@@ -202,33 +202,8 @@ export async function createGameAction(
       };
     }
 
-    // Check recently ended game is finalized on-chain
-    const recentEndedGame = await prisma.game.findFirst({
-      where: {
-        endsAt: { lte: now },
-        onchainId: { not: null },
-      },
-      orderBy: { endsAt: "desc" },
-      select: { id: true, title: true, onchainId: true },
-    });
-
-    if (recentEndedGame?.onchainId) {
-      const onChainGame = await getOnChainGame(
-        recentEndedGame.onchainId as `0x${string}`
-      );
-
-      const gameExistsOnChain =
-        onChainGame &&
-        (onChainGame.ticketCount > BigInt(0) ||
-          onChainGame.entryFee > BigInt(0));
-
-      if (gameExistsOnChain && !onChainGame.ended) {
-        return {
-          success: false,
-          error: `Previous game "${recentEndedGame.title}" not ended on-chain. End it first via Settlement.`,
-        };
-      }
-    }
+    // Note: Previous game on-chain status no longer blocks new game creation.
+    // Admin can create multiple games concurrently.
   } catch (error) {
     console.error("[CreateGame] Pre-flight check failed:", error);
     return {
