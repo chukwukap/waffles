@@ -408,8 +408,6 @@ export default class GameServer implements Party.Server {
     );
   }
 
-  // NOTE: handleQuestionEndAlarm removed - players answer directly to DB
-
   async handleGameEndAlarm() {
     const gameId = await this.room.storage.get<string>("gameId");
     const gameState = await this.room.storage.get<GameState>("gameState");
