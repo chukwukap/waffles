@@ -93,4 +93,8 @@ export const THEMES = [
   },
 ];
 
-export const PRIZE_DISTRIBUTION = [0.6, 0.3, 0.1];
+/**
+ * Number of top players who share the prize pool.
+ * Prize is distributed based on tier (paidAmount), not rank position.
+ */
+export const TOP_WINNERS_COUNT = 5;

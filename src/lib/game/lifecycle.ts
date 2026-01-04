@@ -7,7 +7,7 @@
 
 import { parseUnits } from "viem";
 import { prisma } from "@/lib/db";
-import { PRIZE_DISTRIBUTION } from "@/lib/constants";
+import { TOP_WINNERS_COUNT } from "@/lib/constants";
 import { WAFFLE_GAME_CONFIG, TOKEN_CONFIG } from "@/lib/chain/config";
 import { publicClient, getWalletClient } from "@/lib/chain/client";
 import {
@@ -236,6 +236,7 @@ export async function rankGame(gameId: string): Promise<RankResult> {
       id: true,
       score: true,
       userId: true,
+      paidAmount: true,
       user: { select: { username: true } },
     },
   });
@@ -256,7 +257,8 @@ export async function rankGame(gameId: string): Promise<RankResult> {
     };
   }
 
-  // Calculate rankings and prizes
+  // Calculate rankings and tier-based prizes
+  // Top 5 share the prize pool proportionally to their paidAmount (tier)
   const prizePool = game.prizePool;
   const winners: Array<{
     rank: number;
@@ -266,23 +268,36 @@ export async function rankGame(gameId: string): Promise<RankResult> {
     entryId: string;
   }> = [];
 
+  // Get top 5 entries
+  const top5 = entries.slice(0, TOP_WINNERS_COUNT);
+
+  // Calculate total weight (sum of paidAmounts for top 5)
+  const totalWeight = top5.reduce((sum, e) => sum + (e.paidAmount ?? 0), 0);
+
+  // Build update data for ALL entries
   const updateData = entries.map((entry, index) => {
     const rank = index + 1;
-    const prizePercent =
-      index < PRIZE_DISTRIBUTION.length ? PRIZE_DISTRIBUTION[index] : 0;
-    const prize = prizePool * prizePercent;
 
-    if (prize > 0) {
-      winners.push({
-        rank,
-        prize,
-        userId: entry.userId,
-        username: entry.user.username ?? "Unknown",
-        entryId: entry.id,
-      });
+    // Only top 5 get prizes
+    if (index < TOP_WINNERS_COUNT && totalWeight > 0) {
+      const paidAmount = entry.paidAmount ?? 0;
+      const prize = (paidAmount / totalWeight) * prizePool;
+
+      if (prize > 0) {
+        winners.push({
+          rank,
+          prize,
+          userId: entry.userId,
+          username: entry.user.username ?? "Unknown",
+          entryId: entry.id,
+        });
+      }
+
+      return { id: entry.id, rank, prize };
     }
 
-    return { id: entry.id, rank, prize };
+    // Non-winners get rank but no prize
+    return { id: entry.id, rank, prize: 0 };
   });
 
   // Batch update in transaction
@@ -374,7 +389,7 @@ export async function publishResults(gameId: string): Promise<PublishResult> {
   const rankedEntries = await prisma.gameEntry.findMany({
     where: {
       gameId,
-      rank: { lte: 3 },
+      rank: { lte: TOP_WINNERS_COUNT },
       prize: { gt: 0 },
       paidAt: { not: null },
     },
@@ -485,9 +500,11 @@ async function sendResultNotifications(gameId: string) {
   });
 
   const usersToNotify = allEntries.filter((e) => e.user.notifs.length > 0);
-  const winners = usersToNotify.filter((e) => e.rank && e.rank <= 3 && e.prize);
+  const winners = usersToNotify.filter(
+    (e) => e.rank && e.rank <= TOP_WINNERS_COUNT && e.prize
+  );
   const nonWinners = usersToNotify.filter(
-    (e) => !(e.rank && e.rank <= 3 && e.prize)
+    (e) => !(e.rank && e.rank <= TOP_WINNERS_COUNT && e.prize)
   );
 
   console.log(
@@ -538,16 +555,27 @@ export async function previewRanking(gameId: string) {
     orderBy: [{ score: "desc" }, { updatedAt: "asc" }],
     select: {
       score: true,
+      paidAmount: true,
       user: { select: { username: true } },
     },
     take: 10,
   });
 
+  // Calculate total weight for top winners
+  const topEntries = entries.slice(0, TOP_WINNERS_COUNT);
+  const totalWeight = topEntries.reduce(
+    (sum, e) => sum + (e.paidAmount ?? 0),
+    0
+  );
+
   return entries.map((entry, index) => {
     const rank = index + 1;
-    const prizePercent =
-      index < PRIZE_DISTRIBUTION.length ? PRIZE_DISTRIBUTION[index] : 0;
-    const prize = game.prizePool * prizePercent;
+
+    // Only top 5 get prizes based on tier
+    let prize = 0;
+    if (index < TOP_WINNERS_COUNT && totalWeight > 0) {
+      prize = ((entry.paidAmount ?? 0) / totalWeight) * game.prizePool;
+    }
 
     return {
       rank,

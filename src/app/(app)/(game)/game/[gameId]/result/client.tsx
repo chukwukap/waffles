@@ -101,9 +101,9 @@ export default function ResultPageClient({
   const hasClaimed =
     entry?.claimedAt !== null && entry?.claimedAt !== undefined;
 
-  // Is user a winner (rank 1-3)?
+  // Is user a winner (rank 1-5)?
   const isWinner = useMemo(() => {
-    return userScore !== null && userScore.rank <= 3 && userScore.winnings > 0;
+    return userScore !== null && userScore.rank <= 5 && userScore.winnings > 0;
   }, [userScore]);
 
 
@@ -112,10 +112,10 @@ export default function ResultPageClient({
   useEffect(() => {
     if (!hasPlayedSound.current && userScore) {
       hasPlayedSound.current = true;
-      playSound(userScore.rank <= 3 ? "victory" : "defeat");
+      playSound(userScore.rank <= 5 ? "victory" : "defeat");
 
-      // Fire confetti for winners (rank 1-3)
-      if (userScore.rank <= 3 && userScore.winnings > 0) {
+      // Fire confetti for winners (rank 1-5)
+      if (userScore.rank <= 5 && userScore.winnings > 0) {
         // Initial burst
         confetti({
           particleCount: 100,

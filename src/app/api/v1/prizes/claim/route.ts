@@ -72,8 +72,8 @@ export const POST = withAuth(async (request, auth: AuthResult) => {
       );
     }
 
-    // Check eligibility (top 3 ranks get prizes)
-    const isEligible = entry.rank !== null && entry.rank <= 3;
+    // Check eligibility (top 5 ranks get prizes)
+    const isEligible = entry.rank !== null && entry.rank <= 5;
 
     if (!isEligible) {
       return NextResponse.json<ApiError>(
