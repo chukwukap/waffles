@@ -10,8 +10,8 @@ import { z } from "zod";
 // Configuration
 // ============================================================================
 
-/** Amount of test USDC to airdrop (100 USDC) */
-const AIRDROP_AMOUNT = 100;
+/** Amount of test USDC to airdrop (1000 USDC) */
+const AIRDROP_AMOUNT = 1000;
 
 // ============================================================================
 // Validation Schema
