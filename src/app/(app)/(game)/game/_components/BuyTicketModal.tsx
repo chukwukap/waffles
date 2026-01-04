@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount, useConnect } from "wagmi";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { farcasterFrame } from "@farcaster/miniapp-wagmi-connector";
-import { CHAIN_CONFIG } from "@/lib/chain";
+import { parseUnits } from "viem";
+import { CHAIN_CONFIG, TOKEN_CONFIG } from "@/lib/chain";
+import { useTokenBalance } from "@/hooks/waffleContractHooks";
+import { useFaucet } from "@/hooks/useFaucet";
 
 import {
   useTicketPurchase,
@@ -46,12 +49,19 @@ export function BuyTicketModal({
   const [isAnimating, setIsAnimating] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
 
+  // Track if we've already tried faucet for this modal session
+  const hasRequestedFaucet = useRef(false);
+
   // Derived display values
   const displayUsername =
     username !== "Player" ? username : context?.user?.username || "Player";
   const displayAvatar = userAvatar || context?.user?.pfpUrl;
   const selectedPrice = tierPrices[selectedTier] ?? 0;
   const potentialPayout = Math.round(selectedPrice * 21.1);
+
+  // Token balance for auto-faucet in test mode
+  const { data: balance, refetch: refetchBalance } = useTokenBalance(address as `0x${string}`);
+  const { requestTokens, isLoading: isFaucetLoading, isTestMode } = useFaucet();
 
   // Auto-connect wallet when modal opens (Farcaster MiniApp pattern)
   useEffect(() => {
@@ -62,6 +72,37 @@ export function BuyTicketModal({
       });
     }
   }, [isOpen, isConnected, connect]);
+
+  // Reset faucet request flag when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      hasRequestedFaucet.current = false;
+    }
+  }, [isOpen]);
+
+  // Auto-faucet in test mode when wallet has insufficient balance
+  useEffect(() => {
+    const priceInUnits = parseUnits(selectedPrice.toString(), TOKEN_CONFIG.decimals);
+    const hasInsufficientBalance = balance !== undefined && (balance as bigint) < priceInUnits;
+
+    if (
+      isTestMode &&
+      isConnected &&
+      address &&
+      hasInsufficientBalance &&
+      !hasRequestedFaucet.current &&
+      !isFaucetLoading
+    ) {
+      hasRequestedFaucet.current = true;
+      console.log("[Faucet] Auto-requesting test tokens for", address);
+      requestTokens(address).then((result) => {
+        if (result.success) {
+          // Refetch balance after successful airdrop
+          setTimeout(() => refetchBalance(), 2000);
+        }
+      });
+    }
+  }, [isTestMode, isConnected, address, balance, selectedPrice, requestTokens, isFaucetLoading, refetchBalance]);
 
   // Use the ticket purchase hook
   const {
