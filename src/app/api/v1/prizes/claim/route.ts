@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
+import { sendToUser } from "@/lib/notifications";
+import { env } from "@/lib/env";
 
 const claimSchema = z.object({
   gameId: z.string().min(1, "Invalid Game ID"),
@@ -34,7 +36,7 @@ export const POST = withAuth(async (request, auth: AuthResult) => {
 
     const { gameId } = validation.data;
 
-    // Find game entry
+    // Find game entry with user fid and prize
     const entry = await prisma.gameEntry.findUnique({
       where: { gameId_userId: { gameId, userId: auth.userId } },
       select: {
@@ -42,6 +44,8 @@ export const POST = withAuth(async (request, auth: AuthResult) => {
         rank: true,
         score: true,
         paidAt: true,
+        prize: true,
+        user: { select: { fid: true } },
       },
     });
 
@@ -84,6 +88,16 @@ export const POST = withAuth(async (request, auth: AuthResult) => {
       where: { gameId_userId: { gameId, userId: auth.userId } },
       data: { claimedAt },
     });
+
+    // Send congratulations notification (async, don't block response)
+    const prizeAmount = entry.prize ?? 0;
+    sendToUser(entry.user.fid, {
+      title: "💰 Prize Claimed!",
+      body: `Congratulations! $${prizeAmount.toFixed(
+        2
+      )} has been sent to your wallet.`,
+      targetUrl: `${env.rootUrl}/profile`,
+    }).catch((err) => console.error("[Claim] Notification error:", err));
 
     return NextResponse.json<ClaimResponse>({
       success: true,
