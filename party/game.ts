@@ -21,26 +21,13 @@ interface ChatMessage {
   timestamp: number;
 }
 
-interface Question {
-  id: string;
-  text: string;
-  options: string[];
-  correct: number;
-  timeLimit: number;
-}
-
+// Simplified GameState - no question tracking (DB is source of truth)
 interface GameState {
   isLive: boolean;
-  questions: Question[];
-  currentQuestionIndex: number;
-  questionStartTime: number;
-  questionEndTime: number;
-  isBreak: boolean;
-  breakEndTime: number;
 }
 
-// Alarm phases for chained scheduling
-type AlarmPhase = "notify" | "start" | "questionEnd" | "gameEnd";
+// Alarm phases for chained scheduling (simplified - no question tracking)
+type AlarmPhase = "notify" | "start" | "gameEnd";
 
 // Client → Server messages
 type ClientMessage =
@@ -153,18 +140,17 @@ export default class GameServer implements Party.Server {
             gameId: string;
             startsAt: string;
             endsAt: string;
-            questions: Question[];
+            // questions no longer sent - DB is source of truth
           };
 
           const startsAt = new Date(body.startsAt).getTime();
           const endsAt = new Date(body.endsAt).getTime();
           const notifyTime = startsAt - 60 * 1000; // 1 minute before
 
-          // Store game metadata and questions
+          // Store game metadata (no questions - DB is source of truth)
           await this.room.storage.put("gameId", body.gameId);
           await this.room.storage.put("startsAt", startsAt);
           await this.room.storage.put("endsAt", endsAt);
-          await this.room.storage.put("questions", body.questions);
 
           // Schedule first alarm (notify phase)
           const now = Date.now();
@@ -219,43 +205,6 @@ export default class GameServer implements Party.Server {
           { headers }
         );
       }
-
-      case "sync-questions": {
-        if (req.method !== "POST") {
-          return Response.json(
-            { error: "Method not allowed" },
-            { status: 405, headers }
-          );
-        }
-
-        const secret = this.room.env.PARTYKIT_SECRET as string;
-        const authHeader = req.headers.get("Authorization");
-        if (authHeader !== `Bearer ${secret}`) {
-          return Response.json(
-            { error: "Unauthorized" },
-            { status: 401, headers }
-          );
-        }
-
-        try {
-          const body = (await req.json()) as { questions: Question[] };
-          await this.room.storage.put("questions", body.questions);
-          console.log(
-            `[sync-questions] Stored ${body.questions.length} questions`
-          );
-          return Response.json(
-            { success: true, count: body.questions.length },
-            { headers }
-          );
-        } catch (error) {
-          console.error("[sync-questions] Error:", error);
-          return Response.json(
-            { error: "Failed to sync questions" },
-            { status: 500, headers }
-          );
-        }
-      }
-
       // ==========================================
       // STATS-UPDATE - Called when ticket purchased
       // ==========================================
@@ -400,9 +349,6 @@ export default class GameServer implements Party.Server {
       case "start":
         await this.handleStartAlarm();
         break;
-      case "questionEnd":
-        await this.handleQuestionEndAlarm();
-        break;
       case "gameEnd":
         await this.handleGameEndAlarm();
         break;
@@ -434,121 +380,35 @@ export default class GameServer implements Party.Server {
     const gameId = await this.room.storage.get<string>("gameId");
     const endsAt = await this.room.storage.get<number>("endsAt");
 
-    // Get questions from storage (sent during init)
-    const questions = await this.room.storage.get<Question[]>("questions");
-    if (!questions || questions.length === 0) {
-      console.error(`[Start] Game ${gameId} - no questions found in storage`);
+    if (!endsAt) {
+      console.error(`[Start] Game ${gameId} - no endsAt found`);
       return;
     }
 
-    // Initialize game state
-    const firstQuestion = questions[0];
-    const questionDuration = (firstQuestion.timeLimit || 15) * 1000;
+    // Mark game as live (simplified - no question tracking)
+    await this.room.storage.put("gameState", { isLive: true });
 
-    const gameState: GameState = {
-      isLive: true,
-      questions,
-      currentQuestionIndex: 0,
-      questionStartTime: Date.now(),
-      questionEndTime: Date.now() + questionDuration,
-      isBreak: false,
-      breakEndTime: 0,
-    };
-
-    await this.room.storage.put("gameState", gameState);
-
-    // Schedule question end alarm
-    await this.room.storage.put("alarmPhase", "questionEnd" as AlarmPhase);
-    await this.room.storage.setAlarm(gameState.questionEndTime);
-
-    // Also store game end time for fallback
-    await this.room.storage.put("endsAt", endsAt);
+    // Schedule game end alarm
+    await this.room.storage.put("alarmPhase", "gameEnd" as AlarmPhase);
+    await this.room.storage.setAlarm(endsAt);
 
     // Send "game started" notification
     await this.sendNotifications("The game has started! 🚀");
 
-    // Broadcast first question
+    // Broadcast game start (clients fetch questions from DB)
     this.broadcast({
       type: "gameStart",
-      data: { message: "Game has started!", timestamp: Date.now() },
-    });
-
-    this.broadcast({
-      type: "question",
-      data: {
-        index: 0,
-        question: {
-          id: firstQuestion.id,
-          text: firstQuestion.text,
-          options: firstQuestion.options,
-          timeLimit: firstQuestion.timeLimit,
-        },
-        startTime: gameState.questionStartTime,
-        endTime: gameState.questionEndTime,
-      },
+      data: { gameId, timestamp: Date.now() },
     });
 
     console.log(
-      `[Start] Game ${gameId} - started with ${questions.length} questions`
+      `[Start] Game ${gameId} - started, ends at ${new Date(
+        endsAt
+      ).toISOString()}`
     );
   }
 
-  async handleQuestionEndAlarm() {
-    const gameState = await this.room.storage.get<GameState>("gameState");
-    const endsAt = await this.room.storage.get<number>("endsAt");
-
-    if (!gameState) return;
-
-    const nextIdx = gameState.currentQuestionIndex + 1;
-
-    // Check if game should end (time-based or all questions done)
-    if (nextIdx >= gameState.questions.length || Date.now() >= endsAt!) {
-      await this.handleGameEndAlarm();
-      return;
-    }
-
-    // If currently in break, start next question
-    if (gameState.isBreak) {
-      const question = gameState.questions[nextIdx];
-      const questionDuration = (question.timeLimit || 15) * 1000;
-
-      gameState.currentQuestionIndex = nextIdx;
-      gameState.questionStartTime = Date.now();
-      gameState.questionEndTime = Date.now() + questionDuration;
-      gameState.isBreak = false;
-
-      await this.room.storage.put("gameState", gameState);
-      await this.room.storage.setAlarm(gameState.questionEndTime);
-
-      this.broadcast({
-        type: "question",
-        data: {
-          index: nextIdx,
-          question: {
-            id: question.id,
-            text: question.text,
-            options: question.options,
-            timeLimit: question.timeLimit,
-          },
-          startTime: gameState.questionStartTime,
-          endTime: gameState.questionEndTime,
-        },
-      });
-    } else {
-      // Start break
-      const breakDuration = 5000; // 5 seconds
-      gameState.isBreak = true;
-      gameState.breakEndTime = Date.now() + breakDuration;
-
-      await this.room.storage.put("gameState", gameState);
-      await this.room.storage.setAlarm(gameState.breakEndTime);
-
-      this.broadcast({
-        type: "break",
-        data: { endTime: gameState.breakEndTime, nextIndex: nextIdx },
-      });
-    }
-  }
+  // NOTE: handleQuestionEndAlarm removed - players answer directly to DB
 
   async handleGameEndAlarm() {
     const gameId = await this.room.storage.get<string>("gameId");
