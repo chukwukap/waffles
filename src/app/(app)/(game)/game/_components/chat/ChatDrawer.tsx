@@ -7,7 +7,7 @@ import Backdrop from "@/components/ui/Backdrop";
 import { ChatMessageList } from "./ChatMessageList";
 import { useGameStore } from "@/components/providers/GameStoreProvider";
 import { selectIsConnected } from "@/lib/game-store";
-import { useGameSocket } from "@/hooks/useGameSocket";
+import { useGameSocket } from "@/components/providers/GameSocketProvider";
 import { springs } from "@/lib/animations";
 import { playSound } from "@/lib/sounds";
 import { useVisualViewport } from "@/hooks/useVisualViewport";

@@ -14,7 +14,7 @@ import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import sdk from "@farcaster/miniapp-sdk";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useTimer } from "@/hooks/useTimer";
-import { useGameSocket } from "@/hooks/useGameSocket";
+import { useGameSocket } from "@/components/providers/GameSocketProvider";
 import { useGameEntry } from "@/hooks/useGameEntry";
 import { useGameStoreApi } from "@/components/providers/GameStoreProvider";
 import { playSound } from "@/lib/sounds";

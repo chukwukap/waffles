@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { UsersIcon } from "@/components/icons";
 import { useGameStore } from "@/components/providers/GameStoreProvider";
 import { selectOnlineCount } from "@/lib/game-store";
-import { useGameSocket } from "@/hooks/useGameSocket";
+import { useGameSocket } from "@/components/providers/GameSocketProvider";
 import { fireCheer } from "../CheerOverlay";
 import { springs } from "@/lib/animations";
 

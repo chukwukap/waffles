@@ -6,7 +6,6 @@ import { motion } from "framer-motion";
 import type { Game } from "@prisma";
 
 import { useUser } from "@/hooks/useUser";
-import { useGameSocket } from "@/hooks/useGameSocket";
 import { useSounds } from "@/hooks/useSounds";
 import { useGameStoreApi } from "@/components/providers/GameStoreProvider";
 import { BottomNav } from "@/components/BottomNav";
@@ -40,12 +39,7 @@ export function GameHub({ currentOrNextGame }: GameHubProps) {
   const hasAccess = !!user?.hasGameAccess && !user?.isBanned;
 
 
-
-  // Initialize WebSocket connection
-  useGameSocket({
-    enabled: hasAccess && !!currentOrNextGame,
-    gameId: currentOrNextGame?.id,
-  });
+  // Socket is managed at layout level by GameSocketProvider
 
   // Background music
   const { playBgMusic, stopBgMusic } = useSounds();
