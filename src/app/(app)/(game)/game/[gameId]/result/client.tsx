@@ -299,6 +299,13 @@ export default function ResultPageClient({
 
       if (!proofRes.ok) {
         const errorData = await proofRes.json();
+        // Check if already claimed - set success state
+        if (errorData.code === "ALREADY_CLAIMED") {
+          setClaimState("success");
+          refetchEntry(); // Refresh entry data
+          notify.info("Prize already claimed!");
+          return;
+        }
         // Check if game not settled yet
         if (
           errorData.code === "GAME_NOT_ENDED" ||
@@ -337,7 +344,7 @@ export default function ResultPageClient({
         error instanceof Error ? error.message : "Failed to claim prize"
       );
     }
-  }, [onchainId, address, gameId, sendCalls, resetSendCalls, hasClaimed]);
+  }, [onchainId, address, gameId, sendCalls, resetSendCalls, hasClaimed, refetchEntry]);
 
   // Get button text based on state
   const getClaimButtonText = () => {

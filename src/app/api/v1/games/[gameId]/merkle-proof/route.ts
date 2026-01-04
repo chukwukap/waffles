@@ -53,7 +53,6 @@ export const GET = withAuth<{ gameId: string }>(
         );
       }
 
-      // Get user's entry with stored proof
       const entry = await prisma.gameEntry.findUnique({
         where: {
           gameId_userId: {
@@ -67,6 +66,7 @@ export const GET = withAuth<{ gameId: string }>(
           merkleProof: true,
           merkleAmount: true,
           payerWallet: true,
+          claimedAt: true,
           user: {
             select: { wallet: true },
           },
@@ -76,6 +76,14 @@ export const GET = withAuth<{ gameId: string }>(
       if (!entry) {
         return NextResponse.json<ApiError>(
           { error: "You do not have an entry in this game", code: "NO_ENTRY" },
+          { status: 400 }
+        );
+      }
+
+      // Check if already claimed
+      if (entry.claimedAt) {
+        return NextResponse.json<ApiError>(
+          { error: "Prize already claimed", code: "ALREADY_CLAIMED" },
           { status: 400 }
         );
       }
