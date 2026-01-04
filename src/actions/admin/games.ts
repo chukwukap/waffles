@@ -13,6 +13,7 @@ import {
 } from "@/lib/chain";
 import { getGamePhase } from "@/lib/types";
 import { env } from "@/lib/env";
+import { sendBatch } from "@/lib/notifications";
 
 // ==========================================
 // SCHEMA
@@ -311,8 +312,13 @@ export async function createGameAction(
     };
   }
 
-  // 7. All systems go - redirect to questions page
+  // 7. All systems go - notify users with game access
   console.log(`[CreateGame] Game ${game.id} created successfully`);
+
+  // Notify users with game access (async, don't block redirect)
+  notifyGameAccessUsers(game.id, game.title, game.startsAt).catch((err) =>
+    console.error("[CreateGame] Notification error:", err)
+  );
 
   revalidatePath("/admin/games");
   redirect(`/admin/games/${game.id}/questions`);
@@ -581,4 +587,55 @@ export async function forceEndGameAction(
     console.error("Failed to end game:", error);
     return { success: false, error: "Failed to end game" };
   }
+}
+
+// ==========================================
+// NOTIFICATION HELPERS
+// ==========================================
+
+/**
+ * Notify all users with game access that a new game is available
+ */
+async function notifyGameAccessUsers(
+  gameId: string,
+  title: string,
+  startsAt: Date
+) {
+  // Get all users with game access who have notifications enabled
+  const users = await prisma.user.findMany({
+    where: {
+      hasGameAccess: true,
+      isBanned: false,
+      notifs: { some: {} }, // Has at least one notification token
+    },
+    select: { fid: true },
+  });
+
+  if (users.length === 0) {
+    console.log("[Notify] No users with game access to notify");
+    return;
+  }
+
+  const fids = users.map((u) => u.fid);
+  const formattedTime = startsAt.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+  console.log(`[Notify] Sending new game notification to ${fids.length} users`);
+
+  const results = await sendBatch(
+    {
+      title: "🎮 New Game Available!",
+      body: `${title} starts ${formattedTime}. Get your ticket now!`,
+      targetUrl: `${env.rootUrl}/game`,
+    },
+    { fids }
+  );
+
+  console.log(
+    `[Notify] New game notification: ${results.success} sent, ${results.failed} failed`
+  );
 }

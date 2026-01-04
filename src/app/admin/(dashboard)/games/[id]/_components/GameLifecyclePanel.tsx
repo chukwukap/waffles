@@ -147,7 +147,7 @@ export function GameLifecyclePanel({ gameId }: { gameId: string }) {
     };
 
     return (
-        <div className="bg-gradient-to-br from-white/[0.03] to-transparent rounded-2xl border border-white/10 overflow-hidden">
+        <div className="bg-linear-to-br from-white/3 to-transparent rounded-2xl border border-white/10 overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-white/10">
                 <div className="flex items-center gap-3">
@@ -163,17 +163,17 @@ export function GameLifecyclePanel({ gameId }: { gameId: string }) {
             </div>
 
             {/* Step Progress */}
-            <div className="px-6 py-4 bg-white/[0.02]">
+            <div className="px-6 py-4 bg-white/2">
                 <div className="flex items-center justify-between max-w-md mx-auto">
                     {steps.map((step, index) => (
                         <div key={step.key} className="flex items-center">
                             <div className="flex flex-col items-center">
                                 <div
                                     className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all ${isCompleted(step.key)
-                                            ? "bg-[#14B985] text-black"
-                                            : status.state === step.key || (index === currentStepIndex + 1 && status.state !== "ON_CHAIN")
-                                                ? "bg-[#FFC931] text-black"
-                                                : "bg-white/10 text-white/50"
+                                        ? "bg-[#14B985] text-black"
+                                        : status.state === step.key || (index === currentStepIndex + 1 && status.state !== "ON_CHAIN")
+                                            ? "bg-[#FFC931] text-black"
+                                            : "bg-white/10 text-white/50"
                                         }`}
                                 >
                                     {isCompleted(step.key) ? (
@@ -192,8 +192,8 @@ export function GameLifecyclePanel({ gameId }: { gameId: string }) {
                             {index < steps.length - 1 && (
                                 <div
                                     className={`w-16 h-0.5 mx-2 ${isCompleted(steps[index + 1].key)
-                                            ? "bg-[#14B985]"
-                                            : "bg-white/10"
+                                        ? "bg-[#14B985]"
+                                        : "bg-white/10"
                                         }`}
                                 />
                             )}
@@ -335,7 +335,7 @@ function ActionCard({
 }) {
     if (status.canRank) {
         return (
-            <div className="p-6 bg-gradient-to-br from-[#FFC931]/10 to-transparent border border-[#FFC931]/20 rounded-xl">
+            <div className="p-6 bg-linear-to-br from-[#FFC931]/10 to-transparent border border-[#FFC931]/20 rounded-xl">
                 <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-xl bg-[#FFC931]/20 border border-[#FFC931]/30 flex items-center justify-center shrink-0">
                         <ChartPieIcon className="h-6 w-6 text-[#FFC931]" />
@@ -369,7 +369,7 @@ function ActionCard({
 
     if (status.canPublish) {
         return (
-            <div className="p-6 bg-gradient-to-br from-[#14B985]/10 to-transparent border border-[#14B985]/20 rounded-xl">
+            <div className="p-6 bg-linear-to-br from-[#14B985]/10 to-transparent border border-[#14B985]/20 rounded-xl">
                 <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-xl bg-[#14B985]/20 border border-[#14B985]/30 flex items-center justify-center shrink-0">
                         <LinkIcon className="h-6 w-6 text-[#14B985]" />
