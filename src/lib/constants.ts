@@ -98,3 +98,10 @@ export const THEMES = [
  * Prize is distributed based on tier (paidAmount), not rank position.
  */
 export const TOP_WINNERS_COUNT = 5;
+
+/**
+ * Platform fee in basis points (10% = 1000 bps).
+ * Must match the smart contract platformFeeBps setting.
+ * Prize pool is reduced by this amount before distribution.
+ */
+export const PLATFORM_FEE_BPS = 1000;
