@@ -17,12 +17,13 @@ export type UserData = Pick<
   | "pfpUrl"
   | "wallet"
   | "waitlistPoints"
-  | "waitlistRank"
   | "inviteQuota"
   | "hasGameAccess"
   | "isBanned"
   | "joinedWaitlistAt"
->;
+> & {
+  waitlistRank: number; // Calculated on the fly by /api/v1/me
+};
 
 // ==========================================
 // FETCHER

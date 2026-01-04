@@ -45,7 +45,6 @@ model User {
   // -- WAITLIST --
   joinedWaitlistAt DateTime?
   waitlistPoints   Int              @default(0)
-  waitlistRank     Int? // Pre-computed rank (updated periodically)
   completedQuests  CompletedQuest[]
 
   // -- REWARD TRACKING --
