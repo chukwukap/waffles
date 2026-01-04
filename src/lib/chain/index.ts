@@ -25,8 +25,8 @@ export {
   type OnChainGame,
 } from "./game";
 
-// Settlement - NOT exported here because it's server-only (uses Prisma)
-// Import directly from "@/lib/chain/settlement" in server components/actions
+// Game lifecycle (ranking, publishing) - NOT exported here because it's server-only
+// Import directly from "@/lib/game/lifecycle" in server components/actions
 
 // Merkle tree
 export {
