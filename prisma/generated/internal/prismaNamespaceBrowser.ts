@@ -99,7 +99,6 @@ export const UserScalarFieldEnum = {
   bannedBy: 'bannedBy',
   joinedWaitlistAt: 'joinedWaitlistAt',
   waitlistPoints: 'waitlistPoints',
-  waitlistRank: 'waitlistRank',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

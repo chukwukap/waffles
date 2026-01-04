@@ -695,6 +695,14 @@ export type EnumQuestTypeFieldUpdateOperationsInput = {
   set?: $Enums.QuestType
 }
 
+export type NullableIntFieldUpdateOperationsInput = {
+  set?: number | null
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
 export type EnumRepeatFrequencyFieldUpdateOperationsInput = {
   set?: $Enums.RepeatFrequency
 }
