@@ -14,7 +14,7 @@ import {
     CheckCircleIcon,
     ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
-import { SettlementPanel } from "./_components/SettlementPanel";
+import { GameLifecyclePanel } from "./_components/GameLifecyclePanel";
 import { GameResults } from "./_components/GameResults";
 import { getOnChainGame } from "@/lib/chain";
 import { getGamePhase } from "@/lib/types";
@@ -412,13 +412,9 @@ export default async function GameDetailPage({
                     )}
                 </div>
 
-                {/* Settlement Panel */}
-                <div className="bg-linear-to-br from-white/6 to-white/2 border border-white/8 rounded-2xl p-6">
-                    <SettlementPanel
-                        gameId={game.id}
-                        gameStatus={phase}
-                        onChainStatus={onChainStatus}
-                    />
+                {/* Game Lifecycle Panel */}
+                <div className="bg-linear-to-br from-white/6 to-white/2 border border-white/8 rounded-2xl overflow-hidden">
+                    <GameLifecyclePanel gameId={game.id} />
                 </div>
             </div>
 

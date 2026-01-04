@@ -1361,9 +1361,10 @@ export const GameScalarFieldEnum = {
   playerCount: 'playerCount',
   roundBreakSec: 'roundBreakSec',
   maxPlayers: 'maxPlayers',
+  rankedAt: 'rankedAt',
+  onChainAt: 'onChainAt',
+  onChainTxHash: 'onChainTxHash',
   merkleRoot: 'merkleRoot',
-  settlementTxHash: 'settlementTxHash',
-  settledAt: 'settledAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

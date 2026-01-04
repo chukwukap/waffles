@@ -559,13 +559,13 @@ export default class GameServer implements Party.Server {
       await this.room.storage.put("gameState", gameState);
     }
 
-    // Trigger finalization with retry (DB is source of truth for scores)
+    // Trigger ranking with retry (DB is source of truth for scores)
     const appUrl = this.room.env.NEXT_PUBLIC_URL as string;
     const secret = this.room.env.PARTYKIT_SECRET as string;
 
     if (appUrl && secret) {
       const result = await this.fetchWithRetry(
-        `${appUrl}/api/v1/internal/games/${gameId}/finalize`,
+        `${appUrl}/api/v1/internal/games/${gameId}/rank`,
         {
           method: "POST",
           headers: {
@@ -579,18 +579,18 @@ export default class GameServer implements Party.Server {
 
       if (result.success) {
         console.log(
-          `[GameEnd] Game ${gameId} - finalization successful:`,
+          `[GameEnd] Game ${gameId} - ranking successful:`,
           result.data
         );
       } else {
         console.error(
-          `[GameEnd] Game ${gameId} - finalization failed after retries:`,
+          `[GameEnd] Game ${gameId} - ranking failed after retries:`,
           result.error
         );
       }
     }
 
-    // Send notifications (finalize route now handles winner notifications)
+    // Send notifications (publishing results on-chain handles winner notifications)
     await this.sendNotifications("Game has ended! Check your results 🏆");
 
     // Broadcast game end

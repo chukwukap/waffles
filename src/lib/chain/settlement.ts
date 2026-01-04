@@ -228,8 +228,8 @@ export async function settleGame(gameId: string): Promise<{
     where: { id: gameId },
     data: {
       merkleRoot,
-      settlementTxHash: txHash,
-      settledAt: now,
+      onChainTxHash: txHash,
+      onChainAt: now,
     },
   });
 

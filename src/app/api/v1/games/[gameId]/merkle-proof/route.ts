@@ -32,7 +32,7 @@ export const GET = withAuth<{ gameId: string }>(
         select: {
           id: true,
           merkleRoot: true,
-          settledAt: true,
+          onChainAt: true,
         },
       });
 
@@ -43,9 +43,12 @@ export const GET = withAuth<{ gameId: string }>(
         );
       }
 
-      if (!game.merkleRoot || !game.settledAt) {
+      if (!game.merkleRoot || !game.onChainAt) {
         return NextResponse.json<ApiError>(
-          { error: "Game has not been settled yet", code: "NOT_SETTLED" },
+          {
+            error: "Game has not been published on-chain yet",
+            code: "NOT_PUBLISHED",
+          },
           { status: 400 }
         );
       }
