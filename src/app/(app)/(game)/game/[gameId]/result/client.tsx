@@ -276,6 +276,12 @@ export default function ResultPageClient({
 
   // Handle claim button click
   const handleClaim = useCallback(async () => {
+    // Already claimed - do nothing
+    if (hasClaimed) {
+      notify.info("Already claimed!");
+      return;
+    }
+
     if (!onchainId || !address) {
       notify.error("Cannot claim right now");
       return;
@@ -331,7 +337,7 @@ export default function ResultPageClient({
         error instanceof Error ? error.message : "Failed to claim prize"
       );
     }
-  }, [onchainId, address, gameId, sendCalls, resetSendCalls]);
+  }, [onchainId, address, gameId, sendCalls, resetSendCalls, hasClaimed]);
 
   // Get button text based on state
   const getClaimButtonText = () => {
