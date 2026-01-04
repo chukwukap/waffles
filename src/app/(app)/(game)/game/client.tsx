@@ -81,19 +81,17 @@ export function GameHub({ currentOrNextGame }: GameHubProps) {
   // ==========================================
 
   if (!isLoadingUser && !hasAccess) {
+    // Don't show BottomNav during access check - prevents bypass
     return (
-      <>
-        <main className="flex-1 flex flex-col items-center justify-center min-h-[60vh]">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={springs.gentle}
-          >
-            <WaffleLoader text="Checking access..." />
-          </motion.div>
-        </main>
-        <BottomNav />
-      </>
+      <main className="flex-1 flex flex-col items-center justify-center min-h-[60vh]">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={springs.gentle}
+        >
+          <WaffleLoader text="Checking access..." />
+        </motion.div>
+      </main>
     );
   }
 
