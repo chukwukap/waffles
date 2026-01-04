@@ -6,7 +6,6 @@ import { requireAdminSession } from "@/lib/admin-auth";
 import { logAdminAction, AdminAction, EntityType } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { syncQuestionsToPartyKit } from "@/lib/partykit";
 
 const QuestionSchema = z.object({
   content: z.string().min(5, "Question content is required"),
@@ -85,8 +84,7 @@ export async function createQuestionAction(
       entityId: question.id,
       details: { gameId, roundIndex: data.roundIndex },
     });
-    // Sync questions to PartyKit
-    await syncQuestionsToPartyKit(gameId);
+
     revalidatePath(`/admin/games/${gameId}/questions`);
 
     return { success: true, questionId: question.id };
@@ -124,9 +122,6 @@ export async function deleteQuestionAction(
     console.error("Delete question error:", error);
   }
 
-  // Sync questions to PartyKit
-  await syncQuestionsToPartyKit(gameId);
-
   revalidatePath(`/admin/games/${gameId}/questions`);
   redirect(`/admin/games/${gameId}/questions`);
 }
@@ -161,9 +156,6 @@ export async function reorderQuestionsAction(
       entityId: gameId,
       details: { action: "reorder_questions" },
     });
-
-    // Sync questions to PartyKit
-    await syncQuestionsToPartyKit(gameId);
 
     revalidatePath(`/admin/games/${gameId}/questions`);
 
