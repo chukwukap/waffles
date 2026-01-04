@@ -47,3 +47,5 @@ llm-context.txt
 
 # partykit local state
 .partykit/
+
+backups
