@@ -11,7 +11,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const sParams = await searchParams;
   const rank = sParams.rank ? parseInt(sParams.rank as string) : null;
-  const ref = sParams.ref ? parseInt(sParams.ref as string) : null;
+  const ref = (sParams.ref as string) || null;  // User ID is now CUID (string)
   const pfpUrl = sParams.pfpUrl as string | undefined;
 
   // Build OG image URL with rank and optional pfpUrl
