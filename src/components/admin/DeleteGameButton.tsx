@@ -39,9 +39,11 @@ export function DeleteGameButton({
             <form onSubmit={handleDelete} className="w-full">
                 <button
                     type="submit"
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-red-700 hover:bg-red-50 transition-colors w-full text-left"
+                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors w-full text-left rounded-xl"
                 >
-                    <TrashIcon className="h-4 w-4" />
+                    <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center">
+                        <TrashIcon className="h-4 w-4" />
+                    </div>
                     Delete Game
                 </button>
             </form>
