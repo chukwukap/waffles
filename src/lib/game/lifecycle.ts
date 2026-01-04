@@ -7,9 +7,13 @@
 
 import { parseUnits } from "viem";
 import { prisma } from "@/lib/db";
-import { TOP_WINNERS_COUNT, PLATFORM_FEE_BPS } from "@/lib/constants";
+import { TOP_WINNERS_COUNT } from "@/lib/constants";
 import { WAFFLE_GAME_CONFIG, TOKEN_CONFIG } from "@/lib/chain/config";
-import { publicClient, getWalletClient } from "@/lib/chain/client";
+import {
+  publicClient,
+  getWalletClient,
+  getPlatformFeeBps,
+} from "@/lib/chain/client";
 import {
   buildMerkleTree,
   generateAllProofs,
@@ -261,8 +265,9 @@ export async function rankGame(gameId: string): Promise<RankResult> {
   // Top 5 share the prize pool proportionally to their paidAmount (tier)
   const prizePool = game.prizePool;
 
-  // Deduct platform fee (10%) to get net prize pool available for winners
-  const netPrizePool = prizePool * (1 - PLATFORM_FEE_BPS / 10000);
+  // Read platform fee from smart contract and calculate net prize pool
+  const platformFeeBps = await getPlatformFeeBps();
+  const netPrizePool = prizePool * (1 - platformFeeBps / 10000);
 
   const winners: Array<{
     rank: number;
@@ -572,8 +577,9 @@ export async function previewRanking(gameId: string) {
     0
   );
 
-  // Deduct platform fee (10%) to get net prize pool
-  const netPrizePool = game.prizePool * (1 - PLATFORM_FEE_BPS / 10000);
+  // Read platform fee from smart contract and calculate net prize pool
+  const platformFeeBps = await getPlatformFeeBps();
+  const netPrizePool = game.prizePool * (1 - platformFeeBps / 10000);
 
   return entries.map((entry, index) => {
     const rank = index + 1;
