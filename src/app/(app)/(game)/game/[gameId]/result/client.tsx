@@ -299,13 +299,6 @@ export default function ResultPageClient({
 
       if (!proofRes.ok) {
         const errorData = await proofRes.json();
-        // Check if already claimed - set success state
-        if (errorData.code === "ALREADY_CLAIMED") {
-          setClaimState("success");
-          refetchEntry(); // Refresh entry data
-          notify.info("Prize already claimed!");
-          return;
-        }
         // Check if game not settled yet
         if (
           errorData.code === "GAME_NOT_ENDED" ||
@@ -317,8 +310,16 @@ export default function ResultPageClient({
         throw new Error(errorData.error || "Failed to get proof");
       }
 
-      const { amount, proof } = await proofRes.json();
-      console.log("[Claim] Got proof, amount:", amount);
+      const { amount, proof, claimedAt } = await proofRes.json();
+      console.log("[Claim] Got proof, amount:", amount, "claimedAt:", claimedAt);
+
+      // Check if already claimed from response
+      if (claimedAt) {
+        setClaimState("success");
+        refetchEntry();
+        notify.info("Prize already claimed!");
+        return;
+      }
 
       // 2. Send on-chain claim
       setClaimState("confirming");

@@ -8,6 +8,7 @@ interface MerkleProofResponse {
   amount: string; // Amount in token units as string
   amountUSDC: number; // Amount in human-readable USDC
   proof: string[];
+  claimedAt: string | null; // ISO timestamp if already claimed, null if not
 }
 
 /**
@@ -80,14 +81,6 @@ export const GET = withAuth<{ gameId: string }>(
         );
       }
 
-      // Check if already claimed
-      if (entry.claimedAt) {
-        return NextResponse.json<ApiError>(
-          { error: "Prize already claimed", code: "ALREADY_CLAIMED" },
-          { status: 400 }
-        );
-      }
-
       if (!entry.merkleProof || !entry.merkleAmount) {
         return NextResponse.json<ApiError>(
           { error: "You are not a winner in this game", code: "NOT_WINNER" },
@@ -110,6 +103,7 @@ export const GET = withAuth<{ gameId: string }>(
         amount: entry.merkleAmount,
         amountUSDC: entry.prize ?? 0,
         proof: entry.merkleProof as string[],
+        claimedAt: entry.claimedAt?.toISOString() ?? null,
       });
     } catch (error) {
       console.error("GET /api/v1/games/[gameId]/merkle-proof Error:", error);
