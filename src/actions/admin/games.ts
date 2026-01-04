@@ -458,16 +458,21 @@ export async function deleteGameAction(gameId: string): Promise<void> {
   try {
     const game = await prisma.game.findUnique({
       where: { id: gameId },
-      select: { id: true, onchainId: true, title: true },
+      select: {
+        id: true,
+        onchainId: true,
+        title: true,
+        _count: { select: { entries: true } },
+      },
     });
 
     if (!game) {
       throw new Error("Game not found");
     }
 
-    // If game is on-chain, check if it's still active
+    // If game is on-chain, force end it first
     if (game.onchainId) {
-      const { getOnChainGame } = await import("@/lib/chain");
+      const { getOnChainGame, endGameOnChain } = await import("@/lib/chain");
       const onChainGame = await getOnChainGame(game.onchainId as `0x${string}`);
 
       const gameExistsOnChain =
@@ -476,25 +481,47 @@ export async function deleteGameAction(gameId: string): Promise<void> {
           onChainGame.entryFee > BigInt(0));
 
       if (gameExistsOnChain && !onChainGame.ended) {
-        throw new Error(
-          `Cannot delete "${game.title}" - it is still active on-chain. End it first via Settlement.`
+        console.log(
+          `[DeleteGame] Force ending game ${game.onchainId} on-chain...`
         );
+
+        try {
+          const txHash = await endGameOnChain(game.onchainId as `0x${string}`);
+          console.log(`[DeleteGame] Game ended on-chain. TX: ${txHash}`);
+        } catch (endError) {
+          console.error(`[DeleteGame] Failed to end game on-chain:`, endError);
+          throw new Error(
+            `Failed to end game on-chain before deletion. Please try again or end the game manually first.`
+          );
+        }
       }
     }
 
-    // Cleanup PartyKit room before deleting
+    // Cleanup PartyKit room
+    console.log(`[DeleteGame] Cleaning up PartyKit room for ${gameId}...`);
     const { cleanupGameRoom } = await import("@/lib/partykit");
     await cleanupGameRoom(gameId);
 
+    // Delete game and cascade to entries, questions, etc.
+    console.log(
+      `[DeleteGame] Deleting game ${gameId} (${game._count.entries} entries)...`
+    );
     await prisma.game.delete({
       where: { id: gameId },
     });
+
+    console.log(`[DeleteGame] Game "${game.title}" deleted successfully`);
 
     await logAdminAction({
       adminId: authResult.session.userId,
       action: AdminAction.DELETE_GAME,
       entityType: EntityType.GAME,
       entityId: gameId,
+      details: {
+        title: game.title,
+        onchainId: game.onchainId,
+        entriesDeleted: game._count.entries,
+      },
     });
   } catch (error) {
     console.error("Delete game error:", error);
