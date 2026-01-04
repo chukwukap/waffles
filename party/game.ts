@@ -696,9 +696,13 @@ export default class GameServer implements Party.Server {
     const savedFids = await this.room.storage.get<number[]>("seenFids");
     this.seenFids = new Set(savedFids || []);
 
-    // Store room ID for onAlarm access
-    if (this.room.id) {
-      await this.room.storage.put("roomId", this.room.id);
+    // Store room ID for onAlarm access (may not be available during alarm wake-up)
+    try {
+      if (this.room.id) {
+        await this.room.storage.put("roomId", this.room.id);
+      }
+    } catch {
+      // Ignore - room.id not yet initialized during alarm handler
     }
   }
 
