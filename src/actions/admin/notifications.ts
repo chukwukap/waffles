@@ -72,8 +72,8 @@ export async function sendAdminNotificationAction(
 
   const { title, body, targetUrl, audience, targetFid } = validation.data;
 
-  // Default target URL to app home
-  const finalTargetUrl = targetUrl || env.rootUrl || "https://waffles.fun";
+  // Default target URL to game page
+  const finalTargetUrl = targetUrl || `${env.rootUrl}/game`;
 
   try {
     let results: { total: number; success: number; failed: number };

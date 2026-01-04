@@ -32,7 +32,7 @@ interface MeResponse {
   joinedWaitlistAt: Date | null;
   inviteCode: string | null;
   waitlistPoints: number;
-  rank: number;
+  waitlistRank: number;
   invitesCount: number;
   createdAt: Date;
 }
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
       joinedWaitlistAt: user.joinedWaitlistAt,
       inviteCode: user.inviteCode,
       waitlistPoints: user.waitlistPoints,
-      rank: rank + 1,
+      waitlistRank: rank + 1,
       invitesCount: user._count.referrals,
       createdAt: user.createdAt,
     };
