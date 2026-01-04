@@ -3,11 +3,19 @@ import Link from "next/link";
 import { QuestionsManager } from "@/components/admin/QuestionsManager";
 import { QuestionImport } from "@/components/admin/QuestionImport";
 import { notFound } from "next/navigation";
-import { ChevronLeftIcon, DocumentTextIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
+import { ChevronLeftIcon, DocumentTextIcon, ArrowUpTrayIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
-export default async function GameQuestionsPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function GameQuestionsPage({
+    params,
+    searchParams
+}: {
+    params: Promise<{ id: string }>;
+    searchParams: Promise<{ warning?: string }>;
+}) {
     const resolvedParams = await params;
+    const resolvedSearchParams = await searchParams;
     const gameId = resolvedParams.id;
+    const warning = resolvedSearchParams.warning;
 
     const game = await prisma.game.findUnique({
         where: { id: gameId },
@@ -26,6 +34,16 @@ export default async function GameQuestionsPage({ params }: { params: Promise<{ 
 
     return (
         <div className="max-w-5xl mx-auto space-y-6">
+            {/* Warning Banner */}
+            {warning && (
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300">
+                    <ExclamationTriangleIcon className="h-5 w-5 shrink-0" />
+                    <span className="text-sm">
+                        Game created, but: <strong>{warning}</strong>
+                    </span>
+                </div>
+            )}
+
             {/* Header */}
             <div className="flex items-center gap-4">
                 <Link

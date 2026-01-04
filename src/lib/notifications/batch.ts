@@ -178,8 +178,12 @@ async function sendBatchToUrl(
     clearTimeout(timeoutId);
 
     if (response.status !== 200) {
+      let errorBody = "";
+      try {
+        errorBody = await response.text();
+      } catch {}
       console.error(
-        `${LOG_PREFIX} Batch failed: url=${url}, status=${response.status}`
+        `${LOG_PREFIX} Batch failed: url=${url}, status=${response.status}, body=${errorBody}`
       );
       result.failed = batch.length;
       return result;

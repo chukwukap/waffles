@@ -312,13 +312,54 @@ export async function createGameAction(
     };
   }
 
-  // 7. All systems go - notify users with game access
-  console.log(`[CreateGame] Game ${game.id} created successfully`);
+  // 7. Notify users with game access (CRITICAL - must succeed)
+  console.log(`[CreateGame] Game ${game.id} created, sending notifications...`);
 
-  // Notify users with game access (async, don't block redirect)
-  notifyGameAccessUsers(game.id, game.title, game.startsAt).catch((err) =>
-    console.error("[CreateGame] Notification error:", err)
-  );
+  try {
+    const notificationResult = await notifyGameAccessUsers(
+      game.id,
+      game.title,
+      game.startsAt
+    );
+
+    // If ALL notifications failed, that's a critical error
+    if (
+      notificationResult &&
+      notificationResult.failed > 0 &&
+      notificationResult.success === 0
+    ) {
+      console.error(
+        `[CreateGame] All notifications failed (${notificationResult.failed}), rolling back`
+      );
+      await rollbackGame(game.id, "All notifications failed", adminId);
+      return {
+        success: false,
+        error: `Notification system error: All ${notificationResult.failed} notifications failed. Game was not created. Please check notification token validity.`,
+      };
+    }
+
+    // Log partial failures but don't block (some users notified is better than none)
+    if (notificationResult && notificationResult.failed > 0) {
+      console.warn(
+        `[CreateGame] Partial notification failure: ${notificationResult.success} sent, ${notificationResult.failed} failed`
+      );
+    }
+
+    console.log(
+      `[CreateGame] Game ${game.id} fully created and ${
+        notificationResult?.success ?? 0
+      } notifications sent`
+    );
+  } catch (err) {
+    console.error("[CreateGame] Notification error:", err);
+    await rollbackGame(game.id, "Notification system error", adminId);
+    return {
+      success: false,
+      error: `Notification system error: ${
+        err instanceof Error ? err.message : "Unknown error"
+      }. Game was not created.`,
+    };
+  }
 
   revalidatePath("/admin/games");
   redirect(`/admin/games/${game.id}/questions`);
@@ -595,12 +636,13 @@ export async function forceEndGameAction(
 
 /**
  * Notify all users with game access that a new game is available
+ * @returns Notification results with success/failed counts
  */
 async function notifyGameAccessUsers(
   gameId: string,
   title: string,
   startsAt: Date
-) {
+): Promise<{ success: number; failed: number } | null> {
   // Get all users with game access who have notifications enabled
   const users = await prisma.user.findMany({
     where: {
@@ -613,7 +655,7 @@ async function notifyGameAccessUsers(
 
   if (users.length === 0) {
     console.log("[Notify] No users with game access to notify");
-    return;
+    return { success: 0, failed: 0 };
   }
 
   const fids = users.map((u) => u.fid);
@@ -638,4 +680,6 @@ async function notifyGameAccessUsers(
   console.log(
     `[Notify] New game notification: ${results.success} sent, ${results.failed} failed`
   );
+
+  return { success: results.success, failed: results.failed };
 }
