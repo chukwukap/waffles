@@ -35,6 +35,7 @@ export default function ProfilePage() {
     return (
       <AnimatePresence>
         <motion.div
+          key="profile-loader"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -42,7 +43,7 @@ export default function ProfilePage() {
         >
           <WaffleLoader text="LOADING PROFILE..." />
         </motion.div>
-        <BottomNav />
+        <BottomNav key="bottom-nav" />
       </AnimatePresence>
     );
   }
