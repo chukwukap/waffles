@@ -42,110 +42,7 @@ export type GameActionResult =
   | { success: false; error: string };
 
 // ==========================================
-// HELPER: Rollback game on failure
-// ==========================================
-
-async function rollbackGame(
-  gameId: string,
-  reason: string,
-  adminId: string
-): Promise<void> {
-  console.error(`[CreateGame] Rolling back game ${gameId}: ${reason}`);
-
-  try {
-    await prisma.game.delete({ where: { id: gameId } });
-    console.log(`[CreateGame] Rollback complete for game ${gameId}`);
-
-    await logAdminAction({
-      adminId,
-      action: AdminAction.DELETE_GAME,
-      entityType: EntityType.GAME,
-      entityId: gameId,
-      details: { reason: `Rollback: ${reason}` },
-    });
-  } catch (error) {
-    console.error(`[CreateGame] Rollback failed for game ${gameId}:`, error);
-    // If rollback fails, we have an orphaned game - log for manual cleanup
-    await logAdminAction({
-      adminId,
-      action: AdminAction.DELETE_GAME,
-      entityType: EntityType.GAME,
-      entityId: gameId,
-      details: {
-        reason: `ROLLBACK_FAILED: ${reason}`,
-        requiresManualCleanup: true,
-      },
-    });
-  }
-}
-
-// ==========================================
-// HELPER: Initialize PartyKit room
-// ==========================================
-
-async function initializePartyKitRoom(game: {
-  id: string;
-  startsAt: Date;
-  endsAt: Date;
-}): Promise<{ success: boolean; error?: string }> {
-  if (!env.partykitHost || !env.partykitSecret) {
-    return { success: false, error: "PartyKit not configured" };
-  }
-
-  const partykitUrl = env.partykitHost.startsWith("http")
-    ? env.partykitHost
-    : `https://${env.partykitHost}`;
-
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-
-    const res = await fetch(
-      `${partykitUrl}/parties/main/game-${game.id}/init`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${env.partykitSecret}`,
-        },
-        body: JSON.stringify({
-          gameId: game.id,
-          startsAt: game.startsAt.toISOString(),
-          endsAt: game.endsAt.toISOString(),
-          questions: [],
-        }),
-        signal: controller.signal,
-      }
-    );
-
-    clearTimeout(timeoutId);
-
-    if (!res.ok) {
-      return {
-        success: false,
-        error: `PartyKit returned ${res.status}: ${res.statusText}`,
-      };
-    }
-
-    console.log(`[CreateGame] PartyKit room initialized for game ${game.id}`);
-    return { success: true };
-  } catch (error) {
-    console.error(
-      `[CreateGame] PartyKit room initialization failed for game ${game.id}:`,
-      error
-    );
-    if (error instanceof Error && error.name === "AbortError") {
-      return { success: false, error: "PartyKit request timed out" };
-    }
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
-    };
-  }
-}
-
-// ==========================================
-// CREATE GAME - Rock Solid Flow
+// CREATE GAME
 // ==========================================
 
 export async function createGameAction(
@@ -159,7 +56,7 @@ export async function createGameAction(
 
   const adminId = authResult.session.userId;
 
-  // 1. Validate form data
+  // Validate form data
   const rawData = {
     title: formData.get("title"),
     description: formData.get("description"),
@@ -183,42 +80,15 @@ export async function createGameAction(
   }
 
   const data = validation.data;
-
-  // 2. Pre-flight checks (before any mutations)
-  try {
-    const now = new Date();
-
-    // Check no active games
-    const existingActiveGame = await prisma.game.findFirst({
-      where: { endsAt: { gt: now } },
-      select: { id: true, title: true, onchainId: true },
-    });
-
-    if (existingActiveGame) {
-      return {
-        success: false,
-        error: `Cannot create game while "${existingActiveGame.title}" is still active.`,
-      };
-    }
-
-    // Note: Previous game on-chain status no longer blocks new game creation.
-    // Admin can create multiple games concurrently.
-  } catch (error) {
-    console.error("[CreateGame] Pre-flight check failed:", error);
-    return {
-      success: false,
-      error: "Failed to verify game prerequisites. Please try again.",
-    };
-  }
-
-  // 3. Generate on-chain ID upfront
   const onchainId = generateOnchainGameId();
 
-  // 4. Create game in database
-  let game: { id: string; startsAt: Date; endsAt: Date; title: string };
-
   try {
-    game = await prisma.game.create({
+    // 1. Create on-chain first (so we don't have orphaned DB records)
+    const txHash = await createGameOnChain(onchainId, data.tierPrice1);
+    console.log(`[CreateGame] On-chain created. TX: ${txHash}`);
+
+    // 2. Create in database
+    const game = await prisma.game.create({
       data: {
         title: data.title,
         description: data.description || null,
@@ -234,62 +104,47 @@ export async function createGameAction(
         onchainId,
       },
     });
-    console.log(`[CreateGame] Database record created: game ${game.id}`);
-  } catch (error) {
-    console.error("[CreateGame] Database creation failed:", error);
-    return {
-      success: false,
-      error: "Failed to create game in database. Please try again.",
-    };
-  }
 
-  // 5. Create on-chain (with rollback on failure)
-  try {
-    const txHash = await createGameOnChain(onchainId, data.tierPrice1);
-    console.log(`[CreateGame] On-chain creation success. TX: ${txHash}`);
+    // 3. Initialize PartyKit room (non-blocking)
+    if (env.partykitHost && env.partykitSecret) {
+      const partykitUrl = env.partykitHost.startsWith("http")
+        ? env.partykitHost
+        : `https://${env.partykitHost}`;
+
+      fetch(`${partykitUrl}/parties/main/game-${game.id}/init`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${env.partykitSecret}`,
+        },
+        body: JSON.stringify({
+          gameId: game.id,
+          startsAt: game.startsAt.toISOString(),
+          endsAt: game.endsAt.toISOString(),
+        }),
+      }).catch((err) =>
+        console.error("[CreateGame] PartyKit init failed:", err)
+      );
+    }
 
     await logAdminAction({
       adminId,
       action: AdminAction.CREATE_GAME,
       entityType: EntityType.GAME,
       entityId: game.id,
-      details: {
-        title: game.title,
-        theme: data.theme,
-        onchainId,
-        onChainTx: txHash,
-        tierPrices: [data.tierPrice1, data.tierPrice2, data.tierPrice3],
-      },
+      details: { title: game.title, theme: data.theme, onchainId, txHash },
     });
+
+    console.log(`[CreateGame] Game ${game.id} created`);
+    revalidatePath("/admin/games");
+    redirect(`/admin/games/${game.id}/questions`);
   } catch (error) {
-    console.error("[CreateGame] On-chain creation failed:", error);
-    await rollbackGame(game.id, "On-chain creation failed", adminId);
-
-    const errorMsg =
-      error instanceof Error ? error.message : "Unknown blockchain error";
+    console.error("[CreateGame] Failed:", error);
     return {
       success: false,
-      error: `On-chain creation failed: ${errorMsg}. Game was not created.`,
+      error: error instanceof Error ? error.message : "Failed to create game",
     };
   }
-
-  // 6. Initialize PartyKit room (with rollback on failure)
-  const partykitResult = await initializePartyKitRoom(game);
-
-  if (!partykitResult.success) {
-    console.error("[CreateGame] PartyKit init failed:", partykitResult.error);
-    await rollbackGame(game.id, "PartyKit initialization failed", adminId);
-
-    return {
-      success: false,
-      error: `Game server initialization failed: ${partykitResult.error}. Game was not created.`,
-    };
-  }
-
-  console.log(`[CreateGame] Game ${game.id} fully created`);
-
-  revalidatePath("/admin/games");
-  redirect(`/admin/games/${game.id}/questions`);
 }
 
 // ==========================================
