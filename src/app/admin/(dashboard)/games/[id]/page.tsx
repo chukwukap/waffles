@@ -1,21 +1,14 @@
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { forceEndGameAction } from "@/actions/admin/games";
 import {
     PencilIcon,
     QuestionMarkCircleIcon,
-    StopIcon,
     CalendarIcon,
     ClockIcon,
     UserGroupIcon,
     CurrencyDollarIcon,
-    LinkIcon,
-    CheckCircleIcon,
-    ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
-import { GameResults } from "./_components/GameResults";
-import { getOnChainGame } from "@/lib/chain";
 import { getGamePhase } from "@/lib/types";
 
 // ============================================
@@ -147,11 +140,12 @@ export default async function GameDetailPage({
             entries: {
                 where: { paidAt: { not: null } },
                 orderBy: { score: "desc" },
-                take: 10,
+                take: 20,
                 select: {
                     score: true,
                     rank: true,
                     prize: true,
+                    claimedAt: true,
                     user: {
                         select: { username: true, pfpUrl: true },
                     },
@@ -165,43 +159,6 @@ export default async function GameDetailPage({
     }
 
     const phase = getGamePhase(game);
-
-    // Get on-chain status
-    let onChainStatus = {
-        exists: false,
-        ended: false,
-        settled: false,
-        merkleRoot: undefined as string | undefined,
-        claimCount: 0,
-    };
-
-    try {
-        if (game.onchainId) {
-            const onChainGame = (await getOnChainGame(game.onchainId as `0x${string}`)) as {
-                entryFee: bigint;
-                ticketCount: bigint;
-                merkleRoot: `0x${string}`;
-                settledAt: bigint;
-                claimCount: bigint;
-                ended: boolean;
-            };
-
-            if (onChainGame && onChainGame.entryFee > BigInt(0)) {
-                onChainStatus = {
-                    exists: true,
-                    ended: onChainGame.ended,
-                    settled: onChainGame.merkleRoot !== "0x0000000000000000000000000000000000000000000000000000000000000000",
-                    merkleRoot:
-                        onChainGame.merkleRoot !== "0x0000000000000000000000000000000000000000000000000000000000000000"
-                            ? onChainGame.merkleRoot
-                            : undefined,
-                    claimCount: Number(onChainGame.claimCount),
-                };
-            }
-        }
-    } catch (error) {
-        console.log("[Admin] On-chain lookup failed:", error);
-    }
 
     // Format dates
     const formatDate = (date: Date) => {
@@ -318,143 +275,100 @@ export default async function GameDetailPage({
                     value={`$${game.prizePool.toLocaleString()}`}
                     color="green"
                 />
-                <StatCard
-                    icon={LinkIcon}
-                    label="On-Chain"
-                    value={onChainStatus.exists ? "Deployed" : "Not Found"}
-                    color={onChainStatus.exists ? "gold" : "white"}
-                    subtext={onChainStatus.settled ? "Settled" : onChainStatus.ended ? "Ended" : undefined}
-                />
             </div>
 
-            {/* Game Actions */}
+            {/* Players List */}
             <div className="bg-linear-to-br from-white/6 to-white/2 border border-white/8 rounded-2xl p-6">
                 <h2 className="text-lg font-bold text-white font-display mb-4 flex items-center gap-2">
-                    <span className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
-                        ⚡
+                    <span className="w-8 h-8 rounded-lg bg-[#FFC931]/10 flex items-center justify-center">
+                        🏆
                     </span>
-                    Game Actions
+                    Players ({game._count.entries})
                 </h2>
-                <div className="flex flex-wrap gap-3">
-                    {phase === "LIVE" && (
-                        <form
-                            action={async () => {
-                                "use server";
-                                await forceEndGameAction(game.id);
-                            }}
-                        >
-                            <button
-                                type="submit"
-                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition-all font-medium border border-red-500/20 hover:border-red-500/40"
-                            >
-                                <StopIcon className="h-4 w-4" />
-                                End Game Now
-                            </button>
-                        </form>
-                    )}
-                    {phase === "ENDED" && (
-                        <div className="flex items-center gap-3 px-4 py-3 bg-[#14B985]/10 rounded-xl border border-[#14B985]/20">
-                            <CheckCircleIcon className="h-5 w-5 text-[#14B985]" />
-                            <span className="text-[#14B985] font-medium">
-                                Game ended • Ranks calculated
-                            </span>
-                        </div>
-                    )}
-                    {phase === "SCHEDULED" && (
-                        <div className="flex items-center gap-3 px-4 py-3 bg-[#FFC931]/10 rounded-xl border border-[#FFC931]/20">
-                            <ExclamationTriangleIcon className="h-5 w-5 text-[#FFC931]" />
-                            <span className="text-[#FFC931]/80">
-                                Game is scheduled • Starts {formatDate(game.startsAt)}
-                            </span>
-                        </div>
-                    )}
-                </div>
-            </div>
 
-            {/* Two Column Layout for Results & Settlement */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Game Results */}
-                <div className="bg-linear-to-br from-white/6 to-white/2 border border-white/8 rounded-2xl p-6">
-                    {phase === "ENDED" ? (
-                        game.entries.length > 0 ? (
-                            <GameResults
-                                gameId={game.id}
-                                gameTitle={game.title}
-                                totalEntries={game._count.entries}
-                                prizePool={game.prizePool}
-                                winners={game.entries.map((e, i) => ({
-                                    rank: e.rank || i + 1,
-                                    username: e.user?.username || null,
-                                    score: e.score,
-                                    prize: e.prize,
-                                    pfpUrl: e.user?.pfpUrl || null,
-                                }))}
-                                totalWinners={game.entries.filter(e => (e.prize || 0) > 0).length}
-                            />
-                        ) : (
-                            <div className="text-center py-12">
-                                <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-4 mx-auto">
-                                    <span className="text-3xl">📊</span>
+                {game.entries.length > 0 ? (
+                    <div className="space-y-2">
+                        {game.entries.map((entry, i) => {
+                            const rank = entry.rank || i + 1;
+                            const isWinner = (entry.prize || 0) > 0;
+                            const hasClaimed = !!entry.claimedAt;
+
+                            return (
+                                <div
+                                    key={i}
+                                    className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        {/* Rank Badge */}
+                                        <div
+                                            className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${rank === 1
+                                                ? "bg-[#FFC931]/20 text-[#FFC931]"
+                                                : rank === 2
+                                                    ? "bg-[#C0C0C0]/20 text-[#C0C0C0]"
+                                                    : rank === 3
+                                                        ? "bg-[#CD7F32]/20 text-[#CD7F32]"
+                                                        : "bg-white/10 text-white/60"
+                                                }`}
+                                        >
+                                            {rank}
+                                        </div>
+                                        {/* Avatar */}
+                                        {entry.user?.pfpUrl ? (
+                                            <img
+                                                src={entry.user.pfpUrl}
+                                                alt=""
+                                                className="w-8 h-8 rounded-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white/60 text-sm font-medium">
+                                                {entry.user?.username?.charAt(0)?.toUpperCase() || "?"}
+                                            </div>
+                                        )}
+                                        {/* Username & Score */}
+                                        <div>
+                                            <p className="text-white font-medium text-sm">
+                                                @{entry.user?.username || "Unknown"}
+                                            </p>
+                                            <p className="text-white/50 text-xs">
+                                                {entry.score} pts
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Prize & Claim Status */}
+                                    <div className="text-right flex items-center gap-3">
+                                        {isWinner && (
+                                            <>
+                                                <p className="text-[#14B985] font-bold">
+                                                    ${(entry.prize || 0).toFixed(2)}
+                                                </p>
+                                                {hasClaimed ? (
+                                                    <span className="px-2 py-1 bg-[#14B985]/20 text-[#14B985] text-xs rounded-full font-medium">
+                                                        Claimed
+                                                    </span>
+                                                ) : (
+                                                    <span className="px-2 py-1 bg-[#FFC931]/20 text-[#FFC931] text-xs rounded-full font-medium">
+                                                        Unclaimed
+                                                    </span>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
-                                <p className="text-white font-medium mb-1">No Entries</p>
-                                <p className="text-white/50 text-sm">No paid entries found for this game.</p>
-                            </div>
-                        )
-                    ) : (
-                        <div className="text-center py-12">
-                            <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-4 mx-auto">
-                                <span className="text-3xl">🏆</span>
-                            </div>
-                            <p className="text-white font-medium mb-1">Results Pending</p>
-                            <p className="text-white/50 text-sm">Results will be available after the game ends.</p>
-                        </div>
-                    )}
-                </div>
-
-                {/* Game Status */}
-                <div className="p-6">
-                    <h2 className="text-lg font-bold text-white font-display mb-4 flex items-center gap-2">
-                        <span className="w-8 h-8 rounded-lg bg-[#14B985]/10 flex items-center justify-center">
-                            ⚡
-                        </span>
-                        Settlement Status
-                    </h2>
-                    <div className="space-y-3">
-                        {onChainStatus.settled ? (
-                            <div className="flex items-center gap-3 px-4 py-3 bg-[#14B985]/10 rounded-xl border border-[#14B985]/20">
-                                <CheckCircleIcon className="h-5 w-5 text-[#14B985]" />
-                                <span className="text-[#14B985] font-medium">
-                                    Results published on-chain • {onChainStatus.claimCount} claims
-                                </span>
-                            </div>
-                        ) : phase === "ENDED" ? (
-                            <div className="flex items-center gap-3 px-4 py-3 bg-[#FFC931]/10 rounded-xl border border-[#FFC931]/20">
-                                <ClockIcon className="h-5 w-5 text-[#FFC931]" />
-                                <span className="text-[#FFC931]/80">
-                                    Processing automatically...
-                                </span>
-                            </div>
-                        ) : (
-                            <div className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl border border-white/10">
-                                <ClockIcon className="h-5 w-5 text-white/40" />
-                                <span className="text-white/50">
-                                    Will process automatically after game ends
-                                </span>
-                            </div>
-                        )}
+                            );
+                        })}
                     </div>
-                </div>
+                ) : (
+                    <div className="text-center py-12">
+                        <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-4 mx-auto">
+                            <span className="text-3xl">📊</span>
+                        </div>
+                        <p className="text-white font-medium mb-1">No Entries</p>
+                        <p className="text-white/50 text-sm">No paid entries found for this game.</p>
+                    </div>
+                )}
             </div>
 
-            {/* On-Chain ID (if exists) */}
-            {game.onchainId && (
-                <div className="bg-white/3 border border-white/6 rounded-xl p-4">
-                    <p className="text-white/40 text-xs mb-1">On-Chain Game ID</p>
-                    <code className="text-xs text-[#00CFF2]/70 break-all font-mono">
-                        {game.onchainId}
-                    </code>
-                </div>
-            )}
         </div>
     );
 }
