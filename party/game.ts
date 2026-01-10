@@ -434,64 +434,6 @@ export default class GameServer implements Party.Server {
     );
   }
 
-  /**
-   * Fetch with exponential backoff retry
-   */
-  async fetchWithRetry(
-    url: string,
-    options: RequestInit,
-    maxRetries: number = 3,
-    initialDelayMs: number = 1000
-  ): Promise<{ success: boolean; data?: unknown; error?: string }> {
-    let lastError: string | undefined;
-
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      try {
-        // Timeout controller
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-
-        const res = await fetch(url, {
-          ...options,
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (res.ok) {
-          const data = await res.json();
-          return { success: true, data };
-        }
-
-        // Non-retryable errors (4xx)
-        if (res.status >= 400 && res.status < 500) {
-          return {
-            success: false,
-            error: `HTTP ${res.status}: ${await res.text()}`,
-          };
-        }
-
-        // Retryable error (5xx)
-        lastError = `HTTP ${res.status}`;
-      } catch (error) {
-        lastError = error instanceof Error ? error.message : String(error);
-      }
-
-      // Don't wait after last attempt
-      if (attempt < maxRetries) {
-        const delay = initialDelayMs * Math.pow(2, attempt); // Exponential backoff
-        console.log(
-          `[Retry] Attempt ${attempt + 1}/${
-            maxRetries + 1
-          } failed, retrying in ${delay}ms...`
-        );
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      }
-    }
-
-    return { success: false, error: lastError };
-  }
-
   // ==========================================
   // HELPERS
   // ==========================================
