@@ -5,28 +5,19 @@ import { jwtVerify } from "jose";
 // TYPES
 // ==========================================
 
-interface UserProfile {
+interface Player {
   fid: number;
   username: string;
   pfpUrl: string | null;
 }
 
-// PlayerState is now just UserProfile (no score tracking - DB is source of truth)
-type PlayerState = UserProfile;
-
 interface ChatMessage {
   id: string;
   text: string;
-  sender: UserProfile;
+  sender: Player;
   timestamp: number;
 }
 
-// Simplified GameState - no question tracking (DB is source of truth)
-interface GameState {
-  isLive: boolean;
-}
-
-// Alarm phases for chained scheduling (simplified - no question tracking)
 type AlarmPhase = "notify" | "start" | "gameEnd";
 
 // Client → Server messages
@@ -147,7 +138,6 @@ export default class GameServer implements Party.Server {
           const endsAt = new Date(body.endsAt).getTime();
           const notifyTime = startsAt - 60 * 1000; // 1 minute before
 
-          // Store game metadata (no questions - DB is source of truth)
           await this.room.storage.put("gameId", body.gameId);
           await this.room.storage.put("startsAt", startsAt);
           await this.room.storage.put("endsAt", endsAt);
@@ -191,20 +181,6 @@ export default class GameServer implements Party.Server {
         }
       }
 
-      case "state": {
-        const gameState = await this.room.storage.get<GameState>("gameState");
-        const alarmPhase = await this.room.storage.get<AlarmPhase>(
-          "alarmPhase"
-        );
-        return Response.json(
-          {
-            gameState,
-            alarmPhase,
-            onlineCount: this.getOnlineCount(),
-          },
-          { headers }
-        );
-      }
       // ==========================================
       // STATS-UPDATE - Called when ticket purchased
       // ==========================================
@@ -284,16 +260,6 @@ export default class GameServer implements Party.Server {
           const endsAt = new Date(body.endsAt).getTime();
           const notifyTime = startsAt - 60 * 1000;
           const now = Date.now();
-
-          // Check if game is already live
-          const gameState = await this.room.storage.get<GameState>("gameState");
-          if (gameState?.isLive) {
-            // Can't change timing while game is live
-            return Response.json(
-              { error: "Cannot update timing for live game" },
-              { status: 400, headers }
-            );
-          }
 
           // Update stored timing
           await this.room.storage.put("startsAt", startsAt);
@@ -385,9 +351,6 @@ export default class GameServer implements Party.Server {
       return;
     }
 
-    // Mark game as live (simplified - no question tracking)
-    await this.room.storage.put("gameState", { isLive: true });
-
     // Schedule game end alarm
     await this.room.storage.put("alarmPhase", "gameEnd" as AlarmPhase);
     await this.room.storage.setAlarm(endsAt);
@@ -410,15 +373,8 @@ export default class GameServer implements Party.Server {
 
   async handleGameEndAlarm() {
     const gameId = await this.room.storage.get<string>("gameId");
-    const gameState = await this.room.storage.get<GameState>("gameState");
-
-    if (gameState) {
-      gameState.isLive = false;
-      await this.room.storage.put("gameState", gameState);
-    }
 
     // Note: Ranking is now handled by cron job (/api/cron/roundup-games)
-    // PartyKit just broadcasts the game end event
 
     // Send notifications
     await this.sendNotifications("Game has ended! Check your results 🏆");
@@ -481,7 +437,7 @@ export default class GameServer implements Party.Server {
   }
 
   getConnectionTags(conn: Party.Connection): string[] {
-    const state = conn.state as PlayerState | undefined;
+    const state = conn.state as Player | undefined;
     return state ? [`fid:${state.fid}`] : [];
   }
 
@@ -490,7 +446,7 @@ export default class GameServer implements Party.Server {
     const username = ctx.request.headers.get("X-User-Username") || "Unknown";
     const pfpUrl = ctx.request.headers.get("X-User-PfpUrl") || null;
 
-    const player: PlayerState = { fid, username, pfpUrl };
+    const player: Player = { fid, username, pfpUrl };
     conn.setState(player);
 
     if (!this.seenFids.has(fid)) {
@@ -522,7 +478,7 @@ export default class GameServer implements Party.Server {
   async onMessage(message: string, sender: Party.Connection) {
     try {
       const data = JSON.parse(message) as ClientMessage;
-      const player = sender.state as PlayerState;
+      const player = sender.state as Player;
       if (!player) return;
 
       switch (data.type) {
@@ -554,29 +510,7 @@ export default class GameServer implements Party.Server {
       // Ignore parse errors
     }
   }
-
-  async handleAnswer(
-    conn: Party.Connection,
-    player: PlayerState,
-    data: { questionId: number; selected: number; timeMs: number }
-  ) {
-    // PartyKit just broadcasts the answer event
-    // Validation and scoring handled by client + /answers API → DB
-
-    this.broadcast({
-      type: "event",
-      data: {
-        id: crypto.randomUUID(),
-        eventType: "answer",
-        username: player.username,
-        pfpUrl: player.pfpUrl,
-        content: "answered",
-        timestamp: Date.now(),
-      },
-    });
-  }
-
-  async handleChat(player: PlayerState, text: string) {
+  async handleChat(player: Player, text: string) {
     const chatMsg: ChatMessage = {
       id: crypto.randomUUID(),
       text,
@@ -603,9 +537,25 @@ export default class GameServer implements Party.Server {
       },
     });
   }
+  async handleAnswer(
+    conn: Party.Connection,
+    player: Player,
+    data: { questionId: number; selected: number; timeMs: number }
+  ) {
+    // Broadcast which question was answered (clients filter by their current question)
+    this.broadcast({
+      type: "answer",
+      data: {
+        questionId: data.questionId,
+        username: player.username,
+        pfpUrl: player.pfpUrl,
+        timestamp: Date.now(),
+      },
+    });
+  }
 
   onClose(conn: Party.Connection) {
-    const player = conn.state as PlayerState;
+    const player = conn.state as Player;
     if (player) {
       this.broadcastPresence(player, "leave");
     }
@@ -623,7 +573,7 @@ export default class GameServer implements Party.Server {
     this.room.broadcast(JSON.stringify(msg), exclude);
   }
 
-  broadcastPresence(user: UserProfile, action: "join" | "leave" | "count") {
+  broadcastPresence(user: Player, action: "join" | "leave" | "count") {
     this.broadcast({
       type: "presence",
       data: {

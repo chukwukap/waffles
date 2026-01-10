@@ -252,20 +252,15 @@ export default function QuestionView({
                     )}
                 </AnimatePresence>
 
-                {/* Real-time player count at bottom */}
-                <AnimatePresence>
-                    {hasAnswered && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ delay: 0.5, duration: 0.4 }}
-                            className="mt-auto pt-4"
-                        >
-                            <PlayerAvatarStack actionText="just answered" />
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                {/* Real-time answerers - shows who answered THIS question */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5, duration: 0.4 }}
+                    className="mt-auto pt-4"
+                >
+                    <PlayerAvatarStack actionText="just answered" />
+                </motion.div>
             </section>
         </motion.div>
     );

@@ -79,6 +79,7 @@ type IncomingMessage =
     | { type: "presence"; data: PresenceData }
     | { type: "chat"; data: ChatData }
     | { type: "event"; data: EventData }
+    | { type: "answer"; data: { questionId: number; username: string; pfpUrl?: string | null; timestamp: number } }
     | { type: "cheer" }
     | { type: "gameStats"; data: GameStatsData }
     | { type: "answerResult"; data: { totalScore?: number; answeredCount?: number } }
@@ -180,13 +181,15 @@ export function GameSocketProvider({ children }: GameSocketProviderProps) {
                             content: msg.data.content,
                             timestamp: msg.data.timestamp,
                         });
-                        if (msg.data.eventType === "answer") {
-                            state.addAnswerer({
-                                username: msg.data.username,
-                                pfpUrl: msg.data.pfpUrl || null,
-                                timestamp: msg.data.timestamp,
-                            });
-                        }
+                        break;
+
+                    case "answer":
+                        // Add answerer (store filters by currentQuestionId)
+                        state.addAnswerer(String(msg.data.questionId), {
+                            username: msg.data.username,
+                            pfpUrl: msg.data.pfpUrl || null,
+                            timestamp: msg.data.timestamp,
+                        });
                         break;
 
                     case "cheer":

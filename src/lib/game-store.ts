@@ -66,6 +66,7 @@ export interface GameState {
   messages: ChatMessage[];
   events: GameEvent[];
   recentPlayers: RecentPlayer[];
+  currentQuestionId: string | null; // Currently viewing question
   questionAnswerers: RecentPlayer[]; // Players who answered current question
 
   // === ACTIONS - CORE ===
@@ -84,8 +85,8 @@ export interface GameState {
   setEvents: (events: GameEvent[]) => void;
   addPlayer: (player: RecentPlayer) => void;
   setRecentPlayers: (players: RecentPlayer[]) => void;
-  addAnswerer: (player: RecentPlayer) => void;
-  clearAnswerers: () => void;
+  setCurrentQuestion: (questionId: string | null) => void;
+  addAnswerer: (questionId: string, player: RecentPlayer) => void;
 
   // === ACTIONS - ENTRY ===
   incrementAnswered: () => void;
@@ -110,6 +111,7 @@ const initialRealTimeState = {
   messages: [] as ChatMessage[],
   events: [] as GameEvent[],
   recentPlayers: [] as RecentPlayer[],
+  currentQuestionId: null as string | null,
   questionAnswerers: [] as RecentPlayer[],
 };
 
@@ -187,23 +189,30 @@ export const createGameStore = () =>
         setRecentPlayers: (players) =>
           set({ recentPlayers: players }, false, "setRecentPlayers"),
 
-        addAnswerer: (player) =>
+        setCurrentQuestion: (questionId) =>
           set(
-            (state) => ({
-              // Add to front, keep latest 10
-              questionAnswerers: [
-                player,
-                ...state.questionAnswerers.filter(
-                  (p) => p.username !== player.username
-                ),
-              ].slice(0, 10),
-            }),
+            { currentQuestionId: questionId, questionAnswerers: [] },
+            false,
+            "setCurrentQuestion"
+          ),
+
+        addAnswerer: (questionId, player) =>
+          set(
+            (state) => {
+              // Only add if this answer is for the question we're viewing
+              if (state.currentQuestionId !== questionId) return state;
+              return {
+                questionAnswerers: [
+                  player,
+                  ...state.questionAnswerers.filter(
+                    (p) => p.username !== player.username
+                  ),
+                ].slice(0, 10),
+              };
+            },
             false,
             "addAnswerer"
           ),
-
-        clearAnswerers: () =>
-          set({ questionAnswerers: [] }, false, "clearAnswerers"),
 
         // === ENTRY ACTIONS ===
 

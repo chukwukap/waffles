@@ -204,12 +204,14 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
     setPhase("question");
   }, [currentQuestionIndex, game.questions, game.roundBreakSec, isGameEnded]);
 
-  // Reset answerers when question changes
+  // Set current question in store (for real-time answerer filtering)
   useEffect(() => {
-    if (phase === "question") {
-      store.getState().clearAnswerers();
+    if (phase === "question" && game.questions[currentQuestionIndex]) {
+      store
+        .getState()
+        .setCurrentQuestion(game.questions[currentQuestionIndex].id);
     }
-  }, [currentQuestionIndex, phase, store]);
+  }, [currentQuestionIndex, phase, store, game.questions]);
 
   // ==========================================
   // ACTIONS
