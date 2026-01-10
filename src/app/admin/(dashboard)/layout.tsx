@@ -24,7 +24,7 @@ export default async function AdminLayout({
     return (
         <>
             <div className={cn(
-                "flex h-screen admin-background text-white",
+                "flex h-screen admin-background text-white font-display",
                 fontBody.variable,
                 fontDisplay.variable
             )}>

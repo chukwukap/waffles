@@ -417,47 +417,21 @@ export default class GameServer implements Party.Server {
       await this.room.storage.put("gameState", gameState);
     }
 
-    // Trigger ranking with retry (DB is source of truth for scores)
-    const appUrl = this.room.env.NEXT_PUBLIC_URL as string;
-    const secret = this.room.env.PARTYKIT_SECRET as string;
+    // Note: Ranking is now handled by cron job (/api/cron/roundup-games)
+    // PartyKit just broadcasts the game end event
 
-    if (appUrl && secret) {
-      const result = await this.fetchWithRetry(
-        `${appUrl}/api/v1/internal/games/${gameId}/rank`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${secret}`,
-          },
-        },
-        3, // max retries
-        1000 // initial delay ms
-      );
-
-      if (result.success) {
-        console.log(
-          `[GameEnd] Game ${gameId} - ranking successful:`,
-          result.data
-        );
-      } else {
-        console.error(
-          `[GameEnd] Game ${gameId} - ranking failed after retries:`,
-          result.error
-        );
-      }
-    }
-
-    // Send notifications (publishing results on-chain handles winner notifications)
+    // Send notifications
     await this.sendNotifications("Game has ended! Check your results 🏆");
 
-    // Broadcast game end
+    // Broadcast game end to connected clients
     this.broadcast({
       type: "gameEnd",
       data: { gameId },
     });
 
-    console.log(`[GameEnd] Game ${gameId} - complete`);
+    console.log(
+      `[GameEnd] Game ${gameId} - complete (ranking handled by cron)`
+    );
   }
 
   /**
