@@ -542,26 +542,15 @@ export async function forceEndGameAction(
       return { success: false, error: "Game has already ended" };
     }
 
+    // Set end time to now
     await prisma.game.update({
       where: { id: gameId },
       data: { endsAt: new Date() },
     });
 
-    // Calculate ranks for all entries
-    const entries = await prisma.gameEntry.findMany({
-      where: { gameId, paidAt: { not: null } },
-      orderBy: [{ score: "desc" }, { createdAt: "asc" }],
-      select: { id: true },
-    });
-
-    await prisma.$transaction(
-      entries.map((entry, index) =>
-        prisma.gameEntry.update({
-          where: { id: entry.id },
-          data: { rank: index + 1 },
-        })
-      )
-    );
+    // Use centralized ranking (cron will handle publish)
+    const { rankGame } = await import("@/lib/game/lifecycle");
+    const rankResult = await rankGame(gameId);
 
     await logAdminAction({
       adminId: authResult.session.userId,
@@ -571,7 +560,7 @@ export async function forceEndGameAction(
       details: {
         action: "FORCE_END",
         title: game.title,
-        playerCount: entries.length,
+        entriesRanked: rankResult.entriesRanked,
       },
     });
 

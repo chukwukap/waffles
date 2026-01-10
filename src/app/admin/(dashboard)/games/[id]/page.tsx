@@ -14,7 +14,6 @@ import {
     CheckCircleIcon,
     ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
-import { GameLifecyclePanel } from "./_components/GameLifecyclePanel";
 import { GameResults } from "./_components/GameResults";
 import { getOnChainGame } from "@/lib/chain";
 import { getGamePhase } from "@/lib/types";
@@ -412,9 +411,38 @@ export default async function GameDetailPage({
                     )}
                 </div>
 
-                {/* Game Lifecycle Panel */}
-                <div className="bg-linear-to-br from-white/6 to-white/2 border border-white/8 rounded-2xl overflow-hidden">
-                    <GameLifecyclePanel gameId={game.id} />
+                {/* Game Status */}
+                <div className="p-6">
+                    <h2 className="text-lg font-bold text-white font-display mb-4 flex items-center gap-2">
+                        <span className="w-8 h-8 rounded-lg bg-[#14B985]/10 flex items-center justify-center">
+                            ⚡
+                        </span>
+                        Settlement Status
+                    </h2>
+                    <div className="space-y-3">
+                        {onChainStatus.settled ? (
+                            <div className="flex items-center gap-3 px-4 py-3 bg-[#14B985]/10 rounded-xl border border-[#14B985]/20">
+                                <CheckCircleIcon className="h-5 w-5 text-[#14B985]" />
+                                <span className="text-[#14B985] font-medium">
+                                    Results published on-chain • {onChainStatus.claimCount} claims
+                                </span>
+                            </div>
+                        ) : phase === "ENDED" ? (
+                            <div className="flex items-center gap-3 px-4 py-3 bg-[#FFC931]/10 rounded-xl border border-[#FFC931]/20">
+                                <ClockIcon className="h-5 w-5 text-[#FFC931]" />
+                                <span className="text-[#FFC931]/80">
+                                    Processing automatically...
+                                </span>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl border border-white/10">
+                                <ClockIcon className="h-5 w-5 text-white/40" />
+                                <span className="text-white/50">
+                                    Will process automatically after game ends
+                                </span>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 

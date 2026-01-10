@@ -1,8 +1,8 @@
 /**
  * Game Lifecycle Service
  *
- * Single source of truth for game lifecycle operations.
- * Clean state machine: LIVE → COMPLETED → RANKED → ON_CHAIN
+ * Core functions for ranking games and publishing results on-chain.
+ * Used by cron job for automatic processing.
  */
 
 import { parseUnits } from "viem";
@@ -27,39 +27,6 @@ import { env } from "@/lib/env";
 // Types
 // ============================================================================
 
-export type GameLifecycleState =
-  | "SCHEDULED" // Game hasn't started yet
-  | "LIVE" // Game is in progress
-  | "COMPLETED" // Game ended, waiting for ranking
-  | "RANKED" // Ranks/prizes calculated, waiting for on-chain publish
-  | "ON_CHAIN"; // Results published, prizes claimable
-
-export interface GameLifecycleStatus {
-  state: GameLifecycleState;
-  gameId: string;
-  gameNumber: number;
-  title: string;
-
-  // Timestamps
-  startsAt: Date;
-  endsAt: Date;
-  rankedAt: Date | null;
-  onChainAt: Date | null;
-
-  // Stats
-  playerCount: number;
-  prizePool: number;
-
-  // On-chain data
-  onchainId: string | null;
-  merkleRoot: string | null;
-  onChainTxHash: string | null;
-
-  // Computed
-  canRank: boolean;
-  canPublish: boolean;
-}
-
 export interface RankResult {
   success: boolean;
   entriesRanked: number;
@@ -81,127 +48,24 @@ export interface PublishResult {
 }
 
 // ============================================================================
-// State Derivation
+// Rank Game
 // ============================================================================
 
 /**
- * Derive the current lifecycle state from game data
- */
-export function deriveGameState(game: {
-  startsAt: Date;
-  endsAt: Date;
-  rankedAt: Date | null;
-  onChainAt: Date | null;
-}): GameLifecycleState {
-  const now = new Date();
-
-  // Not started yet
-  if (now < game.startsAt) {
-    return "SCHEDULED";
-  }
-
-  // In progress
-  if (now >= game.startsAt && now < game.endsAt) {
-    return "LIVE";
-  }
-
-  // Ended but not ranked
-  if (now >= game.endsAt && !game.rankedAt) {
-    return "COMPLETED";
-  }
-
-  // Ranked but not on-chain
-  if (game.rankedAt && !game.onChainAt) {
-    return "RANKED";
-  }
-
-  // Published on-chain
-  if (game.onChainAt) {
-    return "ON_CHAIN";
-  }
-
-  return "COMPLETED"; // fallback
-}
-
-// ============================================================================
-// Get Lifecycle Status
-// ============================================================================
-
-/**
- * Get complete lifecycle status for a game
- */
-export async function getGameLifecycleStatus(
-  gameId: string
-): Promise<GameLifecycleStatus | null> {
-  const game = await prisma.game.findUnique({
-    where: { id: gameId },
-    select: {
-      id: true,
-      gameNumber: true,
-      title: true,
-      startsAt: true,
-      endsAt: true,
-      rankedAt: true,
-      onChainAt: true,
-      playerCount: true,
-      prizePool: true,
-      onchainId: true,
-      merkleRoot: true,
-      onChainTxHash: true,
-    },
-  });
-
-  if (!game) return null;
-
-  const state = deriveGameState(game);
-
-  return {
-    state,
-    gameId: game.id,
-    gameNumber: game.gameNumber,
-    title: game.title,
-    startsAt: game.startsAt,
-    endsAt: game.endsAt,
-    rankedAt: game.rankedAt,
-    onChainAt: game.onChainAt,
-    playerCount: game.playerCount,
-    prizePool: game.prizePool,
-    onchainId: game.onchainId,
-    merkleRoot: game.merkleRoot,
-    onChainTxHash: game.onChainTxHash,
-    canRank: state === "COMPLETED",
-    canPublish: state === "RANKED" && !!game.onchainId,
-  };
-}
-
-// ============================================================================
-// Step 1: Rank Game
-// ============================================================================
-
-/**
- * Calculate rankings and distribute prizes
- * Idempotent - safe to call multiple times
+ * Calculate rankings and distribute prizes. Idempotent.
  */
 export async function rankGame(gameId: string): Promise<RankResult> {
-  // Check current state
   const game = await prisma.game.findUnique({
     where: { id: gameId },
-    select: {
-      id: true,
-      endsAt: true,
-      rankedAt: true,
-      prizePool: true,
-    },
+    select: { id: true, endsAt: true, rankedAt: true, prizePool: true },
   });
 
-  if (!game) {
-    throw new Error(`Game ${gameId} not found`);
-  }
+  if (!game) throw new Error(`Game ${gameId} not found`);
 
-  // Already ranked - return existing data (idempotent)
+  // Already ranked - return existing data
   if (game.rankedAt) {
     const existingWinners = await prisma.gameEntry.findMany({
-      where: { gameId, rank: { lte: 3 }, prize: { gt: 0 } },
+      where: { gameId, rank: { lte: TOP_WINNERS_COUNT }, prize: { gt: 0 } },
       select: {
         rank: true,
         prize: true,
@@ -227,12 +91,10 @@ export async function rankGame(gameId: string): Promise<RankResult> {
     };
   }
 
-  // Verify game has ended
-  if (new Date() < game.endsAt) {
+  if (new Date() < game.endsAt)
     throw new Error(`Game ${gameId} has not ended yet`);
-  }
 
-  // Get all paid entries ordered by score
+  // Get entries ordered by score
   const entries = await prisma.gameEntry.findMany({
     where: { gameId, paidAt: { not: null } },
     orderBy: [{ score: "desc" }, { updatedAt: "asc" }],
@@ -246,12 +108,10 @@ export async function rankGame(gameId: string): Promise<RankResult> {
   });
 
   if (entries.length === 0) {
-    // No entries - mark as ranked with empty results
     await prisma.game.update({
       where: { id: gameId },
       data: { rankedAt: new Date() },
     });
-
     return {
       success: true,
       entriesRanked: 0,
@@ -261,13 +121,12 @@ export async function rankGame(gameId: string): Promise<RankResult> {
     };
   }
 
-  // Calculate rankings and tier-based prizes
-  // Top 5 share the prize pool proportionally to their paidAmount (tier)
-  const prizePool = game.prizePool;
-
-  // Read platform fee from smart contract and calculate net prize pool
+  // Calculate net prize pool
   const platformFeeBps = await getPlatformFeeBps();
-  const netPrizePool = prizePool * (1 - platformFeeBps / 10000);
+  const netPrizePool = game.prizePool * (1 - platformFeeBps / 10000);
+
+  const top5 = entries.slice(0, TOP_WINNERS_COUNT);
+  const totalWeight = top5.reduce((sum, e) => sum + (e.paidAmount ?? 0), 0);
 
   const winners: Array<{
     rank: number;
@@ -276,23 +135,11 @@ export async function rankGame(gameId: string): Promise<RankResult> {
     username: string;
     entryId: string;
   }> = [];
-
-  // Get top 5 entries
-  const top5 = entries.slice(0, TOP_WINNERS_COUNT);
-
-  // Calculate total weight (sum of paidAmounts for top 5)
-  const totalWeight = top5.reduce((sum, e) => sum + (e.paidAmount ?? 0), 0);
-
-  // Build update data for ALL entries
   const updateData = entries.map((entry, index) => {
     const rank = index + 1;
-
-    // Only top 5 get prizes
     if (index < TOP_WINNERS_COUNT && totalWeight > 0) {
-      const paidAmount = entry.paidAmount ?? 0;
-      const prize = (paidAmount / totalWeight) * netPrizePool;
-
-      if (prize > 0) {
+      const prize = ((entry.paidAmount ?? 0) / totalWeight) * netPrizePool;
+      if (prize > 0)
         winners.push({
           rank,
           prize,
@@ -300,16 +147,12 @@ export async function rankGame(gameId: string): Promise<RankResult> {
           username: entry.user.username ?? "Unknown",
           entryId: entry.id,
         });
-      }
-
       return { id: entry.id, rank, prize };
     }
-
-    // Non-winners get rank but no prize
     return { id: entry.id, rank, prize: 0 };
   });
 
-  // Batch update in transaction
+  // Batch update
   await prisma.$transaction(async (tx) => {
     for (const data of updateData) {
       await tx.gameEntry.update({
@@ -317,7 +160,6 @@ export async function rankGame(gameId: string): Promise<RankResult> {
         data: { rank: data.rank, prize: data.prize > 0 ? data.prize : null },
       });
     }
-
     await tx.game.update({
       where: { id: gameId },
       data: { rankedAt: new Date() },
@@ -325,14 +167,14 @@ export async function rankGame(gameId: string): Promise<RankResult> {
   });
 
   console.log(
-    `[Lifecycle] Game ${gameId}: Ranked ${entries.length} entries, ${winners.length} winners`
+    `[Lifecycle] Ranked ${entries.length} entries, ${winners.length} winners`
   );
 
   return {
     success: true,
     entriesRanked: entries.length,
     prizesDistributed: winners.length,
-    prizePool,
+    prizePool: game.prizePool,
     winners: winners.map((w) => ({
       rank: w.rank,
       prize: w.prize,
@@ -343,14 +185,13 @@ export async function rankGame(gameId: string): Promise<RankResult> {
 }
 
 // ============================================================================
-// Step 2: Publish Results On-Chain
+// Publish Results On-Chain
 // ============================================================================
 
 /**
- * Submit merkle root to smart contract and notify players
+ * Submit merkle root to smart contract and notify players. Idempotent.
  */
 export async function publishResults(gameId: string): Promise<PublishResult> {
-  // Get game with ranked entries
   const game = await prisma.game.findUnique({
     where: { id: gameId },
     select: {
@@ -362,30 +203,21 @@ export async function publishResults(gameId: string): Promise<PublishResult> {
     },
   });
 
-  if (!game) {
-    throw new Error(`Game ${gameId} not found`);
-  }
-
-  // Verify prerequisites
-  if (!game.rankedAt) {
+  if (!game) throw new Error(`Game ${gameId} not found`);
+  if (!game.rankedAt)
     throw new Error(`Game ${gameId} must be ranked before publishing`);
-  }
+  if (!game.onchainId) throw new Error(`Game ${gameId} has no on-chain ID`);
 
-  if (!game.onchainId) {
-    throw new Error(`Game ${gameId} has no on-chain ID`);
-  }
-
-  // Already published - return existing data (idempotent)
+  // Already published
   if (game.onChainAt) {
-    const existingGame = await prisma.game.findUnique({
+    const existing = await prisma.game.findUnique({
       where: { id: gameId },
       select: { merkleRoot: true, onChainTxHash: true },
     });
-
     return {
       success: true,
-      merkleRoot: existingGame!.merkleRoot!,
-      txHash: existingGame!.onChainTxHash!,
+      merkleRoot: existing!.merkleRoot!,
+      txHash: existing!.onChainTxHash!,
       winnersCount: await prisma.gameEntry.count({
         where: { gameId, prize: { gt: 0 } },
       }),
@@ -406,11 +238,10 @@ export async function publishResults(gameId: string): Promise<PublishResult> {
     orderBy: { rank: "asc" },
   });
 
-  if (rankedEntries.length === 0) {
+  if (rankedEntries.length === 0)
     throw new Error(`No winners to publish for game ${gameId}`);
-  }
 
-  // Build winners array for merkle tree
+  // Build merkle tree
   const winners: Winner[] = rankedEntries
     .filter((e) => e.payerWallet || e.user.wallet)
     .map((entry) => ({
@@ -419,11 +250,9 @@ export async function publishResults(gameId: string): Promise<PublishResult> {
       amount: parseUnits((entry.prize ?? 0).toFixed(6), TOKEN_CONFIG.decimals),
     }));
 
-  if (winners.length === 0) {
+  if (winners.length === 0)
     throw new Error(`No winners with wallets for game ${gameId}`);
-  }
 
-  // Build merkle tree
   const { root: merkleRoot } = buildMerkleTree(winners);
   const allProofs = generateAllProofs(winners);
 
@@ -436,56 +265,38 @@ export async function publishResults(gameId: string): Promise<PublishResult> {
     args: [onchainId, merkleRoot],
   });
 
-  // Wait for confirmation
   await publicClient.waitForTransactionReceipt({ hash: txHash });
 
   // Update database
-  const now = new Date();
-
   await prisma.$transaction(async (tx) => {
-    // Update game
     await tx.game.update({
       where: { id: gameId },
-      data: {
-        merkleRoot,
-        onChainTxHash: txHash,
-        onChainAt: now,
-      },
+      data: { merkleRoot, onChainTxHash: txHash, onChainAt: new Date() },
     });
 
-    // Update entries with merkle proofs
     for (const entry of rankedEntries) {
-      const winnerAddress = (
-        entry.payerWallet || entry.user.wallet
-      )?.toLowerCase();
-      if (!winnerAddress) continue;
-
-      const proofData = allProofs.get(winnerAddress);
-      if (!proofData) continue;
-
-      await tx.gameEntry.update({
-        where: { id: entry.id },
-        data: {
-          merkleProof: proofData.proof,
-          merkleAmount: proofData.amount.toString(),
-        },
-      });
+      const addr = (entry.payerWallet || entry.user.wallet)?.toLowerCase();
+      const proofData = addr ? allProofs.get(addr) : null;
+      if (proofData) {
+        await tx.gameEntry.update({
+          where: { id: entry.id },
+          data: {
+            merkleProof: proofData.proof,
+            merkleAmount: proofData.amount.toString(),
+          },
+        });
+      }
     }
   });
 
-  console.log(`[Lifecycle] Game ${gameId}: Published on-chain. TX: ${txHash}`);
+  console.log(`[Lifecycle] Published on-chain. TX: ${txHash}`);
 
-  // Send notifications (async, don't block)
+  // Send notifications async
   sendResultNotifications(gameId).catch((err) =>
     console.error("[Lifecycle] Notification error:", err)
   );
 
-  return {
-    success: true,
-    merkleRoot,
-    txHash,
-    winnersCount: winners.length,
-  };
+  return { success: true, merkleRoot, txHash, winnersCount: winners.length };
 }
 
 // ============================================================================
@@ -494,13 +305,7 @@ export async function publishResults(gameId: string): Promise<PublishResult> {
 
 async function sendResultNotifications(gameId: string) {
   const allEntries = await prisma.gameEntry.findMany({
-    where: {
-      gameId,
-      user: {
-        hasGameAccess: true,
-        isBanned: false,
-      },
-    },
+    where: { gameId, user: { hasGameAccess: true, isBanned: false } },
     select: {
       rank: true,
       prize: true,
@@ -516,11 +321,7 @@ async function sendResultNotifications(gameId: string) {
     (e) => !(e.rank && e.rank <= TOP_WINNERS_COUNT && e.prize)
   );
 
-  console.log(
-    `[Lifecycle] Notifying ${winners.length} winners and ${nonWinners.length} others`
-  );
-
-  // Winners: personalized messages
+  // Winners: personalized
   await Promise.allSettled(
     winners.map((entry) =>
       sendToUser(entry.user.fid, {
@@ -531,70 +332,15 @@ async function sendResultNotifications(gameId: string) {
     )
   );
 
-  // Non-winners: batch message
+  // Non-winners: batch
   if (nonWinners.length > 0) {
     await sendBatch(
       {
         title: "📊 Results Ready!",
-        body: "See how you ranked and check out the winners!",
+        body: "See how you ranked!",
         targetUrl: `${env.rootUrl}/game/${gameId}/result`,
       },
       { fids: nonWinners.map((e) => e.user.fid) }
     );
   }
-}
-
-// ============================================================================
-// Preview (for admin UI)
-// ============================================================================
-
-/**
- * Get preview of what ranking would look like (without committing)
- */
-export async function previewRanking(gameId: string) {
-  const game = await prisma.game.findUnique({
-    where: { id: gameId },
-    select: { prizePool: true },
-  });
-
-  if (!game) return null;
-
-  const entries = await prisma.gameEntry.findMany({
-    where: { gameId, paidAt: { not: null } },
-    orderBy: [{ score: "desc" }, { updatedAt: "asc" }],
-    select: {
-      score: true,
-      paidAmount: true,
-      user: { select: { username: true } },
-    },
-    take: 10,
-  });
-
-  // Calculate total weight for top winners
-  const topEntries = entries.slice(0, TOP_WINNERS_COUNT);
-  const totalWeight = topEntries.reduce(
-    (sum, e) => sum + (e.paidAmount ?? 0),
-    0
-  );
-
-  // Read platform fee from smart contract and calculate net prize pool
-  const platformFeeBps = await getPlatformFeeBps();
-  const netPrizePool = game.prizePool * (1 - platformFeeBps / 10000);
-
-  return entries.map((entry, index) => {
-    const rank = index + 1;
-
-    // Only top 5 get prizes based on tier
-    let prize = 0;
-    if (index < TOP_WINNERS_COUNT && totalWeight > 0) {
-      prize = ((entry.paidAmount ?? 0) / totalWeight) * netPrizePool;
-    }
-
-    return {
-      rank,
-      username: entry.user.username ?? "Unknown",
-      score: entry.score,
-      prize,
-    };
-  });
 }
