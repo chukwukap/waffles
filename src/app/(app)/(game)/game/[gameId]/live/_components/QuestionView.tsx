@@ -14,6 +14,8 @@ import { QuestionCardHeader } from "./QuestionCardHeader";
 import { QuestionOption } from "./QuestionOption";
 import { playSound } from "@/lib/sounds";
 import { PlayerAvatarStack } from "../../../_components/PlayerAvatarStack";
+import { useGameStore } from "@/components/providers/GameStoreProvider";
+import { selectQuestionAnswerers } from "@/lib/game-store";
 import type { LiveGameQuestion } from "../page";
 
 // ==========================================
@@ -110,6 +112,7 @@ export default function QuestionView({
     onMediaReady,
 }: QuestionViewProps) {
     const [mediaLoaded, setMediaLoaded] = useState(!question.mediaUrl); // true if no media
+    const answerers = useGameStore(selectQuestionAnswerers);
     const isLowTime = seconds <= 3 && seconds > 0;
     const isTimeUp = seconds === 0;
 
@@ -252,15 +255,31 @@ export default function QuestionView({
                     )}
                 </AnimatePresence>
 
-                {/* Real-time answerers - shows who answered THIS question */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5, duration: 0.4 }}
-                    className="mt-auto pt-4"
-                >
-                    <PlayerAvatarStack actionText="just answered" />
-                </motion.div>
+                {/* Real-time answerers - only shows when there are answerers */}
+                <AnimatePresence>
+                    {answerers.length > 0 && (
+                        <motion.div
+                            key="answerers"
+                            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            transition={{
+                                type: "spring",
+                                stiffness: 400,
+                                damping: 25,
+                            }}
+                            className="mt-auto pt-4"
+                        >
+                            <motion.div
+                                key={answerers.length}
+                                animate={{ scale: [1, 1.02, 1] }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                <PlayerAvatarStack actionText="just answered" />
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </section>
         </motion.div>
     );
