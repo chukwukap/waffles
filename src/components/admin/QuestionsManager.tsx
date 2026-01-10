@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
     DndContext,
@@ -302,6 +302,14 @@ export function QuestionsManager({ gameId, initialQuestions }: QuestionsManagerP
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [showPicker, setShowPicker] = useState(false);
+
+    // Sync local state when server data changes (after router.refresh())
+    // Compare by IDs to avoid reference comparison issues
+    const initialIds = initialQuestions.map(q => q.id).join(',');
+    useEffect(() => {
+        setQuestions(initialQuestions);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [initialIds]);
 
     // Get templateIds for existing questions (for duplicate detection)
     const existingTemplateIds = questions

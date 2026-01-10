@@ -33,7 +33,7 @@ export default async function GameQuestionsPage({
     const totalQuestions = game.questions.length;
 
     return (
-        <div className="max-w-5xl mx-auto space-y-6">
+        <div className="max-w-5xl mx-auto space-y-6 font-display">
             {/* Warning Banner */}
             {warning && (
                 <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300">
