@@ -10,45 +10,55 @@ import {
   FinalCTASection,
   Footer,
 } from "@/components/landing";
+import { SmoothScrollProvider } from "@/components/landing/SmoothScrollProvider";
+import { CustomCursor } from "@/components/landing/CustomCursor";
+import { ScrollProgress } from "@/components/landing/ScrollProgress";
 
 export default function Home() {
   return (
-    <main className="relative min-h-screen overflow-x-hidden">
-      {/* Global Noise Overlay - covers the entire page */}
-      <div
-        className="pointer-events-none fixed inset-0 z-50"
-        style={{
-          backgroundImage: `url("/noise.svg")`,
-          backgroundRepeat: "repeat",
-          opacity: 0.5,
-        }}
-        aria-hidden="true"
-      />
+    <SmoothScrollProvider>
+      {/* Custom Cursor - Desktop only */}
+      <CustomCursor />
 
-      {/* Navigation - fixed at top */}
-      <LandingNav />
+      {/* Scroll Progress Indicator */}
+      <ScrollProgress />
 
-      {/* Hero Section - Dark gradient */}
-      <HeroSection />
+      <main className="relative min-h-screen overflow-x-hidden">
+        {/* Global Noise Overlay - covers the entire page */}
+        <div
+          className="pointer-events-none fixed inset-0 z-50"
+          style={{
+            backgroundImage: `url("/noise.svg")`,
+            backgroundRepeat: "repeat",
+            opacity: 0.4,
+          }}
+          aria-hidden="true"
+        />
 
-      {/* Speed, Memory, Intuition - Yellow */}
-      <SpeedSection />
+        {/* Navigation - fixed at top */}
+        <LandingNav />
 
-      {/* Compete for the biggest prize pool - Green */}
-      <CompeteSection />
+        {/* Hero Section - Dark gradient */}
+        <HeroSection />
 
-      {/* Early Players Win Twice - Pink/Magenta */}
-      <EarlyPlayersSection />
+        {/* Speed, Memory, Intuition - Yellow */}
+        <SpeedSection />
 
-      {/* Weekly Themes - Blue gradient */}
-      <ThemesSection />
+        {/* Compete for the biggest prize pool - Green */}
+        <CompeteSection />
 
-      {/* Final CTA - Gold gradient */}
-      <FinalCTASection />
+        {/* Early Players Win Twice - Cyan */}
+        <EarlyPlayersSection />
 
-      {/* Footer - Dark */}
-      <Footer />
-    </main>
+        {/* Weekly Themes - Purple gradient */}
+        <ThemesSection />
+
+        {/* Final CTA - Gold */}
+        <FinalCTASection />
+
+        {/* Footer - Dark */}
+        <Footer />
+      </main>
+    </SmoothScrollProvider>
   );
 }
-

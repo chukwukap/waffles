@@ -9,6 +9,8 @@ import {
     springPresets,
 } from "./AnimationContext";
 import { useMagneticEffect } from "./useAnimationHooks";
+import { TextScramble } from "./TextScramble";
+import { FloatingParticles } from "./GradientBlobs";
 
 // Headline words for stagger
 const headlineWords = ["Think", "You're", "Faster", "Than", "Everyone", "Else?"];
@@ -36,6 +38,9 @@ export function FinalCTASection() {
                 backgroundBlendMode: "overlay",
             }}
         >
+            {/* Floating particles */}
+            <FloatingParticles count={15} color="#493601" className="opacity-20" />
+
             {/* Content Container */}
             <div className="relative z-10 flex flex-col items-center gap-[60px] text-center max-w-[1200px] px-4 md:px-8">
                 {/* Logo - Breathing animation */}
@@ -79,7 +84,7 @@ export function FinalCTASection() {
                     />
                 </motion.div>
 
-                {/* Headline - Staggered word reveal */}
+                {/* Headline - Staggered word reveal with scramble */}
                 <motion.h2
                     variants={staggerContainerVariants}
                     initial="hidden"
@@ -93,7 +98,12 @@ export function FinalCTASection() {
                             variants={wordStaggerVariants}
                             className="inline-block"
                         >
-                            {word}
+                            <TextScramble
+                                text={word}
+                                trigger="inView"
+                                revealDelay={index * 100}
+                                scrambleSpeed={40}
+                            />
                         </motion.span>
                     ))}
                 </motion.h2>
@@ -109,6 +119,8 @@ export function FinalCTASection() {
                         x: magnetic.x,
                         y: magnetic.y,
                     }}
+                    data-cursor-hover
+                    data-cursor-text="Join"
                 >
                     <motion.button
                         className="relative w-[337px] h-[54px] bg-white rounded-xl flex items-center justify-center font-body text-[26px] tracking-[-0.02em] text-[#493601] overflow-hidden"
@@ -130,7 +142,7 @@ export function FinalCTASection() {
                             router.push("https://farcaster.xyz/miniapps/sbpPNle-R2-V/waffles");
                         }}
                     >
-                        {/* Shine effect */}
+                        {/* Animated shine effect */}
                         <motion.div
                             className="absolute inset-0 bg-gradient-to-r from-transparent via-[#493601]/10 to-transparent"
                             animate={{ x: ["-100%", "200%"] }}

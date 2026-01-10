@@ -389,6 +389,7 @@ export const ModelName = {
   Quest: 'Quest',
   CompletedQuest: 'CompletedQuest',
   Game: 'Game',
+  QuestionTemplate: 'QuestionTemplate',
   Question: 'Question',
   GameEntry: 'GameEntry',
   Chat: 'Chat',
@@ -410,7 +411,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "referralReward" | "quest" | "completedQuest" | "game" | "question" | "gameEntry" | "chat" | "notificationToken" | "auditLog" | "inviteCode"
+    modelProps: "user" | "referralReward" | "quest" | "completedQuest" | "game" | "questionTemplate" | "question" | "gameEntry" | "chat" | "notificationToken" | "auditLog" | "inviteCode"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -781,6 +782,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.GameCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.GameCountAggregateOutputType> | number
+        }
+      }
+    }
+    QuestionTemplate: {
+      payload: Prisma.$QuestionTemplatePayload<ExtArgs>
+      fields: Prisma.QuestionTemplateFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.QuestionTemplateFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTemplatePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.QuestionTemplateFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTemplatePayload>
+        }
+        findFirst: {
+          args: Prisma.QuestionTemplateFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTemplatePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.QuestionTemplateFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTemplatePayload>
+        }
+        findMany: {
+          args: Prisma.QuestionTemplateFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTemplatePayload>[]
+        }
+        create: {
+          args: Prisma.QuestionTemplateCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTemplatePayload>
+        }
+        createMany: {
+          args: Prisma.QuestionTemplateCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.QuestionTemplateCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTemplatePayload>[]
+        }
+        delete: {
+          args: Prisma.QuestionTemplateDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTemplatePayload>
+        }
+        update: {
+          args: Prisma.QuestionTemplateUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTemplatePayload>
+        }
+        deleteMany: {
+          args: Prisma.QuestionTemplateDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.QuestionTemplateUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.QuestionTemplateUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTemplatePayload>[]
+        }
+        upsert: {
+          args: Prisma.QuestionTemplateUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuestionTemplatePayload>
+        }
+        aggregate: {
+          args: Prisma.QuestionTemplateAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateQuestionTemplate>
+        }
+        groupBy: {
+          args: Prisma.QuestionTemplateGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.QuestionTemplateGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.QuestionTemplateCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.QuestionTemplateCountAggregateOutputType> | number
         }
       }
     }
@@ -1371,6 +1446,24 @@ export const GameScalarFieldEnum = {
 export type GameScalarFieldEnum = (typeof GameScalarFieldEnum)[keyof typeof GameScalarFieldEnum]
 
 
+export const QuestionTemplateScalarFieldEnum = {
+  id: 'id',
+  content: 'content',
+  options: 'options',
+  correctIndex: 'correctIndex',
+  durationSec: 'durationSec',
+  mediaUrl: 'mediaUrl',
+  soundUrl: 'soundUrl',
+  theme: 'theme',
+  difficulty: 'difficulty',
+  usageCount: 'usageCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type QuestionTemplateScalarFieldEnum = (typeof QuestionTemplateScalarFieldEnum)[keyof typeof QuestionTemplateScalarFieldEnum]
+
+
 export const QuestionScalarFieldEnum = {
   id: 'id',
   gameId: 'gameId',
@@ -1383,6 +1476,7 @@ export const QuestionScalarFieldEnum = {
   correctIndex: 'correctIndex',
   durationSec: 'durationSec',
   points: 'points',
+  templateId: 'templateId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1666,6 +1760,20 @@ export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, '
 
 
 /**
+ * Reference to a field of type 'Difficulty'
+ */
+export type EnumDifficultyFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Difficulty'>
+    
+
+
+/**
+ * Reference to a field of type 'Difficulty[]'
+ */
+export type ListEnumDifficultyFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Difficulty[]'>
+    
+
+
+/**
  * Reference to a field of type 'Json'
  */
 export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
@@ -1762,6 +1870,7 @@ export type GlobalOmitConfig = {
   quest?: Prisma.QuestOmit
   completedQuest?: Prisma.CompletedQuestOmit
   game?: Prisma.GameOmit
+  questionTemplate?: Prisma.QuestionTemplateOmit
   question?: Prisma.QuestionOmit
   gameEntry?: Prisma.GameEntryOmit
   chat?: Prisma.ChatOmit

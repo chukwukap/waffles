@@ -331,6 +331,23 @@ export type FloatWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedFloatFilter<$PrismaModel>
 }
 
+export type EnumDifficultyFilter<$PrismaModel = never> = {
+  equals?: $Enums.Difficulty | Prisma.EnumDifficultyFieldRefInput<$PrismaModel>
+  in?: $Enums.Difficulty[] | Prisma.ListEnumDifficultyFieldRefInput<$PrismaModel>
+  notIn?: $Enums.Difficulty[] | Prisma.ListEnumDifficultyFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDifficultyFilter<$PrismaModel> | $Enums.Difficulty
+}
+
+export type EnumDifficultyWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.Difficulty | Prisma.EnumDifficultyFieldRefInput<$PrismaModel>
+  in?: $Enums.Difficulty[] | Prisma.ListEnumDifficultyFieldRefInput<$PrismaModel>
+  notIn?: $Enums.Difficulty[] | Prisma.ListEnumDifficultyFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDifficultyWithAggregatesFilter<$PrismaModel> | $Enums.Difficulty
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumDifficultyFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumDifficultyFilter<$PrismaModel>
+}
+
 export type FloatNullableFilter<$PrismaModel = never> = {
   equals?: number | Prisma.FloatFieldRefInput<$PrismaModel> | null
   in?: number[] | Prisma.ListFloatFieldRefInput<$PrismaModel> | null
@@ -777,6 +794,23 @@ export type NestedFloatWithAggregatesFilter<$PrismaModel = never> = {
   _sum?: Prisma.NestedFloatFilter<$PrismaModel>
   _min?: Prisma.NestedFloatFilter<$PrismaModel>
   _max?: Prisma.NestedFloatFilter<$PrismaModel>
+}
+
+export type NestedEnumDifficultyFilter<$PrismaModel = never> = {
+  equals?: $Enums.Difficulty | Prisma.EnumDifficultyFieldRefInput<$PrismaModel>
+  in?: $Enums.Difficulty[] | Prisma.ListEnumDifficultyFieldRefInput<$PrismaModel>
+  notIn?: $Enums.Difficulty[] | Prisma.ListEnumDifficultyFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDifficultyFilter<$PrismaModel> | $Enums.Difficulty
+}
+
+export type NestedEnumDifficultyWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.Difficulty | Prisma.EnumDifficultyFieldRefInput<$PrismaModel>
+  in?: $Enums.Difficulty[] | Prisma.ListEnumDifficultyFieldRefInput<$PrismaModel>
+  notIn?: $Enums.Difficulty[] | Prisma.ListEnumDifficultyFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDifficultyWithAggregatesFilter<$PrismaModel> | $Enums.Difficulty
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumDifficultyFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumDifficultyFilter<$PrismaModel>
 }
 
 export type NestedFloatNullableWithAggregatesFilter<$PrismaModel = never> = {

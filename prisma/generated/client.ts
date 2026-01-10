@@ -65,6 +65,11 @@ export type CompletedQuest = Prisma.CompletedQuestModel
  */
 export type Game = Prisma.GameModel
 /**
+ * Model QuestionTemplate
+ * 
+ */
+export type QuestionTemplate = Prisma.QuestionTemplateModel
+/**
  * Model Question
  * 
  */

@@ -12,6 +12,8 @@ import {
     springPresets,
 } from "./AnimationContext";
 import { useMouseParallax, useMagneticEffect } from "./useAnimationHooks";
+import { TextScramble } from "./TextScramble";
+import { FloatingParticles } from "./GradientBlobs";
 
 // Split headline into words for staggered animation
 const headlineWords = ["THE", "WORLD", "IS", "A", "PUZZLE"];
@@ -37,12 +39,17 @@ export function HeroSection() {
                 background: `linear-gradient(180deg, #1E1E1E 0%, #000000 100%)`,
             }}
         >
-            {/* Subtle ambient particles/stars (optional decorative layer) */}
+            {/* Floating particles for ambient effect */}
+            <FloatingParticles count={30} color="#FFC931" className="opacity-40" />
+
+            {/* Subtle ambient layer with parallax */}
             <motion.div
-                className="absolute inset-0 pointer-events-none opacity-30"
+                className="absolute inset-0 pointer-events-none opacity-20"
                 style={{ x: layer2.x, y: layer2.y }}
             >
-                {/* Could add animated particles here */}
+                {/* Gradient orbs for depth */}
+                <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-radial from-[#FFC931]/10 to-transparent rounded-full blur-3xl" />
+                <div className="absolute bottom-1/3 right-1/3 w-64 h-64 bg-gradient-radial from-[#FF6B6B]/10 to-transparent rounded-full blur-3xl" />
             </motion.div>
 
             {/* Content Container - centered with parallax */}
@@ -50,7 +57,7 @@ export function HeroSection() {
                 className="absolute left-1/2 -translate-x-1/2 top-48 md:top-60 flex flex-col items-center gap-6 md:gap-8 w-full max-w-[801px] px-4 md:px-0"
                 style={{ y: contentY }}
             >
-                {/* Main Headline - Staggered word animation */}
+                {/* Main Headline - Staggered word animation with scramble */}
                 <motion.h1
                     variants={staggerContainerVariants}
                     initial="hidden"
@@ -63,16 +70,20 @@ export function HeroSection() {
                             variants={wordStaggerVariants}
                             className="inline-block"
                             style={{
-                                // Subtle 3D perspective on text
                                 transformStyle: "preserve-3d",
                             }}
                         >
-                            {word}
+                            <TextScramble
+                                text={word}
+                                trigger="mount"
+                                revealDelay={300 + index * 150}
+                                scrambleSpeed={40}
+                            />
                         </motion.span>
                     ))}
                 </motion.h1>
 
-                {/* Subtitle with fade up */}
+                {/* Subtitle with fade up and scramble */}
                 <motion.p
                     variants={fadeUpVariants}
                     initial="hidden"
@@ -80,7 +91,12 @@ export function HeroSection() {
                     transition={{ delay: 0.5 }}
                     className="font-display font-medium text-lg sm:text-xl md:text-2xl lg:text-[28px] leading-[1.3] text-center tracking-tight text-white/70 max-w-[453px]"
                 >
-                    Win real money by recognizing patterns faster than everyone else
+                    <TextScramble
+                        text="Win real money by recognizing patterns faster than everyone else"
+                        trigger="mount"
+                        revealDelay={800}
+                        scrambleSpeed={30}
+                    />
                 </motion.p>
 
                 {/* CTA Button with magnetic effect and 3D press */}
@@ -95,6 +111,8 @@ export function HeroSection() {
                         x: magnetic.x,
                         y: magnetic.y,
                     }}
+                    data-cursor-hover
+                    data-cursor-text="Click"
                 >
                     <motion.button
                         className="relative flex items-center justify-center w-full sm:w-[337px] h-[54px] p-3 bg-white rounded-xl font-body text-xl sm:text-2xl leading-[1.15] tracking-tight text-[#FBB03B] text-center overflow-hidden"
@@ -114,11 +132,16 @@ export function HeroSection() {
                         }}
                         transition={springPresets.snappy}
                     >
-                        {/* Shine effect on hover */}
+                        {/* Animated shine effect */}
                         <motion.div
-                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full"
-                            whileHover={{ translateX: "200%" }}
-                            transition={{ duration: 0.6 }}
+                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                            animate={{ x: ["-100%", "200%"] }}
+                            transition={{
+                                duration: 2,
+                                repeat: Infinity,
+                                repeatDelay: 3,
+                                ease: "easeInOut",
+                            }}
                         />
                         <span className="relative z-10">GET INVITE CODE</span>
                     </motion.button>

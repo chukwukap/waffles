@@ -53,6 +53,7 @@ export type QuestionMinAggregateOutputType = {
   correctIndex: number | null
   durationSec: number | null
   points: number | null
+  templateId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -68,6 +69,7 @@ export type QuestionMaxAggregateOutputType = {
   correctIndex: number | null
   durationSec: number | null
   points: number | null
+  templateId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -84,6 +86,7 @@ export type QuestionCountAggregateOutputType = {
   correctIndex: number
   durationSec: number
   points: number
+  templateId: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -117,6 +120,7 @@ export type QuestionMinAggregateInputType = {
   correctIndex?: true
   durationSec?: true
   points?: true
+  templateId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -132,6 +136,7 @@ export type QuestionMaxAggregateInputType = {
   correctIndex?: true
   durationSec?: true
   points?: true
+  templateId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -148,6 +153,7 @@ export type QuestionCountAggregateInputType = {
   correctIndex?: true
   durationSec?: true
   points?: true
+  templateId?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -251,6 +257,7 @@ export type QuestionGroupByOutputType = {
   correctIndex: number
   durationSec: number
   points: number
+  templateId: string | null
   createdAt: Date
   updatedAt: Date
   _count: QuestionCountAggregateOutputType | null
@@ -290,6 +297,7 @@ export type QuestionWhereInput = {
   correctIndex?: Prisma.IntFilter<"Question"> | number
   durationSec?: Prisma.IntFilter<"Question"> | number
   points?: Prisma.IntFilter<"Question"> | number
+  templateId?: Prisma.StringNullableFilter<"Question"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Question"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Question"> | Date | string
   game?: Prisma.XOR<Prisma.GameScalarRelationFilter, Prisma.GameWhereInput>
@@ -307,6 +315,7 @@ export type QuestionOrderByWithRelationInput = {
   correctIndex?: Prisma.SortOrder
   durationSec?: Prisma.SortOrder
   points?: Prisma.SortOrder
+  templateId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   game?: Prisma.GameOrderByWithRelationInput
@@ -327,6 +336,7 @@ export type QuestionWhereUniqueInput = Prisma.AtLeast<{
   correctIndex?: Prisma.IntFilter<"Question"> | number
   durationSec?: Prisma.IntFilter<"Question"> | number
   points?: Prisma.IntFilter<"Question"> | number
+  templateId?: Prisma.StringNullableFilter<"Question"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Question"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Question"> | Date | string
   game?: Prisma.XOR<Prisma.GameScalarRelationFilter, Prisma.GameWhereInput>
@@ -344,6 +354,7 @@ export type QuestionOrderByWithAggregationInput = {
   correctIndex?: Prisma.SortOrder
   durationSec?: Prisma.SortOrder
   points?: Prisma.SortOrder
+  templateId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.QuestionCountOrderByAggregateInput
@@ -368,6 +379,7 @@ export type QuestionScalarWhereWithAggregatesInput = {
   correctIndex?: Prisma.IntWithAggregatesFilter<"Question"> | number
   durationSec?: Prisma.IntWithAggregatesFilter<"Question"> | number
   points?: Prisma.IntWithAggregatesFilter<"Question"> | number
+  templateId?: Prisma.StringNullableWithAggregatesFilter<"Question"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Question"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Question"> | Date | string
 }
@@ -383,6 +395,7 @@ export type QuestionCreateInput = {
   correctIndex: number
   durationSec?: number
   points?: number
+  templateId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   game: Prisma.GameCreateNestedOneWithoutQuestionsInput
@@ -400,6 +413,7 @@ export type QuestionUncheckedCreateInput = {
   correctIndex: number
   durationSec?: number
   points?: number
+  templateId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -415,6 +429,7 @@ export type QuestionUpdateInput = {
   correctIndex?: Prisma.IntFieldUpdateOperationsInput | number
   durationSec?: Prisma.IntFieldUpdateOperationsInput | number
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  templateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   game?: Prisma.GameUpdateOneRequiredWithoutQuestionsNestedInput
@@ -432,6 +447,7 @@ export type QuestionUncheckedUpdateInput = {
   correctIndex?: Prisma.IntFieldUpdateOperationsInput | number
   durationSec?: Prisma.IntFieldUpdateOperationsInput | number
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  templateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -448,6 +464,7 @@ export type QuestionCreateManyInput = {
   correctIndex: number
   durationSec?: number
   points?: number
+  templateId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -463,6 +480,7 @@ export type QuestionUpdateManyMutationInput = {
   correctIndex?: Prisma.IntFieldUpdateOperationsInput | number
   durationSec?: Prisma.IntFieldUpdateOperationsInput | number
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  templateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -479,6 +497,7 @@ export type QuestionUncheckedUpdateManyInput = {
   correctIndex?: Prisma.IntFieldUpdateOperationsInput | number
   durationSec?: Prisma.IntFieldUpdateOperationsInput | number
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  templateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -493,14 +512,6 @@ export type QuestionOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type StringNullableListFilter<$PrismaModel = never> = {
-  equals?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel> | null
-  has?: string | Prisma.StringFieldRefInput<$PrismaModel> | null
-  hasEvery?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
-  hasSome?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
-  isEmpty?: boolean
-}
-
 export type QuestionCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   gameId?: Prisma.SortOrder
@@ -513,6 +524,7 @@ export type QuestionCountOrderByAggregateInput = {
   correctIndex?: Prisma.SortOrder
   durationSec?: Prisma.SortOrder
   points?: Prisma.SortOrder
+  templateId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -536,6 +548,7 @@ export type QuestionMaxOrderByAggregateInput = {
   correctIndex?: Prisma.SortOrder
   durationSec?: Prisma.SortOrder
   points?: Prisma.SortOrder
+  templateId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -551,6 +564,7 @@ export type QuestionMinOrderByAggregateInput = {
   correctIndex?: Prisma.SortOrder
   durationSec?: Prisma.SortOrder
   points?: Prisma.SortOrder
+  templateId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -625,6 +639,7 @@ export type QuestionCreateWithoutGameInput = {
   correctIndex: number
   durationSec?: number
   points?: number
+  templateId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -640,6 +655,7 @@ export type QuestionUncheckedCreateWithoutGameInput = {
   correctIndex: number
   durationSec?: number
   points?: number
+  templateId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -685,6 +701,7 @@ export type QuestionScalarWhereInput = {
   correctIndex?: Prisma.IntFilter<"Question"> | number
   durationSec?: Prisma.IntFilter<"Question"> | number
   points?: Prisma.IntFilter<"Question"> | number
+  templateId?: Prisma.StringNullableFilter<"Question"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Question"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Question"> | Date | string
 }
@@ -700,6 +717,7 @@ export type QuestionCreateManyGameInput = {
   correctIndex: number
   durationSec?: number
   points?: number
+  templateId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -715,6 +733,7 @@ export type QuestionUpdateWithoutGameInput = {
   correctIndex?: Prisma.IntFieldUpdateOperationsInput | number
   durationSec?: Prisma.IntFieldUpdateOperationsInput | number
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  templateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -730,6 +749,7 @@ export type QuestionUncheckedUpdateWithoutGameInput = {
   correctIndex?: Prisma.IntFieldUpdateOperationsInput | number
   durationSec?: Prisma.IntFieldUpdateOperationsInput | number
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  templateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -745,6 +765,7 @@ export type QuestionUncheckedUpdateManyWithoutGameInput = {
   correctIndex?: Prisma.IntFieldUpdateOperationsInput | number
   durationSec?: Prisma.IntFieldUpdateOperationsInput | number
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  templateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -763,6 +784,7 @@ export type QuestionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   correctIndex?: boolean
   durationSec?: boolean
   points?: boolean
+  templateId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   game?: boolean | Prisma.GameDefaultArgs<ExtArgs>
@@ -780,6 +802,7 @@ export type QuestionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   correctIndex?: boolean
   durationSec?: boolean
   points?: boolean
+  templateId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   game?: boolean | Prisma.GameDefaultArgs<ExtArgs>
@@ -797,6 +820,7 @@ export type QuestionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   correctIndex?: boolean
   durationSec?: boolean
   points?: boolean
+  templateId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   game?: boolean | Prisma.GameDefaultArgs<ExtArgs>
@@ -814,11 +838,12 @@ export type QuestionSelectScalar = {
   correctIndex?: boolean
   durationSec?: boolean
   points?: boolean
+  templateId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type QuestionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "gameId" | "roundIndex" | "orderInRound" | "content" | "mediaUrl" | "soundUrl" | "options" | "correctIndex" | "durationSec" | "points" | "createdAt" | "updatedAt", ExtArgs["result"]["question"]>
+export type QuestionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "gameId" | "roundIndex" | "orderInRound" | "content" | "mediaUrl" | "soundUrl" | "options" | "correctIndex" | "durationSec" | "points" | "templateId" | "createdAt" | "updatedAt", ExtArgs["result"]["question"]>
 export type QuestionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   game?: boolean | Prisma.GameDefaultArgs<ExtArgs>
 }
@@ -846,6 +871,7 @@ export type $QuestionPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     correctIndex: number
     durationSec: number
     points: number
+    templateId: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["question"]>
@@ -1283,6 +1309,7 @@ export interface QuestionFieldRefs {
   readonly correctIndex: Prisma.FieldRef<"Question", 'Int'>
   readonly durationSec: Prisma.FieldRef<"Question", 'Int'>
   readonly points: Prisma.FieldRef<"Question", 'Int'>
+  readonly templateId: Prisma.FieldRef<"Question", 'String'>
   readonly createdAt: Prisma.FieldRef<"Question", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Question", 'DateTime'>
 }

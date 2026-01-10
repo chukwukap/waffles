@@ -43,6 +43,7 @@
     "framer-motion": "^12.23.26",
     "frontend": "link:",
     "jose": "^6.1.3",
+    "lenis": "^1.3.17",
     "lucide-react": "^0.546.0",
     "next": "16.0.10",
     "papaparse": "^5.5.3",

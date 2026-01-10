@@ -243,11 +243,49 @@ enum GameTheme {
   GENERAL
 }
 
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
 // NOTE: GameStatus enum REMOVED
 // Phase is now derived from startsAt/endsAt:
 // - now < startsAt => SCHEDULED
 // - startsAt <= now < endsAt => LIVE
 // - now >= endsAt => ENDED
+
+// ==========================================
+// 2.5 QUESTION BANK (Reusable Templates)
+// ==========================================
+
+model QuestionTemplate {
+  id String @id @default(cuid())
+
+  // -- CONTENT --
+  content      String   @db.VarChar(1000)
+  options      String[]
+  correctIndex Int      @db.SmallInt
+  durationSec  Int      @default(10) @db.SmallInt
+  mediaUrl     String?  @db.VarChar(255)
+  soundUrl     String?  @db.VarChar(255)
+
+  // -- CATEGORIZATION --
+  theme      GameTheme  @default(GENERAL)
+  difficulty Difficulty @default(MEDIUM)
+
+  // -- TRACKING (denormalized for fast display) --
+  usageCount Int @default(0)
+
+  // -- TIMESTAMPS --
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // -- INDEXES --
+  @@index([theme, difficulty])
+  @@index([createdAt(sort: Desc)])
+  @@index([usageCount(sort: Desc)])
+}
 
 model Question {
   id     String @id @default(cuid())
@@ -269,11 +307,15 @@ model Question {
   durationSec Int @default(10) @db.SmallInt
   points      Int @default(100) @db.SmallInt
 
+  // -- TEMPLATE ORIGIN (for tracking, nullable) --
+  templateId String?
+
   // -- TIMESTAMPS --
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([gameId, roundIndex, orderInRound])
+  @@index([templateId])
 }
 
 // ==========================================

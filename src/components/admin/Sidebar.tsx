@@ -16,12 +16,14 @@ import {
     StarIcon,
     RectangleGroupIcon,
     BellIcon,
+    ArchiveBoxIcon,
 } from "@heroicons/react/24/outline";
 import { WaffleIcon } from "@/components/icons";
 
 const navigation = [
     { name: "Dashboard", href: "/admin", icon: HomeIcon },
     { name: "Games", href: "/admin/games", icon: TrophyIcon },
+    { name: "Question Bank", href: "/admin/questions", icon: ArchiveBoxIcon },
     { name: "Users", href: "/admin/users", icon: UsersIcon },
     { name: "Notifications", href: "/admin/notifications", icon: BellIcon },
     { name: "Invite Codes", href: "/admin/invite-codes", icon: TicketIcon },

@@ -21,9 +21,10 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { reorderQuestionsAction, deleteQuestionAction } from "@/actions/admin/questions";
 import { createQuestionAction } from "@/actions/admin/questions";
-import { TrashIcon, Bars3Icon, MusicalNoteIcon, PhotoIcon, PlusIcon, ChevronDownIcon, ChevronRightIcon, PencilIcon } from "@heroicons/react/24/outline";
+import { TrashIcon, Bars3Icon, PlusIcon, ChevronDownIcon, ChevronRightIcon, PencilIcon, ArchiveBoxIcon } from "@heroicons/react/24/outline";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
+import { QuestionPicker } from "@/components/admin/QuestionPicker";
 
 interface Question {
     id: string;
@@ -34,6 +35,7 @@ interface Question {
     options: string[];
     correctIndex: number;
     durationSec: number;
+    templateId?: string | null;
 }
 
 interface QuestionsManagerProps {
@@ -299,6 +301,12 @@ export function QuestionsManager({ gameId, initialQuestions }: QuestionsManagerP
     const [questions, setQuestions] = useState(initialQuestions);
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [showPicker, setShowPicker] = useState(false);
+
+    // Get templateIds for existing questions (for duplicate detection)
+    const existingTemplateIds = questions
+        .filter((q) => q.templateId)
+        .map((q) => q.templateId as string);
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -372,11 +380,30 @@ export function QuestionsManager({ gameId, initialQuestions }: QuestionsManagerP
                 </div>
             )}
 
-            {/* Add Question Button/Form */}
-            <InlineAddQuestion
+            {/* Add Question Buttons */}
+            <div className="flex gap-3">
+                <button
+                    onClick={() => setShowPicker(true)}
+                    className="flex-1 p-4 border-2 border-dashed border-white/20 rounded-xl text-white/40 hover:text-[#FB72FF] hover:border-[#FB72FF]/50 hover:bg-[#FB72FF]/5 transition-all flex items-center justify-center gap-2"
+                >
+                    <ArchiveBoxIcon className="h-5 w-5" />
+                    <span className="font-medium">Add from Bank</span>
+                </button>
+                <div className="flex-1">
+                    <InlineAddQuestion
+                        gameId={gameId}
+                        nextRoundIndex={questions.length + 1}
+                        onSuccess={handleQuestionAdded}
+                    />
+                </div>
+            </div>
+
+            {/* Question Picker Modal */}
+            <QuestionPicker
                 gameId={gameId}
-                nextRoundIndex={questions.length + 1}
-                onSuccess={handleQuestionAdded}
+                existingTemplateIds={existingTemplateIds}
+                isOpen={showPicker}
+                onClose={() => setShowPicker(false)}
             />
         </div>
     );
