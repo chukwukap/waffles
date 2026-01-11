@@ -20,6 +20,7 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
+      "@shared/*": ["./shared/*"],
       "@minikit-config": ["./minikit.config.ts"],
       "@prisma": ["./prisma/generated/client"]
     }

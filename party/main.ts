@@ -1,34 +1,20 @@
 import type * as Party from "partykit/server";
 import { jwtVerify } from "jose";
+import type { Message, ChatItem, Player } from "../shared/protocol";
 
 // ==========================================
-// TYPES
+// INTERNAL TYPES
 // ==========================================
 
-interface Player {
-  fid: number;
-  username: string;
-  pfpUrl: string | null;
-}
-
-interface ChatMessage {
+interface StoredChatMessage {
   id: string;
   text: string;
-  sender: Player;
-  timestamp: number;
+  username: string;
+  pfp: string | null;
+  ts: number;
 }
 
 type AlarmPhase = "notify" | "start" | "gameEnd";
-
-// Client → Server messages
-type ClientMessage =
-  | { type: "chat"; text: string }
-  | {
-      type: "answer";
-      data: { questionId: number; selected: number; timeMs: number };
-    }
-  | { type: "event"; data: { eventType: string; content: string } }
-  | { type: "cheer" };
 
 // ==========================================
 // GAME SERVER
@@ -37,7 +23,7 @@ type ClientMessage =
 export default class GameServer implements Party.Server {
   readonly options: Party.ServerOptions = { hibernate: true };
 
-  chatHistory: ChatMessage[] = [];
+  chatHistory: StoredChatMessage[] = [];
   seenFids: Set<number> = new Set();
 
   constructor(readonly room: Party.Room) {}
@@ -131,7 +117,6 @@ export default class GameServer implements Party.Server {
             gameId: string;
             startsAt: string;
             endsAt: string;
-            // questions no longer sent - DB is source of truth
           };
 
           const startsAt = new Date(body.startsAt).getTime();
@@ -155,7 +140,6 @@ export default class GameServer implements Party.Server {
               ).toISOString()}`
             );
           } else if (startsAt > now) {
-            // Skip notify, go straight to start
             await this.room.storage.put("alarmPhase", "start" as AlarmPhase);
             await this.room.storage.setAlarm(startsAt);
             console.log(
@@ -164,7 +148,6 @@ export default class GameServer implements Party.Server {
               } - start alarm scheduled for ${new Date(startsAt).toISOString()}`
             );
           } else {
-            // Game starts immediately
             await this.handleStartAlarm();
           }
 
@@ -207,13 +190,10 @@ export default class GameServer implements Party.Server {
             playerCount: number;
           };
 
-          // Broadcast to all connected clients
           this.broadcast({
-            type: "gameStats",
-            data: {
-              prizePool: body.prizePool,
-              playerCount: body.playerCount,
-            },
+            type: "stats",
+            prizePool: body.prizePool,
+            playerCount: body.playerCount,
           });
 
           console.log(
@@ -261,11 +241,9 @@ export default class GameServer implements Party.Server {
           const notifyTime = startsAt - 60 * 1000;
           const now = Date.now();
 
-          // Update stored timing
           await this.room.storage.put("startsAt", startsAt);
           await this.room.storage.put("endsAt", endsAt);
 
-          // Reschedule alarms
           if (notifyTime > now) {
             await this.room.storage.put("alarmPhase", "notify" as AlarmPhase);
             await this.room.storage.setAlarm(notifyTime);
@@ -300,7 +278,7 @@ export default class GameServer implements Party.Server {
   }
 
   // ==========================================
-  // ALARM HANDLER (Chained)
+  // ALARM HANDLER
   // ==========================================
 
   async onAlarm() {
@@ -327,16 +305,10 @@ export default class GameServer implements Party.Server {
     const gameId = await this.room.storage.get<string>("gameId");
     const startsAt = await this.room.storage.get<number>("startsAt");
 
-    // Send "starting soon" notifications
     await this.sendNotifications("Game starting in 1 minute! 🎮");
 
-    // Broadcast to connected clients
-    this.broadcast({
-      type: "notification",
-      data: { message: "Game starting in 1 minute!", timestamp: Date.now() },
-    });
+    this.broadcast({ type: "game:starting", in: 60 });
 
-    // Schedule start alarm
     await this.room.storage.put("alarmPhase", "start" as AlarmPhase);
     await this.room.storage.setAlarm(startsAt!);
     console.log(`[Notify] Game ${gameId} - start alarm scheduled`);
@@ -351,18 +323,12 @@ export default class GameServer implements Party.Server {
       return;
     }
 
-    // Schedule game end alarm
     await this.room.storage.put("alarmPhase", "gameEnd" as AlarmPhase);
     await this.room.storage.setAlarm(endsAt);
 
-    // Send "game started" notification
     await this.sendNotifications("The game has started! 🚀");
 
-    // Broadcast game start (clients fetch questions from DB)
-    this.broadcast({
-      type: "gameStart",
-      data: { gameId, timestamp: Date.now() },
-    });
+    this.broadcast({ type: "game:live" });
 
     console.log(
       `[Start] Game ${gameId} - started, ends at ${new Date(
@@ -374,25 +340,14 @@ export default class GameServer implements Party.Server {
   async handleGameEndAlarm() {
     const gameId = await this.room.storage.get<string>("gameId");
 
-    // Note: Ranking is now handled by cron job (/api/cron/roundup-games)
-
-    // Send notifications
     await this.sendNotifications("Game has ended! Check your results 🏆");
 
-    // Broadcast game end to connected clients
-    this.broadcast({
-      type: "gameEnd",
-      data: { gameId },
-    });
+    this.broadcast({ type: "game:end", gameId: gameId || "" });
 
     console.log(
       `[GameEnd] Game ${gameId} - complete (ranking handled by cron)`
     );
   }
-
-  // ==========================================
-  // HELPERS
-  // ==========================================
 
   async sendNotifications(message: string) {
     try {
@@ -420,106 +375,89 @@ export default class GameServer implements Party.Server {
   // ==========================================
 
   async onStart() {
-    // Load game state from storage
     this.chatHistory =
-      (await this.room.storage.get<ChatMessage[]>("chatHistory")) || [];
+      (await this.room.storage.get<StoredChatMessage[]>("chatHistory")) || [];
     const savedFids = await this.room.storage.get<number[]>("seenFids");
     this.seenFids = new Set(savedFids || []);
-
-    // Store room ID for onAlarm access (may not be available during alarm wake-up)
-    try {
-      if (this.room.id) {
-        await this.room.storage.put("roomId", this.room.id);
-      }
-    } catch {
-      // Ignore - room.id not yet initialized during alarm handler
-    }
-  }
-
-  getConnectionTags(conn: Party.Connection): string[] {
-    const state = conn.state as Player | undefined;
-    return state ? [`fid:${state.fid}`] : [];
   }
 
   async onConnect(conn: Party.Connection, ctx: Party.ConnectionContext) {
     const fid = Number(ctx.request.headers.get("X-User-Fid"));
     const username = ctx.request.headers.get("X-User-Username") || "Unknown";
-    const pfpUrl = ctx.request.headers.get("X-User-PfpUrl") || null;
+    const pfp = ctx.request.headers.get("X-User-PfpUrl") || null;
 
-    const player: Player = { fid, username, pfpUrl };
+    const player: Player = { fid, username, pfp };
     conn.setState(player);
 
-    if (!this.seenFids.has(fid)) {
-      this.seenFids.add(fid);
-      await this.room.storage.put("seenFids", [...this.seenFids]);
-      this.broadcastPresence(player, "join");
-    } else {
-      this.broadcastPresence(player, "count");
-    }
+    // Send sync to new client
+    const chat: ChatItem[] = this.chatHistory.slice(-50).map((msg) => ({
+      id: msg.id,
+      username: msg.username,
+      pfp: msg.pfp,
+      text: msg.text,
+      ts: msg.ts,
+    }));
 
-    // Send sync data (no scores - DB is source of truth)
     conn.send(
       JSON.stringify({
         type: "sync",
-        data: {
-          onlineCount: this.getOnlineCount(),
-          chatHistory: this.chatHistory.slice(-50).map((msg) => ({
-            id: msg.id,
-            username: msg.sender.username,
-            pfpUrl: msg.sender.pfpUrl,
-            text: msg.text,
-            timestamp: msg.timestamp,
-          })),
-        },
-      })
+        connected: this.getOnlineCount(),
+        chat,
+      } as Message)
     );
+
+    // Broadcast join to others
+    if (!this.seenFids.has(fid)) {
+      this.seenFids.add(fid);
+      await this.room.storage.put("seenFids", [...this.seenFids]);
+      this.broadcast({ type: "joined", username, pfp }, [conn.id]);
+    }
+
+    // Update connected count for all
+    this.broadcast({ type: "connected", count: this.getOnlineCount() });
   }
 
   async onMessage(message: string, sender: Party.Connection) {
     try {
-      const data = JSON.parse(message) as ClientMessage;
+      const msg = JSON.parse(message) as Message;
       const player = sender.state as Player;
       if (!player) return;
 
-      switch (data.type) {
+      switch (msg.type) {
         case "chat":
-          await this.handleChat(player, data.text);
+          await this.handleChat(player, msg.text);
           break;
-        case "answer":
-          await this.handleAnswer(sender, player, data.data);
-          break;
-        case "event":
-          this.broadcast({
-            type: "event",
-            data: {
-              id: crypto.randomUUID(),
-              eventType: data.data?.eventType || "event",
+
+        case "submit":
+          this.broadcast(
+            {
+              type: "answered",
+              questionIndex: msg.q,
               username: player.username,
-              pfpUrl: player.pfpUrl,
-              content: data.data?.content || "",
-              timestamp: Date.now(),
+              pfp: player.pfp,
             },
-          });
+            [sender.id]
+          );
           break;
+
         case "cheer":
-          // Broadcast to all EXCEPT sender (sender already shows local cheer)
-          this.room.broadcast(JSON.stringify({ type: "cheer" }), [sender.id]);
+          this.room.broadcast(JSON.stringify({ type: "cheer" } as Message), [
+            sender.id,
+          ]);
           break;
       }
     } catch {
       // Ignore parse errors
     }
   }
+
   async handleChat(player: Player, text: string) {
-    const chatMsg: ChatMessage = {
+    const chatMsg: StoredChatMessage = {
       id: crypto.randomUUID(),
       text,
-      sender: {
-        fid: player.fid,
-        username: player.username,
-        pfpUrl: player.pfpUrl,
-      },
-      timestamp: Date.now(),
+      username: player.username,
+      pfp: player.pfp,
+      ts: Date.now(),
     };
 
     this.chatHistory.push(chatMsg);
@@ -527,37 +465,20 @@ export default class GameServer implements Party.Server {
     await this.room.storage.put("chatHistory", this.chatHistory);
 
     this.broadcast({
-      type: "chat",
-      data: {
-        id: chatMsg.id,
-        username: chatMsg.sender.username,
-        pfpUrl: chatMsg.sender.pfpUrl,
-        text: chatMsg.text,
-        timestamp: chatMsg.timestamp,
-      },
-    });
-  }
-  async handleAnswer(
-    conn: Party.Connection,
-    player: Player,
-    data: { questionId: number; selected: number; timeMs: number }
-  ) {
-    // Broadcast which question was answered (clients filter by their current question)
-    this.broadcast({
-      type: "answer",
-      data: {
-        questionId: data.questionId,
-        username: player.username,
-        pfpUrl: player.pfpUrl,
-        timestamp: Date.now(),
-      },
+      type: "chat:new",
+      id: chatMsg.id,
+      username: chatMsg.username,
+      pfp: chatMsg.pfp,
+      text: chatMsg.text,
+      ts: chatMsg.ts,
     });
   }
 
   onClose(conn: Party.Connection) {
     const player = conn.state as Player;
     if (player) {
-      this.broadcastPresence(player, "leave");
+      this.broadcast({ type: "left", username: player.username });
+      this.broadcast({ type: "connected", count: this.getOnlineCount() });
     }
   }
 
@@ -565,24 +486,16 @@ export default class GameServer implements Party.Server {
     console.error(`[Error] Connection ${conn.id} error:`, error.message);
   }
 
+  // ==========================================
+  // HELPERS
+  // ==========================================
+
   getOnlineCount(): number {
     return [...this.room.getConnections()].length;
   }
 
-  broadcast(msg: Record<string, unknown>, exclude: string[] = []) {
+  broadcast(msg: Message, exclude: string[] = []) {
     this.room.broadcast(JSON.stringify(msg), exclude);
-  }
-
-  broadcastPresence(user: Player, action: "join" | "leave" | "count") {
-    this.broadcast({
-      type: "presence",
-      data: {
-        onlineCount: this.getOnlineCount(),
-        joined: action === "join" ? user.username : undefined,
-        pfpUrl: action === "join" ? user.pfpUrl : undefined,
-        left: action === "leave" ? user.username : undefined,
-      },
-    });
   }
 }
 
