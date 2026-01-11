@@ -7,7 +7,7 @@ type Params = { gameId: string };
 
 /**
  * POST /api/v1/internal/games/:gameId/notify
- * Send notifications to all ticket holders for a game.
+ * Send notifications to all users with game access.
  * Called by PartyKit for game events (starting soon, started, ended).
  */
 export async function POST(
@@ -41,19 +41,17 @@ export async function POST(
       return NextResponse.json({ error: "Game not found" }, { status: 404 });
     }
 
-    // Get all FIDs for this game's entries (only users with game access)
-    const entries = await prisma.gameEntry.findMany({
+    // Get all FIDs for users with game access (not just entries)
+    // Notify everyone who CAN play, not just those who already joined
+    const users = await prisma.user.findMany({
       where: {
-        gameId,
-        user: {
-          hasGameAccess: true,
-          isBanned: false,
-        },
+        hasGameAccess: true,
+        isBanned: false,
       },
-      select: { user: { select: { fid: true } } },
+      select: { fid: true },
     });
 
-    const fids = entries.map((e) => e.user.fid);
+    const fids = users.map((u) => u.fid);
 
     console.log(
       `[notify] Game ${gameId}: Sending batch to ${fids.length} players`

@@ -412,7 +412,7 @@ export function GameForm({
             <label className="block text-xs font-medium text-white/50 uppercase tracking-wider mb-3">
               Duration
             </label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {[
                 { label: "15 min", value: "15" },
                 { label: "30 min", value: "30" },
@@ -433,6 +433,19 @@ export function GameForm({
                   {duration.label}
                 </button>
               ))}
+              {/* Custom duration input */}
+              <div className="flex items-center gap-2 ml-2 pl-2 border-l border-white/10">
+                <input
+                  type="number"
+                  min="1"
+                  max="1440"
+                  placeholder="Custom"
+                  value={!["15", "30", "45", "60", "120", "240"].includes(durationMinutes) ? durationMinutes : ""}
+                  onChange={(e) => setDurationMinutes(e.target.value)}
+                  className="w-20 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-white/40 focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
+                />
+                <span className="text-white/40 text-sm">min</span>
+              </div>
             </div>
           </div>
 
