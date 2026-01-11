@@ -14,9 +14,7 @@ import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import sdk from "@farcaster/miniapp-sdk";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useTimer } from "@/hooks/useTimer";
-import { useGameSocket } from "@/components/providers/GameSocketProvider";
-import { useGameEntry } from "@/hooks/useGameEntry";
-import { useGameStoreApi } from "@/components/providers/GameStoreProvider";
+import { useGame } from "@/components/providers/GameProvider";
 import { playSound } from "@/lib/sounds";
 import type {
   LiveGameData,
@@ -62,17 +60,40 @@ export interface UseLiveGameReturn {
 export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
   const { context } = useMiniKit();
   const userPfpUrl = context?.user?.pfpUrl || null;
-  const store = useGameStoreApi();
+  const { dispatch, sendAnswer } = useGame();
 
   // ==========================================
   // ALL HOOKS DECLARED UNCONDITIONALLY HERE
   // ==========================================
 
-  // WebSocket connection
-  useGameSocket();
+  // Local entry state (fetched separately since entry is per-game)
+  const [entry, setEntry] = useState<{
+    score: number;
+    answered: number;
+    answeredQuestionIds: string[];
+  } | null>(null);
 
-  // Server state (source of truth)
-  const { entry, refetchEntry } = useGameEntry({ gameId: game.id });
+  // Fetch entry from server
+  const refetchEntry = useCallback(async () => {
+    try {
+      const res = await sdk.quickAuth.fetch(`/api/v1/games/${game.id}/entry`);
+      if (res.ok) {
+        const data = await res.json();
+        setEntry({
+          score: data.score ?? 0,
+          answered: data.answered ?? 0,
+          answeredQuestionIds: data.answeredQuestionIds ?? [],
+        });
+      }
+    } catch (err) {
+      console.error("[useLiveGame] Failed to fetch entry:", err);
+    }
+  }, [game.id]);
+
+  // Initial fetch
+  useEffect(() => {
+    refetchEntry();
+  }, [refetchEntry]);
 
   // Core state
   const [phase, setPhase] = useState<GamePhase>("countdown");
@@ -204,14 +225,15 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
     setPhase("question");
   }, [currentQuestionIndex, game.questions, game.roundBreakSec, isGameEnded]);
 
-  // Set current question in store (for real-time answerer filtering)
+  // Set current question in context (for real-time answerer filtering)
   useEffect(() => {
     if (phase === "question" && game.questions[currentQuestionIndex]) {
-      store
-        .getState()
-        .setCurrentQuestion(game.questions[currentQuestionIndex].id);
+      dispatch({
+        type: "SET_CURRENT_QUESTION",
+        payload: game.questions[currentQuestionIndex].id,
+      });
     }
-  }, [currentQuestionIndex, phase, store, game.questions]);
+  }, [currentQuestionIndex, phase, dispatch, game.questions]);
 
   // ==========================================
   // ACTIONS
@@ -243,14 +265,17 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
       setIsSubmitting(true);
       const timeMs = Date.now() - questionStartRef.current;
 
-      // Add event to store for feed
-      store.getState().addEvent({
-        id: `local-${currentQuestion.id}-${Date.now()}`,
-        type: "answer",
-        username: "You",
-        pfpUrl: userPfpUrl,
-        content: "answered a question",
-        timestamp: Date.now(),
+      // Add event to context for feed
+      dispatch({
+        type: "ADD_EVENT",
+        payload: {
+          id: `local-${currentQuestion.id}-${Date.now()}`,
+          type: "achievement" as const,
+          username: "You",
+          pfpUrl: userPfpUrl,
+          content: "answered a question",
+          timestamp: Date.now(),
+        },
       });
 
       // Submit to server
@@ -271,7 +296,7 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
       hasAnswered,
       isSubmitting,
       userPfpUrl,
-      store,
+      dispatch,
       refetchEntry,
       advanceToNext,
     ]

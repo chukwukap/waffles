@@ -5,9 +5,7 @@ import { motion, AnimatePresence, useDragControls, PanInfo } from "framer-motion
 import { ChatIcon } from "@/components/icons";
 import Backdrop from "@/components/ui/Backdrop";
 import { ChatMessageList } from "./ChatMessageList";
-import { useGameStore } from "@/components/providers/GameStoreProvider";
-import { selectIsConnected } from "@/lib/game-store";
-import { useGameSocket } from "@/components/providers/GameSocketProvider";
+import { useGame } from "@/components/providers/GameProvider";
 import { springs } from "@/lib/animations";
 import { playSound } from "@/lib/sounds";
 import { useVisualViewport } from "@/hooks/useVisualViewport";
@@ -64,8 +62,7 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
   const dragControls = useDragControls();
 
-  const isConnected = useGameStore(selectIsConnected);
-  const { sendChat } = useGameSocket();
+  const { state: { connected: isConnected }, sendChat } = useGame();
   const { keyboardHeight, isKeyboardOpen } = useVisualViewport();
 
   // Max message length

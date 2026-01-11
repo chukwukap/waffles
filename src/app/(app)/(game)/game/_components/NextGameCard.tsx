@@ -7,8 +7,7 @@ import { motion, useAnimation } from "framer-motion";
 import type { Game } from "@prisma";
 
 import { WaffleButton } from "@/components/buttons/WaffleButton";
-import { useGameStore } from "@/components/providers/GameStoreProvider";
-import { selectPrizePool, selectPlayerCount } from "@/lib/game-store";
+import { useGameStats } from "@/components/providers/GameProvider";
 import { useUser } from "@/hooks/useUser";
 import { useGameEntry } from "@/hooks/useGameEntry";
 import { useTimer } from "@/hooks/useTimer";
@@ -40,9 +39,8 @@ export function NextGameCard({ game }: NextGameCardProps) {
     enabled: true,
   });
 
-  // Realtime stats from store (updated via WebSocket), fallback to game prop
-  const storePrizePool = useGameStore(selectPrizePool);
-  const storePlayerCount = useGameStore(selectPlayerCount);
+  // Realtime stats from context (updated via WebSocket), fallback to game prop
+  const { prizePool: storePrizePool, playerCount: storePlayerCount } = useGameStats();
   const prizePool = storePrizePool ?? game.prizePool ?? 0;
   const playerCount = storePlayerCount ?? game.playerCount ?? 0;
   const spotsTotal = game.maxPlayers ?? 500;

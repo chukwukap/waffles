@@ -4,9 +4,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { UsersIcon } from "@/components/icons";
-import { useGameStore } from "@/components/providers/GameStoreProvider";
-import { selectOnlineCount } from "@/lib/game-store";
-import { useGameSocket } from "@/components/providers/GameSocketProvider";
+import { useGame } from "@/components/providers/GameProvider";
 import { fireCheer } from "../CheerOverlay";
 import { springs } from "@/lib/animations";
 
@@ -112,8 +110,7 @@ function AnimatedCount({ value }: { value: number }) {
  * Clicking the waffle creates animated bubbles that float up.
  */
 export function ChatInputBar({ onOpen }: ChatInputBarProps) {
-  const activeCount = useGameStore(selectOnlineCount);
-  const { sendCheer } = useGameSocket();
+  const { state: { onlineCount: activeCount }, sendCheer } = useGame();
   const [bubbles, setBubbles] = useState<WaffleBubble[]>([]);
   const [bubbleIdCounter, setBubbleIdCounter] = useState(0);
 
