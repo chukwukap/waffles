@@ -457,6 +457,7 @@ export interface BulkTemplateInput {
   difficulty?: Difficulty;
   mediaUrl?: string;
   soundUrl?: string;
+  roundIndex?: number;
 }
 
 export type BulkImportTemplateResult =

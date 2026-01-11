@@ -241,8 +241,8 @@ export function TicketSuccessClient({
                                 onClick={() => setShowCalendarOptions(!showCalendarOptions)}
                                 className="flex flex-row justify-center items-center p-3 gap-2 w-full bg-white/9 border-2 border-white/40 rounded-[12px] hover:bg-white/15 hover:border-white/60 transition-colors duration-200"
                             >
-                                <span className="font-body font-normal text-[18px] leading-[115%] tracking-[-0.02em] text-white">
-                                    📅 ADD TO CALENDAR
+                                <span className="font-body font-normal text-[18px] leading-[115%] tracking-[-0.02em] text-white whitespace-nowrap">
+                                    📅 ADD TO CAL
                                 </span>
                             </button>
 

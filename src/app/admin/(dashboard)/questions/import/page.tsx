@@ -16,9 +16,9 @@ import {
 } from "@heroicons/react/24/outline";
 
 // CSV Template
-const CSV_HEADER = "content,optionA,optionB,optionC,optionD,correctAnswer,durationSec,theme,difficulty,mediaUrl";
-const CSV_EXAMPLE = `"What year did Bitcoin launch?","2008","2009","2010","2011","B","10","CRYPTO","MEDIUM",""
-"Guess the movie","Option A","Option B","Option C","The Godfather","D","10","MOVIES","EASY","https://example.com/image.jpg"`;
+const CSV_HEADER = "content,optionA,optionB,optionC,optionD,correctAnswer,durationSec,theme,difficulty,mediaUrl,roundIndex";
+const CSV_EXAMPLE = `"What year did Bitcoin launch?","2008","2009","2010","2011","B","10","CRYPTO","MEDIUM","",1
+"Guess the movie","Option A","Option B","Option C","The Godfather","D","10","MOVIES","EASY","https://example.com/image.jpg",1`;
 
 function generateCSVTemplate(): string {
     return `${CSV_HEADER}\n${CSV_EXAMPLE}`;
@@ -57,7 +57,7 @@ function parseCSV(text: string): { data: BulkTemplateInput[]; errors: string[] }
                 continue;
             }
 
-            const [content, optA, optB, optC, optD, correct, duration, theme, difficulty, mediaUrl] = values;
+            const [content, optA, optB, optC, optD, correct, duration, theme, difficulty, mediaUrl, roundIndex] = values;
 
             // Validate correct answer
             const correctIndex = ["A", "B", "C", "D"].indexOf(correct.toUpperCase());
@@ -74,6 +74,7 @@ function parseCSV(text: string): { data: BulkTemplateInput[]; errors: string[] }
                 theme: (theme as any) || "GENERAL",
                 difficulty: (difficulty as any) || "MEDIUM",
                 mediaUrl: mediaUrl?.replace(/^"|"$/g, "") || "",
+                roundIndex: roundIndex ? parseInt(roundIndex) : undefined,
             });
         } catch (e) {
             errors.push(`Row ${i + 1}: Parse error`);

@@ -112,7 +112,7 @@ export async function createGameAction(
     if (env.partykitHost && env.partykitSecret) {
       const partykitUrl = env.partykitHost.startsWith("http")
         ? env.partykitHost
-        : `https://${env.partykitHost}`;
+        : `http://${env.partykitHost}`;
 
       fetch(`${partykitUrl}/parties/main/game-${game.id}/init`, {
         method: "POST",
