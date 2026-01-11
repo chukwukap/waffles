@@ -20,9 +20,9 @@ const envSchema = z.object({
   PARTYKIT_SECRET: isServer
     ? z.string().min(1, "PARTYKIT_SECRET is required")
     : z.string().optional(),
-  NEXT_PUBLIC_PARTYKIT_HOST: isServer
-    ? z.string().min(1, "NEXT_PUBLIC_PARTYKIT_HOST is required")
-    : z.string().optional(),
+  NEXT_PUBLIC_PARTYKIT_HOST: z
+    .string()
+    .min(1, "NEXT_PUBLIC_PARTYKIT_HOST is required"),
 
   // Cloudinary (media storage with public URLs)
   CLOUDINARY_CLOUD_NAME: isServer

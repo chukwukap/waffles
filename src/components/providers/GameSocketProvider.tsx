@@ -183,8 +183,9 @@ export function GameSocketProvider({ children }: GameSocketProviderProps) {
             if (cancelled) return;
 
             const socket = new PartySocket({
-                host: env.partykitHost || "localhost:1999",
+                host: env.partykitHost,
                 room: `game-${gameId}`,
+                party: "game",
                 query: { token },
             });
 
