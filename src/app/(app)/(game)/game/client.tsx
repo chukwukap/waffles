@@ -3,10 +3,10 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import type { Game } from "@prisma";
 
 import { useUser } from "@/hooks/useUser";
 import { useSounds } from "@/hooks/useSounds";
+import { useGame } from "@/components/providers/GameProvider";
 import { useMiniKit, useAddFrame } from "@coinbase/onchainkit/minikit";
 import { saveNotificationTokenAction } from "@/actions/notifications";
 import { BottomNav } from "@/components/BottomNav";
@@ -20,21 +20,16 @@ import { NextGameCard } from "./_components/NextGameCard";
 import { CheerOverlay } from "./_components/CheerOverlay";
 
 // ==========================================
-// PROPS
-// ==========================================
-
-interface GameHubProps {
-  currentOrNextGame: Game | null;
-}
-
-// ==========================================
 // COMPONENT
 // ==========================================
 
-export function GameHub({ currentOrNextGame }: GameHubProps) {
+export function GameHub() {
   const router = useRouter();
   const hasRefreshedRef = useRef(false);
   const hasPromptedAddFrameRef = useRef(false);
+
+  // Get game from context (fetched at layout level)
+  const { state: { game } } = useGame();
 
   // User data
   const { user, isLoading: isLoadingUser } = useUser();
@@ -44,14 +39,12 @@ export function GameHub({ currentOrNextGame }: GameHubProps) {
   const { context } = useMiniKit();
   const addFrame = useAddFrame();
 
-  // Socket is managed at layout level by GameSocketProvider
-
   // Background music
   const { playBgMusic, stopBgMusic } = useSounds();
 
   // Derived state
-  const phase = currentOrNextGame ? getGamePhase(currentOrNextGame) : "SCHEDULED";
-  const hasActiveGame = currentOrNextGame && phase !== "ENDED";
+  const phase = game ? getGamePhase(game) : "SCHEDULED";
+  const hasActiveGame = game && phase !== "ENDED";
 
   // Prompt to add miniapp on first visit (once per session)
   useEffect(() => {
@@ -83,14 +76,14 @@ export function GameHub({ currentOrNextGame }: GameHubProps) {
 
   // Auto-refresh when game should start
   useEffect(() => {
-    if (!currentOrNextGame || phase !== "SCHEDULED") return;
+    if (!game || phase !== "SCHEDULED") return;
 
-    const msUntilStart = currentOrNextGame.startsAt.getTime() - Date.now();
+    const msUntilStart = game.startsAt.getTime() - Date.now();
     if (msUntilStart <= 0 && !hasRefreshedRef.current) {
       hasRefreshedRef.current = true;
       router.refresh();
     }
-  }, [currentOrNextGame, phase, router]);
+  }, [game, phase, router]);
 
   // Background music
   useEffect(() => {
@@ -125,7 +118,7 @@ export function GameHub({ currentOrNextGame }: GameHubProps) {
   // RENDER: Empty State
   // ==========================================
 
-  if (!currentOrNextGame) {
+  if (!game) {
     return (
       <>
         <motion.section
@@ -172,7 +165,7 @@ export function GameHub({ currentOrNextGame }: GameHubProps) {
         transition={{ duration: 0.4 }}
         className="shrink-0 flex flex-col justify-start items-center overflow-hidden px-4 pt-4"
       >
-        <NextGameCard game={currentOrNextGame} />
+        <NextGameCard />
       </motion.section>
 
       {/* Live Event Feed */}

@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion, useAnimation } from "framer-motion";
-import type { Game } from "@prisma";
 
 import { WaffleButton } from "@/components/buttons/WaffleButton";
 import { useGame } from "@/components/providers/GameProvider";
@@ -17,41 +16,35 @@ import { BuyTicketModal } from "./BuyTicketModal";
 import { PlayerAvatarStack } from "./PlayerAvatarStack";
 
 // ==========================================
-// PROPS - Simplified
-// ==========================================
-
-interface NextGameCardProps {
-  game: Game;
-}
-
-// ==========================================
 // COMPONENT
 // ==========================================
 
-export function NextGameCard({ game }: NextGameCardProps) {
+export function NextGameCard() {
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Get game from context (fetched at layout level)
+  const { state: { game, prizePool: storePrizePool, playerCount: storePlayerCount } } = useGame();
 
   // Get user and entry data
   const { user } = useUser();
   const { entry, isLoading: isLoadingEntry, refetchEntry } = useGameEntry({
-    gameId: game.id,
-    enabled: true,
+    gameId: game?.id,
+    enabled: !!game,
   });
 
   // Realtime stats from context (updated via WebSocket), fallback to game prop
-  const { prizePool: storePrizePool, playerCount: storePlayerCount } = useGame().state;
-  const prizePool = storePrizePool ?? game.prizePool ?? 0;
-  const playerCount = storePlayerCount ?? game.playerCount ?? 0;
-  const spotsTotal = game.maxPlayers ?? 500;
+  const prizePool = storePrizePool ?? game?.prizePool ?? 0;
+  const playerCount = storePlayerCount ?? game?.playerCount ?? 0;
+  const spotsTotal = game?.maxPlayers ?? 500;
 
   // Derive phase
   const now = Date.now();
-  const hasEnded = now >= game.endsAt.getTime();
-  const isLive = !hasEnded && now >= game.startsAt.getTime();
+  const hasEnded = game ? now >= game.endsAt.getTime() : false;
+  const isLive = game ? !hasEnded && now >= game.startsAt.getTime() : false;
 
   // Timer - countdown to start or end
-  const targetMs = isLive ? game.endsAt.getTime() : game.startsAt.getTime();
+  const targetMs = game ? (isLive ? game.endsAt.getTime() : game.startsAt.getTime()) : 0;
   const countdown = useTimer(targetMs);
 
   // Derived state
@@ -94,10 +87,10 @@ export function NextGameCard({ game }: NextGameCardProps) {
   const buttonConfig = isLoadingEntry
     ? { text: "LOADING...", disabled: true, href: null }
     : hasEnded
-      ? { text: "VIEW RESULTS", disabled: false, href: `/game/${game.id}/result` }
+      ? { text: "VIEW RESULTS", disabled: false, href: `/game/${game?.id}/result` }
       : isLive
         ? hasTicket
-          ? { text: "PLAY NOW", disabled: false, href: `/game/${game.id}/live` }
+          ? { text: "PLAY NOW", disabled: false, href: `/game/${game?.id}/live` }
           : { text: "GET TICKET", disabled: false, href: null }
         : hasTicket
           ? { text: "YOU'RE IN!", disabled: true, href: null }
@@ -139,7 +132,7 @@ export function NextGameCard({ game }: NextGameCardProps) {
               <Image src="/images/icons/game-controller.png" alt="controller" width={30} height={30} />
             </motion.div>
             <span className="font-body text-white uppercase text-[26px] leading-[92%] tracking-[-0.03em]">
-              WAFFLES #{game.gameNumber.toString().padStart(3, "0")}
+              WAFFLES #{(game?.gameNumber ?? 0).toString().padStart(3, "0")}
             </span>
           </div>
         </motion.div>
@@ -234,11 +227,11 @@ export function NextGameCard({ game }: NextGameCardProps) {
       <BuyTicketModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        gameId={game.id}
-        onchainId={game.onchainId as `0x${string}` | null}
-        theme={game.theme}
-        themeIcon={game.coverUrl ?? undefined}
-        tierPrices={game.tierPrices}
+        gameId={game?.id ?? ""}
+        onchainId={(game?.onchainId as `0x${string}`) ?? null}
+        theme={game?.theme ?? ""}
+        themeIcon={game?.coverUrl ?? undefined}
+        tierPrices={game?.tierPrices ?? []}
         onPurchaseSuccess={() => {
           refetchEntry();
 

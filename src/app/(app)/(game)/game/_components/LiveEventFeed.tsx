@@ -1,16 +1,28 @@
 "use client";
 
-import { memo, } from "react";
+import { memo, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGame } from "@/components/providers/GameProvider";
-import type { ChatItem } from "@shared/protocol";
 import { springs } from "@/lib/animations";
+
+// ==========================================
+// TYPES
+// ==========================================
+
+interface FeedItem {
+  id: string;
+  type: "chat" | "join";
+  username: string;
+  pfp: string | null;
+  text: string;
+  ts: number;
+}
 
 // ==========================================
 // FEED ITEM COMPONENT
 // ==========================================
 
-const MessageRow = memo(function MessageRow({ msg }: { msg: ChatItem }) {
+const FeedRow = memo(function FeedRow({ item }: { item: FeedItem }) {
   return (
     <motion.div
       layout
@@ -26,26 +38,26 @@ const MessageRow = memo(function MessageRow({ msg }: { msg: ChatItem }) {
         animate={{ scale: 1 }}
         transition={{ ...springs.bouncy, delay: 0.1 }}
       >
-        {msg.pfp ? (
+        {item.pfp ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={msg.pfp}
-            alt={msg.username}
+            src={item.pfp}
+            alt={item.username}
             className="w-5 h-5 rounded-full object-cover shrink-0"
           />
         ) : (
           <div className="w-5 h-5 rounded-full bg-white/20 shrink-0 flex items-center justify-center">
             <span className="text-[10px] text-white/80">
-              {msg.username?.charAt(0)?.toUpperCase() || "?"}
+              {item.username?.charAt(0)?.toUpperCase() || "?"}
             </span>
           </div>
         )}
       </motion.div>
 
-      {/* Message content */}
-      <span className="text-white/70 text-sm truncate">
-        <span className="text-white font-medium">{msg.username}</span>{" "}
-        <span className="font-display">{msg.text}</span>
+      {/* Content */}
+      <span className={`text-white/70 text-sm truncate ${item.type === "join" ? "italic" : ""}`}>
+        <span className="text-white font-medium">{item.username}</span>{" "}
+        <span className="font-display">{item.text}</span>
       </span>
     </motion.div>
   );
@@ -87,12 +99,36 @@ interface LiveEventFeedProps {
 }
 
 export function LiveEventFeed({ maxEvents = 5 }: LiveEventFeedProps) {
-  const { messages, connected: isConnected, onlineCount } = useGame().state;
+  const { messages, recentPlayers, connected: isConnected, onlineCount } = useGame().state;
 
-  // Show most recent messages
-  const recentMessages = messages.slice(-maxEvents);
+  // Combine chat messages and join events into a unified feed
+  const feedItems = useMemo(() => {
+    const items: FeedItem[] = [
+      // Chat messages
+      ...messages.map((m) => ({
+        id: m.id,
+        type: "chat" as const,
+        username: m.username,
+        pfp: m.pfp,
+        text: m.text,
+        ts: m.ts,
+      })),
+      // Join events from recentPlayers
+      ...recentPlayers.map((p) => ({
+        id: `join-${p.username}-${p.timestamp}`,
+        type: "join" as const,
+        username: p.username,
+        pfp: p.pfpUrl,
+        text: "joined the game",
+        ts: p.timestamp,
+      })),
+    ];
 
-  if (recentMessages.length === 0) {
+    // Sort by timestamp and take most recent
+    return items.sort((a, b) => a.ts - b.ts).slice(-maxEvents);
+  }, [messages, recentPlayers, maxEvents]);
+
+  if (feedItems.length === 0) {
     return (
       <motion.div
         initial={{ opacity: 0 }}
@@ -130,8 +166,8 @@ export function LiveEventFeed({ maxEvents = 5 }: LiveEventFeedProps) {
       >
         <div className="flex flex-col gap-1 pt-4">
           <AnimatePresence mode="popLayout" initial={false}>
-            {recentMessages.map((msg) => (
-              <MessageRow key={msg.id} msg={msg} />
+            {feedItems.map((item) => (
+              <FeedRow key={item.id} item={item} />
             ))}
           </AnimatePresence>
         </div>

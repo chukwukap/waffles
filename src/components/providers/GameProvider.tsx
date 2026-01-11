@@ -19,12 +19,12 @@ import {
     type ReactNode,
     type Dispatch,
 } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import usePartySocket from "partysocket/react";
 import sdk from "@farcaster/miniapp-sdk";
 import { env } from "@/lib/env";
 import type { Message, ChatItem } from "@shared/protocol";
-import type { GameEntry } from "@prisma";
+import type { GameEntry, Game } from "@prisma";
 
 
 
@@ -46,6 +46,9 @@ export type GameEntryData = Pick<
 // ==========================================
 
 interface GameState {
+    // Game data (from server)
+    game: Game | null;
+
     // Core
     entry: GameEntryData | null;
     prizePool: number | null;
@@ -61,6 +64,7 @@ interface GameState {
 }
 
 const initialState: GameState = {
+    game: null,
     entry: null,
     prizePool: null,
     playerCount: null,
@@ -184,14 +188,14 @@ const GameContext = createContext<GameContextValue | null>(null);
 
 interface GameProviderProps {
     children: ReactNode;
+    game: Game | null;
 }
 
-export function GameProvider({ children }: GameProviderProps) {
-    const params = useParams();
+export function GameProvider({ children, game }: GameProviderProps) {
     const router = useRouter();
-    const [state, dispatch] = useReducer(reducer, initialState);
+    const [state, dispatch] = useReducer(reducer, { ...initialState, game });
 
-    const gameId = params?.gameId as string | undefined;
+    const gameId = game?.id;
 
     // Message handler for WebSocket events
     const handleMessage = useCallback(
@@ -286,10 +290,12 @@ export function GameProvider({ children }: GameProviderProps) {
     // - Auto-connects on mount, disconnects on unmount
     // - Auto-reconnects with exponential backoff
     // - Async query function fetches auth token for each connection
+    // - startClosed=true when no gameId (don't connect without a game)
     const socket = usePartySocket({
         host: env.partykitHost,
         party: "main",
-        room: gameId ? `game-${gameId}` : "lobby",
+        room: gameId ? `game-${gameId}` : "none",
+        startClosed: !gameId, // Don't connect if no gameId
 
         // Async query function - fetches auth token before connection
         query: async () => {

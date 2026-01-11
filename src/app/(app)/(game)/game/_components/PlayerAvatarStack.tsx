@@ -52,12 +52,14 @@ export function PlayerAvatarStack({
     const avatars = allPlayers.slice(0, maxAvatars);
 
     // Calculate display count
-    const displayCount = overrideCount ?? (isAnswerContext ? questionAnswerers.length : (onlineCount > 0 ? onlineCount : allPlayers.length || 1));
+    const displayCount = overrideCount ?? (isAnswerContext ? questionAnswerers.length : (onlineCount > 0 ? onlineCount : allPlayers.length || 0));
 
-    // Format text
+    // Format text - special case for zero
     const text = formatText
         ? formatText(displayCount)
-        : `${displayCount} ${displayCount === 1 ? 'person has' : 'people have'} ${actionText}`;
+        : displayCount === 0
+            ? "Be the first to join!"
+            : `${displayCount} ${displayCount === 1 ? 'person has' : 'people have'} ${actionText}`;
 
     return (
         <div className="flex flex-row items-center justify-center gap-2 px-0">
