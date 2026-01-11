@@ -339,14 +339,51 @@ export default class GameServer implements Party.Server {
 
   async handleGameEndAlarm() {
     const gameId = await this.room.storage.get<string>("gameId");
+    const appUrl = this.room.env.NEXT_PUBLIC_URL as string;
+    const secret = this.room.env.PARTYKIT_SECRET as string;
 
-    await this.sendNotifications("Game has ended! Check your results 🏆");
+    if (!gameId || !appUrl || !secret) {
+      console.error("[GameEnd] Missing config - gameId, appUrl, or secret");
+      return;
+    }
 
-    this.broadcast({ type: "game:end", gameId: gameId || "" });
+    try {
+      // Call roundup API (handles ranking, on-chain, and notifications)
+      const response = await fetch(
+        `${appUrl}/api/v1/internal/games/${gameId}/roundup`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${secret}`,
+          },
+        }
+      );
 
-    console.log(
-      `[GameEnd] Game ${gameId} - complete (ranking handled by cron)`
-    );
+      const result = await response.json();
+
+      if (result.success) {
+        // Only broadcast if roundup succeeded
+        this.broadcast({
+          type: "game:end",
+          gameId,
+          prizePool: result.prizePool,
+          winnersCount: result.winnersCount,
+        });
+        console.log(
+          `[GameEnd] Game ${gameId} - roundup complete, ${result.winnersCount} winners`
+        );
+      } else {
+        console.error(
+          `[GameEnd] Game ${gameId} - roundup failed:`,
+          result.error
+        );
+        // Cron will catch this as fallback
+      }
+    } catch (error) {
+      console.error(`[GameEnd] Game ${gameId} - roundup error:`, error);
+      // Cron will catch this as fallback
+    }
   }
 
   async sendNotifications(message: string) {

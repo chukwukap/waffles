@@ -50,7 +50,12 @@ export type Message =
   // === GAME LIFECYCLE (Server → Clients) ===
   | { type: "game:starting"; in: number } // seconds until start
   | { type: "game:live" } // game is now playable
-  | { type: "game:end"; gameId: string } // game over, redirect to results
+  | {
+      type: "game:end";
+      gameId: string;
+      prizePool?: number;
+      winnersCount?: number;
+    } // game over, redirect to results
 
   // === STATS (Server → Clients) ===
   | { type: "stats"; prizePool: number; playerCount: number }

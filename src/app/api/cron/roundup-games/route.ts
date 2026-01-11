@@ -2,12 +2,17 @@
  * Cron: Roundup Games
  * POST /api/cron/roundup-games
  *
+ * Fallback for games that weren't rounded up by PartyKit alarm.
  * Auto-ranks and publishes ended games. Called every 5 min.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { rankGame, publishResults } from "@/lib/game/lifecycle";
+import {
+  rankGame,
+  publishResults,
+  sendResultNotifications,
+} from "@/lib/game/lifecycle";
 import { env } from "@/lib/env";
 
 export const maxDuration = 60;
@@ -35,9 +40,15 @@ export async function POST(request: NextRequest) {
       ranked++;
 
       if (game.onchainId && result.prizesDistributed > 0) {
+        // On-chain: publishResults handles notifications
         await publishResults(game.id);
         published++;
+      } else {
+        // Off-chain: send notifications directly
+        await sendResultNotifications(game.id);
       }
+
+      console.log(`[Cron] Game ${game.id} rounded up (fallback)`);
     } catch (e) {
       console.error(`[Cron] Game ${game.id}:`, e);
     }
