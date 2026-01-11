@@ -185,7 +185,7 @@ export function GameSocketProvider({ children }: GameSocketProviderProps) {
             const socket = new PartySocket({
                 host: env.partykitHost,
                 room: `game-${gameId}`,
-                party: "game",
+                party: "main",
                 query: { token },
             });
 
