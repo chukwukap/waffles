@@ -7,7 +7,8 @@ import type { Game } from "@prisma";
 
 import { useUser } from "@/hooks/useUser";
 import { useSounds } from "@/hooks/useSounds";
-import { useGameStoreApi } from "@/components/providers/GameStoreProvider";
+import { useMiniKit, useAddFrame } from "@coinbase/onchainkit/minikit";
+import { saveNotificationTokenAction } from "@/actions/notifications";
 import { BottomNav } from "@/components/BottomNav";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
 import { springs, staggerContainer, fadeInUp } from "@/lib/animations";
@@ -33,11 +34,15 @@ interface GameHubProps {
 export function GameHub({ currentOrNextGame }: GameHubProps) {
   const router = useRouter();
   const hasRefreshedRef = useRef(false);
+  const hasPromptedAddFrameRef = useRef(false);
 
   // User data
   const { user, isLoading: isLoadingUser } = useUser();
   const hasAccess = !!user?.hasGameAccess && !user?.isBanned;
 
+  // MiniKit/AddFrame for notifications
+  const { context } = useMiniKit();
+  const addFrame = useAddFrame();
 
   // Socket is managed at layout level by GameSocketProvider
 
@@ -47,6 +52,27 @@ export function GameHub({ currentOrNextGame }: GameHubProps) {
   // Derived state
   const phase = currentOrNextGame ? getGamePhase(currentOrNextGame) : "SCHEDULED";
   const hasActiveGame = currentOrNextGame && phase !== "ENDED";
+
+  // Prompt to add miniapp on first visit (once per session)
+  useEffect(() => {
+    if (hasPromptedAddFrameRef.current) return;
+    if (!hasAccess || !user?.fid) return;
+    if (context?.client?.added) return; // Already added
+
+    hasPromptedAddFrameRef.current = true;
+
+    (async () => {
+      try {
+        const result = await addFrame();
+        if (result && context?.client.clientFid && user.fid) {
+          await saveNotificationTokenAction(user.fid, context.client.clientFid, result);
+        }
+      } catch (err) {
+        // User may decline - that's ok
+        console.log("User declined addFrame:", err);
+      }
+    })();
+  }, [hasAccess, user?.fid, context?.client?.added, context?.client?.clientFid, addFrame]);
 
   // Access control redirect
   useEffect(() => {
