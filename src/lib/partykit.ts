@@ -12,7 +12,7 @@ function partyFetch(gameId: string, path: string, body: unknown) {
     {
       host: env.partykitHost || "localhost:1999",
       room: `game-${gameId}`,
-      party: "game",
+      party: "main",
       path,
     },
     {
