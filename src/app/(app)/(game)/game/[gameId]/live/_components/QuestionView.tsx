@@ -14,7 +14,7 @@ import { QuestionCardHeader } from "./QuestionCardHeader";
 import { QuestionOption } from "./QuestionOption";
 import { playSound } from "@/lib/sounds";
 import { PlayerAvatarStack } from "../../../_components/PlayerAvatarStack";
-import { useGameAnswerers } from "@/components/providers/GameProvider";
+import { useGame } from "@/components/providers/GameProvider";
 import type { LiveGameQuestion } from "../page";
 
 // ==========================================
@@ -111,7 +111,7 @@ export default function QuestionView({
     onMediaReady,
 }: QuestionViewProps) {
     const [mediaLoaded, setMediaLoaded] = useState(!question.mediaUrl); // true if no media
-    const answerers = useGameAnswerers();
+    const answerers = useGame().state.questionAnswerers;
     const isLowTime = seconds <= 3 && seconds > 0;
     const isTimeUp = seconds === 0;
 

@@ -461,35 +461,3 @@ export function useGame(): GameContextValue {
     }
     return context;
 }
-
-// Convenience hooks for common selectors
-export function useGameState() {
-    return useGame().state;
-}
-
-export function useGameEntry() {
-    return useGame().state.entry;
-}
-
-export function useGameStats() {
-    const { prizePool, playerCount } = useGame().state;
-    return { prizePool, playerCount };
-}
-
-export function useGameConnection() {
-    const { connected, onlineCount } = useGame().state;
-    return { connected, onlineCount };
-}
-
-export function useGameChat() {
-    const { state, sendChat } = useGame();
-    return { messages: state.messages, sendChat };
-}
-
-export function useGameAnswerers() {
-    return useGame().state.questionAnswerers;
-}
-
-export function useGameDispatch() {
-    return useGame().dispatch;
-}

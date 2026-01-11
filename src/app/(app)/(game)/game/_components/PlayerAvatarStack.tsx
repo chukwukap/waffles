@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { useGameState } from "@/components/providers/GameProvider";
+import { useGame } from "@/components/providers/GameProvider";
 
 // Avatar rotation angles from design specs
 const AVATAR_ROTATIONS = [-8.71, 5.85, -3.57, 7.56];
@@ -34,7 +34,7 @@ export function PlayerAvatarStack({
     formatText,
 }: PlayerAvatarStackProps) {
     // Get real-time data from context
-    const { recentPlayers, questionAnswerers, onlineCount } = useGameState();
+    const { recentPlayers, questionAnswerers, onlineCount } = useGame().state;
 
     // Use questionAnswerers for "just answered", otherwise recentPlayers
     const isAnswerContext = actionText === "just answered";

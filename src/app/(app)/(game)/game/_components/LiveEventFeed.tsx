@@ -2,7 +2,7 @@
 
 import { memo, } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useGameState, type GameEvent, type ChatMessage } from "@/components/providers/GameProvider";
+import { useGame, type GameEvent, type ChatMessage } from "@/components/providers/GameProvider";
 import { springs } from "@/lib/animations";
 
 // ==========================================
@@ -111,7 +111,7 @@ interface LiveEventFeedProps {
 }
 
 export function LiveEventFeed({ maxEvents = 5 }: LiveEventFeedProps) {
-  const { events, messages, connected: isConnected, onlineCount } = useGameState();
+  const { events, messages, connected: isConnected, onlineCount } = useGame().state;
 
   // Note: Welcome message removed - feed starts empty until real events arrive
 

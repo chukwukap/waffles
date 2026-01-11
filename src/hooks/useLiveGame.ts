@@ -60,7 +60,7 @@ export interface UseLiveGameReturn {
 export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
   const { context } = useMiniKit();
   const userPfpUrl = context?.user?.pfpUrl || null;
-  const { dispatch, sendAnswer } = useGame();
+  const { dispatch } = useGame();
 
   // ==========================================
   // ALL HOOKS DECLARED UNCONDITIONALLY HERE
