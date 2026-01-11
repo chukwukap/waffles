@@ -80,11 +80,16 @@ export function GameForm({
   const [maxPlayers, setMaxPlayers] = useState(
     initialData?.maxPlayers?.toString() || "100"
   );
-  const [startsAt, setStartsAt] = useState(
-    initialData?.startsAt
-      ? new Date(initialData.startsAt).toISOString().slice(0, 16)
-      : ""
-  );
+  const [startsAt, setStartsAt] = useState(() => {
+    if (!initialData?.startsAt) return "";
+    const d = new Date(initialData.startsAt);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const hours = String(d.getHours()).padStart(2, "0");
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  });
   // Calculate initial duration if editing
   const initialDuration = initialData?.startsAt && initialData?.endsAt
     ? Math.round((new Date(initialData.endsAt).getTime() - new Date(initialData.startsAt).getTime()) / 60000)
@@ -105,22 +110,22 @@ export function GameForm({
   );
 
   // Calculate end time from start + duration
+  // IMPORTANT: Keep in local datetime-local format (YYYY-MM-DDTHH:mm)
+  // Do NOT use toISOString() as it converts to UTC and breaks timezone handling
   const calculatedEndsAt = useMemo(() => {
     if (!startsAt || !durationMinutes) return "";
     const start = new Date(startsAt);
     const end = new Date(start.getTime() + parseInt(durationMinutes) * 60000);
-    return end.toISOString().slice(0, 16);
+    // Format as local datetime-local string (same format as input)
+    const year = end.getFullYear();
+    const month = String(end.getMonth() + 1).padStart(2, "0");
+    const day = String(end.getDate()).padStart(2, "0");
+    const hours = String(end.getHours()).padStart(2, "0");
+    const minutes = String(end.getMinutes()).padStart(2, "0");
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   }, [startsAt, durationMinutes]);
 
-  // Display duration text
-  const durationDisplay = useMemo(() => {
-    const mins = parseInt(durationMinutes);
-    if (!mins) return null;
-    if (mins < 60) return `${mins} min`;
-    const hours = Math.floor(mins / 60);
-    const remainingMins = mins % 60;
-    return remainingMins > 0 ? `${hours}h ${remainingMins}m` : `${hours}h`;
-  }, [durationMinutes]);
+
 
   // Form submission handler
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {

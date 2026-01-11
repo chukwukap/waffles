@@ -81,6 +81,7 @@ export async function createGameAction(
 
   const data = validation.data;
   const onchainId = generateOnchainGameId();
+  let gameId: string;
 
   try {
     // 1. Create on-chain first (so we don't have orphaned DB records)
@@ -104,6 +105,8 @@ export async function createGameAction(
         onchainId,
       },
     });
+
+    gameId = game.id;
 
     // 3. Initialize PartyKit room (non-blocking)
     if (env.partykitHost && env.partykitSecret) {
@@ -137,7 +140,6 @@ export async function createGameAction(
 
     console.log(`[CreateGame] Game ${game.id} created`);
     revalidatePath("/admin/games");
-    redirect(`/admin/games/${game.id}/questions`);
   } catch (error) {
     console.error("[CreateGame] Failed:", error);
     return {
@@ -145,6 +147,9 @@ export async function createGameAction(
       error: error instanceof Error ? error.message : "Failed to create game",
     };
   }
+
+  // Redirect outside try/catch (Next.js redirect throws internally)
+  redirect(`/admin/games/${gameId}/questions`);
 }
 
 // ==========================================

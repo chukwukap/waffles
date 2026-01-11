@@ -1,5 +1,5 @@
 {
   "name": "waffles-party",
-  "main": "party/game.ts",
+  "main": "party/main.ts",
   "compatibilityDate": "2025-01-01"
 }
