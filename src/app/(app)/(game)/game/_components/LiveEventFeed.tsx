@@ -2,31 +2,15 @@
 
 import { memo, } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useGame, type GameEvent, type ChatMessage } from "@/components/providers/GameProvider";
+import { useGame } from "@/components/providers/GameProvider";
+import type { ChatItem } from "@shared/protocol";
 import { springs } from "@/lib/animations";
-
-// ==========================================
-// TYPES
-// ==========================================
-
-interface FeedItem {
-  id: string;
-  type: "event" | "chat";
-  username: string;
-  pfpUrl: string | null;
-  content: string;
-  timestamp: number;
-}
 
 // ==========================================
 // FEED ITEM COMPONENT
 // ==========================================
 
-const FeedItemRow = memo(function FeedItemRow({
-  item,
-}: {
-  item: FeedItem;
-}) {
+const MessageRow = memo(function MessageRow({ msg }: { msg: ChatItem }) {
   return (
     <motion.div
       layout
@@ -36,39 +20,33 @@ const FeedItemRow = memo(function FeedItemRow({
       transition={springs.snappy}
       className="flex items-center gap-2"
     >
-      {/* Avatar with pop-in effect */}
+      {/* Avatar */}
       <motion.div
         initial={false}
         animate={{ scale: 1 }}
         transition={{ ...springs.bouncy, delay: 0.1 }}
       >
-        {item.pfpUrl ? (
+        {msg.pfp ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={item.pfpUrl}
-            alt={item.username}
-
+            src={msg.pfp}
+            alt={msg.username}
             className="w-5 h-5 rounded-full object-cover shrink-0"
           />
         ) : (
           <div className="w-5 h-5 rounded-full bg-white/20 shrink-0 flex items-center justify-center">
             <span className="text-[10px] text-white/80">
-              {item.username?.charAt(0)?.toUpperCase() || "?"}
+              {msg.username?.charAt(0)?.toUpperCase() || "?"}
             </span>
           </div>
         )}
       </motion.div>
 
       {/* Message content */}
-      <span
-        className={`text-white/70 text-sm truncate ${item.type === "event" ? "italic" : ""
-          }`}
-      >
-        <span className="text-white font-medium">{item.username}</span>{" "}
-        <span className="font-display">{item.content}</span>
+      <span className="text-white/70 text-sm truncate">
+        <span className="text-white font-medium">{msg.username}</span>{" "}
+        <span className="font-display">{msg.text}</span>
       </span>
-
-
     </motion.div>
   );
 });
@@ -84,7 +62,6 @@ function ConnectionIndicator({ isConnected, onlineCount }: { isConnected: boolea
       animate={{ opacity: 1, y: 0 }}
       className="absolute top-2 right-4 flex items-center gap-1.5 z-20"
     >
-      {/* Status dot */}
       <motion.div
         animate={
           isConnected
@@ -94,7 +71,6 @@ function ConnectionIndicator({ isConnected, onlineCount }: { isConnected: boolea
         transition={{ duration: isConnected ? 2 : 1, repeat: Infinity }}
         className={`w-2 h-2 rounded-full ${isConnected ? "bg-[#14B985]" : "bg-[#F5BB1B]"}`}
       />
-      {/* Status text */}
       <span className="text-[10px] text-white/50 font-display">
         {isConnected ? `${onlineCount} online` : "connecting..."}
       </span>
@@ -111,43 +87,12 @@ interface LiveEventFeedProps {
 }
 
 export function LiveEventFeed({ maxEvents = 5 }: LiveEventFeedProps) {
-  const { events, messages, connected: isConnected, onlineCount } = useGame().state;
+  const { messages, connected: isConnected, onlineCount } = useGame().state;
 
-  // Note: Welcome message removed - feed starts empty until real events arrive
+  // Show most recent messages
+  const recentMessages = messages.slice(-maxEvents);
 
-  // Combine events and recent chat messages into a unified feed
-  const feedItems: FeedItem[] = [
-    ...events.map(
-      (e): FeedItem => ({
-        id: e.id,
-        type: "event",
-        username: e.username,
-        pfpUrl: e.pfpUrl,
-        content: e.content,
-        timestamp: e.timestamp,
-      })
-    ),
-    ...messages.map(
-      (m): FeedItem => ({
-        id: m.id,
-        type: "chat",
-        username: m.username,
-        pfpUrl: m.pfpUrl,
-        content: m.text,
-        timestamp: m.timestamp,
-      })
-    ),
-  ];
-
-  // Sort by timestamp and take most recent
-  const sortedItems = feedItems
-    .sort((a, b) => a.timestamp - b.timestamp)
-    .slice(-maxEvents);
-
-  // Check if item is the newest (for special animation)
-  const isNewest = (index: number) => index === sortedItems.length - 1;
-
-  if (sortedItems.length === 0) {
+  if (recentMessages.length === 0) {
     return (
       <motion.div
         initial={{ opacity: 0 }}
@@ -172,9 +117,7 @@ export function LiveEventFeed({ maxEvents = 5 }: LiveEventFeedProps) {
       className="relative w-screen -mx-4 overflow-hidden"
       style={{ height: "clamp(60px, 12vh, 140px)" }}
     >
-      {/* Connection status indicator */}
       <ConnectionIndicator isConnected={isConnected} onlineCount={onlineCount} />
-      {/* Content layer with mask for smooth fade */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -187,8 +130,8 @@ export function LiveEventFeed({ maxEvents = 5 }: LiveEventFeedProps) {
       >
         <div className="flex flex-col gap-1 pt-4">
           <AnimatePresence mode="popLayout" initial={false}>
-            {sortedItems.map((item, index) => (
-              <FeedItemRow key={item.id} item={item} />
+            {recentMessages.map((msg) => (
+              <MessageRow key={msg.id} msg={msg} />
             ))}
           </AnimatePresence>
         </div>

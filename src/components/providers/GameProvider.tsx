@@ -28,26 +28,7 @@ import { env } from "@/lib/env";
 import type { Message, ChatItem } from "@shared/protocol";
 import type { GameEntry } from "@prisma";
 
-// ==========================================
-// TYPES
-// ==========================================
 
-export interface ChatMessage {
-    id: string;
-    username: string;
-    pfpUrl: string | null;
-    text: string;
-    timestamp: number;
-}
-
-export interface GameEvent {
-    id: string;
-    type: "join" | "achievement";
-    username: string;
-    pfpUrl: string | null;
-    content: string;
-    timestamp: number;
-}
 
 export interface RecentPlayer {
     username: string;
@@ -75,8 +56,7 @@ interface GameState {
     // Real-time
     connected: boolean;
     onlineCount: number;
-    messages: ChatMessage[];
-    events: GameEvent[];
+    messages: ChatItem[];
     recentPlayers: RecentPlayer[];
     currentQuestionId: string | null;
     questionAnswerers: RecentPlayer[];
@@ -89,7 +69,6 @@ const initialState: GameState = {
     connected: false,
     onlineCount: 0,
     messages: [],
-    events: [],
     recentPlayers: [],
     currentQuestionId: null,
     questionAnswerers: [],
@@ -104,9 +83,8 @@ type Action =
     | { type: "UPDATE_STATS"; payload: { prizePool?: number; playerCount?: number } }
     | { type: "SET_CONNECTED"; payload: boolean }
     | { type: "SET_ONLINE_COUNT"; payload: number }
-    | { type: "SET_MESSAGES"; payload: ChatMessage[] }
-    | { type: "ADD_MESSAGE"; payload: ChatMessage }
-    | { type: "ADD_EVENT"; payload: GameEvent }
+    | { type: "SET_MESSAGES"; payload: ChatItem[] }
+    | { type: "ADD_MESSAGE"; payload: ChatItem }
     | { type: "ADD_PLAYER"; payload: RecentPlayer }
     | { type: "SET_CURRENT_QUESTION"; payload: string | null }
     | { type: "ADD_ANSWERER"; payload: { questionId: string; player: RecentPlayer } }
@@ -138,12 +116,6 @@ function reducer(state: GameState, action: Action): GameState {
             return {
                 ...state,
                 messages: [...state.messages.slice(-99), action.payload],
-            };
-
-        case "ADD_EVENT":
-            return {
-                ...state,
-                events: [...state.events.slice(-49), action.payload],
             };
 
         case "ADD_PLAYER":
@@ -234,16 +206,7 @@ export function GameProvider({ children }: GameProviderProps) {
                 switch (msg.type) {
                     case "sync":
                         dispatch({ type: "SET_ONLINE_COUNT", payload: msg.connected });
-                        dispatch({
-                            type: "SET_MESSAGES",
-                            payload: msg.chat.map((m: ChatItem) => ({
-                                id: m.id,
-                                username: m.username,
-                                pfpUrl: m.pfp,
-                                text: m.text,
-                                timestamp: m.ts,
-                            })),
-                        });
+                        dispatch({ type: "SET_MESSAGES", payload: msg.chat });
                         break;
 
                     case "joined":
@@ -252,17 +215,6 @@ export function GameProvider({ children }: GameProviderProps) {
                             payload: {
                                 username: msg.username,
                                 pfpUrl: msg.pfp,
-                                timestamp: Date.now(),
-                            },
-                        });
-                        dispatch({
-                            type: "ADD_EVENT",
-                            payload: {
-                                id: `join-${Date.now()}`,
-                                type: "join",
-                                username: msg.username,
-                                pfpUrl: msg.pfp,
-                                content: "joined the game",
                                 timestamp: Date.now(),
                             },
                         });
@@ -278,9 +230,9 @@ export function GameProvider({ children }: GameProviderProps) {
                             payload: {
                                 id: msg.id,
                                 username: msg.username,
-                                pfpUrl: msg.pfp,
+                                pfp: msg.pfp,
                                 text: msg.text,
-                                timestamp: msg.ts,
+                                ts: msg.ts,
                             },
                         });
                         break;

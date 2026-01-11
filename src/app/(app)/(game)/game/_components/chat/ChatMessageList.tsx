@@ -3,7 +3,8 @@
 import { useRef, useEffect, useState, useImperativeHandle, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChatComment } from "./ChatComment";
-import { useGame, type ChatMessage } from "@/components/providers/GameProvider";
+import { useGame } from "@/components/providers/GameProvider";
+import type { ChatItem } from "@shared/protocol";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { springs } from "@/lib/animations";
 import { playSound } from "@/lib/sounds";
@@ -34,16 +35,16 @@ interface CommentType {
 // HELPERS
 // ==========================================
 
-const mapMessageToComment = (msg: ChatMessage, currentUsername?: string): CommentType => ({
+const mapMessageToComment = (msg: ChatItem, currentUsername?: string): CommentType => ({
     id: msg.id,
     name: msg.username,
-    time: new Date(msg.timestamp).toLocaleTimeString("en-US", {
+    time: new Date(msg.ts).toLocaleTimeString("en-US", {
         hour: "2-digit",
         minute: "2-digit",
         hour12: false,
     }),
     message: msg.text,
-    avatarUrl: msg.pfpUrl,
+    avatarUrl: msg.pfp,
     isCurrentUser: msg.username === currentUsername,
     status: "sent",
 });

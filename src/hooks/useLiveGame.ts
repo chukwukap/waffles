@@ -265,19 +265,6 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
       setIsSubmitting(true);
       const timeMs = Date.now() - questionStartRef.current;
 
-      // Add event to context for feed
-      dispatch({
-        type: "ADD_EVENT",
-        payload: {
-          id: `local-${currentQuestion.id}-${Date.now()}`,
-          type: "achievement" as const,
-          username: "You",
-          pfpUrl: userPfpUrl,
-          content: "answered a question",
-          timestamp: Date.now(),
-        },
-      });
-
       // Submit to server
       await submitAnswerToServer(
         game.id,
