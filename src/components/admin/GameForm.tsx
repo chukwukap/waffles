@@ -125,7 +125,15 @@ export function GameForm({
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   }, [startsAt, durationMinutes]);
 
-
+  // Display duration text
+  const durationDisplay = useMemo(() => {
+    const mins = parseInt(durationMinutes);
+    if (!mins) return null;
+    if (mins < 60) return `${mins} min`;
+    const hours = Math.floor(mins / 60);
+    const remainingMins = mins % 60;
+    return remainingMins > 0 ? `${hours}h ${remainingMins}m` : `${hours}h`;
+  }, [durationMinutes]);
 
   // Form submission handler
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -327,66 +335,135 @@ export function GameForm({
           </div>
         </section>
 
-        {/* 3. Schedule */}
+        {/* 3. Schedule - World Class UX */}
         <section className="bg-white/5 rounded-2xl border border-white/10 p-6">
           <div className="flex items-center gap-3 mb-5">
             <div className="p-2.5 rounded-xl bg-[#14B985]/15">
-              <CalendarIcon className="h-5 w-5 text-[#14B985]" />
+              <ClockIcon className="h-5 w-5 text-[#14B985]" />
             </div>
             <div>
               <h3 className="font-bold text-white">Schedule</h3>
-              <p className="text-sm text-white/50">When does the game start?</p>
+              <p className="text-sm text-white/50">When should the game run?</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="startsAt" className="block text-sm font-medium text-white/70 mb-2">
-                Start Time <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="datetime-local"
-                id="startsAt"
-                name="startsAt"
-                required
-                value={startsAt}
-                onChange={(e) => setStartsAt(e.target.value)}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all scheme-dark"
-              />
-            </div>
-            <div>
-              <label htmlFor="duration" className="block text-sm font-medium text-white/70 mb-2">
-                Duration <span className="text-red-400">*</span>
-              </label>
-              <select
-                id="duration"
-                value={durationMinutes}
-                onChange={(e) => setDurationMinutes(e.target.value)}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
-              >
-                <option value="15" className="bg-[#0a0a0b]">15 minutes</option>
-                <option value="30" className="bg-[#0a0a0b]">30 minutes</option>
-                <option value="45" className="bg-[#0a0a0b]">45 minutes</option>
-                <option value="60" className="bg-[#0a0a0b]">1 hour</option>
-                <option value="90" className="bg-[#0a0a0b]">1.5 hours</option>
-                <option value="120" className="bg-[#0a0a0b]">2 hours</option>
-                <option value="180" className="bg-[#0a0a0b]">3 hours</option>
-                <option value="240" className="bg-[#0a0a0b]">4 hours</option>
-                <option value="360" className="bg-[#0a0a0b]">6 hours</option>
-                <option value="720" className="bg-[#0a0a0b]">12 hours</option>
-                <option value="1440" className="bg-[#0a0a0b]">24 hours</option>
-              </select>
+          {/* Quick Start Presets */}
+          <div className="mb-6">
+            <label className="block text-xs font-medium text-white/50 uppercase tracking-wider mb-3">
+              Quick Start
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: "In 2 min", minutes: 2 },
+                { label: "In 5 min", minutes: 5 },
+                { label: "In 30 min", minutes: 30 },
+                { label: "In 1 hour", minutes: 60 },
+                { label: "Tomorrow 3pm", tomorrow: true },
+              ].map((preset) => {
+                const getPresetTime = () => {
+                  const now = new Date();
+                  if (preset.tomorrow) {
+                    const tomorrow = new Date(now);
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    tomorrow.setHours(15, 0, 0, 0);
+                    return tomorrow;
+                  }
+                  return new Date(now.getTime() + (preset.minutes || 0) * 60000);
+                };
+                const presetDate = getPresetTime();
+                const presetValue = `${presetDate.getFullYear()}-${String(presetDate.getMonth() + 1).padStart(2, "0")}-${String(presetDate.getDate()).padStart(2, "0")}T${String(presetDate.getHours()).padStart(2, "0")}:${String(presetDate.getMinutes()).padStart(2, "0")}`;
+                const isActive = startsAt === presetValue;
+
+                return (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => setStartsAt(presetValue)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${isActive
+                      ? "bg-[#14B985] text-white shadow-lg shadow-[#14B985]/25"
+                      : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10"
+                      }`}
+                  >
+                    {preset.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Show calculated end time */}
+          {/* Custom Time (collapsible or always visible) */}
+          <div className="mb-6">
+            <label htmlFor="startsAt" className="block text-xs font-medium text-white/50 uppercase tracking-wider mb-3">
+              Or choose custom time
+            </label>
+            <input
+              type="datetime-local"
+              id="startsAt"
+              name="startsAt"
+              required
+              value={startsAt}
+              onChange={(e) => setStartsAt(e.target.value)}
+              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#14B985]/50 focus:border-[#14B985] transition-all"
+            />
+          </div>
+
+          {/* Duration Pills */}
+          <div className="mb-6">
+            <label className="block text-xs font-medium text-white/50 uppercase tracking-wider mb-3">
+              Duration
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: "15 min", value: "15" },
+                { label: "30 min", value: "30" },
+                { label: "45 min", value: "45" },
+                { label: "1 hour", value: "60" },
+                { label: "2 hours", value: "120" },
+                { label: "4 hours", value: "240" },
+              ].map((duration) => (
+                <button
+                  key={duration.value}
+                  type="button"
+                  onClick={() => setDurationMinutes(duration.value)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${durationMinutes === duration.value
+                    ? "bg-[#FFC931] text-[#0a0a0b] shadow-lg shadow-[#FFC931]/25"
+                    : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10"
+                    }`}
+                >
+                  {duration.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Live Preview Bar */}
           {startsAt && durationMinutes && (
-            <div className="mt-4 p-3 bg-[#14B985]/10 rounded-lg border border-[#14B985]/20">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-white/60">Game ends at:</span>
-                <span className="font-medium text-[#14B985]">
-                  {new Date(calculatedEndsAt).toLocaleString()}
-                </span>
+            <div className="p-4 bg-linear-to-r from-[#14B985]/10 to-[#FFC931]/10 rounded-xl border border-white/10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-[#14B985] animate-pulse" />
+                  <span className="text-white/60 text-sm">Game runs:</span>
+                </div>
+                <div className="text-right">
+                  <div className="font-medium text-white">
+                    {new Date(startsAt).toLocaleString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                      hour12: true
+                    })}
+                    {" → "}
+                    {new Date(calculatedEndsAt).toLocaleString("en-US", {
+                      hour: "numeric",
+                      minute: "2-digit",
+                      hour12: true
+                    })}
+                  </div>
+                  <div className="text-xs text-white/50">
+                    {durationDisplay} duration
+                  </div>
+                </div>
               </div>
             </div>
           )}
