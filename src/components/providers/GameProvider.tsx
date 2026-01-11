@@ -2,7 +2,7 @@
  * GameProvider - Pure Context-based game state management
  *
  * Manages:
- * - PartyKit WebSocket connection
+ * - PartyKit WebSocket connection (via usePartySocket)
  * - Game state (entry, stats, chat, etc.)
  * - Send functions (chat, answer, cheer)
  *
@@ -14,15 +14,13 @@
 import {
     createContext,
     useContext,
-    useRef,
-    useEffect,
     useReducer,
     useCallback,
     type ReactNode,
     type Dispatch,
 } from "react";
 import { useParams, useRouter } from "next/navigation";
-import PartySocket from "partysocket";
+import usePartySocket from "partysocket/react";
 import sdk from "@farcaster/miniapp-sdk";
 import { env } from "@/lib/env";
 import type { Message, ChatItem } from "@shared/protocol";
@@ -194,10 +192,8 @@ export function GameProvider({ children }: GameProviderProps) {
     const [state, dispatch] = useReducer(reducer, initialState);
 
     const gameId = params?.gameId as string | undefined;
-    const socketRef = useRef<PartySocket | null>(null);
-    const currentGameIdRef = useRef<string | null>(null);
 
-    // Message handler
+    // Message handler for WebSocket events
     const handleMessage = useCallback(
         (event: MessageEvent) => {
             try {
@@ -280,117 +276,82 @@ export function GameProvider({ children }: GameProviderProps) {
                         break;
                 }
             } catch {
-                // Ignore parse errors
+                console.error("Failed to parse message", event.data);
             }
         },
         [router]
     );
 
-    // Socket lifecycle
-    useEffect(() => {
-        if (!gameId) return;
+    // WebSocket connection using PartyKit's hook
+    // - Auto-connects on mount, disconnects on unmount
+    // - Auto-reconnects with exponential backoff
+    // - Async query function fetches auth token for each connection
+    const socket = usePartySocket({
+        host: env.partykitHost,
+        party: "main",
+        room: gameId ? `game-${gameId}` : "lobby",
 
-        if (socketRef.current && currentGameIdRef.current === gameId) {
-            return;
-        }
-
-        if (socketRef.current && currentGameIdRef.current !== gameId) {
-            socketRef.current.close();
-            socketRef.current = null;
-            currentGameIdRef.current = null;
-            dispatch({ type: "SET_CONNECTED", payload: false });
-        }
-
-        let cancelled = false;
-
-        async function connect() {
-            let token = "";
+        // Async query function - fetches auth token before connection
+        query: async () => {
             try {
                 const res = await sdk.quickAuth.fetch("/api/v1/auth/party-token");
-                if (res.ok && !cancelled) {
+                if (res.ok) {
                     const data = await res.json();
-                    token = data.token || "";
+                    return { token: data.token || "" };
                 }
             } catch {
                 // Continue without token
             }
+            return { token: "" };
+        },
 
-            if (cancelled) return;
+        // Lifecycle handlers
+        onOpen() {
+            dispatch({ type: "SET_CONNECTED", payload: true });
+        },
+        onClose() {
+            dispatch({ type: "SET_CONNECTED", payload: false });
+        },
+        onMessage: handleMessage,
+    });
 
-            const socket = new PartySocket({
-                host: env.partykitHost,
-                room: `game-${gameId}`,
-                party: "main",
-                query: { token },
-            });
-
-            socket.addEventListener("open", () => {
-                dispatch({ type: "SET_CONNECTED", payload: true });
-            });
-
-            socket.addEventListener("close", () => {
-                dispatch({ type: "SET_CONNECTED", payload: false });
-            });
-
-            socket.addEventListener("message", handleMessage);
-
-            socketRef.current = socket;
-            currentGameIdRef.current = gameId ?? null;
-        }
-
-        connect();
-
-        return () => {
-            cancelled = true;
-        };
-    }, [gameId, handleMessage]);
-
-    // Cleanup on unmount
-    useEffect(() => {
-        return () => {
-            if (socketRef.current) {
-                socketRef.current.close();
-                socketRef.current = null;
-                currentGameIdRef.current = null;
-                dispatch({ type: "SET_CONNECTED", payload: false });
+    // Send functions use socket directly
+    const sendChat = useCallback(
+        (text: string): boolean => {
+            if (socket.readyState === WebSocket.OPEN) {
+                try {
+                    const msg: Message = { type: "chat", text };
+                    socket.send(JSON.stringify(msg));
+                    return true;
+                } catch {
+                    return false;
+                }
             }
-        };
-    }, []);
-
-    // Send functions
-    const sendChat = useCallback((text: string): boolean => {
-        if (socketRef.current?.readyState === WebSocket.OPEN) {
-            try {
-                const msg: Message = { type: "chat", text };
-                socketRef.current.send(JSON.stringify(msg));
-                return true;
-            } catch {
-                return false;
-            }
-        }
-        return false;
-    }, []);
+            return false;
+        },
+        [socket]
+    );
 
     const sendCheer = useCallback(() => {
-        if (socketRef.current?.readyState === WebSocket.OPEN) {
+        if (socket.readyState === WebSocket.OPEN) {
             const msg: Message = { type: "cheer" };
-            socketRef.current.send(JSON.stringify(msg));
+            socket.send(JSON.stringify(msg));
         }
-    }, []);
+    }, [socket]);
 
     const sendAnswer = useCallback(
         (questionIndex: number, answerIndex: number, timeMs: number) => {
-            if (socketRef.current?.readyState === WebSocket.OPEN) {
+            if (socket.readyState === WebSocket.OPEN) {
                 const msg: Message = {
                     type: "submit",
                     q: questionIndex,
                     a: answerIndex,
                     ms: timeMs,
                 };
-                socketRef.current.send(JSON.stringify(msg));
+                socket.send(JSON.stringify(msg));
             }
         },
-        []
+        [socket]
     );
 
     return (
