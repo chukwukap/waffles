@@ -5,20 +5,30 @@ import { GameHeader } from "./game/_components/GameHeader";
 import { GameProvider } from "@/components/providers/GameProvider";
 
 /**
- * Fetch current live game or next scheduled game.
+ * Fetch current live game, next scheduled game, or most recent ended game.
+ * Priority: Live > Scheduled > Last Ended
  * Cached for request deduplication.
  */
 const getCurrentOrNextGame = cache(async (): Promise<Game | null> => {
   const now = new Date();
 
-  return prisma.game.findFirst({
+  // First try to get current live or upcoming game
+  const activeGame = await prisma.game.findFirst({
     where: {
       OR: [
-        { startsAt: { lte: now }, endsAt: { gt: now } },
-        { startsAt: { gt: now } },
+        { startsAt: { lte: now }, endsAt: { gt: now } }, // Live
+        { startsAt: { gt: now } }, // Scheduled
       ],
     },
     orderBy: [{ startsAt: "asc" }],
+  });
+
+  if (activeGame) return activeGame;
+
+  // Fallback: get most recent ended game
+  return prisma.game.findFirst({
+    where: { endsAt: { lte: now } },
+    orderBy: [{ endsAt: "desc" }],
   });
 });
 

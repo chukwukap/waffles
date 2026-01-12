@@ -200,7 +200,7 @@ export function NextGameCard() {
             </motion.span>
           </motion.div>
           <span className="font-display text-center text-white/50 text-xs">
-            Until game starts
+            {isLive ? "Until game ends" : "Until game starts"}
           </span>
         </motion.div>
 
@@ -234,7 +234,6 @@ export function NextGameCard() {
         tierPrices={game?.tierPrices ?? []}
         onPurchaseSuccess={() => {
           refetchEntry();
-
         }}
         username={user?.username ?? undefined}
         userAvatar={user?.pfpUrl ?? undefined}
