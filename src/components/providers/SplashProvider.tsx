@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
-import { SplashScreen } from "./SplashScreen";
+import { SplashScreen } from "../SplashScreen";
 
 interface SplashContextValue {
     showSplash: boolean;

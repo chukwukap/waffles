@@ -45,3 +45,15 @@ export function formatTimeColon(remainingSeconds: number): string {
   // Return the final formatted string
   return `${paddedMinutes}:${paddedSeconds}`;
 }
+
+// --- Invite Code Generation ---
+const CODE_LENGTH = 6;
+const CODE_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+export function generateInviteCode(): string {
+  const bytes = new Uint8Array(CODE_LENGTH);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes)
+    .map((byte) => CODE_ALPHABET[byte % CODE_ALPHABET.length])
+    .join("");
+}

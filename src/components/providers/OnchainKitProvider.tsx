@@ -1,6 +1,6 @@
 "use client";
 
-import { OnchainKitProvider } from "@coinbase/onchainkit";
+import { OnchainKitProvider as OnchainKitProviderComponent } from "@coinbase/onchainkit";
 import { env } from "@/lib/env";
 import { CHAIN_CONFIG } from "@/lib/chain";
 import { minikitConfig } from "@minikit-config";
@@ -9,9 +9,9 @@ interface Props {
   children: React.ReactNode;
 }
 
-export function MinikitProvider({ children }: Props) {
+export function OnchainKitProvider({ children }: Props) {
   return (
-    <OnchainKitProvider
+    <OnchainKitProviderComponent
       apiKey={env.nextPublicOnchainkitApiKey}
       chain={CHAIN_CONFIG.chain}
       config={{
@@ -23,7 +23,7 @@ export function MinikitProvider({ children }: Props) {
           preference: "all",
           supportedWallets: {
             frame: true,
-          }
+          },
         },
       }}
       miniKit={{
@@ -33,6 +33,6 @@ export function MinikitProvider({ children }: Props) {
       }}
     >
       {children}
-    </OnchainKitProvider>
+    </OnchainKitProviderComponent>
   );
 }

@@ -2,7 +2,6 @@
 
 import useSWR from "swr";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
-import sdk from "@farcaster/miniapp-sdk";
 
 import type { User } from "@prisma";
 
@@ -30,10 +29,10 @@ export type UserData = Pick<
 // ==========================================
 
 async function fetchUser(url: string): Promise<UserData | null> {
-  const res = await sdk.quickAuth.fetch(url, { cache: "no-store" });
+  const res = await fetch(url, { cache: "no-store" });
 
-  // 404/401 = user not in DB yet (expected for new users)
-  if (res.status === 404 || res.status === 401) {
+  // 404 = user not in DB yet (expected for new users)
+  if (res.status === 404) {
     return null;
   }
 
@@ -59,7 +58,7 @@ export function useUser() {
   const fid = context?.user?.fid;
 
   const { data, error, isLoading, mutate } = useSWR<UserData | null>(
-    fid ? "/api/v1/me" : null,
+    fid ? `/api/v1/me?fid=${fid}` : null,
     fetchUser,
     {
       revalidateOnFocus: false,

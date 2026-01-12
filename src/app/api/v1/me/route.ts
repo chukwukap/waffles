@@ -1,20 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { createClient, Errors } from "@farcaster/quick-auth";
-import { env } from "@/lib/env";
-
-const client = createClient();
-
-function getDomain(): string {
-  try {
-    const url = new URL(env.rootUrl);
-    return url.hostname;
-  } catch {
-    return "localhost:3000";
-  }
-}
-
-const domain = getDomain();
 
 interface ApiError {
   error: string;
@@ -38,39 +23,27 @@ interface MeResponse {
 }
 
 /**
- * GET /api/v1/me
- * Check if user exists in database
- *
- * FIX: Returns 404 (not 401) when user doesn't exist in DB
- * This allows auth-gate to distinguish "new user" from "invalid token"
+ * GET /api/v1/me?fid=<fid>
+ * Check if user exists in database by FID (no auth required)
  */
 export async function GET(request: NextRequest) {
   try {
-    // Extract token from Authorization header
-    const authorization = request.headers.get("Authorization");
+    const { searchParams } = new URL(request.url);
+    const fidParam = searchParams.get("fid");
 
-    if (!authorization?.startsWith("Bearer ")) {
+    if (!fidParam) {
       return NextResponse.json<ApiError>(
-        { error: "Authentication required", code: "UNAUTHORIZED" },
-        { status: 401 }
+        { error: "Missing fid parameter", code: "BAD_REQUEST" },
+        { status: 400 }
       );
     }
 
-    const token = authorization.split(" ")[1];
-
-    // Verify JWT
-    let fid: number;
-    try {
-      const payload = await client.verifyJwt({ token, domain });
-      fid = Number(payload.sub);
-    } catch (e) {
-      if (e instanceof Errors.InvalidTokenError) {
-        return NextResponse.json<ApiError>(
-          { error: "Invalid token", code: "UNAUTHORIZED" },
-          { status: 401 }
-        );
-      }
-      throw e;
+    const fid = Number(fidParam);
+    if (isNaN(fid)) {
+      return NextResponse.json<ApiError>(
+        { error: "Invalid fid parameter", code: "BAD_REQUEST" },
+        { status: 400 }
+      );
     }
 
     // Look up user by FID
@@ -83,7 +56,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // User not found → 404 (this is what fixes the onboarding loop!)
+    // User not found → 404
     if (!user) {
       return NextResponse.json<ApiError>(
         { error: "User not found", code: "NOT_FOUND" },
@@ -109,7 +82,7 @@ export async function GET(request: NextRequest) {
       joinedWaitlistAt: user.joinedWaitlistAt,
       inviteCode: user.inviteCode,
       waitlistPoints: user.waitlistPoints,
-      waitlistRank: rank + 1,
+      waitlistRank: rank + 1, // +1 because rank is 0-indexed
       invitesCount: user._count.referrals,
       createdAt: user.createdAt,
     };

@@ -1,8 +1,7 @@
+// Mini app root layout
 import { Providers } from "@/components/providers";
-import { SplashProvider } from "@/components/SplashProvider";
 import { Metadata } from "next";
 import { minikitConfig } from "@minikit-config";
-
 
 export async function generateMetadata(): Promise<Metadata> {
     return {
@@ -26,7 +25,6 @@ export async function generateMetadata(): Promise<Metadata> {
         },
     };
 }
-
 export default function AppLayout({
     children,
 }: {
@@ -34,11 +32,9 @@ export default function AppLayout({
 }) {
     return (
         <Providers>
-            <SplashProvider duration={2000}>
-                <main className="h-dvh flex flex-col overflow-hidden app-background">
-                    {children}
-                </main>
-            </SplashProvider>
+            <main className="h-dvh flex flex-col overflow-hidden app-background">
+                {children}
+            </main>
         </Providers>
     );
 }

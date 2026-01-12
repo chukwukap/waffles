@@ -5,10 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
 import { useUser } from "@/hooks/useUser";
-import { useSounds } from "@/hooks/useSounds";
 import { useGame } from "@/components/providers/GameProvider";
-import { useMiniKit, useAddFrame } from "@coinbase/onchainkit/minikit";
-import { saveNotificationTokenAction } from "@/actions/notifications";
 import { BottomNav } from "@/components/BottomNav";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
 import { springs, staggerContainer, fadeInUp } from "@/lib/animations";
@@ -18,6 +15,7 @@ import { GameChat } from "./_components/chat/GameChat";
 import { LiveEventFeed } from "./_components/LiveEventFeed";
 import { NextGameCard } from "./_components/NextGameCard";
 import { CheerOverlay } from "./_components/CheerOverlay";
+import { useSounds } from "@/components/providers/SoundProvider";
 
 // ==========================================
 // COMPONENT
@@ -26,7 +24,6 @@ import { CheerOverlay } from "./_components/CheerOverlay";
 export function GameHub() {
   const router = useRouter();
   const hasRefreshedRef = useRef(false);
-  const hasPromptedAddFrameRef = useRef(false);
 
   // Get game from context (fetched at layout level)
   const { state: { game } } = useGame();
@@ -35,37 +32,12 @@ export function GameHub() {
   const { user, isLoading: isLoadingUser } = useUser();
   const hasAccess = !!user?.hasGameAccess && !user?.isBanned;
 
-  // MiniKit/AddFrame for notifications
-  const { context } = useMiniKit();
-  const addFrame = useAddFrame();
-
   // Background music
   const { playBgMusic, stopBgMusic } = useSounds();
 
   // Derived state
   const phase = game ? getGamePhase(game) : "SCHEDULED";
   const hasActiveGame = game && phase !== "ENDED";
-
-  // Prompt to add miniapp on first visit (once per session)
-  useEffect(() => {
-    if (hasPromptedAddFrameRef.current) return;
-    if (!hasAccess || !user?.fid) return;
-    if (context?.client?.added) return; // Already added
-
-    hasPromptedAddFrameRef.current = true;
-
-    (async () => {
-      try {
-        const result = await addFrame();
-        if (result && context?.client.clientFid && user.fid) {
-          await saveNotificationTokenAction(user.fid, context.client.clientFid, result);
-        }
-      } catch (err) {
-        // User may decline - that's ok
-        console.log("User declined addFrame:", err);
-      }
-    })();
-  }, [hasAccess, user?.fid, context?.client?.added, context?.client?.clientFid, addFrame]);
 
   // Access control redirect
   useEffect(() => {

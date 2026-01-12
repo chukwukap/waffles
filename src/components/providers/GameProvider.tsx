@@ -6,7 +6,6 @@
  * - Game state (entry, stats, chat, etc.)
  * - Send functions (chat, answer, cheer)
  *
- * No Zustand - just React Context + useReducer
  */
 
 "use client";

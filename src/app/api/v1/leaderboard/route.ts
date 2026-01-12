@@ -6,8 +6,9 @@ import { z } from "zod";
 const PAGE_SIZE = env.nextPublicLeaderboardPageSize;
 
 const querySchema = z.object({
-  tab: z.enum(["current", "allTime"]).default("current"),
+  tab: z.enum(["current", "allTime", "game"]).default("current"),
   page: z.coerce.number().int().nonnegative().default(0),
+  gameId: z.string().optional(),
   limit: z.coerce
     .number()
     .int()
@@ -25,15 +26,21 @@ interface LeaderboardEntry {
 }
 
 interface LeaderboardResponse {
-  users: LeaderboardEntry[];
+  entries: LeaderboardEntry[];
   hasMore: boolean;
   totalPlayers?: number;
   totalWinnings?: number; // Total USDC winnings
+  gameTitle?: string;
 }
 
 /**
  * GET /api/v1/leaderboard
  * Public endpoint for leaderboard data with pagination
+ *
+ * Query params:
+ * - tab: "current" | "allTime" | "game" (default: "current")
+ * - page: number (default: 0)
+ * - gameId: string (required when tab=game, used for current tab to specify game)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -41,6 +48,7 @@ export async function GET(request: NextRequest) {
     const validation = querySchema.safeParse({
       tab: searchParams.get("tab") || "current",
       page: searchParams.get("page") || "0",
+      gameId: searchParams.get("gameId") || undefined,
     });
 
     if (!validation.success) {
@@ -50,13 +58,51 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { tab, page } = validation.data;
+    const { tab, page, gameId } = validation.data;
 
     let entries: LeaderboardEntry[] = [];
     let totalCount = 0;
     let totalWinnings = 0;
+    let gameTitle: string | undefined;
 
-    if (tab === "current") {
+    // Handle "game" tab - fetch specific game's leaderboard
+    if (tab === "game" && gameId) {
+      // Fetch game title
+      const game = await prisma.game.findUnique({
+        where: { id: gameId },
+        select: { title: true },
+      });
+      gameTitle = game?.title ?? "Game";
+
+      const [players, total] = await prisma.$transaction([
+        prisma.gameEntry.findMany({
+          where: { gameId, paidAt: { not: null } },
+          select: {
+            prize: true,
+            rank: true,
+            user: {
+              select: { id: true, fid: true, username: true, pfpUrl: true },
+            },
+          },
+          orderBy: { prize: "desc" },
+          take: PAGE_SIZE,
+          skip: page * PAGE_SIZE,
+        }),
+        prisma.gameEntry.count({
+          where: { gameId, paidAt: { not: null } },
+        }),
+      ]);
+
+      totalCount = total;
+      entries = players.map((p, index) => ({
+        id: p.user.id,
+        fid: p.user.fid,
+        rank: p.rank ?? page * PAGE_SIZE + index + 1,
+        username: p.user.username,
+        winnings: p.prize ?? 0,
+        pfpUrl: p.user.pfpUrl,
+      }));
+    } else if (tab === "current") {
       // --- Query for "Current Game" Tab ---
       // Find a live game (startsAt <= now < endsAt)
       const now = new Date();
@@ -66,23 +112,26 @@ export async function GET(request: NextRequest) {
           endsAt: { gt: now },
         },
         orderBy: { startsAt: "asc" },
-        select: { id: true },
+        select: { id: true, title: true },
       });
 
       if (!currentGame) {
         return NextResponse.json<LeaderboardResponse>({
-          users: [],
+          entries: [],
           hasMore: false,
           totalPlayers: 0,
           totalWinnings: 0,
         });
       }
 
+      gameTitle = currentGame.title;
+
       const [players, total] = await prisma.$transaction([
         prisma.gameEntry.findMany({
           where: { gameId: currentGame.id, paidAt: { not: null } },
           select: {
             prize: true,
+            rank: true,
             user: {
               select: { id: true, fid: true, username: true, pfpUrl: true },
             },
@@ -100,7 +149,7 @@ export async function GET(request: NextRequest) {
       entries = players.map((p, index) => ({
         id: p.user.id,
         fid: p.user.fid,
-        rank: page * PAGE_SIZE + index + 1,
+        rank: p.rank ?? page * PAGE_SIZE + index + 1,
         username: p.user.username,
         winnings: p.prize ?? 0,
         pfpUrl: p.user.pfpUrl,
@@ -150,10 +199,11 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json<LeaderboardResponse>({
-      users: entries,
+      entries,
       hasMore: (page + 1) * PAGE_SIZE < totalCount,
       totalPlayers: totalCount,
       totalWinnings: totalWinnings,
+      gameTitle,
     });
   } catch (error) {
     console.error("GET /api/v1/leaderboard Error:", error);

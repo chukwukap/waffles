@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import Image from "next/image";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
+import { useGame } from "@/components/providers/GameProvider";
 import { LeaderboardData, TabKey } from "./page";
 import { Tabs, LeaderboardTabKey } from "./_components/Tabs";
 import { Top3 } from "./_components/Top3";
@@ -40,35 +41,35 @@ const CROWN_HEIGHT = 180; // Height at which crown fully fades
 // TYPES
 // ============================================
 interface LeaderboardClientProps {
-  initialData: LeaderboardData;
   activeTab: TabKey;
-  gameId?: string;
+  gameIdOverride?: string; // If viewing a specific game's leaderboard
 }
 
 // ============================================
 // COMPONENT
 // ============================================
 export default function LeaderboardClient({
-  initialData,
   activeTab,
-  gameId,
+  gameIdOverride,
 }: LeaderboardClientProps) {
+  // Get game from context (fetched at layout level)
+  const { state: { game } } = useGame();
+
+  // The actual gameId to use: override from URL, or current game from context
+  const gameId = gameIdOverride ?? game?.id;
+  const gameTitle = game?.title ?? "Game";
+
   // Get user FID from MiniKit context
   const { context } = useMiniKit();
   const userFid = context?.user?.fid ?? null;
 
-  // Use mock data if enabled and real data is empty
-  const effectiveData = USE_MOCK_DATA && initialData.entries.length === 0
-    ? MOCK_ENTRIES
-    : initialData.entries;
-
   // ============================================
   // STATE
   // ============================================
-  const [entries, setEntries] = useState(effectiveData);
-  const [hasMore, setHasMore] = useState(USE_MOCK_DATA && initialData.entries.length === 0 ? false : initialData.hasMore);
-  const [page, setPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
+  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+  const [hasMore, setHasMore] = useState(false);
+  const [page, setPage] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [crownOpacity, setCrownOpacity] = useState(1);
   const [isSticky, setIsSticky] = useState(false);
@@ -81,23 +82,90 @@ export default function LeaderboardClient({
   const abortRef = useRef<AbortController | null>(null);
 
   // ============================================
-  // EFFECTS
+  // INITIAL DATA FETCH
   // ============================================
+  const fetchData = useCallback(async (pageNum: number, reset = false) => {
+    // Cancel any in-flight request
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
 
-  // Reset state when tab changes
+    if (reset) {
+      setIsLoading(true);
+      setError(null);
+    }
+
+    try {
+      const params = new URLSearchParams({ page: String(pageNum) });
+
+      // For "current" tab, use the gameId from context
+      // For "allTime" tab, no gameId needed
+      // For "game" tab (specific game), use the gameIdOverride
+      if (activeTab === "current" && gameId) {
+        params.set("tab", "game");
+        params.set("gameId", gameId);
+      } else if (activeTab === "game" && gameIdOverride) {
+        params.set("tab", "game");
+        params.set("gameId", gameIdOverride);
+      } else {
+        params.set("tab", activeTab);
+      }
+
+      const res = await fetch(`/api/v1/leaderboard?${params}`, {
+        signal: controller.signal,
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to fetch: ${res.status}`);
+      }
+
+      const data: LeaderboardData = await res.json();
+
+      if (!controller.signal.aborted) {
+        if (reset) {
+          // Use mock data if enabled and real data is empty
+          const effectiveEntries = USE_MOCK_DATA && data.entries.length === 0
+            ? MOCK_ENTRIES
+            : data.entries;
+          setEntries(effectiveEntries);
+          setHasMore(USE_MOCK_DATA && data.entries.length === 0 ? false : data.hasMore);
+        } else {
+          setEntries((prev) => [...prev, ...data.entries]);
+          setHasMore(data.hasMore);
+        }
+        setPage(pageNum + 1);
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") return;
+      console.error("[Leaderboard] Fetch failed:", err);
+      if (reset) {
+        // On initial load failure, show mock data if enabled
+        if (USE_MOCK_DATA) {
+          setEntries(MOCK_ENTRIES);
+          setHasMore(false);
+        } else {
+          setError("Failed to load leaderboard. Try again.");
+        }
+      } else {
+        setError("Failed to load more. Try again.");
+      }
+    } finally {
+      if (abortRef.current === controller) {
+        abortRef.current = null;
+      }
+      setIsLoading(false);
+    }
+  }, [activeTab, gameId, gameIdOverride]);
+
+  // Fetch on mount and when tab/game changes
   useEffect(() => {
-    const data = USE_MOCK_DATA && initialData.entries.length === 0 ? MOCK_ENTRIES : initialData.entries;
-    setEntries(data);
-    setHasMore(USE_MOCK_DATA && initialData.entries.length === 0 ? false : initialData.hasMore);
-    setPage(1);
-    setError(null);
+    setPage(0);
     setCrownOpacity(1);
-
-    // Reset scroll position
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTop = 0;
     }
-  }, [activeTab, initialData]);
+    fetchData(0, true);
+  }, [activeTab, gameId, fetchData]);
 
   // Infinite scroll observer
   useEffect(() => {
@@ -107,7 +175,7 @@ export default function LeaderboardClient({
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          loadMore();
+          fetchData(page);
         }
       },
       { rootMargin: "300px" }
@@ -115,7 +183,7 @@ export default function LeaderboardClient({
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [hasMore, isLoading]);
+  }, [hasMore, isLoading, page, fetchData]);
 
   // ============================================
   // HANDLERS
@@ -131,50 +199,6 @@ export default function LeaderboardClient({
     setIsSticky(scrollTop >= CROWN_HEIGHT);
   }, []);
 
-  const loadMore = useCallback(async () => {
-    if (isLoading || !hasMore) return;
-
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const params = new URLSearchParams({
-        tab: activeTab,
-        page: String(page),
-      });
-      if (gameId) params.set("gameId", String(gameId));
-
-      const res = await fetch(`/api/v1/leaderboard?${params}`, {
-        signal: controller.signal,
-      });
-
-      if (!res.ok) {
-        throw new Error(`Failed to fetch: ${res.status}`);
-      }
-
-      const data: LeaderboardData = await res.json();
-
-      if (!controller.signal.aborted) {
-        setEntries((prev) => [...prev, ...data.entries]);
-        setHasMore(data.hasMore);
-        setPage((prev) => prev + 1);
-      }
-    } catch (err) {
-      if (err instanceof Error && err.name === "AbortError") return;
-      console.error("[Leaderboard] Load more failed:", err);
-      setError("Failed to load more. Try again.");
-    } finally {
-      if (abortRef.current === controller) {
-        abortRef.current = null;
-      }
-      setIsLoading(false);
-    }
-  }, [isLoading, hasMore, activeTab, page, gameId]);
-
   // ============================================
   // COMPUTED
   // ============================================
@@ -183,11 +207,9 @@ export default function LeaderboardClient({
   const top3 = showTop3 ? entries.slice(0, 3) : [];
   const rest = showTop3 ? entries.slice(3) : entries; // If no Top3, show all in normal flow
   const tabDescription =
-    activeTab === "game"
-      ? initialData.gameTitle ?? "Game Leaderboard"
-      : activeTab === "current"
-        ? "Real-time standings from the current game"
-        : "The greatest of all time";
+    activeTab === "game" || activeTab === "current"
+      ? gameTitle
+      : "The greatest of all time";
 
   // ============================================
   // RENDER
@@ -247,6 +269,17 @@ export default function LeaderboardClient({
 
       {/* LIST SECTION */}
       <section className="pb-24 pt-4 space-y-4">
+        {/* Initial loading state */}
+        {isLoading && entries.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="py-8 flex justify-center"
+          >
+            <WaffleLoader size={80} text="Loading..." />
+          </motion.div>
+        )}
+
         {/* Top 3 - only shown when at least 3 entries */}
         <AnimatePresence mode="wait">
           {showTop3 && (
@@ -279,7 +312,7 @@ export default function LeaderboardClient({
           initial="hidden"
           animate="visible"
         >
-          {rest.map((entry, index) => (
+          {rest.map((entry) => (
             <motion.div
               key={`${activeTab}-${entry.rank}-${entry.id}`}
               variants={{
@@ -295,8 +328,8 @@ export default function LeaderboardClient({
             </motion.div>
           ))}
 
-          {/* Loading indicator */}
-          {isLoading && (
+          {/* Loading indicator for pagination */}
+          {isLoading && entries.length > 0 && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -336,7 +369,7 @@ export default function LeaderboardClient({
           )}
 
           {/* End of list */}
-          {!hasMore && !isEmpty && !error && (
+          {!hasMore && !isEmpty && !error && !isLoading && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
