@@ -287,7 +287,7 @@ export const POST = withAuth<Params>(
       return NextResponse.json(entry, { status: 201 });
     } catch (error) {
       logger.error(SERVICE, "entry_create_error", {
-        gameId,
+        gameId: params.gameId,
         error: logger.errorMessage(error),
       });
       return NextResponse.json<ApiError>(
