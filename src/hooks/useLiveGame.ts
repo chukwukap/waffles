@@ -15,7 +15,7 @@ import sdk from "@farcaster/miniapp-sdk";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useTimer } from "@/hooks/useTimer";
 import { useGame } from "@/components/providers/GameProvider";
-import { playSound, playQuestionAudio, stopQuestionAudio, stopAllAudio } from "@/lib/sounds";
+import { playSound, stopAllAudio } from "@/lib/sounds";
 import type {
   LiveGameData,
   LiveGameQuestion,
@@ -154,9 +154,6 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
     }
 
     if (phase === "question") {
-      // Stop question audio before processing timeout
-      stopQuestionAudio();
-      
       // Auto-submit timeout if not answered
       if (!hasAnswered && !isSubmitting && currentQuestion) {
         setIsSubmitting(true);
@@ -200,43 +197,26 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
     prevSecondsRef.current = seconds;
   }, [seconds, phase]);
 
-  // Play question audio when question changes
+  // Stop all sound effects when question changes or phase ends
   useEffect(() => {
-    if (phase === "question" && currentQuestion?.soundUrl) {
-      playQuestionAudio(currentQuestion.id, currentQuestion.soundUrl);
-    }
-    
-    // Cleanup: stop question audio when question changes or phase ends
-    return () => {
-      stopQuestionAudio();
-    };
-  }, [currentQuestion?.id, currentQuestion?.soundUrl, phase]);
-
-  // Stop all audio when phase changes (clean transitions)
-  useEffect(() => {
-    if (phase !== "question") {
-      stopQuestionAudio();
-    }
-    
-    // On unmount, stop everything
+    // Cleanup on question change or unmount
     return () => {
       stopAllAudio();
     };
-  }, [phase]);
+  }, [currentQuestion?.id, phase]);
 
   // ==========================================
   // GAME LOGIC
   // ==========================================
 
   const advanceToNext = useCallback(() => {
-    // Stop any playing audio before transitioning
-    stopQuestionAudio();
+    // Stop any playing sound effects before transitioning
+    stopAllAudio();
     
     const nextIdx = currentQuestionIndex + 1;
 
     // Game complete?
     if (nextIdx >= game.questions.length || isGameEnded) {
-      stopAllAudio(); // Clean stop for game end
       setPhase("complete");
       return;
     }

@@ -48,7 +48,6 @@ export async function GET(
             id: true,
             content: true,
             mediaUrl: true,
-            soundUrl: true,
             options: true, // String[] field
             durationSec: true,
             roundIndex: true,
