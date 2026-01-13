@@ -20,7 +20,6 @@ import { Abi, encodeFunctionData } from "viem";
 import { WAFFLE_GAME_CONFIG } from "@/lib/chain";
 import waffleGameAbi from "@/lib/chain/abi.json";
 import { Spinner } from "@/components/ui/spinner";
-import { useGame } from "@/components/providers/GameProvider";
 import confetti from "canvas-confetti";
 import { Game } from "@prisma";
 import { WINNERS_COUNT } from "@/lib/game/prizeDistribution";
@@ -37,6 +36,18 @@ type ClaimState =
   | "success"
   | "error"
   | "pending";
+
+// Entry data type for this specific game (independent of global context)
+interface ResultEntryData {
+  id: string;
+  score: number;
+  answered: number;
+  paidAt: string | null;
+  rank: number | null;
+  prize: number | null;
+  claimedAt: string | null;
+  answeredQuestionIds: string[];
+}
 
 // ==========================================
 // COMPONENT
@@ -66,10 +77,45 @@ export default function ResultPageClient({
   const { composeCastAsync } = useComposeCast();
   const gameId = game?.id;
   const gameNumber = game?.gameNumber ?? 0;
-  const { state: gameState, refetchEntry } = useGame();
-  const { entry, isLoadingEntry: entryLoading } = gameState;
+
+  // Local entry state - fetched independently for THIS specific game
+  // This ensures result page works regardless of what game is in global context
+  const [entry, setEntry] = useState<ResultEntryData | null>(null);
+  const [entryLoading, setEntryLoading] = useState(true);
 
   const hasPlayedSound = useRef(false);
+
+  // Fetch entry data for this specific game (independent of global context)
+  const fetchEntry = useCallback(async () => {
+    if (!gameId) {
+      setEntryLoading(false);
+      return;
+    }
+
+    try {
+      const res = await sdk.quickAuth.fetch(`/api/v1/games/${gameId}/entry`);
+      if (res.ok) {
+        const data = await res.json();
+        setEntry(data);
+      } else {
+        // User might not have an entry for this game
+        setEntry(null);
+      }
+    } catch (e) {
+      console.error("[ResultPage] Failed to fetch entry:", e);
+      setEntry(null);
+    } finally {
+      setEntryLoading(false);
+    }
+  }, [gameId]);
+
+  // Initial fetch on mount
+  useEffect(() => {
+    fetchEntry();
+  }, [fetchEntry]);
+
+  // Alias for refetchEntry (used in claim flow)
+  const refetchEntry = fetchEntry;
 
   // Claim state
   const [claimState, setClaimState] = useState<ClaimState>("idle");
