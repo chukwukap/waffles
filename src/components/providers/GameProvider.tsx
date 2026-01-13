@@ -198,11 +198,18 @@ const GameContext = createContext<GameContextValue | null>(null);
 interface GameProviderProps {
     children: ReactNode;
     game: Game | null;
+    /** Initial recent players from server for immediate avatar display */
+    initialRecentPlayers?: RecentPlayer[];
 }
 
-export function GameProvider({ children, game }: GameProviderProps) {
+export function GameProvider({ children, game, initialRecentPlayers = [] }: GameProviderProps) {
     const router = useRouter();
-    const [state, dispatch] = useReducer(reducer, { ...initialState, game });
+    // Seed initial state with server-fetched recent players for immediate display
+    const [state, dispatch] = useReducer(reducer, {
+        ...initialState,
+        game,
+        recentPlayers: initialRecentPlayers,
+    });
 
     const gameId = game?.id;
 
