@@ -95,6 +95,13 @@ export const THEMES = [
 
 /**
  * Number of top players who share the prize pool.
- * Prize is distributed based on tier (paidAmount), not rank position.
+ * Top 3 (podium) share 70%, ranks 4-10 share 30%.
+ * Distribution factors in both rank position and ticket tier.
  */
-export const TOP_WINNERS_COUNT = 5;
+export const TOP_WINNERS_COUNT = 10;
+
+/**
+ * Platform fee in basis points (20% = 2000 bps).
+ * Deducted from gross prize pool before distribution.
+ */
+export const PLATFORM_FEE_BPS = 2000;

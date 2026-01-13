@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getGamePhase } from "@/lib/types";
+import { TOP_WINNERS_COUNT } from "@/lib/constants";
 
 type Params = { prizeId: string };
 
@@ -81,8 +82,8 @@ export const POST = withAuth<Params>(
         );
       }
 
-      // Check eligibility (top 5 ranks get prizes)
-      const isEligible = entry.rank !== null && entry.rank <= 5;
+      // Check eligibility (top 10 ranks get prizes)
+      const isEligible = entry.rank !== null && entry.rank <= TOP_WINNERS_COUNT;
 
       if (!isEligible) {
         return NextResponse.json<ApiError>(

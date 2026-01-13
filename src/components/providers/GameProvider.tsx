@@ -13,6 +13,7 @@
 import {
     createContext,
     useContext,
+    useEffect,
     useReducer,
     useCallback,
     type ReactNode,
@@ -24,6 +25,8 @@ import sdk from "@farcaster/miniapp-sdk";
 import { env } from "@/lib/env";
 import type { Message, ChatItem } from "@shared/protocol";
 import type { GameEntry, Game } from "@prisma";
+import { useUser } from "@/hooks/useUser";
+import { WaffleLoader } from "@/components/ui/WaffleLoader";
 
 
 
@@ -50,6 +53,7 @@ interface GameState {
 
     // Core
     entry: GameEntryData | null;
+    isLoadingEntry: boolean;
     prizePool: number | null;
     playerCount: number | null;
 
@@ -65,6 +69,7 @@ interface GameState {
 const initialState: GameState = {
     game: null,
     entry: null,
+    isLoadingEntry: true,
     prizePool: null,
     playerCount: null,
     connected: false,
@@ -81,6 +86,7 @@ const initialState: GameState = {
 
 type Action =
     | { type: "SET_ENTRY"; payload: GameEntryData | null }
+    | { type: "SET_LOADING_ENTRY"; payload: boolean }
     | { type: "UPDATE_STATS"; payload: { prizePool?: number; playerCount?: number } }
     | { type: "SET_CONNECTED"; payload: boolean }
     | { type: "SET_ONLINE_COUNT"; payload: number }
@@ -95,7 +101,10 @@ type Action =
 function reducer(state: GameState, action: Action): GameState {
     switch (action.type) {
         case "SET_ENTRY":
-            return { ...state, entry: action.payload };
+            return { ...state, entry: action.payload, isLoadingEntry: false };
+
+        case "SET_LOADING_ENTRY":
+            return { ...state, isLoadingEntry: action.payload };
 
         case "UPDATE_STATS":
             return {
@@ -177,6 +186,7 @@ interface GameContextValue {
     sendChat: (text: string) => boolean;
     sendAnswer: (questionIndex: number, answerIndex: number, timeMs: number) => void;
     sendCheer: () => void;
+    refetchEntry: () => Promise<void>;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -320,6 +330,54 @@ export function GameProvider({ children, game }: GameProviderProps) {
         onMessage: handleMessage,
     });
 
+    // Access Control Logic - Redirects if user doesn't have game access
+    const { user, isLoading: isLoadingUser } = useUser();
+
+    useEffect(() => {
+        if (!isLoadingUser && (!user || !user.hasGameAccess || user.isBanned)) {
+            router.replace("/redeem");
+        }
+    }, [user, isLoadingUser, router]);
+
+    // Fetch User Entry
+    const fetchEntry = useCallback(async () => {
+        if (!gameId) return;
+
+        dispatch({ type: "SET_LOADING_ENTRY", payload: true });
+
+        try {
+            const res = await sdk.quickAuth.fetch(`/api/v1/games/${gameId}/entry`);
+            if (res.ok) {
+                const data = await res.json();
+                dispatch({
+                    type: "SET_ENTRY",
+                    payload: {
+                        id: data.id,
+                        score: data.score ?? 0,
+                        answered: data.answered ?? 0,
+                        answeredQuestionIds: data.answeredQuestionIds ?? [],
+                        paidAt: data.paidAt ? new Date(data.paidAt) : null,
+                        rank: data.rank ?? null,
+                        prize: data.prize ?? null,
+                        claimedAt: data.claimedAt ? new Date(data.claimedAt) : null,
+                    },
+                });
+            } else if (res.status === 404) {
+                dispatch({ type: "SET_ENTRY", payload: null });
+            } else {
+                throw new Error("Failed to fetch");
+            }
+        } catch (err) {
+            console.error("Failed to fetch entry", err);
+            dispatch({ type: "SET_LOADING_ENTRY", payload: false });
+        }
+    }, [gameId]);
+
+    // Auto-fetch entry on mount/change
+    useEffect(() => {
+        fetchEntry();
+    }, [fetchEntry]);
+
     // Send functions use socket directly
     const sendChat = useCallback(
         (text: string): boolean => {
@@ -359,9 +417,13 @@ export function GameProvider({ children, game }: GameProviderProps) {
         [socket]
     );
 
+    // Block rendering while directing or if access denied
+    if (isLoadingUser) return <WaffleLoader />;
+    if (!user || !user.hasGameAccess || user.isBanned) return null;
+
     return (
         <GameContext.Provider
-            value={{ state, dispatch, sendChat, sendAnswer, sendCheer }}
+            value={{ state, dispatch, sendChat, sendAnswer, sendCheer, refetchEntry: fetchEntry }}
         >
             {children}
         </GameContext.Provider>

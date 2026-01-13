@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { z } from "zod";
 import { sendToUser } from "@/lib/notifications";
 import { env } from "@/lib/env";
+import { TOP_WINNERS_COUNT } from "@/lib/constants";
 
 const claimSchema = z.object({
   gameId: z.string().min(1, "Invalid Game ID"),
@@ -72,8 +73,8 @@ export const POST = withAuth(async (request, auth: AuthResult) => {
       );
     }
 
-    // Check eligibility (top 5 ranks get prizes)
-    const isEligible = entry.rank !== null && entry.rank <= 5;
+    // Check eligibility (top 10 ranks get prizes)
+    const isEligible = entry.rank !== null && entry.rank <= TOP_WINNERS_COUNT && entry.prize !== null && entry.prize > 0;
 
     if (!isEligible) {
       return NextResponse.json<ApiError>(

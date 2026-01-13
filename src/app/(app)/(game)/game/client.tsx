@@ -1,15 +1,11 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 
-import { useUser } from "@/hooks/useUser";
 import { useGame } from "@/components/providers/GameProvider";
 import { BottomNav } from "@/components/BottomNav";
-import { WaffleLoader } from "@/components/ui/WaffleLoader";
 import { springs, staggerContainer, fadeInUp } from "@/lib/animations";
-import { getGamePhase } from "@/lib/types";
 
 import { GameChat } from "./_components/chat/GameChat";
 import { LiveEventFeed } from "./_components/LiveEventFeed";
@@ -22,69 +18,26 @@ import { useSounds } from "@/components/providers/SoundProvider";
 // ==========================================
 
 export function GameHub() {
-  const router = useRouter();
-  const hasRefreshedRef = useRef(false);
-
-  // Get game from context (fetched at layout level)
-  const { state: { game } } = useGame();
-
-  // User data
-  const { user, isLoading: isLoadingUser } = useUser();
-  const hasAccess = !!user?.hasGameAccess && !user?.isBanned;
+  const {
+    state: { game },
+  } = useGame();
 
   // Background music
   const { playBgMusic, stopBgMusic } = useSounds();
 
-  // Derived state
-  const phase = game ? getGamePhase(game) : "SCHEDULED";
-  const hasActiveGame = game && phase !== "ENDED";
-
-  // Access control redirect
-  useEffect(() => {
-    if (!isLoadingUser && (!user || !user.hasGameAccess || user.isBanned)) {
-      router.replace("/redeem");
-    }
-  }, [user, isLoadingUser, router]);
-
-  // Auto-refresh when game should start
-  useEffect(() => {
-    if (!game || phase !== "SCHEDULED") return;
-
-    const msUntilStart = game.startsAt.getTime() - Date.now();
-    if (msUntilStart <= 0 && !hasRefreshedRef.current) {
-      hasRefreshedRef.current = true;
-      router.refresh();
-    }
-  }, [game, phase, router]);
+  // Derived state - check if game has ended by comparing current time to endsAt
+  const hasEnded = game ? Date.now() >= game.endsAt.getTime() : true;
+  const hasActiveGame = game && !hasEnded;
 
   // Background music
   useEffect(() => {
-    if (hasAccess && hasActiveGame) {
+    if (hasActiveGame) {
       playBgMusic();
     } else {
       stopBgMusic();
     }
     return () => stopBgMusic();
-  }, [hasAccess, hasActiveGame, playBgMusic, stopBgMusic]);
-
-  // ==========================================
-  // RENDER: Loading
-  // ==========================================
-
-  if (!isLoadingUser && !hasAccess) {
-    // Don't show BottomNav during access check - prevents bypass
-    return (
-      <main className="flex-1 flex flex-col items-center justify-center min-h-[60vh]">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={springs.gentle}
-        >
-          <WaffleLoader text="Checking access..." />
-        </motion.div>
-      </main>
-    );
-  }
+  }, [hasActiveGame, playBgMusic, stopBgMusic]);
 
   // ==========================================
   // RENDER: Empty State

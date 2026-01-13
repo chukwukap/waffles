@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion, useAnimation } from "framer-motion";
@@ -8,7 +8,6 @@ import { motion, useAnimation } from "framer-motion";
 import { WaffleButton } from "@/components/buttons/WaffleButton";
 import { useGame } from "@/components/providers/GameProvider";
 import { useUser } from "@/hooks/useUser";
-import { useGameEntry } from "@/hooks/useGameEntry";
 import { useTimer } from "@/hooks/useTimer";
 import { springs } from "@/lib/animations";
 
@@ -24,27 +23,35 @@ export function NextGameCard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Get game from context (fetched at layout level)
-  const { state: { game, prizePool: storePrizePool, playerCount: storePlayerCount } } = useGame();
+  const {
+    state: {
+      game,
+      entry,
+      isLoadingEntry,
+      prizePool: storePrizePool,
+      playerCount: storePlayerCount,
+    },
+    refetchEntry,
+  } = useGame();
 
-  // Get user and entry data
+  // Get user data
   const { user } = useUser();
-  const { entry, isLoading: isLoadingEntry, refetchEntry } = useGameEntry({
-    gameId: game?.id,
-    enabled: !!game,
-  });
 
   // Realtime stats from context (updated via WebSocket), fallback to game prop
   const prizePool = storePrizePool ?? game?.prizePool ?? 0;
   const playerCount = storePlayerCount ?? game?.playerCount ?? 0;
   const spotsTotal = game?.maxPlayers ?? 500;
 
-  // Derive phase
   const now = Date.now();
   const hasEnded = game ? now >= game.endsAt.getTime() : false;
   const isLive = game ? !hasEnded && now >= game.startsAt.getTime() : false;
 
   // Timer - countdown to start or end
-  const targetMs = game ? (isLive ? game.endsAt.getTime() : game.startsAt.getTime()) : 0;
+  const targetMs = game
+    ? isLive
+      ? game.endsAt.getTime()
+      : game.startsAt.getTime()
+    : 0;
   const countdown = useTimer(targetMs);
 
   // Derived state
@@ -87,14 +94,18 @@ export function NextGameCard() {
   const buttonConfig = isLoadingEntry
     ? { text: "LOADING...", disabled: true, href: null }
     : hasEnded
-      ? { text: "VIEW RESULTS", disabled: false, href: `/game/${game?.id}/result` }
-      : isLive
-        ? hasTicket
-          ? { text: "PLAY NOW", disabled: false, href: `/game/${game?.id}/live` }
-          : { text: "GET TICKET", disabled: false, href: null }
-        : hasTicket
-          ? { text: "YOU'RE IN!", disabled: true, href: null }
-          : { text: "BUY WAFFLE", disabled: false, href: null };
+    ? {
+        text: "VIEW RESULTS",
+        disabled: false,
+        href: `/game/${game?.id}/result`,
+      }
+    : isLive
+    ? hasTicket
+      ? { text: "PLAY NOW", disabled: false, href: `/game/${game?.id}/live` }
+      : { text: "GET TICKET", disabled: false, href: null }
+    : hasTicket
+    ? { text: "YOU'RE IN!", disabled: true, href: null }
+    : { text: "BUY WAFFLE", disabled: false, href: null };
 
   const handleButtonClick = () => {
     if (buttonConfig.disabled) return;
@@ -104,7 +115,6 @@ export function NextGameCard() {
       setIsModalOpen(true);
     }
   };
-
 
   return (
     <>
@@ -125,11 +135,22 @@ export function NextGameCard() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, ...springs.bouncy }}
           className="relative flex flex-col justify-center items-center shrink-0 z-10 w-full h-[52px]"
-          style={{ background: "rgba(27, 27, 29, 0.8)", backdropFilter: "blur(12px)" }}
+          style={{
+            background: "rgba(27, 27, 29, 0.8)",
+            backdropFilter: "blur(12px)",
+          }}
         >
           <div className="flex flex-row justify-center items-center gap-3 h-[30px]">
-            <motion.div animate={{ rotate: [0, -5, 5, -3, 3, 0] }} transition={{ delay: 0.5, duration: 0.5 }}>
-              <Image src="/images/icons/game-controller.png" alt="controller" width={30} height={30} />
+            <motion.div
+              animate={{ rotate: [0, -5, 5, -3, 3, 0] }}
+              transition={{ delay: 0.5, duration: 0.5 }}
+            >
+              <Image
+                src="/images/icons/game-controller.png"
+                alt="controller"
+                width={30}
+                height={30}
+              />
             </motion.div>
             <span className="font-body text-white uppercase text-[26px] leading-[92%] tracking-[-0.03em]">
               WAFFLES #{(game?.gameNumber ?? 0).toString().padStart(3, "0")}
@@ -167,7 +188,10 @@ export function NextGameCard() {
           transition={{ delay: 0.4, ...springs.bouncy }}
           className="relative flex justify-center items-center px-4 py-2 z-10 shrink-0"
         >
-          <WaffleButton disabled={buttonConfig.disabled} onClick={handleButtonClick}>
+          <WaffleButton
+            disabled={buttonConfig.disabled}
+            onClick={handleButtonClick}
+          >
             {buttonConfig.text}
           </WaffleButton>
         </motion.div>
@@ -187,7 +211,11 @@ export function NextGameCard() {
                 "0 0 0px rgba(245, 187, 27, 0)",
               ],
             }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" as const }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut" as const,
+            }}
             className="flex flex-row justify-center items-center px-5 py-2.5 min-w-[158px] h-[44px] border-2 border-[#F5BB1B] rounded-full"
           >
             <motion.span
@@ -200,7 +228,11 @@ export function NextGameCard() {
             </motion.span>
           </motion.div>
           <span className="font-display text-center text-white/50 text-xs">
-            {isLive ? "Until game ends" : "Until game starts"}
+            {hasEnded
+              ? "Game has ended"
+              : isLive
+              ? "Until game ends"
+              : "Until game starts"}
           </span>
         </motion.div>
 
@@ -215,11 +247,6 @@ export function NextGameCard() {
           <PlayerAvatarStack
             actionText="joined the game"
             overrideCount={playerCount}
-            formatText={(count) =>
-              count > 0
-                ? `${count} ${count === 1 ? "person has" : "people have"} joined the game`
-                : "Be the first to join!"
-            }
           />
         </motion.div>
       </motion.div>
@@ -267,8 +294,13 @@ function StatBlock({
       className="flex flex-col justify-center items-center flex-1 h-[85px]"
     >
       <Image src={icon} alt={label} width={iconSize.w} height={iconSize.h} />
-      <span className="font-display text-center text-[#99A0AE] text-base">{label}</span>
-      <motion.span animate={animateControls} className="font-body text-white text-2xl">
+      <span className="font-display text-center text-[#99A0AE] text-base">
+        {label}
+      </span>
+      <motion.span
+        animate={animateControls}
+        className="font-body text-white text-2xl"
+      >
         {value}
       </motion.span>
     </motion.div>

@@ -68,7 +68,6 @@ export function BuyTicketModal({
     if (isOpen && !isConnected) {
       connect({
         connector: farcasterFrame(),
-        chainId: CHAIN_CONFIG.chain.id
       });
     }
   }, [isOpen, isConnected, connect]);

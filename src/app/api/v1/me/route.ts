@@ -16,6 +16,7 @@ interface MeResponse {
   isBanned: boolean;
   joinedWaitlistAt: Date | null;
   inviteCode: string | null;
+  inviteQuota: number;
   waitlistPoints: number;
   waitlistRank: number;
   invitesCount: number;
@@ -81,6 +82,7 @@ export async function GET(request: NextRequest) {
       isBanned: user.isBanned,
       joinedWaitlistAt: user.joinedWaitlistAt,
       inviteCode: user.inviteCode,
+      inviteQuota: user.inviteQuota,
       waitlistPoints: user.waitlistPoints,
       waitlistRank: rank + 1, // +1 because rank is 0-indexed
       invitesCount: user._count.referrals,

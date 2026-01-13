@@ -9,11 +9,7 @@ import { parseUnits } from "viem";
 import { prisma } from "@/lib/db";
 import { TOP_WINNERS_COUNT } from "@/lib/constants";
 import { WAFFLE_GAME_CONFIG, TOKEN_CONFIG } from "@/lib/chain/config";
-import {
-  publicClient,
-  getWalletClient,
-  getPlatformFeeBps,
-} from "@/lib/chain/client";
+import { publicClient, getWalletClient } from "@/lib/chain/client";
 import {
   buildMerkleTree,
   generateAllProofs,
@@ -22,6 +18,11 @@ import {
 import waffleGameAbi from "@/lib/chain/abi.json";
 import { sendToUser, sendBatch } from "@/lib/notifications";
 import { env } from "@/lib/env";
+import {
+  calculatePrizeDistribution,
+  formatDistribution,
+  type PlayerEntry,
+} from "./prizeDistribution";
 
 // ============================================================================
 // Types
@@ -94,19 +95,21 @@ export async function rankGame(gameId: string): Promise<RankResult> {
   if (new Date() < game.endsAt)
     throw new Error(`Game ${gameId} has not ended yet`);
 
-  // Get entries ordered by score
+  // Get all entries ordered by score (tie-breaker: earlier submission wins)
   const entries = await prisma.gameEntry.findMany({
-    where: { gameId, paidAt: { not: null } },
+    where: { gameId },
     orderBy: [{ score: "desc" }, { updatedAt: "asc" }],
     select: {
       id: true,
       score: true,
       userId: true,
       paidAmount: true,
+      paidAt: true,
       user: { select: { username: true } },
     },
   });
 
+  // Handle no entries case
   if (entries.length === 0) {
     await prisma.game.update({
       where: { id: gameId },
@@ -121,13 +124,22 @@ export async function rankGame(gameId: string): Promise<RankResult> {
     };
   }
 
-  // Calculate net prize pool
-  const platformFeeBps = await getPlatformFeeBps();
-  const netPrizePool = game.prizePool * (1 - platformFeeBps / 10000);
+  // Transform entries for prize distribution algorithm
+  const playerEntries: PlayerEntry[] = entries.map((e) => ({
+    id: e.id,
+    userId: e.userId,
+    score: e.score,
+    paidAmount: e.paidAt ? (e.paidAmount ?? 0) : 0, // Only count paid entries
+    username: e.user.username ?? undefined,
+  }));
 
-  const top5 = entries.slice(0, TOP_WINNERS_COUNT);
-  const totalWeight = top5.reduce((sum, e) => sum + (e.paidAmount ?? 0), 0);
+  // Calculate prize distribution using new algorithm
+  const distribution = calculatePrizeDistribution(playerEntries, game.prizePool);
 
+  // Log distribution for debugging
+  console.log(`[Lifecycle] ${formatDistribution(distribution)}`);
+
+  // Build update data and winners list
   const winners: Array<{
     rank: number;
     prize: number;
@@ -135,21 +147,22 @@ export async function rankGame(gameId: string): Promise<RankResult> {
     username: string;
     entryId: string;
   }> = [];
-  const updateData = entries.map((entry, index) => {
-    const rank = index + 1;
-    if (index < TOP_WINNERS_COUNT && totalWeight > 0) {
-      const prize = ((entry.paidAmount ?? 0) / totalWeight) * netPrizePool;
-      if (prize > 0)
-        winners.push({
-          rank,
-          prize,
-          userId: entry.userId,
-          username: entry.user.username ?? "Unknown",
-          entryId: entry.id,
-        });
-      return { id: entry.id, rank, prize };
+
+  const updateData = distribution.allocations.map((alloc) => {
+    if (alloc.prize > 0) {
+      winners.push({
+        rank: alloc.rank,
+        prize: alloc.prize,
+        userId: alloc.userId,
+        username: alloc.username ?? "Unknown",
+        entryId: alloc.entryId,
+      });
     }
-    return { id: entry.id, rank, prize: 0 };
+    return {
+      id: alloc.entryId,
+      rank: alloc.rank,
+      prize: alloc.prize,
+    };
   });
 
   // Batch update

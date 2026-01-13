@@ -6,7 +6,7 @@ import { parseUnits, encodeFunctionData } from "viem";
 import { farcasterFrame } from "@farcaster/miniapp-wagmi-connector";
 import sdk from "@farcaster/miniapp-sdk";
 
-import { useGameEntry } from "./useGameEntry";
+import { useGame } from "@/components/providers/GameProvider";
 import { useTokenAllowance } from "./waffleContractHooks";
 import { notify } from "@/components/ui/Toaster";
 import { playSound } from "@/lib/sounds";
@@ -50,14 +50,8 @@ export function useTicketPurchase(
   // ==========================================
   // BACKEND ENTRY (Source of Truth)
   // ==========================================
-  const {
-    entry,
-    isLoading: isLoadingEntry,
-    refetchEntry,
-  } = useGameEntry({
-    gameId,
-    enabled: !!gameId,
-  });
+  const { state: gameState, refetchEntry } = useGame();
+  const { entry, isLoadingEntry } = gameState;
 
   // Has ticket = entry exists and is paid
   const hasTicket = !!entry?.paidAt;

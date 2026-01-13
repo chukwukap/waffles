@@ -20,9 +20,10 @@ import { Abi, encodeFunctionData } from "viem";
 import { WAFFLE_GAME_CONFIG } from "@/lib/chain";
 import waffleGameAbi from "@/lib/chain/abi.json";
 import { Spinner } from "@/components/ui/spinner";
-import { useGameEntry } from "@/hooks/useGameEntry";
+import { useGame } from "@/components/providers/GameProvider";
 import confetti from "canvas-confetti";
 import { Game } from "@prisma";
+import { TOP_WINNERS_COUNT } from "@/lib/constants";
 
 // ==========================================
 // TYPES
@@ -67,7 +68,8 @@ export default function ResultPageClient({
   const { composeCastAsync } = useComposeCast();
   const gameId = game?.id
   const gameNumber = game?.gameNumber ?? 0
-  const { entry, isLoading: entryLoading, refetchEntry } = useGameEntry({ gameId });
+  const { state: gameState, refetchEntry } = useGame();
+  const { entry, isLoadingEntry: entryLoading } = gameState;
 
   const hasPlayedSound = useRef(false);
 
@@ -101,9 +103,9 @@ export default function ResultPageClient({
   const hasClaimed =
     entry?.claimedAt !== null && entry?.claimedAt !== undefined;
 
-  // Is user a winner (rank 1-5)?
+  // Is user a winner (rank 1-10)?
   const isWinner = useMemo(() => {
-    return userScore !== null && userScore.rank <= 5 && userScore.winnings > 0;
+    return userScore !== null && userScore.rank <= TOP_WINNERS_COUNT && userScore.winnings > 0;
   }, [userScore]);
 
 
@@ -112,10 +114,10 @@ export default function ResultPageClient({
   useEffect(() => {
     if (!hasPlayedSound.current && userScore) {
       hasPlayedSound.current = true;
-      playSound(userScore.rank <= 5 ? "victory" : "defeat");
+      playSound(userScore.rank <= TOP_WINNERS_COUNT ? "victory" : "defeat");
 
-      // Fire confetti for winners (rank 1-5)
-      if (userScore.rank <= 5 && userScore.winnings > 0) {
+      // Fire confetti for winners (rank 1-10)
+      if (userScore.rank <= TOP_WINNERS_COUNT && userScore.winnings > 0) {
         // Initial burst
         confetti({
           particleCount: 100,

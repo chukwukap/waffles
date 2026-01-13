@@ -11,17 +11,21 @@ import type { User } from "@prisma";
 
 export type UserData = Pick<
   User,
+  | "id"
   | "fid"
   | "username"
   | "pfpUrl"
   | "wallet"
   | "waitlistPoints"
   | "inviteQuota"
+  | "inviteCode"
   | "hasGameAccess"
   | "isBanned"
   | "joinedWaitlistAt"
+  | "createdAt"
 > & {
   waitlistRank: number; // Calculated on the fly by /api/v1/me
+  invitesCount: number;
 };
 
 // ==========================================
@@ -67,9 +71,13 @@ export function useUser() {
     }
   );
 
+  // If no FID, we are waiting for MiniKit context (loading)
+  // If SWR is fetching, we are loading
+  const isGlobalLoading = isLoading || !fid;
+
   return {
     user: data ?? null,
-    isLoading,
+    isLoading: isGlobalLoading,
     error: error ? "Failed to load user" : null,
     refetch: mutate,
   };

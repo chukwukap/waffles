@@ -17,18 +17,22 @@ export default async function GameQuestionsPage({
     const gameId = resolvedParams.id;
     const warning = resolvedSearchParams.warning;
 
-    const game = await prisma.game.findUnique({
+    const gameData = await prisma.game.findUnique({
         where: { id: gameId },
-        include: {
-            questions: {
-                orderBy: { roundIndex: "asc" },
-            },
-        },
     });
 
-    if (!game) {
+    if (!gameData) {
         notFound();
     }
+
+    const questions = await prisma.question.findMany({
+        where: { gameId: gameData.id },
+        orderBy: { roundIndex: "asc" },
+    });
+
+    const game = { ...gameData, questions };
+
+
 
     const totalQuestions = game.questions.length;
 
