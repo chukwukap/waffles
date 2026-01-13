@@ -3,208 +3,107 @@ import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { z } from "zod";
 
+// ============================================
+// CONFIGURATION
+// ============================================
 const PAGE_SIZE = env.nextPublicLeaderboardPageSize;
+const USE_MOCK_DATA = false; // TODO: Set to false for production
 
-const querySchema = z.object({
-  tab: z.enum(["current", "allTime", "game"]).default("current"),
-  page: z.coerce.number().int().nonnegative().default(0),
-  gameId: z.string().optional(),
-  limit: z.coerce
-    .number()
-    .int()
-    .min(1)
-    .default(env.nextPublicLeaderboardPageSize),
-});
-
+// ============================================
+// TYPES
+// ============================================
 interface LeaderboardEntry {
   id: string;
   fid: number;
   rank: number;
   username: string | null;
-  winnings: number; // USDC winnings, not points
+  prize: number;
   pfpUrl: string | null;
 }
 
 interface LeaderboardResponse {
   entries: LeaderboardEntry[];
   hasMore: boolean;
-  totalPlayers?: number;
-  totalWinnings?: number; // Total USDC winnings
+  totalPlayers: number;
   gameTitle?: string;
+  gameNumber?: number;
 }
 
-/**
- * GET /api/v1/leaderboard
- * Public endpoint for leaderboard data with pagination
- *
- * Query params:
- * - tab: "current" | "allTime" | "game" (default: "current")
- * - page: number (default: 0)
- * - gameId: string (required when tab=game, used for current tab to specify game)
- */
+// ============================================
+// MOCK DATA
+// ============================================
+const MOCK_USERNAMES = [
+  "CryptoKing",
+  "WaffleQueen",
+  "BlockchainBoss",
+  "TokenMaster",
+  "DeFiDegen",
+  "NFTNinja",
+  "ChainChamp",
+  "MintMaster",
+  "GasGuru",
+  "StakeSlayer",
+];
+
+function getMockEntries(page: number): LeaderboardEntry[] {
+  const start = page * PAGE_SIZE;
+  const end = start + PAGE_SIZE;
+
+  // Generate 100 total mock entries, paginated
+  return Array.from({ length: PAGE_SIZE }, (_, i) => {
+    const rank = start + i + 1;
+    if (rank > 100) return null; // Only 100 mock entries total
+    return {
+      id: `mock-${rank}`,
+      fid: 100000 + rank,
+      rank,
+      username:
+        MOCK_USERNAMES[(rank - 1) % MOCK_USERNAMES.length] +
+        (rank > MOCK_USERNAMES.length
+          ? `_${Math.floor((rank - 1) / MOCK_USERNAMES.length)}`
+          : ""),
+      prize: Math.max(10000 - (rank - 1) * 100, 100),
+      pfpUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${rank}`,
+    };
+  }).filter(Boolean) as LeaderboardEntry[];
+}
+
+// ============================================
+// QUERY VALIDATION
+// ============================================
+const querySchema = z.object({
+  tab: z.enum(["allTime"]).optional(),
+  page: z.coerce.number().int().nonnegative().default(0),
+  gameId: z.string().optional(),
+});
+
+// ============================================
+// HANDLER
+// ============================================
 export async function GET(request: NextRequest) {
   try {
+    // 1. Parse params
     const { searchParams } = new URL(request.url);
-    const validation = querySchema.safeParse({
-      tab: searchParams.get("tab") || "current",
+    const parsed = querySchema.safeParse({
+      tab: searchParams.get("tab") || undefined,
       page: searchParams.get("page") || "0",
       gameId: searchParams.get("gameId") || undefined,
     });
 
-    if (!validation.success) {
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Invalid query parameters" },
+        { error: "Invalid parameters" },
         { status: 400 }
       );
     }
 
-    const { tab, page, gameId } = validation.data;
+    const { tab, page, gameId } = parsed.data;
 
-    let entries: LeaderboardEntry[] = [];
-    let totalCount = 0;
-    let totalWinnings = 0;
-    let gameTitle: string | undefined;
-
-    // Handle "game" tab - fetch specific game's leaderboard
-    if (tab === "game" && gameId) {
-      // Fetch game title
-      const game = await prisma.game.findUnique({
-        where: { id: gameId },
-        select: { title: true },
-      });
-      gameTitle = game?.title ?? "Game";
-
-      const [players, total] = await prisma.$transaction([
-        prisma.gameEntry.findMany({
-          where: { gameId, paidAt: { not: null } },
-          select: {
-            prize: true,
-            rank: true,
-            user: {
-              select: { id: true, fid: true, username: true, pfpUrl: true },
-            },
-          },
-          orderBy: { prize: "desc" },
-          take: PAGE_SIZE,
-          skip: page * PAGE_SIZE,
-        }),
-        prisma.gameEntry.count({
-          where: { gameId, paidAt: { not: null } },
-        }),
-      ]);
-
-      totalCount = total;
-      entries = players.map((p, index) => ({
-        id: p.user.id,
-        fid: p.user.fid,
-        rank: p.rank ?? page * PAGE_SIZE + index + 1,
-        username: p.user.username,
-        winnings: p.prize ?? 0,
-        pfpUrl: p.user.pfpUrl,
-      }));
-    } else if (tab === "current") {
-      // --- Query for "Current Game" Tab ---
-      // Find a live game (startsAt <= now < endsAt)
-      const now = new Date();
-      const currentGame = await prisma.game.findFirst({
-        where: {
-          startsAt: { lte: now },
-          endsAt: { gt: now },
-        },
-        orderBy: { startsAt: "asc" },
-        select: { id: true, title: true },
-      });
-
-      if (!currentGame) {
-        return NextResponse.json<LeaderboardResponse>({
-          entries: [],
-          hasMore: false,
-          totalPlayers: 0,
-          totalWinnings: 0,
-        });
-      }
-
-      gameTitle = currentGame.title;
-
-      const [players, total] = await prisma.$transaction([
-        prisma.gameEntry.findMany({
-          where: { gameId: currentGame.id, paidAt: { not: null } },
-          select: {
-            prize: true,
-            rank: true,
-            user: {
-              select: { id: true, fid: true, username: true, pfpUrl: true },
-            },
-          },
-          orderBy: { prize: "desc" },
-          take: PAGE_SIZE,
-          skip: page * PAGE_SIZE,
-        }),
-        prisma.gameEntry.count({
-          where: { gameId: currentGame.id, paidAt: { not: null } },
-        }),
-      ]);
-
-      totalCount = total;
-      entries = players.map((p, index) => ({
-        id: p.user.id,
-        fid: p.user.fid,
-        rank: p.rank ?? page * PAGE_SIZE + index + 1,
-        username: p.user.username,
-        winnings: p.prize ?? 0,
-        pfpUrl: p.user.pfpUrl,
-      }));
-    } else {
-      // --- Query for "All Time" Tab ---
-      const [aggregatedPrizes, totalCountResult] = await prisma.$transaction([
-        prisma.gameEntry.groupBy({
-          by: ["userId"],
-          where: { paidAt: { not: null } },
-          _sum: { prize: true },
-          orderBy: { _sum: { prize: "desc" } },
-          take: PAGE_SIZE,
-          skip: page * PAGE_SIZE,
-        }),
-        prisma.gameEntry.groupBy({
-          by: ["userId"],
-          where: { paidAt: { not: null } },
-          orderBy: { userId: "asc" },
-        }),
-      ]);
-
-      totalCount = totalCountResult.length;
-      const userIds = aggregatedPrizes.map((s) => s.userId);
-
-      if (userIds.length > 0) {
-        const users = await prisma.user.findMany({
-          where: { id: { in: userIds } },
-          select: { id: true, fid: true, username: true, pfpUrl: true },
-        });
-        const usersMap = new Map(users.map((u) => [u.id, u]));
-
-        entries = aggregatedPrizes.map((s, index) => {
-          const user = usersMap.get(s.userId);
-          const winnings = s._sum?.prize ?? 0;
-          totalWinnings += winnings;
-          return {
-            id: user?.id ?? "",
-            fid: user?.fid ?? 0,
-            rank: page * PAGE_SIZE + index + 1,
-            username: user?.username ?? "Unknown",
-            winnings: winnings,
-            pfpUrl: user?.pfpUrl ?? null,
-          };
-        });
-      }
+    // 2. Route to appropriate handler
+    if (tab === "allTime") {
+      return handleAllTime(page);
     }
-
-    return NextResponse.json<LeaderboardResponse>({
-      entries,
-      hasMore: (page + 1) * PAGE_SIZE < totalCount,
-      totalPlayers: totalCount,
-      totalWinnings: totalWinnings,
-      gameTitle,
-    });
+    return handleGame(page, gameId);
   } catch (error) {
     console.error("GET /api/v1/leaderboard Error:", error);
     return NextResponse.json(
@@ -212,4 +111,145 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// ============================================
+// ALL TIME HANDLER
+// ============================================
+async function handleAllTime(
+  page: number
+): Promise<NextResponse<LeaderboardResponse>> {
+  const [aggregated, allUsers] = await prisma.$transaction([
+    prisma.gameEntry.groupBy({
+      by: ["userId"],
+      where: { paidAt: { not: null } },
+      _sum: { prize: true },
+      orderBy: { _sum: { prize: "desc" } },
+      take: PAGE_SIZE,
+      skip: page * PAGE_SIZE,
+    }),
+    prisma.gameEntry.groupBy({
+      by: ["userId"],
+      where: { paidAt: { not: null } },
+      orderBy: { userId: "asc" },
+    }),
+  ]);
+
+  const totalPlayers = allUsers.length;
+
+  // No data - return mock if enabled
+  if (aggregated.length === 0) {
+    return NextResponse.json({
+      entries: USE_MOCK_DATA ? getMockEntries(page) : [],
+      hasMore: USE_MOCK_DATA ? (page + 1) * PAGE_SIZE < 100 : false,
+      totalPlayers: USE_MOCK_DATA ? 100 : 0,
+    });
+  }
+
+  // Fetch user details
+  const userIds = aggregated.map((a) => a.userId);
+  const users = await prisma.user.findMany({
+    where: { id: { in: userIds } },
+    select: { id: true, fid: true, username: true, pfpUrl: true },
+  });
+  const userMap = new Map(users.map((u) => [u.id, u]));
+
+  const entries: LeaderboardEntry[] = aggregated.map((a, i) => {
+    const user = userMap.get(a.userId);
+    return {
+      id: user?.id ?? a.userId,
+      fid: user?.fid ?? 0,
+      rank: page * PAGE_SIZE + i + 1,
+      username: user?.username ?? "Unknown",
+      prize: a._sum?.prize ?? 0,
+      pfpUrl: user?.pfpUrl ?? null,
+    };
+  });
+
+  return NextResponse.json({
+    entries,
+    hasMore: (page + 1) * PAGE_SIZE < totalPlayers,
+    totalPlayers,
+  });
+}
+
+// ============================================
+// GAME HANDLER
+// ============================================
+async function handleGame(
+  page: number,
+  gameId?: string
+): Promise<NextResponse<LeaderboardResponse>> {
+  // Resolve game ID - use provided or get latest
+  let targetGameId = gameId;
+
+  if (!targetGameId) {
+    const latest = await prisma.game.findFirst({
+      orderBy: { endsAt: "desc" },
+      select: { id: true },
+    });
+    targetGameId = latest?.id;
+  }
+
+  // No games exist at all - return mock
+  if (!targetGameId) {
+    return NextResponse.json({
+      entries: USE_MOCK_DATA ? getMockEntries(page) : [],
+      hasMore: USE_MOCK_DATA ? (page + 1) * PAGE_SIZE < 100 : false,
+      totalPlayers: USE_MOCK_DATA ? 100 : 0,
+      gameTitle: "Demo Game",
+      gameNumber: 1,
+    });
+  }
+
+  // Fetch game info + entries in parallel
+  const [game, players, total] = await prisma.$transaction([
+    prisma.game.findUnique({
+      where: { id: targetGameId },
+      select: { title: true, gameNumber: true },
+    }),
+    prisma.gameEntry.findMany({
+      where: { gameId: targetGameId, paidAt: { not: null } },
+      select: {
+        prize: true,
+        rank: true,
+        score: true,
+        user: { select: { id: true, fid: true, username: true, pfpUrl: true } },
+      },
+      orderBy: [{ rank: { sort: "asc", nulls: "last" } }, { score: "desc" }],
+      take: PAGE_SIZE,
+      skip: page * PAGE_SIZE,
+    }),
+    prisma.gameEntry.count({
+      where: { gameId: targetGameId, paidAt: { not: null } },
+    }),
+  ]);
+
+  // No entries for this game - return mock
+  if (players.length === 0) {
+    return NextResponse.json({
+      entries: USE_MOCK_DATA ? getMockEntries(page) : [],
+      hasMore: USE_MOCK_DATA ? (page + 1) * PAGE_SIZE < 100 : false,
+      totalPlayers: USE_MOCK_DATA ? 100 : 0,
+      gameTitle: game?.title ?? "Game",
+      gameNumber: game?.gameNumber ?? 1,
+    });
+  }
+
+  const entries: LeaderboardEntry[] = players.map((p, i) => ({
+    id: p.user.id,
+    fid: p.user.fid,
+    rank: p.rank ?? page * PAGE_SIZE + i + 1,
+    username: p.user.username,
+    prize: p.prize ?? 0,
+    pfpUrl: p.user.pfpUrl,
+  }));
+
+  return NextResponse.json({
+    entries,
+    hasMore: (page + 1) * PAGE_SIZE < total,
+    totalPlayers: total,
+    gameTitle: game?.title ?? "Game",
+    gameNumber: game?.gameNumber ?? undefined,
+  });
 }

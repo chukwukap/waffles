@@ -1,46 +1,45 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { PixelButton } from "@/components/ui/PixelButton";
 import { motion } from "framer-motion";
 
-export type LeaderboardTabKey = "current" | "allTime";
-
-const TABS: { key: LeaderboardTabKey; label: string }[] = [
-  { key: "current", label: "Current game" },
-  { key: "allTime", label: "All time" },
-];
+type TabKey = "current" | "allTime";
 
 interface TabsProps {
-  activeTab: LeaderboardTabKey;
-  fid: number | null;
+  activeTab: TabKey;
+  gameNumber?: number | null;
 }
 
-export function Tabs({ activeTab, fid }: TabsProps) {
+export function Tabs({ activeTab, gameNumber }: TabsProps) {
   const router = useRouter();
   const pathname = usePathname();
 
+  const currentLabel = gameNumber
+    ? `WAFFLES #${gameNumber.toString().padStart(3, "0")}`
+    : "Current";
+
+  const tabs: { key: TabKey; label: string }[] = [
+    { key: "current", label: currentLabel },
+    { key: "allTime", label: "All time" },
+  ];
+
   const handleTabChange = useCallback(
-    (newTab: LeaderboardTabKey) => {
-      const params = new URLSearchParams();
-      params.set("tab", newTab);
-      if (fid) {
-        params.set("fid", fid.toString());
-      }
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    (newTab: TabKey) => {
+      router.push(`${pathname}?tab=${newTab}`, { scroll: false });
     },
-    [router, pathname, fid]
+    [router, pathname]
   );
 
   return (
     <motion.div
       initial={{ y: 10, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="inline-flex justify-center gap-3 sm:gap-4 items-center"
+      className="inline-flex justify-center gap-3 items-center"
       role="tablist"
     >
-      {TABS.map(({ key, label }) => {
+      {tabs.map(({ key, label }) => {
         const isActive = activeTab === key;
         return (
           <div key={key} className="relative">
@@ -53,13 +52,12 @@ export function Tabs({ activeTab, fid }: TabsProps) {
               width={140}
               height={40}
             >
-              <span className="relative z-10">{label}</span>
+              {label}
             </PixelButton>
             {isActive && (
               <motion.div
                 layoutId="activeTab"
                 className="absolute -bottom-1 left-0 right-0 h-0.5 bg-waffle-yellow"
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
               />
             )}
           </div>
@@ -68,3 +66,6 @@ export function Tabs({ activeTab, fid }: TabsProps) {
     </motion.div>
   );
 }
+
+// Re-export for client
+export type { TabKey as LeaderboardTabKey };

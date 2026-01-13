@@ -1,46 +1,41 @@
+import { Metadata } from "next";
+import { minikitConfig } from "@minikit-config";
+import { env } from "@/lib/env";
+
 import { BottomNav } from "@/components/BottomNav";
 import LeaderboardClient from "./client";
 
-// ============================================
-// TYPES (exported for use in client and API)
-// ============================================
-export type TabKey = "current" | "allTime" | "game";
+// ==========================================
+// METADATA
+// ==========================================
+export const metadata: Metadata = {
+  title: `Leaderboard | ${minikitConfig.miniapp.name}`,
+  description: "See who's winning! Top players ranked by score.",
+  other: {
+    "fc:frame": JSON.stringify({
+      version: minikitConfig.miniapp.version,
+      imageUrl: minikitConfig.miniapp.heroImageUrl,
+      button: {
+        title: "View Leaderboard",
+        action: {
+          name: "View Leaderboard",
+          type: "launch_frame",
+          url: `${env.rootUrl}/leaderboard`,
+          splashImageUrl: minikitConfig.miniapp.splashImageUrl,
+          splashBackgroundColor: minikitConfig.miniapp.splashBackgroundColor,
+        },
+      },
+    }),
+  },
+};
 
-export interface LeaderboardData {
-  entries: {
-    id: string | number;
-    fid: number;
-    rank: number;
-    username: string;
-    winnings: number;
-    pfpUrl: string | null;
-  }[];
-  hasMore: boolean;
-  totalPlayers: number;
-  gameTitle?: string;
-}
-
-// ============================================
+// ==========================================
 // PAGE COMPONENT
-// ============================================
-export default async function LeaderboardPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ tab?: string; gameId?: string }>;
-}) {
-  const { tab, gameId: gameIdParam } = await searchParams;
-
-  // Determine which tab to show
-  const gameId = gameIdParam ? gameIdParam : undefined;
-  const activeTab: TabKey = gameId ? "game" : (tab === "allTime" ? "allTime" : "current");
-
-  // No server-side data fetching - client will fetch using gameId from context
+// ==========================================
+export default function LeaderboardPage() {
   return (
     <>
-      <LeaderboardClient
-        activeTab={activeTab}
-        gameIdOverride={gameId}
-      />
+      <LeaderboardClient />
       <BottomNav />
     </>
   );

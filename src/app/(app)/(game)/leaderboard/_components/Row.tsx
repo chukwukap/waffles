@@ -12,7 +12,7 @@ interface RowProps {
 }
 
 export function Row({ entry, isCurrentUser = false }: RowProps) {
-  const formattedPoints = entry.winnings.toLocaleString(undefined, {
+  const formattedPoints = entry.prize.toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -27,7 +27,7 @@ export function Row({ entry, isCurrentUser = false }: RowProps) {
       }}
       whileTap={{ scale: 0.99 }}
       className={cn(
-        "panel flex h-12 items-center justify-between rounded-xl px-3",
+        "bg-white/5 border border-white/10 flex h-12 items-center justify-between rounded-xl px-3",
         "transition-all duration-150 ease-out",
         isCurrentUser &&
         "bg-blue-900/30 ring-1 ring-blue-500/60"

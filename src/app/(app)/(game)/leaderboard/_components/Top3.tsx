@@ -54,7 +54,7 @@ export function Top3({ entries, currentUserId }: Top3Props) {
           currentUserId != null && entry.fid === currentUserId;
         const styles = cardStyles[i] ?? cardStyles[cardStyles.length - 1];
 
-        const formattedPoints = entry.winnings.toLocaleString(undefined, {
+        const formattedPoints = entry.prize.toLocaleString(undefined, {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         });

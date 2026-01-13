@@ -7,7 +7,7 @@ export interface LeaderboardEntry {
   fid: number;
   rank: number;
   username: string | null;
-  winnings: number; // USDC winnings amount
+  prize: number; // USDC prize amount
   pfpUrl: string | null;
 }
 
