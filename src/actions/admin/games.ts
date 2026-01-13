@@ -9,6 +9,9 @@ import { redirect } from "next/navigation";
 import { createGameOnChain, generateOnchainGameId } from "@/lib/chain";
 import { getGamePhase } from "@/lib/types";
 import { env } from "@/lib/env";
+import { logger } from "@/lib/logger";
+
+const SERVICE = "admin-games";
 
 // ==========================================
 // SCHEMA
@@ -112,9 +115,18 @@ export async function createGameAction(
     if (env.partykitHost && env.partykitSecret) {
       const partykitUrl = env.partykitHost.startsWith("http")
         ? env.partykitHost
-        : `http://${env.partykitHost}`;
+        : `https://${env.partykitHost}`;
 
-      fetch(`${partykitUrl}/parties/main/game-${game.id}/init`, {
+      const initUrl = `${partykitUrl}/parties/main/game-${game.id}/init`;
+
+      logger.info(SERVICE, "partykit_init_request", {
+        gameId: game.id,
+        url: initUrl,
+        startsAt: game.startsAt.toISOString(),
+        endsAt: game.endsAt.toISOString(),
+      });
+
+      fetch(initUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -125,9 +137,35 @@ export async function createGameAction(
           startsAt: game.startsAt.toISOString(),
           endsAt: game.endsAt.toISOString(),
         }),
-      }).catch((err) =>
-        console.error("[CreateGame] PartyKit init failed:", err)
-      );
+      })
+        .then(async (res) => {
+          if (res.ok) {
+            logger.info(SERVICE, "partykit_init_success", {
+              gameId: game.id,
+              status: res.status,
+            });
+          } else {
+            const errorText = await res.text().catch(() => "Unknown error");
+            logger.error(SERVICE, "partykit_init_failed", {
+              gameId: game.id,
+              status: res.status,
+              error: errorText,
+            });
+          }
+        })
+        .catch((err) =>
+          logger.error(SERVICE, "partykit_init_error", {
+            gameId: game.id,
+            error: logger.errorMessage(err),
+          })
+        );
+    } else {
+      logger.warn(SERVICE, "partykit_init_skipped", {
+        gameId: game.id,
+        reason: "PartyKit not configured",
+        hasHost: !!env.partykitHost,
+        hasSecret: !!env.partykitSecret,
+      });
     }
 
     await logAdminAction({
@@ -138,10 +176,18 @@ export async function createGameAction(
       details: { title: game.title, theme: data.theme, onchainId, txHash },
     });
 
-    console.log(`[CreateGame] Game ${game.id} created`);
+    logger.info(SERVICE, "game_created", {
+      gameId: game.id,
+      title: game.title,
+      theme: data.theme,
+      onchainId,
+    });
+
     revalidatePath("/admin/games");
   } catch (error) {
-    console.error("[CreateGame] Failed:", error);
+    logger.error(SERVICE, "game_create_failed", {
+      error: logger.errorMessage(error),
+    });
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to create game",
@@ -215,19 +261,38 @@ export async function updateGameAction(
     });
 
     // Sync timing to PartyKit (async, don't block response)
+    logger.info(SERVICE, "game_update_partykit_sync", {
+      gameId: game.id,
+      startsAt: new Date(data.startsAt).toISOString(),
+      endsAt: new Date(data.endsAt).toISOString(),
+    });
+
     const { updateGameTiming } = await import("@/lib/partykit");
     updateGameTiming(
       game.id,
       new Date(data.startsAt),
       new Date(data.endsAt)
-    ).catch((err) => console.error("[UpdateGame] PartyKit sync error:", err));
+    ).catch((err) =>
+      logger.error(SERVICE, "game_update_partykit_sync_error", {
+        gameId: game.id,
+        error: logger.errorMessage(err),
+      })
+    );
 
     revalidatePath("/admin/games");
     revalidatePath(`/admin/games/${game.id}`);
 
+    logger.info(SERVICE, "game_updated", {
+      gameId: game.id,
+      title: game.title,
+    });
+
     return { success: true, gameId: game.id };
   } catch (error) {
-    console.error("Update game error:", error);
+    logger.error(SERVICE, "game_update_failed", {
+      gameId,
+      error: logger.errorMessage(error),
+    });
     return { success: false, error: "Failed to update game" };
   }
 }
@@ -285,19 +350,27 @@ export async function deleteGameAction(gameId: string): Promise<void> {
     }
 
     // Cleanup PartyKit room
-    console.log(`[DeleteGame] Cleaning up PartyKit room for ${gameId}...`);
+    logger.info(SERVICE, "game_delete_partykit_cleanup", {
+      gameId,
+      title: game.title,
+    });
     const { cleanupGameRoom } = await import("@/lib/partykit");
     await cleanupGameRoom(gameId);
 
     // Delete game and cascade to entries, questions, etc.
-    console.log(
-      `[DeleteGame] Deleting game ${gameId} (${game._count.entries} entries)...`
-    );
+    logger.info(SERVICE, "game_delete_db_cascade", {
+      gameId,
+      entriesCount: game._count.entries,
+    });
     await prisma.game.delete({
       where: { id: gameId },
     });
 
-    console.log(`[DeleteGame] Game "${game.title}" deleted successfully`);
+    logger.info(SERVICE, "game_deleted", {
+      gameId,
+      title: game.title,
+      entriesDeleted: game._count.entries,
+    });
 
     await logAdminAction({
       adminId: authResult.session.userId,

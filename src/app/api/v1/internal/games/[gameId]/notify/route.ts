@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendBatch } from "@/lib/notifications";
 import { env } from "@/lib/env";
+import { logger } from "@/lib/logger";
+
+const SERVICE = "notify-api";
 
 type Params = { gameId: string };
 
@@ -14,17 +17,26 @@ export async function POST(
   request: NextRequest,
   context: { params: Promise<Params> }
 ) {
-  try {
-    const { gameId } = await context.params;
+  const { gameId } = await context.params;
 
+  logger.info(SERVICE, "notify_request_received", {
+    gameId,
+    source: "partykit",
+  });
+
+  try {
     if (!gameId) {
+      logger.warn(SERVICE, "notify_invalid_game_id", { gameId });
       return NextResponse.json({ error: "Invalid game ID" }, { status: 400 });
     }
 
     // Verify Authorization header (called from PartyKit)
     const authHeader = request.headers.get("Authorization");
     if (authHeader !== `Bearer ${env.partykitSecret}`) {
-      console.error("[notify] Invalid Authorization header");
+      logger.warn(SERVICE, "notify_unauthorized", {
+        gameId,
+        message: "Invalid authorization header",
+      });
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -38,6 +50,7 @@ export async function POST(
     });
 
     if (!game) {
+      logger.error(SERVICE, "notify_game_not_found", { gameId });
       return NextResponse.json({ error: "Game not found" }, { status: 404 });
     }
 
@@ -53,9 +66,12 @@ export async function POST(
 
     const fids = users.map((u) => u.fid);
 
-    console.log(
-      `[notify] Game ${gameId}: Sending batch to ${fids.length} players`
-    );
+    logger.info(SERVICE, "notify_sending_batch", {
+      gameId,
+      gameTitle: game.title,
+      message,
+      recipientCount: fids.length,
+    });
 
     // Send batch notification (100 tokens per request)
     const results = await sendBatch(
@@ -67,9 +83,15 @@ export async function POST(
       { fids }
     );
 
-    console.log(
-      `[notify] Game ${gameId}: ${results.success} sent, ${results.failed} failed`
-    );
+    logger.info(SERVICE, "notify_batch_complete", {
+      gameId,
+      message,
+      success: results.success,
+      failed: results.failed,
+      invalidTokens: results.invalidTokens,
+      rateLimited: results.rateLimited,
+      total: results.total,
+    });
 
     return NextResponse.json({
       success: true,
@@ -78,7 +100,10 @@ export async function POST(
       total: results.total,
     });
   } catch (error) {
-    console.error("[notify] Error:", error);
+    logger.error(SERVICE, "notify_error", {
+      gameId,
+      error: logger.errorMessage(error),
+    });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

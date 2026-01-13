@@ -4,6 +4,9 @@ import { prisma } from "@/lib/db";
 import { sendToUser } from "@/lib/notifications";
 import { broadcastGameStats } from "@/lib/partykit";
 import { env } from "@/lib/env";
+import { logger } from "@/lib/logger";
+
+const SERVICE = "entry-api";
 
 type Params = { gameId: string };
 
@@ -250,18 +253,43 @@ export const POST = withAuth<Params>(
 
       // Send ticket purchase notification (async, don't block response)
       sendTicketNotification(auth.fid, gameId, game).catch((err) =>
-        console.error("[Entry] Notification error:", err)
+        logger.error(SERVICE, "notification_error", {
+          gameId,
+          fid: auth.fid,
+          error: logger.errorMessage(err),
+        })
       );
 
       // Broadcast updated stats to connected clients (async, don't block response)
+      logger.info(SERVICE, "stats_broadcast_trigger", {
+        gameId,
+        newPrizePool: game.prizePool + paidAmount,
+        newPlayerCount: game.playerCount + 1,
+      });
+
       broadcastGameStats(gameId, {
         prizePool: game.prizePool + paidAmount,
         playerCount: game.playerCount + 1,
-      }).catch((err) => console.error("[Entry] Stats broadcast error:", err));
+      }).catch((err) =>
+        logger.error(SERVICE, "stats_broadcast_error", {
+          gameId,
+          error: logger.errorMessage(err),
+        })
+      );
+
+      logger.info(SERVICE, "entry_created", {
+        gameId,
+        entryId: entry.id,
+        userId: auth.userId,
+        paidAmount,
+      });
 
       return NextResponse.json(entry, { status: 201 });
     } catch (error) {
-      console.error("POST /api/v1/games/:gameId/entry Error:", error);
+      logger.error(SERVICE, "entry_create_error", {
+        gameId,
+        error: logger.errorMessage(error),
+      });
       return NextResponse.json<ApiError>(
         { error: "Internal server error", code: "INTERNAL_ERROR" },
         { status: 500 }
