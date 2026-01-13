@@ -16,6 +16,44 @@ interface StoredChatMessage {
 
 type AlarmPhase = "notify" | "start" | "gameEnd";
 
+// Log levels for structured logging
+type LogLevel = "DEBUG" | "INFO" | "WARN" | "ERROR";
+
+// ==========================================
+// LOGGING UTILITY
+// Structured logging for PartyKit monitoring via `npx partykit tail`
+// ==========================================
+
+function log(
+  level: LogLevel,
+  roomId: string,
+  event: string,
+  data?: Record<string, unknown>
+) {
+  const timestamp = new Date().toISOString();
+  const logData = {
+    ts: timestamp,
+    level,
+    room: roomId,
+    event,
+    ...data,
+  };
+  // Use console methods for proper level filtering
+  switch (level) {
+    case "ERROR":
+      console.error(JSON.stringify(logData));
+      break;
+    case "WARN":
+      console.warn(JSON.stringify(logData));
+      break;
+    case "DEBUG":
+      console.debug(JSON.stringify(logData));
+      break;
+    default:
+      console.log(JSON.stringify(logData));
+  }
+}
+
 // ==========================================
 // GAME SERVER
 // ==========================================
@@ -26,7 +64,12 @@ export default class GameServer implements Party.Server {
   chatHistory: StoredChatMessage[] = [];
   seenFids: Set<number> = new Set();
 
-  constructor(readonly room: Party.Room) {}
+  constructor(readonly room: Party.Room) {
+    // Log room instantiation (helpful for debugging hibernate wake-ups)
+    log("INFO", room.id, "room_instantiated", {
+      hibernateEnabled: true,
+    });
+  }
 
   // ==========================================
   // AUTHENTICATION
@@ -93,6 +136,60 @@ export default class GameServer implements Party.Server {
 
     switch (path) {
       // ==========================================
+      // DEBUG - Health check and state inspection
+      // ==========================================
+      case "debug": {
+        const secret = this.room.env.PARTYKIT_SECRET as string;
+        const authHeader = req.headers.get("Authorization");
+        if (authHeader !== `Bearer ${secret}`) {
+          return Response.json(
+            { error: "Unauthorized" },
+            { status: 401, headers }
+          );
+        }
+
+        try {
+          const gameId = await this.room.storage.get<string>("gameId");
+          const startsAt = await this.room.storage.get<number>("startsAt");
+          const endsAt = await this.room.storage.get<number>("endsAt");
+          const alarmPhase = await this.room.storage.get<AlarmPhase>(
+            "alarmPhase"
+          );
+          const currentAlarm = await this.room.storage.getAlarm();
+          const now = Date.now();
+
+          const debugInfo = {
+            roomId: this.room.id,
+            gameId,
+            now: new Date(now).toISOString(),
+            startsAt: startsAt ? new Date(startsAt).toISOString() : null,
+            endsAt: endsAt ? new Date(endsAt).toISOString() : null,
+            alarmPhase,
+            alarmScheduled: currentAlarm
+              ? new Date(currentAlarm).toISOString()
+              : null,
+            alarmInMs: currentAlarm ? currentAlarm - now : null,
+            connectedClients: this.getOnlineCount(),
+            chatHistoryCount: this.chatHistory.length,
+            seenFidsCount: this.seenFids.size,
+            env: {
+              hasPartykitSecret: !!this.room.env.PARTYKIT_SECRET,
+              hasNextPublicUrl: !!this.room.env.NEXT_PUBLIC_URL,
+              nextPublicUrl: this.room.env.NEXT_PUBLIC_URL || "NOT_SET",
+            },
+          };
+
+          log("DEBUG", this.room.id, "debug_endpoint_called", debugInfo);
+          return Response.json(debugInfo, { headers });
+        } catch (error) {
+          return Response.json(
+            { error: String(error) },
+            { status: 500, headers }
+          );
+        }
+      }
+
+      // ==========================================
       // INIT - Called when admin creates game
       // ==========================================
       case "init": {
@@ -106,6 +203,9 @@ export default class GameServer implements Party.Server {
         const secret = this.room.env.PARTYKIT_SECRET as string;
         const authHeader = req.headers.get("Authorization");
         if (authHeader !== `Bearer ${secret}`) {
+          log("WARN", this.room.id, "init_unauthorized", {
+            message: "Unauthorized init attempt",
+          });
           return Response.json(
             { error: "Unauthorized" },
             { status: 401, headers }
@@ -122,32 +222,47 @@ export default class GameServer implements Party.Server {
           const startsAt = new Date(body.startsAt).getTime();
           const endsAt = new Date(body.endsAt).getTime();
           const notifyTime = startsAt - 60 * 1000; // 1 minute before
+          const now = Date.now();
+
+          log("INFO", this.room.id, "init_received", {
+            gameId: body.gameId,
+            now: new Date(now).toISOString(),
+            startsAt: new Date(startsAt).toISOString(),
+            endsAt: new Date(endsAt).toISOString(),
+            notifyTime: new Date(notifyTime).toISOString(),
+            timeUntilNotify: notifyTime - now,
+            timeUntilStart: startsAt - now,
+          });
 
           await this.room.storage.put("gameId", body.gameId);
           await this.room.storage.put("startsAt", startsAt);
           await this.room.storage.put("endsAt", endsAt);
 
           // Schedule first alarm (notify phase)
-          const now = Date.now();
           if (notifyTime > now) {
             await this.room.storage.put("alarmPhase", "notify" as AlarmPhase);
             await this.room.storage.setAlarm(notifyTime);
-            console.log(
-              `[Init] Game ${
-                body.gameId
-              } - notify alarm scheduled for ${new Date(
-                notifyTime
-              ).toISOString()}`
-            );
+            log("INFO", this.room.id, "init_alarm_scheduled", {
+              gameId: body.gameId,
+              phase: "notify",
+              scheduledFor: new Date(notifyTime).toISOString(),
+              inMs: notifyTime - now,
+            });
           } else if (startsAt > now) {
             await this.room.storage.put("alarmPhase", "start" as AlarmPhase);
             await this.room.storage.setAlarm(startsAt);
-            console.log(
-              `[Init] Game ${
-                body.gameId
-              } - start alarm scheduled for ${new Date(startsAt).toISOString()}`
-            );
+            log("INFO", this.room.id, "init_alarm_scheduled", {
+              gameId: body.gameId,
+              phase: "start",
+              scheduledFor: new Date(startsAt).toISOString(),
+              inMs: startsAt - now,
+              note: "Notify time already passed, skipping to start",
+            });
           } else {
+            log("INFO", this.room.id, "init_immediate_start", {
+              gameId: body.gameId,
+              note: "Start time already passed, triggering immediately",
+            });
             await this.handleStartAlarm();
           }
 
@@ -156,7 +271,9 @@ export default class GameServer implements Party.Server {
             { headers }
           );
         } catch (error) {
-          console.error("[Init] Error:", error);
+          log("ERROR", this.room.id, "init_error", {
+            error: error instanceof Error ? error.message : String(error),
+          });
           return Response.json(
             { error: "Failed to initialize room" },
             { status: 500, headers }
@@ -196,13 +313,17 @@ export default class GameServer implements Party.Server {
             playerCount: body.playerCount,
           });
 
-          console.log(
-            `[stats-update] Broadcasted: prizePool=${body.prizePool}, playerCount=${body.playerCount}`
-          );
+          log("INFO", this.room.id, "stats_update_broadcasted", {
+            prizePool: body.prizePool,
+            playerCount: body.playerCount,
+            connectedClients: this.getOnlineCount(),
+          });
 
           return Response.json({ success: true }, { headers });
         } catch (error) {
-          console.error("[stats-update] Error:", error);
+          log("ERROR", this.room.id, "stats_update_error", {
+            error: error instanceof Error ? error.message : String(error),
+          });
           return Response.json(
             { error: "Failed to broadcast stats" },
             { status: 500, headers }
@@ -240,6 +361,14 @@ export default class GameServer implements Party.Server {
           const endsAt = new Date(body.endsAt).getTime();
           const notifyTime = startsAt - 60 * 1000;
           const now = Date.now();
+          const gameId = await this.room.storage.get<string>("gameId");
+
+          log("INFO", this.room.id, "update_timing_received", {
+            gameId,
+            startsAt: new Date(startsAt).toISOString(),
+            endsAt: new Date(endsAt).toISOString(),
+            notifyTime: new Date(notifyTime).toISOString(),
+          });
 
           await this.room.storage.put("startsAt", startsAt);
           await this.room.storage.put("endsAt", endsAt);
@@ -247,24 +376,32 @@ export default class GameServer implements Party.Server {
           if (notifyTime > now) {
             await this.room.storage.put("alarmPhase", "notify" as AlarmPhase);
             await this.room.storage.setAlarm(notifyTime);
-            console.log(
-              `[update-timing] Rescheduled notify alarm for ${new Date(
-                notifyTime
-              ).toISOString()}`
-            );
+            log("INFO", this.room.id, "update_timing_alarm_rescheduled", {
+              gameId,
+              phase: "notify",
+              scheduledFor: new Date(notifyTime).toISOString(),
+            });
           } else if (startsAt > now) {
             await this.room.storage.put("alarmPhase", "start" as AlarmPhase);
             await this.room.storage.setAlarm(startsAt);
-            console.log(
-              `[update-timing] Rescheduled start alarm for ${new Date(
-                startsAt
-              ).toISOString()}`
-            );
+            log("INFO", this.room.id, "update_timing_alarm_rescheduled", {
+              gameId,
+              phase: "start",
+              scheduledFor: new Date(startsAt).toISOString(),
+              note: "Notify time already passed",
+            });
+          } else {
+            log("WARN", this.room.id, "update_timing_no_alarm", {
+              gameId,
+              note: "Both notify and start times already passed",
+            });
           }
 
           return Response.json({ success: true }, { headers });
         } catch (error) {
-          console.error("[update-timing] Error:", error);
+          log("ERROR", this.room.id, "update_timing_error", {
+            error: error instanceof Error ? error.message : String(error),
+          });
           return Response.json(
             { error: "Failed to update timing" },
             { status: 500, headers }
@@ -284,7 +421,14 @@ export default class GameServer implements Party.Server {
   async onAlarm() {
     const phase = await this.room.storage.get<AlarmPhase>("alarmPhase");
     const gameId = await this.room.storage.get<string>("gameId");
-    console.log(`[Alarm] Game ${gameId} - phase: ${phase}`);
+    const now = Date.now();
+
+    log("INFO", this.room.id, "alarm_triggered", {
+      gameId,
+      phase,
+      triggeredAt: new Date(now).toISOString(),
+      message: "Alarm callback invoked",
+    });
 
     switch (phase) {
       case "notify":
@@ -297,7 +441,11 @@ export default class GameServer implements Party.Server {
         await this.handleGameEndAlarm();
         break;
       default:
-        console.warn(`[Alarm] Unknown phase: ${phase}`);
+        log("WARN", this.room.id, "alarm_unknown_phase", {
+          gameId,
+          phase,
+          message: "Alarm triggered with unknown phase",
+        });
     }
   }
 
@@ -305,36 +453,55 @@ export default class GameServer implements Party.Server {
     const gameId = await this.room.storage.get<string>("gameId");
     const startsAt = await this.room.storage.get<number>("startsAt");
 
-    await this.sendNotifications("Game starting in 1 minute! 🎮");
+    log("INFO", this.room.id, "notify_phase_start", {
+      gameId,
+      startsAt: startsAt ? new Date(startsAt).toISOString() : null,
+    });
 
+    await this.sendNotifications("Game starting in 1 minute! 🎮");
     this.broadcast({ type: "game:starting", in: 60 });
 
+    // Schedule next alarm for game start
     await this.room.storage.put("alarmPhase", "start" as AlarmPhase);
     await this.room.storage.setAlarm(startsAt!);
-    console.log(`[Notify] Game ${gameId} - start alarm scheduled`);
+
+    log("INFO", this.room.id, "notify_phase_complete", {
+      gameId,
+      nextPhase: "start",
+      nextAlarmAt: new Date(startsAt!).toISOString(),
+    });
   }
 
   async handleStartAlarm() {
     const gameId = await this.room.storage.get<string>("gameId");
     const endsAt = await this.room.storage.get<number>("endsAt");
 
+    log("INFO", this.room.id, "start_phase_begin", {
+      gameId,
+      endsAt: endsAt ? new Date(endsAt).toISOString() : null,
+    });
+
     if (!endsAt) {
-      console.error(`[Start] Game ${gameId} - no endsAt found`);
+      log("ERROR", this.room.id, "start_phase_no_endsAt", {
+        gameId,
+        message: "No endsAt found in storage - cannot schedule gameEnd alarm",
+      });
       return;
     }
 
+    // Schedule game end alarm
     await this.room.storage.put("alarmPhase", "gameEnd" as AlarmPhase);
     await this.room.storage.setAlarm(endsAt);
 
     await this.sendNotifications("The game has started! 🚀");
-
     this.broadcast({ type: "game:live" });
 
-    console.log(
-      `[Start] Game ${gameId} - started, ends at ${new Date(
-        endsAt
-      ).toISOString()}`
-    );
+    log("INFO", this.room.id, "start_phase_complete", {
+      gameId,
+      nextPhase: "gameEnd",
+      nextAlarmAt: new Date(endsAt).toISOString(),
+      connectedClients: this.getOnlineCount(),
+    });
   }
 
   async handleGameEndAlarm() {
@@ -342,23 +509,38 @@ export default class GameServer implements Party.Server {
     const appUrl = this.room.env.NEXT_PUBLIC_URL as string;
     const secret = this.room.env.PARTYKIT_SECRET as string;
 
+    log("INFO", this.room.id, "gameEnd_phase_begin", {
+      gameId,
+      hasAppUrl: !!appUrl,
+      hasSecret: !!secret,
+    });
+
     if (!gameId || !appUrl || !secret) {
-      console.error("[GameEnd] Missing config - gameId, appUrl, or secret");
+      log("ERROR", this.room.id, "gameEnd_missing_config", {
+        gameId,
+        hasAppUrl: !!appUrl,
+        hasSecret: !!secret,
+        message: "Missing required env vars for roundup API call",
+      });
       return;
     }
 
+    const roundupUrl = `${appUrl}/api/v1/internal/games/${gameId}/roundup`;
+
     try {
+      log("DEBUG", this.room.id, "gameEnd_calling_roundup", {
+        gameId,
+        url: roundupUrl,
+      });
+
       // Call roundup API (handles ranking, on-chain, and notifications)
-      const response = await fetch(
-        `${appUrl}/api/v1/internal/games/${gameId}/roundup`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${secret}`,
-          },
-        }
-      );
+      const response = await fetch(roundupUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${secret}`,
+        },
+      });
 
       const result = await response.json();
 
@@ -370,31 +552,53 @@ export default class GameServer implements Party.Server {
           prizePool: result.prizePool,
           winnersCount: result.winnersCount,
         });
-        console.log(
-          `[GameEnd] Game ${gameId} - roundup complete, ${result.winnersCount} winners`
-        );
+
+        log("INFO", this.room.id, "gameEnd_roundup_success", {
+          gameId,
+          winnersCount: result.winnersCount,
+          prizePool: result.prizePool,
+        });
       } else {
-        console.error(
-          `[GameEnd] Game ${gameId} - roundup failed:`,
-          result.error
-        );
-        // Cron will catch this as fallback
+        log("ERROR", this.room.id, "gameEnd_roundup_failed", {
+          gameId,
+          error: result.error,
+          message: "Roundup API returned error - cron fallback will handle",
+        });
       }
     } catch (error) {
-      console.error(`[GameEnd] Game ${gameId} - roundup error:`, error);
-      // Cron will catch this as fallback
+      log("ERROR", this.room.id, "gameEnd_roundup_exception", {
+        gameId,
+        error: error instanceof Error ? error.message : String(error),
+        message: "Roundup API threw exception - cron fallback will handle",
+      });
     }
   }
 
   async sendNotifications(message: string) {
+    const gameId = await this.room.storage.get<string>("gameId");
+    const appUrl = this.room.env.NEXT_PUBLIC_URL as string;
+    const secret = this.room.env.PARTYKIT_SECRET as string;
+
+    if (!appUrl || !secret || !gameId) {
+      log("WARN", this.room.id, "notify_skipped_missing_config", {
+        gameId,
+        hasAppUrl: !!appUrl,
+        hasSecret: !!secret,
+        message,
+      });
+      return;
+    }
+
+    const notifyUrl = `${appUrl}/api/v1/internal/games/${gameId}/notify`;
+
     try {
-      const appUrl = this.room.env.NEXT_PUBLIC_URL as string;
-      const secret = this.room.env.PARTYKIT_SECRET as string;
-      const gameId = await this.room.storage.get<string>("gameId");
+      log("DEBUG", this.room.id, "notify_sending", {
+        gameId,
+        message,
+        url: notifyUrl,
+      });
 
-      if (!appUrl || !secret || !gameId) return;
-
-      await fetch(`${appUrl}/api/v1/internal/games/${gameId}/notify`, {
+      const response = await fetch(notifyUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -402,8 +606,27 @@ export default class GameServer implements Party.Server {
         },
         body: JSON.stringify({ message }),
       });
+
+      if (response.ok) {
+        log("INFO", this.room.id, "notify_sent", {
+          gameId,
+          message,
+          status: response.status,
+        });
+      } else {
+        log("WARN", this.room.id, "notify_failed", {
+          gameId,
+          message,
+          status: response.status,
+          statusText: response.statusText,
+        });
+      }
     } catch (error) {
-      console.error("[Notify] Error:", error);
+      log("ERROR", this.room.id, "notify_error", {
+        gameId,
+        message,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
@@ -412,10 +635,31 @@ export default class GameServer implements Party.Server {
   // ==========================================
 
   async onStart() {
+    log("INFO", this.room.id, "room_starting", {
+      action: "onStart",
+      message: "Room waking up from hibernation or initializing",
+    });
+
+    // Restore persisted state
     this.chatHistory =
       (await this.room.storage.get<StoredChatMessage[]>("chatHistory")) || [];
     const savedFids = await this.room.storage.get<number[]>("seenFids");
     this.seenFids = new Set(savedFids || []);
+
+    // Log alarm state for debugging
+    const alarmPhase = await this.room.storage.get<AlarmPhase>("alarmPhase");
+    const currentAlarm = await this.room.storage.getAlarm();
+    const gameId = await this.room.storage.get<string>("gameId");
+
+    log("INFO", this.room.id, "room_state_restored", {
+      gameId,
+      alarmPhase,
+      alarmScheduledAt: currentAlarm
+        ? new Date(currentAlarm).toISOString()
+        : null,
+      chatHistoryCount: this.chatHistory.length,
+      seenFidsCount: this.seenFids.size,
+    });
   }
 
   async onConnect(conn: Party.Connection, ctx: Party.ConnectionContext) {
@@ -425,6 +669,13 @@ export default class GameServer implements Party.Server {
 
     const player: Player = { fid, username, pfp };
     conn.setState(player);
+
+    log("DEBUG", this.room.id, "client_connected", {
+      connectionId: conn.id,
+      fid,
+      username,
+      totalConnections: this.getOnlineCount(),
+    });
 
     // Send sync to new client
     const chat: ChatItem[] = this.chatHistory.slice(-50).map((msg) => ({
@@ -514,13 +765,25 @@ export default class GameServer implements Party.Server {
   onClose(conn: Party.Connection) {
     const player = conn.state as Player;
     if (player) {
+      log("DEBUG", this.room.id, "client_disconnected", {
+        connectionId: conn.id,
+        fid: player.fid,
+        username: player.username,
+        remainingConnections: this.getOnlineCount(),
+      });
       this.broadcast({ type: "left", username: player.username });
       this.broadcast({ type: "connected", count: this.getOnlineCount() });
     }
   }
 
   onError(conn: Party.Connection, error: Error) {
-    console.error(`[Error] Connection ${conn.id} error:`, error.message);
+    const player = conn.state as Player | undefined;
+    log("ERROR", this.room.id, "connection_error", {
+      connectionId: conn.id,
+      fid: player?.fid,
+      username: player?.username,
+      error: error.message,
+    });
   }
 
   // ==========================================
