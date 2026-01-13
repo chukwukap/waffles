@@ -673,6 +673,7 @@ export default function ResultPageClient({
             pfpUrl: e.user?.pfpUrl ?? "",
             score: e.score,
           }))}
+          gameId={gameId}
         />
       </div>
       <BottomNav />

@@ -37,10 +37,15 @@ interface Entry {
 interface Props {
   entries: Entry[];
   className?: string;
+  /** Game ID for the "VIEW LEADERBOARD" link - ensures we show this specific game's leaderboard */
+  gameId?: string;
 }
 
-export default function Top3Leaderboard({ entries, className }: Props) {
+export default function Top3Leaderboard({ entries, className, gameId }: Props) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  
+  // Build leaderboard URL - include gameId if provided for game-specific view
+  const leaderboardHref = gameId ? `/leaderboard?gameId=${gameId}` : "/leaderboard";
 
   return (
     <motion.div
@@ -65,7 +70,7 @@ export default function Top3Leaderboard({ entries, className }: Props) {
         <div className="flex-1 min-w-0" />
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Link
-            href="/leaderboard"
+            href={leaderboardHref}
             className={clsx(
               "flex flex-row justify-center items-center px-2 sm:px-3 py-1.5 sm:py-2 gap-2 rounded-[12px]",
               "transition-all duration-200 ease-out",
