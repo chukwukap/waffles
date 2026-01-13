@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { CLAIM_DELAY_MS } from "@/lib/constants";
 
 interface MerkleProofResponse {
   gameId: string;
@@ -34,6 +35,7 @@ export const GET = withAuth<{ gameId: string }>(
           id: true,
           merkleRoot: true,
           onChainAt: true,
+          endsAt: true,
         },
       });
 
@@ -49,6 +51,21 @@ export const GET = withAuth<{ gameId: string }>(
           {
             error: "Game has not been published on-chain yet",
             code: "NOT_PUBLISHED",
+          },
+          { status: 400 }
+        );
+      }
+
+      // Check if claim window has opened (1 hour after game ends)
+      const claimOpensAt = new Date(game.endsAt.getTime() + CLAIM_DELAY_MS);
+      const now = new Date();
+      if (now < claimOpensAt) {
+        return NextResponse.json(
+          {
+            error: "Claim window not yet open",
+            code: "CLAIM_NOT_OPEN",
+            claimOpensAt: claimOpensAt.toISOString(),
+            remainingMs: claimOpensAt.getTime() - now.getTime(),
           },
           { status: 400 }
         );

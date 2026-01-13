@@ -24,6 +24,7 @@ import { useGame } from "@/components/providers/GameProvider";
 import confetti from "canvas-confetti";
 import { Game } from "@prisma";
 import { WINNERS_COUNT } from "@/lib/game/prizeDistribution";
+import { CLAIM_DELAY_MS } from "@/lib/constants";
 
 // ==========================================
 // TYPES
@@ -73,6 +74,45 @@ export default function ResultPageClient({
   // Claim state
   const [claimState, setClaimState] = useState<ClaimState>("idle");
   const [claimError, setClaimError] = useState<string | null>(null);
+  const [claimCountdown, setClaimCountdown] = useState<string | null>(null);
+
+  // Calculate when claim window opens (1 hour after game ends)
+  const claimOpensAt = useMemo(() => {
+    if (!game?.endsAt) return null;
+    return new Date(new Date(game.endsAt).getTime() + CLAIM_DELAY_MS);
+  }, [game?.endsAt]);
+
+  // Check if claim window is open
+  const isClaimWindowOpen = useMemo(() => {
+    if (!claimOpensAt) return false;
+    return new Date() >= claimOpensAt;
+  }, [claimOpensAt]);
+
+  // Countdown timer for claim window
+  useEffect(() => {
+    if (!claimOpensAt || isClaimWindowOpen || hasClaimed) {
+      setClaimCountdown(null);
+      return;
+    }
+
+    const updateCountdown = () => {
+      const now = new Date();
+      const diff = claimOpensAt.getTime() - now.getTime();
+
+      if (diff <= 0) {
+        setClaimCountdown(null);
+        return;
+      }
+
+      const minutes = Math.floor(diff / 60000);
+      const seconds = Math.floor((diff % 60000) / 1000);
+      setClaimCountdown(`${minutes}m ${seconds}s`);
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [claimOpensAt, isClaimWindowOpen, hasClaimed]);
 
   // Get onchainId
   const onchainId = game?.onchainId;
@@ -281,6 +321,12 @@ export default function ResultPageClient({
       return;
     }
 
+    // Check if claim window is open
+    if (!isClaimWindowOpen) {
+      notify.info("Claim window opens in " + claimCountdown);
+      return;
+    }
+
     if (!onchainId || !address) {
       notify.error("Cannot claim right now");
       return;
@@ -357,12 +403,15 @@ export default function ResultPageClient({
     resetSendCalls,
     hasClaimed,
     refetchEntry,
+    isClaimWindowOpen,
+    claimCountdown,
   ]);
 
   // Get button text based on state
   const getClaimButtonText = () => {
     if (entryLoading) return "Loading...";
     if (hasClaimed || claimState === "success") return "CLAIMED ✓";
+    if (!isClaimWindowOpen && claimCountdown) return `OPENS IN ${claimCountdown}`;
     if (claimState === "pending") return "RESULTS PENDING";
     if (claimState === "fetching") return "Loading...";
     if (claimState === "confirming" || isSending) return "Claiming...";
@@ -373,6 +422,7 @@ export default function ResultPageClient({
   const isClaimDisabled =
     entryLoading ||
     hasClaimed ||
+    !isClaimWindowOpen ||
     claimState === "success" ||
     claimState === "pending" ||
     claimState === "fetching" ||
@@ -499,11 +549,13 @@ export default function ResultPageClient({
                   className={
                     claimState === "success" || hasClaimed
                       ? "text-[#14B985] border-[#14B985] opacity-80"
-                      : claimState === "pending"
+                      : !isClaimWindowOpen
                         ? "text-amber-400 border-amber-400 opacity-80"
-                        : claimState === "error"
-                          ? "text-red-400 border-red-400"
-                          : "text-[#14B985] border-[#14B985]"
+                        : claimState === "pending"
+                          ? "text-amber-400 border-amber-400 opacity-80"
+                          : claimState === "error"
+                            ? "text-red-400 border-red-400"
+                            : "text-[#14B985] border-[#14B985]"
                   }
                 >
                   {(claimState === "confirming" || isSending) && (

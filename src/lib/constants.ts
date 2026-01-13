@@ -11,6 +11,9 @@ export const USDC_ADDRESS_BASE_MAINNET =
   "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 
 export const REFERRAL_BONUS_POINTS = 200;
+
+// Claim delay: Players must wait this long after game ends before claiming prizes
+export const CLAIM_DELAY_MS = 60 * 60 * 1000; // 1 hour in milliseconds
 // ERC20 approve ABI
 
 // ERC20 ABI for approve
