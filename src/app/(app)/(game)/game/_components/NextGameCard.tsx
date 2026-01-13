@@ -292,7 +292,10 @@ export function NextGameCard() {
               ? "Be the first to join!"
               : playerCount === 1
               ? "1 player has joined"
-              : `and ${Math.max(0, playerCount - recentPlayers.slice(0, 4).length)} others have joined the game`}
+              : `and ${Math.max(
+                  0,
+                  playerCount - recentPlayers.slice(0, 4).length
+                )} others have joined the game`}
           </motion.span>
         </motion.div>
       </motion.div>
