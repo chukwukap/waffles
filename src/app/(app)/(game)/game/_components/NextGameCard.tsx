@@ -12,7 +12,6 @@ import { useTimer } from "@/hooks/useTimer";
 import { springs } from "@/lib/animations";
 
 import { BuyTicketModal } from "./BuyTicketModal";
-import { PlayerAvatarStack } from "./PlayerAvatarStack";
 
 // ==========================================
 // COMPONENT
@@ -30,6 +29,7 @@ export function NextGameCard() {
       isLoadingEntry,
       prizePool: storePrizePool,
       playerCount: storePlayerCount,
+      recentPlayers,
     },
     refetchEntry,
   } = useGame();
@@ -236,18 +236,64 @@ export function NextGameCard() {
           </span>
         </motion.div>
 
-        {/* Player Avatars Row */}
+        {/* Player Avatars Row - matches Figma design */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}
-          className="flex flex-row justify-center items-center w-full px-4 pb-4 mt-4"
-          style={{ gap: "6px", minHeight: "25px" }}
+          className="flex flex-row justify-center items-center w-full px-4 pb-4 mt-4 gap-1.5"
+          style={{ minHeight: "25px" }}
         >
-          <PlayerAvatarStack
-            actionText="joined the game"
-            overrideCount={playerCount}
-          />
+          {/* Avatar Stack */}
+          {recentPlayers.length > 0 && (
+            <div className="flex flex-row items-center">
+              {recentPlayers.slice(0, 4).map((player, index) => (
+                <motion.div
+                  key={player.username}
+                  initial={{ opacity: 0, scale: 0, x: -10 }}
+                  animate={{ opacity: 1, scale: 1, x: 0 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 20,
+                    delay: 0.7 + index * 0.08,
+                  }}
+                  className="box-border w-[25px] h-[25px] rounded-full border-2 border-white overflow-hidden bg-[#F0F3F4] shrink-0"
+                  style={{
+                    marginLeft: index > 0 ? "-10px" : "0",
+                    zIndex: 4 - index,
+                  }}
+                >
+                  {player.pfpUrl ? (
+                    <Image
+                      src={player.pfpUrl}
+                      alt=""
+                      width={25}
+                      height={25}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-linear-to-br from-[#F5BB1B] to-[#FF6B35]" />
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          )}
+
+          {/* Text */}
+          <motion.span
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.9 }}
+            className="font-display font-medium text-sm text-center tracking-[-0.03em] text-[#99A0AE]"
+            style={{ lineHeight: "130%" }}
+          >
+            {playerCount === 0
+              ? "Be the first to join!"
+              : playerCount === 1
+              ? "1 player has joined"
+              : `and ${Math.max(0, playerCount - recentPlayers.slice(0, 4).length)} others have joined the game`}
+          </motion.span>
         </motion.div>
       </motion.div>
 

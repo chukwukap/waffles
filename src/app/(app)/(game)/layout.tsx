@@ -2,7 +2,10 @@ import { cache } from "react";
 import { prisma } from "@/lib/db";
 import type { Game } from "@prisma";
 import { GameHeader } from "./game/_components/GameHeader";
-import { GameProvider, type RecentPlayer } from "@/components/providers/GameProvider";
+import {
+  GameProvider,
+  type RecentPlayer,
+} from "@/components/providers/GameProvider";
 
 // Include entries for recent players display
 const gameWithEntries = {
@@ -20,57 +23,59 @@ const gameWithEntries = {
  * Includes recent player entries for avatar display.
  * Cached for request deduplication.
  */
-const getCurrentOrNextGame = cache(async (): Promise<{
-  game: Game | null;
-  recentPlayers: RecentPlayer[];
-}> => {
-  const now = new Date();
+const getCurrentOrNextGame = cache(
+  async (): Promise<{
+    game: Game | null;
+    recentPlayers: RecentPlayer[];
+  }> => {
+    const now = new Date();
 
-  // First try to get current live or upcoming game
-  const activeGame = await prisma.game.findFirst({
-    where: {
-      OR: [
-        { startsAt: { lte: now }, endsAt: { gt: now } }, // Live
-        { startsAt: { gt: now } }, // Scheduled
-      ],
-    },
-    orderBy: [{ startsAt: "asc" }],
-    include: gameWithEntries,
-  });
+    // First try to get current live or upcoming game
+    const activeGame = await prisma.game.findFirst({
+      where: {
+        OR: [
+          { startsAt: { lte: now }, endsAt: { gt: now } }, // Live
+          { startsAt: { gt: now } }, // Scheduled
+        ],
+      },
+      orderBy: [{ startsAt: "asc" }],
+      include: gameWithEntries,
+    });
 
-  if (activeGame) {
-    const { entries, ...game } = activeGame;
-    return {
-      game,
-      recentPlayers: entries.map((e) => ({
-        username: e.user.username || "Player",
-        pfpUrl: e.user.pfpUrl,
-        timestamp: Date.now(),
-      })),
-    };
+    if (activeGame) {
+      const { entries, ...game } = activeGame;
+      return {
+        game,
+        recentPlayers: entries.map((e) => ({
+          username: e.user.username || "Player",
+          pfpUrl: e.user.pfpUrl,
+          timestamp: Date.now(),
+        })),
+      };
+    }
+
+    // Fallback: get most recent ended game
+    const endedGame = await prisma.game.findFirst({
+      where: { endsAt: { lte: now } },
+      orderBy: [{ endsAt: "desc" }],
+      include: gameWithEntries,
+    });
+
+    if (endedGame) {
+      const { entries, ...game } = endedGame;
+      return {
+        game,
+        recentPlayers: entries.map((e) => ({
+          username: e.user.username || "Player",
+          pfpUrl: e.user.pfpUrl,
+          timestamp: Date.now(),
+        })),
+      };
+    }
+
+    return { game: null, recentPlayers: [] };
   }
-
-  // Fallback: get most recent ended game
-  const endedGame = await prisma.game.findFirst({
-    where: { endsAt: { lte: now } },
-    orderBy: [{ endsAt: "desc" }],
-    include: gameWithEntries,
-  });
-
-  if (endedGame) {
-    const { entries, ...game } = endedGame;
-    return {
-      game,
-      recentPlayers: entries.map((e) => ({
-        username: e.user.username || "Player",
-        pfpUrl: e.user.pfpUrl,
-        timestamp: Date.now(),
-      })),
-    };
-  }
-
-  return { game: null, recentPlayers: [] };
-});
+);
 
 export default async function GameLayout({
   children,
