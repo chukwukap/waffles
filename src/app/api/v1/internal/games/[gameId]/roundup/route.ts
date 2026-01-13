@@ -7,11 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import {
-  rankGame,
-  publishResults,
-  sendResultNotifications,
-} from "@/lib/game/lifecycle";
+import { rankGame, publishResults } from "@/lib/game/lifecycle";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 
@@ -115,9 +111,7 @@ export async function POST(
     } else {
       logger.info(SERVICE, "roundup_skip_onchain", {
         gameId,
-        reason: !game.onchainId
-          ? "no_onchain_id"
-          : "no_prizes_to_distribute",
+        reason: !game.onchainId ? "no_onchain_id" : "no_prizes_to_distribute",
       });
     }
 

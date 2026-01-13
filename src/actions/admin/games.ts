@@ -7,7 +7,6 @@ import { logAdminAction, AdminAction, EntityType } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createGameOnChain, generateOnchainGameId } from "@/lib/chain";
-import { getGamePhase } from "@/lib/types";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 
