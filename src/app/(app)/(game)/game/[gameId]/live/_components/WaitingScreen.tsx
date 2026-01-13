@@ -29,7 +29,7 @@ const floatVariants = {
     transition: {
       duration: 4,
       repeat: Infinity,
-      ease: "easeInOut",
+      ease: "easeInOut" as const,
     },
   },
 };
@@ -176,7 +176,7 @@ export default function WaitingScreen({
               }}
             />
 
-            <div className="relative bg-gradient-to-b from-white/5 to-[#1B8FF5]/10 p-4 rounded-2xl">
+            <div className="relative bg-linear-to-b from-white/5 to-[#1B8FF5]/10 p-4 rounded-2xl">
               <p className="font-display text-[12px] font-medium text-[#99A0AE] text-center mb-2 uppercase tracking-wider">
                 Game ends in
               </p>
@@ -236,7 +236,7 @@ export default function WaitingScreen({
               }}
             />
 
-            <div className="relative bg-gradient-to-b from-white/5 to-[#14B985]/10 p-4 rounded-2xl">
+            <div className="relative bg-linear-to-b from-white/5 to-[#14B985]/10 p-4 rounded-2xl">
               <div className="flex items-center justify-between">
                 <div className="flex flex-col">
                   <span className="font-display text-[12px] font-medium text-[#99A0AE] uppercase tracking-wider mb-1">
@@ -361,7 +361,7 @@ export default function WaitingScreen({
                             unoptimized
                           />
                         ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-[#F5BB1B] to-[#FF6B35]" />
+                          <div className="w-full h-full bg-linear-to-br from-[#F5BB1B] to-[#FF6B35]" />
                         )}
                       </div>
 

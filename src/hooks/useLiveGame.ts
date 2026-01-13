@@ -198,7 +198,7 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
     if (phase === "break") {
       // Stop any playing sounds before transitioning
       stopAllAudio();
-      
+
       // Move to next question after break
       const nextIdx = currentQuestionIndex + 1;
       if (nextIdx >= game.questions.length || isGameEnded) {
