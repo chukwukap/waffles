@@ -15,7 +15,7 @@ import sdk from "@farcaster/miniapp-sdk";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useTimer } from "@/hooks/useTimer";
 import { useGame } from "@/components/providers/GameProvider";
-import { playSound } from "@/lib/sounds";
+import { playSound, playQuestionAudio, stopQuestionAudio, stopAllAudio } from "@/lib/sounds";
 import type {
   LiveGameData,
   LiveGameQuestion,
@@ -143,6 +143,7 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
       // Move to next question after break
       const nextIdx = currentQuestionIndex + 1;
       if (nextIdx >= game.questions.length || isGameEnded) {
+        stopAllAudio();
         setPhase("complete");
       } else {
         setCurrentQuestionIndex(nextIdx);
@@ -153,6 +154,9 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
     }
 
     if (phase === "question") {
+      // Stop question audio before processing timeout
+      stopQuestionAudio();
+      
       // Auto-submit timeout if not answered
       if (!hasAnswered && !isSubmitting && currentQuestion) {
         setIsSubmitting(true);
@@ -183,7 +187,7 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
 
   const seconds = useTimer(timerTarget, handleTimerExpiry);
 
-  // Sound effects
+  // Sound effects for timer warnings
   useEffect(() => {
     if (phase !== "question") return;
 
@@ -196,15 +200,43 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
     prevSecondsRef.current = seconds;
   }, [seconds, phase]);
 
+  // Play question audio when question changes
+  useEffect(() => {
+    if (phase === "question" && currentQuestion?.soundUrl) {
+      playQuestionAudio(currentQuestion.id, currentQuestion.soundUrl);
+    }
+    
+    // Cleanup: stop question audio when question changes or phase ends
+    return () => {
+      stopQuestionAudio();
+    };
+  }, [currentQuestion?.id, currentQuestion?.soundUrl, phase]);
+
+  // Stop all audio when phase changes (clean transitions)
+  useEffect(() => {
+    if (phase !== "question") {
+      stopQuestionAudio();
+    }
+    
+    // On unmount, stop everything
+    return () => {
+      stopAllAudio();
+    };
+  }, [phase]);
+
   // ==========================================
   // GAME LOGIC
   // ==========================================
 
   const advanceToNext = useCallback(() => {
+    // Stop any playing audio before transitioning
+    stopQuestionAudio();
+    
     const nextIdx = currentQuestionIndex + 1;
 
     // Game complete?
     if (nextIdx >= game.questions.length || isGameEnded) {
+      stopAllAudio(); // Clean stop for game end
       setPhase("complete");
       return;
     }

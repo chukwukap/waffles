@@ -5,6 +5,7 @@
  * - Lazy-loaded Audio objects for instant playback
  * - Volume control with mute toggle
  * - LocalStorage persistence for user preferences
+ * - Question-specific audio with proper cleanup on transitions
  */
 
 // ============================================
@@ -47,6 +48,9 @@ export type SoundName = keyof typeof SOUNDS;
 // ============================================
 
 const audioCache = new Map<SoundName, HTMLAudioElement>();
+
+// Track all currently playing audio for cleanup
+const activeAudioSet = new Set<HTMLAudioElement>();
 
 /**
  * Get or create an Audio element for a sound
@@ -93,6 +97,10 @@ class SoundManager {
   private _initialized: boolean = false;
   private _bgAudio: HTMLAudioElement | null = null;
   private _bgPlaying: boolean = false;
+  
+  // Question-specific audio (external URL)
+  private _questionAudio: HTMLAudioElement | null = null;
+  private _currentQuestionId: string | null = null;
 
   constructor() {
     // Defer initialization to first access (client-side only)
@@ -134,9 +142,102 @@ class SoundManager {
     audio.currentTime = 0;
     audio.volume = this._volume;
 
+    // Track active audio
+    activeAudioSet.add(audio);
+    
+    // Remove from tracking when ended
+    const handleEnded = () => {
+      activeAudioSet.delete(audio);
+      audio.removeEventListener("ended", handleEnded);
+    };
+    audio.addEventListener("ended", handleEnded);
+
     // Play with error handling (browsers may block autoplay)
     audio.play().catch(() => {
-      // Silently fail - user interaction may be required
+      activeAudioSet.delete(audio);
+    });
+  }
+
+  // ============================================
+  // QUESTION-SPECIFIC AUDIO
+  // ============================================
+
+  /**
+   * Play audio for a specific question (external URL).
+   * Automatically stops previous question audio.
+   */
+  playQuestionAudio(questionId: string, soundUrl: string): void {
+    this.init();
+    if (this._isMuted) return;
+    if (typeof window === "undefined") return;
+
+    // Stop previous question audio if different question
+    if (this._currentQuestionId !== questionId) {
+      this.stopQuestionAudio();
+    }
+
+    // Already playing this question's audio
+    if (this._currentQuestionId === questionId && this._questionAudio) {
+      return;
+    }
+
+    try {
+      this._questionAudio = new Audio(soundUrl);
+      this._questionAudio.volume = this._volume;
+      this._questionAudio.preload = "auto";
+      this._currentQuestionId = questionId;
+
+      // Track for cleanup
+      activeAudioSet.add(this._questionAudio);
+
+      const handleEnded = () => {
+        if (this._questionAudio) {
+          activeAudioSet.delete(this._questionAudio);
+        }
+      };
+      this._questionAudio.addEventListener("ended", handleEnded);
+
+      this._questionAudio.play().catch(() => {
+        this.stopQuestionAudio();
+      });
+    } catch {
+      this._questionAudio = null;
+      this._currentQuestionId = null;
+    }
+  }
+
+  /**
+   * Stop currently playing question audio
+   */
+  stopQuestionAudio(): void {
+    if (this._questionAudio) {
+      this._questionAudio.pause();
+      this._questionAudio.currentTime = 0;
+      activeAudioSet.delete(this._questionAudio);
+      this._questionAudio = null;
+    }
+    this._currentQuestionId = null;
+  }
+
+  /**
+   * Stop ALL currently playing audio (sound effects + question audio).
+   * Useful for clean transitions between game phases.
+   */
+  stopAllAudio(): void {
+    // Stop question audio
+    this.stopQuestionAudio();
+
+    // Stop all tracked active audio
+    activeAudioSet.forEach((audio) => {
+      audio.pause();
+      audio.currentTime = 0;
+    });
+    activeAudioSet.clear();
+
+    // Stop cached SFX that might be playing
+    audioCache.forEach((audio) => {
+      audio.pause();
+      audio.currentTime = 0;
     });
   }
 
@@ -270,4 +371,25 @@ export const soundManager = new SoundManager();
  */
 export function playSound(name: SoundName): void {
   soundManager.play(name);
+}
+
+/**
+ * Play question-specific audio from URL
+ */
+export function playQuestionAudio(questionId: string, soundUrl: string): void {
+  soundManager.playQuestionAudio(questionId, soundUrl);
+}
+
+/**
+ * Stop question audio
+ */
+export function stopQuestionAudio(): void {
+  soundManager.stopQuestionAudio();
+}
+
+/**
+ * Stop all audio - use when transitioning between game phases
+ */
+export function stopAllAudio(): void {
+  soundManager.stopAllAudio();
 }

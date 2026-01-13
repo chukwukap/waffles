@@ -157,7 +157,9 @@ export function GameCountdownScreen({
             >
               {recentPlayers.length === 0
                 ? "Be the first to join!"
-                : `${recentPlayers.length} ${recentPlayers.length === 1 ? "person has" : "people have"} joined the game`}
+                : `${recentPlayers.length} ${
+                    recentPlayers.length === 1 ? "person has" : "people have"
+                  } joined the game`}
             </motion.span>
           </div>
         </motion.div>
