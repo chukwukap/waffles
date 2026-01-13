@@ -415,6 +415,7 @@ export function WaitlistClient() {
   const addFrame = useAddFrame();
   const searchParams = useSearchParams();
   const { composeCastAsync } = useComposeCast();
+  const router = useRouter();
 
   const fid = context?.user?.fid;
   const ref = searchParams.get("ref") || null;
@@ -422,6 +423,13 @@ export function WaitlistClient() {
   // Data Fetching
   const { user, isLoading, error, refetch } = useUser();
   const mutualsData = useMutuals();
+
+  // Redirect users with game access to the game (for testing)
+  useEffect(() => {
+    if (!isLoading && user?.hasGameAccess) {
+      router.replace("/game");
+    }
+  }, [user, isLoading, router]);
 
   // Track if user just joined (for celebration)
   const [justJoined, setJustJoined] = useState(false);
