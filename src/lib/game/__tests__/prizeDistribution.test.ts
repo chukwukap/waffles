@@ -5,8 +5,15 @@
  * - Top 3 (podium) share 70% of net pool
  * - Ranks 4-10 (runners) share 30% of net pool
  * - 20% platform fee is deducted
- * - Higher tickets = higher prizes within tier
+ * - Same ticket = same prize within tier
+ *
+ * Run with: npx jest src/lib/game/__tests__/prizeDistribution.test.ts
+ * Or install @types/jest for IDE support
+ *
+ * @jest-environment node
  */
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import {
   calculatePrizeDistribution,
@@ -16,6 +23,11 @@ import {
   PLATFORM_FEE_BPS,
   type PlayerEntry,
 } from "../prizeDistribution";
+
+// Type declarations for Jest globals (avoids @types/jest dependency)
+declare function describe(name: string, fn: () => void): void;
+declare function it(name: string, fn: () => void): void;
+declare function expect(value: any): any;
 
 // ============================================================================
 // Test Helpers
@@ -74,24 +86,46 @@ describe("Prize Distribution Algorithm", () => {
       expect(Math.abs(totalPrizes - result.netPool)).toBeLessThan(0.01);
     });
 
-    it("should give podium (ranks 1-3) more than runners (ranks 4-10)", () => {
+    it("should allocate 70% to podium and 30% to runners", () => {
       const players = createPlayers(10);
       const grossPool = 1000;
 
       const result = calculatePrizeDistribution(players, grossPool);
 
-      // Minimum podium prize should be > maximum runner prize
+      // Podium gets 70% of net pool, runners get 30%
+      const expectedPodiumTotal = result.netPool * 0.7;
+      const expectedRunnersTotal = result.netPool * 0.3;
+
+      expect(result.podiumTotal).toBeCloseTo(expectedPodiumTotal, 2);
+      expect(result.runnersTotal).toBeCloseTo(expectedRunnersTotal, 2);
+    });
+
+    it("should give equal prizes to same-ticket players in same tier", () => {
+      // All players have same ticket ($10)
+      const players = createPlayers(10);
+      const grossPool = 1000;
+
+      const result = calculatePrizeDistribution(players, grossPool);
+
+      // All podium players should have equal prizes (same ticket)
       const podiumPrizes = result.allocations
         .filter((a) => a.tier === "podium")
         .map((a) => a.prize);
+
+      const firstPodiumPrize = podiumPrizes[0];
+      podiumPrizes.forEach((p) => {
+        expect(p).toBeCloseTo(firstPodiumPrize, 2);
+      });
+
+      // All runner players should have equal prizes (same ticket)
       const runnerPrizes = result.allocations
         .filter((a) => a.tier === "runner")
         .map((a) => a.prize);
 
-      const minPodium = Math.min(...podiumPrizes);
-      const maxRunner = Math.max(...runnerPrizes);
-
-      expect(minPodium).toBeGreaterThan(maxRunner);
+      const firstRunnerPrize = runnerPrizes[0];
+      runnerPrizes.forEach((p) => {
+        expect(p).toBeCloseTo(firstRunnerPrize, 2);
+      });
     });
 
     it("should rank players by score (higher score = lower rank number)", () => {
@@ -108,42 +142,69 @@ describe("Prize Distribution Algorithm", () => {
   });
 
   describe("Ticket Weighting", () => {
-    it("should give higher prizes to players with higher tickets at same rank tier", () => {
-      // Create 3 podium players with different ticket amounts
+    it("should give higher prizes to players with higher tickets within podium", () => {
+      // 3 podium players with different ticket amounts
       const players = [
         createPlayer({ id: "1", userId: "u1", score: 1000, paidAmount: 25 }),
         createPlayer({ id: "2", userId: "u2", score: 900, paidAmount: 10 }),
         createPlayer({ id: "3", userId: "u3", score: 800, paidAmount: 5 }),
       ];
-      const grossPool = 300;
+      const grossPool = 400;
 
       const result = calculatePrizeDistribution(players, grossPool);
 
-      // Rank 1 should have highest prize (best score + highest ticket)
+      // Higher ticket = higher prize (regardless of rank position)
+      // Player 1 ($25) should get more than Player 2 ($10) and Player 3 ($5)
       expect(result.allocations[0].prize).toBeGreaterThan(result.allocations[1].prize);
       expect(result.allocations[1].prize).toBeGreaterThan(result.allocations[2].prize);
+
+      // Check proportionality: 25:10:5 ratio
+      const p1 = result.allocations[0].prize;
+      const p2 = result.allocations[1].prize;
+      const p3 = result.allocations[2].prize;
+
+      expect(p1 / p3).toBeCloseTo(5, 1); // 25/5 = 5x
+      expect(p2 / p3).toBeCloseTo(2, 1); // 10/5 = 2x
     });
 
-    it("should distribute runner prizes proportionally by ticket", () => {
-      // Create exact scenario: 3 podium + 3 runners with different tickets
+    it("should give higher prizes to players with higher tickets within runners", () => {
+      // 3 podium (equal tickets) + 3 runners with different tickets
       const players = [
         createPlayer({ id: "1", userId: "u1", score: 1000, paidAmount: 10 }),
         createPlayer({ id: "2", userId: "u2", score: 900, paidAmount: 10 }),
         createPlayer({ id: "3", userId: "u3", score: 800, paidAmount: 10 }),
-        // Runners: rank 4 has 2x the ticket of rank 5
+        // Runners with varying tickets
         createPlayer({ id: "4", userId: "u4", score: 700, paidAmount: 20 }),
         createPlayer({ id: "5", userId: "u5", score: 600, paidAmount: 10 }),
+        createPlayer({ id: "6", userId: "u6", score: 500, paidAmount: 10 }),
       ];
-      const grossPool = 500;
+      const grossPool = 600;
 
       const result = calculatePrizeDistribution(players, grossPool);
 
-      // Rank 4 should get ~2x the prize of rank 5
+      // Rank 4 ($20) should get 2x the prize of rank 5 or 6 ($10)
       const rank4Prize = result.allocations.find((a) => a.rank === 4)?.prize ?? 0;
       const rank5Prize = result.allocations.find((a) => a.rank === 5)?.prize ?? 0;
+      const rank6Prize = result.allocations.find((a) => a.rank === 6)?.prize ?? 0;
 
-      // Should be roughly 2:1 ratio (allow some tolerance)
       expect(rank4Prize / rank5Prize).toBeCloseTo(2, 1);
+      expect(rank5Prize).toBeCloseTo(rank6Prize, 2); // Same ticket = same prize
+    });
+
+    it("should give same prize to same-ticket players regardless of rank", () => {
+      // All equal tickets
+      const players = [
+        createPlayer({ id: "1", userId: "u1", score: 1000, paidAmount: 10 }),
+        createPlayer({ id: "2", userId: "u2", score: 900, paidAmount: 10 }),
+        createPlayer({ id: "3", userId: "u3", score: 800, paidAmount: 10 }),
+      ];
+      const grossPool = 300;
+
+      const result = calculatePrizeDistribution(players, grossPool);
+
+      // All podium players with same ticket = same prize
+      expect(result.allocations[0].prize).toBeCloseTo(result.allocations[1].prize, 2);
+      expect(result.allocations[1].prize).toBeCloseTo(result.allocations[2].prize, 2);
     });
   });
 
