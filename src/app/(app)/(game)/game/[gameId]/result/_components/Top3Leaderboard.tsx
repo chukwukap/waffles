@@ -43,9 +43,11 @@ interface Props {
 
 export default function Top3Leaderboard({ entries, className, gameId }: Props) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  
+
   // Build leaderboard URL - include gameId if provided for game-specific view
-  const leaderboardHref = gameId ? `/leaderboard?gameId=${gameId}` : "/leaderboard";
+  const leaderboardHref = gameId
+    ? `/leaderboard?gameId=${gameId}`
+    : "/leaderboard";
 
   return (
     <motion.div
@@ -173,9 +175,9 @@ export default function Top3Leaderboard({ entries, className, gameId }: Props) {
                   animate={
                     hoveredIndex === i
                       ? {
-                        scale: [1, 1.2, 1],
-                        rotate: [0, 10, -10, 0],
-                      }
+                          scale: [1, 1.2, 1],
+                          rotate: [0, 10, -10, 0],
+                        }
                       : {}
                   }
                   transition={{
