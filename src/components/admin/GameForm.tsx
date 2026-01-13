@@ -135,6 +135,19 @@ export function GameForm({
     return remainingMins > 0 ? `${hours}h ${remainingMins}m` : `${hours}h`;
   }, [durationMinutes]);
 
+  /**
+   * Converts a datetime-local string to ISO 8601 format with timezone info.
+   * This ensures consistent timezone handling between client and server.
+   * datetime-local gives "2025-01-13T14:00" - we need to add timezone offset.
+   */
+  const toISOWithTimezone = (datetimeLocalValue: string): string => {
+    if (!datetimeLocalValue) return "";
+    // Create date from local value - JavaScript parses this in local timezone
+    const date = new Date(datetimeLocalValue);
+    // Return ISO string (always in UTC with 'Z' suffix)
+    return date.toISOString();
+  };
+
   // Form submission handler
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -163,6 +176,11 @@ export function GameForm({
 
     setValidationError(null);
     const formData = new FormData(e.currentTarget);
+
+    // CRITICAL: Convert datetime-local values to UTC ISO strings
+    // This fixes timezone inconsistency between local and production servers
+    formData.set("startsAt", toISOWithTimezone(startsAt));
+    formData.set("endsAt", toISOWithTimezone(calculatedEndsAt));
 
     // For edit mode, submit directly
     if (isEdit) {

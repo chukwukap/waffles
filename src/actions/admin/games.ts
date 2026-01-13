@@ -28,6 +28,9 @@ const gameSchema = z.object({
     "GENERAL",
   ]),
   coverUrl: z.string().optional().nullable(),
+  // NOTE: startsAt and endsAt should be ISO 8601 strings (with timezone/UTC).
+  // The client converts datetime-local values to ISO format before submission
+  // to ensure consistent timezone handling between local and production servers.
   startsAt: z.string().transform((str) => new Date(str)),
   endsAt: z.string().transform((str) => new Date(str)),
   tierPrice1: z.coerce.number().min(0, "Tier price must be non-negative"),
