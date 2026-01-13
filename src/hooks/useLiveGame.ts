@@ -24,7 +24,12 @@ import type {
 // TYPES
 // ==========================================
 
-export type GamePhase = "countdown" | "question" | "break" | "waiting" | "complete";
+export type GamePhase =
+  | "countdown"
+  | "question"
+  | "break"
+  | "waiting"
+  | "complete";
 
 export interface UseLiveGameReturn {
   // Current phase
@@ -191,10 +196,12 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
 
   const handleTimerExpiry = useCallback(async () => {
     if (phase === "break") {
+      // Stop any playing sounds before transitioning
+      stopAllAudio();
+      
       // Move to next question after break
       const nextIdx = currentQuestionIndex + 1;
       if (nextIdx >= game.questions.length || isGameEnded) {
-        stopAllAudio();
         setPhase("complete");
       } else {
         setCurrentQuestionIndex(nextIdx);

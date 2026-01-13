@@ -56,7 +56,7 @@ export function NextGameCard() {
 
   // Derived state
   const hasTicket = !!entry?.paidAt;
-  
+
   // Check if player has answered all questions (finished playing)
   const hasFinishedAnswering =
     hasTicket &&
@@ -109,7 +109,11 @@ export function NextGameCard() {
     : isLive
     ? hasTicket
       ? hasFinishedAnswering
-        ? { text: "WAITING...", disabled: false, href: `/game/${game?.id}/live` }
+        ? {
+            text: "WAITING...",
+            disabled: false,
+            href: `/game/${game?.id}/live`,
+          }
         : { text: "PLAY NOW", disabled: false, href: `/game/${game?.id}/live` }
       : { text: "GET TICKET", disabled: false, href: null }
     : hasTicket
