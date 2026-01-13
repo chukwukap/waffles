@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         published++;
       } else {
         // Off-chain: send notifications directly
-        await sendResultNotifications(game.id);
+        // await sendResultNotifications(game.id);
       }
 
       console.log(`[Cron] Game ${game.id} rounded up (fallback)`);

@@ -23,13 +23,11 @@ import { Spinner } from "@/components/ui/spinner";
 import { useGame } from "@/components/providers/GameProvider";
 import confetti from "canvas-confetti";
 import { Game } from "@prisma";
-import { TOP_WINNERS_COUNT } from "@/lib/constants";
+import { WINNERS_COUNT } from "@/lib/game/prizeDistribution";
 
 // ==========================================
 // TYPES
 // ==========================================
-
-
 
 type ClaimState =
   | "idle"
@@ -42,7 +40,6 @@ type ClaimState =
 // ==========================================
 // COMPONENT
 // ==========================================
-
 
 type Top3Entry = {
   score: number;
@@ -66,8 +63,8 @@ export default function ResultPageClient({
   const { address } = useAccount();
   const { context } = useMiniKit();
   const { composeCastAsync } = useComposeCast();
-  const gameId = game?.id
-  const gameNumber = game?.gameNumber ?? 0
+  const gameId = game?.id;
+  const gameNumber = game?.gameNumber ?? 0;
   const { state: gameState, refetchEntry } = useGame();
   const { entry, isLoadingEntry: entryLoading } = gameState;
 
@@ -78,9 +75,7 @@ export default function ResultPageClient({
   const [claimError, setClaimError] = useState<string | null>(null);
 
   // Get onchainId
-  const onchainId = game?.onchainId
-
-
+  const onchainId = game?.onchainId;
 
   // User score from GameProvider entry
   const userScore = useMemo(() => {
@@ -105,19 +100,21 @@ export default function ResultPageClient({
 
   // Is user a winner (rank 1-10)?
   const isWinner = useMemo(() => {
-    return userScore !== null && userScore.rank <= TOP_WINNERS_COUNT && userScore.winnings > 0;
+    return (
+      userScore !== null &&
+      userScore.rank <= WINNERS_COUNT &&
+      userScore.winnings > 0
+    );
   }, [userScore]);
-
-
 
   // Play sound and confetti on mount (once)
   useEffect(() => {
     if (!hasPlayedSound.current && userScore) {
       hasPlayedSound.current = true;
-      playSound(userScore.rank <= TOP_WINNERS_COUNT ? "victory" : "defeat");
+      playSound(userScore.rank <= WINNERS_COUNT ? "victory" : "defeat");
 
       // Fire confetti for winners (rank 1-10)
-      if (userScore.rank <= TOP_WINNERS_COUNT && userScore.winnings > 0) {
+      if (userScore.rank <= WINNERS_COUNT && userScore.winnings > 0) {
         // Initial burst
         confetti({
           particleCount: 100,
@@ -175,7 +172,8 @@ export default function ResultPageClient({
       if (context?.user?.pfpUrl) {
         frameParams.set("pfpUrl", context.user.pfpUrl);
       }
-      const frameUrl = `${env.rootUrl}/game/${gameId}/result?${frameParams.toString()}`;
+      const frameUrl = `${env.rootUrl
+        }/game/${gameId}/result?${frameParams.toString()}`;
 
       const result = await composeCastAsync({
         text: prizeText,
@@ -236,10 +234,9 @@ export default function ResultPageClient({
   // Sync claim with backend (defined before the effect that uses it)
   const syncClaimWithBackend = useCallback(async () => {
     try {
-      const response = await sdk.quickAuth.fetch("/api/v1/prizes/claim", {
+      const response = await sdk.quickAuth.fetch(`/api/v1/games/${gameId}/claim`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gameId }),
       });
 
       if (!response.ok) {
@@ -313,7 +310,12 @@ export default function ResultPageClient({
       }
 
       const { amount, proof, claimedAt } = await proofRes.json();
-      console.log("[Claim] Got proof, amount:", amount, "claimedAt:", claimedAt);
+      console.log(
+        "[Claim] Got proof, amount:",
+        amount,
+        "claimedAt:",
+        claimedAt
+      );
 
       // Check if already claimed from response
       if (claimedAt) {
@@ -347,7 +349,15 @@ export default function ResultPageClient({
         error instanceof Error ? error.message : "Failed to claim prize"
       );
     }
-  }, [onchainId, address, gameId, sendCalls, resetSendCalls, hasClaimed, refetchEntry]);
+  }, [
+    onchainId,
+    address,
+    gameId,
+    sendCalls,
+    resetSendCalls,
+    hasClaimed,
+    refetchEntry,
+  ]);
 
   // Get button text based on state
   const getClaimButtonText = () => {
@@ -553,11 +563,13 @@ export default function ResultPageClient({
           </div>
         </div>
 
-        <Top3Leaderboard entries={top3Entries.map((e) => ({
-          username: e.user?.username ?? "anon",
-          pfpUrl: e.user?.pfpUrl ?? "",
-          score: e.score,
-        }))} />
+        <Top3Leaderboard
+          entries={top3Entries.map((e) => ({
+            username: e.user?.username ?? "anon",
+            pfpUrl: e.user?.pfpUrl ?? "",
+            score: e.score,
+          }))}
+        />
       </div>
       <BottomNav />
     </>

@@ -3,7 +3,6 @@
 import { WaffleIcon, FlashIcon, CupIcon } from "@/components/icons";
 import { GameHistoryEntry } from "./GameHistory";
 import { cn } from "@/lib/utils";
-import React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 

@@ -7,7 +7,7 @@
  * - 20% platform fee is deducted
  * - Same ticket = same prize within tier
  *
- * Run with: pnpm vitest run src/lib/game/__tests__/prizeDistribution.test.ts
+ * Run with: npx vitest run src/lib/game/__tests__/prizeDistribution.test.ts
  */
 
 import { describe, it, expect } from "vitest";

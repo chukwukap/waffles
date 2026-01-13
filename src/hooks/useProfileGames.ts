@@ -73,13 +73,15 @@ export function useProfileGames(limit?: number) {
     }
   );
 
-  // Apply limit client-side (API returns all games)
-  const games = data ?? [];
-  const limitedGames = limit ? games.slice(0, limit) : games;
+  // Filter games that have ended
+  const endedGames = (data ?? []).filter(
+    (g) => new Date(g.game.endsAt).getTime() < Date.now()
+  );
+
+  const limitedGames = limit ? endedGames.slice(0, limit) : endedGames;
 
   return {
     games: limitedGames,
-    allGames: games,
     isLoading,
     error: error ? "Failed to load games" : null,
     refetch: mutate,

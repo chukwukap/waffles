@@ -7,7 +7,6 @@
 
 import { parseUnits } from "viem";
 import { prisma } from "@/lib/db";
-import { TOP_WINNERS_COUNT } from "@/lib/constants";
 import { WAFFLE_GAME_CONFIG, TOKEN_CONFIG } from "@/lib/chain/config";
 import { publicClient, getWalletClient } from "@/lib/chain/client";
 import {
@@ -21,6 +20,7 @@ import { env } from "@/lib/env";
 import {
   calculatePrizeDistribution,
   formatDistribution,
+  WINNERS_COUNT,
   type PlayerEntry,
 } from "./prizeDistribution";
 
@@ -66,7 +66,7 @@ export async function rankGame(gameId: string): Promise<RankResult> {
   // Already ranked - return existing data
   if (game.rankedAt) {
     const existingWinners = await prisma.gameEntry.findMany({
-      where: { gameId, rank: { lte: TOP_WINNERS_COUNT }, prize: { gt: 0 } },
+      where: { gameId, rank: { lte: WINNERS_COUNT }, prize: { gt: 0 } },
       select: {
         rank: true,
         prize: true,
@@ -129,12 +129,15 @@ export async function rankGame(gameId: string): Promise<RankResult> {
     id: e.id,
     userId: e.userId,
     score: e.score,
-    paidAmount: e.paidAt ? (e.paidAmount ?? 0) : 0, // Only count paid entries
+    paidAmount: e.paidAt ? e.paidAmount ?? 0 : 0, // Only count paid entries
     username: e.user.username ?? undefined,
   }));
 
   // Calculate prize distribution using new algorithm
-  const distribution = calculatePrizeDistribution(playerEntries, game.prizePool);
+  const distribution = calculatePrizeDistribution(
+    playerEntries,
+    game.prizePool
+  );
 
   // Log distribution for debugging
   console.log(`[Lifecycle] ${formatDistribution(distribution)}`);
@@ -243,7 +246,7 @@ export async function publishResults(gameId: string): Promise<PublishResult> {
   const rankedEntries = await prisma.gameEntry.findMany({
     where: {
       gameId,
-      rank: { lte: TOP_WINNERS_COUNT },
+      rank: { lte: WINNERS_COUNT },
       prize: { gt: 0 },
       paidAt: { not: null },
     },
@@ -328,10 +331,10 @@ export async function sendResultNotifications(gameId: string) {
 
   const usersToNotify = allEntries.filter((e) => e.user.notifs.length > 0);
   const winners = usersToNotify.filter(
-    (e) => e.rank && e.rank <= TOP_WINNERS_COUNT && e.prize
+    (e) => e.rank && e.rank <= WINNERS_COUNT && e.prize
   );
   const nonWinners = usersToNotify.filter(
-    (e) => !(e.rank && e.rank <= TOP_WINNERS_COUNT && e.prize)
+    (e) => !(e.rank && e.rank <= WINNERS_COUNT && e.prize)
   );
 
   // Winners: personalized

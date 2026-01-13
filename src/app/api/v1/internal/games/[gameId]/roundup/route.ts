@@ -84,7 +84,7 @@ export async function POST(
       );
     } else {
       // 4. Send notifications for off-chain games (on-chain games get notified in publishResults)
-      await sendResultNotifications(gameId);
+      // await sendResultNotifications(gameId);
       console.log(
         `[Roundup] Game ${gameId} notifications sent (off-chain game)`
       );
