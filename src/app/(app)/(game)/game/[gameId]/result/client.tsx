@@ -74,6 +74,7 @@ export default function ResultPageClient({
   // Claim state
   const [claimState, setClaimState] = useState<ClaimState>("idle");
   const [claimError, setClaimError] = useState<string | null>(null);
+  console.log("claimError", claimError);
   const [claimCountdown, setClaimCountdown] = useState<string | null>(null);
 
   // Check if already claimed from entry
@@ -233,7 +234,7 @@ export default function ResultPageClient({
       console.error("[Share] Error:", error);
       notify.error("Failed to share");
     }
-  }, [composeCastAsync, context?.user, userScore]);
+  }, [composeCastAsync, context?.user, userScore, gameId]);
 
   // ==========================================
   // CLAIM LOGIC

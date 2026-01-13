@@ -3,7 +3,9 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { PlayerAvatarStack } from "../../../_components/PlayerAvatarStack";
+
+// Rotation angles from design specs
+const AVATAR_ROTATIONS = [-8.71, 5.85, -3.57, 7.56];
 
 interface GameCountdownScreenProps {
   onComplete: () => void;
@@ -103,11 +105,60 @@ export function GameCountdownScreen({
           </div>
 
           {/* Player count - shows "X people have joined the game" */}
-          <div className="flex justify-center">
-            <PlayerAvatarStack
-              initialPlayers={recentPlayers}
-              actionText="joined the game"
-            />
+          <div className="flex flex-row justify-center items-center gap-2">
+            {/* Avatar Stack - rotated rounded squares */}
+            {recentPlayers.length > 0 && (
+              <div className="flex flex-row items-center">
+                {recentPlayers.slice(0, 4).map((player, index) => (
+                  <motion.div
+                    key={player.username || index}
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{
+                      opacity: 1,
+                      scale: 1,
+                      rotate: AVATAR_ROTATIONS[index] || 0,
+                    }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 400,
+                      damping: 20,
+                      delay: 0.4 + index * 0.08,
+                    }}
+                    className="box-border w-[21px] h-[21px] rounded-[3px] overflow-hidden bg-[#F0F3F4] shrink-0"
+                    style={{
+                      marginLeft: index > 0 ? "-11px" : "0",
+                      zIndex: 4 - index,
+                      border: "1.5px solid #FFFFFF",
+                    }}
+                  >
+                    {player.pfpUrl ? (
+                      <Image
+                        src={player.pfpUrl}
+                        alt=""
+                        width={21}
+                        height={21}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-linear-to-br from-[#F5BB1B] to-[#FF6B35]" />
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            )}
+
+            {/* Text - "X people have joined the game" */}
+            <motion.span
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.6 }}
+              className="font-display font-medium text-base text-center tracking-[-0.03em] text-[#99A0AE]"
+              style={{ lineHeight: "130%" }}
+            >
+              {recentPlayers.length === 0
+                ? "Be the first to join!"
+                : `${recentPlayers.length} ${recentPlayers.length === 1 ? "person has" : "people have"} joined the game`}
+            </motion.span>
           </div>
         </motion.div>
       </AnimatePresence>
