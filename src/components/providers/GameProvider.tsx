@@ -86,6 +86,7 @@ const initialState: GameState = {
 // ==========================================
 
 type Action =
+  | { type: "SET_GAME"; payload: GameWithQuestionCount | null }
   | { type: "SET_ENTRY"; payload: GameEntryData | null }
   | { type: "SET_LOADING_ENTRY"; payload: boolean }
   | {
@@ -107,6 +108,9 @@ type Action =
 
 function reducer(state: GameState, action: Action): GameState {
   switch (action.type) {
+    case "SET_GAME":
+      return { ...state, game: action.payload };
+
     case "SET_ENTRY":
       return { ...state, entry: action.payload, isLoadingEntry: false };
 
@@ -225,6 +229,12 @@ export function GameProvider({
     game,
     recentPlayers: initialRecentPlayers,
   });
+
+  // Sync game prop to state when server data changes (e.g., after navigation)
+  // This ensures fresh data from server components propagates to client state
+  useEffect(() => {
+    dispatch({ type: "SET_GAME", payload: game });
+  }, [game?.id]);
 
   const gameId = game?.id;
 
