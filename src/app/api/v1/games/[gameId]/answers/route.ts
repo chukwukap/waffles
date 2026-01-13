@@ -3,7 +3,7 @@ import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma";
 import { z } from "zod";
-import { getScore } from "@/lib/scoring";
+import { getScore } from "@/lib/game/scoring";
 
 type Params = { gameId: string };
 

@@ -7,27 +7,18 @@
  * - 20% platform fee is deducted
  * - Same ticket = same prize within tier
  *
- * Run with: npx jest src/lib/game/__tests__/prizeDistribution.test.ts
- * Or install @types/jest for IDE support
- *
- * @jest-environment node
+ * Run with: pnpm vitest run src/lib/game/__tests__/prizeDistribution.test.ts
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
+import { describe, it, expect } from "vitest";
 import {
   calculatePrizeDistribution,
   validateDistribution,
   formatDistribution,
   WINNERS_COUNT,
   PLATFORM_FEE_BPS,
-  type PlayerEntry,
 } from "../prizeDistribution";
-
-// Type declarations for Jest globals (avoids @types/jest dependency)
-declare function describe(name: string, fn: () => void): void;
-declare function it(name: string, fn: () => void): void;
-declare function expect(value: any): any;
+import type { PlayerEntry } from "../prizeDistribution";
 
 // ============================================================================
 // Test Helpers
@@ -82,7 +73,10 @@ describe("Prize Distribution Algorithm", () => {
       expect(validation.valid).toBe(true);
 
       // Total prizes should equal net pool (within tolerance)
-      const totalPrizes = result.allocations.reduce((sum, a) => sum + a.prize, 0);
+      const totalPrizes = result.allocations.reduce(
+        (sum, a) => sum + a.prize,
+        0
+      );
       expect(Math.abs(totalPrizes - result.netPool)).toBeLessThan(0.01);
     });
 
@@ -155,8 +149,12 @@ describe("Prize Distribution Algorithm", () => {
 
       // Higher ticket = higher prize (regardless of rank position)
       // Player 1 ($25) should get more than Player 2 ($10) and Player 3 ($5)
-      expect(result.allocations[0].prize).toBeGreaterThan(result.allocations[1].prize);
-      expect(result.allocations[1].prize).toBeGreaterThan(result.allocations[2].prize);
+      expect(result.allocations[0].prize).toBeGreaterThan(
+        result.allocations[1].prize
+      );
+      expect(result.allocations[1].prize).toBeGreaterThan(
+        result.allocations[2].prize
+      );
 
       // Check proportionality: 25:10:5 ratio
       const p1 = result.allocations[0].prize;
@@ -183,9 +181,12 @@ describe("Prize Distribution Algorithm", () => {
       const result = calculatePrizeDistribution(players, grossPool);
 
       // Rank 4 ($20) should get 2x the prize of rank 5 or 6 ($10)
-      const rank4Prize = result.allocations.find((a) => a.rank === 4)?.prize ?? 0;
-      const rank5Prize = result.allocations.find((a) => a.rank === 5)?.prize ?? 0;
-      const rank6Prize = result.allocations.find((a) => a.rank === 6)?.prize ?? 0;
+      const rank4Prize =
+        result.allocations.find((a) => a.rank === 4)?.prize ?? 0;
+      const rank5Prize =
+        result.allocations.find((a) => a.rank === 5)?.prize ?? 0;
+      const rank6Prize =
+        result.allocations.find((a) => a.rank === 6)?.prize ?? 0;
 
       expect(rank4Prize / rank5Prize).toBeCloseTo(2, 1);
       expect(rank5Prize).toBeCloseTo(rank6Prize, 2); // Same ticket = same prize
@@ -203,8 +204,14 @@ describe("Prize Distribution Algorithm", () => {
       const result = calculatePrizeDistribution(players, grossPool);
 
       // All podium players with same ticket = same prize
-      expect(result.allocations[0].prize).toBeCloseTo(result.allocations[1].prize, 2);
-      expect(result.allocations[1].prize).toBeCloseTo(result.allocations[2].prize, 2);
+      expect(result.allocations[0].prize).toBeCloseTo(
+        result.allocations[1].prize,
+        2
+      );
+      expect(result.allocations[1].prize).toBeCloseTo(
+        result.allocations[2].prize,
+        2
+      );
     });
   });
 
@@ -239,11 +246,15 @@ describe("Prize Distribution Algorithm", () => {
       expect(validation.valid).toBe(true);
 
       // All should be podium tier
-      const podiumCount = result.allocations.filter((a) => a.tier === "podium").length;
+      const podiumCount = result.allocations.filter(
+        (a) => a.tier === "podium"
+      ).length;
       expect(podiumCount).toBe(3);
 
       // No runners
-      const runnerCount = result.allocations.filter((a) => a.tier === "runner").length;
+      const runnerCount = result.allocations.filter(
+        (a) => a.tier === "runner"
+      ).length;
       expect(runnerCount).toBe(0);
 
       // Podium gets entire net pool when no runners
@@ -260,8 +271,12 @@ describe("Prize Distribution Algorithm", () => {
       expect(validation.valid).toBe(true);
 
       // 3 podium + 4 runners
-      const podiumCount = result.allocations.filter((a) => a.tier === "podium").length;
-      const runnerCount = result.allocations.filter((a) => a.tier === "runner").length;
+      const podiumCount = result.allocations.filter(
+        (a) => a.tier === "podium"
+      ).length;
+      const runnerCount = result.allocations.filter(
+        (a) => a.tier === "runner"
+      ).length;
 
       expect(podiumCount).toBe(3);
       expect(runnerCount).toBe(4);

@@ -305,7 +305,9 @@ export function validateDistribution(result: DistributionResult): {
     // Should be ~70% (allow some tolerance for rounding)
     if (Math.abs(podiumRatio - 0.7) > 0.05) {
       errors.push(
-        `Podium ratio (${(podiumRatio * 100).toFixed(1)}%) doesn't match expected 70%`
+        `Podium ratio (${(podiumRatio * 100).toFixed(
+          1
+        )}%) doesn't match expected 70%`
       );
     }
   }
