@@ -96,6 +96,8 @@ export default function LeaderboardClient({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  // Track if initial animation has played to prevent re-animation on data updates
+  const hasAnimatedRef = useRef(false);
 
   // ============================================
   // INITIAL DATA FETCH
@@ -187,6 +189,8 @@ export default function LeaderboardClient({
   useEffect(() => {
     setPage(0);
     setCrownOpacity(1);
+    // Reset animation flag when tab/game changes so new data animates in
+    hasAnimatedRef.current = false;
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTop = 0;
     }
@@ -314,7 +318,7 @@ export default function LeaderboardClient({
           {showTop3 && (
             <motion.div
               key={`top3-${activeTab}`}
-              initial={{ opacity: 0, y: 20 }}
+              initial={hasAnimatedRef.current ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{
@@ -343,8 +347,11 @@ export default function LeaderboardClient({
               },
             },
           }}
-          initial="hidden"
+          initial={hasAnimatedRef.current ? "visible" : "hidden"}
           animate="visible"
+          onAnimationComplete={() => {
+            hasAnimatedRef.current = true;
+          }}
         >
           {rest.map((entry) => (
             <motion.div
