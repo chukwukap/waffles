@@ -52,12 +52,11 @@ export default function LeaderboardClient({
   activeTab,
   gameIdOverride,
 }: LeaderboardClientProps) {
-  // Get game from context (fetched at layout level)
+  // Get game from context only as fallback when no override provided
   const { state: { game } } = useGame();
 
-  // The actual gameId to use: override from URL, or current game from context
+  // The actual gameId to use: override from URL takes priority, fallback to context
   const gameId = gameIdOverride ?? game?.id;
-  const gameTitle = game?.title ?? "Game";
 
   // Get user FID from MiniKit context
   const { context } = useMiniKit();
@@ -73,6 +72,8 @@ export default function LeaderboardClient({
   const [error, setError] = useState<string | null>(null);
   const [crownOpacity, setCrownOpacity] = useState(1);
   const [isSticky, setIsSticky] = useState(false);
+  // Game title from API response - independent of context for game-specific views
+  const [gameTitle, setGameTitle] = useState<string>("Game");
 
   // ============================================
   // REFS
@@ -129,6 +130,10 @@ export default function LeaderboardClient({
             : data.entries;
           setEntries(effectiveEntries);
           setHasMore(USE_MOCK_DATA && data.entries.length === 0 ? false : data.hasMore);
+          // Set game title from API response (independent of context)
+          if (data.gameTitle) {
+            setGameTitle(data.gameTitle);
+          }
         } else {
           setEntries((prev) => [...prev, ...data.entries]);
           setHasMore(data.hasMore);
