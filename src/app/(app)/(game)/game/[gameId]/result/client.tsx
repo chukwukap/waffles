@@ -76,6 +76,10 @@ export default function ResultPageClient({
   const [claimError, setClaimError] = useState<string | null>(null);
   const [claimCountdown, setClaimCountdown] = useState<string | null>(null);
 
+  // Check if already claimed from entry
+  const hasClaimed =
+    entry?.claimedAt !== null && entry?.claimedAt !== undefined;
+
   // Calculate when claim window opens (1 hour after game ends)
   const claimOpensAt = useMemo(() => {
     if (!game?.endsAt) return null;
@@ -133,10 +137,6 @@ export default function ResultPageClient({
       percentile: Math.max(0, Math.min(100, percentile)),
     };
   }, [entry, game?.playerCount]);
-
-  // Check if already claimed from entry
-  const hasClaimed =
-    entry?.claimedAt !== null && entry?.claimedAt !== undefined;
 
   // Is user a winner (rank 1-10)?
   const isWinner = useMemo(() => {
