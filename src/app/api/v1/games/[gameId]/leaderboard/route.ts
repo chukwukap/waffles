@@ -26,7 +26,7 @@ export async function GET(
   try {
     const { gameId } = await context.params;
 
-    if (gameId) {
+    if (!gameId) {
       return NextResponse.json(
         { error: "Invalid game ID", code: "INVALID_PARAM" },
         { status: 400 }

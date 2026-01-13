@@ -11,6 +11,7 @@
  */
 
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import sdk from "@farcaster/miniapp-sdk";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useTimer } from "@/hooks/useTimer";
@@ -61,6 +62,10 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
   const { context } = useMiniKit();
   const userPfpUrl = context?.user?.pfpUrl || null;
   const { dispatch } = useGame();
+  const searchParams = useSearchParams();
+  
+  // Check if user is in waiting mode (finished all questions, viewing standings)
+  const isWaitingMode = searchParams.get("waiting") === "true";
 
   // ==========================================
   // ALL HOOKS DECLARED UNCONDITIONALLY HERE
@@ -95,10 +100,14 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
     refetchEntry();
   }, [refetchEntry]);
 
-  // Core state
-  const [phase, setPhase] = useState<GamePhase>("countdown");
+  // Core state - start in break phase if in waiting mode
+  const [phase, setPhase] = useState<GamePhase>(
+    isWaitingMode ? "break" : "countdown"
+  );
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [timerTarget, setTimerTarget] = useState(0);
+  const [timerTarget, setTimerTarget] = useState(
+    isWaitingMode ? game.endsAt.getTime() : 0
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mediaReady, setMediaReady] = useState(false);
 
@@ -212,7 +221,7 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
   const advanceToNext = useCallback(() => {
     // Stop any playing sound effects before transitioning
     stopAllAudio();
-    
+
     const nextIdx = currentQuestionIndex + 1;
 
     // Game complete?
@@ -260,15 +269,22 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
     );
 
     if (firstUnansweredIdx === -1) {
-      // All questions answered
-      setPhase("complete");
+      // All questions answered - show break view (standings) if in waiting mode
+      // or if game is still live, otherwise show complete
+      if (isWaitingMode || !isGameEnded) {
+        setPhase("break");
+        // Set a long timer for break - will end when game ends
+        setTimerTarget(game.endsAt.getTime());
+      } else {
+        setPhase("complete");
+      }
       return;
     }
 
     setCurrentQuestionIndex(firstUnansweredIdx);
     setMediaReady(false);
     setPhase("question");
-  }, [phase, game.questions, answeredIds]);
+  }, [phase, game.questions, answeredIds, isWaitingMode, isGameEnded, game.endsAt]);
 
   const submitAnswer = useCallback(
     async (selectedIndex: number) => {

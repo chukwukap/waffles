@@ -7,13 +7,16 @@ import {
   type RecentPlayer,
 } from "@/components/providers/GameProvider";
 
-// Include entries for recent players display
-const gameWithEntries = {
+// Include entries for recent players display and question count
+const gameWithExtras = {
   entries: {
     where: { paidAt: { not: null } },
     select: { user: { select: { pfpUrl: true, username: true } } },
     take: 10,
     orderBy: { createdAt: "desc" as const },
+  },
+  _count: {
+    select: { questions: true },
   },
 };
 
@@ -23,9 +26,12 @@ const gameWithEntries = {
  * Includes recent player entries for avatar display.
  * Cached for request deduplication.
  */
+// Extended Game type with question count
+type GameWithCount = Game & { questionCount: number };
+
 const getCurrentOrNextGame = cache(
   async (): Promise<{
-    game: Game | null;
+    game: GameWithCount | null;
     recentPlayers: RecentPlayer[];
   }> => {
     const now = new Date();
@@ -39,13 +45,13 @@ const getCurrentOrNextGame = cache(
         ],
       },
       orderBy: [{ startsAt: "asc" }],
-      include: gameWithEntries,
+      include: gameWithExtras,
     });
 
     if (activeGame) {
-      const { entries, ...game } = activeGame;
+      const { entries, _count, ...game } = activeGame;
       return {
-        game,
+        game: { ...game, questionCount: _count.questions },
         recentPlayers: entries.map((e) => ({
           username: e.user.username || "Player",
           pfpUrl: e.user.pfpUrl,
@@ -58,13 +64,13 @@ const getCurrentOrNextGame = cache(
     const endedGame = await prisma.game.findFirst({
       where: { endsAt: { lte: now } },
       orderBy: [{ endsAt: "desc" }],
-      include: gameWithEntries,
+      include: gameWithExtras,
     });
 
     if (endedGame) {
-      const { entries, ...game } = endedGame;
+      const { entries, _count, ...game } = endedGame;
       return {
-        game,
+        game: { ...game, questionCount: _count.questions },
         recentPlayers: entries.map((e) => ({
           username: e.user.username || "Player",
           pfpUrl: e.user.pfpUrl,

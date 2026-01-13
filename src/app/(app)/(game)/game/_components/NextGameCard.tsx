@@ -56,6 +56,14 @@ export function NextGameCard() {
 
   // Derived state
   const hasTicket = !!entry?.paidAt;
+  
+  // Check if player has answered all questions (game is live and they're done)
+  const hasFinishedAllQuestions =
+    isLive &&
+    hasTicket &&
+    game?.questionCount &&
+    entry?.answered &&
+    entry.answered >= game.questionCount;
 
   // Animation controls
   const prevPrizePool = useRef(prizePool);
@@ -101,7 +109,9 @@ export function NextGameCard() {
       }
     : isLive
     ? hasTicket
-      ? { text: "PLAY NOW", disabled: false, href: `/game/${game?.id}/live` }
+      ? hasFinishedAllQuestions
+        ? { text: "VIEW STANDINGS", disabled: false, href: `/game/${game?.id}/live?waiting=true` }
+        : { text: "PLAY NOW", disabled: false, href: `/game/${game?.id}/live` }
       : { text: "GET TICKET", disabled: false, href: null }
     : hasTicket
     ? { text: "YOU'RE IN!", disabled: true, href: null }

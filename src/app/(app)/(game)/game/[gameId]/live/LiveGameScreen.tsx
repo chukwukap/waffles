@@ -40,13 +40,6 @@ export default function LiveGameScreen({ game }: { game: LiveGameData }) {
   // No hooks below this point!
   // ==========================================
 
-  // return (
-  //   <GameCountdownScreen
-  //     onComplete={startGame}
-  //     recentPlayers={game.recentPlayers}
-  //   />
-  // );
-
   switch (phase) {
     case "countdown":
       return (
