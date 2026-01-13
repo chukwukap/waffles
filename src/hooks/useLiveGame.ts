@@ -11,9 +11,7 @@
  */
 
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
 import sdk from "@farcaster/miniapp-sdk";
-import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useTimer } from "@/hooks/useTimer";
 import { useGame } from "@/components/providers/GameProvider";
 import { playSound, stopAllAudio } from "@/lib/sounds";
@@ -26,7 +24,7 @@ import type {
 // TYPES
 // ==========================================
 
-export type GamePhase = "countdown" | "question" | "break" | "complete";
+export type GamePhase = "countdown" | "question" | "break" | "waiting" | "complete";
 
 export interface UseLiveGameReturn {
   // Current phase
@@ -48,6 +46,10 @@ export interface UseLiveGameReturn {
   // Break state
   nextRoundNumber: number;
 
+  // Waiting state - for showing countdown until game ends
+  gameEndsAt: Date;
+  gameId: string;
+
   // Actions
   startGame: () => void;
   submitAnswer: (index: number) => Promise<void>;
@@ -59,13 +61,7 @@ export interface UseLiveGameReturn {
 // ==========================================
 
 export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
-  const { context } = useMiniKit();
-  const userPfpUrl = context?.user?.pfpUrl || null;
   const { dispatch } = useGame();
-  const searchParams = useSearchParams();
-  
-  // Check if user is in waiting mode (finished all questions, viewing standings)
-  const isWaitingMode = searchParams.get("waiting") === "true";
 
   // ==========================================
   // ALL HOOKS DECLARED UNCONDITIONALLY HERE
@@ -100,14 +96,10 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
     refetchEntry();
   }, [refetchEntry]);
 
-  // Core state - start in break phase if in waiting mode
-  const [phase, setPhase] = useState<GamePhase>(
-    isWaitingMode ? "break" : "countdown"
-  );
+  // Core state
+  const [phase, setPhase] = useState<GamePhase>("countdown");
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [timerTarget, setTimerTarget] = useState(
-    isWaitingMode ? game.endsAt.getTime() : 0
-  );
+  const [timerTarget, setTimerTarget] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mediaReady, setMediaReady] = useState(false);
 
@@ -138,10 +130,60 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
 
   const isGameEnded = Date.now() >= game.endsAt.getTime();
 
+  // Auto-transition from waiting to complete when game ends
+  useEffect(() => {
+    if (phase !== "waiting") return;
+
+    const timeUntilEnd = game.endsAt.getTime() - Date.now();
+    if (timeUntilEnd <= 0) {
+      setPhase("complete");
+      return;
+    }
+
+    // Set timer to auto-transition when game ends
+    const timer = setTimeout(() => {
+      setPhase("complete");
+    }, timeUntilEnd);
+
+    return () => clearTimeout(timer);
+  }, [phase, game.endsAt]);
+
   const nextRoundNumber = useMemo(() => {
     const nextQ = game.questions[currentQuestionIndex + 1];
     return nextQ?.roundIndex ?? 1;
   }, [game.questions, currentQuestionIndex]);
+
+  // ==========================================
+  // GAME LOGIC
+  // ==========================================
+
+  const advanceToNext = useCallback(() => {
+    // Stop any playing sound effects before transitioning
+    stopAllAudio();
+
+    const nextIdx = currentQuestionIndex + 1;
+
+    // Game complete?
+    if (nextIdx >= game.questions.length || isGameEnded) {
+      setPhase("complete");
+      return;
+    }
+
+    const current = game.questions[currentQuestionIndex];
+    const next = game.questions[nextIdx];
+
+    // Round break?
+    if (current && next && current.roundIndex !== next.roundIndex) {
+      setPhase("break");
+      setTimerTarget(Date.now() + game.roundBreakSec * 1000);
+      return;
+    }
+
+    // Move to next question
+    setCurrentQuestionIndex(nextIdx);
+    setMediaReady(false);
+    setPhase("question");
+  }, [currentQuestionIndex, game.questions, game.roundBreakSec, isGameEnded]);
 
   // ==========================================
   // TIMER EXPIRY HANDLER
@@ -185,6 +227,7 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
     isSubmitting,
     currentQuestion,
     refetchEntry,
+    advanceToNext,
   ]);
 
   // ==========================================
@@ -214,38 +257,6 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
     };
   }, [currentQuestion?.id, phase]);
 
-  // ==========================================
-  // GAME LOGIC
-  // ==========================================
-
-  const advanceToNext = useCallback(() => {
-    // Stop any playing sound effects before transitioning
-    stopAllAudio();
-
-    const nextIdx = currentQuestionIndex + 1;
-
-    // Game complete?
-    if (nextIdx >= game.questions.length || isGameEnded) {
-      setPhase("complete");
-      return;
-    }
-
-    const current = game.questions[currentQuestionIndex];
-    const next = game.questions[nextIdx];
-
-    // Round break?
-    if (current && next && current.roundIndex !== next.roundIndex) {
-      setPhase("break");
-      setTimerTarget(Date.now() + game.roundBreakSec * 1000);
-      return;
-    }
-
-    // Move to next question
-    setCurrentQuestionIndex(nextIdx);
-    setMediaReady(false);
-    setPhase("question");
-  }, [currentQuestionIndex, game.questions, game.roundBreakSec, isGameEnded]);
-
   // Set current question in context (for real-time answerer filtering)
   useEffect(() => {
     if (phase === "question" && game.questions[currentQuestionIndex]) {
@@ -269,14 +280,11 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
     );
 
     if (firstUnansweredIdx === -1) {
-      // All questions answered - show break view (standings) if in waiting mode
-      // or if game is still live, otherwise show complete
-      if (isWaitingMode || !isGameEnded) {
-        setPhase("break");
-        // Set a long timer for break - will end when game ends
-        setTimerTarget(game.endsAt.getTime());
-      } else {
+      // All questions answered - go to waiting screen if game still live
+      if (isGameEnded) {
         setPhase("complete");
+      } else {
+        setPhase("waiting");
       }
       return;
     }
@@ -284,7 +292,7 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
     setCurrentQuestionIndex(firstUnansweredIdx);
     setMediaReady(false);
     setPhase("question");
-  }, [phase, game.questions, answeredIds, isWaitingMode, isGameEnded, game.endsAt]);
+  }, [phase, game.questions, answeredIds, isGameEnded]);
 
   const submitAnswer = useCallback(
     async (selectedIndex: number) => {
@@ -310,8 +318,6 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
       currentQuestion,
       hasAnswered,
       isSubmitting,
-      userPfpUrl,
-      dispatch,
       refetchEntry,
       advanceToNext,
     ]
@@ -339,6 +345,8 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
     isSubmitting,
     score,
     nextRoundNumber,
+    gameEndsAt: game.endsAt,
+    gameId: game.id,
     startGame,
     submitAnswer,
     onMediaReady,

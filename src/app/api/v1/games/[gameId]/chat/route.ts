@@ -33,7 +33,7 @@ export async function GET(
   try {
     const { gameId } = await context.params;
 
-    if (!gameId) {
+    if (gameId) {
       return NextResponse.json(
         { error: "Invalid game ID", code: "INVALID_PARAM" },
         { status: 400 }
@@ -88,7 +88,7 @@ export const POST = withAuth<Params>(
     try {
       const gameId = params.gameId;
 
-      if (!gameId) {
+      if (gameId) {
         return NextResponse.json<ApiError>(
           { error: "Invalid game ID", code: "INVALID_PARAM" },
           { status: 400 }

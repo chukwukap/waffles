@@ -28,8 +28,8 @@ import type { GameEntry, Game } from "@prisma";
 import { useUser } from "@/hooks/useUser";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
 
-// Extended Game type with question count for checking if all questions answered
-export type GameWithCount = Game & { questionCount?: number };
+// Extended Game type with question count for determining if player finished
+export type GameWithQuestionCount = Game & { questionCount: number };
 
 export interface RecentPlayer {
   username: string;
@@ -49,8 +49,8 @@ export type GameEntryData = Pick<
 // ==========================================
 
 interface GameState {
-  // Game data (from server)
-  game: GameWithCount | null;
+  // Game data (from server) - includes questionCount for finished detection
+  game: GameWithQuestionCount | null;
 
   // Core
   entry: GameEntryData | null;
@@ -208,7 +208,7 @@ const GameContext = createContext<GameContextValue | null>(null);
 
 interface GameProviderProps {
   children: ReactNode;
-  game: GameWithCount | null;
+  game: GameWithQuestionCount | null;
   /** Initial recent players from server for immediate avatar display */
   initialRecentPlayers?: RecentPlayer[];
 }

@@ -12,6 +12,7 @@ import QuestionView from "./_components/QuestionView";
 import BreakView from "./_components/BreakView";
 import GameCountdownScreen from "./_components/GameCountdownScreen";
 import GameCompleteScreen from "./_components/GameCompleteScreen";
+import WaitingScreen from "./_components/WaitingScreen";
 import { CheerOverlay } from "../../_components/CheerOverlay";
 import type { LiveGameData } from "./page";
 
@@ -30,6 +31,8 @@ export default function LiveGameScreen({ game }: { game: LiveGameData }) {
     isSubmitting,
     score,
     nextRoundNumber,
+    gameEndsAt,
+    gameId,
     startGame,
     submitAnswer,
     onMediaReady,
@@ -87,6 +90,20 @@ export default function LiveGameScreen({ game }: { game: LiveGameData }) {
               seconds={secondsRemaining}
               nextRoundNumber={nextRoundNumber}
               gameId={game.id}
+            />
+          </div>
+          <CheerOverlay />
+        </>
+      );
+
+    case "waiting":
+      return (
+        <>
+          <div className="flex-1 flex flex-col min-h-0">
+            <WaitingScreen
+              score={score}
+              gameEndsAt={gameEndsAt}
+              gameId={gameId}
             />
           </div>
           <CheerOverlay />

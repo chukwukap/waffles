@@ -17,7 +17,7 @@ export const POST = withAuth<Params>(
     try {
       const gameId = params.gameId;
 
-      if (!gameId) {
+      if (gameId) {
         return NextResponse.json<ApiError>(
           { error: "Invalid game ID", code: "INVALID_PARAM" },
           { status: 400 }

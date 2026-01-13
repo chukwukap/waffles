@@ -8,7 +8,7 @@ import {
 } from "@/components/providers/GameProvider";
 
 // Include entries for recent players display and question count
-const gameWithExtras = {
+const gameInclude = {
   entries: {
     where: { paidAt: { not: null } },
     select: { user: { select: { pfpUrl: true, username: true } } },
@@ -26,12 +26,9 @@ const gameWithExtras = {
  * Includes recent player entries for avatar display.
  * Cached for request deduplication.
  */
-// Extended Game type with question count
-type GameWithCount = Game & { questionCount: number };
-
 const getCurrentOrNextGame = cache(
   async (): Promise<{
-    game: GameWithCount | null;
+    game: (Game & { questionCount: number }) | null;
     recentPlayers: RecentPlayer[];
   }> => {
     const now = new Date();
@@ -45,13 +42,13 @@ const getCurrentOrNextGame = cache(
         ],
       },
       orderBy: [{ startsAt: "asc" }],
-      include: gameWithExtras,
+      include: gameInclude,
     });
 
     if (activeGame) {
-      const { entries, _count, ...game } = activeGame;
+      const { entries, _count, ...gameData } = activeGame;
       return {
-        game: { ...game, questionCount: _count.questions },
+        game: { ...gameData, questionCount: _count.questions },
         recentPlayers: entries.map((e) => ({
           username: e.user.username || "Player",
           pfpUrl: e.user.pfpUrl,
@@ -64,13 +61,13 @@ const getCurrentOrNextGame = cache(
     const endedGame = await prisma.game.findFirst({
       where: { endsAt: { lte: now } },
       orderBy: [{ endsAt: "desc" }],
-      include: gameWithExtras,
+      include: gameInclude,
     });
 
     if (endedGame) {
-      const { entries, _count, ...game } = endedGame;
+      const { entries, _count, ...gameData } = endedGame;
       return {
-        game: { ...game, questionCount: _count.questions },
+        game: { ...gameData, questionCount: _count.questions },
         recentPlayers: entries.map((e) => ({
           username: e.user.username || "Player",
           pfpUrl: e.user.pfpUrl,
