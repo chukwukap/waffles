@@ -68,20 +68,6 @@ const optionContainerVariants = {
   },
 };
 
-const statusVariants = {
-  hidden: { opacity: 0, y: 10, scale: 0.9 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: {
-      duration: 0.3,
-      type: "spring" as const,
-      stiffness: 300,
-      damping: 20,
-    },
-  },
-};
 
 // ==========================================
 // PROPS
@@ -229,34 +215,6 @@ export default function QuestionView({
             />
           ))}
         </motion.ul>
-
-        {/* Answered status with bounce entrance */}
-        <AnimatePresence>
-          {hasAnswered && (
-            <motion.div
-              className="mx-auto text-center font-display text-[16px] text-[#99A0AE] flex items-center justify-center gap-2"
-              variants={statusVariants}
-              initial="hidden"
-              animate="visible"
-              exit={{ opacity: 0, y: -10 }}
-            >
-              <motion.span
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{
-                  delay: 0.1,
-                  type: "spring",
-                  stiffness: 400,
-                  damping: 15,
-                }}
-                className="text-green-400"
-              >
-                ✓
-              </motion.span>
-              Answer submitted! Wait for the next question...
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* Real-time answerers - only shows when there are answerers */}
         <AnimatePresence>
