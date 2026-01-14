@@ -1,16 +1,47 @@
-import { NextResponse } from "next/server";
-import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
+type Params = { fid: string };
+
+interface ApiError {
+  error: string;
+  code?: string;
+}
+
 /**
- * GET /api/v1/me/games
- * Get game history for the authenticated user
+ * GET /api/v1/users/[fid]/games
+ * Get game history for a user (public endpoint)
  */
-export const GET = withAuth(async (request, auth: AuthResult) => {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<Params> }
+) {
   try {
-    // Single efficient query - no N+1 problem
+    const { fid: fidParam } = await params;
+    const fid = parseInt(fidParam, 10);
+
+    if (isNaN(fid)) {
+      return NextResponse.json<ApiError>(
+        { error: "Invalid fid", code: "INVALID_INPUT" },
+        { status: 400 }
+      );
+    }
+
+    // Look up user by fid
+    const user = await prisma.user.findUnique({
+      where: { fid },
+      select: { id: true },
+    });
+
+    if (!user) {
+      return NextResponse.json<ApiError>(
+        { error: "User not found", code: "NOT_FOUND" },
+        { status: 404 }
+      );
+    }
+
     const entries = await prisma.gameEntry.findMany({
-      where: { userId: auth.userId },
+      where: { userId: user.id },
       select: {
         id: true,
         gameId: true,
@@ -38,7 +69,6 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
       orderBy: { createdAt: "desc" },
     });
 
-    // Map to response format (no extra queries needed)
     const response = entries.map((entry) => ({
       id: entry.id,
       gameId: entry.gameId,
@@ -64,10 +94,10 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error("GET /api/v1/me/games Error:", error);
+    console.error("GET /api/v1/users/[fid]/games Error:", error);
     return NextResponse.json<ApiError>(
       { error: "Internal server error", code: "INTERNAL_ERROR" },
       { status: 500 }
     );
   }
-});
+}

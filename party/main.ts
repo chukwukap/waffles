@@ -65,10 +65,8 @@ export default class GameServer implements Party.Server {
   seenFids: Set<number> = new Set();
 
   constructor(readonly room: Party.Room) {
-    // Log room instantiation (helpful for debugging hibernate wake-ups)
-    log("INFO", room.id, "room_instantiated", {
-      hibernateEnabled: true,
-    });
+    // Note: Cannot access room.id in constructor during alarm wake-ups
+    // Logging moved to onStart() where room.id is reliably available
   }
 
   // ==========================================
@@ -263,7 +261,7 @@ export default class GameServer implements Party.Server {
               gameId: body.gameId,
               note: "Start time already passed, triggering immediately",
             });
-            await this.handleStartAlarm();
+            await this.handleStartAlarm(this.room.id);
           }
 
           return Response.json(
@@ -419,11 +417,11 @@ export default class GameServer implements Party.Server {
   // ==========================================
 
   async onAlarm() {
-    // NOTE: With hibernate=true, this.room.id may not be available when alarm fires.
-    // We must fetch gameId from storage first and use it for logging.
+    // IMPORTANT: Cannot access this.room.id in onAlarm - known PartyKit limitation
+    // Retrieve stored roomId from storage instead
+    const roomId = (await this.room.storage.get<string>("roomId")) || "unknown";
     const phase = await this.room.storage.get<AlarmPhase>("alarmPhase");
     const gameId = await this.room.storage.get<string>("gameId");
-    const roomId = gameId ? `game-${gameId}` : "unknown";
     const now = Date.now();
 
     log("INFO", roomId, "alarm_triggered", {
@@ -435,13 +433,13 @@ export default class GameServer implements Party.Server {
 
     switch (phase) {
       case "notify":
-        await this.handleNotifyAlarm();
+        await this.handleNotifyAlarm(roomId);
         break;
       case "start":
-        await this.handleStartAlarm();
+        await this.handleStartAlarm(roomId);
         break;
       case "gameEnd":
-        await this.handleGameEndAlarm();
+        await this.handleGameEndAlarm(roomId);
         break;
       default:
         log("WARN", roomId, "alarm_unknown_phase", {
@@ -452,17 +450,16 @@ export default class GameServer implements Party.Server {
     }
   }
 
-  async handleNotifyAlarm() {
+  async handleNotifyAlarm(roomId: string) {
     const gameId = await this.room.storage.get<string>("gameId");
     const startsAt = await this.room.storage.get<number>("startsAt");
-    const roomId = gameId ? `game-${gameId}` : "unknown";
 
     log("INFO", roomId, "notify_phase_start", {
       gameId,
       startsAt: startsAt ? new Date(startsAt).toISOString() : null,
     });
 
-    await this.sendNotifications("Game starting in 1 minute! 🎮");
+    await this.sendNotifications("Game starting in 1 minute! 🎮", roomId);
     this.broadcast({ type: "game:starting", in: 60 });
 
     // Schedule next alarm for game start
@@ -476,10 +473,9 @@ export default class GameServer implements Party.Server {
     });
   }
 
-  async handleStartAlarm() {
+  async handleStartAlarm(roomId: string) {
     const gameId = await this.room.storage.get<string>("gameId");
     const endsAt = await this.room.storage.get<number>("endsAt");
-    const roomId = gameId ? `game-${gameId}` : "unknown";
 
     log("INFO", roomId, "start_phase_begin", {
       gameId,
@@ -498,7 +494,7 @@ export default class GameServer implements Party.Server {
     await this.room.storage.put("alarmPhase", "gameEnd" as AlarmPhase);
     await this.room.storage.setAlarm(endsAt);
 
-    await this.sendNotifications("The game has started! 🚀");
+    await this.sendNotifications("The game has started! 🚀", roomId);
     this.broadcast({ type: "game:live" });
 
     log("INFO", roomId, "start_phase_complete", {
@@ -509,11 +505,10 @@ export default class GameServer implements Party.Server {
     });
   }
 
-  async handleGameEndAlarm() {
+  async handleGameEndAlarm(roomId: string) {
     const gameId = await this.room.storage.get<string>("gameId");
     const appUrl = this.room.env.NEXT_PUBLIC_URL as string;
     const secret = this.room.env.PARTYKIT_SECRET as string;
-    const roomId = gameId ? `game-${gameId}` : "unknown";
 
     log("INFO", roomId, "gameEnd_phase_begin", {
       gameId,
@@ -580,14 +575,15 @@ export default class GameServer implements Party.Server {
     }
   }
 
-  async sendNotifications(message: string) {
+  async sendNotifications(message: string, roomId?: string) {
+    // Use provided roomId or fallback to this.room.id (safe in non-alarm contexts)
+    const logRoomId = roomId || this.room.id;
     const gameId = await this.room.storage.get<string>("gameId");
     const appUrl = this.room.env.NEXT_PUBLIC_URL as string;
     const secret = this.room.env.PARTYKIT_SECRET as string;
-    const roomId = gameId ? `game-${gameId}` : "unknown";
 
     if (!appUrl || !secret || !gameId) {
-      log("WARN", roomId, "notify_skipped_missing_config", {
+      log("WARN", logRoomId, "notify_skipped_missing_config", {
         gameId,
         hasAppUrl: !!appUrl,
         hasSecret: !!secret,
@@ -599,7 +595,7 @@ export default class GameServer implements Party.Server {
     const notifyUrl = `${appUrl}/api/v1/internal/games/${gameId}/notify`;
 
     try {
-      log("DEBUG", roomId, "notify_sending", {
+      log("DEBUG", logRoomId, "notify_sending", {
         gameId,
         message,
         url: notifyUrl,
@@ -615,13 +611,13 @@ export default class GameServer implements Party.Server {
       });
 
       if (response.ok) {
-        log("INFO", roomId, "notify_sent", {
+        log("INFO", logRoomId, "notify_sent", {
           gameId,
           message,
           status: response.status,
         });
       } else {
-        log("WARN", roomId, "notify_failed", {
+        log("WARN", logRoomId, "notify_failed", {
           gameId,
           message,
           status: response.status,
@@ -629,7 +625,7 @@ export default class GameServer implements Party.Server {
         });
       }
     } catch (error) {
-      log("ERROR", roomId, "notify_error", {
+      log("ERROR", logRoomId, "notify_error", {
         gameId,
         message,
         error: error instanceof Error ? error.message : String(error),
@@ -642,6 +638,10 @@ export default class GameServer implements Party.Server {
   // ==========================================
 
   async onStart() {
+    // Store room.id for use in onAlarm (where this.room.id is not available)
+    // This MUST happen first before any other operations
+    await this.room.storage.put("roomId", this.room.id);
+
     log("INFO", this.room.id, "room_starting", {
       action: "onStart",
       message: "Room waking up from hibernation or initializing",

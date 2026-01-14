@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useCallback, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { useAccount, useSendCalls, useCallsStatus, useConnect } from "wagmi";
 import { parseUnits, encodeFunctionData } from "viem";
 import { farcasterFrame } from "@farcaster/miniapp-wagmi-connector";
 import sdk from "@farcaster/miniapp-sdk";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
 import { useGame } from "@/components/providers/GameProvider";
 import { useTokenAllowance } from "./waffleContractHooks";
@@ -13,6 +15,7 @@ import { playSound } from "@/lib/sounds";
 import waffleGameAbi from "@/lib/chain/abi.json";
 import { WAFFLE_GAME_CONFIG, TOKEN_CONFIG } from "@/lib/chain";
 import { ERC20_ABI } from "@/lib/constants";
+import { purchaseGameTicket } from "@/actions/game";
 
 // ==========================================
 // TYPES
@@ -43,9 +46,14 @@ export function useTicketPurchase(
   price: number,
   onSuccess?: () => void
 ) {
+  const router = useRouter();
+  const { context } = useMiniKit();
   const { address, isConnected } = useAccount();
   const { connectAsync } = useConnect();
   const [state, setState] = useState<TicketPurchaseState>({ step: "idle" });
+
+  // Get user's fid from MiniKit context
+  const fid = context?.user?.fid;
 
   // ==========================================
   // BACKEND ENTRY (Source of Truth)
@@ -130,26 +138,25 @@ export function useTicketPurchase(
   });
 
   // ==========================================
-  // SYNC WITH BACKEND
+  // SYNC WITH BACKEND (Server Action)
   // ==========================================
   const syncWithBackend = useCallback(
     async (txHash: string) => {
-      if (!address) return;
+      if (!address || !fid) return;
 
       try {
-        const res = await sdk.quickAuth.fetch(`/api/v1/games/${gameId}/entry`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            txHash,
-            paidAmount: price,
-            payerWallet: address,
-          }),
+        // Use Server Action instead of API route
+        // This automatically revalidates cache via revalidatePath
+        const result = await purchaseGameTicket({
+          gameId,
+          fid,
+          txHash,
+          paidAmount: price,
+          payerWallet: address,
         });
 
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error || "Sync failed");
+        if (!result.success) {
+          throw new Error(result.error || "Sync failed");
         }
 
         setState({ step: "success", txHash });
@@ -157,6 +164,7 @@ export function useTicketPurchase(
         notify.success("Ticket purchased! 🎉");
         sdk.haptics.impactOccurred("medium").catch(() => {});
         refetchEntry();
+        router.refresh(); // Extra client-side refresh for immediate update
         onSuccess?.();
       } catch (err) {
         console.error("[useTicketPurchase] Sync error:", err);
@@ -164,10 +172,11 @@ export function useTicketPurchase(
         notify.info("Purchased! Syncing in background...");
         setState({ step: "success", txHash });
         refetchEntry();
+        router.refresh();
         onSuccess?.();
       }
     },
-    [address, gameId, price, refetchEntry, onSuccess]
+    [address, fid, gameId, price, refetchEntry, router, onSuccess]
   );
 
   // ==========================================

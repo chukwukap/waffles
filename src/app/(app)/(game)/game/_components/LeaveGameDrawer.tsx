@@ -4,10 +4,11 @@ import { Dispatch, SetStateAction, useCallback, useEffect, useState, useRef } fr
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import sdk from "@farcaster/miniapp-sdk";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { cn } from "@/lib/utils";
 import { notify } from "@/components/ui/Toaster";
 import { playSound } from "@/lib/sounds";
+import { leaveGame } from "@/actions/game";
 
 interface LeaveGameDrawerProps {
   open: boolean;
@@ -61,6 +62,7 @@ export default function LeaveGameDrawer({
   gameId,
 }: LeaveGameDrawerProps) {
   const router = useRouter();
+  const { context } = useMiniKit();
   const [isLeaving, setIsLeaving] = useState(false);
   const prevOpen = useRef(false);
 
@@ -93,33 +95,31 @@ export default function LeaveGameDrawer({
   }, [open, setIsLeaveGameDrawerOpen]);
 
   const handleLeaveGame = useCallback(async () => {
-    if (!gameId) {
-      notify.error("Failed to leave game: No game ID found.");
+    const fid = context?.user?.fid;
+    if (!gameId || !fid) {
+      notify.error("Failed to leave game: Missing game or user info.");
       return;
     }
 
     setIsLeaving(true);
     try {
-      const res = await sdk.quickAuth.fetch(`/api/v1/games/${gameId}/leave`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
+      const result = await leaveGame({ gameId, fid });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to leave game");
+      if (!result.success) {
+        throw new Error(result.error || "Failed to leave game");
       }
 
       notify.success("You've left the game");
       setIsLeaveGameDrawerOpen(false);
       router.push("/game");
+      router.refresh();
     } catch (error) {
       console.error("Leave game failed:", error);
       notify.error(error instanceof Error ? error.message : "Failed to leave game");
     } finally {
       setIsLeaving(false);
     }
-  }, [gameId, setIsLeaveGameDrawerOpen, router]);
+  }, [gameId, context?.user?.fid, setIsLeaveGameDrawerOpen, router]);
 
   return (
     <AnimatePresence>

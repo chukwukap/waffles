@@ -1,7 +1,6 @@
 "use client";
 
 import useSWR from "swr";
-import sdk from "@farcaster/miniapp-sdk";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
 // ==========================================
@@ -24,9 +23,9 @@ export interface ProfileStats {
 // ==========================================
 
 async function fetchStats(url: string): Promise<ProfileStats | null> {
-  const res = await sdk.quickAuth.fetch(url, { cache: "no-store" });
+  const res = await fetch(url, { cache: "no-store" });
 
-  if (res.status === 404 || res.status === 401) {
+  if (res.status === 404) {
     return null;
   }
 
@@ -43,14 +42,14 @@ async function fetchStats(url: string): Promise<ProfileStats | null> {
 
 /**
  * Fetch profile stats with SWR caching.
- * Uses /api/v1/me/stats endpoint.
+ * Uses public /api/v1/users/[fid]/stats endpoint.
  */
 export function useProfileStats() {
   const { context } = useMiniKit();
   const fid = context?.user?.fid;
 
   const { data, error, isLoading, mutate } = useSWR<ProfileStats | null>(
-    fid ? "/api/v1/me/stats" : null,
+    fid ? `/api/v1/users/${fid}/stats` : null,
     fetchStats,
     {
       revalidateOnFocus: false,

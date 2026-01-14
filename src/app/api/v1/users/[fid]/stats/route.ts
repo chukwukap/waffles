@@ -1,7 +1,13 @@
-import { NextResponse } from "next/server";
-import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { calculateStreak } from "@/lib/streaks";
+
+type Params = { fid: string };
+
+interface ApiError {
+  error: string;
+  code?: string;
+}
 
 interface StatsResponse {
   totalGames: number;
@@ -15,37 +21,56 @@ interface StatsResponse {
 }
 
 /**
- * GET /api/v1/me/stats
- * Returns user's game statistics
+ * GET /api/v1/users/[fid]/stats
+ * Returns user's game statistics (public endpoint)
  */
-export const GET = withAuth(async (request, auth: AuthResult) => {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<Params> }
+) {
   try {
-    const { userId } = auth;
+    const { fid: fidParam } = await params;
+    const fid = parseInt(fidParam, 10);
+
+    if (isNaN(fid)) {
+      return NextResponse.json<ApiError>(
+        { error: "Invalid fid", code: "INVALID_INPUT" },
+        { status: 400 }
+      );
+    }
+
+    // Look up user by fid
+    const user = await prisma.user.findUnique({
+      where: { fid },
+      select: { id: true },
+    });
+
+    if (!user) {
+      return NextResponse.json<ApiError>(
+        { error: "User not found", code: "NOT_FOUND" },
+        { status: 404 }
+      );
+    }
+
+    const userId = user.id;
 
     // Parallel queries for efficiency
     const [statsAggregate, winStats, bestRankEntry, streakData] =
       await Promise.all([
-        // Aggregate stats
         prisma.gameEntry.aggregate({
           where: { userId, paidAt: { not: null } },
           _count: { _all: true },
           _sum: { score: true, prize: true },
           _max: { score: true },
         }),
-
-        // Win count (rank 1)
         prisma.gameEntry.count({
           where: { userId, rank: 1, paidAt: { not: null } },
         }),
-
-        // Best rank
         prisma.gameEntry.findFirst({
           where: { userId, rank: { not: null }, paidAt: { not: null } },
           orderBy: { rank: "asc" },
           select: { rank: true },
         }),
-
-        // Streak data (recent game dates)
         prisma.gameEntry.findMany({
           where: { userId, paidAt: { not: null } },
           select: { paidAt: true },
@@ -62,7 +87,6 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
     const winRate = totalGames > 0 ? (winStats / totalGames) * 100 : 0;
     const bestRank = bestRankEntry?.rank ?? null;
 
-    // Calculate streak
     const gameDates = streakData
       .map((g) => g.paidAt)
       .filter((d): d is Date => d !== null);
@@ -81,10 +105,10 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error("GET /api/v1/me/stats Error:", error);
+    console.error("GET /api/v1/users/[fid]/stats Error:", error);
     return NextResponse.json<ApiError>(
       { error: "Internal server error", code: "INTERNAL_ERROR" },
       { status: 500 }
     );
   }
-});
+}

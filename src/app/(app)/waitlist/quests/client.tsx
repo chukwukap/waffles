@@ -6,7 +6,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuestActions } from "./_components/useQuestActions";
 import { WaffleLoader } from "@/components/ui/WaffleLoader";
-import sdk from "@farcaster/miniapp-sdk";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
 // ============================================
 // TYPES
@@ -258,6 +258,8 @@ function QuestCard({
 // MAIN COMPONENT
 // ============================================
 export function QuestsPageClient() {
+  const { context } = useMiniKit();
+  const fid = context?.user?.fid;
   const [waitlistData, setWaitlistData] = useState<WaitlistData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -268,14 +270,14 @@ export function QuestsPageClient() {
   // Fetch waitlist data on mount
   useEffect(() => {
     async function fetchData() {
+      if (!fid) return;
       try {
-        const response = await sdk.quickAuth.fetch("/api/v1/waitlist");
+        const response = await fetch(`/api/v1/waitlist?fid=${fid}`);
         if (!response.ok) {
           throw new Error("Failed to fetch waitlist data");
         }
         const data = await response.json();
         setWaitlistData(data);
-        // Reset optimistic state when we get fresh data
         setOptimisticCompleted([]);
       } catch (err) {
         console.error("Error fetching waitlist data:", err);
@@ -285,7 +287,7 @@ export function QuestsPageClient() {
       }
     }
     fetchData();
-  }, []);
+  }, [fid]);
 
   // Initialize quest actions hook
   const {

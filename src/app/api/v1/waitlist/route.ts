@@ -1,6 +1,10 @@
-import { NextResponse } from "next/server";
-import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+
+interface ApiError {
+  error: string;
+  code?: string;
+}
 
 interface QuestResponse {
   id: string;
@@ -16,8 +20,8 @@ interface QuestResponse {
   requiredCount: number;
   repeatFrequency: string;
   isCompleted: boolean;
-  isPending: boolean; // For CUSTOM quests pending approval
-  progress: number; // For REFERRAL quests
+  isPending: boolean;
+  progress: number;
 }
 
 interface WaitlistResponse {
@@ -28,19 +32,37 @@ interface WaitlistResponse {
   invitesCount: number;
   hasGameAccess: boolean;
   joinedWaitlistAt: Date | null;
-  completedQuests: string[]; // Slugs of completed quests
+  completedQuests: string[];
   quests: QuestResponse[];
 }
 
 /**
- * GET /api/v1/waitlist
- * Get authenticated user's waitlist status with quests (auth required)
+ * GET /api/v1/waitlist?fid=123
+ * Get user's waitlist status with quests (public endpoint)
  */
-export const GET = withAuth(async (request, auth: AuthResult) => {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const fidParam = searchParams.get("fid");
+
+    if (!fidParam) {
+      return NextResponse.json<ApiError>(
+        { error: "fid query parameter required", code: "INVALID_INPUT" },
+        { status: 400 }
+      );
+    }
+
+    const fid = parseInt(fidParam, 10);
+    if (isNaN(fid)) {
+      return NextResponse.json<ApiError>(
+        { error: "Invalid fid", code: "INVALID_INPUT" },
+        { status: 400 }
+      );
+    }
+
     // Get user with completed quests
     const user = await prisma.user.findUnique({
-      where: { id: auth.userId },
+      where: { fid },
       select: {
         fid: true,
         waitlistPoints: true,
@@ -83,7 +105,7 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
       orderBy: { sortOrder: "asc" },
     });
 
-    // Map completed quests for quick lookup
+    // Map completed quests
     const completedSlugs = new Set(
       user.completedQuests
         .filter((cq) => cq.isApproved)
@@ -143,4 +165,4 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
       { status: 500 }
     );
   }
-});
+}

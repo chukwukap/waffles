@@ -1,7 +1,13 @@
-import { NextResponse } from "next/server";
-import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getGamePhase } from "@/lib/types";
+
+type Params = { fid: string };
+
+interface ApiError {
+  error: string;
+  code?: string;
+}
 
 interface EntryResponse {
   id: string;
@@ -22,23 +28,47 @@ interface EntryResponse {
 }
 
 /**
- * GET /api/v1/me/tickets
- * Get all game entries (tickets) for the authenticated user
+ * GET /api/v1/users/[fid]/tickets
+ * Get all game entries (tickets) for a user (public endpoint)
  * Optional query param: ?gameId=X to filter by specific game
  */
-export const GET = withAuth(async (request, auth: AuthResult) => {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<Params> }
+) {
   try {
+    const { fid: fidParam } = await params;
+    const fid = parseInt(fidParam, 10);
+
+    if (isNaN(fid)) {
+      return NextResponse.json<ApiError>(
+        { error: "Invalid fid", code: "INVALID_INPUT" },
+        { status: 400 }
+      );
+    }
+
+    // Look up user by fid
+    const user = await prisma.user.findUnique({
+      where: { fid },
+      select: { id: true },
+    });
+
+    if (!user) {
+      return NextResponse.json<ApiError>(
+        { error: "User not found", code: "NOT_FOUND" },
+        { status: 404 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const gameIdParam = searchParams.get("gameId");
 
     const whereClause: { userId: string; gameId?: string } = {
-      userId: auth.userId,
+      userId: user.id,
     };
 
     if (gameIdParam) {
-      if (gameIdParam) {
-        whereClause.gameId = gameIdParam;
-      }
+      whereClause.gameId = gameIdParam;
     }
 
     const entries = await prisma.gameEntry.findMany({
@@ -76,10 +106,10 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error("GET /api/v1/me/tickets Error:", error);
+    console.error("GET /api/v1/users/[fid]/tickets Error:", error);
     return NextResponse.json<ApiError>(
       { error: "Internal server error", code: "INTERNAL_ERROR" },
       { status: 500 }
     );
   }
-});
+}

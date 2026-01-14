@@ -90,9 +90,9 @@ type Action =
   | { type: "SET_ENTRY"; payload: GameEntryData | null }
   | { type: "SET_LOADING_ENTRY"; payload: boolean }
   | {
-      type: "UPDATE_STATS";
-      payload: { prizePool?: number; playerCount?: number };
-    }
+    type: "UPDATE_STATS";
+    payload: { prizePool?: number; playerCount?: number };
+  }
   | { type: "SET_CONNECTED"; payload: boolean }
   | { type: "SET_ONLINE_COUNT"; payload: number }
   | { type: "SET_MESSAGES"; payload: ChatItem[] }
@@ -100,9 +100,9 @@ type Action =
   | { type: "ADD_PLAYER"; payload: RecentPlayer }
   | { type: "SET_CURRENT_QUESTION"; payload: string | null }
   | {
-      type: "ADD_ANSWERER";
-      payload: { questionId: string; player: RecentPlayer };
-    }
+    type: "ADD_ANSWERER";
+    payload: { questionId: string; player: RecentPlayer };
+  }
   | { type: "INCREMENT_ANSWERED" }
   | { type: "RESET" };
 
@@ -373,12 +373,12 @@ export function GameProvider({
 
   // Fetch User Entry
   const fetchEntry = useCallback(async () => {
-    if (!gameId) return;
+    if (!gameId || !user?.fid) return;
 
     dispatch({ type: "SET_LOADING_ENTRY", payload: true });
 
     try {
-      const res = await sdk.quickAuth.fetch(`/api/v1/games/${gameId}/entry`);
+      const res = await fetch(`/api/v1/games/${gameId}/entry?fid=${user.fid}`);
       if (res.ok) {
         const data = await res.json();
         dispatch({
@@ -403,7 +403,7 @@ export function GameProvider({
       console.error("Failed to fetch entry", err);
       dispatch({ type: "SET_LOADING_ENTRY", payload: false });
     }
-  }, [gameId]);
+  }, [gameId, user?.fid]);
 
   // Auto-fetch entry on mount/change
   useEffect(() => {

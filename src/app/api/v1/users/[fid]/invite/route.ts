@@ -1,6 +1,12 @@
-import { NextResponse } from "next/server";
-import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+
+type Params = { fid: string };
+
+interface ApiError {
+  error: string;
+  code?: string;
+}
 
 interface InviteResponse {
   code: string | null;
@@ -9,13 +15,26 @@ interface InviteResponse {
 }
 
 /**
- * GET /api/v1/me/invite
- * Get current user's invite code and stats (auth required)
+ * GET /api/v1/users/[fid]/invite
+ * Get user's invite code and stats (public endpoint)
  */
-export const GET = withAuth(async (_request, auth: AuthResult) => {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<Params> }
+) {
   try {
+    const { fid: fidParam } = await params;
+    const fid = parseInt(fidParam, 10);
+
+    if (isNaN(fid)) {
+      return NextResponse.json<ApiError>(
+        { error: "Invalid fid", code: "INVALID_INPUT" },
+        { status: 400 }
+      );
+    }
+
     const user = await prisma.user.findUnique({
-      where: { id: auth.userId },
+      where: { fid },
       select: {
         inviteCode: true,
         inviteQuota: true,
@@ -38,10 +57,10 @@ export const GET = withAuth(async (_request, auth: AuthResult) => {
       inviteQuota: user.inviteQuota,
     });
   } catch (error) {
-    console.error("GET /api/v1/me/invite Error:", error);
+    console.error("GET /api/v1/users/[fid]/invite Error:", error);
     return NextResponse.json<ApiError>(
       { error: "Internal server error", code: "INTERNAL_ERROR" },
       { status: 500 }
     );
   }
-});
+}
