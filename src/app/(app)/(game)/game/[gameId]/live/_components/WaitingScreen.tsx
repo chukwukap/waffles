@@ -10,11 +10,12 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import sdk from "@farcaster/miniapp-sdk";
 import { useTimer } from "@/hooks/useTimer";
 import { GameChat } from "../../../_components/chat/GameChat";
-import { FlashIcon } from "@/components/icons";
+import { FlashIcon, ArrowLeftIcon } from "@/components/icons";
 
 // ==========================================
 // CONSTANTS
@@ -63,6 +64,7 @@ export default function WaitingScreen({
   gameEndsAt,
   gameId,
 }: WaitingScreenProps) {
+  const router = useRouter();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [userRank, setUserRank] = useState<number | null>(null);
@@ -108,7 +110,20 @@ export default function WaitingScreen({
     <div className="flex flex-col h-full w-full">
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto min-h-0">
-        <div className="flex flex-col items-center w-full max-w-md mx-auto px-4 pt-6 pb-4 gap-5">
+        <div className="flex flex-col items-center w-full max-w-md mx-auto px-4 pt-4 pb-4 gap-5">
+          {/* ==================== Back Button ==================== */}
+          <motion.button
+            onClick={() => router.push("/game")}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3 }}
+            className="self-start flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 border border-white/10 active:scale-95 transition-transform"
+            aria-label="Go back to game hub"
+          >
+            <ArrowLeftIcon className="w-4 h-4" />
+            <span className="font-display text-[13px] text-white/70">Back</span>
+          </motion.button>
+
           {/* ==================== Header Section ==================== */}
           <motion.div
             className="flex flex-col items-center gap-3 w-full"
