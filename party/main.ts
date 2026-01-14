@@ -677,7 +677,10 @@ export default class GameServer implements Party.Server {
     const player: Player = { fid, username, pfp };
     conn.setState(player);
 
-    log("DEBUG", this.room.id, "client_connected", {
+    // Safe room ID access - may not be available during hibernation wake
+    const roomId = this.safeRoomId();
+
+    log("DEBUG", roomId, "client_connected", {
       connectionId: conn.id,
       fid,
       username,
@@ -772,7 +775,8 @@ export default class GameServer implements Party.Server {
   onClose(conn: Party.Connection) {
     const player = conn.state as Player;
     if (player) {
-      log("DEBUG", this.room.id, "client_disconnected", {
+      const roomId = this.safeRoomId();
+      log("DEBUG", roomId, "client_disconnected", {
         connectionId: conn.id,
         fid: player.fid,
         username: player.username,
@@ -785,7 +789,8 @@ export default class GameServer implements Party.Server {
 
   onError(conn: Party.Connection, error: Error) {
     const player = conn.state as Player | undefined;
-    log("ERROR", this.room.id, "connection_error", {
+    const roomId = this.safeRoomId();
+    log("ERROR", roomId, "connection_error", {
       connectionId: conn.id,
       fid: player?.fid,
       username: player?.username,
@@ -796,6 +801,18 @@ export default class GameServer implements Party.Server {
   // ==========================================
   // HELPERS
   // ==========================================
+
+  /**
+   * Safely access room.id - PartyKit may throw if accessed before initialization
+   * (especially during hibernation wake-up). Falls back to "unknown".
+   */
+  safeRoomId(): string {
+    try {
+      return this.room.id;
+    } catch {
+      return "unknown";
+    }
+  }
 
   getOnlineCount(): number {
     return [...this.room.getConnections()].length;

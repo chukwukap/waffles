@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import sdk from "@farcaster/miniapp-sdk";
 import { useTimer } from "@/hooks/useTimer";
 import { GameChat } from "../../../_components/chat/GameChat";
+import { LiveEventFeed } from "../../../_components/LiveEventFeed";
 import { FlashIcon, ArrowLeftIcon } from "@/components/icons";
 
 // ==========================================
@@ -341,23 +342,21 @@ export default function WaitingScreen({
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.3, delay: 0.5 + index * 0.05 }}
-                      className={`flex items-center gap-2.5 py-1.5 px-2 rounded-lg transition-colors ${
-                        entry.isCurrentUser
+                      className={`flex items-center gap-2.5 py-1.5 px-2 rounded-lg transition-colors ${entry.isCurrentUser
                           ? "bg-[#14B985]/15 border border-[#14B985]/30"
                           : "hover:bg-white/5"
-                      }`}
+                        }`}
                     >
                       {/* Rank */}
                       <div
-                        className={`flex items-center justify-center w-6 h-6 rounded-full shrink-0 ${
-                          entry.rank === 1
+                        className={`flex items-center justify-center w-6 h-6 rounded-full shrink-0 ${entry.rank === 1
                             ? "bg-[#F5BB1B]/20 text-[#F5BB1B]"
                             : entry.rank === 2
-                            ? "bg-[#C0C0C0]/20 text-[#C0C0C0]"
-                            : entry.rank === 3
-                            ? "bg-[#CD7F32]/20 text-[#CD7F32]"
-                            : "bg-white/10 text-white/60"
-                        }`}
+                              ? "bg-[#C0C0C0]/20 text-[#C0C0C0]"
+                              : entry.rank === 3
+                                ? "bg-[#CD7F32]/20 text-[#CD7F32]"
+                                : "bg-white/10 text-white/60"
+                          }`}
                       >
                         <span className="font-display text-[11px] font-bold">
                           {entry.rank}
@@ -382,9 +381,8 @@ export default function WaitingScreen({
 
                       {/* Username */}
                       <span
-                        className={`font-display text-[14px] truncate flex-1 ${
-                          entry.isCurrentUser ? "text-[#14B985]" : "text-white"
-                        }`}
+                        className={`font-display text-[14px] truncate flex-1 ${entry.isCurrentUser ? "text-[#14B985]" : "text-white"
+                          }`}
                       >
                         {entry.username || `Player ${entry.fid}`}
                         {entry.isCurrentUser && (
@@ -407,10 +405,18 @@ export default function WaitingScreen({
         </div>
       </div>
 
-      {/* ==================== Chat Section ==================== */}
-      <div className="shrink-0 mt-auto w-full bg-[#0E0E0E] border-t border-white/10 px-4 py-3">
-        <div className="w-full max-w-md mx-auto">
-          <GameChat />
+      {/* ==================== Bottom Section ==================== */}
+      <div className="shrink-0 mt-auto">
+        {/* Live Feed */}
+        <div className="w-full max-w-md mx-auto px-4">
+          <LiveEventFeed />
+        </div>
+
+        {/* Chat */}
+        <div className="w-full bg-[#0E0E0E] border-t border-white/10 px-4 py-3">
+          <div className="w-full max-w-md mx-auto">
+            <GameChat />
+          </div>
         </div>
       </div>
     </div>
