@@ -44,8 +44,10 @@ export async function generateMetadata({
     // Extract share params
     const username = (sParams.username as string) || "Player";
     const pfpUrl = sParams.pfpUrl as string | undefined;
-    // themeImageUrl is required - use coverUrl or fallback to a default icon
-    const themeImageUrl = game.coverUrl || "/logo.png";
+    // themeImageUrl must be absolute URL for OG image generator to fetch
+    const themeImageUrl = game.coverUrl
+        ? (game.coverUrl.startsWith("http") ? game.coverUrl : `${env.rootUrl}${game.coverUrl}`)
+        : `${env.rootUrl}/logo.png`;
 
     // Build OG image URL using the /api/og/joined route
     const imageUrl = buildJoinedOGUrl({

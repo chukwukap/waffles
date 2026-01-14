@@ -40,15 +40,13 @@ export function SuccessView({
         setIsSharing(true);
 
         try {
-            // Build frame URL with params - this page has fc:frame metadata
+            // Build frame URL pointing to ticket success page which has fc:frame metadata
             const frameParams = new URLSearchParams();
             frameParams.set("username", displayUsername);
-            frameParams.set("prizePool", prizePool.toString());
-            frameParams.set("theme", theme);
             if (displayAvatar) {
                 frameParams.set("pfpUrl", displayAvatar);
             }
-            const frameUrl = `${env.rootUrl}/share/joined?${frameParams.toString()}`;
+            const frameUrl = `${env.rootUrl}/game/${gameId}/ticket/success?${frameParams.toString()}`;
 
             const result = await composeCastAsync({
                 text: `I just joined the next Waffles game! 🧇\n\nTheme: ${theme}\nPrize Pool: $${prizePool.toLocaleString()}\n\nJoin me!`,
@@ -64,7 +62,7 @@ export function SuccessView({
         } finally {
             setIsSharing(false);
         }
-    }, [composeCastAsync, displayUsername, displayAvatar, theme, prizePool, isSharing]);
+    }, [composeCastAsync, displayUsername, displayAvatar, theme, prizePool, isSharing, gameId]);
 
     // Staggered entrance animations
     useEffect(() => {
