@@ -137,6 +137,19 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
     [currentQuestion, answeredIds]
   );
 
+  // Check if user has already completed all questions - skip countdown
+  const hasCompletedAllQuestions = useMemo(
+    () => entry !== null && answeredIds.size >= game.questions.length,
+    [entry, answeredIds.size, game.questions.length]
+  );
+
+  // Skip countdown if user already completed all questions
+  useEffect(() => {
+    if (hasCompletedAllQuestions && phase === "countdown") {
+      setPhase("waiting");
+    }
+  }, [hasCompletedAllQuestions, phase]);
+
   const isGameEnded = Date.now() >= game.endsAt.getTime();
 
   // Auto-transition from waiting to complete when game ends
