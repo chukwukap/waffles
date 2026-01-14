@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { minikitConfig } from "@minikit-config";
 import { env } from "@/lib/env";
+import { getCurrentOrNextGame } from "@/lib/game";
 
 import { GameHub } from "./client";
 
@@ -33,7 +34,9 @@ export const metadata: Metadata = {
 // PAGE COMPONENT
 // ==========================================
 
-export default function GamePage() {
-  return <GameHub />;
-}
+export default async function GamePage() {
+  // Fetch game data in server component - deduplicated with layout via cache()
+  const { game } = await getCurrentOrNextGame();
 
+  return <GameHub game={game} />;
+}

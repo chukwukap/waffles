@@ -6,25 +6,34 @@ import { useRouter } from "next/navigation";
 import { motion, useAnimation } from "framer-motion";
 
 import { WaffleButton } from "@/components/buttons/WaffleButton";
-import { useGame } from "@/components/providers/GameProvider";
+import { useRealtime } from "@/components/providers/RealtimeProvider";
 import { useUser } from "@/hooks/useUser";
 import { useTimer } from "@/hooks/useTimer";
 import { springs } from "@/lib/animations";
+import type { GameWithQuestionCount } from "@/lib/game";
 
 import { BuyTicketModal } from "./BuyTicketModal";
+
+// ==========================================
+// TYPES
+// ==========================================
+
+interface NextGameCardProps {
+  /** Game data from server component */
+  game: GameWithQuestionCount;
+}
 
 // ==========================================
 // COMPONENT
 // ==========================================
 
-export function NextGameCard() {
+export function NextGameCard({ game }: NextGameCardProps) {
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Get game from context (fetched at layout level)
+  // Get real-time state from context (entry, stats, players)
   const {
     state: {
-      game,
       entry,
       isLoadingEntry,
       prizePool: storePrizePool,
@@ -32,26 +41,22 @@ export function NextGameCard() {
       recentPlayers,
     },
     refetchEntry,
-  } = useGame();
+  } = useRealtime();
 
   // Get user data
   const { user } = useUser();
 
   // Realtime stats from context (updated via WebSocket), fallback to game prop
-  const prizePool = storePrizePool ?? game?.prizePool ?? 0;
-  const playerCount = storePlayerCount ?? game?.playerCount ?? 0;
-  const spotsTotal = game?.maxPlayers ?? 500;
+  const prizePool = storePrizePool ?? game.prizePool ?? 0;
+  const playerCount = storePlayerCount ?? game.playerCount ?? 0;
+  const spotsTotal = game.maxPlayers ?? 500;
 
   const now = Date.now();
-  const hasEnded = game ? now >= game.endsAt.getTime() : false;
-  const isLive = game ? !hasEnded && now >= game.startsAt.getTime() : false;
+  const hasEnded = now >= game.endsAt.getTime();
+  const isLive = !hasEnded && now >= game.startsAt.getTime();
 
   // Timer - countdown to start or end
-  const targetMs = game
-    ? isLive
-      ? game.endsAt.getTime()
-      : game.startsAt.getTime()
-    : 0;
+  const targetMs = isLive ? game.endsAt.getTime() : game.startsAt.getTime();
   const countdown = useTimer(targetMs);
 
   // Derived state
@@ -60,7 +65,7 @@ export function NextGameCard() {
   // Check if player has answered all questions (finished playing)
   const hasFinishedAnswering =
     hasTicket &&
-    game?.questionCount &&
+    game.questionCount &&
     entry?.answeredQuestionIds &&
     entry.answeredQuestionIds.length >= game.questionCount;
 
@@ -104,7 +109,7 @@ export function NextGameCard() {
     ? {
         text: "VIEW RESULTS",
         disabled: false,
-        href: `/game/${game?.id}/result`,
+        href: `/game/${game.id}/result`,
       }
     : isLive
     ? hasTicket
@@ -112,9 +117,9 @@ export function NextGameCard() {
         ? {
             text: "WAITING...",
             disabled: false,
-            href: `/game/${game?.id}/live`,
+            href: `/game/${game.id}/live`,
           }
-        : { text: "PLAY NOW", disabled: false, href: `/game/${game?.id}/live` }
+        : { text: "PLAY NOW", disabled: false, href: `/game/${game.id}/live` }
       : { text: "GET TICKET", disabled: false, href: null }
     : hasTicket
     ? { text: "YOU'RE IN!", disabled: true, href: null }
@@ -166,7 +171,7 @@ export function NextGameCard() {
               />
             </motion.div>
             <span className="font-body text-white uppercase text-[26px] leading-[92%] tracking-[-0.03em]">
-              WAFFLES #{(game?.gameNumber ?? 0).toString().padStart(3, "0")}
+              WAFFLES #{(game.gameNumber ?? 0).toString().padStart(3, "0")}
             </span>
           </div>
         </motion.div>
@@ -316,11 +321,11 @@ export function NextGameCard() {
       <BuyTicketModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        gameId={game?.id ?? ""}
-        onchainId={(game?.onchainId as `0x${string}`) ?? null}
-        theme={game?.theme ?? ""}
-        themeIcon={game?.coverUrl ?? undefined}
-        tierPrices={game?.tierPrices ?? []}
+        gameId={game.id}
+        onchainId={(game.onchainId as `0x${string}`) ?? null}
+        theme={game.theme ?? ""}
+        themeIcon={game.coverUrl ?? undefined}
+        tierPrices={game.tierPrices ?? []}
         onPurchaseSuccess={() => {
           refetchEntry();
         }}

@@ -33,4 +33,9 @@ export {
 export * from "./scoring";
 
 // Lifecycle
-export { rankGame, publishResults, type RankResult, type PublishResult } from "./lifecycle";
+export {
+  rankGame,
+  publishResults,
+  type RankResult,
+  type PublishResult,
+} from "./lifecycle";

@@ -3,9 +3,9 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 
-import { useGame } from "@/components/providers/GameProvider";
 import { BottomNav } from "@/components/BottomNav";
 import { springs, staggerContainer, fadeInUp } from "@/lib/animations";
+import type { GameWithQuestionCount } from "@/lib/game";
 
 import { GameChat } from "./_components/chat/GameChat";
 import { LiveEventFeed } from "./_components/LiveEventFeed";
@@ -14,14 +14,19 @@ import { CheerOverlay } from "./_components/CheerOverlay";
 import { useSounds } from "@/components/providers/SoundProvider";
 
 // ==========================================
+// TYPES
+// ==========================================
+
+interface GameHubProps {
+  /** Game data from server component - not stored in React state */
+  game: GameWithQuestionCount | null;
+}
+
+// ==========================================
 // COMPONENT
 // ==========================================
 
-export function GameHub() {
-  const {
-    state: { game },
-  } = useGame();
-
+export function GameHub({ game }: GameHubProps) {
   // Background music
   const { playBgMusic, stopBgMusic } = useSounds();
 
@@ -29,7 +34,7 @@ export function GameHub() {
   const hasEnded = game ? Date.now() >= game.endsAt.getTime() : true;
   const hasActiveGame = game && !hasEnded;
 
-  // Background music
+  // Background music control
   useEffect(() => {
     if (hasActiveGame) {
       playBgMusic();
@@ -90,7 +95,7 @@ export function GameHub() {
         transition={{ duration: 0.4 }}
         className="shrink-0 flex flex-col justify-start items-center overflow-hidden px-4 pt-4"
       >
-        <NextGameCard />
+        <NextGameCard game={game} />
       </motion.section>
 
       {/* Live Event Feed */}
