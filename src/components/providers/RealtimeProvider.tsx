@@ -8,6 +8,9 @@
  *
  * NOTE: Game data is NOT stored here. Game data should be fetched
  * in server components and passed as props to client components.
+ *
+ * NOTE: Access control is handled by AccessGuard at the layout level,
+ * not in this provider.
  */
 
 "use client";
@@ -28,7 +31,6 @@ import { env } from "@/lib/env";
 import type { Message, ChatItem } from "@shared/protocol";
 import type { GameEntry } from "@prisma";
 import { useUser } from "@/hooks/useUser";
-import { WaffleLoader } from "@/components/ui/WaffleLoader";
 
 // ==========================================
 // TYPES
@@ -231,6 +233,9 @@ export function RealtimeProvider({
 }: RealtimeProviderProps) {
   const router = useRouter();
 
+  // Get user for entry fetching (access control is handled by AccessGuard)
+  const { user } = useUser();
+
   // Initialize state with server-provided recent players
   const [state, dispatch] = useReducer(reducer, {
     ...initialState,
@@ -361,15 +366,6 @@ export function RealtimeProvider({
     onMessage: handleMessage,
   });
 
-  // Access Control Logic - Redirects if user doesn't have game access
-  const { user, isLoading: isLoadingUser } = useUser();
-
-  useEffect(() => {
-    if (!isLoadingUser && (!user || !user.hasGameAccess || user.isBanned)) {
-      router.replace("/redeem");
-    }
-  }, [user, isLoadingUser, router]);
-
   // Fetch User Entry
   const fetchEntry = useCallback(async () => {
     if (!gameId || !user?.fid) return;
@@ -447,10 +443,6 @@ export function RealtimeProvider({
     },
     [socket]
   );
-
-  // Block rendering while loading user or if access denied
-  if (isLoadingUser) return <WaffleLoader />;
-  if (!user || !user.hasGameAccess || user.isBanned) return null;
 
   return (
     <RealtimeContext.Provider

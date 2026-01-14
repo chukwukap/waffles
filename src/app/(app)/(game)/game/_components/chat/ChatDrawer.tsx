@@ -1,7 +1,12 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { motion, AnimatePresence, useDragControls, PanInfo } from "framer-motion";
+import {
+  motion,
+  AnimatePresence,
+  useDragControls,
+  PanInfo,
+} from "framer-motion";
 import { ChatIcon } from "@/components/icons";
 import Backdrop from "@/components/ui/Backdrop";
 import { ChatMessageList } from "./ChatMessageList";
@@ -21,17 +26,23 @@ function AnimatedSendIcon({ isHovered }: { isHovered: boolean }) {
       height="14"
       viewBox="0 0 16 14"
       fill="none"
-      animate={isHovered ? { x: [0, 2, 0], scale: [1, 1.15, 1] } : { x: 0, scale: 1 }}
+      animate={
+        isHovered ? { x: [0, 2, 0], scale: [1, 1.15, 1] } : { x: 0, scale: 1 }
+      }
       transition={{ duration: 0.35, ease: "easeOut" as const }}
     >
       {/* Arrow path with slide + rotate animation */}
       <motion.path
         d="M10 0H8V4H2V6H0V12H2V10H8V14H10V12H12V10H14V8H16V6H14V4H12V2H10V0Z"
         fill="white"
-        animate={isHovered ? {
-          x: [0, 4, 2],
-          rotate: [0, -5, 0]
-        } : { x: 0, rotate: 0 }}
+        animate={
+          isHovered
+            ? {
+                x: [0, 4, 2],
+                rotate: [0, -5, 0],
+              }
+            : { x: 0, rotate: 0 }
+        }
         transition={{ duration: 0.3, ease: "easeOut" as const }}
         style={{ transformOrigin: "center" }}
       />
@@ -62,7 +73,10 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
   const dragControls = useDragControls();
 
-  const { state: { connected: isConnected }, sendChat } = useRealtime();
+  const {
+    state: { connected: isConnected },
+    sendChat,
+  } = useRealtime();
   const { keyboardHeight, isKeyboardOpen } = useVisualViewport();
 
   // Max message length
@@ -85,7 +99,7 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
       // Ensure the input stays visible when keyboard opens
       drawerRef.current.style.transform = `translateY(-${keyboardHeight}px)`;
     } else if (drawerRef.current) {
-      drawerRef.current.style.transform = 'translateY(0)';
+      drawerRef.current.style.transform = "translateY(0)";
     }
   }, [isKeyboardOpen, keyboardHeight]);
 
@@ -173,7 +187,10 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
               >
                 <motion.div
                   className="absolute top-1/2 left-1/2 h-[4px] w-10 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/40"
-                  whileHover={{ width: 48, backgroundColor: "rgba(255,255,255,0.6)" }}
+                  whileHover={{
+                    width: 48,
+                    backgroundColor: "rgba(255,255,255,0.6)",
+                  }}
                   transition={{ duration: 0.2 }}
                 />
               </motion.button>
@@ -226,7 +243,9 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                   boxShadow: inputFocused
                     ? "0 0 0 2px rgba(55, 149, 246, 0.3), inset 0 0 20px rgba(55, 149, 246, 0.05)"
                     : "none",
-                  backgroundColor: inputFocused ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.05)"
+                  backgroundColor: inputFocused
+                    ? "rgba(255,255,255,0.08)"
+                    : "rgba(255,255,255,0.05)",
                 }}
                 transition={{ duration: 0.2 }}
               >
@@ -263,7 +282,7 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                       exit={{ scale: 0, opacity: 0, x: 20 }}
                       whileHover={{
                         scale: 1.1,
-                        boxShadow: "0 0 20px rgba(59, 130, 246, 0.5)"
+                        boxShadow: "0 0 20px rgba(59, 130, 246, 0.5)",
                       }}
                       whileTap={{ scale: 0.85 }}
                       transition={springs.bouncy}
@@ -301,4 +320,3 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
 }
 
 export default ChatDrawer;
-

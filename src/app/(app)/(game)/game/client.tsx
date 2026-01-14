@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 
-import { BottomNav } from "@/components/BottomNav";
 import { springs, staggerContainer, fadeInUp } from "@/lib/animations";
 import type { GameWithQuestionCount } from "@/lib/game";
 
@@ -50,36 +49,33 @@ export function GameHub({ game }: GameHubProps) {
 
   if (!game) {
     return (
-      <>
-        <motion.section
-          variants={staggerContainer}
-          initial="hidden"
-          animate="visible"
-          className="flex-1 overflow-y-auto px-4 py-2"
-        >
-          <div className="flex flex-col items-center justify-center gap-6 py-16">
-            <motion.div variants={fadeInUp} className="text-center space-y-2">
-              <motion.h2
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1, ...springs.bouncy }}
-                className="text-white font-body text-2xl"
-              >
-                NO GAMES YET
-              </motion.h2>
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="text-white/50 font-display text-sm max-w-[280px]"
-              >
-                New games are coming soon. Check back later!
-              </motion.p>
-            </motion.div>
-          </div>
-        </motion.section>
-        <BottomNav />
-      </>
+      <motion.section
+        variants={staggerContainer}
+        initial="hidden"
+        animate="visible"
+        className="flex-1 overflow-y-auto px-4 py-2"
+      >
+        <div className="flex flex-col items-center justify-center gap-6 py-16">
+          <motion.div variants={fadeInUp} className="text-center space-y-2">
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, ...springs.bouncy }}
+              className="text-white font-body text-2xl"
+            >
+              NO GAMES YET
+            </motion.h2>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="text-white/50 font-display text-sm max-w-[280px]"
+            >
+              New games are coming soon. Check back later!
+            </motion.p>
+          </motion.div>
+        </div>
+      </motion.section>
     );
   }
 
@@ -121,7 +117,6 @@ export function GameHub({ game }: GameHubProps) {
         </div>
       </motion.div>
 
-      <BottomNav />
       <CheerOverlay />
     </>
   );

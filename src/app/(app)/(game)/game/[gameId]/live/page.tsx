@@ -1,7 +1,8 @@
 import { cache } from "react";
-import { redirect, } from "next/navigation";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getGamePhase } from "@/lib/types";
+import { RealtimeProvider } from "@/components/providers/RealtimeProvider";
 import LiveGameScreen from "./LiveGameScreen";
 
 export const dynamic = "force-dynamic";
@@ -63,10 +64,7 @@ const getGame = cache(async (gameId: string) => {
           roundIndex: true,
           orderInRound: true,
         },
-        orderBy: [
-          { roundIndex: "asc" },
-          { orderInRound: "asc" },
-        ],
+        orderBy: [{ roundIndex: "asc" }, { orderInRound: "asc" }],
       },
       entries: {
         select: {
@@ -127,7 +125,16 @@ export default async function LiveGamePage({
     redirect("/game");
   }
 
+  // Map recentPlayers to RealtimeProvider format
+  const recentPlayers = game.recentPlayers.map((p) => ({
+    username: p.username,
+    pfpUrl: p.pfpUrl,
+    timestamp: Date.now(),
+  }));
+
   return (
-    <LiveGameScreen game={game} />
+    <RealtimeProvider gameId={gameId} initialRecentPlayers={recentPlayers}>
+      <LiveGameScreen game={game} />
+    </RealtimeProvider>
   );
 }

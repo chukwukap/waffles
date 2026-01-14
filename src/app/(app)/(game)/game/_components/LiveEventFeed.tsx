@@ -55,7 +55,11 @@ const FeedRow = memo(function FeedRow({ item }: { item: FeedItem }) {
       </motion.div>
 
       {/* Content */}
-      <span className={`text-white/70 text-sm truncate ${item.type === "join" ? "italic" : ""}`}>
+      <span
+        className={`text-white/70 text-sm truncate ${
+          item.type === "join" ? "italic" : ""
+        }`}
+      >
         <span className="text-white font-medium">{item.username}</span>{" "}
         <span className="font-display">{item.text}</span>
       </span>
@@ -67,7 +71,13 @@ const FeedRow = memo(function FeedRow({ item }: { item: FeedItem }) {
 // CONNECTION INDICATOR
 // ==========================================
 
-function ConnectionIndicator({ isConnected, onlineCount }: { isConnected: boolean; onlineCount: number }) {
+function ConnectionIndicator({
+  isConnected,
+  onlineCount,
+}: {
+  isConnected: boolean;
+  onlineCount: number;
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
@@ -81,7 +91,9 @@ function ConnectionIndicator({ isConnected, onlineCount }: { isConnected: boolea
             : { scale: [0.8, 1, 0.8], opacity: [0.5, 1, 0.5] }
         }
         transition={{ duration: isConnected ? 2 : 1, repeat: Infinity }}
-        className={`w-2 h-2 rounded-full ${isConnected ? "bg-[#14B985]" : "bg-[#F5BB1B]"}`}
+        className={`w-2 h-2 rounded-full ${
+          isConnected ? "bg-[#14B985]" : "bg-[#F5BB1B]"
+        }`}
       />
       <span className="text-[10px] text-white/50 font-display">
         {isConnected ? `${onlineCount} online` : "connecting..."}
@@ -99,7 +111,12 @@ interface LiveEventFeedProps {
 }
 
 export function LiveEventFeed({ maxEvents = 5 }: LiveEventFeedProps) {
-  const { messages, recentPlayers, connected: isConnected, onlineCount } = useRealtime().state;
+  const {
+    messages,
+    recentPlayers,
+    connected: isConnected,
+    onlineCount,
+  } = useRealtime().state;
 
   // Combine chat messages and join events into a unified feed
   const feedItems = useMemo(() => {
@@ -136,7 +153,10 @@ export function LiveEventFeed({ maxEvents = 5 }: LiveEventFeedProps) {
         className="relative w-full max-w-full mx-auto flex flex-col justify-center items-center"
         style={{ height: "clamp(60px, 12vh, 140px)" }}
       >
-        <ConnectionIndicator isConnected={isConnected} onlineCount={onlineCount} />
+        <ConnectionIndicator
+          isConnected={isConnected}
+          onlineCount={onlineCount}
+        />
         <motion.p
           animate={{ opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 2, repeat: Infinity }}
@@ -153,7 +173,10 @@ export function LiveEventFeed({ maxEvents = 5 }: LiveEventFeedProps) {
       className="relative w-screen -mx-4 overflow-hidden"
       style={{ height: "clamp(60px, 12vh, 140px)" }}
     >
-      <ConnectionIndicator isConnected={isConnected} onlineCount={onlineCount} />
+      <ConnectionIndicator
+        isConnected={isConnected}
+        onlineCount={onlineCount}
+      />
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}

@@ -110,7 +110,10 @@ function AnimatedCount({ value }: { value: number }) {
  * Clicking the waffle creates animated bubbles that float up.
  */
 export function ChatInputBar({ onOpen }: ChatInputBarProps) {
-  const { state: { onlineCount: activeCount }, sendCheer } = useRealtime();
+  const {
+    state: { onlineCount: activeCount },
+    sendCheer,
+  } = useRealtime();
   const [bubbles, setBubbles] = useState<WaffleBubble[]>([]);
   const [bubbleIdCounter, setBubbleIdCounter] = useState(0);
 

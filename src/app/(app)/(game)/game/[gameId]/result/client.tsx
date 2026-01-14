@@ -260,8 +260,9 @@ export default function ResultPageClient({
       if (context?.user?.pfpUrl) {
         frameParams.set("pfpUrl", context.user.pfpUrl);
       }
-      const frameUrl = `${env.rootUrl
-        }/game/${gameId}/result?${frameParams.toString()}`;
+      const frameUrl = `${
+        env.rootUrl
+      }/game/${gameId}/result?${frameParams.toString()}`;
 
       const result = await composeCastAsync({
         text: prizeText,
@@ -272,7 +273,7 @@ export default function ResultPageClient({
         console.log("[Share] Cast created:", result.cast.hash);
         playSound("purchase");
         notify.success("Shared to Farcaster! 🎉");
-        sdk.haptics.impactOccurred("light").catch(() => { });
+        sdk.haptics.impactOccurred("light").catch(() => {});
       } else {
         console.log("[Share] User cancelled");
       }
@@ -341,7 +342,7 @@ export default function ResultPageClient({
       refetchEntry(); // Refetch to get updated claimedAt
       playSound("purchase");
       notify.success("Prize claimed! 🎉");
-      sdk.haptics.impactOccurred("medium").catch(() => { });
+      sdk.haptics.impactOccurred("medium").catch(() => {});
     }
   }, [gameId, refetchEntry]);
 
@@ -603,12 +604,12 @@ export default function ResultPageClient({
                     claimState === "success" || hasClaimed
                       ? "text-[#14B985] border-[#14B985] opacity-80"
                       : !isClaimWindowOpen
-                        ? "text-amber-400 border-amber-400 opacity-80"
-                        : claimState === "pending"
-                          ? "text-amber-400 border-amber-400 opacity-80"
-                          : claimState === "error"
-                            ? "text-red-400 border-red-400"
-                            : "text-[#14B985] border-[#14B985]"
+                      ? "text-amber-400 border-amber-400 opacity-80"
+                      : claimState === "pending"
+                      ? "text-amber-400 border-amber-400 opacity-80"
+                      : claimState === "error"
+                      ? "text-red-400 border-red-400"
+                      : "text-[#14B985] border-[#14B985]"
                   }
                 >
                   {(claimState === "confirming" || isSending) && (
