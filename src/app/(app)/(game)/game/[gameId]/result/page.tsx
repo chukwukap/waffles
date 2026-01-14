@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import ResultPageClient from "./client";
 import { minikitConfig } from "@minikit-config";
 import { env } from "@/lib/env";
-import { buildPrizeOGUrl } from "@/lib/og";
+import { buildPrizeOGUrl, buildScoreOGUrl } from "@/lib/og";
 
 interface ResultPageProps {
   params: Promise<{ gameId: string }>;
@@ -53,14 +53,20 @@ export async function generateMetadata({
   const prizeAmount = parseInt((sParams.prizeAmount as string) || "0", 10);
   const score = parseInt((sParams.score as string) || "0", 10);
   const pfpUrl = sParams.pfpUrl as string | undefined;
+  const gameNumber = game.gameNumber;
+  const category = game.theme || "Trivia";
+  const rank = sParams.rank ? parseInt(sParams.rank as string, 10) : undefined;
 
-  // Check if this is a share context (has score or prizeAmount)
-  const isShareContext = score > 0 || prizeAmount > 0;
+  // Build OG image URL based on context
+  let imageUrl: string | null = null;
+  if (prizeAmount > 0) {
+    // Prize winner - use prize OG
+    imageUrl = buildPrizeOGUrl({ prizeAmount, pfpUrl });
+  } else if (score > 0) {
+    // Score share - use score OG
+    imageUrl = buildScoreOGUrl({ score, username, gameNumber, category, rank, pfpUrl });
+  }
 
-  // Build OG image URL when in share context
-  const imageUrl = isShareContext
-    ? buildPrizeOGUrl({ prizeAmount, score, pfpUrl })
-    : null;
 
   // Metadata based on context
   const title = prizeAmount > 0

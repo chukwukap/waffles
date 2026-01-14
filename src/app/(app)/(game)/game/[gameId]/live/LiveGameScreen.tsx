@@ -7,11 +7,12 @@
  * No hooks after the switch statement - just pure rendering.
  */
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useLiveGame } from "@/hooks/useLiveGame";
 import QuestionView from "./_components/QuestionView";
 import BreakView from "./_components/BreakView";
 import GameCountdownScreen from "./_components/GameCountdownScreen";
-import GameCompleteScreen from "./_components/GameCompleteScreen";
 import WaitingScreen from "./_components/WaitingScreen";
 import { CheerOverlay } from "../../_components/CheerOverlay";
 import type { LiveGameData } from "./page";
@@ -21,6 +22,7 @@ import type { LiveGameData } from "./page";
 // ==========================================
 
 export default function LiveGameScreen({ game }: { game: LiveGameData }) {
+  const router = useRouter();
   const {
     phase,
     secondsRemaining,
@@ -37,6 +39,13 @@ export default function LiveGameScreen({ game }: { game: LiveGameData }) {
     submitAnswer,
     onMediaReady,
   } = useLiveGame(game);
+
+  // Redirect to result page when game is complete
+  useEffect(() => {
+    if (phase === "complete") {
+      router.replace(`/game/${game.id}/result`);
+    }
+  }, [phase, game.id, router]);
 
   // ==========================================
   // PHASE-BASED RENDERING
@@ -119,13 +128,12 @@ export default function LiveGameScreen({ game }: { game: LiveGameData }) {
       );
 
     case "complete":
+      // Redirecting to result page - show loader
       return (
-        <GameCompleteScreen
-          score={score}
-          gameTheme={game.theme}
-          gameId={game.id}
-          gameNumber={game.gameNumber}
-        />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+        </div>
       );
   }
 }
+

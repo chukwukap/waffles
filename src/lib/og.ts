@@ -22,7 +22,15 @@ export interface JoinedOGParams {
 
 export interface PrizeOGParams {
   prizeAmount: number;
-  score?: number;
+  pfpUrl?: string;
+}
+
+export interface ScoreOGParams {
+  score: number;
+  username: string;
+  gameNumber: number;
+  category: string;
+  rank?: number;
   pfpUrl?: string;
 }
 
@@ -82,14 +90,33 @@ export function buildPrizeOGUrl(params: PrizeOGParams): string {
 
   const searchParams = new URLSearchParams();
   searchParams.set("prizeAmount", params.prizeAmount.toString());
-  if (params.score !== undefined) {
-    searchParams.set("score", params.score.toString());
-  }
   if (params.pfpUrl) {
     searchParams.set("pfpUrl", params.pfpUrl);
   }
 
   return `${baseUrl}/api/og/prize?${searchParams.toString()}`;
+}
+
+/**
+ * Build URL for Score Share OG image
+ */
+export function buildScoreOGUrl(params: ScoreOGParams): string {
+  const baseUrl = env.rootUrl || "";
+  if (!baseUrl) return "";
+
+  const searchParams = new URLSearchParams();
+  searchParams.set("score", params.score.toString());
+  searchParams.set("username", params.username);
+  searchParams.set("gameNumber", params.gameNumber.toString());
+  searchParams.set("category", params.category);
+  if (params.rank !== undefined) {
+    searchParams.set("rank", params.rank.toString());
+  }
+  if (params.pfpUrl) {
+    searchParams.set("pfpUrl", params.pfpUrl);
+  }
+
+  return `${baseUrl}/api/og/score?${searchParams.toString()}`;
 }
 
 /**
