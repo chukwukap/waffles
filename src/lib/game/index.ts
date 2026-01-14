@@ -14,7 +14,6 @@ export {
   getGameById,
   type GameWithQuestionCount,
   type GameQueryResult,
-  type RecentPlayer,
 } from "./queries";
 
 // Prize distribution
