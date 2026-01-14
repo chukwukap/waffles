@@ -181,7 +181,7 @@ export default function ResultPageClient({
     return {
       score: entry.score,
       rank,
-      winnings: entry.prize ?? 0,
+      prize: entry.prize ?? 0,
       percentile: Math.max(0, Math.min(100, percentile)),
     };
   }, [entry, game?.playerCount]);
@@ -191,7 +191,7 @@ export default function ResultPageClient({
     return (
       userScore !== null &&
       userScore.rank <= WINNERS_COUNT &&
-      userScore.winnings > 0
+      userScore.prize > 0
     );
   }, [userScore]);
 
@@ -202,7 +202,7 @@ export default function ResultPageClient({
       playSound(userScore.rank <= WINNERS_COUNT ? "victory" : "defeat");
 
       // Fire confetti for winners (rank 1-10)
-      if (userScore.rank <= WINNERS_COUNT && userScore.winnings > 0) {
+      if (userScore.rank <= WINNERS_COUNT && userScore.prize > 0) {
         // Initial burst
         confetti({
           particleCount: 100,
@@ -247,7 +247,7 @@ export default function ResultPageClient({
     if (!context?.user || !userScore) return;
 
     try {
-      const hasPrize = userScore.winnings > 0;
+      const hasPrize = userScore.prize > 0;
       const username = context.user.username ?? "Player";
       const pfpUrl = context.user.pfpUrl || "";
 
@@ -257,11 +257,11 @@ export default function ResultPageClient({
       if (hasPrize) {
         // Use prize OG route for winners
         const prizeParams = new URLSearchParams({
-          prizeAmount: userScore.winnings.toString(),
+          prizeAmount: userScore.prize.toString(),
           ...(pfpUrl && { pfpUrl }),
         });
         embedUrl = `${env.rootUrl}/api/og/prize?${prizeParams.toString()}`;
-        shareText = `Just won $${userScore.winnings.toLocaleString()} on Waffles! 🧇🏆`;
+        shareText = `Just won $${userScore.prize.toLocaleString()} on Waffles! 🧇🏆`;
       } else {
         // Use score OG route for non-winners
         const scoreParams = new URLSearchParams({
@@ -564,7 +564,7 @@ export default function ResultPageClient({
         </div>
 
         <GameResultCard
-          winnings={userScore.winnings}
+          winnings={userScore.prize}
           score={userScore.score}
           rank={userScore.rank}
           pfpUrl={context.user.pfpUrl ?? ""}
