@@ -24,7 +24,7 @@ export type UserData = Pick<
   | "joinedWaitlistAt"
   | "createdAt"
 > & {
-  waitlistRank: number; // Calculated on the fly by /api/v1/me
+  waitlistRank: number; // Calculated on the fly by /api/v1/users/[fid]
   invitesCount: number;
 };
 
@@ -62,7 +62,7 @@ export function useUser() {
   const fid = context?.user?.fid;
 
   const { data, error, isLoading, mutate } = useSWR<UserData | null>(
-    fid ? `/api/v1/me?fid=${fid}` : null,
+    fid ? `/api/v1/users/${fid}` : null,
     fetchUser,
     {
       revalidateOnFocus: false,

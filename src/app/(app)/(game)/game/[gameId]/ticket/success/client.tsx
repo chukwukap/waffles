@@ -6,8 +6,7 @@ import { useCallback, useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { env } from "@/lib/env";
-import { useComposeCast, useOpenUrl } from "@coinbase/onchainkit/minikit";
-import sdk from "@farcaster/miniapp-sdk";
+import { useComposeCast, useOpenUrl, useMiniKit } from "@coinbase/onchainkit/minikit";
 import { GameSummaryCard } from "../_components/GameSummary";
 import { BottomNav } from "@/components/BottomNav";
 import confetti from "canvas-confetti";
@@ -38,6 +37,7 @@ export function TicketSuccessClient({
 }: TicketSuccessClientProps) {
     const { composeCastAsync } = useComposeCast();
     const openUrl = useOpenUrl();
+    const { context } = useMiniKit();
     const [showCalendarOptions, setShowCalendarOptions] = useState(false);
     const hasCelebrated = useRef(false);
     const [userInfo, setUserInfo] = useState<{
@@ -85,9 +85,12 @@ export function TicketSuccessClient({
 
     // Fetch user info on mount
     useEffect(() => {
+        const fid = context?.user?.fid;
+        if (!fid) return;
+
         async function fetchUser() {
             try {
-                const res = await sdk.quickAuth.fetch("/api/v1/me");
+                const res = await fetch(`/api/v1/users/${fid}`);
                 if (res.ok) {
                     setUserInfo(await res.json());
                 }
@@ -96,7 +99,7 @@ export function TicketSuccessClient({
             }
         }
         fetchUser();
-    }, []);
+    }, [context?.user?.fid]);
 
     // Create calendar event
     const calendarEvent = createGameCalendarEvent(
