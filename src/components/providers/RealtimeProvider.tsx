@@ -44,16 +44,6 @@ export type GameEntryData = Pick<
   answeredQuestionIds: string[];
 };
 
-/** Unified feed event for chronological display */
-export interface FeedEvent {
-  id: string;
-  type: "chat" | "join";
-  username: string;
-  pfp: string | null;
-  text: string;
-  ts: number;
-}
-
 // ==========================================
 // STATE
 // ==========================================
@@ -77,9 +67,6 @@ interface RealtimeState {
   // Ticket entrants (synced via PartyKit)
   entrants: Entrant[];
 
-  // Unified feed events (chronologically ordered)
-  feedEvents: FeedEvent[];
-
   // Live game question tracking
   currentQuestionId: string | null;
   questionAnswerers: Entrant[];
@@ -94,7 +81,6 @@ const initialState: RealtimeState = {
   onlineCount: 0,
   messages: [],
   entrants: [],
-  feedEvents: [],
   currentQuestionId: null,
   questionAnswerers: [],
 };
@@ -116,7 +102,6 @@ type Action =
   | { type: "ADD_MESSAGE"; payload: ChatItem }
   | { type: "SET_ENTRANTS"; payload: Entrant[] }
   | { type: "ADD_ENTRANT"; payload: Entrant }
-  | { type: "ADD_FEED_EVENT"; payload: FeedEvent }
   | { type: "SET_CURRENT_QUESTION"; payload: string | null }
   | {
     type: "ADD_ANSWERER";
@@ -167,12 +152,6 @@ function reducer(state: RealtimeState, action: Action): RealtimeState {
             (e) => e.username !== action.payload.username
           ),
         ].slice(0, 20),
-      };
-
-    case "ADD_FEED_EVENT":
-      return {
-        ...state,
-        feedEvents: [...state.feedEvents.slice(-49), action.payload],
       };
 
     case "SET_CURRENT_QUESTION":
@@ -278,17 +257,6 @@ export function RealtimeProvider({
                 timestamp: msg.timestamp,
               },
             });
-            dispatch({
-              type: "ADD_FEED_EVENT",
-              payload: {
-                id: `join-${msg.username}-${msg.timestamp}`,
-                type: "join",
-                username: msg.username,
-                pfp: msg.pfpUrl,
-                text: "joined the game",
-                ts: msg.timestamp,
-              },
-            });
             break;
 
           case "connected":
@@ -300,17 +268,6 @@ export function RealtimeProvider({
               type: "ADD_MESSAGE",
               payload: {
                 id: msg.id,
-                username: msg.username,
-                pfp: msg.pfp,
-                text: msg.text,
-                ts: msg.ts,
-              },
-            });
-            dispatch({
-              type: "ADD_FEED_EVENT",
-              payload: {
-                id: msg.id,
-                type: "chat",
                 username: msg.username,
                 pfp: msg.pfp,
                 text: msg.text,
@@ -337,7 +294,7 @@ export function RealtimeProvider({
                 player: {
                   username: msg.username,
                   pfpUrl: msg.pfp,
-                  timestamp: Date.now(),
+                  timestamp: msg.ts,
                 },
               },
             });

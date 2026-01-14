@@ -77,6 +77,7 @@ export type Message =
       questionIndex: number;
       username: string;
       pfp: string | null;
+      ts: number;
     }
   | { type: "cheer" }
 

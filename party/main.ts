@@ -754,6 +754,7 @@ export default class GameServer implements Party.Server {
               questionIndex: msg.q,
               username: player.username,
               pfp: player.pfp,
+              ts: Date.now(),
             },
             [sender.id]
           );
