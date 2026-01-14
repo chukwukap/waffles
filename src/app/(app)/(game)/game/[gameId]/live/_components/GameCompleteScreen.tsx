@@ -4,7 +4,7 @@ import { useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { useComposeCast } from "@coinbase/onchainkit/minikit";
+import { useComposeCast, useMiniKit } from "@coinbase/onchainkit/minikit";
 import { WaffleButton } from "@/components/buttons/WaffleButton";
 import { useEffect, useRef } from "react";
 import { playSound } from "@/lib/sounds";
@@ -25,6 +25,7 @@ export default function GameCompleteScreen({
     gameNumber,
 }: GameCompleteScreenProps) {
     const hasPlayedSound = useRef(false);
+    const { context } = useMiniKit();
 
     // Play victory sound
     useEffect(() => {
@@ -38,10 +39,24 @@ export default function GameCompleteScreen({
 
     const handleShare = useCallback(async () => {
         try {
-            const message = `I scored ${score.toLocaleString()} points in Waffles! 🧇`;
+            const user = context?.user;
+            const username = user?.username || "Player";
+            const pfpUrl = user?.pfpUrl || "";
+
+            // Build OG image URL with all params
+            const ogParams = new URLSearchParams({
+                score: score.toString(),
+                username,
+                gameNumber: gameNumber.toString(),
+                category: gameTheme,
+                ...(pfpUrl && { pfpUrl }),
+            });
+            const ogImageUrl = `${env.rootUrl}/api/og/score?${ogParams.toString()}`;
+
+            const message = `I scored ${score.toLocaleString()} points in Waffles #${String(gameNumber).padStart(3, "0")}! 🧇`;
             const result = await composeCastAsync({
                 text: message,
-                embeds: [`${env.rootUrl}/game/${gameId}/result`].filter(Boolean) as [],
+                embeds: [ogImageUrl],
             });
 
             if (result?.cast) {
@@ -50,7 +65,7 @@ export default function GameCompleteScreen({
         } catch (e) {
             console.error("Share failed:", e);
         }
-    }, [composeCastAsync, score, gameId]);
+    }, [composeCastAsync, score, gameId, gameNumber, gameTheme, context]);
 
     return (
         <div className="w-full px-4 text-white flex flex-col items-center flex-1 overflow-y-auto pb-8">

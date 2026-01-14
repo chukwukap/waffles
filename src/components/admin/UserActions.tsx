@@ -74,7 +74,7 @@ export function UserActions({ user }: { user: { id: string; username: string | n
     };
 
     return (
-        <div className="bg-white/5 border border-white/[0.08] rounded-2xl backdrop-blur-lg p-6">
+        <div className="bg-white/5 border border-white/8 rounded-2xl backdrop-blur-lg p-6">
             <h3 className="text-lg font-semibold text-white mb-4 font-display">Actions</h3>
             <div className="space-y-4">
                 <div>
