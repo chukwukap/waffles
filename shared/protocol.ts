@@ -23,16 +23,27 @@ export interface Player {
   pfp: string | null;
 }
 
+export interface Entrant {
+  username: string;
+  pfpUrl: string | null;
+  timestamp: number;
+}
+
 // ==========================================
 // MESSAGE TYPES
 // ==========================================
 
 export type Message =
   // === SYNC (Server → Client on connect) ===
-  | { type: "sync"; connected: number; chat: ChatItem[] }
+  | { type: "sync"; connected: number; chat: ChatItem[]; entrants: Entrant[] }
 
   // === PRESENCE (Server → Clients) ===
-  | { type: "joined"; username: string; pfp: string | null }
+  | {
+      type: "entrant:new";
+      username: string;
+      pfpUrl: string | null;
+      timestamp: number;
+    }
   | { type: "left"; username: string }
   | { type: "connected"; count: number }
 

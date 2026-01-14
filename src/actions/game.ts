@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma";
-import { broadcastGameStats } from "@/lib/partykit";
+import { notifyTicketPurchased } from "@/lib/partykit";
 import { sendToUser } from "@/lib/notifications";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
@@ -84,7 +84,7 @@ export async function purchaseGameTicket(
     // Get user by fid
     const user = await prisma.user.findUnique({
       where: { fid },
-      select: { id: true, fid: true },
+      select: { id: true, fid: true, username: true, pfpUrl: true },
     });
 
     if (!user) {
@@ -196,12 +196,14 @@ export async function purchaseGameTicket(
       })
     );
 
-    // Async: Broadcast stats to connected clients
-    broadcastGameStats(gameId, {
+    // Async: Notify PartyKit of ticket purchase (stats + entrant atomically)
+    notifyTicketPurchased(gameId, {
+      username: user.username || "Player",
+      pfpUrl: user.pfpUrl || null,
       prizePool: game.prizePool + paidAmount,
       playerCount: game.playerCount + 1,
     }).catch((err) =>
-      logger.error(SERVICE, "broadcast_error", {
+      logger.error(SERVICE, "partykit_notify_error", {
         gameId,
         error: logger.errorMessage(err),
       })

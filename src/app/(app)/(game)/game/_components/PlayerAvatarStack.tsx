@@ -34,11 +34,11 @@ export function PlayerAvatarStack({
   formatText,
 }: PlayerAvatarStackProps) {
   // Get real-time data from context
-  const { recentPlayers, questionAnswerers, onlineCount } = useRealtime().state;
+  const { entrants, questionAnswerers, onlineCount } = useRealtime().state;
 
   // Use questionAnswerers for "just answered", otherwise recentPlayers
   const isAnswerContext = actionText === "just answered";
-  const sourcePlayers = isAnswerContext ? questionAnswerers : recentPlayers;
+  const sourcePlayers = isAnswerContext ? questionAnswerers : entrants;
 
   // Merge initial players with real-time players (avoid duplicates)
   const allPlayers = [...initialPlayers];
@@ -57,8 +57,8 @@ export function PlayerAvatarStack({
     (isAnswerContext
       ? questionAnswerers.length
       : onlineCount > 0
-      ? onlineCount
-      : allPlayers.length || 0);
+        ? onlineCount
+        : allPlayers.length || 0);
 
   // Format text - special case for zero
   //   const text = formatText

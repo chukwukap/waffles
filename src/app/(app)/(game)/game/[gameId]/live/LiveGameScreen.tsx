@@ -10,6 +10,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useLiveGame } from "@/hooks/useLiveGame";
+import { useRealtime } from "@/components/providers/RealtimeProvider";
 import QuestionView from "./_components/QuestionView";
 import BreakView from "./_components/BreakView";
 import GameCountdownScreen from "./_components/GameCountdownScreen";
@@ -23,6 +24,7 @@ import type { LiveGameData } from "./page";
 
 export default function LiveGameScreen({ game }: { game: LiveGameData }) {
   const router = useRouter();
+  const { state: { entrants } } = useRealtime();
   const {
     phase,
     secondsRemaining,
@@ -65,7 +67,7 @@ export default function LiveGameScreen({ game }: { game: LiveGameData }) {
       return (
         <GameCountdownScreen
           onComplete={startGame}
-          recentPlayers={game.recentPlayers}
+          entrants={entrants}
         />
       );
 

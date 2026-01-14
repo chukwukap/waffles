@@ -28,7 +28,7 @@ import { useRouter } from "next/navigation";
 import usePartySocket from "partysocket/react";
 import sdk from "@farcaster/miniapp-sdk";
 import { env } from "@/lib/env";
-import type { Message, ChatItem } from "@shared/protocol";
+import type { Message, ChatItem, Entrant } from "@shared/protocol";
 import type { GameEntry } from "@prisma";
 import { useUser } from "@/hooks/useUser";
 
@@ -36,11 +36,6 @@ import { useUser } from "@/hooks/useUser";
 // TYPES
 // ==========================================
 
-export interface RecentPlayer {
-  username: string;
-  pfpUrl: string | null;
-  timestamp: number;
-}
 
 export type GameEntryData = Pick<
   GameEntry,
@@ -69,12 +64,12 @@ interface RealtimeState {
   // Chat
   messages: ChatItem[];
 
-  // Recent players (for avatar stack display)
-  recentPlayers: RecentPlayer[];
+  // Ticket entrants (synced via PartyKit)
+  entrants: Entrant[];
 
   // Live game question tracking
   currentQuestionId: string | null;
-  questionAnswerers: RecentPlayer[];
+  questionAnswerers: Entrant[];
 }
 
 const initialState: RealtimeState = {
@@ -85,7 +80,7 @@ const initialState: RealtimeState = {
   connected: false,
   onlineCount: 0,
   messages: [],
-  recentPlayers: [],
+  entrants: [],
   currentQuestionId: null,
   questionAnswerers: [],
 };
@@ -98,19 +93,20 @@ type Action =
   | { type: "SET_ENTRY"; payload: GameEntryData | null }
   | { type: "SET_LOADING_ENTRY"; payload: boolean }
   | {
-      type: "UPDATE_STATS";
-      payload: { prizePool?: number; playerCount?: number };
-    }
+    type: "UPDATE_STATS";
+    payload: { prizePool?: number; playerCount?: number };
+  }
   | { type: "SET_CONNECTED"; payload: boolean }
   | { type: "SET_ONLINE_COUNT"; payload: number }
   | { type: "SET_MESSAGES"; payload: ChatItem[] }
   | { type: "ADD_MESSAGE"; payload: ChatItem }
-  | { type: "ADD_PLAYER"; payload: RecentPlayer }
+  | { type: "SET_ENTRANTS"; payload: Entrant[] }
+  | { type: "ADD_ENTRANT"; payload: Entrant }
   | { type: "SET_CURRENT_QUESTION"; payload: string | null }
   | {
-      type: "ADD_ANSWERER";
-      payload: { questionId: string; player: RecentPlayer };
-    }
+    type: "ADD_ANSWERER";
+    payload: { questionId: string; player: Entrant };
+  }
   | { type: "INCREMENT_ANSWERED" }
   | { type: "RESET" };
 
@@ -144,13 +140,16 @@ function reducer(state: RealtimeState, action: Action): RealtimeState {
         messages: [...state.messages.slice(-99), action.payload],
       };
 
-    case "ADD_PLAYER":
+    case "SET_ENTRANTS":
+      return { ...state, entrants: action.payload };
+
+    case "ADD_ENTRANT":
       return {
         ...state,
-        recentPlayers: [
+        entrants: [
           action.payload,
-          ...state.recentPlayers.filter(
-            (p) => p.username !== action.payload.username
+          ...state.entrants.filter(
+            (e) => e.username !== action.payload.username
           ),
         ].slice(0, 20),
       };
@@ -222,25 +221,19 @@ interface RealtimeProviderProps {
   children: ReactNode;
   /** Game ID to connect WebSocket room. Can be null if no active game. */
   gameId: string | null;
-  /** Initial recent players from server for immediate avatar display */
-  initialRecentPlayers?: RecentPlayer[];
 }
 
 export function RealtimeProvider({
   children,
   gameId,
-  initialRecentPlayers = [],
 }: RealtimeProviderProps) {
   const router = useRouter();
 
   // Get user for entry fetching (access control is handled by AccessGuard)
   const { user } = useUser();
 
-  // Initialize state with server-provided recent players
-  const [state, dispatch] = useReducer(reducer, {
-    ...initialState,
-    recentPlayers: initialRecentPlayers,
-  });
+  // Initialize state
+  const [state, dispatch] = useReducer(reducer, initialState);
 
   // Message handler for WebSocket events
   const handleMessage = useCallback(
@@ -252,15 +245,16 @@ export function RealtimeProvider({
           case "sync":
             dispatch({ type: "SET_ONLINE_COUNT", payload: msg.connected });
             dispatch({ type: "SET_MESSAGES", payload: msg.chat });
+            dispatch({ type: "SET_ENTRANTS", payload: msg.entrants });
             break;
 
-          case "joined":
+          case "entrant:new":
             dispatch({
-              type: "ADD_PLAYER",
+              type: "ADD_ENTRANT",
               payload: {
                 username: msg.username,
-                pfpUrl: msg.pfp,
-                timestamp: Date.now(),
+                pfpUrl: msg.pfpUrl,
+                timestamp: msg.timestamp,
               },
             });
             break;

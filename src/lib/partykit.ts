@@ -43,41 +43,45 @@ function partyFetch(gameId: string, path: string, body: unknown) {
 // ==========================================
 
 /**
- * Broadcast updated game stats to all connected PartyKit clients.
- * Called when a ticket is purchased.
+ * Notify PartyKit of a ticket purchase.
+ * Broadcasts both stats update and entrant addition atomically.
  */
-export async function broadcastGameStats(
+export async function notifyTicketPurchased(
   gameId: string,
-  stats: { prizePool: number; playerCount: number }
+  data: {
+    username: string;
+    pfpUrl: string | null;
+    prizePool: number;
+    playerCount: number;
+  }
 ): Promise<void> {
   if (!env.partykitHost || !env.partykitSecret) {
-    logger.warn(SERVICE, "stats_broadcast_skipped", {
+    logger.warn(SERVICE, "notify_ticket_purchased_skipped", {
       gameId,
       reason: "PartyKit not configured",
-      hasHost: !!env.partykitHost,
-      hasSecret: !!env.partykitSecret,
     });
     return;
   }
 
   try {
-    const res = await partyFetch(gameId, "stats-update", stats);
+    const res = await partyFetch(gameId, "ticket-purchased", data);
 
     if (res.ok) {
-      logger.info(SERVICE, "stats_broadcast_success", {
+      logger.info(SERVICE, "notify_ticket_purchased_success", {
         gameId,
-        prizePool: stats.prizePool,
-        playerCount: stats.playerCount,
+        username: data.username,
+        prizePool: data.prizePool,
+        playerCount: data.playerCount,
       });
     } else {
-      logger.error(SERVICE, "stats_broadcast_failed", {
+      logger.error(SERVICE, "notify_ticket_purchased_failed", {
         gameId,
         status: res.status,
         statusText: res.statusText,
       });
     }
   } catch (err) {
-    logger.error(SERVICE, "stats_broadcast_error", {
+    logger.error(SERVICE, "notify_ticket_purchased_error", {
       gameId,
       error: logger.errorMessage(err),
     });

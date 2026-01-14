@@ -56,9 +56,8 @@ const FeedRow = memo(function FeedRow({ item }: { item: FeedItem }) {
 
       {/* Content */}
       <span
-        className={`text-white/70 text-sm truncate ${
-          item.type === "join" ? "italic" : ""
-        }`}
+        className={`text-white/70 text-sm truncate ${item.type === "join" ? "italic" : ""
+          }`}
       >
         <span className="text-white font-medium">{item.username}</span>{" "}
         <span className="font-display">{item.text}</span>
@@ -91,9 +90,8 @@ function ConnectionIndicator({
             : { scale: [0.8, 1, 0.8], opacity: [0.5, 1, 0.5] }
         }
         transition={{ duration: isConnected ? 2 : 1, repeat: Infinity }}
-        className={`w-2 h-2 rounded-full ${
-          isConnected ? "bg-[#14B985]" : "bg-[#F5BB1B]"
-        }`}
+        className={`w-2 h-2 rounded-full ${isConnected ? "bg-[#14B985]" : "bg-[#F5BB1B]"
+          }`}
       />
       <span className="text-[10px] text-white/50 font-display">
         {isConnected ? `${onlineCount} online` : "connecting..."}
@@ -113,7 +111,7 @@ interface LiveEventFeedProps {
 export function LiveEventFeed({ maxEvents = 5 }: LiveEventFeedProps) {
   const {
     messages,
-    recentPlayers,
+    entrants,
     connected: isConnected,
     onlineCount,
   } = useRealtime().state;
@@ -130,8 +128,8 @@ export function LiveEventFeed({ maxEvents = 5 }: LiveEventFeedProps) {
         text: m.text,
         ts: m.ts,
       })),
-      // Join events from recentPlayers
-      ...recentPlayers.map((p) => ({
+      // Join events from entrants
+      ...entrants.map((p) => ({
         id: `join-${p.username}-${p.timestamp}`,
         type: "join" as const,
         username: p.username,
@@ -143,7 +141,7 @@ export function LiveEventFeed({ maxEvents = 5 }: LiveEventFeedProps) {
 
     // Sort by timestamp and take most recent
     return items.sort((a, b) => a.ts - b.ts).slice(-maxEvents);
-  }, [messages, recentPlayers, maxEvents]);
+  }, [messages, entrants, maxEvents]);
 
   if (feedItems.length === 0) {
     return (

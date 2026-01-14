@@ -33,7 +33,6 @@ export interface LiveGameData {
   prizePool: number;
   theme: string;
   questions: LiveGameQuestion[];
-  recentPlayers: { pfpUrl: string | null; username: string }[];
 }
 
 // ==========================================
@@ -66,18 +65,6 @@ const getGame = cache(async (gameId: string) => {
         },
         orderBy: [{ roundIndex: "asc" }, { orderInRound: "asc" }],
       },
-      entries: {
-        select: {
-          user: {
-            select: {
-              pfpUrl: true,
-              username: true,
-            },
-          },
-        },
-        take: 10,
-        orderBy: { createdAt: "desc" },
-      },
     },
   });
 
@@ -100,10 +87,6 @@ const getGame = cache(async (gameId: string) => {
       ...q,
       durationSec: q.durationSec ?? 10,
     })),
-    recentPlayers: game.entries.map((e) => ({
-      pfpUrl: e.user.pfpUrl,
-      username: e.user.username || `Player`,
-    })),
   } satisfies LiveGameData;
 });
 
@@ -125,15 +108,8 @@ export default async function LiveGamePage({
     redirect("/game");
   }
 
-  // Map recentPlayers to RealtimeProvider format
-  const recentPlayers = game.recentPlayers.map((p) => ({
-    username: p.username,
-    pfpUrl: p.pfpUrl,
-    timestamp: Date.now(),
-  }));
-
   return (
-    <RealtimeProvider gameId={gameId} initialRecentPlayers={recentPlayers}>
+    <RealtimeProvider gameId={gameId}>
       <LiveGameScreen game={game} />
     </RealtimeProvider>
   );

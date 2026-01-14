@@ -38,7 +38,7 @@ export function NextGameCard({ game }: NextGameCardProps) {
       isLoadingEntry,
       prizePool: storePrizePool,
       playerCount: storePlayerCount,
-      recentPlayers,
+      entrants,
     },
     refetchEntry,
   } = useRealtime();
@@ -106,24 +106,24 @@ export function NextGameCard({ game }: NextGameCardProps) {
   const buttonConfig = isLoadingEntry
     ? { text: "LOADING...", disabled: true, href: null }
     : hasEnded
-    ? {
+      ? {
         text: "VIEW RESULTS",
         disabled: false,
         href: `/game/${game.id}/result`,
       }
-    : isLive
-    ? hasTicket
-      ? hasFinishedAnswering
-        ? {
-            text: "WAITING...",
-            disabled: false,
-            href: `/game/${game.id}/live`,
-          }
-        : { text: "PLAY NOW", disabled: false, href: `/game/${game.id}/live` }
-      : { text: "GET TICKET", disabled: false, href: null }
-    : hasTicket
-    ? { text: "YOU'RE IN!", disabled: true, href: null }
-    : { text: "BUY WAFFLE", disabled: false, href: null };
+      : isLive
+        ? hasTicket
+          ? hasFinishedAnswering
+            ? {
+              text: "WAITING...",
+              disabled: false,
+              href: `/game/${game.id}/live`,
+            }
+            : { text: "PLAY NOW", disabled: false, href: `/game/${game.id}/live` }
+          : { text: "GET TICKET", disabled: false, href: null }
+        : hasTicket
+          ? { text: "YOU'RE IN!", disabled: true, href: null }
+          : { text: "BUY WAFFLE", disabled: false, href: null };
 
   const handleButtonClick = () => {
     if (buttonConfig.disabled) return;
@@ -249,8 +249,8 @@ export function NextGameCard({ game }: NextGameCardProps) {
             {hasEnded
               ? "Game has ended"
               : isLive
-              ? "Until game ends"
-              : "Until game starts"}
+                ? "Until game ends"
+                : "Until game starts"}
           </span>
         </motion.div>
 
@@ -263,9 +263,9 @@ export function NextGameCard({ game }: NextGameCardProps) {
           style={{ minHeight: "25px" }}
         >
           {/* Avatar Stack */}
-          {recentPlayers.length > 0 && (
+          {entrants.length > 0 && (
             <div className="flex flex-row items-center">
-              {recentPlayers.slice(0, 4).map((player, index) => (
+              {entrants.slice(0, 4).map((player, index) => (
                 <motion.div
                   key={player.username}
                   initial={{ opacity: 0, scale: 0, x: -10 }}
@@ -309,10 +309,10 @@ export function NextGameCard({ game }: NextGameCardProps) {
             {playerCount === 0
               ? "Be the first to join!"
               : playerCount === 1
-              ? "1 player has joined"
-              : `and ${Math.max(
+                ? "1 player has joined"
+                : `and ${Math.max(
                   0,
-                  playerCount - recentPlayers.slice(0, 4).length
+                  playerCount - entrants.slice(0, 4).length
                 )} others have joined the game`}
           </motion.span>
         </motion.div>

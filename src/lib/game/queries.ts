@@ -14,17 +14,10 @@ import type { Game } from "@prisma";
 // Types
 // ============================================================================
 
-export interface RecentPlayer {
-  username: string;
-  pfpUrl: string | null;
-  timestamp: number;
-}
-
 export type GameWithQuestionCount = Game & { questionCount: number };
 
 export interface GameQueryResult {
   game: GameWithQuestionCount | null;
-  recentPlayers: RecentPlayer[];
 }
 
 // ============================================================================
@@ -35,12 +28,6 @@ export interface GameQueryResult {
  * Prisma include config for fetching recent players and question count
  */
 const gameInclude = {
-  entries: {
-    where: { paidAt: { not: null } },
-    select: { user: { select: { pfpUrl: true, username: true } } },
-    take: 10,
-    orderBy: { createdAt: "desc" as const },
-  },
   _count: {
     select: { questions: true },
   },
@@ -77,14 +64,9 @@ export const getCurrentOrNextGame = cache(
     });
 
     if (activeGame) {
-      const { entries, _count, ...gameData } = activeGame;
+      const { _count, ...gameData } = activeGame;
       return {
         game: { ...gameData, questionCount: _count.questions },
-        recentPlayers: entries.map((e) => ({
-          username: e.user.username || "Player",
-          pfpUrl: e.user.pfpUrl,
-          timestamp: Date.now(),
-        })),
       };
     }
 
@@ -96,18 +78,13 @@ export const getCurrentOrNextGame = cache(
     });
 
     if (endedGame) {
-      const { entries, _count, ...gameData } = endedGame;
+      const { _count, ...gameData } = endedGame;
       return {
         game: { ...gameData, questionCount: _count.questions },
-        recentPlayers: entries.map((e) => ({
-          username: e.user.username || "Player",
-          pfpUrl: e.user.pfpUrl,
-          timestamp: Date.now(),
-        })),
       };
     }
 
-    return { game: null, recentPlayers: [] };
+    return { game: null };
   }
 );
 
@@ -126,17 +103,12 @@ export const getGameById = cache(
     });
 
     if (!game) {
-      return { game: null, recentPlayers: [] };
+      return { game: null };
     }
 
-    const { entries, _count, ...gameData } = game;
+    const { _count, ...gameData } = game;
     return {
       game: { ...gameData, questionCount: _count.questions },
-      recentPlayers: entries.map((e) => ({
-        username: e.user.username || "Player",
-        pfpUrl: e.user.pfpUrl,
-        timestamp: Date.now(),
-      })),
     };
   }
 );

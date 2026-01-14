@@ -38,12 +38,11 @@ export const metadata: Metadata = {
 
 export default async function GamePage() {
   // Fetch game data in server component
-  const { game, recentPlayers } = await getCurrentOrNextGame();
+  const { game } = await getCurrentOrNextGame();
 
   return (
     <RealtimeProvider
       gameId={game?.id ?? null}
-      initialRecentPlayers={recentPlayers}
     >
       <GameHub game={game} />
       <BottomNav />

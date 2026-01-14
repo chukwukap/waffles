@@ -9,7 +9,7 @@ const AVATAR_ROTATIONS = [-8.71, 5.85, -3.57, 7.56];
 
 interface GameCountdownScreenProps {
   onComplete: () => void;
-  recentPlayers?: Array<{ pfpUrl: string | null; username?: string }>;
+  entrants?: Array<{ pfpUrl: string | null; username?: string }>;
 }
 
 /**
@@ -21,7 +21,7 @@ interface GameCountdownScreenProps {
  */
 export function GameCountdownScreen({
   onComplete,
-  recentPlayers = [],
+  entrants = [],
 }: GameCountdownScreenProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hasEnded, setHasEnded] = useState(false);
@@ -107,9 +107,9 @@ export function GameCountdownScreen({
           {/* Player count - shows "X people have joined the game" */}
           <div className="flex flex-row justify-center items-center gap-2">
             {/* Avatar Stack - rotated rounded squares */}
-            {recentPlayers.length > 0 && (
+            {entrants.length > 0 && (
               <div className="flex flex-row items-center">
-                {recentPlayers.slice(0, 4).map((player, index) => (
+                {entrants.slice(0, 4).map((player, index) => (
                   <motion.div
                     key={player.username || index}
                     initial={{ opacity: 0, scale: 0 }}
@@ -155,11 +155,10 @@ export function GameCountdownScreen({
               className="font-display font-medium text-base text-center tracking-[-0.03em] text-[#99A0AE]"
               style={{ lineHeight: "130%" }}
             >
-              {recentPlayers.length === 0
+              {entrants.length === 0
                 ? "Be the first to join!"
-                : `${recentPlayers.length} ${
-                    recentPlayers.length === 1 ? "person has" : "people have"
-                  } joined the game`}
+                : `${entrants.length} ${entrants.length === 1 ? "person has" : "people have"
+                } joined the game`}
             </motion.span>
           </div>
         </motion.div>

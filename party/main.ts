@@ -1,6 +1,6 @@
 import type * as Party from "partykit/server";
 import { jwtVerify } from "jose";
-import type { Message, ChatItem, Player } from "../shared/protocol";
+import type { Message, ChatItem, Player, Entrant } from "../shared/protocol";
 
 // ==========================================
 // INTERNAL TYPES
@@ -62,6 +62,7 @@ export default class GameServer implements Party.Server {
   readonly options: Party.ServerOptions = { hibernate: true };
 
   chatHistory: StoredChatMessage[] = [];
+  entrants: Entrant[] = [];
   seenFids: Set<number> = new Set();
 
   constructor(readonly room: Party.Room) {
@@ -280,9 +281,10 @@ export default class GameServer implements Party.Server {
       }
 
       // ==========================================
-      // STATS-UPDATE - Called when ticket purchased
+      // TICKET-PURCHASED - Single unified endpoint for ticket purchases
+      // Handles both stats broadcast and entrant tracking atomically
       // ==========================================
-      case "stats-update": {
+      case "ticket-purchased": {
         if (req.method !== "POST") {
           return Response.json(
             { error: "Method not allowed" },
@@ -301,29 +303,52 @@ export default class GameServer implements Party.Server {
 
         try {
           const body = (await req.json()) as {
+            username: string;
+            pfpUrl: string | null;
             prizePool: number;
             playerCount: number;
           };
 
+          // 1. Update entrants list
+          const entrant: Entrant = {
+            username: body.username,
+            pfpUrl: body.pfpUrl,
+            timestamp: Date.now(),
+          };
+          this.entrants = [
+            entrant,
+            ...this.entrants.filter((e) => e.username !== entrant.username),
+          ].slice(0, 20);
+          await this.room.storage.put("entrants", this.entrants);
+
+          // 2. Broadcast both messages atomically
           this.broadcast({
             type: "stats",
             prizePool: body.prizePool,
             playerCount: body.playerCount,
           });
+          this.broadcast({
+            type: "entrant:new",
+            username: entrant.username,
+            pfpUrl: entrant.pfpUrl,
+            timestamp: entrant.timestamp,
+          });
 
-          log("INFO", this.room.id, "stats_update_broadcasted", {
+          log("INFO", this.room.id, "ticket_purchased_broadcasted", {
+            username: entrant.username,
             prizePool: body.prizePool,
             playerCount: body.playerCount,
+            totalEntrants: this.entrants.length,
             connectedClients: this.getOnlineCount(),
           });
 
           return Response.json({ success: true }, { headers });
         } catch (error) {
-          log("ERROR", this.room.id, "stats_update_error", {
+          log("ERROR", this.room.id, "ticket_purchased_error", {
             error: error instanceof Error ? error.message : String(error),
           });
           return Response.json(
-            { error: "Failed to broadcast stats" },
+            { error: "Failed to process ticket purchase" },
             { status: 500, headers }
           );
         }
@@ -650,6 +675,7 @@ export default class GameServer implements Party.Server {
     // Restore persisted state
     this.chatHistory =
       (await this.room.storage.get<StoredChatMessage[]>("chatHistory")) || [];
+    this.entrants = (await this.room.storage.get<Entrant[]>("entrants")) || [];
     const savedFids = await this.room.storage.get<number[]>("seenFids");
     this.seenFids = new Set(savedFids || []);
 
@@ -665,6 +691,7 @@ export default class GameServer implements Party.Server {
         ? new Date(currentAlarm).toISOString()
         : null,
       chatHistoryCount: this.chatHistory.length,
+      entrantsCount: this.entrants.length,
       seenFidsCount: this.seenFids.size,
     });
   }
@@ -701,15 +728,9 @@ export default class GameServer implements Party.Server {
         type: "sync",
         connected: this.getOnlineCount(),
         chat,
+        entrants: this.entrants,
       } as Message)
     );
-
-    // Broadcast join to others
-    if (!this.seenFids.has(fid)) {
-      this.seenFids.add(fid);
-      await this.room.storage.put("seenFids", [...this.seenFids]);
-      this.broadcast({ type: "joined", username, pfp }, [conn.id]);
-    }
 
     // Update connected count for all
     this.broadcast({ type: "connected", count: this.getOnlineCount() });
