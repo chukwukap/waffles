@@ -564,7 +564,7 @@ export default function ResultPageClient({
         </div>
 
         <GameResultCard
-          winnings={userScore.prize}
+          prize={userScore.prize}
           score={userScore.score}
           rank={userScore.rank}
           pfpUrl={context.user.pfpUrl ?? ""}

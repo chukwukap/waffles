@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
 interface Props {
-    winnings: number;
+    prize: number;
     score: number;
     rank: number;
     username: string;
@@ -15,7 +15,7 @@ interface Props {
 }
 
 export default function GameResultCard({
-    winnings,
+    prize,
     score,
     rank,
     username,
@@ -58,7 +58,7 @@ export default function GameResultCard({
                         transition={{ duration: 0.4, delay: 0.5 }}
                     >
                         <span className="font-display font-medium text-[14px] leading-[130%] tracking-[-0.03em] text-[#99A0AE]">
-                            Winnings
+                            Prize
                         </span>
 
                         <div className="flex flex-row items-center gap-2.5">
@@ -95,7 +95,7 @@ export default function GameResultCard({
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.4, delay: 0.6 }}
                         >
-                            ${winnings.toLocaleString()}
+                            ${prize.toLocaleString()}
                         </motion.h2>
 
                         <motion.div
@@ -185,7 +185,7 @@ export default function GameResultCard({
                                 <TrendIcon className="w-6 h-6 text-[#14B985] shrink-0" />
                             </motion.div>
                             <span className="font-body text-[20px] leading-[100%] text-white">
-                                {rank}
+                                {rank > 0 ? rank : "Pending"}
                             </span>
                         </div>
                     </motion.div>
