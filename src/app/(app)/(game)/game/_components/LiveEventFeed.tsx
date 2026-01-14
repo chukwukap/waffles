@@ -2,27 +2,14 @@
 
 import { memo, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useRealtime } from "@/components/providers/RealtimeProvider";
+import { useRealtime, type FeedEvent } from "@/components/providers/RealtimeProvider";
 import { springs } from "@/lib/animations";
-
-// ==========================================
-// TYPES
-// ==========================================
-
-interface FeedItem {
-  id: string;
-  type: "chat" | "join";
-  username: string;
-  pfp: string | null;
-  text: string;
-  ts: number;
-}
 
 // ==========================================
 // FEED ITEM COMPONENT
 // ==========================================
 
-const FeedRow = memo(function FeedRow({ item }: { item: FeedItem }) {
+const FeedRow = memo(function FeedRow({ item }: { item: FeedEvent }) {
   return (
     <motion.div
       layout
@@ -110,38 +97,15 @@ interface LiveEventFeedProps {
 
 export function LiveEventFeed({ maxEvents = 5 }: LiveEventFeedProps) {
   const {
-    messages,
-    entrants,
+    feedEvents,
     connected: isConnected,
     onlineCount,
   } = useRealtime().state;
 
-  // Combine chat messages and join events into a unified feed
+  // feedEvents is already chronologically ordered - just take the most recent N
   const feedItems = useMemo(() => {
-    const items: FeedItem[] = [
-      // Chat messages
-      ...messages.map((m) => ({
-        id: m.id,
-        type: "chat" as const,
-        username: m.username,
-        pfp: m.pfp,
-        text: m.text,
-        ts: m.ts,
-      })),
-      // Join events from entrants
-      ...entrants.map((p) => ({
-        id: `join-${p.username}-${p.timestamp}`,
-        type: "join" as const,
-        username: p.username,
-        pfp: p.pfpUrl,
-        text: "joined the game",
-        ts: p.timestamp,
-      })),
-    ];
-
-    // Sort by timestamp and take most recent
-    return items.sort((a, b) => a.ts - b.ts).slice(-maxEvents);
-  }, [messages, entrants, maxEvents]);
+    return feedEvents.slice(-maxEvents);
+  }, [feedEvents, maxEvents]);
 
   if (feedItems.length === 0) {
     return (
