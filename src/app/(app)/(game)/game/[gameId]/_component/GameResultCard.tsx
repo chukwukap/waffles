@@ -95,7 +95,7 @@ export default function GameResultCard({
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.4, delay: 0.6 }}
                         >
-                            {prize > 0 ? `$${prize.toLocaleString()}` : "Pending"}
+                            {rank > 0 ? `$${prize.toLocaleString()}` : "Pending"}
                         </motion.h2>
 
                         <motion.div
