@@ -247,33 +247,45 @@ export default function ResultPageClient({
     if (!context?.user || !userScore) return;
 
     try {
-      const prizeText =
-        userScore.winnings > 0
-          ? `Just won $${userScore.winnings.toLocaleString()} on Waffles! 🧇🏆`
-          : `Just scored ${userScore.score} points on Waffles! 🧇`;
+      const hasPrize = userScore.winnings > 0;
+      const username = context.user.username ?? "Player";
+      const pfpUrl = context.user.pfpUrl || "";
 
-      // Build frame URL with params - this page has fc:frame metadata
-      const frameParams = new URLSearchParams();
-      frameParams.set("username", context?.user?.username ?? "Anon");
-      frameParams.set("prizeAmount", userScore.winnings.toString());
-      frameParams.set("score", userScore.score.toString());
-      if (context?.user?.pfpUrl) {
-        frameParams.set("pfpUrl", context.user.pfpUrl);
+      let embedUrl: string;
+      let shareText: string;
+
+      if (hasPrize) {
+        // Use prize OG route for winners
+        const prizeParams = new URLSearchParams({
+          prizeAmount: userScore.winnings.toString(),
+          ...(pfpUrl && { pfpUrl }),
+        });
+        embedUrl = `${env.rootUrl}/api/og/prize?${prizeParams.toString()}`;
+        shareText = `Just won $${userScore.winnings.toLocaleString()} on Waffles! 🧇🏆`;
+      } else {
+        // Use score OG route for non-winners
+        const scoreParams = new URLSearchParams({
+          score: userScore.score.toString(),
+          username,
+          gameNumber: gameNumber.toString(),
+          category: game?.theme || "Trivia",
+          rank: userScore.rank.toString(),
+          ...(pfpUrl && { pfpUrl }),
+        });
+        embedUrl = `${env.rootUrl}/api/og/score?${scoreParams.toString()}`;
+        shareText = `Just scored ${userScore.score.toLocaleString()} points on Waffles #${String(gameNumber).padStart(3, "0")}! 🧇`;
       }
-      const frameUrl = `${
-        env.rootUrl
-      }/game/${gameId}/result?${frameParams.toString()}`;
 
       const result = await composeCastAsync({
-        text: prizeText,
-        embeds: [frameUrl],
+        text: shareText,
+        embeds: [embedUrl],
       });
 
       if (result?.cast) {
         console.log("[Share] Cast created:", result.cast.hash);
         playSound("purchase");
         notify.success("Shared to Farcaster! 🎉");
-        sdk.haptics.impactOccurred("light").catch(() => {});
+        sdk.haptics.impactOccurred("light").catch(() => { });
       } else {
         console.log("[Share] User cancelled");
       }
@@ -281,7 +293,7 @@ export default function ResultPageClient({
       console.error("[Share] Error:", error);
       notify.error("Failed to share");
     }
-  }, [composeCastAsync, context?.user, userScore, gameId]);
+  }, [composeCastAsync, context?.user, userScore, gameId, gameNumber, game?.theme]);
 
   // ==========================================
   // CLAIM LOGIC
@@ -342,7 +354,7 @@ export default function ResultPageClient({
       refetchEntry(); // Refetch to get updated claimedAt
       playSound("purchase");
       notify.success("Prize claimed! 🎉");
-      sdk.haptics.impactOccurred("medium").catch(() => {});
+      sdk.haptics.impactOccurred("medium").catch(() => { });
     }
   }, [gameId, refetchEntry]);
 
@@ -604,12 +616,12 @@ export default function ResultPageClient({
                     claimState === "success" || hasClaimed
                       ? "text-[#14B985] border-[#14B985] opacity-80"
                       : !isClaimWindowOpen
-                      ? "text-amber-400 border-amber-400 opacity-80"
-                      : claimState === "pending"
-                      ? "text-amber-400 border-amber-400 opacity-80"
-                      : claimState === "error"
-                      ? "text-red-400 border-red-400"
-                      : "text-[#14B985] border-[#14B985]"
+                        ? "text-amber-400 border-amber-400 opacity-80"
+                        : claimState === "pending"
+                          ? "text-amber-400 border-amber-400 opacity-80"
+                          : claimState === "error"
+                            ? "text-red-400 border-red-400"
+                            : "text-[#14B985] border-[#14B985]"
                   }
                 >
                   {(claimState === "confirming" || isSending) && (

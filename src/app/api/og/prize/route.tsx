@@ -6,17 +6,21 @@ import { join } from "node:path";
 
 export const runtime = "nodejs";
 
+/**
+ * Prize Share OG Image
+ * 
+ * Displays prize winnings for winners to share.
+ * 
+ * Params:
+ * - prizeAmount: number (required) - Prize amount in USD
+ * - pfpUrl: string (optional) - Profile picture URL
+ */
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
 
-    // Parse params - supports both prize and score display
+    // Parse params
     const prizeAmount = parseInt(searchParams.get("prizeAmount") || "0", 10);
-    const score = parseInt(searchParams.get("score") || "0", 10);
     const pfpUrlParam = searchParams.get("pfpUrl");
-
-    // Determine display mode
-    const hasPrize = prizeAmount > 0;
-    const hasScore = score > 0;
 
     // Load assets from filesystem
     const publicDir = join(process.cwd(), "public");
@@ -33,12 +37,8 @@ export async function GET(request: Request) {
     const chestImage = `data:image/png;base64,${chestBuffer.toString("base64")}`;
     const bgImage = `data:image/png;base64,${bgBuffer.toString("base64")}`;
 
-    // Format display values
-    const displayValue = hasPrize
-        ? `$${prizeAmount.toLocaleString()}`
-        : `${score.toLocaleString()} PTS`;
-    const headlineText = hasPrize ? "JUST WON" : "SCORED";
-    const valueColor = hasPrize ? "#05FF8F" : "#FFC931"; // Green for prize, Gold for score
+    // Format prize display
+    const displayValue = `$${prizeAmount.toLocaleString()}`;
 
     return new ImageResponse(
         (
@@ -99,15 +99,15 @@ export async function GET(request: Request) {
                             letterSpacing: "0.02em",
                         }}
                     >
-                        {headlineText}
+                        JUST WON
                     </span>
                 </div>
 
-                {/* Value - Large text (green for prize, gold for score) */}
+                {/* Prize Amount - Large green text */}
                 <span
                     style={{
                         fontSize: 72,
-                        color: valueColor,
+                        color: "#05FF8F",
                         lineHeight: 1,
                         marginBottom: 4,
                         letterSpacing: "-0.02em",
