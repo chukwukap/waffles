@@ -165,8 +165,8 @@ function QuestionRow({
     );
 }
 
-// Add Question Form - Inline compact version
-function InlineAddQuestion({ gameId, nextRoundIndex, onSuccess }: { gameId: string; nextRoundIndex: number; onSuccess: () => void }) {
+// Add Question Form - Inline compact version (rounds are auto-calculated)
+function InlineAddQuestion({ gameId, onSuccess }: { gameId: string; onSuccess: () => void }) {
     const [isOpen, setIsOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -220,28 +220,15 @@ function InlineAddQuestion({ gameId, nextRoundIndex, onSuccess }: { gameId: stri
                 </div>
             )}
 
-            {/* Question + Round */}
-            <div className="flex gap-3">
-                <div className="flex-1">
-                    <textarea
-                        name="content"
-                        required
-                        rows={2}
-                        placeholder="Enter your question..."
-                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-white/30 focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all resize-none"
-                    />
-                </div>
-                <div className="w-20">
-                    <input
-                        type="number"
-                        name="roundIndex"
-                        defaultValue={nextRoundIndex}
-                        min={1}
-                        placeholder="Q#"
-                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm text-center focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
-                    />
-                    <div className="text-[10px] text-white/30 text-center mt-1">Round</div>
-                </div>
+            {/* Question */}
+            <div>
+                <textarea
+                    name="content"
+                    required
+                    rows={2}
+                    placeholder="Enter your question..."
+                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-white/30 focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all resize-none"
+                />
             </div>
 
             {/* Options in 2x2 grid */}
@@ -400,7 +387,6 @@ export function QuestionsManager({ gameId, initialQuestions }: QuestionsManagerP
                 <div className="flex-1">
                     <InlineAddQuestion
                         gameId={gameId}
-                        nextRoundIndex={questions.length + 1}
                         onSuccess={handleQuestionAdded}
                     />
                 </div>

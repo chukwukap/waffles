@@ -6,6 +6,7 @@ import { requireAdminSession } from "@/lib/admin-auth";
 import { logAdminAction, AdminAction, EntityType } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { recalculateGameRounds } from "@/lib/game/rounds";
 
 const QuestionSchema = z.object({
   content: z.string().min(5, "Question content is required"),
@@ -15,7 +16,6 @@ const QuestionSchema = z.object({
   optionD: z.string().min(1, "Option D is required"),
   correctAnswer: z.enum(["A", "B", "C", "D"]),
   durationSec: z.coerce.number().min(5).default(10),
-  roundIndex: z.coerce.number().min(1),
   mediaUrl: z.string().optional(),
   soundUrl: z.string().optional(),
 });
@@ -26,6 +26,7 @@ export type QuestionActionResult =
 
 /**
  * Create a question for a game
+ * Round assignment is automatic - questions are distributed across max 3 rounds
  */
 export async function createQuestionAction(
   gameId: string,
@@ -44,7 +45,6 @@ export async function createQuestionAction(
     optionC: formData.get("optionC"),
     optionD: formData.get("optionD"),
     correctAnswer: formData.get("correctAnswer"),
-    roundIndex: formData.get("roundIndex"),
     mediaUrl: formData.get("mediaUrl"),
     soundUrl: formData.get("soundUrl"),
     durationSec: formData.get("durationSec") || "10",
@@ -64,10 +64,11 @@ export async function createQuestionAction(
   const correctIndex = data.correctAnswer.charCodeAt(0) - 65;
 
   try {
+    // Create question with placeholder round (will be recalculated)
     const question = await prisma.question.create({
       data: {
         gameId,
-        roundIndex: data.roundIndex,
+        roundIndex: 1, // Placeholder, will be recalculated
         content: data.content,
         options: [data.optionA, data.optionB, data.optionC, data.optionD],
         correctIndex,
@@ -77,12 +78,15 @@ export async function createQuestionAction(
       },
     });
 
+    // Recalculate all round assignments for this game
+    await recalculateGameRounds(gameId);
+
     await logAdminAction({
       adminId: authResult.session.userId,
       action: AdminAction.CREATE_QUESTION,
       entityType: EntityType.QUESTION,
       entityId: question.id,
-      details: { gameId, roundIndex: data.roundIndex },
+      details: { gameId },
     });
 
     revalidatePath(`/admin/games/${gameId}/questions`);
@@ -96,6 +100,7 @@ export async function createQuestionAction(
 
 /**
  * Delete a question (form action - returns void)
+ * After deletion, remaining questions are redistributed into rounds
  */
 export async function deleteQuestionAction(
   questionId: string,
@@ -110,6 +115,9 @@ export async function deleteQuestionAction(
     await prisma.question.delete({
       where: { id: questionId },
     });
+
+    // Recalculate rounds after deletion
+    await recalculateGameRounds(gameId);
 
     await logAdminAction({
       adminId: authResult.session.userId,
@@ -128,6 +136,7 @@ export async function deleteQuestionAction(
 
 /**
  * Reorder questions
+ * After reordering, questions are redistributed into rounds based on new order
  */
 export async function reorderQuestionsAction(
   gameId: string,
@@ -139,7 +148,7 @@ export async function reorderQuestionsAction(
   }
 
   try {
-    // Use a transaction to update all questions
+    // First update order, then recalculate rounds
     await prisma.$transaction(
       orderedQuestionIds.map((id, index) =>
         prisma.question.update({
@@ -149,9 +158,12 @@ export async function reorderQuestionsAction(
       )
     );
 
+    // Recalculate round distribution based on new order
+    await recalculateGameRounds(gameId);
+
     await logAdminAction({
       adminId: authResult.session.userId,
-      action: AdminAction.UPDATE_GAME, // Using UPDATE_GAME as a proxy for reordering
+      action: AdminAction.UPDATE_GAME,
       entityType: EntityType.GAME,
       entityId: gameId,
       details: { action: "reorder_questions" },

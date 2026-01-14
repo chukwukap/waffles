@@ -7,6 +7,7 @@ import { logAdminAction, AdminAction, EntityType } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 import { GameTheme, Difficulty } from "@prisma";
 import { getGamePhase } from "@/lib/types";
+import { recalculateGameRounds } from "@/lib/game/rounds";
 
 // ==========================================
 // SCHEMAS
@@ -378,13 +379,7 @@ export async function assignToGameAction(
       };
     }
 
-    // 3. Get current max roundIndex
-    const maxRoundIndex = Math.max(
-      0,
-      ...game.questions.map((q) => q.roundIndex)
-    );
-
-    // 4. Execute in transaction
+    // 3. Execute in transaction
     await prisma.$transaction(async (tx) => {
       // Fetch templates
       const templates = await tx.questionTemplate.findMany({
@@ -395,7 +390,8 @@ export async function assignToGameAction(
         throw new Error("Some templates not found");
       }
 
-      // Create questions from templates
+      // Create questions from templates with placeholder rounds
+      // Rounds will be recalculated after the transaction
       await tx.question.createMany({
         data: templates.map((t, idx) => ({
           gameId,
@@ -405,8 +401,8 @@ export async function assignToGameAction(
           durationSec: t.durationSec,
           mediaUrl: t.mediaUrl,
           soundUrl: t.soundUrl,
-          roundIndex: maxRoundIndex + idx + 1,
-          orderInRound: idx,
+          roundIndex: 1, // Placeholder, will be recalculated
+          orderInRound: game.questions.length + idx,
           templateId: t.id,
         })),
       });
@@ -417,6 +413,9 @@ export async function assignToGameAction(
         data: { usageCount: { increment: 1 } },
       });
     });
+
+    // Recalculate round distribution for all questions
+    await recalculateGameRounds(gameId);
 
     await logAdminAction({
       adminId: authResult.session.userId,
