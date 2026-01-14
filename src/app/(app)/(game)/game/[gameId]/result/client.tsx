@@ -389,8 +389,9 @@ export default function ResultPageClient({
     try {
       // 1. Fetch merkle proof
       console.log("[Claim] Fetching merkle proof...");
-      const proofRes = await sdk.quickAuth.fetch(
-        `/api/v1/games/${gameId}/merkle-proof`
+      const fid = context?.user?.fid;
+      const proofRes = await fetch(
+        `/api/v1/games/${gameId}/merkle-proof?fid=${fid}`
       );
 
       if (!proofRes.ok) {
