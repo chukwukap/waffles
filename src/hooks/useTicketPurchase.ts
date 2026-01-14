@@ -8,7 +8,7 @@ import { farcasterFrame } from "@farcaster/miniapp-wagmi-connector";
 import sdk from "@farcaster/miniapp-sdk";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
-import { useGame } from "@/components/providers/GameProvider";
+import { useRealtime } from "@/components/providers/RealtimeProvider";
 import { useTokenAllowance } from "./waffleContractHooks";
 import { notify } from "@/components/ui/Toaster";
 import { playSound } from "@/lib/sounds";
@@ -58,8 +58,8 @@ export function useTicketPurchase(
   // ==========================================
   // BACKEND ENTRY (Source of Truth)
   // ==========================================
-  const { state: gameState, refetchEntry } = useGame();
-  const { entry, isLoadingEntry } = gameState;
+  const { state: realtimeState, refetchEntry } = useRealtime();
+  const { entry, isLoadingEntry } = realtimeState;
 
   // Has ticket = entry exists and is paid
   const hasTicket = !!entry?.paidAt;

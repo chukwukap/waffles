@@ -7,7 +7,7 @@ import LiveGameScreen from "./LiveGameScreen";
 export const dynamic = "force-dynamic";
 
 // ==========================================
-// TYPES (exported for LiveGameProvider)
+// TYPES (exported for LiveGameScreen)
 // ==========================================
 
 export interface LiveGameQuestion {

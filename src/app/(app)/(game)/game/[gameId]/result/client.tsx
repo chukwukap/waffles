@@ -169,7 +169,7 @@ export default function ResultPageClient({
   // Get onchainId
   const onchainId = game?.onchainId;
 
-  // User score from GameProvider entry
+  // User score from RealtimeProvider entry
   const userScore = useMemo(() => {
     if (!entry) return null;
 

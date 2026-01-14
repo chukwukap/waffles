@@ -485,19 +485,5 @@ export function useRealtime(): RealtimeContextValue {
   return context;
 }
 
-// ==========================================
-// LEGACY COMPATIBILITY
-// ==========================================
-
-/**
- * @deprecated Use useRealtime() instead. Game data should come from server components as props.
- */
-export const useGame = useRealtime;
-
-/**
- * @deprecated Use RealtimeProvider instead.
- */
-export const GameProvider = RealtimeProvider;
-
 // Re-export types for convenience
 export type { RealtimeState, RealtimeContextValue };

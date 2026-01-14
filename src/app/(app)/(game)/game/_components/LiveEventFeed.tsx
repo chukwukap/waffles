@@ -2,7 +2,7 @@
 
 import { memo, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useGame } from "@/components/providers/GameProvider";
+import { useRealtime } from "@/components/providers/RealtimeProvider";
 import { springs } from "@/lib/animations";
 
 // ==========================================
@@ -99,7 +99,7 @@ interface LiveEventFeedProps {
 }
 
 export function LiveEventFeed({ maxEvents = 5 }: LiveEventFeedProps) {
-  const { messages, recentPlayers, connected: isConnected, onlineCount } = useGame().state;
+  const { messages, recentPlayers, connected: isConnected, onlineCount } = useRealtime().state;
 
   // Combine chat messages and join events into a unified feed
   const feedItems = useMemo(() => {

@@ -14,7 +14,7 @@ import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import sdk from "@farcaster/miniapp-sdk";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useTimer } from "@/hooks/useTimer";
-import { useGame } from "@/components/providers/GameProvider";
+import { useRealtime } from "@/components/providers/RealtimeProvider";
 import { playSound, stopAllAudio } from "@/lib/sounds";
 import type {
   LiveGameData,
@@ -67,7 +67,7 @@ export interface UseLiveGameReturn {
 // ==========================================
 
 export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
-  const { dispatch } = useGame();
+  const { dispatch } = useRealtime();
   const { context } = useMiniKit();
   const fid = context?.user?.fid;
 

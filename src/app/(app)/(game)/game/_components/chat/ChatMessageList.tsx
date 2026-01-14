@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState, useImperativeHandle, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChatComment } from "./ChatComment";
-import { useGame } from "@/components/providers/GameProvider";
+import { useRealtime } from "@/components/providers/RealtimeProvider";
 import type { ChatItem } from "@shared/protocol";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { springs } from "@/lib/animations";
@@ -62,7 +62,7 @@ export const ChatMessageList = forwardRef<ChatMessageListRef, ChatMessageListPro
         const { context: miniKitContext } = useMiniKit();
         const username = miniKitContext?.user?.username ?? "Player";
 
-        const { messages: storeMessages } = useGame().state;
+        const { messages: storeMessages } = useRealtime().state;
         const comments = storeMessages.map((m) => mapMessageToComment(m, username));
         const prevMessageCount = useRef(storeMessages.length);
 

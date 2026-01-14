@@ -14,7 +14,7 @@ import { SplashProvider } from "./SplashProvider";
  * 2. AppInitializer (handles onboarding for new users)
  * 3. SoundProvider (Audio)
  *
- * Note: GameProvider is at the game layout level, not root.
+ * Note: RealtimeProvider is at the game layout level, not root.
  */
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
