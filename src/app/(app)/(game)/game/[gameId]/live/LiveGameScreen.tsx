@@ -44,6 +44,14 @@ export default function LiveGameScreen({ game }: { game: LiveGameData }) {
   // ==========================================
 
   switch (phase) {
+    case "initializing":
+      // Loading entry data - show minimal loader to avoid flash
+      return (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+        </div>
+      );
+
     case "countdown":
       return (
         <GameCountdownScreen

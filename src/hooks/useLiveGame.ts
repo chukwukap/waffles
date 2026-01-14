@@ -11,7 +11,6 @@
  */
 
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
-import sdk from "@farcaster/miniapp-sdk";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { useTimer } from "@/hooks/useTimer";
 import { useRealtime } from "@/components/providers/RealtimeProvider";
@@ -26,6 +25,7 @@ import type {
 // ==========================================
 
 export type GamePhase =
+  | "initializing" // Waiting for entry data to determine correct starting phase
   | "countdown"
   | "question"
   | "break"
@@ -82,6 +82,9 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
     answeredQuestionIds: string[];
   } | null>(null);
 
+  // Track if initial entry fetch is complete (determines when we can pick starting phase)
+  const [entryLoaded, setEntryLoaded] = useState(false);
+
   // Fetch entry from server (public endpoint with fid)
   const refetchEntry = useCallback(async () => {
     if (!fid) return;
@@ -100,13 +103,25 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
     }
   }, [game.id, fid]);
 
-  // Initial fetch
+  // Initial fetch - marks entryLoaded when complete
   useEffect(() => {
-    refetchEntry();
+    let mounted = true;
+
+    async function loadEntry() {
+      await refetchEntry();
+      if (mounted) {
+        setEntryLoaded(true);
+      }
+    }
+
+    loadEntry();
+    return () => {
+      mounted = false;
+    };
   }, [refetchEntry]);
 
-  // Core state
-  const [phase, setPhase] = useState<GamePhase>("countdown");
+  // Core state - start with "initializing" to avoid flash of wrong screen
+  const [phase, setPhase] = useState<GamePhase>("initializing");
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [timerTarget, setTimerTarget] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -137,20 +152,30 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
     [currentQuestion, answeredIds]
   );
 
-  // Check if user has already completed all questions - skip countdown
+  // Check if user has already completed all questions
   const hasCompletedAllQuestions = useMemo(
-    () => entry !== null && answeredIds.size >= game.questions.length,
-    [entry, answeredIds.size, game.questions.length]
+    () => answeredIds.size >= game.questions.length,
+    [answeredIds.size, game.questions.length]
   );
 
-  // Skip countdown if user already completed all questions
-  useEffect(() => {
-    if (hasCompletedAllQuestions && phase === "countdown") {
-      setPhase("waiting");
-    }
-  }, [hasCompletedAllQuestions, phase]);
-
   const isGameEnded = Date.now() >= game.endsAt.getTime();
+
+  // Determine correct starting phase once entry is loaded
+  // This runs only once when transitioning out of "initializing"
+  useEffect(() => {
+    if (phase !== "initializing" || !entryLoaded) return;
+
+    // Determine the correct starting phase based on game state
+    if (isGameEnded) {
+      setPhase("complete");
+    } else if (hasCompletedAllQuestions) {
+      // User already answered all questions - go straight to waiting
+      setPhase("waiting");
+    } else {
+      // Show countdown to start the game
+      setPhase("countdown");
+    }
+  }, [phase, entryLoaded, isGameEnded, hasCompletedAllQuestions]);
 
   // Auto-transition from waiting to complete when game ends
   useEffect(() => {
