@@ -310,11 +310,11 @@ export default function WaitingScreen({
               <h3 className="font-display text-[14px] font-medium text-white/80 uppercase tracking-wider">
                 Current Standings
               </h3>
-              <motion.div
+              {/* <motion.div
                 className="w-2 h-2 rounded-full bg-[#14B985]"
                 animate={{ opacity: [1, 0.4, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
-              />
+              /> */}
             </div>
 
             <div className="bg-white/5 border border-white/10 rounded-xl p-3">
@@ -343,19 +343,19 @@ export default function WaitingScreen({
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.3, delay: 0.5 + index * 0.05 }}
                       className={`flex items-center gap-2.5 py-1.5 px-2 rounded-lg transition-colors ${entry.isCurrentUser
-                          ? "bg-[#14B985]/15 border border-[#14B985]/30"
-                          : "hover:bg-white/5"
+                        ? "bg-[#14B985]/15 border border-[#14B985]/30"
+                        : "hover:bg-white/5"
                         }`}
                     >
                       {/* Rank */}
                       <div
                         className={`flex items-center justify-center w-6 h-6 rounded-full shrink-0 ${entry.rank === 1
-                            ? "bg-[#F5BB1B]/20 text-[#F5BB1B]"
-                            : entry.rank === 2
-                              ? "bg-[#C0C0C0]/20 text-[#C0C0C0]"
-                              : entry.rank === 3
-                                ? "bg-[#CD7F32]/20 text-[#CD7F32]"
-                                : "bg-white/10 text-white/60"
+                          ? "bg-[#F5BB1B]/20 text-[#F5BB1B]"
+                          : entry.rank === 2
+                            ? "bg-[#C0C0C0]/20 text-[#C0C0C0]"
+                            : entry.rank === 3
+                              ? "bg-[#CD7F32]/20 text-[#CD7F32]"
+                              : "bg-white/10 text-white/60"
                           }`}
                       >
                         <span className="font-display text-[11px] font-bold">
