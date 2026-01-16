@@ -69,7 +69,7 @@ export function GameCountdownScreen({
       {/* Video - covers full viewport below header */}
       <video
         ref={videoRef}
-        src="https://res.cloudinary.com/dfqjfrf4m/video/upload/v1766449403/countdown_f88eeg.mp4"
+        src="https://res.cloudinary.com/dfqjfrf4m/video/upload/v1768537546/Countdown_Timer_3_veyirr.mp4"
         autoPlay
         playsInline
         preload="auto"
