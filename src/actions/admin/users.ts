@@ -7,11 +7,11 @@ import { logAdminAction, AdminAction, EntityType } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 
 const userIdSchema = z.object({
-  userId: z.number().int().positive(),
+  userId: z.string().min(1),
 });
 
 const adjustQuotaSchema = z.object({
-  userId: z.number().int().positive(),
+  userId: z.string().min(1),
   quota: z.number().int().min(0),
 });
 
@@ -36,6 +36,18 @@ export async function grantGameAccessAction(
   }
 
   try {
+    // Check user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!existingUser) {
+      return { success: false, error: "User not found" };
+    }
+
+    if (existingUser.hasGameAccess) {
+      return { success: false, error: "User already has game access" };
+    }
+
     const user = await prisma.user.update({
       where: { id: userId },
       data: {
@@ -78,6 +90,23 @@ export async function banUserAction(userId: string): Promise<UserActionResult> {
   }
 
   try {
+    // Check user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!existingUser) {
+      return { success: false, error: "User not found" };
+    }
+
+    // Prevent self-ban
+    if (userId === authResult.session.userId) {
+      return { success: false, error: "You cannot ban yourself" };
+    }
+
+    if (existingUser.isBanned) {
+      return { success: false, error: "User is already banned" };
+    }
+
     const user = await prisma.user.update({
       where: { id: userId },
       data: {
@@ -122,6 +151,18 @@ export async function unbanUserAction(
   }
 
   try {
+    // Check user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!existingUser) {
+      return { success: false, error: "User not found" };
+    }
+
+    if (!existingUser.isBanned) {
+      return { success: false, error: "User is not banned" };
+    }
+
     const user = await prisma.user.update({
       where: { id: userId },
       data: {
@@ -167,6 +208,14 @@ export async function adjustInviteQuotaAction(
   }
 
   try {
+    // Check user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!existingUser) {
+      return { success: false, error: "User not found" };
+    }
+
     const user = await prisma.user.update({
       where: { id: userId },
       data: { inviteQuota: quota },
@@ -177,7 +226,11 @@ export async function adjustInviteQuotaAction(
       action: AdminAction.ADJUST_INVITE_QUOTA,
       entityType: EntityType.USER,
       entityId: userId,
-      details: { newQuota: quota, username: user.username },
+      details: {
+        oldQuota: existingUser.inviteQuota,
+        newQuota: quota,
+        username: user.username,
+      },
     });
 
     revalidatePath("/admin/users");
@@ -201,7 +254,25 @@ export async function promoteToAdminAction(
     return { success: false, error: "Unauthorized" };
   }
 
+  const validation = userIdSchema.safeParse({ userId });
+  if (!validation.success) {
+    return { success: false, error: "Invalid input" };
+  }
+
   try {
+    // Check user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!existingUser) {
+      return { success: false, error: "User not found" };
+    }
+
+    // Prevent self-promotion (already admin)
+    if (existingUser.role === "ADMIN") {
+      return { success: false, error: "User is already an admin" };
+    }
+
     const user = await prisma.user.update({
       where: { id: userId },
       data: { role: "ADMIN" },
@@ -222,5 +293,66 @@ export async function promoteToAdminAction(
   } catch (error) {
     console.error("Promote to admin error:", error);
     return { success: false, error: "Failed to promote user" };
+  }
+}
+
+/**
+ * Revoke game access from a user
+ */
+export async function revokeGameAccessAction(
+  userId: string
+): Promise<UserActionResult> {
+  const authResult = await requireAdminSession();
+  if (!authResult.authenticated || !authResult.session) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const validation = userIdSchema.safeParse({ userId });
+  if (!validation.success) {
+    return { success: false, error: "Invalid input" };
+  }
+
+  try {
+    // Check user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!existingUser) {
+      return { success: false, error: "User not found" };
+    }
+
+    if (!existingUser.hasGameAccess) {
+      return { success: false, error: "User does not have game access" };
+    }
+
+    // Prevent revoking own access
+    if (userId === authResult.session.userId) {
+      return { success: false, error: "You cannot revoke your own access" };
+    }
+
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        hasGameAccess: false,
+        accessGrantedAt: null,
+        accessGrantedBy: null,
+      },
+    });
+
+    await logAdminAction({
+      adminId: authResult.session.userId,
+      action: AdminAction.UPDATE_USER_STATUS,
+      entityType: EntityType.USER,
+      entityId: userId,
+      details: { action: "revoke_access", username: user.username },
+    });
+
+    revalidatePath("/admin/users");
+    revalidatePath(`/admin/users/${userId}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Revoke game access error:", error);
+    return { success: false, error: "Failed to revoke game access" };
   }
 }

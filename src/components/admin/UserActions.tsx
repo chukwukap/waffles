@@ -1,129 +1,246 @@
 "use client";
 
-import { grantGameAccessAction, banUserAction, unbanUserAction, adjustInviteQuotaAction, promoteToAdminAction } from "@/actions/admin/users";
+import {
+    grantGameAccessAction,
+    revokeGameAccessAction,
+    banUserAction,
+    unbanUserAction,
+    adjustInviteQuotaAction,
+    promoteToAdminAction
+} from "@/actions/admin/users";
 import { useState } from "react";
 
-export function UserActions({ user }: { user: { id: string; username: string | null; inviteQuota: number; hasGameAccess: boolean; isBanned: boolean; role: string } }) {
-    const [loading, setLoading] = useState(false);
+interface UserActionsProps {
+    user: {
+        id: string;
+        username: string | null;
+        inviteQuota: number;
+        hasGameAccess: boolean;
+        isBanned: boolean;
+        role: string;
+    };
+}
+
+// Loading spinner component
+function Spinner() {
+    return (
+        <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg>
+    );
+}
+
+export function UserActions({ user }: UserActionsProps) {
+    const [loading, setLoading] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
+
+    // Clear messages after 3 seconds
+    const showMessage = (type: 'success' | 'error', message: string) => {
+        if (type === 'success') {
+            setSuccess(message);
+            setError(null);
+        } else {
+            setError(message);
+            setSuccess(null);
+        }
+        setTimeout(() => {
+            setSuccess(null);
+            setError(null);
+        }, 3000);
+    };
 
     const handleGrantAccess = async () => {
-        if (!confirm(`Grant game access to this user?`)) return;
+        if (!confirm(`Grant game access to @${user.username || 'this user'}?\n\nThey will be able to play games immediately.`)) return;
 
-        setLoading(true);
+        setLoading('grant');
         const result = await grantGameAccessAction(user.id);
-        setLoading(false);
+        setLoading(null);
 
-        if (!result.success) {
-            alert(result.error);
+        if (result.success) {
+            showMessage('success', 'Game access granted!');
+        } else {
+            showMessage('error', result.error);
+        }
+    };
+
+    const handleRevokeAccess = async () => {
+        if (!confirm(`Revoke game access from @${user.username || 'this user'}?\n\n⚠️ They will lose access to all games.`)) return;
+
+        setLoading('revoke');
+        const result = await revokeGameAccessAction(user.id);
+        setLoading(null);
+
+        if (result.success) {
+            showMessage('success', 'Game access revoked');
+        } else {
+            showMessage('error', result.error);
         }
     };
 
     const handleBan = async () => {
-        if (!confirm(`Ban this user?`)) return;
+        if (!confirm(`Ban @${user.username || 'this user'}?\n\n⚠️ This will block them from all platform activities.`)) return;
 
-        setLoading(true);
+        setLoading('ban');
         const result = await banUserAction(user.id);
-        setLoading(false);
+        setLoading(null);
 
-        if (!result.success) {
-            alert(result.error);
+        if (result.success) {
+            showMessage('success', 'User banned');
+        } else {
+            showMessage('error', result.error);
         }
     };
 
     const handleUnban = async () => {
-        if (!confirm(`Unban this user?`)) return;
+        if (!confirm(`Unban @${user.username || 'this user'}?\n\nThey will regain access to the platform.`)) return;
 
-        setLoading(true);
+        setLoading('unban');
         const result = await unbanUserAction(user.id);
-        setLoading(false);
+        setLoading(null);
 
-        if (!result.success) {
-            alert(result.error);
+        if (result.success) {
+            showMessage('success', 'User unbanned');
+        } else {
+            showMessage('error', result.error);
         }
     };
 
     const handleQuotaAdjust = async () => {
-        const newQuota = prompt(`Enter new invite quota (current: ${user.inviteQuota}):`, user.inviteQuota.toString());
+        const newQuota = prompt(`Enter new invite quota for @${user.username || 'this user'}:\n\nCurrent quota: ${user.inviteQuota}`, user.inviteQuota.toString());
         if (!newQuota) return;
 
         const quota = parseInt(newQuota);
         if (isNaN(quota) || quota < 0) {
-            alert("Invalid quota");
+            showMessage('error', 'Invalid quota - must be a positive number');
             return;
         }
 
-        setLoading(true);
+        setLoading('quota');
         const result = await adjustInviteQuotaAction(user.id, quota);
-        setLoading(false);
+        setLoading(null);
 
-        if (!result.success) {
-            alert(result.error);
+        if (result.success) {
+            showMessage('success', `Invite quota updated to ${quota}`);
+        } else {
+            showMessage('error', result.error);
         }
     };
 
     const handlePromoteToAdmin = async () => {
-        if (!confirm(`Promote ${user.username} to ADMIN? This gives them full admin access.`)) return;
+        if (!confirm(`Promote @${user.username || 'this user'} to ADMIN?\n\n⚠️ This grants FULL administrative access to the platform.\n\nThis action should be used with extreme caution.`)) return;
 
-        setLoading(true);
+        setLoading('promote');
         const result = await promoteToAdminAction(user.id);
-        setLoading(false);
+        setLoading(null);
 
-        if (!result.success) {
-            alert(result.error);
+        if (result.success) {
+            showMessage('success', 'User promoted to admin');
+        } else {
+            showMessage('error', result.error);
         }
     };
+
+    const isLoading = loading !== null;
 
     return (
         <div className="bg-white/5 border border-white/8 rounded-2xl backdrop-blur-lg p-6">
             <h3 className="text-lg font-semibold text-white mb-4 font-display">Actions</h3>
+
+            {/* Status Messages */}
+            {success && (
+                <div className="mb-4 p-3 rounded-xl bg-[#14B985]/20 border border-[#14B985]/30 text-[#14B985] text-sm font-medium flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    {success}
+                </div>
+            )}
+            {error && (
+                <div className="mb-4 p-3 rounded-xl bg-red-500/20 border border-red-500/30 text-red-400 text-sm font-medium flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    {error}
+                </div>
+            )}
+
             <div className="space-y-4">
+                {/* Access Control */}
                 <div>
                     <p className="text-sm font-medium text-white/50 mb-3">Access Control</p>
                     <div className="flex flex-wrap gap-2">
-                        <button
-                            onClick={handleGrantAccess}
-                            disabled={loading || user.hasGameAccess}
-                            className="px-3 py-1.5 bg-[#14B985]/20 disabled:opacity-40 text-[#14B985] text-sm rounded-xl hover:bg-[#14B985]/30 border border-[#14B985]/30 transition-colors font-medium"
-                        >
-                            Grant Access
-                        </button>
+                        {user.hasGameAccess ? (
+                            <button
+                                onClick={handleRevokeAccess}
+                                disabled={isLoading}
+                                className="px-3 py-1.5 bg-orange-500/20 disabled:opacity-40 text-orange-400 text-sm rounded-xl hover:bg-orange-500/30 border border-orange-500/30 transition-colors font-medium flex items-center gap-2"
+                            >
+                                {loading === 'revoke' && <Spinner />}
+                                Revoke Access
+                            </button>
+                        ) : (
+                            <button
+                                onClick={handleGrantAccess}
+                                disabled={isLoading}
+                                className="px-3 py-1.5 bg-[#14B985]/20 disabled:opacity-40 text-[#14B985] text-sm rounded-xl hover:bg-[#14B985]/30 border border-[#14B985]/30 transition-colors font-medium flex items-center gap-2"
+                            >
+                                {loading === 'grant' && <Spinner />}
+                                Grant Access
+                            </button>
+                        )}
+
                         {user.isBanned ? (
                             <button
                                 onClick={handleUnban}
-                                disabled={loading}
-                                className="px-3 py-1.5 bg-[#FFC931]/20 disabled:opacity-40 text-[#FFC931] text-sm rounded-xl hover:bg-[#FFC931]/30 border border-[#FFC931]/30 transition-colors font-medium"
+                                disabled={isLoading}
+                                className="px-3 py-1.5 bg-[#FFC931]/20 disabled:opacity-40 text-[#FFC931] text-sm rounded-xl hover:bg-[#FFC931]/30 border border-[#FFC931]/30 transition-colors font-medium flex items-center gap-2"
                             >
+                                {loading === 'unban' && <Spinner />}
                                 Unban
                             </button>
                         ) : (
                             <button
                                 onClick={handleBan}
-                                disabled={loading}
-                                className="px-3 py-1.5 bg-red-500/20 disabled:opacity-40 text-red-400 text-sm rounded-xl hover:bg-red-500/30 border border-red-500/30 transition-colors font-medium"
+                                disabled={isLoading}
+                                className="px-3 py-1.5 bg-red-500/20 disabled:opacity-40 text-red-400 text-sm rounded-xl hover:bg-red-500/30 border border-red-500/30 transition-colors font-medium flex items-center gap-2"
                             >
+                                {loading === 'ban' && <Spinner />}
                                 Ban
                             </button>
                         )}
                     </div>
                 </div>
 
+                {/* Invite Quota */}
                 <div className="pt-4 border-t border-white/10">
+                    <div className="flex items-center justify-between mb-3">
+                        <p className="text-sm font-medium text-white/50">Invite Quota</p>
+                        <span className="text-sm font-mono text-white/80 bg-white/10 px-2 py-0.5 rounded-md">
+                            {user.inviteQuota}
+                        </span>
+                    </div>
                     <button
                         onClick={handleQuotaAdjust}
-                        disabled={loading}
-                        className="w-full px-4 py-2.5 bg-[#00CFF2]/20 disabled:opacity-40 text-[#00CFF2] text-sm font-medium rounded-xl hover:bg-[#00CFF2]/30 border border-[#00CFF2]/30 transition-colors"
+                        disabled={isLoading}
+                        className="w-full px-4 py-2.5 bg-[#00CFF2]/20 disabled:opacity-40 text-[#00CFF2] text-sm font-medium rounded-xl hover:bg-[#00CFF2]/30 border border-[#00CFF2]/30 transition-colors flex items-center justify-center gap-2"
                     >
+                        {loading === 'quota' && <Spinner />}
                         Adjust Invite Quota
                     </button>
                 </div>
 
+                {/* Promote to Admin */}
                 {user.role !== "ADMIN" && (
                     <div className="pt-4 border-t border-white/10">
+                        <p className="text-xs text-white/30 mb-2">⚠️ Danger Zone</p>
                         <button
                             onClick={handlePromoteToAdmin}
-                            disabled={loading}
-                            className="w-full px-4 py-2.5 bg-[#FB72FF]/20 disabled:opacity-40 text-[#FB72FF] text-sm font-medium rounded-xl hover:bg-[#FB72FF]/30 border border-[#FB72FF]/30 transition-colors"
+                            disabled={isLoading}
+                            className="w-full px-4 py-2.5 bg-[#FB72FF]/20 disabled:opacity-40 text-[#FB72FF] text-sm font-medium rounded-xl hover:bg-[#FB72FF]/30 border border-[#FB72FF]/30 transition-colors flex items-center justify-center gap-2"
                         >
+                            {loading === 'promote' && <Spinner />}
                             Promote to Admin
                         </button>
                     </div>
