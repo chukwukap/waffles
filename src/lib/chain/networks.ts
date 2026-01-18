@@ -27,7 +27,7 @@ const NETWORKS: Record<"testnet" | "mainnet", NetworkConfig> = {
   testnet: {
     chain: baseSepolia,
     contracts: {
-      waffleGame: "0xbD20Be151F655aC17048d331bA5a6C0093c99d34",
+      waffleGame: "0xeB89A087cC3898713d9f887b21Dc3BF4FC963B8F",
       usdc: "0x8aAa7ECea87244Ca4062eBce6DA61820f3830233",
     },
   },

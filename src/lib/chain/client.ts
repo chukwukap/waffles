@@ -54,13 +54,13 @@ import { WAFFLE_GAME_CONFIG } from "./config";
 
 /**
  * Read the current platform fee from the smart contract
- * @returns Platform fee in basis points (e.g., 1000 = 10%)
+ * @returns Platform fee in permyriad (e.g., 1000 = 10%)
  */
 export async function getPlatformFeeBps(): Promise<number> {
   const fee = await publicClient.readContract({
     address: WAFFLE_GAME_CONFIG.address,
     abi: waffleGameAbi,
-    functionName: "platformFeeBps",
+    functionName: "platformFeePermyriad",
   });
   return Number(fee);
 }

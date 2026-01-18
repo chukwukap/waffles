@@ -28,7 +28,7 @@ export function useContractToken() {
   return useReadContract({
     address: WAFFLE_GAME_CONFIG.address,
     abi: waffleGameAbi,
-    functionName: "token",
+    functionName: "paymentToken",
   });
 }
 
@@ -169,4 +169,64 @@ export function useClaimPrize() {
   };
 
   return { claimPrize, hash, isPending, isConfirming, isSuccess, error };
+}
+
+/**
+ * Hook to sponsor a game's prize pool (v5 feature)
+ */
+export function useSponsorPrizePool() {
+  const { writeContract, data: hash, isPending, error } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  const sponsorPrizePool = (onchainId: `0x${string}`, amount: string) => {
+    const amountInUnits = parseUnits(amount, TOKEN_CONFIG.decimals);
+    writeContract({
+      address: WAFFLE_GAME_CONFIG.address,
+      abi: waffleGameAbi,
+      functionName: "sponsorPrizePool",
+      args: [onchainId, amountInUnits],
+    });
+  };
+
+  return { sponsorPrizePool, hash, isPending, isConfirming, isSuccess, error };
+}
+
+/**
+ * Hook to get the total prize pool for a game (v5 feature)
+ * Includes ticket revenue (net of fees) + sponsored amounts
+ */
+export function useGetTotalPrizePool(onchainId: `0x${string}`) {
+  return useReadContract({
+    address: WAFFLE_GAME_CONFIG.address,
+    abi: waffleGameAbi,
+    functionName: "getTotalPrizePool",
+    args: [onchainId],
+    query: {
+      enabled: !!onchainId,
+    },
+  });
+}
+
+/**
+ * Hook to get accumulated platform fees (admin use)
+ */
+export function useAccumulatedFees() {
+  return useReadContract({
+    address: WAFFLE_GAME_CONFIG.address,
+    abi: waffleGameAbi,
+    functionName: "accumulatedFees",
+  });
+}
+
+/**
+ * Hook to get the platform fee percentage
+ */
+export function usePlatformFee() {
+  return useReadContract({
+    address: WAFFLE_GAME_CONFIG.address,
+    abi: waffleGameAbi,
+    functionName: "platformFeePermyriad",
+  });
 }

@@ -259,33 +259,88 @@ export default function ContractSettingsPage() {
                     <div className="p-3 bg-orange-500/20 rounded-xl">
                         <Cog6ToothIcon className="h-6 w-6 text-orange-400" />
                     </div>
-                    <div>
+                    <div className="flex-1">
                         <h3 className="text-lg font-semibold text-white font-display mb-2">
-                            Super Admin Functions
+                            Admin Functions
                         </h3>
                         <p className="text-white/60 text-sm mb-4">
-                            The following operations require the <code className="bg-black/30 px-1 rounded">DEFAULT_ADMIN_ROLE</code> (cold wallet):
+                            Role-based access control governs all privileged operations:
                         </p>
-                        <ul className="space-y-2 text-sm text-white/50">
-                            <li className="flex items-center gap-2">
-                                <span className="w-2 h-2 bg-orange-400 rounded-full" />
-                                <strong className="text-white">setToken</strong> - Change payment token (requires no active games)
-                            </li>
-                            <li className="flex items-center gap-2">
-                                <span className="w-2 h-2 bg-orange-400 rounded-full" />
-                                <strong className="text-white">setPlatformFee</strong> - Update fee percentage
-                            </li>
-                            <li className="flex items-center gap-2">
-                                <span className="w-2 h-2 bg-orange-400 rounded-full" />
-                                <strong className="text-white">withdrawFees</strong> - Withdraw accumulated fees
-                            </li>
-                            <li className="flex items-center gap-2">
-                                <span className="w-2 h-2 bg-orange-400 rounded-full" />
-                                <strong className="text-white">sweepExpiredGame</strong> - Recover unclaimed funds after 90 days
-                            </li>
-                        </ul>
-                        <p className="text-white/40 text-xs mt-4">
-                            These functions should be executed directly on Basescan or via your multisig wallet.
+
+                        {/* Super Admin Functions */}
+                        <div className="mb-4">
+                            <p className="text-xs text-white/40 uppercase tracking-wide mb-2">DEFAULT_ADMIN_ROLE (Cold Wallet)</p>
+                            <ul className="space-y-2 text-sm text-white/50">
+                                <li className="flex items-center gap-2">
+                                    <span className="w-2 h-2 bg-orange-400 rounded-full" />
+                                    <strong className="text-white">setPaymentToken</strong> - Change payment token (requires no active games)
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <span className="w-2 h-2 bg-orange-400 rounded-full" />
+                                    <strong className="text-white">setPlatformFee</strong> - Update fee percentage
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <span className="w-2 h-2 bg-orange-400 rounded-full" />
+                                    <strong className="text-white">withdrawFees</strong> - Withdraw accumulated fees
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <span className="w-2 h-2 bg-orange-400 rounded-full" />
+                                    <strong className="text-white">sweepUnclaimedFunds</strong> - Recover unclaimed funds after 90 days
+                                </li>
+                            </ul>
+                        </div>
+
+                        {/* Operator Functions */}
+                        <div className="mb-4">
+                            <p className="text-xs text-white/40 uppercase tracking-wide mb-2">OPERATOR_ROLE (Hot Wallet)</p>
+                            <ul className="space-y-2 text-sm text-white/50">
+                                <li className="flex items-center gap-2">
+                                    <span className="w-2 h-2 bg-[#00CFF2] rounded-full" />
+                                    <strong className="text-white">createGame</strong> - Create new game on-chain
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <span className="w-2 h-2 bg-[#00CFF2] rounded-full" />
+                                    <strong className="text-white">closeSales</strong> - Stop ticket purchases
+                                </li>
+                            </ul>
+                        </div>
+
+                        {/* Settler Functions */}
+                        <div className="mb-4">
+                            <p className="text-xs text-white/40 uppercase tracking-wide mb-2">SETTLER_ROLE</p>
+                            <ul className="space-y-2 text-sm text-white/50">
+                                <li className="flex items-center gap-2">
+                                    <span className="w-2 h-2 bg-[#14B985] rounded-full" />
+                                    <strong className="text-white">submitResults</strong> - Publish Merkle root of winners
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <span className="w-2 h-2 bg-[#14B985] rounded-full" />
+                                    <strong className="text-white">correctResultsRoot</strong> - Fix Merkle root (before any claims)
+                                </li>
+                            </ul>
+                        </div>
+
+                        {/* Public Functions */}
+                        <div className="mb-4">
+                            <p className="text-xs text-white/40 uppercase tracking-wide mb-2">PUBLIC (Anyone)</p>
+                            <ul className="space-y-2 text-sm text-white/50">
+                                <li className="flex items-center gap-2">
+                                    <span className="w-2 h-2 bg-[#FFC931] rounded-full" />
+                                    <strong className="text-white">sponsorPrizePool</strong> - Sponsor a game&apos;s prize pool (fee deducted)
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <span className="w-2 h-2 bg-[#FFC931] rounded-full" />
+                                    <strong className="text-white">buyTicket</strong> - Purchase game ticket
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <span className="w-2 h-2 bg-[#FFC931] rounded-full" />
+                                    <strong className="text-white">claimPrize</strong> - Claim winnings with Merkle proof
+                                </li>
+                            </ul>
+                        </div>
+
+                        <p className="text-white/40 text-xs">
+                            Admin functions should be executed directly on Basescan or via your multisig wallet.
                         </p>
                     </div>
                 </div>

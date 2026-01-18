@@ -43,7 +43,7 @@ export function CompeteSection() {
                     damping: 15,
                     delay: 0.2,
                 }}
-                className="absolute left-1/2 -translate-x-1/2 -top-14 md:-top-16 lg:-top-20 w-64 sm:w-80 md:w-96 lg:w-[424px] h-auto z-10"
+                className="absolute left-1/2 -translate-x-1/2 -top-14 md:-top-16 lg:-top-20 w-64 sm:w-80 md:w-96 lg:w-[424px] h-auto z-20"
                 style={{ y: chestY }}
             >
                 {/* Glow effect behind chest */}

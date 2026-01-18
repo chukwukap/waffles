@@ -9,7 +9,7 @@ import { env } from "@/lib/env";
  * Admin Contract Management API
  *
  * Provides read-only access to contract state.
- * Write operations (like setToken, withdrawFees) require the cold wallet
+ * Write operations (like setPaymentToken, withdrawFees) require the cold wallet
  * and should be done directly via the contract or a multisig.
  */
 
@@ -65,12 +65,12 @@ export async function GET(request: NextRequest) {
       publicClient.readContract({
         address: WAFFLE_GAME_CONFIG.address,
         abi: waffleGameAbi,
-        functionName: "token",
+        functionName: "paymentToken",
       }) as Promise<`0x${string}`>,
       publicClient.readContract({
         address: WAFFLE_GAME_CONFIG.address,
         abi: waffleGameAbi,
-        functionName: "platformFeeBps",
+        functionName: "platformFeePermyriad",
       }) as Promise<number>,
       publicClient.readContract({
         address: WAFFLE_GAME_CONFIG.address,

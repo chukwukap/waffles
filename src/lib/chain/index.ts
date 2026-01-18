@@ -18,7 +18,7 @@ export { publicClient, getAdminWallet, getWalletClient } from "./client";
 export {
   generateOnchainGameId,
   createGameOnChain,
-  endGameOnChain,
+  closeSalesOnChain,
   getOnChainGame,
   hasTicketOnChain,
   hasClaimedOnChain,

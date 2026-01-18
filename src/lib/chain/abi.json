@@ -6,20 +6,7 @@
   },
   {
     "type": "function",
-    "name": "ADMIN_ROLE",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "CLAIM_EXPIRY",
+    "name": "CLAIM_WINDOW",
     "inputs": [],
     "outputs": [
       {
@@ -45,20 +32,20 @@
   },
   {
     "type": "function",
-    "name": "MAX_ENTRY_FEE",
+    "name": "GUARDIAN_ROLE",
     "inputs": [],
     "outputs": [
       {
         "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "bytes32",
+        "internalType": "bytes32"
       }
     ],
     "stateMutability": "view"
   },
   {
     "type": "function",
-    "name": "MAX_FEE_BPS",
+    "name": "MAX_FEE_PERMYRIAD",
     "inputs": [],
     "outputs": [
       {
@@ -71,7 +58,20 @@
   },
   {
     "type": "function",
-    "name": "PAUSER_ROLE",
+    "name": "MAX_TICKET_PRICE",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "OPERATOR_ROLE",
     "inputs": [],
     "outputs": [
       {
@@ -167,44 +167,6 @@
   },
   {
     "type": "function",
-    "name": "buyTicketWithPermit",
-    "inputs": [
-      {
-        "name": "gameId",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      },
-      {
-        "name": "amount",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "deadline",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "v",
-        "type": "uint8",
-        "internalType": "uint8"
-      },
-      {
-        "name": "r",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      },
-      {
-        "name": "s",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
     "name": "claimPrize",
     "inputs": [
       {
@@ -228,6 +190,37 @@
   },
   {
     "type": "function",
+    "name": "closeSales",
+    "inputs": [
+      {
+        "name": "gameId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "correctResultsRoot",
+    "inputs": [
+      {
+        "name": "gameId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "newRoot",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "createGame",
     "inputs": [
       {
@@ -236,22 +229,9 @@
         "internalType": "bytes32"
       },
       {
-        "name": "entryFee",
+        "name": "minimumTicketPrice",
         "type": "uint256",
         "internalType": "uint256"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "endGame",
-    "inputs": [
-      {
-        "name": "gameId",
-        "type": "bytes32",
-        "internalType": "bytes32"
       }
     ],
     "outputs": [],
@@ -274,7 +254,7 @@
         "internalType": "struct WaffleGame.Game",
         "components": [
           {
-            "name": "entryFee",
+            "name": "minimumTicketPrice",
             "type": "uint256",
             "internalType": "uint256"
           },
@@ -284,7 +264,17 @@
             "internalType": "uint256"
           },
           {
-            "name": "merkleRoot",
+            "name": "ticketRevenue",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "sponsoredAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "resultsRoot",
             "type": "bytes32",
             "internalType": "bytes32"
           },
@@ -299,7 +289,7 @@
             "internalType": "uint256"
           },
           {
-            "name": "ended",
+            "name": "salesClosed",
             "type": "bool",
             "internalType": "bool"
           }
@@ -323,6 +313,25 @@
         "name": "",
         "type": "bytes32",
         "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getTotalPrizePool",
+    "inputs": [
+      {
+        "name": "gameId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "stateMutability": "view"
@@ -422,9 +431,14 @@
     "name": "initialize",
     "inputs": [
       {
-        "name": "token_",
+        "name": "paymentToken_",
         "type": "address",
         "internalType": "address"
+      },
+      {
+        "name": "platformFeePermyriad_",
+        "type": "uint16",
+        "internalType": "uint16"
       },
       {
         "name": "superAdmin_",
@@ -442,14 +456,9 @@
         "internalType": "address"
       },
       {
-        "name": "pauser_",
+        "name": "guardian_",
         "type": "address",
         "internalType": "address"
-      },
-      {
-        "name": "platformFeeBps_",
-        "type": "uint16",
-        "internalType": "uint16"
       }
     ],
     "outputs": [],
@@ -477,7 +486,20 @@
   },
   {
     "type": "function",
-    "name": "platformFeeBps",
+    "name": "paymentToken",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "platformFeePermyriad",
     "inputs": [],
     "outputs": [
       {
@@ -539,10 +561,23 @@
   },
   {
     "type": "function",
+    "name": "setPaymentToken",
+    "inputs": [
+      {
+        "name": "newToken",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "setPlatformFee",
     "inputs": [
       {
-        "name": "newFeeBps",
+        "name": "newFeePermyriad",
         "type": "uint16",
         "internalType": "uint16"
       }
@@ -552,12 +587,17 @@
   },
   {
     "type": "function",
-    "name": "setToken",
+    "name": "sponsorPrizePool",
     "inputs": [
       {
-        "name": "newToken",
-        "type": "address",
-        "internalType": "address"
+        "name": "gameId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "amount",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "outputs": [],
@@ -573,7 +613,7 @@
         "internalType": "bytes32"
       },
       {
-        "name": "merkleRoot",
+        "name": "resultsRoot",
         "type": "bytes32",
         "internalType": "bytes32"
       }
@@ -602,7 +642,7 @@
   },
   {
     "type": "function",
-    "name": "sweepExpiredGame",
+    "name": "sweepUnclaimedFunds",
     "inputs": [
       {
         "name": "gameId",
@@ -610,7 +650,7 @@
         "internalType": "bytes32"
       },
       {
-        "name": "to",
+        "name": "recipient",
         "type": "address",
         "internalType": "address"
       },
@@ -625,39 +665,8 @@
   },
   {
     "type": "function",
-    "name": "token",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "unpause",
     "inputs": [],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "updateMerkleRoot",
-    "inputs": [
-      {
-        "name": "gameId",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      },
-      {
-        "name": "newMerkleRoot",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      }
-    ],
     "outputs": [],
     "stateMutability": "nonpayable"
   },
@@ -684,7 +693,7 @@
     "name": "withdrawFees",
     "inputs": [
       {
-        "name": "to",
+        "name": "recipient",
         "type": "address",
         "internalType": "address"
       },
@@ -702,32 +711,7 @@
     "name": "FeesWithdrawn",
     "inputs": [
       {
-        "name": "to",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "amount",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "FundsSwept",
-    "inputs": [
-      {
-        "name": "gameId",
-        "type": "bytes32",
-        "indexed": true,
-        "internalType": "bytes32"
-      },
-      {
-        "name": "to",
+        "name": "recipient",
         "type": "address",
         "indexed": true,
         "internalType": "address"
@@ -752,23 +736,10 @@
         "internalType": "bytes32"
       },
       {
-        "name": "entryFee",
+        "name": "minimumTicketPrice",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "GameEnded",
-    "inputs": [
-      {
-        "name": "gameId",
-        "type": "bytes32",
-        "indexed": true,
-        "internalType": "bytes32"
       }
     ],
     "anonymous": false
@@ -788,31 +759,31 @@
   },
   {
     "type": "event",
-    "name": "MerkleRootUpdated",
-    "inputs": [
-      {
-        "name": "gameId",
-        "type": "bytes32",
-        "indexed": true,
-        "internalType": "bytes32"
-      },
-      {
-        "name": "newMerkleRoot",
-        "type": "bytes32",
-        "indexed": false,
-        "internalType": "bytes32"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
     "name": "Paused",
     "inputs": [
       {
         "name": "account",
         "type": "address",
         "indexed": false,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "PaymentTokenUpdated",
+    "inputs": [
+      {
+        "name": "oldToken",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "newToken",
+        "type": "address",
+        "indexed": true,
         "internalType": "address"
       }
     ],
@@ -864,6 +835,56 @@
   },
   {
     "type": "event",
+    "name": "PrizePoolSponsored",
+    "inputs": [
+      {
+        "name": "gameId",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "sponsor",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "grossAmount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "fee",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ResultsCorrected",
+    "inputs": [
+      {
+        "name": "gameId",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "newRoot",
+        "type": "bytes32",
+        "indexed": false,
+        "internalType": "bytes32"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "ResultsSubmitted",
     "inputs": [
       {
@@ -873,7 +894,7 @@
         "internalType": "bytes32"
       },
       {
-        "name": "merkleRoot",
+        "name": "resultsRoot",
         "type": "bytes32",
         "indexed": false,
         "internalType": "bytes32"
@@ -958,6 +979,19 @@
   },
   {
     "type": "event",
+    "name": "SalesClosed",
+    "inputs": [
+      {
+        "name": "gameId",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "TicketPurchased",
     "inputs": [
       {
@@ -983,19 +1017,25 @@
   },
   {
     "type": "event",
-    "name": "TokenUpdated",
+    "name": "UnclaimedFundsSwept",
     "inputs": [
       {
-        "name": "oldToken",
+        "name": "gameId",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "recipient",
         "type": "address",
-        "indexed": false,
+        "indexed": true,
         "internalType": "address"
       },
       {
-        "name": "newToken",
-        "type": "address",
+        "name": "amount",
+        "type": "uint256",
         "indexed": false,
-        "internalType": "address"
+        "internalType": "uint256"
       }
     ],
     "anonymous": false
@@ -1049,7 +1089,7 @@
   },
   {
     "type": "error",
-    "name": "ActiveGamesExist",
+    "name": "ActiveGamesPreventChange",
     "inputs": []
   },
   {
@@ -1070,22 +1110,12 @@
   },
   {
     "type": "error",
-    "name": "AlreadyEnded",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "AlreadyFinalized",
-    "inputs": []
-  },
-  {
-    "type": "error",
     "name": "AlreadyHasTicket",
     "inputs": []
   },
   {
     "type": "error",
-    "name": "ClaimExpired",
+    "name": "AlreadySettled",
     "inputs": []
   },
   {
@@ -1095,7 +1125,12 @@
   },
   {
     "type": "error",
-    "name": "ClaimsAlreadyMade",
+    "name": "ClaimWindowExpired",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ClaimsAlreadyStarted",
     "inputs": []
   },
   {
@@ -1121,16 +1156,6 @@
   },
   {
     "type": "error",
-    "name": "EntryFeeTooHigh",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "EntryFeeTooLow",
-    "inputs": []
-  },
-  {
-    "type": "error",
     "name": "ExpectedPause",
     "inputs": []
   },
@@ -1146,12 +1171,7 @@
   },
   {
     "type": "error",
-    "name": "GameExists",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "GameIsEnded",
+    "name": "GameAlreadyExists",
     "inputs": []
   },
   {
@@ -1161,22 +1181,17 @@
   },
   {
     "type": "error",
-    "name": "GameNotSettled",
-    "inputs": []
-  },
-  {
-    "type": "error",
     "name": "InsufficientFees",
     "inputs": []
   },
   {
     "type": "error",
-    "name": "InvalidEntryFee",
+    "name": "InvalidAmount",
     "inputs": []
   },
   {
     "type": "error",
-    "name": "InvalidFee",
+    "name": "InvalidFeeValue",
     "inputs": []
   },
   {
@@ -1191,27 +1206,27 @@
   },
   {
     "type": "error",
-    "name": "InvalidMerkleRoot",
+    "name": "InvalidMerkleProof",
     "inputs": []
   },
   {
     "type": "error",
-    "name": "InvalidProof",
+    "name": "InvalidResultsRoot",
     "inputs": []
   },
   {
     "type": "error",
-    "name": "NoTicket",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "NotFinalized",
+    "name": "NoTicketFound",
     "inputs": []
   },
   {
     "type": "error",
     "name": "NotInitializing",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotSettled",
     "inputs": []
   },
   {
@@ -1229,6 +1244,21 @@
         "internalType": "address"
       }
     ]
+  },
+  {
+    "type": "error",
+    "name": "SalesAlreadyClosed",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "TicketPriceTooHigh",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "TicketPriceTooLow",
+    "inputs": []
   },
   {
     "type": "error",

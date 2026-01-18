@@ -324,28 +324,33 @@ export async function deleteGameAction(gameId: string): Promise<void> {
       throw new Error("Game not found");
     }
 
-    // If game is on-chain, force end it first
+    // If game is on-chain, force close sales first
     if (game.onchainId) {
-      const { getOnChainGame, endGameOnChain } = await import("@/lib/chain");
+      const { getOnChainGame, closeSalesOnChain } = await import("@/lib/chain");
       const onChainGame = await getOnChainGame(game.onchainId as `0x${string}`);
 
       const gameExistsOnChain =
         onChainGame &&
         (onChainGame.ticketCount > BigInt(0) ||
-          onChainGame.entryFee > BigInt(0));
+          onChainGame.minimumTicketPrice > BigInt(0));
 
-      if (gameExistsOnChain && !onChainGame.ended) {
+      if (gameExistsOnChain && !onChainGame.salesClosed) {
         console.log(
-          `[DeleteGame] Force ending game ${game.onchainId} on-chain...`
+          `[DeleteGame] Force closing sales for game ${game.onchainId} on-chain...`
         );
 
         try {
-          const txHash = await endGameOnChain(game.onchainId as `0x${string}`);
-          console.log(`[DeleteGame] Game ended on-chain. TX: ${txHash}`);
+          const txHash = await closeSalesOnChain(
+            game.onchainId as `0x${string}`
+          );
+          console.log(`[DeleteGame] Game sales closed on-chain. TX: ${txHash}`);
         } catch (endError) {
-          console.error(`[DeleteGame] Failed to end game on-chain:`, endError);
+          console.error(
+            `[DeleteGame] Failed to close sales on-chain:`,
+            endError
+          );
           throw new Error(
-            `Failed to end game on-chain before deletion. Please try again or end the game manually first.`
+            `Failed to close sales on-chain before deletion. Please try again or close sales manually first.`
           );
         }
       }

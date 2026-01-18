@@ -1,6 +1,7 @@
 /**
  * Game On-Chain Operations
  * Functions for creating, ending, and querying games on-chain
+ * Updated for WaffleGame v5
  */
 
 import { parseUnits } from "viem";
@@ -9,16 +10,18 @@ import { publicClient, getWalletClient } from "./client";
 import waffleGameAbi from "./abi.json";
 
 // ============================================================================
-// Types
+// Types (v5 Contract)
 // ============================================================================
 
 export interface OnChainGame {
-  entryFee: bigint;
+  minimumTicketPrice: bigint;
   ticketCount: bigint;
-  merkleRoot: `0x${string}`;
+  ticketRevenue: bigint;
+  sponsoredAmount: bigint;
+  resultsRoot: `0x${string}`;
   settledAt: bigint;
   claimCount: bigint;
-  ended: boolean;
+  salesClosed: boolean;
 }
 
 // ============================================================================
@@ -38,16 +41,16 @@ export function generateOnchainGameId(): `0x${string}` {
 /**
  * Create a game on-chain
  * @param onchainId - The bytes32 on-chain game ID
- * @param minEntryFeeUSDC - Minimum entry fee in USDC (human readable)
+ * @param minTicketPriceUSDC - Minimum ticket price in USDC (human readable)
  * @returns Transaction hash
  */
 export async function createGameOnChain(
   onchainId: `0x${string}`,
-  minEntryFeeUSDC: number
+  minTicketPriceUSDC: number
 ): Promise<`0x${string}`> {
   const walletClient = getWalletClient();
-  const entryFee = parseUnits(
-    minEntryFeeUSDC.toString(),
+  const minimumTicketPrice = parseUnits(
+    minTicketPriceUSDC.toString(),
     TOKEN_CONFIG.decimals
   );
 
@@ -55,7 +58,7 @@ export async function createGameOnChain(
     address: WAFFLE_GAME_CONFIG.address,
     abi: waffleGameAbi,
     functionName: "createGame",
-    args: [onchainId, entryFee],
+    args: [onchainId, minimumTicketPrice],
   });
 
   console.log(`[Chain] Created game ${onchainId}. TX: ${hash}`);
@@ -63,11 +66,11 @@ export async function createGameOnChain(
 }
 
 /**
- * End a game on-chain (stops ticket sales)
+ * Close sales for a game on-chain (stops ticket purchases)
  * @param onchainId - The bytes32 on-chain game ID
  * @returns Transaction hash
  */
-export async function endGameOnChain(
+export async function closeSalesOnChain(
   onchainId: `0x${string}`
 ): Promise<`0x${string}`> {
   const walletClient = getWalletClient();
@@ -75,11 +78,11 @@ export async function endGameOnChain(
   const hash = await walletClient.writeContract({
     address: WAFFLE_GAME_CONFIG.address,
     abi: waffleGameAbi,
-    functionName: "endGame",
+    functionName: "closeSales",
     args: [onchainId],
   });
 
-  console.log(`[Chain] Ended game ${onchainId}. TX: ${hash}`);
+  console.log(`[Chain] Closed sales for game ${onchainId}. TX: ${hash}`);
   return hash;
 }
 
@@ -102,8 +105,8 @@ export async function getOnChainGame(
       args: [onchainId],
     })) as OnChainGame;
 
-    // Game doesn't exist if entryFee is 0
-    if (game.entryFee === BigInt(0)) {
+    // Game doesn't exist if minimumTicketPrice is 0
+    if (game.minimumTicketPrice === BigInt(0)) {
       return null;
     }
 
