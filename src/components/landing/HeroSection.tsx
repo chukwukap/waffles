@@ -83,7 +83,7 @@ export function HeroSection() {
                     ))}
                 </motion.h1>
 
-                {/* Subtitle with fade up and scramble */}
+                {/* Subtitle with fade up */}
                 <motion.p
                     variants={fadeUpVariants}
                     initial="hidden"
@@ -91,12 +91,7 @@ export function HeroSection() {
                     transition={{ delay: 0.5 }}
                     className="font-display font-medium text-lg sm:text-xl md:text-2xl lg:text-[28px] leading-[1.3] text-center tracking-tight text-white/70 max-w-[453px]"
                 >
-                    <TextScramble
-                        text="Win real money by recognizing patterns faster than everyone else"
-                        trigger="mount"
-                        revealDelay={800}
-                        scrambleSpeed={30}
-                    />
+                    Win real money by recognizing patterns faster than everyone else
                 </motion.p>
 
                 {/* CTA Button with magnetic effect and 3D press */}
@@ -134,7 +129,7 @@ export function HeroSection() {
                     >
                         {/* Animated shine effect */}
                         <motion.div
-                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                            className="absolute inset-0 bg-linear-to-r from-transparent via-white/30 to-transparent"
                             animate={{ x: ["-100%", "200%"] }}
                             transition={{
                                 duration: 2,
