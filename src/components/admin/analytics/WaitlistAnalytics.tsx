@@ -125,7 +125,7 @@ export function WaitlistAnalytics({ data }: WaitlistAnalyticsProps) {
                                         border: "1px solid rgba(255,255,255,0.1)",
                                         borderRadius: "12px",
                                     }}
-                                    formatter={(value: number) => [`${value} users`, ""]}
+                                    formatter={(value: number | undefined) => [`${value} users`, ""]}
                                 />
                                 <Legend
                                     formatter={(value) => <span className="text-white/70 text-sm">{value}</span>}

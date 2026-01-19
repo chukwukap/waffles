@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminSession } from "@/lib/admin-auth";
 import { createPublicClient, http, formatUnits } from "viem";
-import { WAFFLE_GAME_CONFIG, TOKEN_CONFIG, CHAIN_CONFIG } from "@/lib/chain";
 import waffleGameAbi from "@/lib/chain/abi.json";
 import { env } from "@/lib/env";
+import {
+  chain,
+  PAYMENT_TOKEN_DECIMALS,
+  WAFFLE_CONTRACT_ADDRESS,
+} from "@/lib/chain";
 
 /**
  * Admin Contract Management API
@@ -14,7 +18,7 @@ import { env } from "@/lib/env";
  */
 
 const publicClient = createPublicClient({
-  chain: CHAIN_CONFIG.chain,
+  chain: chain,
   transport: http(),
 });
 
@@ -63,27 +67,27 @@ export async function GET(request: NextRequest) {
       isPaused,
     ] = await Promise.all([
       publicClient.readContract({
-        address: WAFFLE_GAME_CONFIG.address,
+        address: WAFFLE_CONTRACT_ADDRESS,
         abi: waffleGameAbi,
         functionName: "paymentToken",
       }) as Promise<`0x${string}`>,
       publicClient.readContract({
-        address: WAFFLE_GAME_CONFIG.address,
+        address: WAFFLE_CONTRACT_ADDRESS,
         abi: waffleGameAbi,
         functionName: "platformFeePermyriad",
       }) as Promise<number>,
       publicClient.readContract({
-        address: WAFFLE_GAME_CONFIG.address,
+        address: WAFFLE_CONTRACT_ADDRESS,
         abi: waffleGameAbi,
         functionName: "accumulatedFees",
       }) as Promise<bigint>,
       publicClient.readContract({
-        address: WAFFLE_GAME_CONFIG.address,
+        address: WAFFLE_CONTRACT_ADDRESS,
         abi: waffleGameAbi,
         functionName: "activeGameCount",
       }) as Promise<bigint>,
       publicClient.readContract({
-        address: WAFFLE_GAME_CONFIG.address,
+        address: WAFFLE_CONTRACT_ADDRESS,
         abi: waffleGameAbi,
         functionName: "paused",
       }) as Promise<boolean>,
@@ -95,20 +99,20 @@ export async function GET(request: NextRequest) {
     // let balance = null;
 
     const state: ContractState = {
-      address: WAFFLE_GAME_CONFIG.address,
-      chain: CHAIN_CONFIG.chain.name,
-      chainId: WAFFLE_GAME_CONFIG.chainId,
+      address: WAFFLE_CONTRACT_ADDRESS,
+      chain: chain.name,
+      chainId: chain.id,
       token: {
         address: tokenAddress,
-        symbol: TOKEN_CONFIG.symbol,
-        decimals: TOKEN_CONFIG.decimals,
+        symbol: "USDC",
+        decimals: PAYMENT_TOKEN_DECIMALS,
       },
       platformFeeBps: Number(platformFeeBps),
       platformFeePercent: (Number(platformFeeBps) / 100).toFixed(2),
       accumulatedFees: accumulatedFees.toString(),
       accumulatedFeesFormatted: formatUnits(
         accumulatedFees,
-        TOKEN_CONFIG.decimals
+        PAYMENT_TOKEN_DECIMALS,
       ),
       activeGameCount: Number(activeGameCount),
       isPaused,
@@ -125,7 +129,7 @@ export async function GET(request: NextRequest) {
             ? error.message
             : "Failed to fetch contract state",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

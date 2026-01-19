@@ -6,8 +6,8 @@ import { motion, useAnimation } from "framer-motion";
 import { useEffect, useRef } from "react";
 import { farcasterFrame } from "@farcaster/miniapp-wagmi-connector";
 
-import { TOKEN_CONFIG } from "@/lib/chain";
 import { springs } from "@/lib/animations";
+import { PAYMENT_TOKEN_ADDRESS, PAYMENT_TOKEN_DECIMALS } from "@/lib/chain";
 
 // Animated Wallet Icon with coin drop effect
 function AnimatedWalletIcon({ triggerAnim }: { triggerAnim: boolean }) {
@@ -46,9 +46,9 @@ function AnimatedWalletIcon({ triggerAnim }: { triggerAnim: boolean }) {
         animate={
           triggerAnim
             ? {
-                scale: [1, 1.3, 1],
-                opacity: [1, 0.6, 1],
-              }
+              scale: [1, 1.3, 1],
+              opacity: [1, 0.6, 1],
+            }
             : {}
         }
         transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" as const }}
@@ -74,10 +74,10 @@ export function WalletBalance() {
   }, [isConnected, connect]);
 
   const { roundedBalance } = useGetTokenBalance(address as `0x${string}`, {
-    address: TOKEN_CONFIG.address as `0x${string}`,
-    decimals: TOKEN_CONFIG.decimals,
-    name: TOKEN_CONFIG.symbol,
-    symbol: TOKEN_CONFIG.symbol,
+    address: PAYMENT_TOKEN_ADDRESS as `0x${string}`,
+    decimals: PAYMENT_TOKEN_DECIMALS,
+    name: "USDC",
+    symbol: "USDC",
     image: "/images/tokens/usdc.png",
     chainId: chainId,
   });

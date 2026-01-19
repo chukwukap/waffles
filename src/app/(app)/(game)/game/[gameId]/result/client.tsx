@@ -17,13 +17,14 @@ import { motion } from "framer-motion";
 import { useSendCalls, useCallsStatus, useAccount } from "wagmi";
 import { useMiniKit, useComposeCast } from "@coinbase/onchainkit/minikit";
 import { Abi, encodeFunctionData } from "viem";
-import { WAFFLE_GAME_CONFIG } from "@/lib/chain";
+
 import waffleGameAbi from "@/lib/chain/abi.json";
 import { Spinner } from "@/components/ui/spinner";
 import confetti from "canvas-confetti";
 import { Game } from "@prisma";
 import { WINNERS_COUNT } from "@/lib/game/prizeDistribution";
 import { CLAIM_DELAY_MS } from "@/lib/constants";
+import { WAFFLE_CONTRACT_ADDRESS } from "@/lib/chain";
 
 // ==========================================
 // TYPES
@@ -443,7 +444,7 @@ export default function ResultPageClient({
       sendCalls({
         calls: [
           {
-            to: WAFFLE_GAME_CONFIG.address,
+            to: WAFFLE_CONTRACT_ADDRESS,
             data: encodeFunctionData({
               abi: waffleGameAbi as Abi,
               functionName: "claimPrize",

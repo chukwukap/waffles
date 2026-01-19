@@ -1,48 +1,11 @@
-/**
- * Chain Configuration
- *
- * All values derive from networks.ts, controlled by NEXT_PUBLIC_TEST_MODE.
- */
-import { networkConfig, isTestMode } from "./networks";
+import { baseSepolia } from "viem/chains";
 
-// ============================================================================
-// Chain Configuration
-// ============================================================================
+export const chain = baseSepolia;
 
-export const CHAIN_CONFIG = {
-  chain: networkConfig.chain,
-  chainId: networkConfig.chain.id,
-  isTestnet: isTestMode,
-  name: networkConfig.chain.name,
-  explorerUrl: networkConfig.chain.blockExplorers?.default.url ?? "",
-} as const;
+export const WAFFLE_CONTRACT_ADDRESS =
+  "0xeB89A087cC3898713d9f887b21Dc3BF4FC963B8F";
+const SEPOLIA_USDC_ADDRESS = "0x8aAa7ECea87244Ca4062eBce6DA61820f3830233";
+const BASE_MAINNET_USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 
-// ============================================================================
-// Token Configuration
-// ============================================================================
-
-export const TOKEN_CONFIG = {
-  address: networkConfig.contracts.usdc,
-  decimals: 6,
-  symbol: "USDC",
-} as const;
-
-// ============================================================================
-// Contract Configuration
-// ============================================================================
-
-export const WAFFLE_GAME_CONFIG = {
-  address: networkConfig.contracts.waffleGame,
-  chainId: networkConfig.chain.id,
-} as const;
-
-// ============================================================================
-// Utilities
-// ============================================================================
-
-export function getExplorerUrl(
-  hashOrAddress: string,
-  type: "tx" | "address" = "tx"
-): string {
-  return `${CHAIN_CONFIG.explorerUrl}/${type}/${hashOrAddress}`;
-}
+export const PAYMENT_TOKEN_ADDRESS = SEPOLIA_USDC_ADDRESS;
+export const PAYMENT_TOKEN_DECIMALS = 6;

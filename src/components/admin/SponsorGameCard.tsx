@@ -17,7 +17,7 @@ import {
     useApproveToken,
     useTokenAllowance
 } from "@/hooks/waffleContractHooks";
-import { TOKEN_CONFIG } from "@/lib/chain";
+import { PAYMENT_TOKEN_DECIMALS, PAYMENT_TOKEN_ADDRESS } from "@/lib/chain";
 import { parseUnits, formatUnits } from "viem";
 
 interface SponsorGameCardProps {
@@ -41,13 +41,13 @@ export function SponsorGameCard({ gameId, onchainId, gameTitle }: SponsorGameCar
     const { approve, isPending: isApprovePending, isSuccess: approveSuccess } = useApproveToken();
     const { data: allowance, refetch: refetchAllowance } = useTokenAllowance(
         address || "0x0000000000000000000000000000000000000000" as `0x${string}`,
-        TOKEN_CONFIG.address
+        PAYMENT_TOKEN_ADDRESS
     );
 
     const isPending = isSponsorPending || isApprovePending || isConfirming;
 
     // Calculate if approval is needed
-    const amountInUnits = amount ? parseUnits(amount, TOKEN_CONFIG.decimals) : BigInt(0);
+    const amountInUnits = amount ? parseUnits(amount, PAYMENT_TOKEN_DECIMALS) : BigInt(0);
     const allowanceBigInt = typeof allowance === "bigint" ? allowance : BigInt(0);
     const needsApproval = amountInUnits > BigInt(0) && amountInUnits > allowanceBigInt;
 
@@ -78,11 +78,11 @@ export function SponsorGameCard({ gameId, onchainId, gameTitle }: SponsorGameCar
     }
 
     const formattedBalance = balance
-        ? parseFloat(formatUnits(balance as bigint, TOKEN_CONFIG.decimals)).toFixed(2)
+        ? parseFloat(formatUnits(balance as bigint, PAYMENT_TOKEN_DECIMALS)).toFixed(2)
         : "0.00";
 
     const formattedPrizePool = totalPrizePool
-        ? parseFloat(formatUnits(totalPrizePool as bigint, TOKEN_CONFIG.decimals)).toFixed(2)
+        ? parseFloat(formatUnits(totalPrizePool as bigint, PAYMENT_TOKEN_DECIMALS)).toFixed(2)
         : "0.00";
 
     return (
@@ -159,7 +159,7 @@ export function SponsorGameCard({ gameId, onchainId, gameTitle }: SponsorGameCar
                                     className="w-full pl-16 pr-20 py-4 bg-white/5 border border-white/10 rounded-xl text-white text-lg font-medium placeholder-white/30 focus:ring-2 focus:ring-[#14B985]/50 focus:border-[#14B985] transition-all"
                                 />
                                 <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                                    <span className="text-white/40 text-sm">{TOKEN_CONFIG.symbol}</span>
+                                    <span className="text-white/40 text-sm">USDC</span>
                                 </div>
                             </div>
 
@@ -167,7 +167,7 @@ export function SponsorGameCard({ gameId, onchainId, gameTitle }: SponsorGameCar
                             {isConnected && (
                                 <div className="mt-2 flex items-center justify-between text-xs">
                                     <span className="text-white/40">
-                                        Balance: <span className="text-white/60">${formattedBalance} {TOKEN_CONFIG.symbol}</span>
+                                        Balance: <span className="text-white/60">${formattedBalance} USDC</span>
                                     </span>
                                     <button
                                         type="button"
@@ -196,7 +196,7 @@ export function SponsorGameCard({ gameId, onchainId, gameTitle }: SponsorGameCar
                             ) : needsApproval ? (
                                 <>
                                     <CheckCircleIcon className="h-5 w-5" />
-                                    Approve {TOKEN_CONFIG.symbol}
+                                    Approve USDC
                                 </>
                             ) : (
                                 <>

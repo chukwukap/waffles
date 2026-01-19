@@ -7,7 +7,7 @@ import { notifyTicketPurchased } from "@/lib/partykit";
 import { sendToUser } from "@/lib/notifications";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
-import { verifyTicketPurchase, TOKEN_CONFIG } from "@/lib/chain";
+import { PAYMENT_TOKEN_DECIMALS, verifyTicketPurchase } from "@/lib/chain";
 import { parseUnits } from "viem";
 
 const SERVICE = "game-actions";
@@ -160,7 +160,7 @@ export async function purchaseGameTicket(
       txHash: txHash as `0x${string}`,
       expectedGameId: game.onchainId as `0x${string}`,
       expectedBuyer: payerWallet as `0x${string}`,
-      minimumAmount: parseUnits(paidAmount.toString(), TOKEN_CONFIG.decimals),
+      minimumAmount: parseUnits(paidAmount.toString(), PAYMENT_TOKEN_DECIMALS),
     });
 
     if (!verification.verified) {

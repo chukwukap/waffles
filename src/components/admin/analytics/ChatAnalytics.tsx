@@ -102,7 +102,7 @@ export function ChatAnalytics({ data }: ChatAnalyticsProps) {
                                         border: "1px solid rgba(255,255,255,0.1)",
                                         borderRadius: "12px",
                                     }}
-                                    formatter={(value: number) => [`${value} messages`, "Round"]}
+                                    formatter={(value: number | undefined) => [`${value} messages`, "Round"]}
                                     labelFormatter={(label) => `Round ${label}`}
                                 />
                                 <Bar dataKey="messages" fill="#00CFF2" radius={[4, 4, 0, 0]} />

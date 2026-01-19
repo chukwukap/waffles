@@ -7,7 +7,6 @@
 
 import { parseUnits } from "viem";
 import { prisma } from "@/lib/db";
-import { WAFFLE_GAME_CONFIG, TOKEN_CONFIG } from "@/lib/chain/config";
 import { publicClient, getWalletClient } from "@/lib/chain/client";
 import {
   buildMerkleTree,
@@ -23,6 +22,7 @@ import {
   WINNERS_COUNT,
   type PlayerEntry,
 } from "./prizeDistribution";
+import { PAYMENT_TOKEN_DECIMALS, WAFFLE_CONTRACT_ADDRESS } from "../chain";
 
 // ============================================================================
 // Types
@@ -129,14 +129,14 @@ export async function rankGame(gameId: string): Promise<RankResult> {
     id: e.id,
     userId: e.userId,
     score: e.score,
-    paidAmount: e.paidAt ? e.paidAmount ?? 0 : 0, // Only count paid entries
+    paidAmount: e.paidAt ? (e.paidAmount ?? 0) : 0, // Only count paid entries
     username: e.user.username ?? undefined,
   }));
 
   // Calculate prize distribution using new algorithm
   const distribution = calculatePrizeDistribution(
     playerEntries,
-    game.prizePool
+    game.prizePool,
   );
 
   // Log distribution for debugging
@@ -183,7 +183,7 @@ export async function rankGame(gameId: string): Promise<RankResult> {
   });
 
   console.log(
-    `[Lifecycle] Ranked ${entries.length} entries, ${winners.length} winners`
+    `[Lifecycle] Ranked ${entries.length} entries, ${winners.length} winners`,
   );
 
   return {
@@ -263,7 +263,7 @@ export async function publishResults(gameId: string): Promise<PublishResult> {
     .map((entry) => ({
       gameId: onchainId,
       address: (entry.payerWallet || entry.user.wallet) as `0x${string}`,
-      amount: parseUnits((entry.prize ?? 0).toFixed(6), TOKEN_CONFIG.decimals),
+      amount: parseUnits((entry.prize ?? 0).toFixed(6), PAYMENT_TOKEN_DECIMALS),
     }));
 
   if (winners.length === 0)
@@ -275,7 +275,7 @@ export async function publishResults(gameId: string): Promise<PublishResult> {
   // Submit to chain
   const walletClient = getWalletClient();
   const txHash = await walletClient.writeContract({
-    address: WAFFLE_GAME_CONFIG.address,
+    address: WAFFLE_CONTRACT_ADDRESS,
     abi: waffleGameAbi,
     functionName: "submitResults",
     args: [onchainId, merkleRoot],
@@ -309,7 +309,7 @@ export async function publishResults(gameId: string): Promise<PublishResult> {
 
   // Send notifications async
   sendResultNotifications(gameId).catch((err) =>
-    console.error("[Lifecycle] Notification error:", err)
+    console.error("[Lifecycle] Notification error:", err),
   );
 
   return { success: true, merkleRoot, txHash, winnersCount: winners.length };
@@ -331,10 +331,10 @@ export async function sendResultNotifications(gameId: string) {
 
   const usersToNotify = allEntries.filter((e) => e.user.notifs.length > 0);
   const winners = usersToNotify.filter(
-    (e) => e.rank && e.rank <= WINNERS_COUNT && e.prize
+    (e) => e.rank && e.rank <= WINNERS_COUNT && e.prize,
   );
   const nonWinners = usersToNotify.filter(
-    (e) => !(e.rank && e.rank <= WINNERS_COUNT && e.prize)
+    (e) => !(e.rank && e.rank <= WINNERS_COUNT && e.prize),
   );
 
   // Winners: personalized
@@ -344,8 +344,8 @@ export async function sendResultNotifications(gameId: string) {
         title: "🏆 You Won!",
         body: `You won $${entry.prize?.toFixed(2)}! Claim your prize now.`,
         targetUrl: `${env.rootUrl}/game/${gameId}/result`,
-      })
-    )
+      }),
+    ),
   );
 
   // Non-winners: batch
@@ -356,7 +356,7 @@ export async function sendResultNotifications(gameId: string) {
         body: "See how you ranked!",
         targetUrl: `${env.rootUrl}/game/${gameId}/result`,
       },
-      { fids: nonWinners.map((e) => e.user.fid) }
+      { fids: nonWinners.map((e) => e.user.fid) },
     );
   }
 }

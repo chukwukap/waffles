@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isTestMode } from "@/lib/chain/networks";
 import { getWalletClient, publicClient } from "@/lib/chain/client";
-import { TOKEN_CONFIG } from "@/lib/chain/config";
 import { parseUnits, encodeFunctionData } from "viem";
 import { ERC20_ABI } from "@/lib/constants";
 import { z } from "zod";
+import {
+  chain,
+  PAYMENT_TOKEN_ADDRESS,
+  PAYMENT_TOKEN_DECIMALS,
+} from "@/lib/chain";
 
 // ============================================================================
 // Configuration
@@ -36,10 +39,10 @@ const requestSchema = z.object({
  */
 export async function POST(request: NextRequest) {
   // CRITICAL: Block in production mode
-  if (!isTestMode) {
+  if (chain.testnet) {
     return NextResponse.json(
       { error: "Faucet is only available in test mode" },
-      { status: 403 }
+      { status: 403 },
     );
   }
 
@@ -51,7 +54,7 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Invalid request", details: parsed.error.flatten() },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -66,7 +69,7 @@ export async function POST(request: NextRequest) {
 
     // Check admin balance
     const adminBalance = await publicClient.readContract({
-      address: TOKEN_CONFIG.address,
+      address: PAYMENT_TOKEN_ADDRESS,
       abi: ERC20_ABI,
       functionName: "balanceOf",
       args: [adminAddress],
@@ -74,20 +77,20 @@ export async function POST(request: NextRequest) {
 
     const transferAmount = parseUnits(
       AIRDROP_AMOUNT.toString(),
-      TOKEN_CONFIG.decimals
+      PAYMENT_TOKEN_DECIMALS,
     );
 
     if ((adminBalance as bigint) < transferAmount) {
       console.error("[Faucet] Admin wallet has insufficient test tokens");
       return NextResponse.json(
         { error: "Faucet is temporarily unavailable. Please try again later." },
-        { status: 503 }
+        { status: 503 },
       );
     }
 
     // Execute transfer
     const hash = await walletClient.writeContract({
-      address: TOKEN_CONFIG.address,
+      address: PAYMENT_TOKEN_ADDRESS,
       abi: ERC20_ABI,
       functionName: "transfer",
       args: [recipient, transferAmount],
@@ -104,7 +107,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(
-      `[Faucet] Successfully sent ${AIRDROP_AMOUNT} USDC to ${wallet}`
+      `[Faucet] Successfully sent ${AIRDROP_AMOUNT} USDC to ${wallet}`,
     );
 
     return NextResponse.json({
@@ -116,7 +119,7 @@ export async function POST(request: NextRequest) {
     console.error("[Faucet] Error:", error);
     return NextResponse.json(
       { error: "Failed to process faucet request" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

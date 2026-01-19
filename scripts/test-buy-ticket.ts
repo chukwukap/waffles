@@ -20,7 +20,7 @@ import { baseSepolia } from "viem/chains";
 // Contract addresses (Base Sepolia testnet)
 const WAFFLE_GAME_ADDRESS = "0xb4De98e6290142626F00A3371D5Ea2cD5B01A0A3";
 // TestUSDC with faucet function (contract updated to use this token)
-const USDC_ADDRESS = "0x8aAa7ECea87244Ca4062eBce6DA61820f3830233";
+const USDC_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
 
 // ABIs (minimal)
 const erc20Abi = [
@@ -100,7 +100,7 @@ async function main() {
   if (!privateKey) {
     console.error("❌ PRIVATE_KEY environment variable not set");
     console.log(
-      "Usage: PRIVATE_KEY=0x... npx tsx scripts/test-buy-ticket.ts <onchainId>"
+      "Usage: PRIVATE_KEY=0x... npx tsx scripts/test-buy-ticket.ts <onchainId>",
     );
     process.exit(1);
   }
@@ -110,7 +110,7 @@ async function main() {
   if (!onchainId || !onchainId.startsWith("0x")) {
     console.error("❌ Please provide onchainId as command line argument");
     console.log(
-      "Usage: PRIVATE_KEY=0x... npx tsx scripts/test-buy-ticket.ts 0x..."
+      "Usage: PRIVATE_KEY=0x... npx tsx scripts/test-buy-ticket.ts 0x...",
     );
     process.exit(1);
   }
@@ -188,7 +188,7 @@ async function main() {
     console.log(
       "USDC balance:",
       balance.toString(),
-      `(${Number(balance / BigInt(1000000))} USDC)`
+      `(${Number(balance / BigInt(1000000))} USDC)`,
     );
 
     if (balance < amount) {
@@ -246,7 +246,7 @@ async function main() {
       console.log("\n✅ SUCCESS! Ticket purchased!");
       console.log("Transaction hash:", buyHash);
       console.log(
-        `View on explorer: https://sepolia.basescan.org/tx/${buyHash}`
+        `View on explorer: https://sepolia.basescan.org/tx/${buyHash}`,
       );
     } else {
       console.log("\n❌ Transaction reverted");

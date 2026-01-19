@@ -2,7 +2,7 @@
 
 import { OnchainKitProvider as OnchainKitProviderComponent } from "@coinbase/onchainkit";
 import { env } from "@/lib/env";
-import { CHAIN_CONFIG } from "@/lib/chain";
+import { chain } from "@/lib/chain";
 
 interface Props {
     children: React.ReactNode;
@@ -16,17 +16,17 @@ interface Props {
  * without the full minikit config used in the main app.
  */
 export function AdminOnchainProvider({ children }: Props) {
+
     return (
         <OnchainKitProviderComponent
             apiKey={env.nextPublicOnchainkitApiKey}
-            chain={CHAIN_CONFIG.chain}
+            chain={chain}
             config={{
                 appearance: {
                     mode: "dark",
                 },
                 wallet: {
                     display: "modal",
-                    preference: "all",
                 },
             }}
         >

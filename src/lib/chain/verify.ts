@@ -10,7 +10,7 @@
 import { formatUnits } from "viem";
 import { publicClient } from "./client";
 import waffleGameAbi from "./abi.json";
-import { WAFFLE_GAME_CONFIG, TOKEN_CONFIG } from "./config";
+import { PAYMENT_TOKEN_DECIMALS, WAFFLE_CONTRACT_ADDRESS } from "./config";
 
 // ============================================================================
 // Types
@@ -85,7 +85,7 @@ export async function verifyTicketPurchase(
     // Look for logs from our contract that could be TicketPurchased events
     const contractLogs = receipt.logs.filter(
       (log) =>
-        log.address.toLowerCase() === WAFFLE_GAME_CONFIG.address.toLowerCase(),
+        log.address.toLowerCase() === WAFFLE_CONTRACT_ADDRESS.toLowerCase(),
     );
 
     if (contractLogs.length === 0) {
@@ -141,7 +141,7 @@ export async function verifyTicketPurchase(
     if (matchingEvent.amount < minimumAmount) {
       return {
         verified: false,
-        error: `Payment amount (${formatUnits(matchingEvent.amount, TOKEN_CONFIG.decimals)}) is less than minimum required.`,
+        error: `Payment amount (${formatUnits(matchingEvent.amount, PAYMENT_TOKEN_DECIMALS)}) is less than minimum required.`,
       };
     }
 
@@ -154,7 +154,7 @@ export async function verifyTicketPurchase(
     let hasTicket: boolean;
     try {
       hasTicket = (await publicClient.readContract({
-        address: WAFFLE_GAME_CONFIG.address,
+        address: WAFFLE_CONTRACT_ADDRESS,
         abi: waffleGameAbi,
         functionName: "hasTicket",
         args: [expectedGameId, expectedBuyer],
@@ -184,7 +184,7 @@ export async function verifyTicketPurchase(
         gameId: eventArgs.gameId,
         buyer: eventArgs.buyer,
         amount: eventArgs.amount,
-        amountFormatted: formatUnits(eventArgs.amount, TOKEN_CONFIG.decimals),
+        amountFormatted: formatUnits(eventArgs.amount, PAYMENT_TOKEN_DECIMALS),
       },
     };
   } catch (error) {

@@ -4,7 +4,11 @@ import {
   useWaitForTransactionReceipt,
 } from "wagmi";
 import { parseUnits } from "viem";
-import { WAFFLE_GAME_CONFIG, TOKEN_CONFIG } from "@/lib/chain";
+import {
+  PAYMENT_TOKEN_ADDRESS,
+  PAYMENT_TOKEN_DECIMALS,
+  WAFFLE_CONTRACT_ADDRESS,
+} from "@/lib/chain";
 import waffleGameAbi from "@/lib/chain/abi.json";
 import { ERC20_ABI } from "@/lib/constants";
 
@@ -13,7 +17,7 @@ import { ERC20_ABI } from "@/lib/constants";
  */
 export function useGetGame(onchainId: `0x${string}`) {
   return useReadContract({
-    address: WAFFLE_GAME_CONFIG.address,
+    address: WAFFLE_CONTRACT_ADDRESS,
     abi: waffleGameAbi,
     functionName: "getGame",
     args: [onchainId],
@@ -26,7 +30,7 @@ export function useGetGame(onchainId: `0x${string}`) {
  */
 export function useContractToken() {
   return useReadContract({
-    address: WAFFLE_GAME_CONFIG.address,
+    address: WAFFLE_CONTRACT_ADDRESS,
     abi: waffleGameAbi,
     functionName: "paymentToken",
   });
@@ -37,10 +41,10 @@ export function useContractToken() {
  */
 export function useHasTicket(
   onchainId: `0x${string}`,
-  playerAddress: `0x${string}`
+  playerAddress: `0x${string}`,
 ) {
   return useReadContract({
-    address: WAFFLE_GAME_CONFIG.address,
+    address: WAFFLE_CONTRACT_ADDRESS,
     abi: waffleGameAbi,
     functionName: "hasTicket",
     args: [onchainId, playerAddress],
@@ -55,10 +59,10 @@ export function useHasTicket(
  */
 export function useHasClaimed(
   onchainId: `0x${string}`,
-  playerAddress: `0x${string}`
+  playerAddress: `0x${string}`,
 ) {
   return useReadContract({
-    address: WAFFLE_GAME_CONFIG.address,
+    address: WAFFLE_CONTRACT_ADDRESS,
     abi: waffleGameAbi,
     functionName: "hasClaimed",
     args: [onchainId, playerAddress],
@@ -72,7 +76,7 @@ export function useHasClaimed(
  */
 export function useTokenBalance(
   address: `0x${string}` | undefined,
-  tokenAddress: `0x${string}` = TOKEN_CONFIG.address
+  tokenAddress: `0x${string}` = PAYMENT_TOKEN_ADDRESS,
 ) {
   return useReadContract({
     address: tokenAddress,
@@ -92,13 +96,13 @@ export function useTokenBalance(
  */
 export function useTokenAllowance(
   ownerAddress: `0x${string}`,
-  tokenAddress: `0x${string}`
+  tokenAddress: `0x${string}`,
 ) {
   return useReadContract({
     address: tokenAddress,
     abi: ERC20_ABI,
     functionName: "allowance",
-    args: [ownerAddress, WAFFLE_GAME_CONFIG.address],
+    args: [ownerAddress, WAFFLE_CONTRACT_ADDRESS],
   });
 }
 
@@ -112,12 +116,12 @@ export function useApproveToken() {
   });
 
   const approve = (amount: string) => {
-    const amountInUnits = parseUnits(amount, TOKEN_CONFIG.decimals);
+    const amountInUnits = parseUnits(amount, PAYMENT_TOKEN_DECIMALS);
     writeContract({
-      address: TOKEN_CONFIG.address,
+      address: PAYMENT_TOKEN_ADDRESS,
       abi: ERC20_ABI,
       functionName: "approve",
-      args: [WAFFLE_GAME_CONFIG.address, amountInUnits],
+      args: [WAFFLE_CONTRACT_ADDRESS, amountInUnits],
     });
   };
 
@@ -134,9 +138,9 @@ export function useBuyTicket() {
   });
 
   const buyTicket = (onchainId: `0x${string}`, amount: string) => {
-    const amountInUnits = parseUnits(amount, TOKEN_CONFIG.decimals);
+    const amountInUnits = parseUnits(amount, PAYMENT_TOKEN_DECIMALS);
     writeContract({
-      address: WAFFLE_GAME_CONFIG.address,
+      address: WAFFLE_CONTRACT_ADDRESS,
       abi: waffleGameAbi,
       functionName: "buyTicket",
       args: [onchainId, amountInUnits],
@@ -158,10 +162,10 @@ export function useClaimPrize() {
   const claimPrize = (
     onchainId: `0x${string}`,
     amount: bigint,
-    proof: `0x${string}`[]
+    proof: `0x${string}`[],
   ) => {
     writeContract({
-      address: WAFFLE_GAME_CONFIG.address,
+      address: WAFFLE_CONTRACT_ADDRESS,
       abi: waffleGameAbi,
       functionName: "claimPrize",
       args: [onchainId, amount, proof],
@@ -181,9 +185,9 @@ export function useSponsorPrizePool() {
   });
 
   const sponsorPrizePool = (onchainId: `0x${string}`, amount: string) => {
-    const amountInUnits = parseUnits(amount, TOKEN_CONFIG.decimals);
+    const amountInUnits = parseUnits(amount, PAYMENT_TOKEN_DECIMALS);
     writeContract({
-      address: WAFFLE_GAME_CONFIG.address,
+      address: WAFFLE_CONTRACT_ADDRESS,
       abi: waffleGameAbi,
       functionName: "sponsorPrizePool",
       args: [onchainId, amountInUnits],
@@ -199,7 +203,7 @@ export function useSponsorPrizePool() {
  */
 export function useGetTotalPrizePool(onchainId: `0x${string}`) {
   return useReadContract({
-    address: WAFFLE_GAME_CONFIG.address,
+    address: WAFFLE_CONTRACT_ADDRESS,
     abi: waffleGameAbi,
     functionName: "getTotalPrizePool",
     args: [onchainId],
@@ -214,7 +218,7 @@ export function useGetTotalPrizePool(onchainId: `0x${string}`) {
  */
 export function useAccumulatedFees() {
   return useReadContract({
-    address: WAFFLE_GAME_CONFIG.address,
+    address: WAFFLE_CONTRACT_ADDRESS,
     abi: waffleGameAbi,
     functionName: "accumulatedFees",
   });
@@ -225,7 +229,7 @@ export function useAccumulatedFees() {
  */
 export function usePlatformFee() {
   return useReadContract({
-    address: WAFFLE_GAME_CONFIG.address,
+    address: WAFFLE_CONTRACT_ADDRESS,
     abi: waffleGameAbi,
     functionName: "platformFeePermyriad",
   });

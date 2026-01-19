@@ -6,7 +6,6 @@ import { useAccount, useConnect } from "wagmi";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { farcasterFrame } from "@farcaster/miniapp-wagmi-connector";
 import { parseUnits } from "viem";
-import { CHAIN_CONFIG, TOKEN_CONFIG } from "@/lib/chain";
 import { useTokenBalance } from "@/hooks/waffleContractHooks";
 import { useFaucet } from "@/hooks/useFaucet";
 
@@ -15,6 +14,7 @@ import {
   getPurchaseButtonText,
 } from "@/hooks/useTicketPurchase";
 import { PurchaseView, type PurchaseStep } from "./PurchaseView";
+import { PAYMENT_TOKEN_DECIMALS } from "@/lib/chain";
 
 interface BuyTicketModalProps {
   isOpen: boolean;
@@ -81,7 +81,7 @@ export function BuyTicketModal({
 
   // Auto-faucet in test mode when wallet has insufficient balance
   useEffect(() => {
-    const priceInUnits = parseUnits(selectedPrice.toString(), TOKEN_CONFIG.decimals);
+    const priceInUnits = parseUnits(selectedPrice.toString(), PAYMENT_TOKEN_DECIMALS);
     const hasInsufficientBalance = balance !== undefined && (balance as bigint) < priceInUnits;
 
     if (

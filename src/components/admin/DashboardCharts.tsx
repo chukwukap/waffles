@@ -129,7 +129,7 @@ export function DashboardCharts({
                                 contentStyle={tooltipStyle}
                                 labelStyle={tooltipLabelStyle}
                                 itemStyle={{ color: COLORS.gold, fontWeight: 600 }}
-                                formatter={(value: number) => [`$${value}`, 'Revenue']}
+                                formatter={(value: number | undefined) => [`$${value ?? 0}`, 'Revenue']}
                             />
                             <Bar
                                 dataKey="amount"

@@ -13,9 +13,13 @@ import { useTokenAllowance } from "./waffleContractHooks";
 import { notify } from "@/components/ui/Toaster";
 import { playSound } from "@/lib/sounds";
 import waffleGameAbi from "@/lib/chain/abi.json";
-import { WAFFLE_GAME_CONFIG, TOKEN_CONFIG } from "@/lib/chain";
 import { ERC20_ABI } from "@/lib/constants";
 import { purchaseGameTicket } from "@/actions/game";
+import {
+  PAYMENT_TOKEN_ADDRESS,
+  PAYMENT_TOKEN_DECIMALS,
+  WAFFLE_CONTRACT_ADDRESS,
+} from "@/lib/chain";
 
 // ==========================================
 // TYPES
@@ -68,15 +72,17 @@ export function useTicketPurchase(
   // TOKEN & ALLOWANCE
   // ==========================================
   const priceInUnits = useMemo(
-    () => parseUnits(price.toString(), TOKEN_CONFIG.decimals),
+    () => parseUnits(price.toString(), PAYMENT_TOKEN_DECIMALS),
     [price],
   );
 
-  const tokenAddress = TOKEN_CONFIG.address;
+  const tokenAddress = PAYMENT_TOKEN_ADDRESS;
   const { data: allowance } = useTokenAllowance(
     address as `0x${string}`,
     tokenAddress,
   );
+
+  // console.log("[DEBUG] Token allowance:", allowance);
 
   const needsApproval = useMemo(() => {
     if (!allowance) return true;
@@ -87,26 +93,45 @@ export function useTicketPurchase(
   // BUILD TRANSACTION CALLS
   // ==========================================
   const calls = useMemo(() => {
-    if (!tokenAddress || !onchainId) return [];
+    console.log("[DEBUG] Building calls:", {
+      tokenAddress,
+      onchainId,
+      needsApproval,
+      priceInUnits: priceInUnits?.toString(),
+    });
+
+    if (!tokenAddress || !onchainId) {
+      console.log("[DEBUG] Cannot build calls - missing:", {
+        tokenAddress,
+        onchainId,
+      });
+      return [];
+    }
 
     const callList: Array<{ to: `0x${string}`; data: `0x${string}` }> = [];
 
     if (needsApproval) {
+      console.log("[DEBUG] Adding approval call");
       callList.push({
         to: tokenAddress,
         data: encodeFunctionData({
           abi: ERC20_ABI,
           functionName: "approve",
           args: [
-            WAFFLE_GAME_CONFIG.address,
-            parseUnits("5000", TOKEN_CONFIG.decimals),
+            WAFFLE_CONTRACT_ADDRESS,
+            parseUnits("5000", PAYMENT_TOKEN_DECIMALS),
           ],
         }),
       });
     }
 
+    console.log("[DEBUG] Adding buyTicket call:", {
+      contract: WAFFLE_CONTRACT_ADDRESS,
+      onchainId,
+      amount: priceInUnits?.toString(),
+    });
     callList.push({
-      to: WAFFLE_GAME_CONFIG.address,
+      to: WAFFLE_CONTRACT_ADDRESS,
       data: encodeFunctionData({
         abi: waffleGameAbi,
         functionName: "buyTicket",
@@ -114,6 +139,7 @@ export function useTicketPurchase(
       }),
     });
 
+    console.log("[DEBUG] Built calls:", callList.length, "calls");
     return callList;
   }, [onchainId, priceInUnits, needsApproval, tokenAddress]);
 
@@ -210,23 +236,37 @@ export function useTicketPurchase(
   }, [sendError]);
 
   useEffect(() => {
+    console.log("[DEBUG] callsStatus changed:", {
+      status: callsStatus?.status,
+      receipts: callsStatus?.receipts?.length,
+      callsId: callsId?.id,
+    });
+
     if (!callsStatus) return;
 
     if (callsStatus.status === "pending" && state.step === "pending") {
+      console.log("[DEBUG] Status: confirming");
       setState({ step: "confirming" });
     }
 
     if (callsStatus.status === "failure") {
+      console.log("[DEBUG] Status: failure", callsStatus);
       setState({ step: "error", error: "Transaction failed on-chain" });
       notify.error("Transaction failed. Check your balance.");
     }
 
     if (callsStatus.status === "success") {
+      console.log("[DEBUG] Status: success, receipts:", callsStatus.receipts);
       const txHash =
         callsStatus.receipts?.[callsStatus.receipts.length - 1]
           ?.transactionHash;
+      console.log("[DEBUG] Extracted txHash:", txHash);
       setState({ step: "syncing", txHash });
-      if (txHash) syncWithBackend(txHash);
+      if (txHash) {
+        syncWithBackend(txHash);
+      } else {
+        console.error("[DEBUG] No txHash found in receipts!");
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [callsStatus]);
@@ -249,7 +289,7 @@ export function useTicketPurchase(
     if (!isConnected || !address) {
       setState({ step: "connecting" });
       try {
-        await connectAsync({ connector: farcasterFrame() });
+        // await connectAsync({ connector: farcasterFrame() });
         setState({ step: "idle" });
         notify.info("Wallet connected! Tap again to buy.");
         return;
@@ -261,16 +301,27 @@ export function useTicketPurchase(
     }
 
     if (calls.length === 0) {
+      console.log("[DEBUG] No calls built, cannot proceed");
       notify.error("Not ready. Please wait...");
       return;
     }
+
+    console.log("[DEBUG] Starting purchase:", {
+      callsCount: calls.length,
+      address,
+      onchainId,
+      price,
+    });
 
     resetSendCalls();
     setState({ step: "pending" });
 
     try {
+      console.log("[DEBUG] Calling sendCalls...");
       sendCalls({ calls, capabilities: { atomicBatch: { supported: true } } });
-    } catch {
+      console.log("[DEBUG] sendCalls returned");
+    } catch (err) {
+      console.error("[DEBUG] sendCalls threw error:", err);
       setState({ step: "error", error: "Transaction failed" });
       notify.error("Transaction failed");
     }

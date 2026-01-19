@@ -1,19 +1,12 @@
-/**
- * Chain Module - Unified Exports
- * Import everything from @/lib/chain
- */
-
-// Configuration
-export {
-  CHAIN_CONFIG,
-  TOKEN_CONFIG,
-  WAFFLE_GAME_CONFIG,
-  getExplorerUrl,
-} from "./config";
-
 // Clients
 export { publicClient, getAdminWallet, getWalletClient } from "./client";
 
+export {
+  chain,
+  PAYMENT_TOKEN_ADDRESS,
+  PAYMENT_TOKEN_DECIMALS,
+  WAFFLE_CONTRACT_ADDRESS,
+} from "./config";
 // Game operations
 export {
   generateOnchainGameId,

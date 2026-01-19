@@ -1,8 +1,7 @@
 "use client";
 
-import { useAccount, useChainId, useConnect, useDisconnect } from "wagmi";
+import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { injected } from "wagmi/connectors";
-import { CHAIN_CONFIG } from "@/lib/chain";
 import {
     ArrowRightEndOnRectangleIcon,
     WalletIcon
@@ -14,13 +13,11 @@ interface AdminHeaderProps {
 }
 
 export function AdminHeader({ username, pfpUrl }: AdminHeaderProps) {
-    const { isConnected, address } = useAccount();
-    const chainId = useChainId();
+    const { isConnected, address, chain } = useAccount();
+
     const { connect, isPending: isConnecting } = useConnect();
     const { disconnect } = useDisconnect();
 
-    const isCorrectNetwork = chainId === CHAIN_CONFIG.chainId;
-    const networkName = CHAIN_CONFIG.isTestnet ? "Sepolia" : "Base";
 
     return (
         <header className="bg-[#0a0a0b]/80 border-b border-white/6 backdrop-blur-xl flex h-16 items-center justify-between px-6">
@@ -34,13 +31,13 @@ export function AdminHeader({ username, pfpUrl }: AdminHeaderProps) {
                 {/* Wallet Section */}
                 {isConnected ? (
                     <div className="flex items-center gap-1.5">
-                        <div className={`flex items-center gap-2 px-2.5 py-1 rounded-lg text-xs ${isCorrectNetwork
-                                ? "bg-[#14B985]/10 text-[#14B985]"
-                                : "bg-red-500/10 text-red-400"
+                        <div className={`flex items-center gap-2 px-2.5 py-1 rounded-lg text-xs ${chain?.testnet
+                            ? "bg-[#14B985]/10 text-[#14B985]"
+                            : "bg-red-500/10 text-red-400"
                             }`}>
-                            <div className={`w-1.5 h-1.5 rounded-full ${isCorrectNetwork ? "bg-[#14B985]" : "bg-red-400"
+                            <div className={`w-1.5 h-1.5 rounded-full ${chain?.testnet ? "bg-[#14B985]" : "bg-red-400"
                                 }`} />
-                            <span className="font-medium">{networkName}</span>
+                            <span className="font-medium">{chain?.name}</span>
                             <span className="text-white/30">·</span>
                             <span className="text-white/50 font-mono">
                                 {address?.slice(0, 4)}...{address?.slice(-3)}

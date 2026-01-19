@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { isTestMode } from "@/lib/chain/networks";
+import { chain } from "@/lib/chain";
 
 interface FaucetState {
   isLoading: boolean;
@@ -24,7 +24,7 @@ export function useFaucet() {
 
   const requestTokens = useCallback(async (wallet: string) => {
     // Block in production
-    if (!isTestMode) {
+    if (chain.testnet) {
       console.log("[Faucet] Blocked - not in test mode");
       return { success: false, error: "Not in test mode" };
     }
@@ -79,6 +79,6 @@ export function useFaucet() {
     ...state,
     requestTokens,
     reset,
-    isTestMode,
+    isTestMode: chain.testnet,
   };
 }
