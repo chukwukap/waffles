@@ -116,6 +116,45 @@ export default function ResultPageClient({
     fetchEntry();
   }, [fetchEntry]);
 
+  // Recovery: Check for pending claims that failed to sync
+  useEffect(() => {
+    if (!gameId || !address) return;
+
+    const key = `pending-claim-${gameId}`;
+    const pendingData = localStorage.getItem(key);
+
+    if (!pendingData) return;
+
+    try {
+      const pending = JSON.parse(pendingData);
+
+      // Only recover if from within last 24 hours
+      if (Date.now() - pending.timestamp > 24 * 60 * 60 * 1000) {
+        localStorage.removeItem(key);
+        return;
+      }
+
+      console.log("[Claim Recovery] Found pending claim, attempting sync:", pending);
+
+      // Attempt recovery
+      sdk.quickAuth.fetch(`/api/v1/games/${gameId}/claim`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ txHash: pending.txHash, wallet: pending.wallet }),
+      }).then((response) => {
+        if (response.ok) {
+          console.log("[Claim Recovery] Successfully recovered pending claim!");
+          localStorage.removeItem(key);
+          fetchEntry(); // Refresh entry data
+        }
+      }).catch((err) => {
+        console.error("[Claim Recovery] Recovery error:", err);
+      });
+    } catch {
+      localStorage.removeItem(key);
+    }
+  }, [gameId, address, fetchEntry]);
+
   // Alias for refetchEntry (used in claim flow)
   const refetchEntry = fetchEntry;
 
@@ -333,31 +372,82 @@ export default function ResultPageClient({
     }
   }, [sendError]);
 
-  // Sync claim with backend (defined before the effect that uses it)
-  const syncClaimWithBackend = useCallback(async () => {
-    try {
-      const response = await sdk.quickAuth.fetch(
-        `/api/v1/games/${gameId}/claim`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+  // Sync claim with backend (with retries)
+  const syncClaimWithBackend = useCallback(async (txHash: string) => {
+    if (!address) return;
 
-      if (!response.ok) {
-        console.warn("[Claim] Backend sync failed but on-chain succeeded");
+    const MAX_RETRIES = 5;
+    let lastError = "Sync failed";
+
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        const response = await sdk.quickAuth.fetch(
+          `/api/v1/games/${gameId}/claim`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ txHash, wallet: address }),
+          }
+        );
+
+        if (response.ok) {
+          // Success! Clear any pending recovery data
+          localStorage.removeItem(`pending-claim-${gameId}`);
+          setClaimState("success");
+          refetchEntry();
+          playSound("purchase");
+          notify.success("Prize claimed! 🎉");
+          sdk.haptics.impactOccurred("medium").catch(() => { });
+          return;
+        }
+
+        const data = await response.json();
+
+        // If already claimed, treat as success (idempotent)
+        if (data.code === "ALREADY_CLAIMED" || data.success) {
+          localStorage.removeItem(`pending-claim-${gameId}`);
+          setClaimState("success");
+          refetchEntry();
+          return;
+        }
+
+        // Verification failed - don't retry
+        if (data.code === "VERIFICATION_FAILED") {
+          console.error("[Claim] Verification failed:", data.error);
+          setClaimError(data.error || "Verification failed");
+          setClaimState("error");
+          notify.error(data.error || "Claim verification failed");
+          return;
+        }
+
+        lastError = data.error || "Sync failed";
+      } catch (err) {
+        console.error(`[Claim] Sync attempt ${attempt + 1} failed:`, err);
+        lastError = err instanceof Error ? err.message : "Sync failed";
       }
-    } catch (error) {
-      console.error("[Claim] Backend sync error:", error);
-    } finally {
-      // Always mark as success since on-chain TX succeeded
-      setClaimState("success");
-      refetchEntry(); // Refetch to get updated claimedAt
-      playSound("purchase");
-      notify.success("Prize claimed! 🎉");
-      sdk.haptics.impactOccurred("medium").catch(() => { });
+
+      // Wait before retry (exponential backoff: 1s, 2s, 4s, 8s, 16s)
+      if (attempt < MAX_RETRIES - 1) {
+        await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt)));
+      }
     }
-  }, [gameId, refetchEntry]);
+
+    // All retries failed - save for recovery on page load
+    console.error("[Claim] All sync retries failed, saving for recovery");
+    localStorage.setItem(`pending-claim-${gameId}`, JSON.stringify({
+      txHash,
+      wallet: address,
+      timestamp: Date.now(),
+    }));
+
+    // Still mark as success since on-chain TX succeeded
+    // Backend will catch up on retry or admin can verify
+    setClaimState("success");
+    refetchEntry();
+    playSound("purchase");
+    notify.success("Prize claimed! Syncing with server...");
+    sdk.haptics.impactOccurred("medium").catch(() => { });
+  }, [gameId, address, refetchEntry]);
 
   // Handle calls status
   useEffect(() => {
@@ -372,11 +462,22 @@ export default function ResultPageClient({
     }
 
     if (callsStatus.status === "success") {
-      console.log("[Claim] TX confirmed!");
-      // Sync with backend silently
-      syncClaimWithBackend();
+      // Extract txHash from receipts
+      const txHash = callsStatus.receipts?.[callsStatus.receipts.length - 1]?.transactionHash;
+      console.log("[Claim] TX confirmed! Hash:", txHash);
+
+      if (txHash) {
+        syncClaimWithBackend(txHash);
+      } else {
+        console.error("[Claim] No txHash found in receipts!");
+        // Still mark as success since on-chain worked
+        setClaimState("success");
+        refetchEntry();
+        playSound("purchase");
+        notify.success("Prize claimed!");
+      }
     }
-  }, [callsStatus, syncClaimWithBackend]);
+  }, [callsStatus, syncClaimWithBackend, refetchEntry]);
 
   // Handle claim button click
   const handleClaim = useCallback(async () => {

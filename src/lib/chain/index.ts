@@ -33,7 +33,10 @@ export {
 // Payment verification
 export {
   verifyTicketPurchase,
+  verifyClaim,
   waitForTransaction,
   type VerifyTicketPurchaseResult,
   type VerifyTicketPurchaseInput,
+  type VerifyClaimResult,
+  type VerifyClaimInput,
 } from "./verify";

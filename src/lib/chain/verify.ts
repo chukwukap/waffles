@@ -222,3 +222,167 @@ export async function waitForTransaction(
     return { success: false };
   }
 }
+
+// ============================================================================
+// Claim Verification
+// ============================================================================
+
+export interface VerifyClaimResult {
+  verified: boolean;
+  error?: string;
+  details?: {
+    gameId: `0x${string}`;
+    claimer: `0x${string}`;
+    amount: bigint;
+    amountFormatted: string;
+  };
+}
+
+export interface VerifyClaimInput {
+  txHash: `0x${string}`;
+  expectedGameId: `0x${string}`;
+  expectedClaimer: `0x${string}`;
+}
+
+/**
+ * Verify a prize claim transaction on-chain.
+ *
+ * Performs 3-layer verification:
+ * 1. Transaction receipt - ensures tx succeeded
+ * 2. Event logs - ensures PrizeClaimed was emitted with correct params
+ * 3. Contract state - ensures hasClaimed() returns true (reorg protection)
+ */
+export async function verifyClaim(
+  input: VerifyClaimInput,
+): Promise<VerifyClaimResult> {
+  const { txHash, expectedGameId, expectedClaimer } = input;
+
+  try {
+    // =========================================================================
+    // Layer 1: Transaction Receipt Verification
+    // =========================================================================
+
+    let receipt;
+    try {
+      receipt = await publicClient.getTransactionReceipt({ hash: txHash });
+    } catch {
+      return {
+        verified: false,
+        error: "Transaction not found. It may still be pending.",
+      };
+    }
+
+    if (receipt.status !== "success") {
+      return {
+        verified: false,
+        error: "Transaction reverted on-chain.",
+      };
+    }
+
+    // =========================================================================
+    // Layer 2: Event Log Verification
+    // =========================================================================
+
+    // Look for logs from our contract
+    const contractLogs = receipt.logs.filter(
+      (log) =>
+        log.address.toLowerCase() === WAFFLE_CONTRACT_ADDRESS.toLowerCase(),
+    );
+
+    if (contractLogs.length === 0) {
+      return {
+        verified: false,
+        error: "No events from WaffleGame contract found.",
+      };
+    }
+
+    // Parse PrizeClaimed event - has:
+    // topics[0] = event signature
+    // topics[1] = gameId (indexed)
+    // topics[2] = claimer (indexed)
+    // data = amount (not indexed)
+    let matchingEvent: {
+      gameId: `0x${string}`;
+      claimer: `0x${string}`;
+      amount: bigint;
+    } | null = null;
+
+    for (const log of contractLogs) {
+      if (log.topics.length >= 3) {
+        const logGameId = log.topics[1] as `0x${string}`;
+        const claimerPadded = log.topics[2] as `0x${string}`;
+        const logClaimer = `0x${claimerPadded.slice(-40)}` as `0x${string}`;
+        const logAmount = log.data ? BigInt(log.data) : BigInt(0);
+
+        if (
+          logGameId.toLowerCase() === expectedGameId.toLowerCase() &&
+          logClaimer.toLowerCase() === expectedClaimer.toLowerCase()
+        ) {
+          matchingEvent = {
+            gameId: logGameId,
+            claimer: logClaimer,
+            amount: logAmount,
+          };
+          break;
+        }
+      }
+    }
+
+    if (!matchingEvent) {
+      return {
+        verified: false,
+        error: "PrizeClaimed event does not match expected game/claimer.",
+      };
+    }
+
+    // =========================================================================
+    // Layer 3: Contract State Verification (Reorg Protection)
+    // =========================================================================
+
+    let hasClaimed: boolean;
+    try {
+      hasClaimed = (await publicClient.readContract({
+        address: WAFFLE_CONTRACT_ADDRESS,
+        abi: waffleGameAbi,
+        functionName: "hasClaimed",
+        args: [expectedGameId, expectedClaimer],
+      })) as boolean;
+    } catch {
+      return {
+        verified: false,
+        error: "Failed to verify claim on contract. Please try again.",
+      };
+    }
+
+    if (!hasClaimed) {
+      return {
+        verified: false,
+        error:
+          "Claim not recorded on-chain. Possible chain reorganization - please wait and try again.",
+      };
+    }
+
+    // =========================================================================
+    // All 3 Layers Passed - Verified!
+    // =========================================================================
+
+    return {
+      verified: true,
+      details: {
+        gameId: matchingEvent.gameId,
+        claimer: matchingEvent.claimer,
+        amount: matchingEvent.amount,
+        amountFormatted: formatUnits(
+          matchingEvent.amount,
+          PAYMENT_TOKEN_DECIMALS,
+        ),
+      },
+    };
+  } catch (error) {
+    console.error("[verifyClaim] Unexpected error:", error);
+    return {
+      verified: false,
+      error: `Verification error: ${error instanceof Error ? error.message : "Unknown error"}`,
+    };
+  }
+}

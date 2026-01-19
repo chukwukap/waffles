@@ -19,9 +19,9 @@ export function OnchainKitProvider({ children }: Props) {
           mode: "dark",
         },
         wallet: {
-          display: "modal", supportedWallets: {
+          display: "modal",
+          supportedWallets: {
             frame: true,
-
           }
         },
       }}
