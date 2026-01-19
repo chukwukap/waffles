@@ -14,6 +14,7 @@ export function OnchainKitProvider({ children }: Props) {
     <OnchainKitProviderComponent
       apiKey={env.nextPublicOnchainkitApiKey}
       chain={chain}
+      rpcUrl="https://sepolia.base.org"
       config={{
         appearance: {
           mode: "dark",
