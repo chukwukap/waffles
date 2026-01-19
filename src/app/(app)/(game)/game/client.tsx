@@ -2,9 +2,13 @@
 
 import { useEffect } from "react";
 import { motion } from "framer-motion";
+import { useAccount } from "wagmi";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
 import { springs, staggerContainer, fadeInUp } from "@/lib/animations";
 import type { GameWithQuestionCount } from "@/lib/game";
+import { usePendingPurchaseRecovery } from "@/hooks/usePendingPurchaseRecovery";
+import { useRealtime } from "@/components/providers/RealtimeProvider";
 
 import { GameChat } from "./_components/chat/GameChat";
 import { LiveEventFeed } from "./_components/LiveEventFeed";
@@ -29,9 +33,23 @@ export function GameHub({ game }: GameHubProps) {
   // Background music
   const { playBgMusic, stopBgMusic } = useSounds();
 
+  // User context for recovery
+  const { context } = useMiniKit();
+  const { address } = useAccount();
+  const { refetchEntry } = useRealtime();
+  const fid = context?.user?.fid;
+
   // Derived state - check if game has ended by comparing current time to endsAt
   const hasEnded = game ? Date.now() >= game.endsAt.getTime() : true;
   const hasActiveGame = game && !hasEnded;
+
+  // Recovery: Check for pending purchases that failed to sync
+  usePendingPurchaseRecovery(
+    game?.id ?? "",
+    fid,
+    address,
+    refetchEntry, // Callback when recovered
+  );
 
   // Background music control
   useEffect(() => {

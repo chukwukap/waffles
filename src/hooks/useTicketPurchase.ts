@@ -164,27 +164,40 @@ export function useTicketPurchase(
   });
 
   // ==========================================
-  // SYNC WITH BACKEND (Server Action)
+  // SYNC WITH BACKEND (with retries)
   // ==========================================
   const syncWithBackend = useCallback(
     async (txHash: string) => {
       if (!address || !fid) return;
 
-      try {
-        // Use Server Action instead of API route
-        // This automatically revalidates cache via revalidatePath
-        const result = await purchaseGameTicket({
-          gameId,
-          fid,
-          txHash,
-          paidAmount: price,
-          payerWallet: address,
-        });
+      const MAX_RETRIES = 5;
+      let lastError: string = "Sync failed";
 
-        if (!result.success) {
-          // Handle verification failure specifically
+      for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        try {
+          const result = await purchaseGameTicket({
+            gameId,
+            fid,
+            txHash,
+            paidAmount: price,
+            payerWallet: address,
+          });
+
+          if (result.success) {
+            // Success! Clear any pending recovery data
+            localStorage.removeItem(`pending-purchase-${gameId}`);
+            setState({ step: "success", txHash });
+            playSound("purchase");
+            notify.success("Ticket purchased! 🎉");
+            sdk.haptics.impactOccurred("medium").catch(() => {});
+            refetchEntry();
+            router.refresh();
+            onSuccess?.();
+            return;
+          }
+
+          // Verification failure - don't retry, show error
           if (result.code === "VERIFICATION_FAILED") {
-            // On-chain verification failed - do NOT mark as success
             console.error(
               "[useTicketPurchase] Verification failed:",
               result.error,
@@ -193,23 +206,39 @@ export function useTicketPurchase(
             setState({ step: "error", error: result.error });
             return;
           }
-          throw new Error(result.error || "Sync failed");
+
+          lastError = result.error || "Sync failed";
+        } catch (err) {
+          console.error(
+            `[useTicketPurchase] Sync attempt ${attempt + 1} failed:`,
+            err,
+          );
+          lastError = err instanceof Error ? err.message : "Sync failed";
         }
 
-        setState({ step: "success", txHash });
-        playSound("purchase");
-        notify.success("Ticket purchased! 🎉");
-        sdk.haptics.impactOccurred("medium").catch(() => {});
-        refetchEntry();
-        router.refresh(); // Extra client-side refresh for immediate update
-        onSuccess?.();
-      } catch (err) {
-        console.error("[useTicketPurchase] Sync error:", err);
-        const errorMsg = err instanceof Error ? err.message : "Sync failed";
-        // Don't mark as success if we have an actual error
-        notify.error(errorMsg);
-        setState({ step: "error", error: errorMsg });
+        // Wait before retry (exponential backoff: 1s, 2s, 4s, 8s, 16s)
+        if (attempt < MAX_RETRIES - 1) {
+          await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt)));
+        }
       }
+
+      // All retries failed - save for recovery on page load
+      console.error(
+        "[useTicketPurchase] All sync retries failed, saving for recovery",
+      );
+      localStorage.setItem(
+        `pending-purchase-${gameId}`,
+        JSON.stringify({
+          txHash,
+          fid,
+          wallet: address,
+          price,
+          timestamp: Date.now(),
+        }),
+      );
+
+      notify.error("Sync failed. Your purchase will be verified shortly.");
+      setState({ step: "error", error: lastError, txHash });
     },
     [address, fid, gameId, price, refetchEntry, router, onSuccess],
   );
