@@ -13,13 +13,23 @@ export const REFERRAL_BONUS_POINTS = 200;
 export const CLAIM_DELAY_MS = 60 * 60 * 1000; // 1 hour in milliseconds
 // ERC20 approve ABI
 
-// ERC20 ABI for approve
+// ERC20 ABI for approve, transfer, and balance
 export const ERC20_ABI = [
   {
     type: "function",
     name: "approve",
     inputs: [
       { name: "spender", type: "address" },
+      { name: "amount", type: "uint256" },
+    ],
+    outputs: [{ name: "", type: "bool" }],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "transfer",
+    inputs: [
+      { name: "to", type: "address" },
       { name: "amount", type: "uint256" },
     ],
     outputs: [{ name: "", type: "bool" }],
