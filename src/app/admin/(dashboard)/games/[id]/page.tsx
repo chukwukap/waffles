@@ -10,6 +10,7 @@ import {
     CurrencyDollarIcon,
 } from "@heroicons/react/24/outline";
 import { getGamePhase } from "@/lib/types";
+import { SponsorGameCard } from "@/components/admin/SponsorGameCard";
 
 // ============================================
 // HELPER COMPONENTS
@@ -276,6 +277,15 @@ export default async function GameDetailPage({
                     color="green"
                 />
             </div>
+
+            {/* Sponsor Prize Pool Card - Only show for on-chain games */}
+            {game.onchainId && (
+                <SponsorGameCard
+                    gameId={game.id}
+                    onchainId={game.onchainId as `0x${string}`}
+                    gameTitle={game.title}
+                />
+            )}
 
             {/* Players List */}
             <div className="bg-linear-to-br from-white/6 to-white/2 border border-white/8 rounded-2xl p-6">

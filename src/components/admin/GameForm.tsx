@@ -38,7 +38,6 @@ interface GameFormProps {
     startsAt: Date;
     endsAt: Date;
     tierPrices: number[];
-    prizePool: number;
     roundBreakSec: number;
     maxPlayers: number;
   };
@@ -71,9 +70,7 @@ export function GameForm({
   const [tierPrice3, setTierPrice3] = useState(
     initialData?.tierPrices?.[2]?.toString() || "50"
   );
-  const [prizePool, setPrizePool] = useState(
-    initialData?.prizePool?.toString() || ""
-  );
+
   const [roundDuration, setRoundDuration] = useState(
     initialData?.roundBreakSec?.toString() || "15"
   );
@@ -225,7 +222,7 @@ export function GameForm({
       { label: "Title", value: pendingFormData.get("title")?.toString() || "Untitled" },
       { label: "Theme", value: themeData ? `${themeData.icon} ${themeData.label}` : "—" },
       { label: "Starts", value: startsAt ? new Date(startsAt).toLocaleString() : "—" },
-      { label: "Prize Pool", value: `$${pendingFormData.get("prizePool")} USDC` },
+      { label: "Min Ticket", value: `$${pendingFormData.get("tierPrice1")} USDC` },
     ];
   };
 
@@ -511,7 +508,7 @@ export function GameForm({
             </div>
             <div>
               <h3 className="font-bold text-white">Pricing & Settings</h3>
-              <p className="text-sm text-white/50">Ticket tiers, prize pool, and limits</p>
+              <p className="text-sm text-white/50">Ticket tiers and game limits</p>
             </div>
           </div>
 
@@ -581,25 +578,19 @@ export function GameForm({
                 />
               </div>
             </div>
-
-            {/* Prize Pool */}
-            <div>
-              <label htmlFor="prizePool" className="block text-sm font-medium text-white/70 mb-2">
+            {/* Prize Pool Info (v5 - Dynamic) */}
+            <div className="col-span-1">
+              <label className="block text-sm font-medium text-white/70 mb-2">
                 Prize Pool
               </label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#14B985]">$</span>
-                <input
-                  type="number"
-                  id="prizePool"
-                  name="prizePool"
-                  required
-                  value={prizePool}
-                  onChange={(e) => setPrizePool(e.target.value)}
-                  min={0}
-                  className="w-full pl-7 pr-3 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-[#FFC931]/50 focus:border-[#FFC931] transition-all"
-                  placeholder="0"
-                />
+              <div className="flex items-center gap-3 px-4 py-3 bg-[#14B985]/10 border border-[#14B985]/30 rounded-xl">
+                <div className="w-8 h-8 rounded-lg bg-[#14B985]/20 flex items-center justify-center shrink-0">
+                  <SparklesIcon className="h-4 w-4 text-[#14B985]" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-[#14B985]">Dynamic</p>
+                  <p className="text-xs text-white/50">Auto from tickets + sponsors</p>
+                </div>
               </div>
             </div>
           </div>

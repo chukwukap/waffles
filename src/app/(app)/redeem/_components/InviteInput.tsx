@@ -1,7 +1,6 @@
 import React from "react";
-import { cn } from "@/lib/utils"; // Assuming you use a utility for class names
+import { cn } from "@/lib/utils";
 
-// Define the component's props, extending standard input attributes
 export interface InviteInputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
   className?: string;
@@ -14,26 +13,31 @@ export interface InviteInputProps
 }
 
 const InviteInput = React.forwardRef<HTMLInputElement, InviteInputProps>(
-  ({ className, type, ...props }, ref) => {
+  ({ className, type, value, ...props }, ref) => {
+    const hasValue = value && value.length > 0;
+
     return (
       <div
         className={cn(
-          "flex h-[56px] w-[361px] max-w-full items-center justify-center",
-          "rounded-xl bg-[#FFFFFF1A] px-3", // Container styles
-          "transition-all duration-200", // Smooth transitions
-          "focus-within:border-white focus-within:ring-2 focus-within:ring-white/50", // Focus state
-          className // Allow merging custom classes
+          "flex h-[56px] w-full max-w-[361px] items-center justify-center",
+          "rounded-xl bg-white/10 py-[19px] px-4",
+          "transition-all duration-200",
+          "focus-within:ring-2 focus-within:ring-white/50",
+          className
         )}
       >
         <input
           type={type}
           ref={ref}
+          value={value}
           {...props}
           className={cn(
             "h-full w-full border-none bg-transparent p-0 text-center outline-none",
-            "text-[33px] font-body leading-[1.3] tracking-[-0.03em] text-white",
-            "placeholder:text-[14px] placeholder:font-body placeholder:leading-[1.3] placeholder:tracking-[-0.03em] placeholder:text-center",
-            "transition-all duration-150" // Smooth text transitions
+            "font-body leading-[1.3] tracking-[-0.03em] text-white",
+            "placeholder:font-body placeholder:leading-[1.3] placeholder:tracking-[-0.03em] placeholder:text-center placeholder:text-white/40",
+            "transition-all duration-150",
+            // Dynamic font size based on whether there's a value
+            hasValue ? "text-[33px]" : "text-[25px]"
           )}
         />
       </div>
