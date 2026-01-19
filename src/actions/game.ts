@@ -7,6 +7,8 @@ import { notifyTicketPurchased } from "@/lib/partykit";
 import { sendToUser } from "@/lib/notifications";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
+import { verifyTicketPurchase, TOKEN_CONFIG } from "@/lib/chain";
+import { parseUnits } from "viem";
 
 const SERVICE = "game-actions";
 
@@ -59,7 +61,7 @@ function formatGameTime(date: Date): string {
  * Creates game entry, updates prize pool, sends notification, and revalidates cache.
  */
 export async function purchaseGameTicket(
-  input: PurchaseInput
+  input: PurchaseInput,
 ): Promise<PurchaseResult> {
   const { gameId, fid, txHash, paidAmount, payerWallet } = input;
 
@@ -108,6 +110,7 @@ export async function purchaseGameTicket(
       where: { id: gameId },
       select: {
         id: true,
+        onchainId: true,
         startsAt: true,
         endsAt: true,
         prizePool: true,
@@ -123,7 +126,7 @@ export async function purchaseGameTicket(
 
     // Validate payment amount against allowed tiers
     const isValidTier = game.tierPrices.some(
-      (price) => Math.abs(price - paidAmount) < 0.0001
+      (price) => Math.abs(price - paidAmount) < 0.0001,
     );
     if (!isValidTier) {
       return {
@@ -141,6 +144,46 @@ export async function purchaseGameTicket(
     if (game.playerCount >= game.maxPlayers) {
       return { success: false, error: "Game is full", code: "GAME_FULL" };
     }
+
+    // =========================================================================
+    // CRITICAL: Verify payment on-chain before recording
+    // =========================================================================
+    if (!game.onchainId) {
+      return {
+        success: false,
+        error: "Game not deployed on-chain",
+        code: "NOT_ONCHAIN",
+      };
+    }
+
+    const verification = await verifyTicketPurchase({
+      txHash: txHash as `0x${string}`,
+      expectedGameId: game.onchainId as `0x${string}`,
+      expectedBuyer: payerWallet as `0x${string}`,
+      minimumAmount: parseUnits(paidAmount.toString(), TOKEN_CONFIG.decimals),
+    });
+
+    if (!verification.verified) {
+      logger.error(SERVICE, "payment_verification_failed", {
+        gameId,
+        fid,
+        txHash,
+        payerWallet,
+        error: verification.error,
+      });
+      return {
+        success: false,
+        error: verification.error || "Payment verification failed",
+        code: "VERIFICATION_FAILED",
+      };
+    }
+
+    logger.info(SERVICE, "payment_verified", {
+      gameId,
+      fid,
+      txHash,
+      verifiedAmount: verification.details?.amountFormatted,
+    });
 
     // Create entry and update game atomically
     const entry = await prisma.$transaction(async (tx) => {
@@ -193,7 +236,7 @@ export async function purchaseGameTicket(
         gameId,
         fid,
         error: logger.errorMessage(err),
-      })
+      }),
     );
 
     // Async: Notify PartyKit of ticket purchase (stats + entrant atomically)
@@ -206,7 +249,7 @@ export async function purchaseGameTicket(
       logger.error(SERVICE, "partykit_notify_error", {
         gameId,
         error: logger.errorMessage(err),
-      })
+      }),
     );
 
     logger.info(SERVICE, "ticket_purchased", {
@@ -245,7 +288,7 @@ interface LeaveGameInput {
  * Sets leftAt timestamp on GameEntry.
  */
 export async function leaveGame(
-  input: LeaveGameInput
+  input: LeaveGameInput,
 ): Promise<LeaveGameResult> {
   const { gameId, fid } = input;
 
@@ -363,7 +406,7 @@ interface AnswerEntry {
  * Submit an answer for a question in a live game.
  */
 export async function submitAnswer(
-  input: SubmitAnswerInput
+  input: SubmitAnswerInput,
 ): Promise<SubmitAnswerResult> {
   const { gameId, fid, questionId, selectedIndex, timeTakenMs } = input;
 

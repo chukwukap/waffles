@@ -17,9 +17,8 @@ import {
     useApproveToken,
     useTokenAllowance
 } from "@/hooks/waffleContractHooks";
-import { TOKEN_CONFIG, WAFFLE_GAME_CONFIG } from "@/lib/chain";
+import { TOKEN_CONFIG } from "@/lib/chain";
 import { parseUnits, formatUnits } from "viem";
-import { AdminOnchainProvider } from "./AdminOnchainProvider";
 
 interface SponsorGameCardProps {
     gameId: string;
@@ -27,17 +26,7 @@ interface SponsorGameCardProps {
     gameTitle: string;
 }
 
-// Wrapper that provides OnchainKit context
-export function SponsorGameCard(props: SponsorGameCardProps) {
-    return (
-        <AdminOnchainProvider>
-            <SponsorGameCardInner {...props} />
-        </AdminOnchainProvider>
-    );
-}
-
-// Inner component that uses wagmi hooks
-function SponsorGameCardInner({ gameId, onchainId, gameTitle }: SponsorGameCardProps) {
+export function SponsorGameCard({ gameId, onchainId, gameTitle }: SponsorGameCardProps) {
     const [amount, setAmount] = useState("");
     const [isExpanded, setIsExpanded] = useState(false);
 

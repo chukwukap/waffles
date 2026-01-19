@@ -44,7 +44,7 @@ export function useTicketPurchase(
   gameId: string,
   onchainId: `0x${string}` | null,
   price: number,
-  onSuccess?: () => void
+  onSuccess?: () => void,
 ) {
   const router = useRouter();
   const { context } = useMiniKit();
@@ -69,13 +69,13 @@ export function useTicketPurchase(
   // ==========================================
   const priceInUnits = useMemo(
     () => parseUnits(price.toString(), TOKEN_CONFIG.decimals),
-    [price]
+    [price],
   );
 
   const tokenAddress = TOKEN_CONFIG.address;
   const { data: allowance } = useTokenAllowance(
     address as `0x${string}`,
-    tokenAddress
+    tokenAddress,
   );
 
   const needsApproval = useMemo(() => {
@@ -156,6 +156,17 @@ export function useTicketPurchase(
         });
 
         if (!result.success) {
+          // Handle verification failure specifically
+          if (result.code === "VERIFICATION_FAILED") {
+            // On-chain verification failed - do NOT mark as success
+            console.error(
+              "[useTicketPurchase] Verification failed:",
+              result.error,
+            );
+            notify.error(result.error || "Payment verification failed");
+            setState({ step: "error", error: result.error });
+            return;
+          }
           throw new Error(result.error || "Sync failed");
         }
 
@@ -168,15 +179,13 @@ export function useTicketPurchase(
         onSuccess?.();
       } catch (err) {
         console.error("[useTicketPurchase] Sync error:", err);
-        // On-chain succeeded, backend failed - still mark success
-        notify.info("Purchased! Syncing in background...");
-        setState({ step: "success", txHash });
-        refetchEntry();
-        router.refresh();
-        onSuccess?.();
+        const errorMsg = err instanceof Error ? err.message : "Sync failed";
+        // Don't mark as success if we have an actual error
+        notify.error(errorMsg);
+        setState({ step: "error", error: errorMsg });
       }
     },
-    [address, fid, gameId, price, refetchEntry, router, onSuccess]
+    [address, fid, gameId, price, refetchEntry, router, onSuccess],
   );
 
   // ==========================================
@@ -193,8 +202,8 @@ export function useTicketPurchase(
       const msg = sendError.message.includes("rejected")
         ? "Transaction rejected"
         : sendError.message.includes("insufficient")
-        ? "Insufficient funds"
-        : "Transaction failed";
+          ? "Insufficient funds"
+          : "Transaction failed";
       setState({ step: "error", error: msg });
       notify.error(msg);
     }
@@ -298,7 +307,7 @@ export function useTicketPurchase(
     isSuccess: state.step === "success",
     isError: state.step === "error",
     isLoading: ["connecting", "pending", "confirming", "syncing"].includes(
-      state.step
+      state.step,
     ),
 
     hasTicket,
@@ -317,7 +326,7 @@ export function useTicketPurchase(
 // ==========================================
 export function getPurchaseButtonText(
   step: PurchaseStep,
-  price: number
+  price: number,
 ): string {
   const texts: Record<PurchaseStep, string> = {
     idle: `BUY WAFFLE - $${price}`,

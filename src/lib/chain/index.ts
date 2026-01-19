@@ -36,3 +36,11 @@ export {
   type Winner,
   type MerkleTreeResult,
 } from "./merkle";
+
+// Payment verification
+export {
+  verifyTicketPurchase,
+  waitForTransaction,
+  type VerifyTicketPurchaseResult,
+  type VerifyTicketPurchaseInput,
+} from "./verify";

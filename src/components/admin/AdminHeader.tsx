@@ -1,0 +1,91 @@
+"use client";
+
+import { useAccount, useChainId, useConnect, useDisconnect } from "wagmi";
+import { injected } from "wagmi/connectors";
+import { CHAIN_CONFIG } from "@/lib/chain";
+import {
+    ArrowRightEndOnRectangleIcon,
+    WalletIcon
+} from "@heroicons/react/24/outline";
+
+interface AdminHeaderProps {
+    username: string;
+    pfpUrl: string | null;
+}
+
+export function AdminHeader({ username, pfpUrl }: AdminHeaderProps) {
+    const { isConnected, address } = useAccount();
+    const chainId = useChainId();
+    const { connect, isPending: isConnecting } = useConnect();
+    const { disconnect } = useDisconnect();
+
+    const isCorrectNetwork = chainId === CHAIN_CONFIG.chainId;
+    const networkName = CHAIN_CONFIG.isTestnet ? "Sepolia" : "Base";
+
+    return (
+        <header className="bg-[#0a0a0b]/80 border-b border-white/6 backdrop-blur-xl flex h-16 items-center justify-between px-6">
+            {/* Left: Title */}
+            <h2 className="text-lg font-semibold text-white font-body">
+                Admin Dashboard
+            </h2>
+
+            {/* Right: Wallet + User */}
+            <div className="flex items-center gap-3">
+                {/* Wallet Section */}
+                {isConnected ? (
+                    <div className="flex items-center gap-1.5">
+                        <div className={`flex items-center gap-2 px-2.5 py-1 rounded-lg text-xs ${isCorrectNetwork
+                                ? "bg-[#14B985]/10 text-[#14B985]"
+                                : "bg-red-500/10 text-red-400"
+                            }`}>
+                            <div className={`w-1.5 h-1.5 rounded-full ${isCorrectNetwork ? "bg-[#14B985]" : "bg-red-400"
+                                }`} />
+                            <span className="font-medium">{networkName}</span>
+                            <span className="text-white/30">·</span>
+                            <span className="text-white/50 font-mono">
+                                {address?.slice(0, 4)}...{address?.slice(-3)}
+                            </span>
+                        </div>
+                        <button
+                            onClick={() => disconnect()}
+                            className="p-1 hover:bg-white/10 rounded transition-colors"
+                            title="Disconnect"
+                        >
+                            <ArrowRightEndOnRectangleIcon className="h-4 w-4 text-white/40 hover:text-red-400" />
+                        </button>
+                    </div>
+                ) : (
+                    <button
+                        onClick={() => connect({ connector: injected() })}
+                        disabled={isConnecting}
+                        className="flex items-center gap-1.5 px-2.5 py-1 bg-[#FFC931]/10 hover:bg-[#FFC931]/20 rounded-lg text-xs font-medium text-[#FFC931] transition-colors disabled:opacity-50"
+                    >
+                        <WalletIcon className="h-3.5 w-3.5" />
+                        {isConnecting ? "Connecting..." : "Connect"}
+                    </button>
+                )}
+
+                {/* Divider */}
+                <div className="w-px h-6 bg-white/10" />
+
+                {/* User Section */}
+                <div className="flex items-center gap-2">
+                    <span className="text-xs text-white/50">
+                        {username}
+                    </span>
+                    {pfpUrl ? (
+                        <img
+                            src={pfpUrl}
+                            alt={username}
+                            className="h-7 w-7 rounded-full ring-1 ring-white/10 object-cover"
+                        />
+                    ) : (
+                        <div className="h-7 w-7 rounded-full bg-linear-to-br from-[#FFC931] to-[#00CFF2] flex items-center justify-center text-black font-bold text-xs ring-1 ring-white/10">
+                            {username?.[0]?.toUpperCase() || "A"}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </header>
+    );
+}

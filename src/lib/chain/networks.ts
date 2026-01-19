@@ -28,7 +28,7 @@ const NETWORKS: Record<"testnet" | "mainnet", NetworkConfig> = {
     chain: baseSepolia,
     contracts: {
       waffleGame: "0xeB89A087cC3898713d9f887b21Dc3BF4FC963B8F",
-      usdc: "0x8aAa7ECea87244Ca4062eBce6DA61820f3830233",
+      usdc: "0x036CbD53842c5426634e7929541eC2318f3dCF7e", // Official Base Sepolia USDC (6 decimals)
     },
   },
   mainnet: {
