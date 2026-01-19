@@ -20,6 +20,7 @@ import {
   PAYMENT_TOKEN_DECIMALS,
   WAFFLE_CONTRACT_ADDRESS,
 } from "@/lib/chain";
+import { useCorrectChain } from "./useCorrectChain";
 
 // ==========================================
 // TYPES
@@ -54,6 +55,7 @@ export function useTicketPurchase(
   const { context } = useMiniKit();
   const { address, isConnected } = useAccount();
   const { connectAsync } = useConnect();
+  const { ensureCorrectChain } = useCorrectChain();
   const [state, setState] = useState<TicketPurchaseState>({ step: "idle" });
 
   // Get user's fid from MiniKit context
@@ -317,6 +319,10 @@ export function useTicketPurchase(
     setState({ step: "pending" });
 
     try {
+      // Switch to correct chain if needed (e.g., Base Sepolia in test mode)
+      console.log("[DEBUG] Ensuring correct chain...");
+      await ensureCorrectChain();
+
       console.log("[DEBUG] Calling sendCalls...");
       sendCalls({ calls, capabilities: { atomicBatch: { supported: true } } });
       console.log("[DEBUG] sendCalls returned");
