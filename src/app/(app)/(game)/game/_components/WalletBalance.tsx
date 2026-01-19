@@ -7,7 +7,8 @@ import { useEffect, useRef } from "react";
 import { farcasterFrame } from "@farcaster/miniapp-wagmi-connector";
 
 import { springs } from "@/lib/animations";
-import { PAYMENT_TOKEN_ADDRESS, PAYMENT_TOKEN_DECIMALS } from "@/lib/chain";
+import { PAYMENT_TOKEN_ADDRESS, PAYMENT_TOKEN_DECIMALS, chain } from "@/lib/chain";
+import { useCorrectChain } from "@/hooks/useCorrectChain";
 
 // Animated Wallet Icon with coin drop effect
 function AnimatedWalletIcon({ triggerAnim }: { triggerAnim: boolean }) {
@@ -61,25 +62,34 @@ function AnimatedWalletIcon({ triggerAnim }: { triggerAnim: boolean }) {
 export function WalletBalance() {
   const { address, isConnected } = useAccount();
   const { connect } = useConnect();
-  const chainId = useChainId();
+  const { ensureCorrectChain, isOnCorrectChain } = useCorrectChain();
 
   // Auto-connect with Farcaster connector if not connected
   useEffect(() => {
     if (!isConnected) {
       connect({
         connector: farcasterFrame(),
-        // chainId: CHAIN_CONFIG.chain.id
       });
     }
   }, [isConnected, connect]);
 
+  // Auto-switch to correct chain when wallet is connected
+  useEffect(() => {
+    if (isConnected && !isOnCorrectChain) {
+      ensureCorrectChain().catch((err) => {
+        console.error("Failed to auto-switch chain:", err);
+      });
+    }
+  }, [isConnected, isOnCorrectChain, ensureCorrectChain]);
+
+  // Fetch balance using the TARGET chain
   const { roundedBalance } = useGetTokenBalance(address as `0x${string}`, {
     address: PAYMENT_TOKEN_ADDRESS as `0x${string}`,
     decimals: PAYMENT_TOKEN_DECIMALS,
     name: "USDC",
     symbol: "USDC",
     image: "/images/tokens/usdc.png",
-    chainId: chainId,
+    chainId: chain.id,
   });
 
   // Track previous balance for animation trigger

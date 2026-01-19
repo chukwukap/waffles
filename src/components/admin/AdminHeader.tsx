@@ -4,11 +4,8 @@ import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { injected } from "wagmi/connectors";
 import {
     ArrowRightEndOnRectangleIcon,
-    WalletIcon,
-    ArrowPathIcon
+    WalletIcon
 } from "@heroicons/react/24/outline";
-import { useCorrectChain } from "@/hooks/useCorrectChain";
-import { chain as targetChain } from "@/lib/chain";
 
 interface AdminHeaderProps {
     username: string;
@@ -17,17 +14,10 @@ interface AdminHeaderProps {
 
 export function AdminHeader({ username, pfpUrl }: AdminHeaderProps) {
     const { isConnected, address, chain } = useAccount();
+
     const { connect, isPending: isConnecting } = useConnect();
     const { disconnect } = useDisconnect();
-    const { ensureCorrectChain, isOnCorrectChain } = useCorrectChain();
 
-    const handleSwitchChain = async () => {
-        try {
-            await ensureCorrectChain();
-        } catch (err) {
-            console.error("Failed to switch chain:", err);
-        }
-    };
 
     return (
         <header className="bg-[#0a0a0b]/80 border-b border-white/6 backdrop-blur-xl flex h-16 items-center justify-between px-6">
@@ -41,32 +31,18 @@ export function AdminHeader({ username, pfpUrl }: AdminHeaderProps) {
                 {/* Wallet Section */}
                 {isConnected ? (
                     <div className="flex items-center gap-1.5">
-                        {/* Chain indicator */}
-                        <div className={`flex items-center gap-2 px-2.5 py-1 rounded-lg text-xs ${isOnCorrectChain
+                        <div className={`flex items-center gap-2 px-2.5 py-1 rounded-lg text-xs ${chain?.testnet
                             ? "bg-[#14B985]/10 text-[#14B985]"
-                            : "bg-amber-500/10 text-amber-400"
+                            : "bg-red-500/10 text-red-400"
                             }`}>
-                            <div className={`w-1.5 h-1.5 rounded-full ${isOnCorrectChain ? "bg-[#14B985]" : "bg-amber-400"
+                            <div className={`w-1.5 h-1.5 rounded-full ${chain?.testnet ? "bg-[#14B985]" : "bg-red-400"
                                 }`} />
-                            <span className="font-medium">{chain?.name || "Unknown"}</span>
+                            <span className="font-medium">{chain?.name}</span>
                             <span className="text-white/30">·</span>
                             <span className="text-white/50 font-mono">
                                 {address?.slice(0, 4)}...{address?.slice(-3)}
                             </span>
                         </div>
-
-                        {/* Switch chain button (shows when on wrong chain) */}
-                        {!isOnCorrectChain && (
-                            <button
-                                onClick={handleSwitchChain}
-                                className="flex items-center gap-1 px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 rounded-lg text-xs font-medium text-amber-400 transition-colors"
-                                title={`Switch to ${targetChain.name}`}
-                            >
-                                <ArrowPathIcon className="h-3 w-3" />
-                                Switch
-                            </button>
-                        )}
-
                         <button
                             onClick={() => disconnect()}
                             className="p-1 hover:bg-white/10 rounded transition-colors"
