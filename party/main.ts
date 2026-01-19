@@ -10,10 +10,9 @@ import { jwtVerify } from "jose";
 import type { Message, Entrant } from "../shared/protocol";
 import { StoredChatMessage, AlarmPhase, CORS_HEADERS } from "./types";
 import {
-  handleDebug,
   handleInit,
   handleTicketPurchased,
-  handleUpdateTiming,
+  handleUpdateGame,
   checkAuth,
 } from "./handlers/http";
 import {
@@ -37,7 +36,6 @@ export default class GameServer implements Party.Server {
 
   chatHistory: StoredChatMessage[] = [];
   entrants: Entrant[] = [];
-  seenFids: Set<number> = new Set();
 
   constructor(readonly room: Party.Room) {}
 
@@ -100,7 +98,7 @@ export default class GameServer implements Party.Server {
     const secret = this.room.env.PARTYKIT_SECRET as string;
 
     // Routes requiring auth
-    const authRoutes = ["debug", "init", "ticket-purchased", "update-timing"];
+    const authRoutes = ["init", "ticket-purchased", "update-game"];
     if (authRoutes.includes(path || "") && !checkAuth(req, secret)) {
       return Response.json(
         { error: "Unauthorized" },
@@ -110,9 +108,6 @@ export default class GameServer implements Party.Server {
 
     try {
       switch (path) {
-        case "debug":
-          return await handleDebug(this);
-
         case "init":
           if (req.method !== "POST") {
             return Response.json(
@@ -131,14 +126,14 @@ export default class GameServer implements Party.Server {
           }
           return await handleTicketPurchased(this, req);
 
-        case "update-timing":
+        case "update-game":
           if (req.method !== "POST") {
             return Response.json(
               { error: "Method not allowed" },
               { status: 405, headers: CORS_HEADERS },
             );
           }
-          return await handleUpdateTiming(this, req);
+          return await handleUpdateGame(this, req);
 
         default:
           return Response.json(
@@ -237,8 +232,6 @@ export default class GameServer implements Party.Server {
     this.chatHistory =
       (await this.room.storage.get<StoredChatMessage[]>("chatHistory")) || [];
     this.entrants = (await this.room.storage.get<Entrant[]>("entrants")) || [];
-    const savedFids = await this.room.storage.get<number[]>("seenFids");
-    this.seenFids = new Set(savedFids || []);
 
     const alarmPhase = await this.room.storage.get<AlarmPhase>("alarmPhase");
     const gameId = await this.room.storage.get<string>("gameId");

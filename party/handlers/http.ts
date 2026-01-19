@@ -9,7 +9,6 @@ interface GameServer {
   room: Party.Room;
   entrants: Entrant[];
   chatHistory: unknown[];
-  seenFids: Set<number>;
   getOnlineCount(): number;
   broadcast(msg: unknown): void;
 }
@@ -18,33 +17,6 @@ interface GameServer {
 function checkAuth(req: Party.Request, secret: string): boolean {
   const authHeader = req.headers.get("Authorization");
   return authHeader === `Bearer ${secret}`;
-}
-
-// Debug endpoint
-export async function handleDebug(server: GameServer): Promise<Response> {
-  const gameId = await server.room.storage.get<string>("gameId");
-  const startsAt = await server.room.storage.get<number>("startsAt");
-  const endsAt = await server.room.storage.get<number>("endsAt");
-  const alarmPhase = await server.room.storage.get<AlarmPhase>("alarmPhase");
-  const currentAlarm = await server.room.storage.getAlarm();
-  const now = Date.now();
-
-  const debugInfo = {
-    roomId: server.room.id,
-    gameId,
-    now: new Date(now).toISOString(),
-    startsAt: startsAt ? new Date(startsAt).toISOString() : null,
-    endsAt: endsAt ? new Date(endsAt).toISOString() : null,
-    alarmPhase,
-    alarmScheduled: currentAlarm ? new Date(currentAlarm).toISOString() : null,
-    alarmInMs: currentAlarm ? currentAlarm - now : null,
-    connectedClients: server.getOnlineCount(),
-    chatHistoryCount: server.chatHistory.length,
-    seenFidsCount: server.seenFids.size,
-  };
-
-  console.log("[PartyKit]", "debug_endpoint_called", debugInfo);
-  return Response.json(debugInfo, { headers: CORS_HEADERS });
 }
 
 // Init endpoint - called when admin creates game
@@ -141,8 +113,8 @@ export async function handleTicketPurchased(
   return Response.json({ success: true }, { headers: CORS_HEADERS });
 }
 
-// Update timing endpoint
-export async function handleUpdateTiming(
+// Update game endpoint - called when admin updates game
+export async function handleUpdateGame(
   server: GameServer,
   req: Party.Request,
 ): Promise<Response> {

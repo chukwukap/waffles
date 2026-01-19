@@ -34,7 +34,7 @@ function partyFetch(gameId: string, path: string, body: unknown) {
         Authorization: `Bearer ${env.partykitSecret}`,
       },
       body: JSON.stringify(body),
-    }
+    },
   );
 }
 
@@ -53,7 +53,7 @@ export async function notifyTicketPurchased(
     pfpUrl: string | null;
     prizePool: number;
     playerCount: number;
-  }
+  },
 ): Promise<void> {
   if (!env.partykitHost || !env.partykitSecret) {
     logger.warn(SERVICE, "notify_ticket_purchased_skipped", {
@@ -132,7 +132,7 @@ export async function cleanupGameRoom(gameId: string): Promise<void> {
 export async function updateGameTiming(
   gameId: string,
   startsAt: Date,
-  endsAt: Date
+  endsAt: Date,
 ): Promise<void> {
   if (!env.partykitHost || !env.partykitSecret) {
     logger.warn(SERVICE, "update_timing_skipped", {
@@ -149,7 +149,7 @@ export async function updateGameTiming(
       endsAt: endsAt.toISOString(),
     });
 
-    const res = await partyFetch(gameId, "update-timing", {
+    const res = await partyFetch(gameId, "update-game", {
       startsAt: startsAt.toISOString(),
       endsAt: endsAt.toISOString(),
     });

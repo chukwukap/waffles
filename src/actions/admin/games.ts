@@ -52,7 +52,7 @@ export type GameActionResult =
 
 export async function createGameAction(
   _prevState: GameActionResult | null,
-  formData: FormData
+  formData: FormData,
 ): Promise<GameActionResult> {
   const authResult = await requireAdminSession();
   if (!authResult.authenticated || !authResult.session) {
@@ -113,7 +113,7 @@ export async function createGameAction(
 
     gameId = game.id;
 
-    // 3. Initialize PartyKit room (non-blocking)
+    // 3. Initialize PartyKit room (BLOCKING - must succeed for game to be valid)
     if (env.partykitHost && env.partykitSecret) {
       const partykitUrl = env.partykitHost.startsWith("http")
         ? env.partykitHost
@@ -128,7 +128,7 @@ export async function createGameAction(
         endsAt: game.endsAt.toISOString(),
       });
 
-      fetch(initUrl, {
+      const initRes = await fetch(initUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -139,35 +139,44 @@ export async function createGameAction(
           startsAt: game.startsAt.toISOString(),
           endsAt: game.endsAt.toISOString(),
         }),
-      })
-        .then(async (res) => {
-          if (res.ok) {
-            logger.info(SERVICE, "partykit_init_success", {
-              gameId: game.id,
-              status: res.status,
-            });
-          } else {
-            const errorText = await res.text().catch(() => "Unknown error");
-            logger.error(SERVICE, "partykit_init_failed", {
-              gameId: game.id,
-              status: res.status,
-              error: errorText,
-            });
-          }
-        })
-        .catch((err) =>
-          logger.error(SERVICE, "partykit_init_error", {
-            gameId: game.id,
-            error: logger.errorMessage(err),
-          })
-        );
-    } else {
-      logger.warn(SERVICE, "partykit_init_skipped", {
+      });
+
+      if (!initRes.ok) {
+        const errorText = await initRes.text().catch(() => "Unknown error");
+        logger.error(SERVICE, "partykit_init_failed", {
+          gameId: game.id,
+          status: initRes.status,
+          error: errorText,
+        });
+
+        // Rollback: delete the game we just created
+        await prisma.game.delete({ where: { id: game.id } });
+
+        return {
+          success: false,
+          error: `Failed to initialize game server: ${errorText}`,
+        };
+      }
+
+      logger.info(SERVICE, "partykit_init_success", {
         gameId: game.id,
-        reason: "PartyKit not configured",
+        status: initRes.status,
+      });
+    } else {
+      // In production, PartyKit is required
+      logger.error(SERVICE, "partykit_not_configured", {
+        gameId: game.id,
         hasHost: !!env.partykitHost,
         hasSecret: !!env.partykitSecret,
       });
+
+      // Rollback
+      await prisma.game.delete({ where: { id: game.id } });
+
+      return {
+        success: false,
+        error: "Game server not configured. Contact administrator.",
+      };
     }
 
     await logAdminAction({
@@ -207,7 +216,7 @@ export async function createGameAction(
 export async function updateGameAction(
   gameId: string,
   _prevState: GameActionResult | null,
-  formData: FormData
+  formData: FormData,
 ): Promise<GameActionResult> {
   const authResult = await requireAdminSession();
   if (!authResult.authenticated || !authResult.session) {
@@ -273,12 +282,12 @@ export async function updateGameAction(
     updateGameTiming(
       game.id,
       new Date(data.startsAt),
-      new Date(data.endsAt)
+      new Date(data.endsAt),
     ).catch((err) =>
       logger.error(SERVICE, "game_update_partykit_sync_error", {
         gameId: game.id,
         error: logger.errorMessage(err),
-      })
+      }),
     );
 
     revalidatePath("/admin/games");
@@ -336,21 +345,21 @@ export async function deleteGameAction(gameId: string): Promise<void> {
 
       if (gameExistsOnChain && !onChainGame.salesClosed) {
         console.log(
-          `[DeleteGame] Force closing sales for game ${game.onchainId} on-chain...`
+          `[DeleteGame] Force closing sales for game ${game.onchainId} on-chain...`,
         );
 
         try {
           const txHash = await closeSalesOnChain(
-            game.onchainId as `0x${string}`
+            game.onchainId as `0x${string}`,
           );
           console.log(`[DeleteGame] Game sales closed on-chain. TX: ${txHash}`);
         } catch (endError) {
           console.error(
             `[DeleteGame] Failed to close sales on-chain:`,
-            endError
+            endError,
           );
           throw new Error(
-            `Failed to close sales on-chain before deletion. Please try again or close sales manually first.`
+            `Failed to close sales on-chain before deletion. Please try again or close sales manually first.`,
           );
         }
       }
