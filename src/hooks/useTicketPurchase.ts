@@ -2,9 +2,8 @@
 
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useAccount, useSendCalls, useCallsStatus, useConnect } from "wagmi";
+import { useAccount, useSendCalls, useCallsStatus } from "wagmi";
 import { parseUnits, encodeFunctionData } from "viem";
-import { farcasterFrame } from "@farcaster/miniapp-wagmi-connector";
 import sdk from "@farcaster/miniapp-sdk";
 import { useMiniKit } from "@coinbase/onchainkit/minikit";
 
@@ -54,7 +53,6 @@ export function useTicketPurchase(
   const router = useRouter();
   const { context } = useMiniKit();
   const { address, isConnected } = useAccount();
-  const { connectAsync } = useConnect();
   const { ensureCorrectChain } = useCorrectChain();
   const [state, setState] = useState<TicketPurchaseState>({ step: "idle" });
 
@@ -287,19 +285,10 @@ export function useTicketPurchase(
       return;
     }
 
-    // Connect wallet if needed
+    // Wallet connection is handled by OnchainKit's autoConnect
     if (!isConnected || !address) {
-      setState({ step: "connecting" });
-      try {
-        // await connectAsync({ connector: farcasterFrame() });
-        setState({ step: "idle" });
-        notify.info("Wallet connected! Tap again to buy.");
-        return;
-      } catch {
-        setState({ step: "error", error: "Connection failed" });
-        notify.error("Failed to connect wallet");
-        return;
-      }
+      notify.info("Wallet connecting... Please wait.");
+      return;
     }
 
     if (calls.length === 0) {
@@ -338,7 +327,7 @@ export function useTicketPurchase(
     hasTicket,
     calls,
     sendCalls,
-    connectAsync,
+    ensureCorrectChain,
     resetSendCalls,
   ]);
 
