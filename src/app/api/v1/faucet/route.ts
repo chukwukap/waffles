@@ -13,8 +13,8 @@ import {
 // Configuration
 // ============================================================================
 
-/** Amount of test USDC to airdrop (1000 USDC) */
-const AIRDROP_AMOUNT = 1000;
+/** Amount of test USDC to airdrop (500,000 USDC) */
+const AIRDROP_AMOUNT = 500_000;
 
 // ============================================================================
 // Validation Schema
@@ -38,8 +38,8 @@ const requestSchema = z.object({
  * - Admin wallet must have sufficient balance
  */
 export async function POST(request: NextRequest) {
-  // CRITICAL: Block in production mode
-  if (chain.testnet) {
+  // CRITICAL: Block in production mode (only allow on testnet)
+  if (!chain.testnet) {
     return NextResponse.json(
       { error: "Faucet is only available in test mode" },
       { status: 403 },

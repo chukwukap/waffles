@@ -23,8 +23,8 @@ export function useFaucet() {
   });
 
   const requestTokens = useCallback(async (wallet: string) => {
-    // Block in production
-    if (chain.testnet) {
+    // Block in production (only allow on testnet)
+    if (!chain.testnet) {
       console.log("[Faucet] Blocked - not in test mode");
       return { success: false, error: "Not in test mode" };
     }
