@@ -122,7 +122,7 @@ export function WalletBalance() {
         className="text-center font-normal not-italic text-[16px] leading-[100%] tracking-[0px] text-white"
         animate={controls}
       >
-        {`$${Number(roundedBalance).toFixed(2)}`}
+        {`$${Number(roundedBalance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
       </motion.span>
     </motion.div>
   );
