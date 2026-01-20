@@ -8,8 +8,7 @@ import { sendToUser } from "@/lib/notifications";
 import { env } from "@/lib/env";
 import { PAYMENT_TOKEN_DECIMALS, verifyTicketPurchase } from "@/lib/chain";
 import { parseUnits } from "viem";
-
-const SERVICE = "game-actions";
+import { formatGameTime } from "@/lib/utils";
 
 // ============================================================================
 // Types
@@ -25,30 +24,6 @@ interface PurchaseInput {
   txHash: string;
   paidAmount: number;
   payerWallet: string;
-}
-
-// ============================================================================
-// Helper: Format game start time
-// ============================================================================
-
-function formatGameTime(date: Date): string {
-  const now = new Date();
-  const diffMs = date.getTime() - now.getTime();
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-
-  if (diffHours > 24) {
-    return date.toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    });
-  } else if (diffHours > 0) {
-    return `in ${diffHours}h ${diffMins}m`;
-  } else if (diffMins > 0) {
-    return `in ${diffMins} minutes`;
-  }
-  return "soon";
 }
 
 // ============================================================================
@@ -163,7 +138,7 @@ export async function purchaseGameTicket(
     });
 
     if (!verification.verified) {
-      console.error("["+SERVICE+"]", "payment_verification_failed", {
+      console.error("[game-actions]", "payment_verification_failed", {
         gameId,
         fid,
         txHash,
@@ -177,7 +152,7 @@ export async function purchaseGameTicket(
       };
     }
 
-    console.log("["+SERVICE+"]", "payment_verified", {
+    console.log("[game-actions]", "payment_verified", {
       gameId,
       fid,
       txHash,
@@ -231,10 +206,10 @@ export async function purchaseGameTicket(
       body: `Game starts ${timeStr}. Don't miss it!`,
       targetUrl: `${env.rootUrl}/game`,
     }).catch((err) =>
-      console.error("["+SERVICE+"]", "notification_error", {
+      console.error("[game-actions]", "notification_error", {
         gameId,
         fid,
-        error: (err instanceof Error ? err.message : String(err)),
+        error: err instanceof Error ? err.message : String(err),
       }),
     );
 
@@ -245,13 +220,13 @@ export async function purchaseGameTicket(
       prizePool: game.prizePool + paidAmount,
       playerCount: game.playerCount + 1,
     }).catch((err) =>
-      console.error("["+SERVICE+"]", "partykit_notify_error", {
+      console.error("[game-actions]", "partykit_notify_error", {
         gameId,
-        error: (err instanceof Error ? err.message : String(err)),
+        error: err instanceof Error ? err.message : String(err),
       }),
     );
 
-    console.log("["+SERVICE+"]", "ticket_purchased", {
+    console.log("[game-actions]", "ticket_purchased", {
       gameId,
       entryId: entry.id,
       fid,
@@ -260,10 +235,10 @@ export async function purchaseGameTicket(
 
     return { success: true, entryId: entry.id };
   } catch (error) {
-    console.error("["+SERVICE+"]", "purchase_error", {
+    console.error("[game-actions]", "purchase_error", {
       gameId,
       fid,
-      error: (error instanceof Error ? error.message : String(error)),
+      error: error instanceof Error ? error.message : String(error),
     });
     return { success: false, error: "Purchase failed", code: "INTERNAL_ERROR" };
   }
@@ -356,14 +331,14 @@ export async function leaveGame(
     revalidatePath("/game");
     revalidatePath("/(app)/(game)", "layout");
 
-    console.log("["+SERVICE+"]", "game_left", { gameId, fid });
+    console.log("[game-actions]", "game_left", { gameId, fid });
 
     return { success: true, leftAt: updated.leftAt! };
   } catch (error) {
-    console.error("["+SERVICE+"]", "leave_error", {
+    console.error("[game-actions]", "leave_error", {
       gameId,
       fid,
-      error: (error instanceof Error ? error.message : String(error)),
+      error: error instanceof Error ? error.message : String(error),
     });
     return {
       success: false,
@@ -557,11 +532,11 @@ export async function submitAnswer(
       totalScore: newTotalScore,
     };
   } catch (error) {
-    console.error("["+SERVICE+"]", "answer_error", {
+    console.error("[game-actions]", "answer_error", {
       gameId,
       fid,
       questionId,
-      error: (error instanceof Error ? error.message : String(error)),
+      error: error instanceof Error ? error.message : String(error),
     });
     return {
       success: false,

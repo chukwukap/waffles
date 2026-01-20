@@ -31,7 +31,7 @@ export type QuestionActionResult =
 export async function createQuestionAction(
   gameId: string,
   _prevState: QuestionActionResult | null,
-  formData: FormData
+  formData: FormData,
 ): Promise<QuestionActionResult> {
   const authResult = await requireAdminSession();
   if (!authResult.authenticated || !authResult.session) {
@@ -47,7 +47,7 @@ export async function createQuestionAction(
     correctAnswer: formData.get("correctAnswer"),
     mediaUrl: formData.get("mediaUrl"),
     soundUrl: formData.get("soundUrl"),
-    durationSec: formData.get("durationSec") || "10",
+    durationSec: formData.get("durationSec"),
   };
 
   const validation = QuestionSchema.safeParse(rawData);
@@ -104,7 +104,7 @@ export async function createQuestionAction(
  */
 export async function deleteQuestionAction(
   questionId: string,
-  gameId: string
+  gameId: string,
 ): Promise<void> {
   const authResult = await requireAdminSession();
   if (!authResult.authenticated || !authResult.session) {
@@ -140,7 +140,7 @@ export async function deleteQuestionAction(
  */
 export async function reorderQuestionsAction(
   gameId: string,
-  orderedQuestionIds: string[]
+  orderedQuestionIds: string[],
 ): Promise<{ success: boolean; error?: string }> {
   const authResult = await requireAdminSession();
   if (!authResult.authenticated || !authResult.session) {
@@ -154,8 +154,8 @@ export async function reorderQuestionsAction(
         prisma.question.update({
           where: { id },
           data: { orderInRound: index },
-        })
-      )
+        }),
+      ),
     );
 
     // Recalculate round distribution based on new order

@@ -21,19 +21,19 @@ const createQuestSchema = z.object({
     .regex(/^[a-z0-9-]+$/, "Slug must be lowercase with hyphens only"),
   title: z.string().min(1).max(200),
   description: z.string().min(1).max(500),
-  iconUrl: z.string().url().nullable().optional(),
-  category: z.nativeEnum(QuestCategory),
+  iconUrl: z.url().nullable().optional(),
+  category: z.enum(QuestCategory),
   sortOrder: z.number().int().default(0),
   points: z.number().int().min(0),
-  type: z.nativeEnum(QuestType),
-  actionUrl: z.string().url().nullable().optional(),
+  type: z.enum(QuestType),
+  actionUrl: z.url().nullable().optional(),
   castHash: z.string().nullable().optional(),
   targetFid: z.number().int().nullable().optional(),
   requiredCount: z.number().int().min(1).default(1),
   isActive: z.boolean().default(true),
   startsAt: z.date().nullable().optional(),
   endsAt: z.date().nullable().optional(),
-  repeatFrequency: z.nativeEnum(RepeatFrequency).default("ONCE"),
+  repeatFrequency: z.enum(RepeatFrequency).default("ONCE"),
 });
 
 const updateQuestSchema = createQuestSchema.partial().extend({
@@ -59,7 +59,7 @@ type ActionResult<T = void> =
  * Create a new quest
  */
 export async function createQuestAction(
-  input: CreateQuestInput
+  input: CreateQuestInput,
 ): Promise<ActionResult<{ id: string }>> {
   const auth = await requireAdminSession();
   if (!auth.authenticated || !auth.session) {
@@ -102,7 +102,7 @@ export async function createQuestAction(
             body: `Complete "${quest.title}" to earn ${quest.points} points!`,
             targetUrl: `${env.rootUrl}/waitlist/quests`,
           },
-          "waitlist"
+          "waitlist",
         );
 
         // Log the notification action for audit trail
@@ -120,13 +120,13 @@ export async function createQuestAction(
 
         console.log(
           `[QuestNotification] Sent notifications for quest "${quest.title}":`,
-          notificationResults
+          notificationResults,
         );
       } catch (notificationError) {
         // Log but don't fail the quest creation
         console.error(
           "[QuestNotification] Failed to send notifications:",
-          notificationError
+          notificationError,
         );
       }
     }
@@ -143,7 +143,7 @@ export async function createQuestAction(
  * Update an existing quest
  */
 export async function updateQuestAction(
-  input: UpdateQuestInput
+  input: UpdateQuestInput,
 ): Promise<ActionResult> {
   const auth = await requireAdminSession();
   if (!auth.authenticated || !auth.session) {
@@ -218,7 +218,7 @@ export async function deleteQuestAction(id: string): Promise<ActionResult> {
  */
 export async function toggleQuestActiveAction(
   id: string,
-  isActive: boolean
+  isActive: boolean,
 ): Promise<ActionResult> {
   const auth = await requireAdminSession();
   if (!auth.authenticated || !auth.session) {
@@ -244,7 +244,7 @@ export async function toggleQuestActiveAction(
  * Approve a pending custom quest completion
  */
 export async function approveQuestCompletionAction(
-  completedQuestId: string
+  completedQuestId: string,
 ): Promise<ActionResult> {
   const auth = await requireAdminSession();
   if (!auth.authenticated || !auth.session) {
@@ -298,7 +298,7 @@ export async function approveQuestCompletionAction(
  * Reject a pending custom quest completion
  */
 export async function rejectQuestCompletionAction(
-  completedQuestId: string
+  completedQuestId: string,
 ): Promise<ActionResult> {
   const auth = await requireAdminSession();
   if (!auth.authenticated || !auth.session) {

@@ -57,3 +57,27 @@ export function generateInviteCode(): string {
     .map((byte) => CODE_ALPHABET[byte % CODE_ALPHABET.length])
     .join("");
 }
+
+/**
+ * Format game start time as human-readable relative string.
+ * Examples: "in 2h 30m", "in 15 minutes", "soon", "Mon, Jan 20"
+ */
+export function formatGameTime(date: Date): string {
+  const now = new Date();
+  const diffMs = date.getTime() - now.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (diffHours > 24) {
+    return date.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
+  } else if (diffHours > 0) {
+    return `in ${diffHours}h ${diffMins}m`;
+  } else if (diffMins > 0) {
+    return `in ${diffMins} minutes`;
+  }
+  return "soon";
+}

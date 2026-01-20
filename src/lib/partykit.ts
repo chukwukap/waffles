@@ -10,7 +10,7 @@ const SERVICE = "partykit-client";
 // ==========================================
 
 function partyFetch(gameId: string, path: string, body: unknown) {
-  const host = env.partykitHost || "localhost:1999";
+  const host = env.partykitHost;
 
   console.log("[" + SERVICE + "]", "fetch_request", {
     gameId,

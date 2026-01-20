@@ -21,8 +21,8 @@ const TemplateSchema = z.object({
   optionD: z.string().min(1, "Option D is required"),
   correctAnswer: z.enum(["A", "B", "C", "D"]),
   durationSec: z.coerce.number().min(5).max(60).default(10),
-  theme: z.nativeEnum(GameTheme).default(GameTheme.GENERAL),
-  difficulty: z.nativeEnum(Difficulty).default(Difficulty.MEDIUM),
+  theme: z.enum(GameTheme).default(GameTheme.GENERAL),
+  difficulty: z.enum(Difficulty).default(Difficulty.MEDIUM),
   mediaUrl: z.string().optional(),
   soundUrl: z.string().optional(),
 });
@@ -71,7 +71,7 @@ export interface TemplateListResult {
 
 export async function createTemplateAction(
   _prevState: TemplateActionResult | null,
-  formData: FormData
+  formData: FormData,
 ): Promise<TemplateActionResult> {
   const authResult = await requireAdminSession();
   if (!authResult.authenticated || !authResult.session) {
@@ -145,7 +145,7 @@ export async function createTemplateAction(
 export async function updateTemplateAction(
   templateId: string,
   _prevState: TemplateActionResult | null,
-  formData: FormData
+  formData: FormData,
 ): Promise<TemplateActionResult> {
   const authResult = await requireAdminSession();
   if (!authResult.authenticated || !authResult.session) {
@@ -215,7 +215,7 @@ export async function updateTemplateAction(
 // ==========================================
 
 export async function deleteTemplateAction(
-  templateId: string
+  templateId: string,
 ): Promise<TemplateActionResult> {
   const authResult = await requireAdminSession();
   if (!authResult.authenticated || !authResult.session) {
@@ -258,7 +258,7 @@ export async function deleteTemplateAction(
 // ==========================================
 
 export async function getTemplatesAction(
-  filters: TemplateFilters = {}
+  filters: TemplateFilters = {},
 ): Promise<TemplateListResult> {
   const authResult = await requireAdminSession();
   if (!authResult.authenticated) {
@@ -324,7 +324,7 @@ export async function getTemplatesAction(
 
 export async function assignToGameAction(
   gameId: string,
-  templateIds: string[]
+  templateIds: string[],
 ): Promise<AssignResult> {
   const authResult = await requireAdminSession();
   if (!authResult.authenticated || !authResult.session) {
@@ -363,11 +363,11 @@ export async function assignToGameAction(
     const existingTemplateIds = new Set(
       game.questions
         .filter((q) => q.templateId)
-        .map((q) => q.templateId as string)
+        .map((q) => q.templateId as string),
     );
 
     const newTemplateIds = templateIds.filter(
-      (id) => !existingTemplateIds.has(id)
+      (id) => !existingTemplateIds.has(id),
     );
     const skipped = templateIds.length - newTemplateIds.length;
 
@@ -464,7 +464,7 @@ export type BulkImportTemplateResult =
   | { success: false; error: string };
 
 export async function bulkImportTemplatesAction(
-  templates: BulkTemplateInput[]
+  templates: BulkTemplateInput[],
 ): Promise<BulkImportTemplateResult> {
   const authResult = await requireAdminSession();
   if (!authResult.authenticated || !authResult.session) {
