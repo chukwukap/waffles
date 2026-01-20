@@ -9,7 +9,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { rankGame, publishResults } from "@/lib/game/lifecycle";
 import { env } from "@/lib/env";
-import { logger } from "@/lib/logger";
 
 const SERVICE = "roundup-api";
 
@@ -30,14 +29,14 @@ export async function POST(
 ): Promise<NextResponse<RoundupResult>> {
   const { gameId } = await params;
 
-  logger.info(SERVICE, "roundup_request_received", {
+  console.log("["+SERVICE+"]", "roundup_request_received", {
     gameId,
     source: "partykit",
   });
 
   // Verify authorization
   if (request.headers.get("Authorization") !== `Bearer ${env.partykitSecret}`) {
-    logger.warn(SERVICE, "roundup_unauthorized", {
+    console.warn("["+SERVICE+"]", "roundup_unauthorized", {
       gameId,
       message: "Invalid or missing authorization header",
     });
@@ -62,7 +61,7 @@ export async function POST(
     });
 
     if (!game) {
-      logger.error(SERVICE, "roundup_game_not_found", { gameId });
+      console.error("["+SERVICE+"]", "roundup_game_not_found", { gameId });
       return NextResponse.json(
         {
           success: false,
@@ -76,7 +75,7 @@ export async function POST(
       );
     }
 
-    logger.info(SERVICE, "roundup_game_found", {
+    console.log("["+SERVICE+"]", "roundup_game_found", {
       gameId,
       onchainId: game.onchainId,
       prizePool: game.prizePool,
@@ -85,7 +84,7 @@ export async function POST(
 
     // 2. Rank the game
     const rankResult = await rankGame(gameId);
-    logger.info(SERVICE, "roundup_ranked", {
+    console.log("["+SERVICE+"]", "roundup_ranked", {
       gameId,
       entriesRanked: rankResult.entriesRanked,
       prizesDistributed: rankResult.prizesDistributed,
@@ -95,7 +94,7 @@ export async function POST(
 
     // 3. Publish on-chain if applicable
     if (game.onchainId && rankResult.prizesDistributed > 0) {
-      logger.info(SERVICE, "roundup_publishing_onchain", {
+      console.log("["+SERVICE+"]", "roundup_publishing_onchain", {
         gameId,
         onchainId: game.onchainId,
       });
@@ -103,19 +102,19 @@ export async function POST(
       const publishResult = await publishResults(gameId);
       published = publishResult.success;
 
-      logger.info(SERVICE, "roundup_published", {
+      console.log("["+SERVICE+"]", "roundup_published", {
         gameId,
         success: publishResult.success,
         txHash: publishResult.txHash,
       });
     } else {
-      logger.info(SERVICE, "roundup_skip_onchain", {
+      console.log("["+SERVICE+"]", "roundup_skip_onchain", {
         gameId,
         reason: !game.onchainId ? "no_onchain_id" : "no_prizes_to_distribute",
       });
     }
 
-    logger.info(SERVICE, "roundup_complete", {
+    console.log("["+SERVICE+"]", "roundup_complete", {
       gameId,
       ranked: true,
       published,
@@ -131,9 +130,9 @@ export async function POST(
       winnersCount: rankResult.prizesDistributed,
     });
   } catch (error) {
-    logger.error(SERVICE, "roundup_failed", {
+    console.error("["+SERVICE+"]", "roundup_failed", {
       gameId,
-      error: logger.errorMessage(error),
+      error: (error instanceof Error ? error.message : String(error)),
     });
     return NextResponse.json(
       {

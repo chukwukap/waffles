@@ -2,7 +2,6 @@
 
 import PartySocket from "partysocket";
 import { env } from "@/lib/env";
-import { logger } from "@/lib/logger";
 
 const SERVICE = "partykit-client";
 
@@ -13,7 +12,7 @@ const SERVICE = "partykit-client";
 function partyFetch(gameId: string, path: string, body: unknown) {
   const host = env.partykitHost || "localhost:1999";
 
-  logger.debug(SERVICE, "fetch_request", {
+  console.log("["+SERVICE+"]", "fetch_request", {
     gameId,
     path,
     host,
@@ -55,7 +54,7 @@ export async function initGameRoom(
     throw new Error("PartyKit not configured");
   }
 
-  logger.info(SERVICE, "init_room_request", {
+  console.log("["+SERVICE+"]", "init_room_request", {
     gameId,
     startsAt: startsAt.toISOString(),
     endsAt: endsAt.toISOString(),
@@ -69,7 +68,7 @@ export async function initGameRoom(
 
   if (!res.ok) {
     const errorText = await res.text().catch(() => "Unknown error");
-    logger.error(SERVICE, "init_room_failed", {
+    console.error("["+SERVICE+"]", "init_room_failed", {
       gameId,
       status: res.status,
       error: errorText,
@@ -77,7 +76,7 @@ export async function initGameRoom(
     throw new Error(`PartyKit init failed: ${errorText}`);
   }
 
-  logger.info(SERVICE, "init_room_success", { gameId });
+  console.log("["+SERVICE+"]", "init_room_success", { gameId });
 }
 
 /**
@@ -94,7 +93,7 @@ export async function notifyTicketPurchased(
   },
 ): Promise<void> {
   if (!env.partykitHost || !env.partykitSecret) {
-    logger.warn(SERVICE, "notify_ticket_purchased_skipped", {
+    console.warn("["+SERVICE+"]", "notify_ticket_purchased_skipped", {
       gameId,
       reason: "PartyKit not configured",
     });
@@ -105,23 +104,23 @@ export async function notifyTicketPurchased(
     const res = await partyFetch(gameId, "ticket-purchased", data);
 
     if (res.ok) {
-      logger.info(SERVICE, "notify_ticket_purchased_success", {
+      console.log("["+SERVICE+"]", "notify_ticket_purchased_success", {
         gameId,
         username: data.username,
         prizePool: data.prizePool,
         playerCount: data.playerCount,
       });
     } else {
-      logger.error(SERVICE, "notify_ticket_purchased_failed", {
+      console.error("["+SERVICE+"]", "notify_ticket_purchased_failed", {
         gameId,
         status: res.status,
         statusText: res.statusText,
       });
     }
   } catch (err) {
-    logger.error(SERVICE, "notify_ticket_purchased_error", {
+    console.error("["+SERVICE+"]", "notify_ticket_purchased_error", {
       gameId,
-      error: logger.errorMessage(err),
+      error: (err instanceof Error ? err.message : String(err)),
     });
   }
 }
@@ -132,7 +131,7 @@ export async function notifyTicketPurchased(
  */
 export async function cleanupGameRoom(gameId: string): Promise<void> {
   if (!env.partykitHost || !env.partykitSecret) {
-    logger.warn(SERVICE, "cleanup_skipped", {
+    console.warn("["+SERVICE+"]", "cleanup_skipped", {
       gameId,
       reason: "PartyKit not configured",
     });
@@ -140,25 +139,25 @@ export async function cleanupGameRoom(gameId: string): Promise<void> {
   }
 
   try {
-    logger.info(SERVICE, "cleanup_request", { gameId });
+    console.log("["+SERVICE+"]", "cleanup_request", { gameId });
 
     const res = await partyFetch(gameId, "cleanup", {
       reason: "game_deleted",
     });
 
     if (res.ok) {
-      logger.info(SERVICE, "cleanup_success", { gameId });
+      console.log("["+SERVICE+"]", "cleanup_success", { gameId });
     } else {
-      logger.warn(SERVICE, "cleanup_failed", {
+      console.warn("["+SERVICE+"]", "cleanup_failed", {
         gameId,
         status: res.status,
       });
     }
   } catch (err) {
     // Don't throw - cleanup is best-effort
-    logger.error(SERVICE, "cleanup_error", {
+    console.error("["+SERVICE+"]", "cleanup_error", {
       gameId,
-      error: logger.errorMessage(err),
+      error: (err instanceof Error ? err.message : String(err)),
     });
   }
 }
@@ -173,7 +172,7 @@ export async function updateGameTiming(
   endsAt: Date,
 ): Promise<void> {
   if (!env.partykitHost || !env.partykitSecret) {
-    logger.warn(SERVICE, "update_timing_skipped", {
+    console.warn("["+SERVICE+"]", "update_timing_skipped", {
       gameId,
       reason: "PartyKit not configured",
     });
@@ -181,7 +180,7 @@ export async function updateGameTiming(
   }
 
   try {
-    logger.info(SERVICE, "update_timing_request", {
+    console.log("["+SERVICE+"]", "update_timing_request", {
       gameId,
       startsAt: startsAt.toISOString(),
       endsAt: endsAt.toISOString(),
@@ -193,14 +192,14 @@ export async function updateGameTiming(
     });
 
     if (res.ok) {
-      logger.info(SERVICE, "update_timing_success", {
+      console.log("["+SERVICE+"]", "update_timing_success", {
         gameId,
         startsAt: startsAt.toISOString(),
         endsAt: endsAt.toISOString(),
       });
     } else {
       const errorText = await res.text();
-      logger.warn(SERVICE, "update_timing_failed", {
+      console.warn("["+SERVICE+"]", "update_timing_failed", {
         gameId,
         status: res.status,
         error: errorText,
@@ -208,9 +207,9 @@ export async function updateGameTiming(
     }
   } catch (err) {
     // Don't throw - sync is best-effort
-    logger.error(SERVICE, "update_timing_error", {
+    console.error("["+SERVICE+"]", "update_timing_error", {
       gameId,
-      error: logger.errorMessage(err),
+      error: (err instanceof Error ? err.message : String(err)),
     });
   }
 }

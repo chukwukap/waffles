@@ -7,7 +7,6 @@ import { logAdminAction, AdminAction, EntityType } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createGameOnChain, generateOnchainGameId } from "@/lib/chain";
-import { logger } from "@/lib/logger";
 import { GameTheme } from "@prisma";
 
 const SERVICE = "admin-games";
@@ -108,7 +107,7 @@ export async function createGameAction(
     // 4. ON-CHAIN LAST (irreversible - only when everything else succeeded)
     const txHash = await createGameOnChain(onchainId, data.tierPrice1);
 
-    logger.info(SERVICE, "game_created", {
+    console.log("["+SERVICE+"]", "game_created", {
       gameId: game.id,
       title: game.title,
       theme: data.theme,
@@ -130,16 +129,16 @@ export async function createGameAction(
     // ROLLBACK: Delete DB record if we created one
     if (gameId) {
       await prisma.game.delete({ where: { id: gameId } }).catch((e) => {
-        logger.error(SERVICE, "rollback_failed", {
+        console.error("["+SERVICE+"]", "rollback_failed", {
           gameId,
-          error: logger.errorMessage(e),
+          error: (e instanceof Error ? e.message : String(e)),
         });
       });
     }
     // Note: On-chain cannot be rolled back, but we do on-chain LAST so this shouldn't happen
 
-    logger.error(SERVICE, "game_create_failed", {
-      error: logger.errorMessage(error),
+    console.error("["+SERVICE+"]", "game_create_failed", {
+      error: (error instanceof Error ? error.message : String(error)),
       gameId,
     });
 
@@ -216,7 +215,7 @@ export async function updateGameAction(
     });
 
     // Sync timing to PartyKit (async, don't block response)
-    logger.info(SERVICE, "game_update_partykit_sync", {
+    console.log("["+SERVICE+"]", "game_update_partykit_sync", {
       gameId: game.id,
       startsAt: new Date(data.startsAt).toISOString(),
       endsAt: new Date(data.endsAt).toISOString(),
@@ -228,25 +227,25 @@ export async function updateGameAction(
       new Date(data.startsAt),
       new Date(data.endsAt),
     ).catch((err) =>
-      logger.error(SERVICE, "game_update_partykit_sync_error", {
+      console.error("["+SERVICE+"]", "game_update_partykit_sync_error", {
         gameId: game.id,
-        error: logger.errorMessage(err),
+        error: (err instanceof Error ? err.message : String(err)),
       }),
     );
 
     revalidatePath("/admin/games");
     revalidatePath(`/admin/games/${game.id}`);
 
-    logger.info(SERVICE, "game_updated", {
+    console.log("["+SERVICE+"]", "game_updated", {
       gameId: game.id,
       title: game.title,
     });
 
     return { success: true, gameId: game.id };
   } catch (error) {
-    logger.error(SERVICE, "game_update_failed", {
+    console.error("["+SERVICE+"]", "game_update_failed", {
       gameId,
-      error: logger.errorMessage(error),
+      error: (error instanceof Error ? error.message : String(error)),
     });
     return { success: false, error: "Failed to update game" };
   }
@@ -310,7 +309,7 @@ export async function deleteGameAction(gameId: string): Promise<void> {
     }
 
     // Cleanup PartyKit room
-    logger.info(SERVICE, "game_delete_partykit_cleanup", {
+    console.log("["+SERVICE+"]", "game_delete_partykit_cleanup", {
       gameId,
       title: game.title,
     });
@@ -318,7 +317,7 @@ export async function deleteGameAction(gameId: string): Promise<void> {
     await cleanupGameRoom(gameId);
 
     // Delete game and cascade to entries, questions, etc.
-    logger.info(SERVICE, "game_delete_db_cascade", {
+    console.log("["+SERVICE+"]", "game_delete_db_cascade", {
       gameId,
       entriesCount: game._count.entries,
     });
@@ -326,7 +325,7 @@ export async function deleteGameAction(gameId: string): Promise<void> {
       where: { id: gameId },
     });
 
-    logger.info(SERVICE, "game_deleted", {
+    console.log("["+SERVICE+"]", "game_deleted", {
       gameId,
       title: game.title,
       entriesDeleted: game._count.entries,

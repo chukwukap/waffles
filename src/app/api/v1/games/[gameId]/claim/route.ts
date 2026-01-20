@@ -5,7 +5,6 @@ import { sendToUser } from "@/lib/notifications";
 import { env } from "@/lib/env";
 import { WINNERS_COUNT } from "@/lib/game/prizeDistribution";
 import { verifyClaim } from "@/lib/chain";
-import { logger } from "@/lib/logger";
 
 const SERVICE = "claim-api";
 
@@ -102,7 +101,7 @@ export const POST = withAuth<Params>(
       // IDEMPOTENT: If already claimed, return success
       // =========================================================================
       if (entry.claimedAt) {
-        logger.info(SERVICE, "claim_already_recorded", {
+        console.log("["+SERVICE+"]", "claim_already_recorded", {
           gameId,
           fid: entry.user.fid,
         });
@@ -145,7 +144,7 @@ export const POST = withAuth<Params>(
       });
 
       if (!verification.verified) {
-        logger.error(SERVICE, "claim_verification_failed", {
+        console.error("["+SERVICE+"]", "claim_verification_failed", {
           gameId,
           fid: entry.user.fid,
           txHash,
@@ -161,7 +160,7 @@ export const POST = withAuth<Params>(
         );
       }
 
-      logger.info(SERVICE, "claim_verified", {
+      console.log("["+SERVICE+"]", "claim_verified", {
         gameId,
         fid: entry.user.fid,
         txHash,
@@ -185,11 +184,11 @@ export const POST = withAuth<Params>(
           body: `Congratulations! $${prizeAmount.toFixed(2)} has been sent to your wallet.`,
           targetUrl: `${env.rootUrl}/profile`,
         }).catch((err: Error) =>
-          logger.error(SERVICE, "notification_error", { error: err.message }),
+          console.error("["+SERVICE+"]", "notification_error", { error: err.message }),
         );
       }
 
-      logger.info(SERVICE, "claim_recorded", {
+      console.log("["+SERVICE+"]", "claim_recorded", {
         gameId,
         fid: entry.user.fid,
         prize: entry.prize,
@@ -201,8 +200,8 @@ export const POST = withAuth<Params>(
         claimedAt: claimedAt.toISOString(),
       });
     } catch (error) {
-      logger.error(SERVICE, "claim_error", {
-        error: logger.errorMessage(error),
+      console.error("["+SERVICE+"]", "claim_error", {
+        error: (error instanceof Error ? error.message : String(error)),
       });
       return NextResponse.json<ApiError>(
         { error: "Internal server error", code: "INTERNAL_ERROR" },

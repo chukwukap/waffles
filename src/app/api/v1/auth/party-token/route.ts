@@ -3,7 +3,6 @@ import { withAuth, type AuthResult, type ApiError } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { SignJWT } from "jose";
 import { env } from "@/lib/env";
-import { logger } from "@/lib/logger";
 
 const SERVICE = "party-token-api";
 
@@ -26,7 +25,7 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
     });
 
     if (!user) {
-      logger.warn(SERVICE, "token_user_not_found", {
+      console.warn("["+SERVICE+"]", "token_user_not_found", {
         userId: auth.userId,
       });
       return NextResponse.json<ApiError>(
@@ -37,7 +36,7 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
 
     const secret = env.partykitSecret;
     if (!secret) {
-      logger.error(SERVICE, "token_secret_missing", {
+      console.error("["+SERVICE+"]", "token_secret_missing", {
         message: "PARTYKIT_SECRET is not set",
       });
       return NextResponse.json<ApiError>(
@@ -57,16 +56,16 @@ export const GET = withAuth(async (request, auth: AuthResult) => {
       .setExpirationTime("1h") // Token valid for 1 hour
       .sign(new TextEncoder().encode(secret));
 
-    logger.debug(SERVICE, "token_issued", {
+    console.log("["+SERVICE+"]", "token_issued", {
       fid: user.fid,
       username: user.username,
     });
 
     return NextResponse.json({ token });
   } catch (error) {
-    logger.error(SERVICE, "token_error", {
+    console.error("["+SERVICE+"]", "token_error", {
       userId: auth.userId,
-      error: logger.errorMessage(error),
+      error: (error instanceof Error ? error.message : String(error)),
     });
     return NextResponse.json<ApiError>(
       { error: "Internal server error", code: "INTERNAL_ERROR" },

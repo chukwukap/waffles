@@ -6,7 +6,6 @@ import { Prisma } from "@prisma";
 import { notifyTicketPurchased } from "@/lib/partykit";
 import { sendToUser } from "@/lib/notifications";
 import { env } from "@/lib/env";
-import { logger } from "@/lib/logger";
 import { PAYMENT_TOKEN_DECIMALS, verifyTicketPurchase } from "@/lib/chain";
 import { parseUnits } from "viem";
 
@@ -164,7 +163,7 @@ export async function purchaseGameTicket(
     });
 
     if (!verification.verified) {
-      logger.error(SERVICE, "payment_verification_failed", {
+      console.error("["+SERVICE+"]", "payment_verification_failed", {
         gameId,
         fid,
         txHash,
@@ -178,7 +177,7 @@ export async function purchaseGameTicket(
       };
     }
 
-    logger.info(SERVICE, "payment_verified", {
+    console.log("["+SERVICE+"]", "payment_verified", {
       gameId,
       fid,
       txHash,
@@ -232,10 +231,10 @@ export async function purchaseGameTicket(
       body: `Game starts ${timeStr}. Don't miss it!`,
       targetUrl: `${env.rootUrl}/game`,
     }).catch((err) =>
-      logger.error(SERVICE, "notification_error", {
+      console.error("["+SERVICE+"]", "notification_error", {
         gameId,
         fid,
-        error: logger.errorMessage(err),
+        error: (err instanceof Error ? err.message : String(err)),
       }),
     );
 
@@ -246,13 +245,13 @@ export async function purchaseGameTicket(
       prizePool: game.prizePool + paidAmount,
       playerCount: game.playerCount + 1,
     }).catch((err) =>
-      logger.error(SERVICE, "partykit_notify_error", {
+      console.error("["+SERVICE+"]", "partykit_notify_error", {
         gameId,
-        error: logger.errorMessage(err),
+        error: (err instanceof Error ? err.message : String(err)),
       }),
     );
 
-    logger.info(SERVICE, "ticket_purchased", {
+    console.log("["+SERVICE+"]", "ticket_purchased", {
       gameId,
       entryId: entry.id,
       fid,
@@ -261,10 +260,10 @@ export async function purchaseGameTicket(
 
     return { success: true, entryId: entry.id };
   } catch (error) {
-    logger.error(SERVICE, "purchase_error", {
+    console.error("["+SERVICE+"]", "purchase_error", {
       gameId,
       fid,
-      error: logger.errorMessage(error),
+      error: (error instanceof Error ? error.message : String(error)),
     });
     return { success: false, error: "Purchase failed", code: "INTERNAL_ERROR" };
   }
@@ -357,14 +356,14 @@ export async function leaveGame(
     revalidatePath("/game");
     revalidatePath("/(app)/(game)", "layout");
 
-    logger.info(SERVICE, "game_left", { gameId, fid });
+    console.log("["+SERVICE+"]", "game_left", { gameId, fid });
 
     return { success: true, leftAt: updated.leftAt! };
   } catch (error) {
-    logger.error(SERVICE, "leave_error", {
+    console.error("["+SERVICE+"]", "leave_error", {
       gameId,
       fid,
-      error: logger.errorMessage(error),
+      error: (error instanceof Error ? error.message : String(error)),
     });
     return {
       success: false,
@@ -558,11 +557,11 @@ export async function submitAnswer(
       totalScore: newTotalScore,
     };
   } catch (error) {
-    logger.error(SERVICE, "answer_error", {
+    console.error("["+SERVICE+"]", "answer_error", {
       gameId,
       fid,
       questionId,
-      error: logger.errorMessage(error),
+      error: (error instanceof Error ? error.message : String(error)),
     });
     return {
       success: false,
