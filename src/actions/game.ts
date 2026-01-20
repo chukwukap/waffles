@@ -384,6 +384,7 @@ export async function submitAnswer(
 ): Promise<SubmitAnswerResult> {
   const { gameId, fid, questionId, selectedIndex, timeTakenMs } = input;
 
+  // 1. VALIDATE INPUT
   if (!gameId || !fid || !questionId) {
     return {
       success: false,
@@ -395,6 +396,7 @@ export async function submitAnswer(
   const selectedIndexValue = selectedIndex ?? -1;
 
   try {
+    // 2. GET USER
     const user = await prisma.user.findUnique({
       where: { fid },
       select: { id: true },
@@ -404,27 +406,28 @@ export async function submitAnswer(
       return { success: false, error: "User not found", code: "NOT_FOUND" };
     }
 
-    // Check if game has ended
+    // 3. GET GAME AND CHECK IF LIVE
     const game = await prisma.game.findUnique({
       where: { id: gameId },
-      select: { endsAt: true },
+      select: { startsAt: true, endsAt: true },
     });
 
     if (!game) {
       return { success: false, error: "Game not found", code: "NOT_FOUND" };
     }
 
-    if (new Date() > game.endsAt) {
+    const now = new Date();
+    if (now < game.startsAt) {
+      return { success: false, error: "Game not started", code: "NOT_STARTED" };
+    }
+    if (now > game.endsAt) {
       return { success: false, error: "Game has ended", code: "GAME_ENDED" };
     }
 
-    // Verify user has a game entry
+    // 4. GET ENTRY AND CHECK ELIGIBILITY
     const entry = await prisma.gameEntry.findUnique({
       where: {
-        gameId_userId: {
-          gameId,
-          userId: user.id,
-        },
+        gameId_userId: { gameId, userId: user.id },
       },
       select: {
         id: true,
@@ -432,6 +435,7 @@ export async function submitAnswer(
         answered: true,
         answers: true,
         paidAt: true,
+        leftAt: true,
       },
     });
 
@@ -447,7 +451,11 @@ export async function submitAnswer(
       };
     }
 
-    // Get question details
+    if (entry.leftAt) {
+      return { success: false, error: "You left this game", code: "LEFT_GAME" };
+    }
+
+    // 5. GET QUESTION
     const question = await prisma.question.findUnique({
       where: { id: questionId },
       select: {
@@ -470,12 +478,11 @@ export async function submitAnswer(
       };
     }
 
-    // Parse existing answers
+    // 6. CHECK IF ALREADY ANSWERED (idempotent)
     const existingAnswers =
       (entry.answers as unknown as Record<string, AnswerEntry>) || {};
     const questionKey = String(questionId);
 
-    // Check if already answered (idempotent)
     if (existingAnswers[questionKey]) {
       const existing = existingAnswers[questionKey];
       return {
@@ -486,11 +493,10 @@ export async function submitAnswer(
       };
     }
 
-    // Calculate score using inline logic (avoid import issues)
+    // 7. CALCULATE SCORE
     const maxTimeSec = question.durationSec ?? 10;
     const isCorrect = selectedIndexValue === question.correctIndex;
 
-    // Score calculation: base points * time bonus if correct, 0 if wrong
     let pointsEarned = 0;
     if (isCorrect) {
       const maxTimeMs = maxTimeSec * 1000;
@@ -499,40 +505,77 @@ export async function submitAnswer(
       pointsEarned = Math.round(basePoints * (0.5 + 0.5 * timeBonus));
     }
 
-    const newTotalScore = entry.score + pointsEarned;
+    // 8. ATOMIC UPDATE (prevents race conditions)
+    const updatedEntry = await prisma.$transaction(async (tx) => {
+      // Re-fetch entry to get latest state inside transaction
+      const currentEntry = await tx.gameEntry.findUnique({
+        where: { id: entry.id },
+        select: { score: true, answered: true, answers: true },
+      });
 
-    // Build new answer entry
-    const newAnswer: AnswerEntry = {
-      selected: selectedIndexValue,
-      correct: isCorrect,
-      points: pointsEarned,
-      ms: timeTakenMs,
-    };
+      if (!currentEntry) {
+        throw new Error("Entry not found");
+      }
 
-    // Build updated answers object
-    const updatedAnswers = {
-      ...existingAnswers,
-      [questionKey]: newAnswer,
-    } as unknown as Prisma.JsonObject;
+      const currentAnswers =
+        (currentEntry.answers as unknown as Record<string, AnswerEntry>) || {};
 
-    // Update entry
-    await prisma.gameEntry.update({
-      where: { id: entry.id },
-      data: {
-        answers: updatedAnswers,
-        score: newTotalScore,
-        answered: entry.answered + 1,
-      },
+      // Double-check idempotency inside transaction
+      if (currentAnswers[questionKey]) {
+        return {
+          alreadyAnswered: true,
+          existing: currentAnswers[questionKey],
+          score: currentEntry.score,
+        };
+      }
+
+      const newAnswer: AnswerEntry = {
+        selected: selectedIndexValue,
+        correct: isCorrect,
+        points: pointsEarned,
+        ms: timeTakenMs,
+      };
+
+      const updatedAnswers = {
+        ...currentAnswers,
+        [questionKey]: newAnswer,
+      } as unknown as Prisma.JsonObject;
+
+      const updated = await tx.gameEntry.update({
+        where: { id: entry.id },
+        data: {
+          answers: updatedAnswers,
+          score: currentEntry.score + pointsEarned,
+          answered: currentEntry.answered + 1,
+        },
+        select: { score: true },
+      });
+
+      return {
+        alreadyAnswered: false,
+        score: updated.score,
+      };
     });
+
+    // Handle race condition: another request answered first
+    if (updatedEntry.alreadyAnswered && "existing" in updatedEntry) {
+      const existing = updatedEntry.existing!;
+      return {
+        success: true,
+        isCorrect: existing.correct,
+        pointsEarned: existing.points,
+        totalScore: updatedEntry.score,
+      };
+    }
 
     return {
       success: true,
       isCorrect,
       pointsEarned,
-      totalScore: newTotalScore,
+      totalScore: updatedEntry.score,
     };
   } catch (error) {
-    console.error("[game-actions]", "answer_error", {
+    console.error("[game-actions] answer_error", {
       gameId,
       fid,
       questionId,
