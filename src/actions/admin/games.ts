@@ -107,7 +107,7 @@ export async function createGameAction(
     // 4. ON-CHAIN LAST (irreversible - only when everything else succeeded)
     const txHash = await createGameOnChain(onchainId, data.tierPrice1);
 
-    console.log("["+SERVICE+"]", "game_created", {
+    console.log("[" + SERVICE + "]", "game_created", {
       gameId: game.id,
       title: game.title,
       theme: data.theme,
@@ -129,16 +129,16 @@ export async function createGameAction(
     // ROLLBACK: Delete DB record if we created one
     if (gameId) {
       await prisma.game.delete({ where: { id: gameId } }).catch((e) => {
-        console.error("["+SERVICE+"]", "rollback_failed", {
+        console.error("[" + SERVICE + "]", "rollback_failed", {
           gameId,
-          error: (e instanceof Error ? e.message : String(e)),
+          error: e instanceof Error ? e.message : String(e),
         });
       });
     }
     // Note: On-chain cannot be rolled back, but we do on-chain LAST so this shouldn't happen
 
-    console.error("["+SERVICE+"]", "game_create_failed", {
-      error: (error instanceof Error ? error.message : String(error)),
+    console.error("[" + SERVICE + "]", "game_create_failed", {
+      error: error instanceof Error ? error.message : String(error),
       gameId,
     });
 
@@ -166,6 +166,7 @@ export async function updateGameAction(
     return { success: false, error: "Unauthorized" };
   }
 
+  // 1. VALIDATE INPUT
   const rawData = {
     title: formData.get("title"),
     description: formData.get("description"),
@@ -191,21 +192,27 @@ export async function updateGameAction(
   const data = validation.data;
 
   try {
+    // 2. UPDATE DATABASE
     const game = await prisma.game.update({
       where: { id: gameId },
       data: {
         title: data.title,
         description: data.description || null,
         theme: data.theme,
-        coverUrl: data.coverUrl || "",
-        startsAt: new Date(data.startsAt),
-        endsAt: new Date(data.endsAt),
+        coverUrl: data.coverUrl,
+        startsAt: data.startsAt,
+        endsAt: data.endsAt,
         tierPrices: [data.tierPrice1, data.tierPrice2, data.tierPrice3],
         roundBreakSec: data.roundBreakSec,
         maxPlayers: data.maxPlayers,
       },
     });
 
+    // 3. SYNC TO PARTYKIT (throws on failure)
+    const { updateGame } = await import("@/lib/partykit");
+    await updateGame(game.id, game.startsAt, game.endsAt);
+
+    // 4. LOG AND REVALIDATE
     await logAdminAction({
       adminId: authResult.session.userId,
       action: AdminAction.UPDATE_GAME,
@@ -214,40 +221,24 @@ export async function updateGameAction(
       details: { title: game.title },
     });
 
-    // Sync timing to PartyKit (async, don't block response)
-    console.log("["+SERVICE+"]", "game_update_partykit_sync", {
-      gameId: game.id,
-      startsAt: new Date(data.startsAt).toISOString(),
-      endsAt: new Date(data.endsAt).toISOString(),
-    });
-
-    const { updateGameTiming } = await import("@/lib/partykit");
-    updateGameTiming(
-      game.id,
-      new Date(data.startsAt),
-      new Date(data.endsAt),
-    ).catch((err) =>
-      console.error("["+SERVICE+"]", "game_update_partykit_sync_error", {
-        gameId: game.id,
-        error: (err instanceof Error ? err.message : String(err)),
-      }),
-    );
-
     revalidatePath("/admin/games");
     revalidatePath(`/admin/games/${game.id}`);
 
-    console.log("["+SERVICE+"]", "game_updated", {
+    console.log("[admin-games] game_updated", {
       gameId: game.id,
       title: game.title,
     });
 
     return { success: true, gameId: game.id };
   } catch (error) {
-    console.error("["+SERVICE+"]", "game_update_failed", {
+    console.error("[admin-games] game_update_failed", {
       gameId,
-      error: (error instanceof Error ? error.message : String(error)),
+      error: error instanceof Error ? error.message : String(error),
     });
-    return { success: false, error: "Failed to update game" };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to update game",
+    };
   }
 }
 
@@ -309,7 +300,7 @@ export async function deleteGameAction(gameId: string): Promise<void> {
     }
 
     // Cleanup PartyKit room
-    console.log("["+SERVICE+"]", "game_delete_partykit_cleanup", {
+    console.log("[" + SERVICE + "]", "game_delete_partykit_cleanup", {
       gameId,
       title: game.title,
     });
@@ -317,7 +308,7 @@ export async function deleteGameAction(gameId: string): Promise<void> {
     await cleanupGameRoom(gameId);
 
     // Delete game and cascade to entries, questions, etc.
-    console.log("["+SERVICE+"]", "game_delete_db_cascade", {
+    console.log("[" + SERVICE + "]", "game_delete_db_cascade", {
       gameId,
       entriesCount: game._count.entries,
     });
@@ -325,7 +316,7 @@ export async function deleteGameAction(gameId: string): Promise<void> {
       where: { id: gameId },
     });
 
-    console.log("["+SERVICE+"]", "game_deleted", {
+    console.log("[" + SERVICE + "]", "game_deleted", {
       gameId,
       title: game.title,
       entriesDeleted: game._count.entries,

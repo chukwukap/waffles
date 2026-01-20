@@ -12,7 +12,7 @@ const SERVICE = "partykit-client";
 function partyFetch(gameId: string, path: string, body: unknown) {
   const host = env.partykitHost || "localhost:1999";
 
-  console.log("["+SERVICE+"]", "fetch_request", {
+  console.log("[" + SERVICE + "]", "fetch_request", {
     gameId,
     path,
     host,
@@ -54,7 +54,7 @@ export async function initGameRoom(
     throw new Error("PartyKit not configured");
   }
 
-  console.log("["+SERVICE+"]", "init_room_request", {
+  console.log("[" + SERVICE + "]", "init_room_request", {
     gameId,
     startsAt: startsAt.toISOString(),
     endsAt: endsAt.toISOString(),
@@ -68,7 +68,7 @@ export async function initGameRoom(
 
   if (!res.ok) {
     const errorText = await res.text().catch(() => "Unknown error");
-    console.error("["+SERVICE+"]", "init_room_failed", {
+    console.error("[" + SERVICE + "]", "init_room_failed", {
       gameId,
       status: res.status,
       error: errorText,
@@ -76,7 +76,7 @@ export async function initGameRoom(
     throw new Error(`PartyKit init failed: ${errorText}`);
   }
 
-  console.log("["+SERVICE+"]", "init_room_success", { gameId });
+  console.log("[" + SERVICE + "]", "init_room_success", { gameId });
 }
 
 /**
@@ -93,7 +93,7 @@ export async function notifyTicketPurchased(
   },
 ): Promise<void> {
   if (!env.partykitHost || !env.partykitSecret) {
-    console.warn("["+SERVICE+"]", "notify_ticket_purchased_skipped", {
+    console.warn("[" + SERVICE + "]", "notify_ticket_purchased_skipped", {
       gameId,
       reason: "PartyKit not configured",
     });
@@ -104,23 +104,23 @@ export async function notifyTicketPurchased(
     const res = await partyFetch(gameId, "ticket-purchased", data);
 
     if (res.ok) {
-      console.log("["+SERVICE+"]", "notify_ticket_purchased_success", {
+      console.log("[" + SERVICE + "]", "notify_ticket_purchased_success", {
         gameId,
         username: data.username,
         prizePool: data.prizePool,
         playerCount: data.playerCount,
       });
     } else {
-      console.error("["+SERVICE+"]", "notify_ticket_purchased_failed", {
+      console.error("[" + SERVICE + "]", "notify_ticket_purchased_failed", {
         gameId,
         status: res.status,
         statusText: res.statusText,
       });
     }
   } catch (err) {
-    console.error("["+SERVICE+"]", "notify_ticket_purchased_error", {
+    console.error("[" + SERVICE + "]", "notify_ticket_purchased_error", {
       gameId,
-      error: (err instanceof Error ? err.message : String(err)),
+      error: err instanceof Error ? err.message : String(err),
     });
   }
 }
@@ -131,7 +131,7 @@ export async function notifyTicketPurchased(
  */
 export async function cleanupGameRoom(gameId: string): Promise<void> {
   if (!env.partykitHost || !env.partykitSecret) {
-    console.warn("["+SERVICE+"]", "cleanup_skipped", {
+    console.warn("[" + SERVICE + "]", "cleanup_skipped", {
       gameId,
       reason: "PartyKit not configured",
     });
@@ -139,77 +139,62 @@ export async function cleanupGameRoom(gameId: string): Promise<void> {
   }
 
   try {
-    console.log("["+SERVICE+"]", "cleanup_request", { gameId });
+    console.log("[" + SERVICE + "]", "cleanup_request", { gameId });
 
     const res = await partyFetch(gameId, "cleanup", {
       reason: "game_deleted",
     });
 
     if (res.ok) {
-      console.log("["+SERVICE+"]", "cleanup_success", { gameId });
+      console.log("[" + SERVICE + "]", "cleanup_success", { gameId });
     } else {
-      console.warn("["+SERVICE+"]", "cleanup_failed", {
+      console.warn("[" + SERVICE + "]", "cleanup_failed", {
         gameId,
         status: res.status,
       });
     }
   } catch (err) {
     // Don't throw - cleanup is best-effort
-    console.error("["+SERVICE+"]", "cleanup_error", {
+    console.error("[" + SERVICE + "]", "cleanup_error", {
       gameId,
-      error: (err instanceof Error ? err.message : String(err)),
+      error: err instanceof Error ? err.message : String(err),
     });
   }
 }
 
 /**
  * Update game timing in PartyKit storage and reschedule alarms.
- * Called when admin updates startsAt or endsAt.
+ * THROWS on failure - caller must handle error.
  */
-export async function updateGameTiming(
+export async function updateGame(
   gameId: string,
   startsAt: Date,
   endsAt: Date,
 ): Promise<void> {
   if (!env.partykitHost || !env.partykitSecret) {
-    console.warn("["+SERVICE+"]", "update_timing_skipped", {
-      gameId,
-      reason: "PartyKit not configured",
-    });
-    return;
+    throw new Error("PartyKit not configured");
   }
 
-  try {
-    console.log("["+SERVICE+"]", "update_timing_request", {
-      gameId,
-      startsAt: startsAt.toISOString(),
-      endsAt: endsAt.toISOString(),
-    });
+  console.log("[partykit] update_game_request", {
+    gameId,
+    startsAt: startsAt.toISOString(),
+    endsAt: endsAt.toISOString(),
+  });
 
-    const res = await partyFetch(gameId, "update-game", {
-      startsAt: startsAt.toISOString(),
-      endsAt: endsAt.toISOString(),
-    });
+  const res = await partyFetch(gameId, "update-game", {
+    startsAt: startsAt.toISOString(),
+    endsAt: endsAt.toISOString(),
+  });
 
-    if (res.ok) {
-      console.log("["+SERVICE+"]", "update_timing_success", {
-        gameId,
-        startsAt: startsAt.toISOString(),
-        endsAt: endsAt.toISOString(),
-      });
-    } else {
-      const errorText = await res.text();
-      console.warn("["+SERVICE+"]", "update_timing_failed", {
-        gameId,
-        status: res.status,
-        error: errorText,
-      });
-    }
-  } catch (err) {
-    // Don't throw - sync is best-effort
-    console.error("["+SERVICE+"]", "update_timing_error", {
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "Unknown error");
+    console.error("[partykit] update_game_failed", {
       gameId,
-      error: (err instanceof Error ? err.message : String(err)),
+      status: res.status,
+      error: errorText,
     });
+    throw new Error(`PartyKit update failed: ${errorText}`);
   }
+
+  console.log("[partykit] update_game_success", { gameId });
 }
