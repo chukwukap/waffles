@@ -43,6 +43,44 @@ function partyFetch(gameId: string, path: string, body: unknown) {
 // ==========================================
 
 /**
+ * Initialize a PartyKit room for a new game.
+ * THROWS on failure - caller must handle rollback.
+ */
+export async function initGameRoom(
+  gameId: string,
+  startsAt: Date,
+  endsAt: Date,
+): Promise<void> {
+  if (!env.partykitHost || !env.partykitSecret) {
+    throw new Error("PartyKit not configured");
+  }
+
+  logger.info(SERVICE, "init_room_request", {
+    gameId,
+    startsAt: startsAt.toISOString(),
+    endsAt: endsAt.toISOString(),
+  });
+
+  const res = await partyFetch(gameId, "init", {
+    gameId,
+    startsAt: startsAt.toISOString(),
+    endsAt: endsAt.toISOString(),
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "Unknown error");
+    logger.error(SERVICE, "init_room_failed", {
+      gameId,
+      status: res.status,
+      error: errorText,
+    });
+    throw new Error(`PartyKit init failed: ${errorText}`);
+  }
+
+  logger.info(SERVICE, "init_room_success", { gameId });
+}
+
+/**
  * Notify PartyKit of a ticket purchase.
  * Broadcasts both stats update and entrant addition atomically.
  */
