@@ -47,14 +47,14 @@ export async function GET(request: Request) {
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
-                    justifyContent: "flex-start",
+                    justifyContent: "center",
                     width: "100%",
                     height: "100%",
                     backgroundImage: `url(${bgImage})`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                     fontFamily: "EditUndo",
-                    padding: "40px 0",
+                    textAlign: "center",
                     position: "relative",
                 }}
             >
@@ -94,7 +94,7 @@ export async function GET(request: Request) {
                     {/* Headline text */}
                     <span
                         style={{
-                            fontSize: 36,
+                            fontSize: 48,
                             color: "#FFFFFF",
                             letterSpacing: "0.02em",
                         }}
@@ -106,7 +106,7 @@ export async function GET(request: Request) {
                 {/* Prize Amount - Large green text */}
                 <span
                     style={{
-                        fontSize: 72,
+                        fontSize: 96,
                         color: "#05FF8F",
                         lineHeight: 1,
                         marginBottom: 4,
@@ -119,7 +119,7 @@ export async function GET(request: Request) {
                 {/* ON WAFFLES */}
                 <span
                     style={{
-                        fontSize: 36,
+                        fontSize: 48,
                         color: "#FFFFFF",
                         letterSpacing: "0.02em",
                         marginBottom: 20,

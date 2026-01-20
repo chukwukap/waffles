@@ -20,7 +20,7 @@ export async function loadEditUndoFont(): Promise<ArrayBuffer> {
   if (cachedEditUndo) return cachedEditUndo;
 
   const fontData = await fetch(
-    new URL(FONT_PATHS.editUndo, import.meta.url)
+    new URL(FONT_PATHS.editUndo, import.meta.url),
   ).then((res) => res.arrayBuffer());
 
   cachedEditUndo = fontData;
@@ -34,7 +34,7 @@ export async function loadBrockmannFont(): Promise<ArrayBuffer> {
   if (cachedBrockmann) return cachedBrockmann;
 
   const fontData = await fetch(
-    new URL(FONT_PATHS.brockmann, import.meta.url)
+    new URL(FONT_PATHS.brockmann, import.meta.url),
   ).then((res) => res.arrayBuffer());
 
   cachedBrockmann = fontData;
@@ -67,9 +67,9 @@ export async function loadOGFonts() {
   ];
 }
 
-// Common OG image dimensions
+// Common OG image dimensions (Farcaster recommends 3:2 aspect ratio)
 export const OG_WIDTH = 1200;
-export const OG_HEIGHT = 630;
+export const OG_HEIGHT = 800;
 
 // Design tokens from Figma
 export const COLORS = {
@@ -91,7 +91,7 @@ export const COLORS = {
  */
 export async function safeImageUrl(
   url: string | null | undefined,
-  timeoutMs: number = 3000
+  timeoutMs: number = 3000,
 ): Promise<string | null> {
   if (!url) return null;
 

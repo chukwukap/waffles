@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { safeImageUrl } from "../utils";
+import { safeImageUrl, OG_WIDTH, OG_HEIGHT } from "../utils";
 
 export const runtime = "nodejs";
 
@@ -129,8 +129,8 @@ export async function GET(request: NextRequest) {
         </div>
       ),
       {
-        width: 1200,
-        height: 800,
+        width: OG_WIDTH,
+        height: OG_HEIGHT,
         fonts: [
           {
             name: "PixelFont",
