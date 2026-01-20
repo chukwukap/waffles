@@ -9,8 +9,6 @@ import { redirect } from "next/navigation";
 import { createGameOnChain, generateOnchainGameId } from "@/lib/chain";
 import { GameTheme } from "@prisma";
 
-const SERVICE = "admin-games";
-
 // ==========================================
 // SCHEMA
 // ==========================================
@@ -107,7 +105,7 @@ export async function createGameAction(
     // 4. ON-CHAIN LAST (irreversible - only when everything else succeeded)
     const txHash = await createGameOnChain(onchainId, data.tierPrice1);
 
-    console.log("[" + SERVICE + "]", "game_created", {
+    console.log("[admin-games]", "game_created", {
       gameId: game.id,
       title: game.title,
       theme: data.theme,
@@ -129,7 +127,7 @@ export async function createGameAction(
     // ROLLBACK: Delete DB record if we created one
     if (gameId) {
       await prisma.game.delete({ where: { id: gameId } }).catch((e) => {
-        console.error("[" + SERVICE + "]", "rollback_failed", {
+        console.error("[admin-games]", "rollback_failed", {
           gameId,
           error: e instanceof Error ? e.message : String(e),
         });
@@ -137,7 +135,7 @@ export async function createGameAction(
     }
     // Note: On-chain cannot be rolled back, but we do on-chain LAST so this shouldn't happen
 
-    console.error("[" + SERVICE + "]", "game_create_failed", {
+    console.error("[admin-games]", "game_create_failed", {
       error: error instanceof Error ? error.message : String(error),
       gameId,
     });
@@ -252,76 +250,77 @@ export async function deleteGameAction(gameId: string): Promise<void> {
     redirect("/admin/login");
   }
 
+  // 1. FETCH GAME DATA
+  const game = await prisma.game.findUnique({
+    where: { id: gameId },
+    select: {
+      id: true,
+      onchainId: true,
+      title: true,
+      _count: { select: { entries: true } },
+    },
+  });
+
+  if (!game) {
+    throw new Error("Game not found");
+  }
+
   try {
-    const game = await prisma.game.findUnique({
-      where: { id: gameId },
-      select: {
-        id: true,
-        onchainId: true,
-        title: true,
-        _count: { select: { entries: true } },
-      },
-    });
-
-    if (!game) {
-      throw new Error("Game not found");
-    }
-
-    // If game is on-chain, force close sales first
-    if (game.onchainId) {
-      const { getOnChainGame, closeSalesOnChain } = await import("@/lib/chain");
-      const onChainGame = await getOnChainGame(game.onchainId as `0x${string}`);
-
-      const gameExistsOnChain =
-        onChainGame &&
-        (onChainGame.ticketCount > BigInt(0) ||
-          onChainGame.minimumTicketPrice > BigInt(0));
-
-      if (gameExistsOnChain && !onChainGame.salesClosed) {
-        console.log(
-          `[DeleteGame] Force closing sales for game ${game.onchainId} on-chain...`,
-        );
-
-        try {
-          const txHash = await closeSalesOnChain(
-            game.onchainId as `0x${string}`,
-          );
-          console.log(`[DeleteGame] Game sales closed on-chain. TX: ${txHash}`);
-        } catch (endError) {
-          console.error(
-            `[DeleteGame] Failed to close sales on-chain:`,
-            endError,
-          );
-          throw new Error(
-            `Failed to close sales on-chain before deletion. Please try again or close sales manually first.`,
-          );
-        }
-      }
-    }
-
-    // Cleanup PartyKit room
-    console.log("[" + SERVICE + "]", "game_delete_partykit_cleanup", {
-      gameId,
-      title: game.title,
-    });
-    const { cleanupGameRoom } = await import("@/lib/partykit");
-    await cleanupGameRoom(gameId);
-
-    // Delete game and cascade to entries, questions, etc.
-    console.log("[" + SERVICE + "]", "game_delete_db_cascade", {
-      gameId,
-      entriesCount: game._count.entries,
-    });
+    // 2. DELETE FROM DATABASE FIRST (easiest to recover if later steps fail)
     await prisma.game.delete({
       where: { id: gameId },
     });
 
-    console.log("[" + SERVICE + "]", "game_deleted", {
+    console.log("[admin-games] game_deleted_from_db", {
       gameId,
       title: game.title,
       entriesDeleted: game._count.entries,
     });
 
+    // 3. CLEANUP PARTYKIT ROOM (best-effort, don't fail if it fails)
+    try {
+      const { cleanupGameRoom } = await import("@/lib/partykit");
+      await cleanupGameRoom(gameId);
+      console.log("[admin-games] partykit_cleanup_success", { gameId });
+    } catch (err) {
+      console.warn("[admin-games] partykit_cleanup_failed", {
+        gameId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      // Continue - PartyKit cleanup is best-effort
+    }
+
+    // 4. CLOSE ON-CHAIN SALES (irreversible - do last, best-effort)
+    if (game.onchainId) {
+      try {
+        const { getOnChainGame, closeSalesOnChain } =
+          await import("@/lib/chain");
+        const onChainGame = await getOnChainGame(
+          game.onchainId as `0x${string}`,
+        );
+
+        const needsClosing =
+          onChainGame &&
+          !onChainGame.salesClosed &&
+          (onChainGame.ticketCount > BigInt(0) ||
+            onChainGame.minimumTicketPrice > BigInt(0));
+
+        if (needsClosing) {
+          const txHash = await closeSalesOnChain(
+            game.onchainId as `0x${string}`,
+          );
+          console.log("[admin-games] onchain_sales_closed", { gameId, txHash });
+        }
+      } catch (err) {
+        console.warn("[admin-games] onchain_close_failed", {
+          gameId,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        // Continue - game is already deleted from DB, on-chain cleanup is best-effort
+      }
+    }
+
+    // 5. LOG ADMIN ACTION
     await logAdminAction({
       adminId: authResult.session.userId,
       action: AdminAction.DELETE_GAME,
@@ -333,8 +332,16 @@ export async function deleteGameAction(gameId: string): Promise<void> {
         entriesDeleted: game._count.entries,
       },
     });
+
+    console.log("[admin-games] game_delete_complete", {
+      gameId,
+      title: game.title,
+    });
   } catch (error) {
-    console.error("Delete game error:", error);
+    console.error("[admin-games] game_delete_failed", {
+      gameId,
+      error: error instanceof Error ? error.message : String(error),
+    });
     throw error;
   }
 
