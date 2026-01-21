@@ -236,29 +236,53 @@ class SoundManager {
    */
   playBgMusic(): void {
     this.init();
-    if (this._isMuted) return;
+
+    console.log("[Sound] playBgMusic called", {
+      isMuted: this._isMuted,
+      hasAudio: !!this._bgAudio,
+      isPlaying: this._bgPlaying,
+    });
+
+    if (this._isMuted) {
+      console.log("[Sound] Skipping BG music - muted");
+      return;
+    }
 
     if (typeof window === "undefined") return;
 
     if (!this._bgAudio) {
+      console.log("[Sound] Creating new BG audio element");
       this._bgAudio = new Audio(BG_TRACK);
       this._bgAudio.loop = true;
       this._bgAudio.preload = "auto";
 
-      // Suppress errors for missing/unsupported audio files
-      this._bgAudio.onerror = () => {
-        // Silently fail
+      // Log errors for debugging
+      this._bgAudio.onerror = (e) => {
+        console.error("[Sound] BG audio error:", e);
         this._bgAudio = null;
       };
     }
 
-    if (!this._bgAudio) return;
+    if (!this._bgAudio) {
+      console.error("[Sound] BG audio element is null");
+      return;
+    }
 
     this._bgAudio.volume = this._volume * 0.4; // Lower volume for BG
-    this._bgAudio.play().catch(() => {
-      // Silently fail - user interaction may be required
-    });
-    this._bgPlaying = true;
+
+    this._bgAudio
+      .play()
+      .then(() => {
+        console.log("[Sound] BG music started successfully");
+        this._bgPlaying = true;
+      })
+      .catch((err) => {
+        console.warn("[Sound] BG music play failed:", err.message);
+        console.log(
+          "[Sound] This is usually due to browser autoplay policy - needs user interaction first",
+        );
+        this._bgPlaying = false;
+      });
   }
 
   /**
