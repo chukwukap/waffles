@@ -89,10 +89,10 @@ export async function GET(request: Request) {
                 >
                     {/* Game name + Category */}
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                        <span style={{ fontSize: 32, color: "#FFFFFF", letterSpacing: "0.02em" }}>
+                        <span style={{ fontSize: 40, color: "#FFFFFF", letterSpacing: "0.02em" }}>
                             {gameName}
                         </span>
-                        <span style={{ fontSize: 20, color: "#99A0AE", textTransform: "capitalize" }}>
+                        <span style={{ fontSize: 28, color: "#99A0AE", textTransform: "capitalize" }}>
                             {category}
                         </span>
                     </div>
@@ -121,19 +121,19 @@ export async function GET(request: Request) {
                                 }}
                             />
                         )}
-                        <span style={{ fontSize: 28, color: "#FFFFFF" }}>
+                        <span style={{ fontSize: 36, color: "#FFFFFF" }}>
                             @{username}
                         </span>
                     </div>
 
                     {/* Score - Large */}
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: 8 }}>
-                        <span style={{ fontSize: 18, color: "#99A0AE", letterSpacing: "0.1em" }}>
+                        <span style={{ fontSize: 24, color: "#99A0AE", letterSpacing: "0.1em" }}>
                             SCORED
                         </span>
                         <span
                             style={{
-                                fontSize: 72,
+                                fontSize: 96,
                                 color: "#FFC931",
                                 lineHeight: 1,
                                 letterSpacing: "-0.02em",
@@ -141,7 +141,7 @@ export async function GET(request: Request) {
                         >
                             {score.toLocaleString()}
                         </span>
-                        <span style={{ fontSize: 24, color: "#FFC931", marginTop: 4 }}>
+                        <span style={{ fontSize: 32, color: "#FFC931", marginTop: 4 }}>
                             POINTS
                         </span>
                     </div>
@@ -159,7 +159,7 @@ export async function GET(request: Request) {
                             border: "1px solid rgba(20, 185, 133, 0.4)",
                         }}
                     >
-                        <span style={{ fontSize: 18, color: "#14B985" }}>
+                        <span style={{ fontSize: 24, color: "#14B985" }}>
                             RANK: {rankText}
                         </span>
                     </div>

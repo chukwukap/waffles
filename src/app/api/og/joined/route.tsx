@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
                                     <span
                                         style={{
                                             fontFamily: "EditUndo",
-                                            fontSize: 46, // Scaled from 23px
+                                            fontSize: 56, // Scaled from 23px
                                             color: COLORS.white,
                                         }}
                                     >
@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
                                 <span
                                     style={{
                                         fontFamily: "EditUndo",
-                                        fontSize: 46, // Scaled from 23px
+                                        fontSize: 56, // Scaled from 23px
                                         lineHeight: "130%",
                                         color: COLORS.white,
                                     }}
@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
                                 <span
                                     style={{
                                         fontFamily: "Brockmann",
-                                        fontSize: 28, // Scaled from 14px
+                                        fontSize: 34, // Scaled from 14px
                                         lineHeight: "130%",
                                         letterSpacing: "-0.03em",
                                         color: COLORS.grayLabel,
@@ -192,7 +192,7 @@ export async function GET(request: NextRequest) {
                                     <span
                                         style={{
                                             fontFamily: "Brockmann",
-                                            fontSize: 23, // Scaled from 11.38px
+                                            fontSize: 28, // Scaled from 11.38px
                                             lineHeight: "130%",
                                             letterSpacing: "-0.03em",
                                             color: COLORS.grayLabel,
@@ -203,7 +203,7 @@ export async function GET(request: NextRequest) {
                                     <span
                                         style={{
                                             fontFamily: "EditUndo",
-                                            fontSize: 34, // Scaled from 17.07px
+                                            fontSize: 42, // Scaled from 17.07px
                                             lineHeight: "100%",
                                             color: COLORS.white,
                                         }}
@@ -239,7 +239,7 @@ export async function GET(request: NextRequest) {
                                     <span
                                         style={{
                                             fontFamily: "Brockmann",
-                                            fontSize: 23,
+                                            fontSize: 28,
                                             lineHeight: "130%",
                                             letterSpacing: "-0.03em",
                                             color: COLORS.grayLabel,
@@ -250,7 +250,7 @@ export async function GET(request: NextRequest) {
                                     <span
                                         style={{
                                             fontFamily: "EditUndo",
-                                            fontSize: 34,
+                                            fontSize: 42,
                                             lineHeight: "100%",
                                             color: COLORS.white,
                                         }}

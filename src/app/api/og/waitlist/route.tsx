@@ -108,13 +108,13 @@ export async function GET(request: NextRequest) {
             )}
 
             {/* Rank Text */}
-            <div style={{ display: "flex", fontSize: 80 }}>
+            <div style={{ display: "flex", fontSize: 100 }}>
               <span style={{ color: "#FCD34D" }}>{validatedRank}</span>
               &nbsp;ON THE
             </div>
 
             {/* Waitlist Text */}
-            <div style={{ fontSize: 80 }}>WAITLIST</div>
+            <div style={{ fontSize: 100 }}>WAITLIST</div>
 
             {/* Scroll Image */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
