@@ -284,37 +284,30 @@ export default function ResultPageClient({
   // ==========================================
 
   const handleShareScore = useCallback(async () => {
-    if (!context?.user || !userScore) return;
+    if (!context?.user || !userScore || !gameId) return;
 
     try {
       const hasPrize = userScore.prize > 0;
       const username = context.user.username ?? "Player";
       const pfpUrl = context.user.pfpUrl || "";
 
-      let embedUrl: string;
-      let shareText: string;
+      // Build share params for the result page URL
+      // The page's generateMetadata will use these to build the correct OG image
+      const shareParams = new URLSearchParams({
+        username,
+        score: userScore.score.toString(),
+        rank: userScore.rank.toString(),
+        ...(hasPrize && { prizeAmount: userScore.prize.toString() }),
+        ...(pfpUrl && { pfpUrl }),
+      });
 
-      if (hasPrize) {
-        // Use prize OG route for winners
-        const prizeParams = new URLSearchParams({
-          prizeAmount: userScore.prize.toString(),
-          ...(pfpUrl && { pfpUrl }),
-        });
-        embedUrl = `${env.rootUrl}/api/og/prize?${prizeParams.toString()}`;
-        shareText = `Just won $${userScore.prize.toLocaleString()} on Waffles! 🧇🏆`;
-      } else {
-        // Use score OG route for non-winners
-        const scoreParams = new URLSearchParams({
-          score: userScore.score.toString(),
-          username,
-          gameNumber: gameNumber.toString(),
-          category: game?.theme || "Trivia",
-          rank: userScore.rank.toString(),
-          ...(pfpUrl && { pfpUrl }),
-        });
-        embedUrl = `${env.rootUrl}/api/og/score?${scoreParams.toString()}`;
-        shareText = `Just scored ${userScore.score.toLocaleString()} points on Waffles #${String(gameNumber).padStart(3, "0")}! 🧇`;
-      }
+      // Embed the result page URL (NOT the OG image URL)
+      // Farcaster will fetch OG metadata from this page, which includes fc:frame with button
+      const embedUrl = `${env.rootUrl}/game/${gameId}/result?${shareParams.toString()}`;
+
+      const shareText = hasPrize
+        ? `Just won $${userScore.prize.toLocaleString()} on Waffles! 🧇🏆`
+        : `Just scored ${userScore.score.toLocaleString()} points on Waffles #${String(gameNumber).padStart(3, "0")}! 🧇`;
 
       const result = await composeCastAsync({
         text: shareText,
@@ -333,7 +326,7 @@ export default function ResultPageClient({
       console.error("[Share] Error:", error);
       notify.error("Failed to share");
     }
-  }, [composeCastAsync, context?.user, userScore, gameId, gameNumber, game?.theme]);
+  }, [composeCastAsync, context?.user, userScore, gameId, gameNumber]);
 
   // ==========================================
   // CLAIM LOGIC
