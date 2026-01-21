@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { PhotoIcon, XMarkIcon, MusicalNoteIcon, VideoCameraIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
@@ -26,6 +26,9 @@ export function MediaPicker({ label, name, accept = "all", onSelect, selectedUrl
     const [loading, setLoading] = useState(false);
     const [filter, setFilter] = useState("");
     const [mounted, setMounted] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadError, setUploadError] = useState<string | null>(null);
+    const dropZoneRef = useRef<HTMLDivElement>(null);
 
     // Ensure we're mounted before using portal
     useEffect(() => {
@@ -37,6 +40,65 @@ export function MediaPicker({ label, name, accept = "all", onSelect, selectedUrl
             loadMedia();
         }
     }, [isOpen]);
+
+    // Upload file to Cloudinary
+    const uploadFile = useCallback(async (file: File) => {
+        setIsUploading(true);
+        setUploadError(null);
+
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("folder", "questions");
+
+            const response = await fetch("/api/upload", {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || "Upload failed");
+            }
+
+            const data = await response.json();
+            onSelect(data.url);
+        } catch (err) {
+            console.error("Upload failed:", err);
+            setUploadError(err instanceof Error ? err.message : "Failed to upload");
+        } finally {
+            setIsUploading(false);
+        }
+    }, [onSelect]);
+
+    // Handle paste event
+    const handlePaste = useCallback(async (e: ClipboardEvent) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+
+        for (const item of Array.from(items)) {
+            if (item.type.startsWith("image/") && (accept === "image" || accept === "all")) {
+                e.preventDefault();
+                const file = item.getAsFile();
+                if (file) {
+                    await uploadFile(file);
+                }
+                return;
+            }
+        }
+    }, [accept, uploadFile]);
+
+    // Attach paste listener to the drop zone
+    useEffect(() => {
+        const dropZone = dropZoneRef.current;
+        if (!dropZone) return;
+
+        const onPaste = (e: Event) => handlePaste(e as ClipboardEvent);
+        dropZone.addEventListener("paste", onPaste);
+        return () => {
+            dropZone.removeEventListener("paste", onPaste);
+        };
+    }, [handlePaste]);
 
     const loadMedia = async () => {
         setLoading(true);
@@ -130,21 +192,38 @@ export function MediaPicker({ label, name, accept = "all", onSelect, selectedUrl
                     </div>
                 </div>
             ) : (
-                <button
-                    type="button"
-                    onClick={() => setIsOpen(true)}
-                    className="w-full border border-dashed border-white/20 rounded-xl p-5 text-center hover:border-[#FFC931]/50 hover:bg-white/5 transition-all group"
+                <div
+                    ref={dropZoneRef}
+                    tabIndex={0}
+                    onClick={() => !isUploading && setIsOpen(true)}
+                    onKeyDown={(e) => e.key === "Enter" && !isUploading && setIsOpen(true)}
+                    className={`w-full border border-dashed rounded-xl p-5 text-center transition-all group cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#FFC931]/50 ${isUploading
+                            ? "border-[#FFC931] bg-[#FFC931]/10"
+                            : uploadError
+                                ? "border-red-500/50"
+                                : "border-white/20 hover:border-[#FFC931]/50 hover:bg-white/5"
+                        }`}
                 >
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 rounded-xl bg-white/5 group-hover:bg-[#FFC931]/10 transition-colors">
-                            <PhotoIcon className="h-6 w-6 text-white/40 group-hover:text-[#FFC931] transition-colors" />
+                    {isUploading ? (
+                        <div className="flex items-center justify-center gap-3">
+                            <div className="h-6 w-6 border-2 border-[#FFC931]/30 border-t-[#FFC931] rounded-full animate-spin" />
+                            <span className="text-sm text-[#FFC931]">Uploading...</span>
                         </div>
-                        <div className="text-left">
-                            <div className="text-sm font-medium text-white">Select from Library</div>
-                            <div className="text-xs text-white/50">Click to browse uploaded files</div>
+                    ) : (
+                        <div className="flex items-center gap-3">
+                            <div className="p-3 rounded-xl bg-white/5 group-hover:bg-[#FFC931]/10 group-focus:bg-[#FFC931]/10 transition-colors">
+                                <PhotoIcon className="h-6 w-6 text-white/40 group-hover:text-[#FFC931] group-focus:text-[#FFC931] transition-colors" />
+                            </div>
+                            <div className="text-left">
+                                <div className="text-sm font-medium text-white">Add Image</div>
+                                <div className="text-xs text-white/50">Paste image (⌘V) or click to browse</div>
+                            </div>
                         </div>
-                    </div>
-                </button>
+                    )}
+                    {uploadError && (
+                        <p className="text-xs text-red-400 mt-2">{uploadError}</p>
+                    )}
+                </div>
             )}
 
             {/* Media Picker Modal - Rendered via Portal to avoid z-index issues */}
