@@ -4,11 +4,11 @@
  * Fair, linear time-based scoring.
  * Faster answers get more points, simple as that.
  *
- * Score range: 100 (at deadline) to 1000 (instant)
+ * Score range: 1,000 (at deadline) to 10,000 (instant)
  */
 
-const MAX_POINTS = 1000;
-const MIN_POINTS = 100;
+const MAX_POINTS = 10000;
+const MIN_POINTS = 1000;
 
 /**
  * Calculate score for an answer.
@@ -16,19 +16,19 @@ const MIN_POINTS = 100;
  * Formula: score = MIN + (MAX - MIN) * (timeRemaining / maxTime)
  *
  * Examples (10 second question):
- * - Answer in 0s   → 1000 points
- * - Answer in 5s   → 550 points
- * - Answer in 10s  → 100 points
+ * - Answer in 0s   → 10,000 points
+ * - Answer in 5s   → 5,500 points
+ * - Answer in 10s  → 1,000 points
  *
  * @param timeTakenMs - Time taken in milliseconds
  * @param maxTimeSec - Maximum time allowed in seconds
  * @param isCorrect - Whether the answer was correct
- * @returns Score (0 for wrong, 100-1000 for correct)
+ * @returns Score (0 for wrong, 1000-10000 for correct)
  */
 export function getScore(
   timeTakenMs: number,
   maxTimeSec: number,
-  isCorrect: boolean
+  isCorrect: boolean,
 ): number {
   // Wrong answers get 0
   if (!isCorrect) return 0;

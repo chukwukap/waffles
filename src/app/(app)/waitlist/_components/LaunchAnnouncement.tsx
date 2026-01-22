@@ -1,15 +1,46 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
+
+import { useUser } from "@/hooks/useUser";
+import { WaffleLoader } from "@/components/ui/WaffleLoader";
 
 /**
  * LaunchAnnouncement
  *
  * Simple, professional page announcing that the waitlist is over
  * and the game launches soon. Clean design, clear messaging.
+ *
+ * Users with game access are redirected to /game.
  */
 export function LaunchAnnouncement() {
+    const router = useRouter();
+    const { user, isLoading } = useUser();
+
+    // Redirect users with game access to the game
+    useEffect(() => {
+        if (!isLoading && user?.hasGameAccess) {
+            router.replace("/game");
+        }
+    }, [user, isLoading, router]);
+
+    // Show loader while checking access
+    if (isLoading) {
+        return (
+            <section className="flex-1 flex items-center justify-center">
+                <WaffleLoader text="" />
+            </section>
+        );
+    }
+
+    // Don't render if user has access (redirect will happen)
+    if (user?.hasGameAccess) {
+        return null;
+    }
+
     return (
         <section className="flex-1 flex flex-col items-center justify-center px-6 text-center">
             {/* Logo */}
@@ -64,7 +95,7 @@ export function LaunchAnnouncement() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.4, delay: 0.4 }}
-                className="font-display text-[14px] leading-[1.5] text-white/50 mt-6 max-w-[300px]"
+                className="font-display text-[14px] leading-normal text-white/50 mt-6 max-w-[300px]"
             >
                 You&apos;ll be notified the moment the game begins. Stay tuned.
             </motion.p>
