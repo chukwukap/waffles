@@ -117,8 +117,12 @@ function ThemeCard({
                     width={268}
                     height={48}
                     fontSize={20}
+                    className="font-body"
                 >
-                    {label}
+                    <span className="font-body">
+                        {label}
+                    </span>
+
                 </PixelButton>
             </motion.div>
         </motion.div>

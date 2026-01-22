@@ -31,7 +31,7 @@ export function SpeedSection() {
     return (
         <section
             ref={sectionRef}
-            className="relative w-full min-h-[930px] bg-[#FFC931] overflow-hidden py-20"
+            className="relative z-20 w-full min-h-[930px] bg-[#FFC931] overflow-x-hidden overflow-y-visible py-20"
         >
             {/* Left Content with parallax */}
             <motion.div

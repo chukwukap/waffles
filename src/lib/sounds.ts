@@ -129,10 +129,18 @@ class SoundManager {
   play(name: SoundName): void {
     this.init();
 
-    if (this._isMuted) return;
+    console.log("[Sound] play called", { name, isMuted: this._isMuted });
+
+    if (this._isMuted) {
+      console.log("[Sound] Skipping sound - muted");
+      return;
+    }
 
     const audio = getAudio(name);
-    if (!audio) return;
+    if (!audio) {
+      console.warn("[Sound] No audio element for:", name);
+      return;
+    }
 
     // Reset to start if already playing
     audio.currentTime = 0;
@@ -149,9 +157,15 @@ class SoundManager {
     audio.addEventListener("ended", handleEnded);
 
     // Play with error handling (browsers may block autoplay)
-    audio.play().catch(() => {
-      activeAudioSet.delete(audio);
-    });
+    audio
+      .play()
+      .then(() => {
+        console.log("[Sound] Playing:", name);
+      })
+      .catch((err) => {
+        console.warn("[Sound] Play failed:", name, err.message);
+        activeAudioSet.delete(audio);
+      });
   }
 
   /**

@@ -15,8 +15,11 @@ import { useMouseParallax, useMagneticEffect } from "./useAnimationHooks";
 import { TextScramble } from "./TextScramble";
 import { FloatingParticles } from "./GradientBlobs";
 
-// Split headline into words for staggered animation
-const headlineWords = ["THE", "WORLD", "IS", "A", "PUZZLE"];
+// Headline lines for explicit line breaks
+const headlineLines = [
+    ["THE", "WORLD"],
+    ["IS", "A", "PUZZLE"],
+];
 
 export function HeroSection() {
     const sectionRef = useRef<HTMLElement>(null);
@@ -34,7 +37,7 @@ export function HeroSection() {
     return (
         <section
             ref={sectionRef}
-            className="relative w-full min-h-screen md:h-[930px] overflow-hidden"
+            className="relative w-full min-h-screen md:h-[930px] overflow-visible"
             style={{
                 background: `linear-gradient(180deg, #1E1E1E 0%, #000000 100%)`,
             }}
@@ -54,32 +57,39 @@ export function HeroSection() {
 
             {/* Content Container - centered with parallax */}
             <motion.div
-                className="absolute left-1/2 -translate-x-1/2 top-48 md:top-60 flex flex-col items-center gap-6 md:gap-8 w-full max-w-[801px] px-4 md:px-0"
+                className="absolute left-1/2 -translate-x-1/2 top-48 md:top-[237px] flex flex-col items-center gap-6 md:gap-8 w-full max-w-[801px] px-4 md:px-0"
                 style={{ y: contentY }}
             >
-                {/* Main Headline - Staggered word animation with scramble */}
+                {/* Main Headline - Two lines with explicit structure */}
                 <motion.h1
                     variants={staggerContainerVariants}
                     initial="hidden"
                     animate="visible"
-                    className="font-body text-5xl sm:text-7xl md:text-8xl lg:text-[140px] leading-[0.9] text-center tracking-tight text-white flex flex-wrap justify-center gap-x-4 md:gap-x-6"
+                    className="font-body text-[48px] sm:text-[72px] md:text-[100px] lg:text-[140px] leading-[0.9] text-center tracking-[-0.03em] text-white flex flex-col items-center w-full"
                 >
-                    {headlineWords.map((word, index) => (
-                        <motion.span
-                            key={index}
-                            variants={wordStaggerVariants}
-                            className="inline-block"
-                            style={{
-                                transformStyle: "preserve-3d",
-                            }}
-                        >
-                            <TextScramble
-                                text={word}
-                                trigger="mount"
-                                revealDelay={300 + index * 150}
-                                scrambleSpeed={40}
-                            />
-                        </motion.span>
+                    {headlineLines.map((line, lineIndex) => (
+                        <div key={lineIndex} className="flex justify-center gap-x-4 md:gap-x-6">
+                            {line.map((word, wordIndex) => {
+                                const globalIndex = lineIndex === 0 ? wordIndex : 2 + wordIndex;
+                                return (
+                                    <motion.span
+                                        key={wordIndex}
+                                        variants={wordStaggerVariants}
+                                        className="inline-block"
+                                        style={{
+                                            transformStyle: "preserve-3d",
+                                        }}
+                                    >
+                                        <TextScramble
+                                            text={word}
+                                            trigger="mount"
+                                            revealDelay={300 + globalIndex * 150}
+                                            scrambleSpeed={40}
+                                        />
+                                    </motion.span>
+                                );
+                            })}
+                        </div>
                     ))}
                 </motion.h1>
 
@@ -89,7 +99,7 @@ export function HeroSection() {
                     initial="hidden"
                     animate="visible"
                     transition={{ delay: 0.5 }}
-                    className="font-display font-medium text-lg sm:text-xl md:text-2xl lg:text-[28px] leading-[1.3] text-center tracking-tight text-white/70 max-w-[453px]"
+                    className="font-display font-medium text-lg sm:text-xl md:text-2xl lg:text-[28px] leading-[1.3] text-center tracking-[-0.03em] text-white/70 max-w-[453px]"
                 >
                     Win real money by recognizing patterns faster than everyone else
                 </motion.p>
@@ -110,7 +120,7 @@ export function HeroSection() {
                     data-cursor-text="Click"
                 >
                     <motion.button
-                        className="relative flex items-center justify-center w-full sm:w-[337px] h-[54px] p-3 bg-white rounded-xl font-body text-xl sm:text-2xl leading-[1.15] tracking-tight text-[#FBB03B] text-center overflow-hidden"
+                        className="relative flex items-center justify-center w-full sm:w-[337px] h-[54px] p-3 bg-white rounded-xl font-body text-[20px] sm:text-[26px] leading-[1.15] tracking-[-0.02em] text-[#FBB03B] text-center overflow-hidden"
                         style={{
                             borderRight: "5px solid #FBB03B",
                             borderBottom: "5px solid #FBB03B",
@@ -143,7 +153,7 @@ export function HeroSection() {
                 </motion.div>
             </motion.div>
 
-            {/* Hero Character - with floating animation and scroll parallax */}
+            {/* Hero Character/Globe - right-aligned, extending below section */}
             <motion.div
                 initial={{ opacity: 0, x: 80, scale: 0.9 }}
                 animate={{ opacity: 1, x: 0, scale: 1 }}
@@ -152,10 +162,9 @@ export function HeroSection() {
                     delay: 0.4,
                     ease: [0.22, 1, 0.36, 1],
                 }}
-                className="absolute right-8 md:right-[133px] bottom-0 w-48 sm:w-64 md:w-80 lg:w-[413px] h-auto"
+                className="absolute right-[2.5%] sm:right-[2.5%] md:right-[0] bottom-0 translate-y-[30%] w-[70vw] sm:w-[55vw]  max-w-[600px] h-auto z-20"
                 style={{
                     y: characterY,
-                    x: layer1.x,
                 }}
             >
                 {/* Floating wrapper */}
@@ -169,7 +178,7 @@ export function HeroSection() {
                         alt="Waffles Character"
                         width={413}
                         height={515}
-                        className="object-contain drop-shadow-2xl"
+                        className="object-contain drop-shadow-2xl w-full h-auto"
                         priority
                     />
                 </motion.div>

@@ -30,7 +30,7 @@ export function CompeteSection() {
     return (
         <section
             ref={sectionRef}
-            className="relative w-full min-h-screen md:h-[930px] bg-[#14B985] overflow-hidden"
+            className="relative z-20 w-full min-h-screen md:h-[930px] bg-[#14B985] overflow-visible"
         >
             {/* Treasure Chest - with bouncy entrance and floating */}
             <motion.div
