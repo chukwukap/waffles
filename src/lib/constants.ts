@@ -1,3 +1,6 @@
+// Launch Mode: Set to true to show "Waitlist is Over" instead of waitlist signup
+export const IS_LAUNCH_MODE = true;
+
 export const PALETTES = [
   { bg: "#FFE8BA", border: "#FFC931", text: "#151515" },
   { bg: "#EFD6FF", border: "#B45CFF", text: "#151515" },
