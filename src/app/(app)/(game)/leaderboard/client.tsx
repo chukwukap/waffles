@@ -141,7 +141,7 @@ export default function LeaderboardClient() {
   const showTop3 = entries.length >= 3;
   const top3 = showTop3 ? entries.slice(0, 3) : [];
   const rest = showTop3 ? entries.slice(3) : entries;
-  const subtitle = activeTab === "current" ? gameTitle : "The greatest of all time";
+  const subtitle = activeTab === "current" ? gameTitle : "The greatest wafflers of all time";
 
   // ── Render ────────────────────────────────────
   return (

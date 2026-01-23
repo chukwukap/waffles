@@ -23,9 +23,9 @@ export const minikitConfig: MiniAppManifest = {
     description:
       "The internet's most addictive social pattern recognition game",
     screenshotUrls: [
-      `${env.rootUrl}/images/screenshots/1.png`,
-      `${env.rootUrl}/images/screenshots/2.png`,
-      `${env.rootUrl}/images/screenshots/3.png`,
+      `${env.rootUrl}/images/screenshots/1.jpg`,
+      `${env.rootUrl}/images/screenshots/2.jpg`,
+      `${env.rootUrl}/images/screenshots/3.jpg`,
     ],
     iconUrl: `${env.rootUrl}/icon.png`,
     splashImageUrl: `${env.rootUrl}/icon.png`,

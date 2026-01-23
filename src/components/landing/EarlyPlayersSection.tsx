@@ -56,7 +56,7 @@ export function EarlyPlayersSection() {
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: cloud.delay }}
-          className="absolute z-[5] hidden md:block"
+          className="absolute z-5 hidden md:block"
           style={{
             left: cloud.left,
             right: cloud.right,
@@ -137,12 +137,12 @@ export function EarlyPlayersSection() {
             >
               {/* Shine effect */}
               <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-[#00CFF2]/10 to-transparent"
+                className="absolute inset-0 bg-linear-to-r from-transparent via-[#00CFF2]/10 to-transparent"
                 animate={{ x: ["-100%", "200%"] }}
                 transition={{ duration: 3, repeat: Infinity, repeatDelay: 2 }}
               />
               <span className="relative z-10 font-body font-normal text-[26px] leading-[115%] tracking-[-0.02em] text-[#00CFF2] text-center">
-                JOIN THE WAITLIST
+                INVITE CODE
               </span>
             </motion.button>
           </motion.div>
@@ -179,7 +179,7 @@ export function EarlyPlayersSection() {
             />
             {/* Glint effect */}
             <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+              className="absolute inset-0 bg-linear-to-r from-transparent via-white/30 to-transparent"
               animate={{ x: ["-100%", "200%"] }}
               transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
             />
@@ -208,7 +208,7 @@ export function EarlyPlayersSection() {
             />
             {/* Glint effect */}
             <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+              className="absolute inset-0 bg-linear-to-r from-transparent via-white/30 to-transparent"
               animate={{ x: ["-100%", "200%"] }}
               transition={{ duration: 2, repeat: Infinity, repeatDelay: 4, delay: 1 }}
             />

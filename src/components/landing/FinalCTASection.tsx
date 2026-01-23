@@ -120,7 +120,7 @@ export function FinalCTASection() {
                         y: magnetic.y,
                     }}
                     data-cursor-hover
-                    data-cursor-text="Join"
+                    data-cursor-text="Enter"
                 >
                     <motion.button
                         className="relative w-[337px] h-[54px] bg-white rounded-xl flex items-center justify-center font-body text-[26px] tracking-[-0.02em] text-[#493601] overflow-hidden"
@@ -144,11 +144,11 @@ export function FinalCTASection() {
                     >
                         {/* Animated shine effect */}
                         <motion.div
-                            className="absolute inset-0 bg-gradient-to-r from-transparent via-[#493601]/10 to-transparent"
+                            className="absolute inset-0 bg-linear-to-r from-transparent via-[#493601]/10 to-transparent"
                             animate={{ x: ["-100%", "200%"] }}
                             transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 3 }}
                         />
-                        <span className="relative z-10">JOIN THE WAITLIST</span>
+                        <span className="relative z-10">INVITE CODE</span>
                     </motion.button>
                 </motion.div>
             </div>

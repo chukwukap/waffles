@@ -54,9 +54,9 @@ const FeedRow = memo(function FeedRow({ item }: { item: FeedItem }) {
         )}
       </motion.div>
 
-      {/* Content */}
+      {/* Content - max-w prevents overlap with online indicator */}
       <span
-        className={`text-white/70 text-sm truncate ${item.type === "join" ? "italic" : ""
+        className={`text-white/70 text-sm truncate max-w-[calc(100%-100px)] ${item.type === "join" ? "italic" : ""
           }`}
       >
         <span className="text-white font-medium">{item.username}</span>{" "}
