@@ -16,17 +16,17 @@ interface TimerTubeProps {
 
 /**
  * TimerTube component displays an animated progress tube that unfills as time runs out.
- * The tube shows progress only for the time before the 3-second warning threshold.
+ * The tube spans the full duration. Warning effects (shake/pulse) trigger at 3 seconds.
  */
 export function TimerTube({ remaining, duration }: TimerTubeProps) {
   const clipPathId = useId();
 
-  // Calculate the percentage excluding the last 3 seconds
+  // Calculate percentage based on full duration (0% remaining = 100% progress)
   const calculateProgress = () => {
-    if (duration <= 3) return 0;
+    if (duration <= 0) return 100;
     const progress = Math.min(
       100,
-      Math.max(0, ((duration - remaining) / (duration - 3)) * 100)
+      Math.max(0, ((duration - remaining) / duration) * 100)
     );
     return progress;
   };
@@ -68,7 +68,7 @@ export function TimerTube({ remaining, duration }: TimerTubeProps) {
       }
     >
       <defs>
-        {/* Animated clipPath for smooth transition */}
+        {/* Animated clipPath - 1s linear transition for smooth continuous countdown */}
         <clipPath id={`timer-clip-${clipPathId}`}>
           <motion.rect
             x="0"
@@ -76,7 +76,7 @@ export function TimerTube({ remaining, duration }: TimerTubeProps) {
             height="12"
             initial={{ width: 78 }}
             animate={{ width: clipWidth }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
+            transition={{ duration: 1, ease: "linear" }}
           />
         </clipPath>
       </defs>

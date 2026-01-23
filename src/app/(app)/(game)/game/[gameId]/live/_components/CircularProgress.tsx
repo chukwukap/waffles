@@ -41,7 +41,7 @@ const CircularProgress = ({
         stroke={color}
         strokeWidth={strokeWidth}
         strokeLinecap="butt"
-        style={{ transition: "d 0.3s ease-out" }}
+        style={{ transition: "d 1s linear" }}
       />
       {/* The dot at the tip of the countdown circle */}
       <circle
@@ -49,7 +49,7 @@ const CircularProgress = ({
         cy={dotPosition.y}
         r={strokeWidth}
         fill={color}
-        style={{ transition: "cx 0.3s ease-out, cy 0.3s ease-out" }}
+        style={{ transition: "cx 1s linear, cy 1s linear" }}
       />
     </svg>
   );
