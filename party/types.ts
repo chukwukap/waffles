@@ -17,9 +17,7 @@ export type AlarmPhase =
   | "5min"
   // Game lifecycle
   | "start" // Game goes live
-  | "gameEnd" // Game ends, trigger settlement
-  // Post-game
-  | "unclaimed"; // Reminder for unclaimed prizes
+  | "gameEnd"; // Game ends, trigger settlement
 
 // CORS headers for HTTP responses
 export const CORS_HEADERS = {

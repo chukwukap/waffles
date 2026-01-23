@@ -95,7 +95,6 @@ export function getAlarmTimeForPhase(
   if (config) return startsAt - config.offsetMs;
   if (phase === "start") return startsAt;
   if (phase === "gameEnd") return endsAt;
-  if (phase === "unclaimed") return endsAt + 24 * 60 * 60 * 1000; // 24h after end
   return null;
 }
 
@@ -214,16 +213,6 @@ export async function handleGameEndAlarm(
         winnersCount: result.winnersCount,
       });
       console.log("[PartyKit]", "gameEnd_roundup_success", { gameId });
-
-      // Schedule unclaimed reminder (24h after game ends)
-      if (endsAt) {
-        const unclaimedTime = endsAt + 24 * 60 * 60 * 1000;
-        await server.room.storage.put("alarmPhase", "unclaimed" as AlarmPhase);
-        await server.room.storage.setAlarm(unclaimedTime);
-        console.log("[PartyKit]", "unclaimed_alarm_scheduled", {
-          at: new Date(unclaimedTime).toISOString(),
-        });
-      }
     } else {
       console.error("[PartyKit]", "gameEnd_roundup_failed", {
         error: result.error,
@@ -231,42 +220,6 @@ export async function handleGameEndAlarm(
     }
   } catch (error) {
     console.error("[PartyKit]", "gameEnd_roundup_exception", {
-      error: error instanceof Error ? error.message : String(error),
-    });
-  }
-}
-
-/**
- * Handle unclaimed prize reminder alarm
- */
-export async function handleUnclaimedAlarm(server: GameServer): Promise<void> {
-  const gameId = await server.room.storage.get<string>("gameId");
-  const appUrl = server.room.env.NEXT_PUBLIC_URL as string;
-  const secret = server.room.env.PARTYKIT_SECRET as string;
-
-  console.log("[PartyKit]", "unclaimed_alarm_triggered", { gameId });
-
-  if (!gameId || !appUrl || !secret) {
-    console.error("[PartyKit]", "unclaimed_missing_config", { gameId });
-    return;
-  }
-
-  // Call internal API to send unclaimed reminders
-  const unclaimedUrl = `${appUrl}/api/v1/internal/games/${gameId}/unclaimed-reminder`;
-
-  try {
-    const response = await fetch(unclaimedUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${secret}`,
-      },
-    });
-
-    const result = await response.json();
-    console.log("[PartyKit]", "unclaimed_reminder_result", result);
-  } catch (error) {
-    console.error("[PartyKit]", "unclaimed_reminder_error", {
       error: error instanceof Error ? error.message : String(error),
     });
   }
