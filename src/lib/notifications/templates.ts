@@ -111,12 +111,24 @@ export const postGame = {
 // HELPER: Build full notification payload
 // ==========================================
 
+export type NotificationContext = "pregame" | "result" | "claim";
+
 export function buildPayload(
   template: NotificationTemplate,
   gameId?: string,
+  context: NotificationContext = "pregame",
 ): { title: string; body: string; targetUrl: string } {
   const baseUrl = env.rootUrl;
-  const targetUrl = gameId ? `${baseUrl}/game/${gameId}` : `${baseUrl}/game`;
+
+  // Route to appropriate page based on context
+  let targetUrl: string;
+  if (!gameId) {
+    targetUrl = `${baseUrl}/game`;
+  } else if (context === "result" || context === "claim") {
+    targetUrl = `${baseUrl}/game/${gameId}/result`;
+  } else {
+    targetUrl = `${baseUrl}/game`; // Pre-game goes to lobby
+  }
 
   return {
     title: template.title,

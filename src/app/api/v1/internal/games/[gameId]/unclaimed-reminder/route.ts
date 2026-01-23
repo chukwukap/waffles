@@ -63,7 +63,7 @@ export async function POST(
       game.gameNumber,
       `$${unclaimedWinners[0].prize?.toFixed(2) || "0"}`,
     );
-    const payload = buildPayload(template, gameId);
+    const payload = buildPayload(template, gameId, "claim");
 
     console.log("[" + SERVICE + "]", "sending_reminders", {
       gameId,
