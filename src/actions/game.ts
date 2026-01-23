@@ -9,6 +9,7 @@ import { env } from "@/lib/env";
 import { PAYMENT_TOKEN_DECIMALS, verifyTicketPurchase } from "@/lib/chain";
 import { parseUnits } from "viem";
 import { formatGameTime } from "@/lib/utils";
+import { getScore } from "@/lib/game/scoring";
 
 // ============================================================================
 // Types
@@ -462,7 +463,6 @@ export async function submitAnswer(
         correctIndex: true,
         durationSec: true,
         gameId: true,
-        points: true,
       },
     });
 
@@ -496,14 +496,7 @@ export async function submitAnswer(
     // 7. CALCULATE SCORE
     const maxTimeSec = question.durationSec ?? 10;
     const isCorrect = selectedIndexValue === question.correctIndex;
-
-    let pointsEarned = 0;
-    if (isCorrect) {
-      const maxTimeMs = maxTimeSec * 1000;
-      const timeBonus = Math.max(0, 1 - timeTakenMs / maxTimeMs);
-      const basePoints = question.points ?? 100;
-      pointsEarned = Math.round(basePoints * (0.5 + 0.5 * timeBonus));
-    }
+    const pointsEarned = getScore(timeTakenMs, maxTimeSec, isCorrect);
 
     // 8. ATOMIC UPDATE (prevents race conditions)
     const updatedEntry = await prisma.$transaction(async (tx) => {
