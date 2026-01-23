@@ -51,6 +51,7 @@ export interface UseLiveGameReturn {
 
   // Break state
   nextRoundNumber: number;
+  isLastRound: boolean;
 
   // Waiting state - for showing countdown until game ends
   gameEndsAt: Date;
@@ -137,25 +138,25 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
 
   const answeredIds = useMemo(
     () => new Set(entry?.answeredQuestionIds ?? []),
-    [entry?.answeredQuestionIds]
+    [entry?.answeredQuestionIds],
   );
 
   const score = entry?.score ?? 0;
 
   const currentQuestion = useMemo(
     () => game.questions[currentQuestionIndex] ?? null,
-    [game.questions, currentQuestionIndex]
+    [game.questions, currentQuestionIndex],
   );
 
   const hasAnswered = useMemo(
     () => (currentQuestion ? answeredIds.has(currentQuestion.id) : false),
-    [currentQuestion, answeredIds]
+    [currentQuestion, answeredIds],
   );
 
   // Check if user has already completed all questions
   const hasCompletedAllQuestions = useMemo(
     () => answeredIds.size >= game.questions.length,
-    [answeredIds.size, game.questions.length]
+    [answeredIds.size, game.questions.length],
   );
 
   const isGameEnded = Date.now() >= game.endsAt.getTime();
@@ -198,6 +199,17 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
   const nextRoundNumber = useMemo(() => {
     const nextQ = game.questions[currentQuestionIndex + 1];
     return nextQ?.roundIndex ?? 1;
+  }, [game.questions, currentQuestionIndex]);
+
+  // Check if the next round is the last one
+  const isLastRound = useMemo(() => {
+    const nextQ = game.questions[currentQuestionIndex + 1];
+    if (!nextQ) return true;
+    // Check if any question after this one has a different round
+    const hasMoreRoundsAfter = game.questions
+      .slice(currentQuestionIndex + 2)
+      .some((q) => q.roundIndex !== nextQ.roundIndex);
+    return !hasMoreRoundsAfter;
   }, [game.questions, currentQuestionIndex]);
 
   // ==========================================
@@ -263,7 +275,7 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
           fid!,
           currentQuestion.id,
           -1,
-          timeMs
+          timeMs,
         );
         await refetchEntry();
         setIsSubmitting(false);
@@ -331,7 +343,7 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
 
     // Find first unanswered question
     const firstUnansweredIdx = game.questions.findIndex(
-      (q) => !answeredIds.has(q.id)
+      (q) => !answeredIds.has(q.id),
     );
 
     if (firstUnansweredIdx === -1) {
@@ -362,7 +374,7 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
         fid!,
         currentQuestion.id,
         selectedIndex,
-        timeMs
+        timeMs,
       );
       await refetchEntry();
 
@@ -376,7 +388,7 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
       isSubmitting,
       refetchEntry,
       advanceToNext,
-    ]
+    ],
   );
 
   const onMediaReady = useCallback(() => {
@@ -393,7 +405,9 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
 
   return {
     phase,
-    secondsRemaining: mediaReady ? seconds : currentQuestion?.durationSec ?? 0,
+    secondsRemaining: mediaReady
+      ? seconds
+      : (currentQuestion?.durationSec ?? 0),
     currentQuestion,
     questionNumber: currentQuestionIndex + 1,
     totalQuestions: game.questions.length,
@@ -401,6 +415,7 @@ export function useLiveGame(game: LiveGameData): UseLiveGameReturn {
     isSubmitting,
     score,
     nextRoundNumber,
+    isLastRound,
     gameEndsAt: game.endsAt,
     gameId: game.id,
     startGame,
@@ -424,7 +439,7 @@ async function submitAnswerToServer(
   questionId: string,
   selectedIndex: number,
   timeMs: number,
-  retries = 3
+  retries = 3,
 ): Promise<SubmitResult> {
   // Import dynamically to avoid circular dependencies
   const { submitAnswer } = await import("@/actions/game");

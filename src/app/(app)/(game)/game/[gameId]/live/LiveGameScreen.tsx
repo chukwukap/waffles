@@ -35,6 +35,7 @@ export default function LiveGameScreen({ game }: { game: LiveGameData }) {
     isSubmitting,
     score,
     nextRoundNumber,
+    isLastRound,
     gameEndsAt,
     gameId,
     startGame,
@@ -108,6 +109,7 @@ export default function LiveGameScreen({ game }: { game: LiveGameData }) {
             <BreakView
               seconds={secondsRemaining}
               nextRoundNumber={nextRoundNumber}
+              isLastRound={isLastRound}
               gameId={game.id}
             />
           </div>

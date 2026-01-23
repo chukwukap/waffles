@@ -33,9 +33,9 @@ const slides: Slide[] = [
     title: "Win Big",
     description: (
       <>
-        The faster you connect the dots, the
+        The faster you recognize the scenes, the
         <br />
-        bigger your share
+        bigger your rewards
       </>
     ),
   },
@@ -44,7 +44,7 @@ const slides: Slide[] = [
     title: "Take Your Crown",
     description: (
       <>
-        Recognize the images, climb the
+        Recognize the scenes, climb the
         <br />
         leaderboard. EZ
       </>

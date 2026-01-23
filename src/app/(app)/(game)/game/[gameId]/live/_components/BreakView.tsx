@@ -8,7 +8,7 @@ import { LiveEventFeed } from "../../../_components/LiveEventFeed";
 import { GameChat } from "../../../_components/chat/GameChat";
 import Image from "next/image";
 
-const MAX_LEADERBOARD_ENTRIES = 10;
+const MAX_LEADERBOARD_ENTRIES = 8;
 
 // ==========================================
 // TYPES
@@ -17,6 +17,7 @@ const MAX_LEADERBOARD_ENTRIES = 10;
 interface BreakViewProps {
   seconds: number;
   nextRoundNumber: number;
+  isLastRound?: boolean;
   totalDuration?: number;
   gameId: string;
 }
@@ -36,6 +37,7 @@ interface LeaderboardEntry {
 
 export default function BreakView({
   seconds,
+  isLastRound = false,
   totalDuration = 20,
   gameId,
 }: BreakViewProps) {
@@ -95,7 +97,7 @@ export default function BreakView({
               transition={{ duration: 0.4, delay: 0.1 }}
               className="text-white text-[36px] leading-[0.92] tracking-tight uppercase"
             >
-              Next round in
+              {isLastRound ? "Last round in" : "Next round in"}
             </motion.h1>
 
             {/* Circular Timer with micro-interactions */}
@@ -172,8 +174,8 @@ export default function BreakView({
                   className="flex items-center gap-1.5 sm:gap-2 w-full py-0.5 sm:py-1"
                 >
                   {/* Rank Badge */}
-                  <div className="flex justify-center items-center w-5 h-5 sm:w-6 sm:h-6 bg-white/10 rounded-full shrink-0">
-                    <span className="text-[10px] sm:text-[12px] text-white">
+                  <div className="flex justify-center items-center w-6 h-6 sm:w-7 sm:h-7 bg-white/10 rounded-full shrink-0">
+                    <span className="text-[12px] sm:text-[14px] text-white font-medium">
                       {entry.rank}
                     </span>
                   </div>
@@ -193,12 +195,12 @@ export default function BreakView({
                   )}
 
                   {/* Username */}
-                  <span className="text-sm sm:text-base md:text-[18px] text-white truncate flex-1">
+                  <span className="text-base sm:text-lg md:text-[20px] text-white truncate flex-1">
                     {entry.username || `User ${entry.fid}`}
                   </span>
 
                   {/* Score */}
-                  <span className="text-xs sm:text-sm text-white/60 shrink-0">
+                  <span className="text-sm sm:text-base text-white/60 shrink-0 font-medium">
                     {entry.score.toLocaleString()}
                   </span>
                 </motion.div>
