@@ -320,6 +320,17 @@ export async function publishResults(gameId: string): Promise<PublishResult> {
 // ============================================================================
 
 export async function sendResultNotifications(gameId: string) {
+  // Get game info for templates
+  const game = await prisma.game.findUnique({
+    where: { id: gameId },
+    select: { gameNumber: true },
+  });
+
+  if (!game) {
+    console.error("[Lifecycle] Game not found for notifications:", gameId);
+    return;
+  }
+
   const allEntries = await prisma.gameEntry.findMany({
     where: { gameId, user: { hasGameAccess: true, isBanned: false } },
     select: {
@@ -337,26 +348,27 @@ export async function sendResultNotifications(gameId: string) {
     (e) => !(e.rank && e.rank <= WINNERS_COUNT && e.prize),
   );
 
-  // Winners: personalized
+  // Import templates dynamically to avoid circular deps
+  const { postGame, buildPayload } =
+    await import("@/lib/notifications/templates");
+
+  // Winners: personalized with rank
   await Promise.allSettled(
-    winners.map((entry) =>
-      sendToUser(entry.user.fid, {
-        title: "🏆 You Won!",
-        body: `You won $${entry.prize?.toFixed(2)}! Claim your prize now.`,
-        targetUrl: `${env.rootUrl}/game/${gameId}/result`,
-      }),
-    ),
+    winners.map((entry) => {
+      const template = postGame.winner(game.gameNumber, entry.rank!);
+      const payload = buildPayload(template, gameId, "result");
+      return sendToUser(entry.user.fid, payload);
+    }),
   );
 
-  // Non-winners: batch
+  // Non-winners: batch notification
   if (nonWinners.length > 0) {
-    await sendBatch(
-      {
-        title: "📊 Results Ready!",
-        body: "See how you ranked!",
-        targetUrl: `${env.rootUrl}/game/${gameId}/result`,
-      },
-      { fids: nonWinners.map((e) => e.user.fid) },
-    );
+    const template = postGame.results(game.gameNumber);
+    const payload = buildPayload(template, gameId, "result");
+    await sendBatch(payload, { fids: nonWinners.map((e) => e.user.fid) });
   }
+
+  console.log(
+    `[Lifecycle] Sent notifications: ${winners.length} winners, ${nonWinners.length} non-winners`,
+  );
 }
