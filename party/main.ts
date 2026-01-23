@@ -19,6 +19,8 @@ import {
   handleNotifyAlarm,
   handleStartAlarm,
   handleGameEndAlarm,
+  handleCountdownAlarm,
+  handleUnclaimedAlarm,
 } from "./handlers/alarms";
 import {
   handleConnect,
@@ -165,6 +167,15 @@ export default class GameServer implements Party.Server {
     console.log("[PartyKit]", "alarm_triggered", { gameId, phase });
 
     switch (phase) {
+      // Countdown phases
+      case "24h":
+      case "12h":
+      case "3h":
+      case "1h":
+      case "5min":
+        await handleCountdownAlarm(this, phase);
+        break;
+      // Existing phases
       case "notify":
         await handleNotifyAlarm(this, roomId);
         break;
@@ -173,6 +184,10 @@ export default class GameServer implements Party.Server {
         break;
       case "gameEnd":
         await handleGameEndAlarm(this, roomId);
+        break;
+      // Post-game
+      case "unclaimed":
+        await handleUnclaimedAlarm(this);
         break;
       default:
         console.warn("[PartyKit]", "alarm_unknown_phase", { phase });

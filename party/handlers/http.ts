@@ -3,7 +3,11 @@
 import type * as Party from "partykit/server";
 import { CORS_HEADERS, type AlarmPhase } from "../types";
 import type { Entrant } from "../../shared/protocol";
-import { handleStartAlarm } from "./alarms";
+import {
+  handleStartAlarm,
+  getFirstCountdownPhase,
+  getAlarmTimeForPhase,
+} from "./alarms";
 
 interface GameServer {
   room: Party.Room;
@@ -28,36 +32,43 @@ export async function handleInit(
     gameId: string;
     startsAt: string;
     endsAt: string;
+    gameNumber?: number;
   };
 
   const startsAt = new Date(body.startsAt).getTime();
   const endsAt = new Date(body.endsAt).getTime();
-  const notifyTime = startsAt - 60 * 1000;
   const now = Date.now();
 
   console.log("[PartyKit]", "init_received", {
     gameId: body.gameId,
     startsAt: new Date(startsAt).toISOString(),
     endsAt: new Date(endsAt).toISOString(),
-    notifyTime: new Date(notifyTime).toISOString(),
   });
 
+  // Store game data
   await server.room.storage.put("gameId", body.gameId);
   await server.room.storage.put("startsAt", startsAt);
   await server.room.storage.put("endsAt", endsAt);
+  if (body.gameNumber) {
+    await server.room.storage.put("gameNumber", body.gameNumber);
+  }
 
-  if (notifyTime > now) {
-    await server.room.storage.put("alarmPhase", "notify" as AlarmPhase);
-    await server.room.storage.setAlarm(notifyTime);
-    console.log("[PartyKit]", "init_alarm_scheduled", { phase: "notify" });
-  } else if (startsAt > now) {
-    await server.room.storage.put("alarmPhase", "start" as AlarmPhase);
-    await server.room.storage.setAlarm(startsAt);
-    console.log("[PartyKit]", "init_alarm_scheduled", { phase: "start" });
+  // Determine first alarm phase based on time until start
+  const firstPhase = getFirstCountdownPhase(startsAt, now);
+
+  if (firstPhase) {
+    const alarmTime = getAlarmTimeForPhase(firstPhase, startsAt, endsAt);
+    if (alarmTime && alarmTime > now) {
+      await server.room.storage.put("alarmPhase", firstPhase);
+      await server.room.storage.setAlarm(alarmTime);
+      console.log("[PartyKit]", "init_alarm_scheduled", {
+        phase: firstPhase,
+        at: new Date(alarmTime).toISOString(),
+      });
+    }
   } else {
     console.log("[PartyKit]", "init_immediate_start");
-    // Immediate start - call alarm handler directly
-    // Note: This requires server to have sendNotifications method
+    // Game already started or about to - trigger start handler
     await handleStartAlarm(server as any, server.room.id);
   }
 
@@ -125,7 +136,6 @@ export async function handleUpdateGame(
 
   const startsAt = new Date(body.startsAt).getTime();
   const endsAt = new Date(body.endsAt).getTime();
-  const notifyTime = startsAt - 60 * 1000;
   const now = Date.now();
   const gameId = await server.room.storage.get<string>("gameId");
 
@@ -138,12 +148,17 @@ export async function handleUpdateGame(
   await server.room.storage.put("startsAt", startsAt);
   await server.room.storage.put("endsAt", endsAt);
 
-  if (notifyTime > now) {
-    await server.room.storage.put("alarmPhase", "notify" as AlarmPhase);
-    await server.room.storage.setAlarm(notifyTime);
-  } else if (startsAt > now) {
-    await server.room.storage.put("alarmPhase", "start" as AlarmPhase);
-    await server.room.storage.setAlarm(startsAt);
+  // Re-schedule alarms based on new timing
+  const firstPhase = getFirstCountdownPhase(startsAt, now);
+  if (firstPhase) {
+    const alarmTime = getAlarmTimeForPhase(firstPhase, startsAt, endsAt);
+    if (alarmTime && alarmTime > now) {
+      await server.room.storage.put("alarmPhase", firstPhase);
+      await server.room.storage.setAlarm(alarmTime);
+      console.log("[PartyKit]", "update_alarm_rescheduled", {
+        phase: firstPhase,
+      });
+    }
   }
 
   return Response.json({ success: true }, { headers: CORS_HEADERS });

@@ -11,6 +11,137 @@ interface GameServer {
   sendNotifications(message: string, roomId?: string): Promise<void>;
 }
 
+// ==========================================
+// COUNTDOWN PHASE CONFIG
+// ==========================================
+
+interface CountdownPhase {
+  phase: AlarmPhase;
+  offsetMs: number; // Time before startsAt
+  nextPhase: AlarmPhase;
+  title: string;
+  body: string;
+}
+
+/**
+ * Countdown phases in chronological order (earliest to latest)
+ * Each phase sends a notification and schedules the next
+ */
+const COUNTDOWN_PHASES: CountdownPhase[] = [
+  {
+    phase: "24h",
+    offsetMs: 24 * 60 * 60 * 1000,
+    nextPhase: "12h",
+    title: "24 Hours Left ⏳",
+    body: "Game starts tomorrow. Secure your spot now.",
+  },
+  {
+    phase: "12h",
+    offsetMs: 12 * 60 * 60 * 1000,
+    nextPhase: "3h",
+    title: "12 Hours to Go 🌗",
+    body: "Tickets are selling fast. Don't get left behind!",
+  },
+  {
+    phase: "3h",
+    offsetMs: 3 * 60 * 60 * 1000,
+    nextPhase: "1h",
+    title: "3 Hours Warning ⚠️",
+    body: "The window is closing. Lock in your ticket!",
+  },
+  {
+    phase: "1h",
+    offsetMs: 1 * 60 * 60 * 1000,
+    nextPhase: "5min",
+    title: "1 Hour Remaining 🚨",
+    body: "This is your last chance to join. Hurry!",
+  },
+  {
+    phase: "5min",
+    offsetMs: 5 * 60 * 1000,
+    nextPhase: "notify",
+    title: "Starting in 5 Minutes! 🧨",
+    body: "Game on! Get your ticket immediately or miss out.",
+  },
+];
+
+/**
+ * Get the first countdown phase that hasn't passed yet
+ */
+export function getFirstCountdownPhase(
+  startsAt: number,
+  now: number,
+): AlarmPhase | null {
+  for (const phase of COUNTDOWN_PHASES) {
+    const alarmTime = startsAt - phase.offsetMs;
+    if (alarmTime > now) {
+      return phase.phase;
+    }
+  }
+  // All countdown phases have passed, check notify (1 min before)
+  const notifyTime = startsAt - 60 * 1000;
+  if (notifyTime > now) return "notify";
+  if (startsAt > now) return "start";
+  return null;
+}
+
+/**
+ * Get alarm time for a phase
+ */
+export function getAlarmTimeForPhase(
+  phase: AlarmPhase,
+  startsAt: number,
+  endsAt: number,
+): number | null {
+  const config = COUNTDOWN_PHASES.find((p) => p.phase === phase);
+  if (config) return startsAt - config.offsetMs;
+  if (phase === "notify") return startsAt - 60 * 1000;
+  if (phase === "start") return startsAt;
+  if (phase === "gameEnd") return endsAt;
+  if (phase === "unclaimed") return endsAt + 24 * 60 * 60 * 1000; // 24h after end
+  return null;
+}
+
+// ==========================================
+// COUNTDOWN ALARM HANDLER
+// ==========================================
+
+/**
+ * Handle countdown alarms (24h, 12h, 3h, 1h, 5min)
+ */
+export async function handleCountdownAlarm(
+  server: GameServer,
+  phase: AlarmPhase,
+): Promise<void> {
+  const gameId = await server.room.storage.get<string>("gameId");
+  const startsAt = await server.room.storage.get<number>("startsAt");
+
+  const config = COUNTDOWN_PHASES.find((p) => p.phase === phase);
+  if (!config || !startsAt) {
+    console.error("[PartyKit]", "countdown_missing_config", { phase, gameId });
+    return;
+  }
+
+  console.log("[PartyKit]", "countdown_alarm", { phase, gameId });
+
+  // Send notification
+  await server.sendNotifications(`${config.title}\n${config.body}`);
+
+  // Schedule next phase
+  const nextAlarmTime = getAlarmTimeForPhase(config.nextPhase, startsAt, 0);
+  if (nextAlarmTime && nextAlarmTime > Date.now()) {
+    await server.room.storage.put("alarmPhase", config.nextPhase);
+    await server.room.storage.setAlarm(nextAlarmTime);
+    console.log("[PartyKit]", "countdown_next_scheduled", {
+      nextPhase: config.nextPhase,
+    });
+  }
+}
+
+// ==========================================
+// EXISTING HANDLERS
+// ==========================================
+
 /**
  * Handle notify alarm - sends 1 minute warning
  */
@@ -80,6 +211,7 @@ export async function handleGameEndAlarm(
   _roomId: string,
 ): Promise<void> {
   const gameId = await server.room.storage.get<string>("gameId");
+  const endsAt = await server.room.storage.get<number>("endsAt");
   const appUrl = server.room.env.NEXT_PUBLIC_URL as string;
   const secret = server.room.env.PARTYKIT_SECRET as string;
 
@@ -113,6 +245,16 @@ export async function handleGameEndAlarm(
         winnersCount: result.winnersCount,
       });
       console.log("[PartyKit]", "gameEnd_roundup_success", { gameId });
+
+      // Schedule unclaimed reminder (24h after game ends)
+      if (endsAt) {
+        const unclaimedTime = endsAt + 24 * 60 * 60 * 1000;
+        await server.room.storage.put("alarmPhase", "unclaimed" as AlarmPhase);
+        await server.room.storage.setAlarm(unclaimedTime);
+        console.log("[PartyKit]", "unclaimed_alarm_scheduled", {
+          at: new Date(unclaimedTime).toISOString(),
+        });
+      }
     } else {
       console.error("[PartyKit]", "gameEnd_roundup_failed", {
         error: result.error,
@@ -120,6 +262,42 @@ export async function handleGameEndAlarm(
     }
   } catch (error) {
     console.error("[PartyKit]", "gameEnd_roundup_exception", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+/**
+ * Handle unclaimed prize reminder alarm
+ */
+export async function handleUnclaimedAlarm(server: GameServer): Promise<void> {
+  const gameId = await server.room.storage.get<string>("gameId");
+  const appUrl = server.room.env.NEXT_PUBLIC_URL as string;
+  const secret = server.room.env.PARTYKIT_SECRET as string;
+
+  console.log("[PartyKit]", "unclaimed_alarm_triggered", { gameId });
+
+  if (!gameId || !appUrl || !secret) {
+    console.error("[PartyKit]", "unclaimed_missing_config", { gameId });
+    return;
+  }
+
+  // Call internal API to send unclaimed reminders
+  const unclaimedUrl = `${appUrl}/api/v1/internal/games/${gameId}/unclaimed-reminder`;
+
+  try {
+    const response = await fetch(unclaimedUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${secret}`,
+      },
+    });
+
+    const result = await response.json();
+    console.log("[PartyKit]", "unclaimed_reminder_result", result);
+  } catch (error) {
+    console.error("[PartyKit]", "unclaimed_reminder_error", {
       error: error instanceof Error ? error.message : String(error),
     });
   }
