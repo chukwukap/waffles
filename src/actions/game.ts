@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma";
 import { notifyTicketPurchased } from "@/lib/partykit";
 import { sendToUser } from "@/lib/notifications";
+import { checkAndNotifyFlipped } from "@/lib/notifications/liveNotify";
 import { env } from "@/lib/env";
 import { PAYMENT_TOKEN_DECIMALS, verifyTicketPurchase } from "@/lib/chain";
 import { parseUnits } from "viem";
@@ -400,7 +401,7 @@ export async function submitAnswer(
     // 2. GET USER
     const user = await prisma.user.findUnique({
       where: { fid },
-      select: { id: true },
+      select: { id: true, username: true },
     });
 
     if (!user) {
@@ -410,7 +411,7 @@ export async function submitAnswer(
     // 3. GET GAME AND CHECK IF LIVE
     const game = await prisma.game.findUnique({
       where: { id: gameId },
-      select: { startsAt: true, endsAt: true },
+      select: { startsAt: true, endsAt: true, gameNumber: true },
     });
 
     if (!game) {
@@ -560,6 +561,15 @@ export async function submitAnswer(
         totalScore: updatedEntry.score,
       };
     }
+
+    // 9. CHECK FOR LEADERBOARD FLIPS (async, non-blocking)
+    checkAndNotifyFlipped(
+      gameId,
+      game.gameNumber,
+      user.id,
+      user.username || `User ${fid}`,
+      updatedEntry.score,
+    ).catch((err) => console.error("[game-actions] flip_check_error", err));
 
     return {
       success: true,

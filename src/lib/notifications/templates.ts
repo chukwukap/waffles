@@ -102,6 +102,18 @@ export const postGame = {
 };
 
 // ==========================================
+// LIVE GAME NOTIFICATIONS
+// ==========================================
+
+export const liveGame = {
+  /** Player got passed on leaderboard */
+  flipped: ((gameNumber: number, byUsername: string): NotificationTemplate => ({
+    title: "Ouch! You just got flipped 📉",
+    body: `${byUsername} just passed you on the leaderboard. Take back your spot!`,
+  })) as TemplateFunction<[number, string]>,
+};
+
+// ==========================================
 // HELPER: Build full notification payload
 // ==========================================
 
