@@ -15,8 +15,7 @@ export type AlarmPhase =
   | "3h"
   | "1h"
   | "5min"
-  // Existing phases
-  | "notify" // 1 minute warning
+  // Game lifecycle
   | "start" // Game goes live
   | "gameEnd" // Game ends, trigger settlement
   // Post-game

@@ -60,12 +60,6 @@ export const preGame = {
     title: "Starting in 5 Minutes! 🧨",
     body: "Game on! Get your ticket immediately or miss out.",
   })) as TemplateFunction<[number]>,
-
-  /** 1 minute before game starts (existing) */
-  countdown1min: ((): NotificationTemplate => ({
-    title: "Game starting in 1 minute! 🎮",
-    body: "Get ready to play!",
-  })) as TemplateFunction,
 };
 
 // ==========================================

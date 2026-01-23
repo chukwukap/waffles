@@ -16,7 +16,6 @@ import {
   checkAuth,
 } from "./handlers/http";
 import {
-  handleNotifyAlarm,
   handleStartAlarm,
   handleGameEndAlarm,
   handleCountdownAlarm,
@@ -174,10 +173,6 @@ export default class GameServer implements Party.Server {
       case "1h":
       case "5min":
         await handleCountdownAlarm(this, phase);
-        break;
-      // Existing phases
-      case "notify":
-        await handleNotifyAlarm(this, roomId);
         break;
       case "start":
         await handleStartAlarm(this, roomId);

@@ -59,7 +59,7 @@ const COUNTDOWN_PHASES: CountdownPhase[] = [
   {
     phase: "5min",
     offsetMs: 5 * 60 * 1000,
-    nextPhase: "notify",
+    nextPhase: "start",
     title: "Starting in 5 Minutes! 🧨",
     body: "Game on! Get your ticket immediately or miss out.",
   },
@@ -78,9 +78,7 @@ export function getFirstCountdownPhase(
       return phase.phase;
     }
   }
-  // All countdown phases have passed, check notify (1 min before)
-  const notifyTime = startsAt - 60 * 1000;
-  if (notifyTime > now) return "notify";
+  // All countdown phases have passed, go directly to start
   if (startsAt > now) return "start";
   return null;
 }
@@ -95,7 +93,6 @@ export function getAlarmTimeForPhase(
 ): number | null {
   const config = COUNTDOWN_PHASES.find((p) => p.phase === phase);
   if (config) return startsAt - config.offsetMs;
-  if (phase === "notify") return startsAt - 60 * 1000;
   if (phase === "start") return startsAt;
   if (phase === "gameEnd") return endsAt;
   if (phase === "unclaimed") return endsAt + 24 * 60 * 60 * 1000; // 24h after end
@@ -141,34 +138,6 @@ export async function handleCountdownAlarm(
 // ==========================================
 // EXISTING HANDLERS
 // ==========================================
-
-/**
- * Handle notify alarm - sends 1 minute warning
- */
-export async function handleNotifyAlarm(
-  server: GameServer,
-  roomId: string,
-): Promise<void> {
-  const gameId = await server.room.storage.get<string>("gameId");
-  const startsAt = await server.room.storage.get<number>("startsAt");
-
-  console.log("[PartyKit]", "notify_phase_start", {
-    gameId,
-    startsAt: startsAt ? new Date(startsAt).toISOString() : null,
-  });
-
-  await server.sendNotifications("Game starting in 1 minute! 🎮", roomId);
-  server.broadcast({ type: "game:starting", in: 60 });
-
-  // Schedule next alarm for game start
-  await server.room.storage.put("alarmPhase", "start" as AlarmPhase);
-  await server.room.storage.setAlarm(startsAt!);
-
-  console.log("[PartyKit]", "notify_phase_complete", {
-    gameId,
-    nextPhase: "start",
-  });
-}
 
 /**
  * Handle start alarm - game goes live
