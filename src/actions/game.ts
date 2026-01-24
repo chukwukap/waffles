@@ -204,16 +204,17 @@ export async function purchaseGameTicket(
 
     // Async: Send notification (don't await)
     const timeStr = formatGameTime(game.startsAt);
-    sendToUser(fid, {
-      title: "🧇 Ticket Secured!",
-      body: `Game starts ${timeStr}. Don't miss it!`,
-      targetUrl: `${env.rootUrl}/game`,
-    }).catch((err) =>
-      console.error("[game-actions]", "notification_error", {
-        gameId,
-        fid,
-        error: err instanceof Error ? err.message : String(err),
-      }),
+    import("@/lib/notifications/templates").then(
+      ({ transactional, buildPayload }) => {
+        const payload = buildPayload(transactional.ticketSecured(timeStr));
+        sendToUser(fid, payload).catch((err) =>
+          console.error("[game-actions]", "notification_error", {
+            gameId,
+            fid,
+            error: err instanceof Error ? err.message : String(err),
+          }),
+        );
+      },
     );
 
     // Async: Notify PartyKit of ticket purchase (stats + entrant atomically)

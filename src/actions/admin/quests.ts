@@ -96,14 +96,15 @@ export async function createQuestAction(
     // Send notifications to waitlist users if quest is active
     if (quest.isActive) {
       try {
-        const notificationResults = await sendBatch(
-          {
-            title: "🎯 New Quest Available!",
-            body: `Complete "${quest.title}" to earn ${quest.points} points!`,
-            targetUrl: `${env.rootUrl}/waitlist/quests`,
-          },
-          "waitlist",
+        const { growth, buildPayload } =
+          await import("@/lib/notifications/templates");
+        const payload = buildPayload(
+          growth.newQuest(quest.title, `${quest.points} points`),
+          undefined,
+          "quest",
         );
+
+        const notificationResults = await sendBatch(payload, "waitlist");
 
         // Log the notification action for audit trail
         await logAdminAction({

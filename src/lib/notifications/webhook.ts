@@ -57,11 +57,10 @@ export async function handleWebhookEvent(data: WebhookEventData): Promise<{
  */
 export async function sendWelcomeNotification(fid: number): Promise<void> {
   try {
-    await sendToUser(fid, {
-      title: "Welcome to Waffles! 🧇",
-      body: "You'll now receive updates about games and prizes.",
-      targetUrl: `${env.rootUrl}/waitlist`,
-    });
+    const { onboarding, buildPayload } = await import("./templates");
+    const payload = buildPayload(onboarding.welcome());
+
+    await sendToUser(fid, payload);
     console.log(`${LOG_PREFIX} Welcome sent: fid=${fid}`);
   } catch (error) {
     console.error(`${LOG_PREFIX} Welcome failed: fid=${fid}`, error);

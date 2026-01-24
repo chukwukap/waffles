@@ -120,26 +120,67 @@ export const liveGame = {
 };
 
 // ==========================================
+// ONBOARDING NOTIFICATIONS
+// ==========================================
+
+export const onboarding = {
+  welcome: ((): NotificationTemplate => ({
+    title: "Welcome to Waffles! 🧇",
+    body: "Get ready to predict, win, and earn.",
+  })) as TemplateFunction<[]>,
+};
+
+// ==========================================
+// TRANSACTIONAL NOTIFICATIONS
+// ==========================================
+
+export const transactional = {
+  ticketSecured: ((timeStr: string): NotificationTemplate => ({
+    title: "🧇 Ticket Secured!",
+    body: `Game starts ${timeStr}. Don't miss it!`,
+  })) as TemplateFunction<[string]>,
+};
+
+// ==========================================
+// GROWTH NOTIFICATIONS (Quests)
+// ==========================================
+
+export const growth = {
+  newQuest: ((title: string, description: string): NotificationTemplate => ({
+    title: `New Quest: ${title}`,
+    body: description,
+  })) as TemplateFunction<[string, string]>,
+};
+
+// ==========================================
 // HELPER: Build full notification payload
 // ==========================================
 
-export type NotificationContext = "pregame" | "result" | "claim";
+export type NotificationContext =
+  | "pregame"
+  | "result"
+  | "claim"
+  | "quest"
+  | "default";
 
 export function buildPayload(
   template: NotificationTemplate,
   gameId?: string,
-  context: NotificationContext = "pregame",
+  context: NotificationContext = "default",
 ): { title: string; body: string; targetUrl: string } {
   const baseUrl = env.rootUrl;
 
   // Route to appropriate page based on context
   let targetUrl: string;
-  if (!gameId) {
+
+  if (context === "quest") {
+    targetUrl = `${baseUrl}/earn`;
+  } else if (!gameId) {
     targetUrl = `${baseUrl}/game`;
   } else if (context === "result" || context === "claim") {
     targetUrl = `${baseUrl}/game/${gameId}/result`;
   } else {
-    targetUrl = `${baseUrl}/game`; // Pre-game goes to lobby
+    targetUrl = `${baseUrl}/game`; // Default fallback
   }
 
   return {
