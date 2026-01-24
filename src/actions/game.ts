@@ -93,6 +93,7 @@ export async function purchaseGameTicket(
         playerCount: true,
         maxPlayers: true,
         tierPrices: true,
+        gameNumber: true,
       },
     });
 

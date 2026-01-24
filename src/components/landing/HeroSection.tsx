@@ -162,7 +162,7 @@ export function HeroSection() {
                     delay: 0.4,
                     ease: [0.22, 1, 0.36, 1],
                 }}
-                className="absolute right-[2.5%] sm:right-[2.5%] md:right-[0] bottom-0 translate-y-[30%] w-[70vw] sm:w-[55vw]  max-w-[600px] h-auto z-20"
+                className="absolute right-[2.5%] sm:right-[2.5%] md:right-0 -bottom-20 translate-y-[30%] w-[70vw] sm:w-[55vw]  max-w-[700px] h-auto z-20"
                 style={{
                     y: characterY,
                 }}

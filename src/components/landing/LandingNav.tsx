@@ -54,13 +54,13 @@ export function LandingNav() {
                             <Image
                                 src="/logo.png"
                                 alt="Waffles"
-                                width={26}
-                                height={20}
+                                width={30}
+                                height={22}
                                 className="h-5 w-auto"
                             />
                         </motion.div>
                         <motion.span
-                            className="font-body text-white text-lg md:text-xl tracking-tight"
+                            className="font-body text-white text-xl md:text-2xl tracking-tight"
                             whileHover={{ x: 2 }}
                             transition={springPresets.gentle}
                         >
