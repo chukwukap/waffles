@@ -4,28 +4,14 @@ import { useActionState, useState, useEffect, useTransition } from "react";
 import {
     BellIcon,
     PaperAirplaneIcon,
-    UserGroupIcon,
-    SparklesIcon,
-    UserIcon,
-    ExclamationCircleIcon,
     CheckCircleIcon,
     ChatBubbleLeftIcon,
 } from "@heroicons/react/24/outline";
 import {
     sendAdminNotificationAction,
-    getAudienceCount,
     NotificationResult,
 } from "@/actions/admin/notifications";
-import { AUDIENCE_LIST, type AudienceId } from "@/lib/notifications/audiences";
 import { ConfirmationModal } from "./ConfirmationModal";
-
-// Map audience IDs to icons (icons can't be serialized in config)
-const AUDIENCE_ICONS: Record<AudienceId, typeof UserGroupIcon> = {
-    all: UserGroupIcon,
-    active: SparklesIcon,
-    waitlist: UserIcon,
-    no_quests: ExclamationCircleIcon,
-};
 
 const TITLE_MAX = 65;
 const BODY_MAX = 240;
@@ -38,21 +24,9 @@ export function NotificationForm() {
 
     const [title, setTitle] = useState("");
     const [body, setBody] = useState("");
-    const [audience, setAudience] = useState<AudienceId>("all");
-    const [audienceCount, setAudienceCount] = useState(0);
-    const [isLoadingCount, setIsLoadingCount] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [pendingFormData, setPendingFormData] = useState<FormData | null>(null);
     const [isPending, startTransition] = useTransition();
-
-    // Fetch audience count when audience changes
-    useEffect(() => {
-        setIsLoadingCount(true);
-        getAudienceCount(audience)
-            .then(setAudienceCount)
-            .catch(() => setAudienceCount(0))
-            .finally(() => setIsLoadingCount(false));
-    }, [audience]);
 
     // Reset form on success
     useEffect(() => {
@@ -78,8 +52,6 @@ export function NotificationForm() {
             setPendingFormData(null);
         });
     };
-
-    const selectedAudience = AUDIENCE_LIST.find((a) => a.id === audience)!;
 
     return (
         <>
@@ -159,46 +131,6 @@ export function NotificationForm() {
                                 </div>
                             </div>
                         </section>
-
-                        {/* Audience Section */}
-                        <section className="bg-linear-to-br from-[#00CFF2]/5 to-transparent rounded-2xl border border-white/10 p-6">
-                            <div className="flex items-center gap-3 mb-5">
-                                <div className="p-2.5 rounded-xl bg-[#00CFF2]/15">
-                                    <UserGroupIcon className="h-5 w-5 text-[#00CFF2]" />
-                                </div>
-                                <h3 className="font-bold text-white font-display">Audience</h3>
-                            </div>
-
-                            <input type="hidden" name="audience" value={audience} />
-
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                {AUDIENCE_LIST.map((option) => {
-                                    const Icon = AUDIENCE_ICONS[option.id as AudienceId];
-                                    const isSelected = audience === option.id;
-                                    return (
-                                        <button
-                                            key={option.id}
-                                            type="button"
-                                            onClick={() => setAudience(option.id as AudienceId)}
-                                            className={`relative p-4 rounded-xl border transition-all duration-200 text-left ${isSelected
-                                                ? `border-white/30 bg-linear-to-br ${option.color} shadow-lg`
-                                                : "border-white/10 bg-white/5 hover:bg-white/8 hover:border-white/20"
-                                                }`}
-                                        >
-                                            {isSelected && (
-                                                <div className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-white flex items-center justify-center">
-                                                    <CheckCircleIcon className="h-4 w-4 text-black" />
-                                                </div>
-                                            )}
-                                            <Icon className={`h-5 w-5 mb-2 ${isSelected ? "text-white" : "text-white/60"}`} />
-                                            <div className="font-bold text-white text-sm">{option.label}</div>
-                                            <div className="text-xs text-white/60 mt-0.5">{option.description}</div>
-                                            <div className="text-xs text-white/40 mt-1">→ {option.path}</div>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </section>
                     </div>
 
                     {/* Right Column - Preview & Send */}
@@ -237,13 +169,11 @@ export function NotificationForm() {
                             <div className="mt-4 space-y-2">
                                 <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
                                     <span className="text-sm text-white/60">Recipients</span>
-                                    <span className="font-bold text-white">
-                                        {isLoadingCount ? "..." : audienceCount.toLocaleString()}
-                                    </span>
+                                    <span className="font-bold text-white">All Users</span>
                                 </div>
                                 <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
-                                    <span className="text-sm text-white/60">Opens</span>
-                                    <span className="font-medium text-white/80">{selectedAudience.path}</span>
+                                    <span className="text-sm text-white/60">Destination</span>
+                                    <span className="font-medium text-white/80">Game Lobby</span>
                                 </div>
                             </div>
                         </section>
@@ -278,8 +208,8 @@ export function NotificationForm() {
                 }}
                 onConfirm={handleConfirmSend}
                 title="Send Notification"
-                description={`Send to ${audienceCount.toLocaleString()} ${selectedAudience.label.toLowerCase()}?`}
-                confirmText="Send"
+                description="This will send a notification to ALL users."
+                confirmText="Send to Everyone"
                 cancelText="Cancel"
                 variant="warning"
                 isLoading={isPending}
