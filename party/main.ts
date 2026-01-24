@@ -234,8 +234,22 @@ export default class GameServer implements Party.Server {
     console.log("[PartyKit]", "room_starting", { roomId: this.room.id });
 
     // Restore persisted state
-    this.chatHistory =
-      (await this.room.storage.get<StoredChatMessage[]>("chatHistory")) || [];
+    // Load chat messages from individual keys (new format)
+    const chatMessages = await this.room.storage.list<StoredChatMessage>({
+      prefix: "chat:",
+    });
+
+    if (chatMessages.size > 0) {
+      // Convert map to sorted array (keys are chat:{timestamp}:{id})
+      this.chatHistory = Array.from(chatMessages.values())
+        .sort((a, b) => a.ts - b.ts)
+        .slice(-100); // Keep last 100 for in-memory sync
+    } else {
+      // Fallback: try legacy format for backwards compatibility
+      this.chatHistory =
+        (await this.room.storage.get<StoredChatMessage[]>("chatHistory")) || [];
+    }
+
     this.entrants = (await this.room.storage.get<Entrant[]>("entrants")) || [];
 
     const alarmPhase = await this.room.storage.get<AlarmPhase>("alarmPhase");

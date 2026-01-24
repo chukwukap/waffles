@@ -99,6 +99,11 @@ export async function handleMessage(
 
 /**
  * Handle chat message
+ *
+ * Messages are stored individually by key (chat:{timestamp}:{id}) for:
+ * - Unlimited storage (no 128KB value limit)
+ * - Full chat history retention for analytics
+ * - In-memory cache still limited to 100 for performance
  */
 async function handleChat(
   server: GameServer,
@@ -113,9 +118,13 @@ async function handleChat(
     ts: Date.now(),
   };
 
+  // Keep in-memory cache limited for sync performance
   server.chatHistory.push(chatMsg);
   if (server.chatHistory.length > 100) server.chatHistory.shift();
-  await server.room.storage.put("chatHistory", server.chatHistory);
+
+  // Store individual message by key for unlimited persistence
+  // Key format: chat:{timestamp}:{id} for natural ordering
+  await server.room.storage.put(`chat:${chatMsg.ts}:${chatMsg.id}`, chatMsg);
 
   server.broadcast({
     type: "chat:new",
