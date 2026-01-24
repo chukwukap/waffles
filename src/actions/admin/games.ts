@@ -105,21 +105,64 @@ export async function createGameAction(
     // 4. ON-CHAIN LAST (irreversible - only when everything else succeeded)
     const txHash = await createGameOnChain(onchainId, data.tierPrice1);
 
+    // 5. CALCULATE GAME NUMBER & SEND NOTIFICATION
+    // We count existing games to determine the number (e.g. #024)
+    const gamesCount = await prisma.game.count();
+    const gameNumber = gamesCount; // Since we just created one, count includes it
+
+    // Update game with number (best effort)
+    await prisma.game.update({
+      where: { id: game.id },
+      data: { gameNumber },
+    });
+
+    // Send "Game Open" notification to all users (fire-and-forget)
+    const template = (await import("@/lib/notifications/templates")).preGame
+      .gameOpen;
+    const { sendBatch } = await import("@/lib/notifications");
+    const { env } = await import("@/lib/env");
+    const { buildPayload } = await import("@/lib/notifications/templates");
+
+    const usersToNotify = await prisma.user.findMany({
+      where: { hasGameAccess: true, isBanned: false },
+      select: { fid: true },
+    });
+
+    if (usersToNotify.length > 0) {
+      const payload = buildPayload(template(gameNumber), undefined, "pregame");
+      sendBatch(payload, { fids: usersToNotify.map((u) => u.fid) }).catch(
+        (err) => {
+          console.error("[admin-games] notification_failed", {
+            gameId: game.id,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        },
+      );
+    }
+
     console.log("[admin-games]", "game_created", {
       gameId: game.id,
       title: game.title,
       theme: data.theme,
       onchainId,
       txHash,
+      gameNumber,
+      notifiedUsers: usersToNotify.length,
     });
 
-    // 5. LOG AND CLEANUP
+    // 6. LOG AND CLEANUP
     await logAdminAction({
       adminId,
       action: AdminAction.CREATE_GAME,
       entityType: EntityType.GAME,
       entityId: game.id,
-      details: { title: game.title, theme: data.theme, onchainId, txHash },
+      details: {
+        title: game.title,
+        theme: data.theme,
+        onchainId,
+        txHash,
+        gameNumber,
+      },
     });
 
     revalidatePath("/admin/games");
