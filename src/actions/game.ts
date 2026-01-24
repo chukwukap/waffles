@@ -228,6 +228,50 @@ export async function purchaseGameTicket(
       }),
     );
 
+    // =========================================================================
+    // ALMOST SOLD OUT NOTIFICATION (90% Threshold)
+    // =========================================================================
+    const playerThreshold = Math.floor(game.maxPlayers * 0.9);
+    const newCount = game.playerCount + 1; // +1 because we just added this user
+
+    // Only fire exactly when crossing the threshold (idempotent-ish)
+    if (newCount === playerThreshold) {
+      // Import dynamically to avoid circular deps
+      const { preGame, buildPayload } =
+        await import("@/lib/notifications/templates");
+      const { sendBatch } = await import("@/lib/notifications");
+
+      // Find users with game access who haven't bought a ticket yet
+      const eligibleUsers = await prisma.user.findMany({
+        where: {
+          hasGameAccess: true,
+          isBanned: false,
+          entries: {
+            none: { gameId }, // User has NOT entered this game
+          },
+        },
+        select: { fid: true },
+        take: 500, // Limit blast radius
+      });
+
+      if (eligibleUsers.length > 0) {
+        const template = preGame.almostSoldOut(game.gameNumber || 0);
+        const payload = buildPayload(template, undefined, "pregame");
+
+        console.log("[game-actions]", "triggering_sold_out_notify", {
+          gameId,
+          threshold: playerThreshold,
+          recipients: eligibleUsers.length,
+        });
+
+        sendBatch(payload, {
+          fids: eligibleUsers.map((u) => u.fid),
+        }).catch((err) =>
+          console.error("[game-actions]", "sold_out_notify_error", err),
+        );
+      }
+    }
+
     console.log("[game-actions]", "ticket_purchased", {
       gameId,
       entryId: entry.id,

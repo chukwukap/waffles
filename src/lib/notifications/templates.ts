@@ -60,6 +60,12 @@ export const preGame = {
     title: "Starting in 5 Minutes! 🧨",
     body: "Game on! Get your ticket immediately or miss out.",
   })) as TemplateFunction<[number]>,
+
+  /** When game is almost full (90% of maxPlayers) */
+  almostSoldOut: ((gameNumber: number): NotificationTemplate => ({
+    title: "Almost Sold Out! 📉",
+    body: `Only a few tickets left for Waffles #${String(gameNumber).padStart(3, "0")}. Secure yours now!`,
+  })) as TemplateFunction<[number]>,
 };
 
 // ==========================================
