@@ -10,6 +10,7 @@ export const runtime = "nodejs";
  * Prize Share OG Image
  * 
  * Displays prize winnings for winners to share.
+ * Matches Figma "Outside farcaster" design.
  * 
  * Params:
  * - prizeAmount: number (required) - Prize amount in USD
@@ -50,7 +51,8 @@ export async function GET(request: Request) {
                     justifyContent: "center",
                     width: "100%",
                     height: "100%",
-                    backgroundImage: `url(${bgImage})`,
+                    // Figma: bg image with dark gradient overlay
+                    backgroundImage: `linear-gradient(180deg, rgba(30, 30, 30, 0.51) 0%, rgba(0, 0, 0, 0.51) 100%), url(${bgImage})`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                     fontFamily: "EditUndo",
@@ -58,86 +60,151 @@ export async function GET(request: Request) {
                     position: "relative",
                 }}
             >
-                {/* Waffles Logo at top */}
-                <img
-                    src={logoImage}
-                    alt="Waffles"
-                    width={160}
-                    height={32}
-                    style={{ marginBottom: 50 }}
-                />
+                {/* Golden glow effect - centered behind content */}
+                {/* <div
+                    style={{
+                        position: "absolute",
+                        width: 320, // 159.23px * 2
+                        height: 340, // 169.5px * 2
+                        left: "50%",
+                        top: "50%",
+                        transform: "translate(-50%, -30%)",
+                        background: "#FFC931",
+                        opacity: 0.67,
+                        filter: "blur(170px)", // 85px * 2
+                        borderRadius: "50%",
+                    }}
+                /> */}
 
-                {/* PFP + Headline row */}
+                {/* Main content container */}
                 <div
                     style={{
                         display: "flex",
+                        flexDirection: "column",
                         alignItems: "center",
-                        justifyContent: "center",
-                        gap: 12,
-                        marginBottom: 4,
+                        gap: 4, // 2px * 2
+                        zIndex: 1,
                     }}
                 >
-                    {/* Profile Picture - circular with border */}
-                    {safePfpUrl && (
-                        <img
-                            src={safePfpUrl}
-                            alt="Profile"
-                            width={50}
-                            height={50}
-                            style={{
-                                borderRadius: "50%",
-                                border: "3px solid #FFC931",
-                            }}
-                        />
-                    )}
-
-                    {/* Headline text */}
-                    <span
+                    {/* PFP + "just won" row */}
+                    <div
                         style={{
-                            fontSize: 48,
-                            color: "#FFFFFF",
-                            letterSpacing: "0.02em",
+                            display: "flex",
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 8,
                         }}
                     >
-                        JUST WON
+                        {/* Profile Picture */}
+                        {safePfpUrl && (
+                            <img
+                                src={safePfpUrl}
+                                alt="Profile"
+                                width={43} // 21.48px * 2
+                                height={43}
+                                style={{
+                                    borderRadius: "50%",
+                                }}
+                            />
+                        )}
+
+                        {/* "just won" text */}
+                        <span
+                            style={{
+                                fontSize: 64, // 32px * 2
+                                color: "#FFFFFF",
+                                letterSpacing: "-0.03em",
+                                lineHeight: "92%",
+                            }}
+                        >
+                            just won
+                        </span>
+                    </div>
+
+                    {/* Prize Amount - Large green text */}
+                    <span
+                        style={{
+                            fontSize: 94, // 47.16px * 2
+                            color: "#05FF8F",
+                            lineHeight: "92%",
+                            letterSpacing: "-0.03em",
+                        }}
+                    >
+                        {displayValue}
+                    </span>
+
+                    {/* "on waffles" */}
+                    <span
+                        style={{
+                            fontSize: 40, // 20px * 2
+                            color: "#FFFFFF",
+                            letterSpacing: "-0.03em",
+                            lineHeight: "92%",
+                        }}
+                    >
+                        on waffles
                     </span>
                 </div>
 
-                {/* Prize Amount - Large green text */}
-                <span
-                    style={{
-                        fontSize: 96,
-                        color: "#05FF8F",
-                        lineHeight: 1,
-                        marginBottom: 4,
-                        letterSpacing: "-0.02em",
-                    }}
-                >
-                    {displayValue}
-                </span>
-
-                {/* ON WAFFLES */}
-                <span
-                    style={{
-                        fontSize: 48,
-                        color: "#FFFFFF",
-                        letterSpacing: "0.02em",
-                        marginBottom: 20,
-                    }}
-                >
-                    ON WAFFLES
-                </span>
-
-                {/* Treasure Chest - at bottom */}
+                {/* Treasure Chest - below text */}
                 <img
                     src={chestImage}
                     alt="Treasure"
-                    width={280}
-                    height={200}
+                    width={416} // 208px * 2
+                    height={387} // 193.62px * 2
                     style={{
                         objectFit: "contain",
+                        marginTop: 16,
+                        zIndex: 1,
                     }}
                 />
+
+                {/* Footer: Waffles logo + PLAYWAFFLES.FUN badge */}
+                <div
+                    style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        position: "absolute",
+                        bottom: 40,
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        width: 678, // 339px * 2
+                        gap: 406, // 203px * 2
+                    }}
+                >
+                    {/* Waffles Logo */}
+                    <img
+                        src={logoImage}
+                        alt="Waffles"
+                        width={91} // ~45.33px * 2
+                        height={16}
+                    />
+
+                    {/* PLAYWAFFLES.FUN badge */}
+                    <div
+                        style={{
+                            display: "flex",
+                            flexDirection: "row",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            padding: "8px 12px",
+                            border: "2px solid #F5BB1B",
+                            borderRadius: 1679, // 839.493px * 2
+                        }}
+                    >
+                        <span
+                            style={{
+                                fontSize: 16, // 8px * 2
+                                color: "#F5BB1B",
+                                lineHeight: "115%",
+                            }}
+                        >
+                            PLAYWAFFLES.FUN
+                        </span>
+                    </div>
+                </div>
             </div>
         ),
         {
