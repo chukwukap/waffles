@@ -2,7 +2,6 @@ import { saveToken, deleteToken } from "./tokens";
 import { sendToUser } from "./send";
 import { LOG_PREFIX } from "./constants";
 import type { NotificationDetails, WebhookEventType } from "./types";
-import { env } from "@/lib/env";
 
 export interface WebhookEventData {
   fid: number;

@@ -39,7 +39,7 @@ export type BatchTarget = UserFilter | { fids: number[] };
  */
 export async function sendBatch(
   payload: NotificationPayload,
-  target: BatchTarget = "all"
+  target: BatchTarget = "all",
 ): Promise<BatchResult> {
   const startTime = Date.now();
 
@@ -92,7 +92,7 @@ export async function sendBatch(
   const tokenGroups = groupTokensByUrl(users);
 
   console.log(
-    `${LOG_PREFIX} Batch send: ${users.length} users, ${tokenGroups.length} URL groups`
+    `${LOG_PREFIX} Batch send: ${users.length} users, ${tokenGroups.length} URL groups`,
   );
 
   // Process each URL group
@@ -136,7 +136,7 @@ export async function sendBatch(
     ...results,
     requestCount: Math.ceil(
       tokenGroups.reduce((sum, g) => sum + g.tokens.length, 0) /
-        MAX_TOKENS_PER_REQUEST
+        MAX_TOKENS_PER_REQUEST,
     ),
   });
 
@@ -149,7 +149,7 @@ export async function sendBatch(
 async function sendBatchToUrl(
   url: string,
   batch: TokenGroup["tokens"],
-  payload: NotificationPayload & { notificationId: string }
+  payload: NotificationPayload & { notificationId: string },
 ): Promise<{
   success: number;
   failed: number;
@@ -183,7 +183,7 @@ async function sendBatchToUrl(
         errorBody = await response.text();
       } catch {}
       console.error(
-        `${LOG_PREFIX} Batch failed: url=${url}, status=${response.status}, body=${errorBody}`
+        `${LOG_PREFIX} Batch failed: url=${url}, status=${response.status}, body=${errorBody}`,
       );
       result.failed = batch.length;
       return result;

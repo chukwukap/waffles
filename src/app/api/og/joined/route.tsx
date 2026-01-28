@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
         // Load assets from filesystem
         const publicDir = join(process.cwd(), "public");
-        const bgPath = join(publicDir, "images/share/waitlist-bg.png");
+        const bgPath = join(publicDir, "images/share/bg.png");
         const moneyPath = join(publicDir, "images/share/money.png");
         const fontPath = join(publicDir, "fonts/editundo_bd.ttf");
         const brockmannPath = join(process.cwd(), "src/lib/fonts/brockmann_bd.otf");
@@ -59,20 +59,21 @@ export async function GET(request: NextRequest) {
                         backgroundImage: `url(${bgImage})`,
                         backgroundSize: "cover",
                         backgroundPosition: "center",
-                        padding: 48,
+                        padding: 64, // 32px * 2 from Figma
                     }}
                 >
-                    {/* Card Container - matches GameSummaryCard design */}
+                    {/* Card Container - exact Figma specs (2x scale) */}
                     <div
                         style={{
                             display: "flex",
                             flexDirection: "column",
                             position: "relative",
-                            width: 722, // Scaled up from 361px (2x for OG)
-                            height: 302, // Scaled up from 151px (2x for OG)
-                            background: "linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 201, 49, 0.12) 100%)",
-                            border: "2px solid rgba(255, 201, 49, 0.4)",
-                            borderRadius: 32, // Scaled up from 16px
+                            width: 1014, // 461px * 2.2
+                            height: 435, // 197.5px * 2.2
+                            // Figma: linear-gradient(0deg, rgba(0,0,0,0.6)), linear-gradient(180deg, transparent 0%, #FFC931 100%)
+                            background: "linear-gradient(0deg, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, #FFC931 100%)",
+                            border: "2.6px solid #FFC931", // 1.29px * 2, solid gold
+                            borderRadius: 41, // 20.68px * 2
                         }}
                     >
                         {/* ─────────── Top Row: User avatar + name ─────────── */}
@@ -81,17 +82,17 @@ export async function GET(request: NextRequest) {
                                 display: "flex",
                                 flexDirection: "row",
                                 alignItems: "center",
-                                gap: 20, // Scaled from 10px
+                                gap: 22, // 10px * 2.2
                                 position: "absolute",
-                                top: 32, // Scaled from 16px
-                                left: 28, // Scaled from 14px
+                                top: 63, // 28.77px * 2.2
+                                left: 39, // 17.88px * 2.2
                             }}
                         >
-                            {/* Avatar */}
+                            {/* Avatar - 54x54 in Figma */}
                             <div
                                 style={{
-                                    width: 108, // Scaled from 54px
-                                    height: 108,
+                                    width: 119, // 54px * 2.2
+                                    height: 119,
                                     borderRadius: "50%",
                                     background: "#D9D9D9",
                                     overflow: "hidden",
@@ -104,15 +105,15 @@ export async function GET(request: NextRequest) {
                                     <img
                                         src={safePfpUrl}
                                         alt="Avatar"
-                                        width={108}
-                                        height={108}
+                                        width={119}
+                                        height={119}
                                         style={{ objectFit: "cover" }}
                                     />
                                 ) : (
                                     <span
                                         style={{
                                             fontFamily: "EditUndo",
-                                            fontSize: 56, // Scaled from 23px
+                                            fontSize: 51, // 23px * 2.2
                                             color: COLORS.white,
                                         }}
                                     >
@@ -133,7 +134,7 @@ export async function GET(request: NextRequest) {
                                 <span
                                     style={{
                                         fontFamily: "EditUndo",
-                                        fontSize: 56, // Scaled from 23px
+                                        fontSize: 51, // 23px * 2.2
                                         lineHeight: "130%",
                                         color: COLORS.white,
                                     }}
@@ -143,10 +144,11 @@ export async function GET(request: NextRequest) {
                                 <span
                                     style={{
                                         fontFamily: "Brockmann",
-                                        fontSize: 34, // Scaled from 14px
+                                        fontSize: 31, // 14px * 2.2
                                         lineHeight: "130%",
                                         letterSpacing: "-0.03em",
-                                        color: COLORS.grayLabel,
+                                        color: COLORS.white,
+                                        opacity: 0.6, // Figma: opacity 0.6
                                     }}
                                 >
                                     has joined the next game
@@ -160,10 +162,10 @@ export async function GET(request: NextRequest) {
                                 display: "flex",
                                 flexDirection: "row",
                                 alignItems: "center",
-                                gap: 24, // Scaled from 12px
+                                gap: 34, // 15.51px * 2.2
                                 position: "absolute",
-                                bottom: 32, // Scaled from 16px
-                                left: 30, // Scaled from 15px
+                                top: 288, // 130.79px * 2.2
+                                left: 42, // 19.16px * 2.2
                             }}
                         >
                             {/* Prize Pool */}
@@ -172,14 +174,14 @@ export async function GET(request: NextRequest) {
                                     display: "flex",
                                     flexDirection: "row",
                                     alignItems: "center",
-                                    gap: 16, // Scaled from 8px
+                                    gap: 24, // 11.03px * 2.2
                                 }}
                             >
                                 <img
                                     src={moneyIcon}
                                     alt="Prize"
-                                    width={54}
-                                    height={56}
+                                    width={77} // 35.22px * 2.2
+                                    height={81} // 36.76px * 2.2
                                 />
                                 <div
                                     style={{
@@ -192,10 +194,10 @@ export async function GET(request: NextRequest) {
                                     <span
                                         style={{
                                             fontFamily: "Brockmann",
-                                            fontSize: 28, // Scaled from 11.38px
+                                            fontSize: 32, // 14.7045px * 2.2
                                             lineHeight: "130%",
                                             letterSpacing: "-0.03em",
-                                            color: COLORS.grayLabel,
+                                            color: "#99A0AE", // Figma label color
                                         }}
                                     >
                                         Prize pool
@@ -203,7 +205,7 @@ export async function GET(request: NextRequest) {
                                     <span
                                         style={{
                                             fontFamily: "EditUndo",
-                                            fontSize: 42, // Scaled from 17.07px
+                                            fontSize: 49, // 22.0567px * 2.2
                                             lineHeight: "100%",
                                             color: COLORS.white,
                                         }}
@@ -219,14 +221,14 @@ export async function GET(request: NextRequest) {
                                     display: "flex",
                                     flexDirection: "row",
                                     alignItems: "center",
-                                    gap: 16,
+                                    gap: 24, // 11.03px * 2.2
                                 }}
                             >
                                 <img
                                     src={themeImageUrl}
                                     alt="Theme"
-                                    width={58}
-                                    height={56}
+                                    width={83} // 37.63px * 2.2
+                                    height={81} // 36.74px * 2.2
                                 />
                                 <div
                                     style={{
@@ -239,10 +241,10 @@ export async function GET(request: NextRequest) {
                                     <span
                                         style={{
                                             fontFamily: "Brockmann",
-                                            fontSize: 28,
+                                            fontSize: 32, // 14.7045px * 2.2
                                             lineHeight: "130%",
                                             letterSpacing: "-0.03em",
-                                            color: COLORS.grayLabel,
+                                            color: "#99A0AE", // Figma label color
                                         }}
                                     >
                                         Theme
@@ -250,7 +252,7 @@ export async function GET(request: NextRequest) {
                                     <span
                                         style={{
                                             fontFamily: "EditUndo",
-                                            fontSize: 42,
+                                            fontSize: 49, // 22.0567px * 2.2
                                             lineHeight: "100%",
                                             color: COLORS.white,
                                         }}
