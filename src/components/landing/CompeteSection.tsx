@@ -9,6 +9,7 @@ import {
     fadeUpVariants,
     springPresets,
 } from "./AnimationContext";
+import { LandingNoise } from "./GradientBlobs";
 
 // Split headline for stagger
 const headlineWords = ["Compete", "for", "the", "biggest"];
@@ -32,6 +33,8 @@ export function CompeteSection() {
             ref={sectionRef}
             className="relative z-20 w-full min-h-screen md:h-[930px] bg-[#14B985] overflow-visible"
         >
+            {/* Grain texture overlay */}
+            <LandingNoise />
             {/* Treasure Chest - with bouncy entrance and floating */}
             <motion.div
                 initial={{ opacity: 0, y: -100, scale: 0.8 }}

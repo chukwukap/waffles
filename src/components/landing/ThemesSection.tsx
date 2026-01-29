@@ -4,6 +4,7 @@ import { motion, useScroll, useTransform, useMotionValue, useSpring } from "fram
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { PixelButton } from "@/components/ui/PixelButton";
+import { LandingNoise } from "./GradientBlobs";
 
 // Theme card component - no border, button extends beyond right edge
 function ThemeCard({
@@ -157,6 +158,8 @@ export function ThemesSection() {
                 background: "linear-gradient(180deg, #FFFEFE 0%, #B01BF5 100%)",
             }}
         >
+            {/* Grain texture overlay */}
+            <LandingNoise />
             {/* Content Container */}
             <div className="flex flex-col items-center gap-10 md:gap-16">
                 {/* Headline Group */}

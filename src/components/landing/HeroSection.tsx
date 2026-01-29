@@ -13,7 +13,7 @@ import {
 } from "./AnimationContext";
 import { useMouseParallax, useMagneticEffect } from "./useAnimationHooks";
 import { TextScramble } from "./TextScramble";
-import { FloatingParticles } from "./GradientBlobs";
+import { FloatingParticles, LandingNoise } from "./GradientBlobs";
 
 // Headline lines for explicit line breaks
 const headlineLines = [
@@ -45,9 +45,12 @@ export function HeroSection() {
             {/* Floating particles for ambient effect */}
             <FloatingParticles count={30} color="#FFC931" className="opacity-40" />
 
+            {/* Grain texture overlay - on background only, behind content */}
+            <LandingNoise />
+
             {/* Subtle ambient layer with parallax */}
             <motion.div
-                className="absolute inset-0 pointer-events-none opacity-20"
+                className="absolute inset-0 pointer-events-none opacity-20 z-[1]"
                 style={{ x: layer2.x, y: layer2.y }}
             >
                 {/* Gradient orbs for depth */}

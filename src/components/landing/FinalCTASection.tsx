@@ -10,7 +10,7 @@ import {
 } from "./AnimationContext";
 import { useMagneticEffect } from "./useAnimationHooks";
 import { TextScramble } from "./TextScramble";
-import { FloatingParticles } from "./GradientBlobs";
+import { FloatingParticles, LandingNoise } from "./GradientBlobs";
 
 // Headline words for stagger
 const headlineWords = ["Think", "You're", "Faster", "Than", "Everyone", "Else?"];
@@ -33,11 +33,11 @@ export function FinalCTASection() {
             className="relative w-full min-h-[763px] overflow-hidden flex flex-col items-center justify-center py-20"
             style={{
                 backgroundColor: "#FFC931",
-                backgroundImage: "url('/noise.svg')",
-                backgroundRepeat: "repeat",
-                backgroundBlendMode: "overlay",
             }}
         >
+            {/* Grain texture overlay */}
+            <LandingNoise />
+
             {/* Floating particles */}
             <FloatingParticles count={15} color="#493601" className="opacity-20" />
 

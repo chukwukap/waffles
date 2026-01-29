@@ -24,16 +24,6 @@ export default function Home() {
       <ScrollProgress />
 
       <main className="relative min-h-screen overflow-x-hidden">
-        {/* Global Noise Overlay - covers the entire page */}
-        <div
-          className="pointer-events-none fixed inset-0 z-50"
-          style={{
-            backgroundImage: `url("/noise.svg")`,
-            backgroundRepeat: "repeat",
-            opacity: 0.4,
-          }}
-          aria-hidden="true"
-        />
 
         {/* Navigation - fixed at top */}
         <LandingNav />

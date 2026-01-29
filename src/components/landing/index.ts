@@ -15,6 +15,7 @@ export { TextScramble, TextScrambleWords } from "./TextScramble";
 export {
   GradientBlobs,
   AnimatedNoise,
+  LandingNoise,
   FloatingParticles,
 } from "./GradientBlobs";
 export * from "./AnimationContext";

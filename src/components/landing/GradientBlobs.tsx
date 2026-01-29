@@ -78,6 +78,25 @@ export function AnimatedNoise({ opacity = 0.03 }: { opacity?: number }) {
 }
 
 /**
+ * Landing page grain texture overlay
+ * Matches Figma specs: Monotone noise, Size 0.5, Density 49%, #000000
+ * Applied to section backgrounds only (not on content/text)
+ */
+export function LandingNoise({ className = "" }: { className?: string }) {
+    return (
+        <div
+            className={`absolute inset-0 pointer-events-none z-0 ${className}`}
+            style={{
+                backgroundImage: `url("/noise.svg")`,
+                backgroundRepeat: "repeat",
+                opacity: 0.49, // Figma: Density 49%
+            }}
+            aria-hidden="true"
+        />
+    );
+}
+
+/**
  * Floating ambient particles
  */
 export function FloatingParticles({

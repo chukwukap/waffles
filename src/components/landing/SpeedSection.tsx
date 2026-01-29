@@ -10,6 +10,7 @@ import {
     slideFromLeftVariants,
     slideFromRightVariants,
 } from "./AnimationContext";
+import { LandingNoise } from "./GradientBlobs";
 
 // Split headline for stagger effect
 const speedWords = ["Speed.", "Memory.", "Intuition."];
@@ -33,6 +34,8 @@ export function SpeedSection() {
             ref={sectionRef}
             className="relative z-20 w-full min-h-[930px] bg-[#FFC931] overflow-x-hidden overflow-y-visible py-20"
         >
+            {/* Grain texture overlay */}
+            <LandingNoise />
             {/* Left Content with parallax */}
             <motion.div
                 className="absolute left-[102px] top-[120px] flex flex-col gap-5 max-w-[752px] max-lg:relative max-lg:left-0 max-lg:px-8"

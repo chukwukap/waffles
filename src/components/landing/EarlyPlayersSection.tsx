@@ -11,6 +11,7 @@ import {
   fadeUpVariants,
   springPresets,
 } from "./AnimationContext";
+import { LandingNoise } from "./GradientBlobs";
 
 // Cloud configurations with unique parallax speeds
 const clouds = [
@@ -47,6 +48,9 @@ export function EarlyPlayersSection() {
           background: "linear-gradient(180deg, #00CFF2 0%, #FFFEFE 100%)",
         }}
       />
+
+      {/* Grain texture overlay */}
+      <LandingNoise />
 
       {/* Decorative Clouds with parallax */}
       {clouds.map((cloud, index) => (
