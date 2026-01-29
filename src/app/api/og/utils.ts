@@ -93,7 +93,12 @@ export async function safeImageUrl(
   url: string | null | undefined,
   timeoutMs: number = 3000,
 ): Promise<string | null> {
-  if (!url) return null;
+  if (!url) {
+    console.log("[OG] safeImageUrl: No URL provided");
+    return null;
+  }
+
+  console.log(`[OG] safeImageUrl: Fetching ${url} (timeout: ${timeoutMs}ms)`);
 
   try {
     const controller = new AbortController();
@@ -110,7 +115,7 @@ export async function safeImageUrl(
     clearTimeout(timeout);
 
     if (!response.ok) {
-      console.warn(`[OG] Failed to fetch image: ${url} (${response.status})`);
+      console.warn(`[OG] safeImageUrl: HTTP ${response.status} for ${url}`);
       return null;
     }
 
@@ -118,9 +123,14 @@ export async function safeImageUrl(
     const buffer = await response.arrayBuffer();
     const base64 = Buffer.from(buffer).toString("base64");
 
+    console.log(
+      `[OG] safeImageUrl: Success! ${url} (${contentType}, ${buffer.byteLength} bytes)`,
+    );
+
     return `data:${contentType};base64,${base64}`;
   } catch (error) {
-    console.warn(`[OG] Error fetching image: ${url}`, error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.warn(`[OG] safeImageUrl: Error fetching ${url} - ${errorMessage}`);
     return null;
   }
 }
