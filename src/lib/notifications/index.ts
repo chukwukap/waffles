@@ -25,5 +25,19 @@ export { sendBatch, type BatchTarget } from "./batch";
 // Webhook
 export { handleWebhookEvent, sendWelcomeNotification } from "./webhook";
 
+// Templates
+export {
+  preGame,
+  liveGame,
+  postGame,
+  onboarding,
+  transactional,
+  retention,
+  growth,
+  buildPayload,
+  type NotificationTemplate,
+  type NotificationContext,
+} from "./templates";
+
 // Constants
 export { LOG_PREFIX } from "./constants";

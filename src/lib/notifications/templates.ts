@@ -16,9 +16,8 @@ export interface NotificationTemplate {
   body: string;
 }
 
-type TemplateFunction<Args extends unknown[] = []> = (
-  ...args: Args
-) => NotificationTemplate;
+/** Helper to format game number with leading zeros */
+const formatGameNum = (n: number) => String(n).padStart(3, "0");
 
 // ==========================================
 // PRE-GAME NOTIFICATIONS
@@ -26,85 +25,55 @@ type TemplateFunction<Args extends unknown[] = []> = (
 
 export const preGame = {
   /** When a new game is created and open for ticket purchases */
-  gameOpen: ((gameNumber: number): NotificationTemplate => ({
-    title: `Waffles #${String(gameNumber).padStart(3, "0")} is Open! 🚪`,
+  gameOpen: (gameNumber: number): NotificationTemplate => ({
+    title: `Waffles #${formatGameNum(gameNumber)} is Open! 🚪`,
     body: "Tickets are available now. Grab yours before the rush!",
-  })) as TemplateFunction<[number]>,
+  }),
 
   /** 24 hours before game starts */
-  countdown24h: ((gameNumber: number): NotificationTemplate => ({
+  countdown24h: (gameNumber: number): NotificationTemplate => ({
     title: "24 Hours Left ⏳",
-    body: `Waffles #${String(gameNumber).padStart(3, "0")} starts tomorrow. Secure your spot now.`,
-  })) as TemplateFunction<[number]>,
+    body: `Waffles #${formatGameNum(gameNumber)} starts tomorrow. Secure your spot now.`,
+  }),
 
   /** 12 hours before game starts */
-  countdown12h: ((gameNumber: number): NotificationTemplate => ({
+  countdown12h: (gameNumber: number): NotificationTemplate => ({
     title: "12 Hours to Go 🌗",
     body: "Tickets are selling fast. Don't get left behind!",
-  })) as TemplateFunction<[number]>,
+  }),
 
   /** 3 hours before game starts */
-  countdown3h: ((gameNumber: number): NotificationTemplate => ({
+  countdown3h: (gameNumber: number): NotificationTemplate => ({
     title: "3 Hours Warning ⚠️",
-    body: `The window is closing. Lock in your ticket for Waffles #${String(gameNumber).padStart(3, "0")}!`,
-  })) as TemplateFunction<[number]>,
+    body: `The window is closing. Lock in your ticket for Waffles #${formatGameNum(gameNumber)}!`,
+  }),
 
   /** 1 hour before game starts */
-  countdown1h: ((gameNumber: number): NotificationTemplate => ({
+  countdown1h: (gameNumber: number): NotificationTemplate => ({
     title: "1 Hour Remaining 🚨",
-    body: `This is your last chance to join Waffles #${String(gameNumber).padStart(3, "0")}. Hurry!`,
-  })) as TemplateFunction<[number]>,
+    body: `This is your last chance to join Waffles #${formatGameNum(gameNumber)}. Hurry!`,
+  }),
 
   /** 5 minutes before game starts */
-  countdown5min: ((gameNumber: number): NotificationTemplate => ({
+  countdown5min: (gameNumber: number): NotificationTemplate => ({
     title: "Starting in 5 Minutes! 🧨",
     body: "Game on! Get your ticket immediately or miss out.",
-  })) as TemplateFunction<[number]>,
+  }),
 
   /** When game is almost full (90% of maxPlayers) */
-  almostSoldOut: ((gameNumber: number): NotificationTemplate => ({
+  almostSoldOut: (gameNumber: number): NotificationTemplate => ({
     title: "Almost Sold Out! 📉",
-    body: `Only a few tickets left for Waffles #${String(gameNumber).padStart(3, "0")}. Secure yours now!`,
-  })) as TemplateFunction<[number]>,
-};
+    body: `Only a few tickets left for Waffles #${formatGameNum(gameNumber)}. Secure yours now!`,
+  }),
 
-// ==========================================
-// POST-GAME NOTIFICATIONS
-// ==========================================
-
-export const postGame = {
-  /** Sent to top 3 winners */
-  winner: ((gameNumber: number, rank: number): NotificationTemplate => {
-    const emoji = rank === 1 ? "🥇" : rank === 2 ? "🥈" : "🥉";
-    return {
-      title: `You're a Winner! 🎉`,
-      body: `You placed #${rank} ${emoji} in Waffles #${String(gameNumber).padStart(3, "0")}! Tap to see your prize.`,
-    };
-  }) as TemplateFunction<[number, number]>,
-
-  /** Sent to winners with unclaimed prizes */
-  topFinish: ((gameNumber: number, rank: number): NotificationTemplate => ({
-    title: `Top ${rank} Finish! 🏆`,
-    body: `You crushed Waffles #${String(gameNumber).padStart(3, "0")}! Claim your prize now.`,
-  })) as TemplateFunction<[number, number]>,
-
-  /** Sent to all non-winners */
-  results: ((gameNumber: number): NotificationTemplate => ({
-    title: `Waffles #${String(gameNumber).padStart(3, "0")} Results are in 📊`,
-    body: "Not a winner this time? Check the final leaderboard here.",
-  })) as TemplateFunction<[number]>,
-
-  /** Reminder for unclaimed prizes */
-  unclaimed: ((gameNumber: number, amount: string): NotificationTemplate => ({
-    title: "You have unclaimed cash! 💸",
-    body: `You won ${amount} in Waffles #${String(gameNumber).padStart(3, "0")}. Tap to claim your prize now.`,
-  })) as TemplateFunction<[number, string]>,
-
-  /** Confirmation when prize is claimed */
-  claimed: ((amount: string): NotificationTemplate => ({
-    title: "💰 Prize Claimed!",
-    body: `Cha-ching! ${amount} has been sent to your wallet. Enjoy!`,
-  })) as TemplateFunction<[string]>,
+  /** When a friend buys a ticket for a game */
+  friendJoined: (
+    gameNumber: number,
+    friendUsername: string,
+  ): NotificationTemplate => ({
+    title: `A Friend joined Waffles #${formatGameNum(gameNumber)}! 🫣`,
+    body: "Tap to see who just bought a ticket.",
+  }),
 };
 
 // ==========================================
@@ -113,10 +82,64 @@ export const postGame = {
 
 export const liveGame = {
   /** Player got passed on leaderboard */
-  flipped: ((gameNumber: number, byUsername: string): NotificationTemplate => ({
+  flipped: (gameNumber: number, byUsername: string): NotificationTemplate => ({
     title: "Ouch! You just got flipped 📉",
     body: `${byUsername} just passed you on the leaderboard. Take back your spot!`,
-  })) as TemplateFunction<[number, string]>,
+  }),
+
+  /** Multiple friends overtook you */
+  rivalryAlert: (count: number): NotificationTemplate => ({
+    title: "Rivalry Alert! ⚔️",
+    body: `Your friend + ${count} others just overtook you.`,
+  }),
+
+  /** Chat is active */
+  chatActive: (messageCount: number): NotificationTemplate => ({
+    title: `${messageCount}+ new messages! 💬`,
+    body: "The chat is blowing up! See what everyone is saying.",
+  }),
+};
+
+// ==========================================
+// POST-GAME NOTIFICATIONS
+// ==========================================
+
+export const postGame = {
+  /** Sent to top 3 winners */
+  winner: (gameNumber: number, rank: number): NotificationTemplate => {
+    const emoji = rank === 1 ? "🥇" : rank === 2 ? "🥈" : "🥉";
+    return {
+      title: "You're a Winner! 🎉",
+      body: `You placed #${rank} ${emoji} in Waffles #${formatGameNum(gameNumber)}! Tap to see your prize.`,
+    };
+  },
+
+  /** Top 3 finish notification */
+  topFinish: (gameNumber: number, rank: number): NotificationTemplate => {
+    const emoji = rank === 1 ? "🥇" : rank === 2 ? "🥈" : "🥉";
+    return {
+      title: `Top 3 Finish! ${emoji}`,
+      body: `You crushed Waffles #${formatGameNum(gameNumber)}! See where your friends ranked.`,
+    };
+  },
+
+  /** Sent to all non-winners */
+  results: (gameNumber: number): NotificationTemplate => ({
+    title: `Waffles #${formatGameNum(gameNumber)} Results are in 📊`,
+    body: "Not a winner this time? Check the final leaderboard here.",
+  }),
+
+  /** Reminder for unclaimed prizes */
+  unclaimed: (gameNumber: number, amount: string): NotificationTemplate => ({
+    title: "You have unclaimed cash! 💸",
+    body: `You won ${amount} in Waffles #${formatGameNum(gameNumber)}. Tap to claim your prize now.`,
+  }),
+
+  /** Confirmation when prize is claimed */
+  claimed: (amount: string): NotificationTemplate => ({
+    title: "💰 Prize Claimed!",
+    body: `Cha-ching! ${amount} has been sent to your wallet. Enjoy!`,
+  }),
 };
 
 // ==========================================
@@ -124,10 +147,11 @@ export const liveGame = {
 // ==========================================
 
 export const onboarding = {
-  welcome: ((): NotificationTemplate => ({
+  /** Welcome message when user first joins */
+  welcome: (): NotificationTemplate => ({
     title: "Welcome to Waffles! 🧇",
     body: "Get ready to predict, win, and earn.",
-  })) as TemplateFunction<[]>,
+  }),
 };
 
 // ==========================================
@@ -135,10 +159,29 @@ export const onboarding = {
 // ==========================================
 
 export const transactional = {
-  ticketSecured: ((timeStr: string): NotificationTemplate => ({
+  /** Ticket purchase confirmation */
+  ticketSecured: (timeStr: string): NotificationTemplate => ({
     title: "🧇 Ticket Secured!",
     body: `Game starts ${timeStr}. Don't miss it!`,
-  })) as TemplateFunction<[string]>,
+  }),
+};
+
+// ==========================================
+// RETENTION & REENGAGEMENT
+// ==========================================
+
+export const retention = {
+  /** Bring back inactive users */
+  comeback: (gameNumber: number): NotificationTemplate => ({
+    title: "Ready for a comeback? 👀",
+    body: `Waffles #${formatGameNum(gameNumber)} is live! It's time to get back in the game.`,
+  }),
+
+  /** Streak reminder */
+  streakReminder: (): NotificationTemplate => ({
+    title: "Don't break your streak! 🔥",
+    body: "Keep the fire alive. Play a game today to maintain your status.",
+  }),
 };
 
 // ==========================================
@@ -146,10 +189,11 @@ export const transactional = {
 // ==========================================
 
 export const growth = {
-  newQuest: ((title: string, description: string): NotificationTemplate => ({
+  /** New quest available */
+  newQuest: (title: string, description: string): NotificationTemplate => ({
     title: `New Quest: ${title}`,
     body: description,
-  })) as TemplateFunction<[string, string]>,
+  }),
 };
 
 // ==========================================
@@ -180,7 +224,7 @@ export function buildPayload(
   } else if (context === "result" || context === "claim") {
     targetUrl = `${baseUrl}/game/${gameId}/result`;
   } else {
-    targetUrl = `${baseUrl}/game`; // Default fallback
+    targetUrl = `${baseUrl}/game`;
   }
 
   return {
