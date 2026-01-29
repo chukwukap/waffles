@@ -122,7 +122,10 @@ export function HeroSection() {
                     data-cursor-hover
                     data-cursor-text="Click"
                 >
-                    <motion.button
+                    <motion.a
+                        href="https://farcaster.xyz/miniapps/sbpPNle-R2-V/waffles"
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="relative flex items-center justify-center w-full sm:w-[337px] h-[54px] p-3 bg-white rounded-xl font-body text-[20px] sm:text-[26px] leading-[1.15] tracking-[-0.02em] text-[#FBB03B] text-center overflow-hidden"
                         style={{
                             borderRight: "5px solid #FBB03B",
@@ -151,8 +154,8 @@ export function HeroSection() {
                                 ease: "easeInOut",
                             }}
                         />
-                        <span className="relative z-10">GET INVITE CODE</span>
-                    </motion.button>
+                        <span className="relative z-10">PLAY NOW</span>
+                    </motion.a>
                 </motion.div>
             </motion.div>
 
