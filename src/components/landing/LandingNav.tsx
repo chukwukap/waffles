@@ -72,7 +72,7 @@ export function LandingNav() {
                     <div className="flex items-center justify-end gap-4 md:gap-6 h-10 md:h-12">
                         {/* Nav Links - hidden on mobile */}
                         <div className="hidden md:flex items-center gap-6">
-                            <NavLink href="#how-to-play">How to play</NavLink>
+                            <NavLink href="https://x.com/playwaffles" external>How to play</NavLink>
                             <NavLink href="#faqs">FAQs</NavLink>
                         </div>
 
@@ -109,9 +109,13 @@ export function LandingNav() {
 }
 
 // Animated nav link component
-function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
+function NavLink({ href, children, external }: { href: string; children: React.ReactNode; external?: boolean }) {
     return (
-        <Link href={href} className="relative group">
+        <Link
+            href={href}
+            className="relative group"
+            {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+        >
             <span className="font-display font-medium text-base leading-tight tracking-tight text-white text-center transition-colors group-hover:text-white/80">
                 {children}
             </span>

@@ -8,6 +8,7 @@ import {
   EarlyPlayersSection,
   ThemesSection,
   FinalCTASection,
+  FAQSection,
   Footer,
 } from "@/components/landing";
 import { SmoothScrollProvider } from "@/components/landing/SmoothScrollProvider";
@@ -45,6 +46,9 @@ export default function Home() {
 
         {/* Final CTA - Gold */}
         <FinalCTASection />
+
+        {/* FAQ Section - Dark */}
+        <FAQSection />
 
         {/* Footer - Dark */}
         <Footer />

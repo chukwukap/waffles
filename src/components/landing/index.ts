@@ -5,6 +5,7 @@ export { CompeteSection } from "./CompeteSection";
 export { EarlyPlayersSection } from "./EarlyPlayersSection";
 export { ThemesSection } from "./ThemesSection";
 export { FinalCTASection } from "./FinalCTASection";
+export { FAQSection } from "./FAQSection";
 export { Footer } from "./Footer";
 
 // Animation utilities
