@@ -16,7 +16,7 @@ const faqs = [
     },
     {
         question: "How much does it cost to play?",
-        answer: "Ticket prices vary per game, typically ranging from $1 to $5 USDC. The ticket price contributes to the prize pool, meaning bigger games have bigger rewards. You can see the current prize pool before joining any game.",
+        answer: "Ticket prices vary per game, typically ranging from $5 to $50 USDC. The ticket price contributes to the prize pool, meaning bigger games have bigger rewards. You can see the current prize pool before joining any game.",
     },
     {
         question: "When are games played?",
@@ -28,7 +28,7 @@ const faqs = [
     },
     {
         question: "How do I get started?",
-        answer: "Simply open Waffles on Farcaster, connect your wallet, buy a ticket for an upcoming game, and you're ready to compete! No complicated setup required – just bring your pattern recognition skills.",
+        answer: "Simply open Waffles on Farcaster, buy a ticket for an upcoming game, and you're ready to compete! No complicated setup required – just bring your pattern recognition skills.",
     },
 ];
 
@@ -199,7 +199,7 @@ export function FAQSection() {
             }}
         >
             {/* Grain texture overlay */}
-            <LandingNoise />
+            {/* <LandingNoise /> */}
 
             {/* Ambient glow effects */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -232,7 +232,7 @@ export function FAQSection() {
                     className="text-center mb-16 md:mb-20"
                 >
                     {/* Eyebrow */}
-                    <motion.span
+                    {/* <motion.span
                         initial={{ opacity: 0, y: 10 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
@@ -240,7 +240,7 @@ export function FAQSection() {
                         className="inline-block px-4 py-2 mb-6 rounded-full bg-white/5 border border-white/10 font-display text-sm tracking-wider text-white/60 uppercase"
                     >
                         Got Questions?
-                    </motion.span>
+                    </motion.span> */}
 
                     {/* Title */}
                     <h2 className="font-body text-5xl sm:text-6xl md:text-7xl lg:text-8xl leading-[0.9] tracking-tight text-white mb-6">
