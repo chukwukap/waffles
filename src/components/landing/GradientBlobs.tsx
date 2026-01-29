@@ -85,9 +85,9 @@ export function AnimatedNoise({ opacity = 0.03 }: { opacity?: number }) {
 export function LandingNoise({ className = "" }: { className?: string }) {
     return (
         <div
-            className={`absolute inset-0 pointer-events-none z-0 ${className}`}
+            className={`absolute inset-0 pointer-events-none z-[1] ${className}`}
             style={{
-                backgroundImage: `url("/noise.svg")`,
+                backgroundImage: `url("/landing-noise.svg")`,
                 backgroundRepeat: "repeat",
                 opacity: 0.49, // Figma: Density 49%
             }}
