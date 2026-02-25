@@ -210,7 +210,7 @@ export function SponsorGameCard({ gameId, onchainId, gameTitle }: SponsorGameCar
                         {hash && (
                             <div className="text-center">
                                 <a
-                                    href={`https://sepolia.basescan.org/tx/${hash}`}
+                                    href={`https://basescan.org/tx/${hash}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-xs text-white/40 hover:text-white/60 transition-colors"

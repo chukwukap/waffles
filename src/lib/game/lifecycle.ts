@@ -8,6 +8,7 @@
 import { parseUnits } from "viem";
 import { prisma } from "@/lib/db";
 import { publicClient, getWalletClient } from "@/lib/chain/client";
+import { withBuilderCodeDataSuffix } from "@/lib/chain/builderCode";
 import {
   buildMerkleTree,
   generateAllProofs,
@@ -274,12 +275,14 @@ export async function publishResults(gameId: string): Promise<PublishResult> {
 
   // Submit to chain
   const walletClient = getWalletClient();
-  const txHash = await walletClient.writeContract({
-    address: WAFFLE_CONTRACT_ADDRESS,
-    abi: waffleGameAbi,
-    functionName: "submitResults",
-    args: [onchainId, merkleRoot],
-  });
+  const txHash = await walletClient.writeContract(
+    withBuilderCodeDataSuffix({
+      address: WAFFLE_CONTRACT_ADDRESS,
+      abi: waffleGameAbi,
+      functionName: "submitResults",
+      args: [onchainId, merkleRoot],
+    }),
+  );
 
   await publicClient.waitForTransactionReceipt({ hash: txHash });
 

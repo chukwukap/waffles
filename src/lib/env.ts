@@ -45,6 +45,7 @@ const envSchema = z.object({
   NEXT_PUBLIC_ONCHAINKIT_API_KEY: z
     .string()
     .min(1, "NEXT_PUBLIC_ONCHAINKIT_API_KEY is required"),
+  NEXT_PUBLIC_BASE_BUILDER_CODE: z.string().optional(),
   NEXT_PUBLIC_LEADERBOARD_PAGE_SIZE: z.coerce
     .number()
     .int()
@@ -83,6 +84,7 @@ const getEnv = () => {
     CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
     NEXT_PUBLIC_TEST_MODE: process.env.NEXT_PUBLIC_TEST_MODE,
     NEXT_PUBLIC_ONCHAINKIT_API_KEY: process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY,
+    NEXT_PUBLIC_BASE_BUILDER_CODE: process.env.NEXT_PUBLIC_BASE_BUILDER_CODE,
     NEXT_PUBLIC_LEADERBOARD_PAGE_SIZE:
       process.env.NEXT_PUBLIC_LEADERBOARD_PAGE_SIZE,
     NEXT_PUBLIC_TREASURY_WALLET: process.env.NEXT_PUBLIC_TREASURY_WALLET,
@@ -127,6 +129,7 @@ const getEnv = () => {
         cloudinaryApiSecret: "",
         isTestMode: false,
         nextPublicOnchainkitApiKey: "",
+        nextPublicBaseBuilderCode: undefined,
         nextPublicLeaderboardPageSize: 25,
         homeUrlPath: "",
         nextPublicTreasuryWallet:
@@ -173,6 +176,7 @@ const getEnv = () => {
     isTestMode: data.NEXT_PUBLIC_TEST_MODE,
     // Client-side
     nextPublicOnchainkitApiKey: data.NEXT_PUBLIC_ONCHAINKIT_API_KEY,
+    nextPublicBaseBuilderCode: data.NEXT_PUBLIC_BASE_BUILDER_CODE,
     nextPublicLeaderboardPageSize: data.NEXT_PUBLIC_LEADERBOARD_PAGE_SIZE,
     homeUrlPath: data.NEXT_PUBLIC_HOME_URL_PATH,
     nextPublicTreasuryWallet: (data.NEXT_PUBLIC_TREASURY_WALLET ||

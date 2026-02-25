@@ -8,6 +8,7 @@ import { parseUnits } from "viem";
 
 import { publicClient, getWalletClient } from "./client";
 import waffleGameAbi from "./abi.json";
+import { withBuilderCodeDataSuffix } from "./builderCode";
 import { PAYMENT_TOKEN_DECIMALS, WAFFLE_CONTRACT_ADDRESS } from "./config";
 
 // ============================================================================
@@ -55,12 +56,14 @@ export async function createGameOnChain(
     PAYMENT_TOKEN_DECIMALS,
   );
 
-  const hash = await walletClient.writeContract({
-    address: WAFFLE_CONTRACT_ADDRESS,
-    abi: waffleGameAbi,
-    functionName: "createGame",
-    args: [onchainId, minimumTicketPrice],
-  });
+  const hash = await walletClient.writeContract(
+    withBuilderCodeDataSuffix({
+      address: WAFFLE_CONTRACT_ADDRESS,
+      abi: waffleGameAbi,
+      functionName: "createGame",
+      args: [onchainId, minimumTicketPrice],
+    }),
+  );
 
   console.log(`[Chain] Created game ${onchainId}. TX: ${hash}`);
   return hash;
@@ -76,12 +79,14 @@ export async function closeSalesOnChain(
 ): Promise<`0x${string}`> {
   const walletClient = getWalletClient();
 
-  const hash = await walletClient.writeContract({
-    address: WAFFLE_CONTRACT_ADDRESS,
-    abi: waffleGameAbi,
-    functionName: "closeSales",
-    args: [onchainId],
-  });
+  const hash = await walletClient.writeContract(
+    withBuilderCodeDataSuffix({
+      address: WAFFLE_CONTRACT_ADDRESS,
+      abi: waffleGameAbi,
+      functionName: "closeSales",
+      args: [onchainId],
+    }),
+  );
 
   console.log(`[Chain] Closed sales for game ${onchainId}. TX: ${hash}`);
   return hash;

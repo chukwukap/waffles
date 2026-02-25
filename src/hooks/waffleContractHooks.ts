@@ -9,6 +9,7 @@ import {
   PAYMENT_TOKEN_DECIMALS,
   WAFFLE_CONTRACT_ADDRESS,
 } from "@/lib/chain";
+import { withBuilderCodeDataSuffix } from "@/lib/chain/builderCode";
 import waffleGameAbi from "@/lib/chain/abi.json";
 import { ERC20_ABI } from "@/lib/constants";
 
@@ -117,12 +118,14 @@ export function useApproveToken() {
 
   const approve = (amount: string) => {
     const amountInUnits = parseUnits(amount, PAYMENT_TOKEN_DECIMALS);
-    writeContract({
-      address: PAYMENT_TOKEN_ADDRESS,
-      abi: ERC20_ABI,
-      functionName: "approve",
-      args: [WAFFLE_CONTRACT_ADDRESS, amountInUnits],
-    });
+    writeContract(
+      withBuilderCodeDataSuffix({
+        address: PAYMENT_TOKEN_ADDRESS,
+        abi: ERC20_ABI,
+        functionName: "approve",
+        args: [WAFFLE_CONTRACT_ADDRESS, amountInUnits],
+      }),
+    );
   };
 
   return { approve, hash, isPending, isConfirming, isSuccess, error };
@@ -139,12 +142,14 @@ export function useBuyTicket() {
 
   const buyTicket = (onchainId: `0x${string}`, amount: string) => {
     const amountInUnits = parseUnits(amount, PAYMENT_TOKEN_DECIMALS);
-    writeContract({
-      address: WAFFLE_CONTRACT_ADDRESS,
-      abi: waffleGameAbi,
-      functionName: "buyTicket",
-      args: [onchainId, amountInUnits],
-    });
+    writeContract(
+      withBuilderCodeDataSuffix({
+        address: WAFFLE_CONTRACT_ADDRESS,
+        abi: waffleGameAbi,
+        functionName: "buyTicket",
+        args: [onchainId, amountInUnits],
+      }),
+    );
   };
 
   return { buyTicket, hash, isPending, isConfirming, isSuccess, error };
@@ -164,12 +169,14 @@ export function useClaimPrize() {
     amount: bigint,
     proof: `0x${string}`[],
   ) => {
-    writeContract({
-      address: WAFFLE_CONTRACT_ADDRESS,
-      abi: waffleGameAbi,
-      functionName: "claimPrize",
-      args: [onchainId, amount, proof],
-    });
+    writeContract(
+      withBuilderCodeDataSuffix({
+        address: WAFFLE_CONTRACT_ADDRESS,
+        abi: waffleGameAbi,
+        functionName: "claimPrize",
+        args: [onchainId, amount, proof],
+      }),
+    );
   };
 
   return { claimPrize, hash, isPending, isConfirming, isSuccess, error };
@@ -186,12 +193,14 @@ export function useSponsorPrizePool() {
 
   const sponsorPrizePool = (onchainId: `0x${string}`, amount: string) => {
     const amountInUnits = parseUnits(amount, PAYMENT_TOKEN_DECIMALS);
-    writeContract({
-      address: WAFFLE_CONTRACT_ADDRESS,
-      abi: waffleGameAbi,
-      functionName: "sponsorPrizePool",
-      args: [onchainId, amountInUnits],
-    });
+    writeContract(
+      withBuilderCodeDataSuffix({
+        address: WAFFLE_CONTRACT_ADDRESS,
+        abi: waffleGameAbi,
+        functionName: "sponsorPrizePool",
+        args: [onchainId, amountInUnits],
+      }),
+    );
   };
 
   return { sponsorPrizePool, hash, isPending, isConfirming, isSuccess, error };

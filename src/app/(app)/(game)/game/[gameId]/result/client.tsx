@@ -25,6 +25,7 @@ import { Game } from "@prisma";
 import { WINNERS_COUNT } from "@/lib/game/prizeDistribution";
 import { CLAIM_DELAY_MS } from "@/lib/constants";
 import { WAFFLE_CONTRACT_ADDRESS } from "@/lib/chain";
+import { builderCodeSendCallsCapability } from "@/lib/chain/builderCode";
 
 // ==========================================
 // TYPES
@@ -546,6 +547,9 @@ export default function ResultPageClient({
             }),
           },
         ],
+        ...(builderCodeSendCallsCapability
+          ? { capabilities: builderCodeSendCallsCapability }
+          : {}),
       });
     } catch (error: unknown) {
       console.error("[Claim] Error:", error);

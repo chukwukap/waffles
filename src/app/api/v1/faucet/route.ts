@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getWalletClient, publicClient } from "@/lib/chain/client";
+import { withBuilderCodeDataSuffix } from "@/lib/chain/builderCode";
 import { parseUnits, encodeFunctionData } from "viem";
 import { ERC20_ABI } from "@/lib/constants";
 import { z } from "zod";
@@ -89,12 +90,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Execute transfer
-    const hash = await walletClient.writeContract({
-      address: PAYMENT_TOKEN_ADDRESS,
-      abi: ERC20_ABI,
-      functionName: "transfer",
-      args: [recipient, transferAmount],
-    });
+    const hash = await walletClient.writeContract(
+      withBuilderCodeDataSuffix({
+        address: PAYMENT_TOKEN_ADDRESS,
+        abi: ERC20_ABI,
+        functionName: "transfer",
+        args: [recipient, transferAmount],
+      }),
+    );
 
     console.log(`[Faucet] Transfer tx: ${hash}`);
 

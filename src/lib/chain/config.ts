@@ -1,11 +1,10 @@
-import { baseSepolia } from "viem/chains";
+import { base } from "viem/chains";
 
-export const chain = baseSepolia;
+export const chain = base;
 
 export const WAFFLE_CONTRACT_ADDRESS =
-  "0xeB89A087cC3898713d9f887b21Dc3BF4FC963B8F";
-const SEPOLIA_USDC_ADDRESS = "0x8aAa7ECea87244Ca4062eBce6DA61820f3830233";
+  "0xac3CB10258250E9644c33673087FAFd2722B2203";
 const BASE_MAINNET_USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 
-export const PAYMENT_TOKEN_ADDRESS = SEPOLIA_USDC_ADDRESS;
+export const PAYMENT_TOKEN_ADDRESS = BASE_MAINNET_USDC_ADDRESS;
 export const PAYMENT_TOKEN_DECIMALS = 6;
