@@ -1,11 +1,10 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChartBarIcon, UsersIcon, TrophyIcon, ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
+import { ChartBarIcon, TrophyIcon, ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
 
 const TABS = [
     { id: "overview", label: "Overview", icon: ChartBarIcon },
-    { id: "waitlist", label: "Waitlist", icon: UsersIcon },
     { id: "games", label: "Games", icon: TrophyIcon },
     { id: "players", label: "Players", icon: ChatBubbleLeftRightIcon },
 ] as const;

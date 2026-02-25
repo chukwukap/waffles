@@ -62,7 +62,7 @@ export default async function AdminQuestsPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-white">Quests</h1>
-                    <p className="text-[#99A0AE]">Manage waitlist quests and rewards</p>
+                    <p className="text-[#99A0AE]">Manage engagement quests and rewards</p>
                 </div>
                 <div className="flex gap-3">
                     {pendingApprovals > 0 && (

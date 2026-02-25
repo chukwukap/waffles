@@ -15,9 +15,9 @@ async function getUsers(searchParams: { page?: string; status?: string; q?: stri
         where.isBanned = false;
     } else if (searchParams.status === 'BANNED') {
         where.isBanned = true;
-    } else if (searchParams.status === 'WAITLIST') {
-        where.joinedWaitlistAt = { not: null };
+    } else if (searchParams.status === 'NO_ACCESS') {
         where.hasGameAccess = false;
+        where.isBanned = false;
     }
 
     if (searchParams.role) {
@@ -46,7 +46,6 @@ async function getUsers(searchParams: { page?: string; status?: string; q?: stri
                 wallet: true,
                 hasGameAccess: true,
                 isBanned: true,
-                joinedWaitlistAt: true,
                 role: true,
                 inviteQuota: true,
                 inviteCode: true,
@@ -66,8 +65,8 @@ async function getUsers(searchParams: { page?: string; status?: string; q?: stri
 }
 
 function UserStatusBadge({ hasGameAccess, isBanned }: { hasGameAccess: boolean; isBanned: boolean }) {
-    let status = 'WAITLIST';
-    let colorClass = 'bg-[#FFC931]/20 text-[#FFC931]';
+    let status = 'NO_ACCESS';
+    let colorClass = 'bg-white/10 text-white/60';
 
     if (isBanned) {
         status = 'BANNED';
@@ -222,4 +221,3 @@ export default async function UsersListPage({
         </div>
     );
 }
-

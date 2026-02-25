@@ -25,7 +25,7 @@ export interface BatchResult {
 /**
  * Filter for targeting users
  */
-export type UserFilter = "all" | "active" | "waitlist" | "no_quests";
+export type UserFilter = "all" | "active";
 
 /**
  * Notification payload

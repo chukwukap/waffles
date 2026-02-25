@@ -119,13 +119,6 @@ export async function getUsersWithTokens(
       where.hasGameAccess = true;
       where.isBanned = false;
       break;
-    case "waitlist":
-      where.hasGameAccess = false;
-      where.joinedWaitlistAt = { not: null };
-      break;
-    case "no_quests":
-      where.completedQuests = { none: {} };
-      break;
   }
 
   return prisma.user.findMany({
@@ -152,13 +145,6 @@ export async function countUsersWithTokens(
     case "active":
       where.hasGameAccess = true;
       where.isBanned = false;
-      break;
-    case "waitlist":
-      where.hasGameAccess = false;
-      where.joinedWaitlistAt = { not: null };
-      break;
-    case "no_quests":
-      where.completedQuests = { none: {} };
       break;
   }
 

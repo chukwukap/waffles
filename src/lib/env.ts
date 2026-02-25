@@ -35,12 +35,6 @@ const envSchema = z.object({
     ? z.string().min(1, "CLOUDINARY_API_SECRET is required")
     : z.string().optional(),
 
-  // Test Mode
-  NEXT_PUBLIC_TEST_MODE: z
-    .enum(["true", "false", ""])
-    .optional()
-    .transform((val) => val === "true"),
-
   // Client
   NEXT_PUBLIC_ONCHAINKIT_API_KEY: z
     .string()
@@ -82,7 +76,6 @@ const getEnv = () => {
     CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
     CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
     CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
-    NEXT_PUBLIC_TEST_MODE: process.env.NEXT_PUBLIC_TEST_MODE,
     NEXT_PUBLIC_ONCHAINKIT_API_KEY: process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY,
     NEXT_PUBLIC_BASE_BUILDER_CODE: process.env.NEXT_PUBLIC_BASE_BUILDER_CODE,
     NEXT_PUBLIC_LEADERBOARD_PAGE_SIZE:
@@ -127,7 +120,6 @@ const getEnv = () => {
         cloudinaryCloudName: "",
         cloudinaryApiKey: "",
         cloudinaryApiSecret: "",
-        isTestMode: false,
         nextPublicOnchainkitApiKey: "",
         nextPublicBaseBuilderCode: undefined,
         nextPublicLeaderboardPageSize: 25,
@@ -172,8 +164,6 @@ const getEnv = () => {
     cloudinaryCloudName: data.CLOUDINARY_CLOUD_NAME,
     cloudinaryApiKey: data.CLOUDINARY_API_KEY,
     cloudinaryApiSecret: data.CLOUDINARY_API_SECRET,
-    // Test Mode
-    isTestMode: data.NEXT_PUBLIC_TEST_MODE,
     // Client-side
     nextPublicOnchainkitApiKey: data.NEXT_PUBLIC_ONCHAINKIT_API_KEY,
     nextPublicBaseBuilderCode: data.NEXT_PUBLIC_BASE_BUILDER_CODE,

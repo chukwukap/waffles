@@ -9,7 +9,6 @@ export { ThemeAnalytics } from "./ThemeAnalytics";
 export { ActivityFeed } from "./ActivityFeed";
 
 // Extended analytics components
-export { WaitlistAnalytics } from "./WaitlistAnalytics";
 export { GameInsights } from "./GameInsights";
 export { QuestionDifficulty } from "./QuestionDifficulty";
 export { PlayerEngagement } from "./PlayerEngagement";

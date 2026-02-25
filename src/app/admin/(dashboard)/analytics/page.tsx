@@ -18,7 +18,6 @@ import {
     ReferralFunnel,
     ThemeAnalytics,
     ActivityFeed,
-    WaitlistAnalytics,
     GameInsights,
     QuestionDifficulty,
     PlayerEngagement,
@@ -192,7 +191,7 @@ async function getOverviewData(start: Date, end: Date) {
             label = "Active";
             color = "#14B985";
         } else {
-            label = "Waitlist";
+            label = "No Access";
             color = "#FFC931";
         }
         return { status: label, count: s._count, color };
@@ -276,46 +275,6 @@ async function getOverviewData(start: Date, end: Date) {
     };
 }
 
-async function getWaitlistData() {
-    const [totalQuests, waitlistUsers, activeUsers, usersWithQuests, invitedUsersCount, totalInviters] = await Promise.all([
-        prisma.quest.count({ where: { isActive: true } }),
-        prisma.user.count({ where: { joinedWaitlistAt: { not: null }, hasGameAccess: false } }),
-        prisma.user.count({ where: { hasGameAccess: true } }),
-        prisma.user.findMany({
-            where: { joinedWaitlistAt: { not: null } },
-            select: {
-                _count: { select: { completedQuests: true } }
-            }
-        }),
-        prisma.user.count({ where: { referredById: { not: null } } }),
-        prisma.user.count({ where: { referrals: { some: {} } } }),
-    ]);
-
-    const questCompletion = {
-        all: 0,
-        most: 0,
-        some: 0,
-        none: 0,
-    };
-
-    usersWithQuests.forEach((u) => {
-        const count = u._count.completedQuests;
-        if (count === 0) questCompletion.none++;
-        else if (count < totalQuests / 2) questCompletion.some++;
-        else if (count < totalQuests) questCompletion.most++;
-        else questCompletion.all++;
-    });
-
-    return {
-        waitlistUsers,
-        activeUsers,
-        totalQuests,
-        questCompletion,
-        invitedUsers: invitedUsersCount,
-        viralCoefficient: totalInviters > 0 ? invitedUsersCount / totalInviters : 0,
-    };
-}
-
 async function getGameInsights() {
     const now = new Date();
 
@@ -371,7 +330,10 @@ export default async function AnalyticsPage({
 }) {
     const { range, tab } = await searchParams;
     const { start, end } = getDateRangeFromParam(range ?? "7d");
-    const activeTab = (tab || "overview") as AnalyticsTab;
+    const validTabs: AnalyticsTab[] = ["overview", "games", "players"];
+    const activeTab = validTabs.includes(tab as AnalyticsTab)
+        ? (tab as AnalyticsTab)
+        : "overview";
 
     return (
         <div className="space-y-6">
@@ -406,23 +368,6 @@ async function AnalyticsContent({
     if (activeTab === "overview") {
         const data = await getOverviewData(start, end);
         return <OverviewTab data={data} />;
-    }
-    if (activeTab === "waitlist") {
-        const rawData = await getWaitlistData();
-        // Map to component expected format
-        const data = {
-            totalWaitlist: rawData.waitlistUsers,
-            totalActive: rawData.activeUsers,
-            questCompletion: {
-                all: rawData.questCompletion.all,
-                most: rawData.questCompletion.most,
-                half: rawData.questCompletion.some,
-                none: rawData.questCompletion.none,
-            },
-            avgInvitesPerUser: rawData.viralCoefficient,
-            totalInvitedUsers: rawData.invitedUsers,
-        };
-        return <WaitlistAnalytics data={data} />;
     }
     if (activeTab === "games") {
         const games = await getGameInsights();

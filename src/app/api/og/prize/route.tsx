@@ -29,7 +29,7 @@ export async function GET(request: Request) {
         readFile(join(publicDir, "fonts/editundo_bd.ttf")),
         readFile(join(publicDir, "logo-onboarding.png")),
         readFile(join(publicDir, "images/illustrations/treasure-chest.png")),
-        readFile(join(publicDir, "images/share/waitlist-bg.png")),
+        readFile(join(publicDir, "images/share/bg.png")),
         safeImageUrl(pfpUrlParam),
     ]);
 

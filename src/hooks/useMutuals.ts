@@ -15,7 +15,7 @@ export function useMutuals(options?: {
     totalCount: number;
   } | null>(null);
 
-  const context = options?.context || "waitlist";
+  const context = options?.context || "game";
   const gameId = options?.gameId;
   const limit = options?.limit;
 

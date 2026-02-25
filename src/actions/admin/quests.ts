@@ -93,7 +93,7 @@ export async function createQuestAction(
       },
     });
 
-    // Send notifications to waitlist users if quest is active
+    // Send notifications to active users if quest is active
     if (quest.isActive) {
       try {
         const { growth, buildPayload } =
@@ -104,7 +104,7 @@ export async function createQuestAction(
           "quest",
         );
 
-        const notificationResults = await sendBatch(payload, "waitlist");
+        const notificationResults = await sendBatch(payload, "active");
 
         // Log the notification action for audit trail
         await logAdminAction({
@@ -184,7 +184,6 @@ export async function updateQuestAction(
     });
 
     revalidatePath("/admin/quests");
-    revalidatePath("/waitlist/quests");
     return { success: true };
   } catch (error) {
     console.error("Error updating quest:", error);
@@ -233,7 +232,6 @@ export async function toggleQuestActiveAction(
     });
 
     revalidatePath("/admin/quests");
-    revalidatePath("/waitlist/quests");
     return { success: true };
   } catch (error) {
     console.error("Error toggling quest:", error);
@@ -255,7 +253,7 @@ export async function approveQuestCompletionAction(
   try {
     const completedQuest = await prisma.completedQuest.findUnique({
       where: { id: completedQuestId },
-      include: { quest: true, user: true },
+      select: { id: true, isApproved: true },
     });
 
     if (!completedQuest) {
@@ -266,28 +264,16 @@ export async function approveQuestCompletionAction(
       return { success: false, error: "Already approved" };
     }
 
-    // Approve and award points
-    await prisma.$transaction([
-      prisma.completedQuest.update({
-        where: { id: completedQuestId },
-        data: {
-          isApproved: true,
-          approvedBy: auth.session.userId,
-          approvedAt: new Date(),
-        },
-      }),
-      prisma.user.update({
-        where: { id: completedQuest.userId },
-        data: {
-          waitlistPoints: {
-            increment: completedQuest.quest.points,
-          },
-        },
-      }),
-    ]);
+    await prisma.completedQuest.update({
+      where: { id: completedQuestId },
+      data: {
+        isApproved: true,
+        approvedBy: auth.session.userId,
+        approvedAt: new Date(),
+      },
+    });
 
     revalidatePath("/admin/quests");
-    revalidatePath("/waitlist/quests");
     return { success: true };
   } catch (error) {
     console.error("Error approving quest completion:", error);

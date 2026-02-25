@@ -1,7 +1,6 @@
 import { useCallback } from "react";
 import { useSwitchChain, useChainId } from "wagmi";
 import { chain } from "@/lib/chain";
-import { env } from "@/lib/env";
 
 /**
  * Hook to ensure the wallet is on the correct chain before performing actions.
@@ -24,7 +23,6 @@ export function useCorrectChain() {
   const { switchChainAsync } = useSwitchChain();
 
   const isOnCorrectChain = currentChainId === chain.id;
-  const isTestMode = env.isTestMode;
 
   const ensureCorrectChain = useCallback(async () => {
     // Only switch if we're on wrong chain
@@ -41,6 +39,5 @@ export function useCorrectChain() {
     isOnCorrectChain,
     currentChainId,
     targetChainId: chain.id,
-    isTestMode,
   };
 }

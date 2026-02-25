@@ -16,15 +16,12 @@ export type UserData = Pick<
   | "username"
   | "pfpUrl"
   | "wallet"
-  | "waitlistPoints"
   | "inviteQuota"
   | "inviteCode"
   | "hasGameAccess"
   | "isBanned"
-  | "joinedWaitlistAt"
   | "createdAt"
 > & {
-  waitlistRank: number; // Calculated on the fly by /api/v1/users/[fid]
   invitesCount: number;
 };
 

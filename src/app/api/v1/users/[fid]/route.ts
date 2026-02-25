@@ -35,12 +35,10 @@ export async function GET(
         username: true,
         pfpUrl: true,
         wallet: true,
-        waitlistPoints: true,
         inviteQuota: true,
         inviteCode: true,
         hasGameAccess: true,
         isBanned: true,
-        joinedWaitlistAt: true,
         createdAt: true,
         _count: {
           select: { referrals: true },
@@ -55,29 +53,17 @@ export async function GET(
       );
     }
 
-    // Calculate waitlist rank
-    const rank = await prisma.user.count({
-      where: {
-        waitlistPoints: {
-          gt: user.waitlistPoints,
-        },
-      },
-    });
-
     return NextResponse.json({
       id: user.id,
       fid: user.fid,
       username: user.username,
       pfpUrl: user.pfpUrl,
       wallet: user.wallet,
-      waitlistPoints: user.waitlistPoints,
       inviteQuota: user.inviteQuota,
       inviteCode: user.inviteCode,
       hasGameAccess: user.hasGameAccess,
       isBanned: user.isBanned,
-      joinedWaitlistAt: user.joinedWaitlistAt,
       createdAt: user.createdAt,
-      waitlistRank: rank + 1,
       invitesCount: user._count.referrals,
     });
   } catch (error) {

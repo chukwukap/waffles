@@ -4,7 +4,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: minikitConfig.miniapp.name,
-  description: "You're invited to join the waitlist.",
+  description: "Enter your invite code to access the game.",
 };
 
 export default function InvitePage() {

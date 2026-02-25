@@ -34,30 +34,9 @@ export interface ScoreOGParams {
   pfpUrl?: string;
 }
 
-export interface WaitlistOGParams {
-  rank: number;
-  pfpUrl?: string;
-}
-
 // ==========================================
 // URL BUILDERS
 // ==========================================
-
-/**
- * Build URL for Waitlist OG image
- */
-export function buildWaitlistOGUrl(params: WaitlistOGParams): string {
-  const baseUrl = env.rootUrl || "";
-  if (!baseUrl) return "";
-
-  const searchParams = new URLSearchParams();
-  searchParams.set("rank", params.rank.toString());
-  if (params.pfpUrl) {
-    searchParams.set("pfpUrl", params.pfpUrl);
-  }
-
-  return `${baseUrl}/api/og/waitlist?${searchParams.toString()}`;
-}
 
 /**
  * Build URL for Joined Game OG image

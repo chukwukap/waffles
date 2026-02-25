@@ -1,6 +1,3 @@
-// Launch Mode: Set to true to show "Waitlist is Over" instead of waitlist signup
-export const IS_LAUNCH_MODE = true;
-
 export const PALETTES = [
   { bg: "#FFE8BA", border: "#FFC931", text: "#151515" },
   { bg: "#EFD6FF", border: "#B45CFF", text: "#151515" },
@@ -9,8 +6,6 @@ export const PALETTES = [
 ] as const;
 
 export const EXTRA_TIME_SECONDS = 3; // 3 seconds
-
-export const REFERRAL_BONUS_POINTS = 200;
 
 // Claim delay: Players must wait this long after game ends before claiming prizes
 export const CLAIM_DELAY_MS = 60 * 60 * 1000; // 1 hour in milliseconds

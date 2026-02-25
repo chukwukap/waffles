@@ -28,11 +28,11 @@ export type BatchTarget = UserFilter | { fids: number[] };
  * Groups tokens by URL, sends up to 100 per request
  *
  * @param payload - Notification content (title, body, targetUrl)
- * @param target - Either a filter ("all", "active", "waitlist", "no_quests") or { fids: number[] }
+ * @param target - Either a filter ("all", "active") or { fids: number[] }
  *
  * @example
- * // Send to all waitlist users
- * await sendBatch({ title: "...", body: "...", targetUrl: "..." }, "waitlist");
+ * // Send to all active users
+ * await sendBatch({ title: "...", body: "...", targetUrl: "..." }, "active");
  *
  * // Send to specific game participants
  * await sendBatch({ title: "...", body: "...", targetUrl: "..." }, { fids: [123, 456, 789] });

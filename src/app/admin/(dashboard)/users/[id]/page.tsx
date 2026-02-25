@@ -153,7 +153,7 @@ export default async function UserDetailsPage({
                             <div className="text-sm text-white/40 font-medium">Status</div>
                             <div className={`text-lg font-bold ${user.isBanned ? 'text-red-400' : user.hasGameAccess ? 'text-[#14B985]' : 'text-[#FFC931]'
                                 }`}>
-                                {user.isBanned ? 'BANNED' : user.hasGameAccess ? 'ACTIVE PLAYER' : 'WAITLISTED'}
+                                {user.isBanned ? 'BANNED' : user.hasGameAccess ? 'ACTIVE PLAYER' : 'NO ACCESS'}
                             </div>
                         </div>
                     </div>
@@ -334,7 +334,7 @@ export default async function UserDetailsPage({
                                             <div className="flex items-center gap-2">
                                                 <span className={`text-[10px] font-bold uppercase tracking-wider ${referral.hasGameAccess ? 'text-[#14B985]' : 'text-white/30'
                                                     }`}>
-                                                    {referral.hasGameAccess ? 'Active' : 'Waitlist'}
+                                                    {referral.hasGameAccess ? 'Active' : 'No Access'}
                                                 </span>
                                                 <span className="text-[10px] text-white/20">•</span>
                                                 <span className="text-[10px] text-white/40">

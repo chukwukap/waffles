@@ -14,7 +14,7 @@ export default function NewQuestPage() {
                 </Link>
                 <div>
                     <h1 className="text-2xl font-bold text-white font-display">Create New Quest</h1>
-                    <p className="text-white/50">Add a new quest for waitlist users</p>
+                    <p className="text-white/50">Add a new quest for users</p>
                 </div>
             </div>
 

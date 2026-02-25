@@ -218,7 +218,7 @@ export function buildPayload(
   let targetUrl: string;
 
   if (context === "quest") {
-    targetUrl = `${baseUrl}/waitlist/quests`;
+    targetUrl = `${baseUrl}/game`;
   } else if (!gameId) {
     targetUrl = `${baseUrl}/game`;
   } else if (context === "result" || context === "claim") {

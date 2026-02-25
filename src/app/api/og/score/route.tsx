@@ -37,7 +37,7 @@ export async function GET(request: Request) {
     const [fontData, brockmannData, bgBuffer, logoBuffer, safePfpUrl] = await Promise.all([
         readFile(join(publicDir, "fonts/editundo_bd.ttf")),
         readFile(join(process.cwd(), "src/lib/fonts/brockmann_bd.otf")),
-        readFile(join(publicDir, "images/share/waitlist-bg.png")),
+        readFile(join(publicDir, "images/share/bg.png")),
         readFile(join(publicDir, "logo-onboarding.png")),
         safeImageUrl(pfpUrlParam),
     ]);
