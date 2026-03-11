@@ -13,40 +13,63 @@ import { upsertUser } from "@/actions/users";
 import { saveNotificationTokenAction } from "@/actions/notifications";
 import { OnboardingOverlay } from "../OnboardingOverlay";
 import { useUser } from "@/hooks/useUser";
+import { useSplash } from "./SplashProvider";
 
 /**
  * AppInitializer - Handles user initialization and app-wide setup.
  *
  * Responsibilities:
- * 1. Check if user exists, show onboarding if not
- * 2. Prompt to add miniapp (once per session) for notifications
+ * 1. Signal MiniApp ready to Farcaster SDK as early as possible
+ * 2. Check if user exists, show onboarding if not
+ * 3. Prompt to add miniapp (once per session) for notifications
  */
 export function AppInitializer({ children }: { children: ReactNode }) {
   const { address } = useAccount();
   const { context, setMiniAppReady } = useMiniKit();
   const addFrame = useAddFrame();
+  const { hideSplash } = useSplash();
 
   const fid = context?.user?.fid;
   const username = context?.user?.username;
   const pfpUrl = context?.user?.pfpUrl;
 
-  const { user, isLoading, refetch } = useUser();
+  const { user, isLoading, error, refetch } = useUser();
   const hasPromptedAddFrameRef = useRef(false);
+  const hasSignaledReadyRef = useRef(false);
 
-  // Signal ready when we know user status
+  // Signal ready to Farcaster as soon as we have context OR after a timeout.
+  // This MUST happen for the Farcaster client to dismiss its own loading state.
   useEffect(() => {
+    if (hasSignaledReadyRef.current) return;
+
+    // Signal ready once we know the user status
     if (!isLoading) {
+      hasSignaledReadyRef.current = true;
       setMiniAppReady();
+      hideSplash();
+      return;
     }
-  }, [isLoading, setMiniAppReady]);
+
+    // Fallback: signal ready after 3s even if still loading,
+    // so the Farcaster client doesn't get stuck on its loading screen.
+    const timeout = setTimeout(() => {
+      if (!hasSignaledReadyRef.current) {
+        hasSignaledReadyRef.current = true;
+        setMiniAppReady();
+        hideSplash();
+      }
+    }, 3000);
+
+    return () => clearTimeout(timeout);
+  }, [isLoading, setMiniAppReady, hideSplash]);
 
   // Prompt to add miniapp on first visit (once per session)
   // This enables push notifications via Farcaster
   useEffect(() => {
     if (hasPromptedAddFrameRef.current) return;
-    if (isLoading || !user) return; // Wait until authenticated
+    if (isLoading || !user) return;
     if (!fid) return;
-    if (context?.client?.added) return; // Already added
+    if (context?.client?.added) return;
 
     hasPromptedAddFrameRef.current = true;
 
@@ -74,14 +97,18 @@ export function AppInitializer({ children }: { children: ReactNode }) {
     if (!result.success)
       throw new Error(result.error || "Failed to create user");
 
-    // Refetch user data to update SWR cache and proceed to app
     await refetch();
   }, [fid, username, pfpUrl, address, refetch]);
 
-  // Still checking
+  // Still loading — show nothing (splash screen covers this)
   if (isLoading) return null;
 
-  // New user (user is null but not loading) → show onboarding
+  // Error fetching user — treat as new user rather than hanging forever
+  if (error && !user) {
+    return <OnboardingOverlay onComplete={handleOnboardingComplete} />;
+  }
+
+  // New user → show onboarding
   if (!user) {
     return <OnboardingOverlay onComplete={handleOnboardingComplete} />;
   }

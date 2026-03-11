@@ -18,12 +18,14 @@ export function useSplash() {
     return context;
 }
 
-interface SplashProviderProps {
-    children: ReactNode;
-    duration?: number;
-}
-
-export function SplashProvider({ children, duration = 2000 }: SplashProviderProps) {
+/**
+ * SplashProvider - Shows splash screen until explicitly dismissed or timeout.
+ *
+ * The splash is dismissed when:
+ * 1. AppInitializer calls hideSplash() after initialization, OR
+ * 2. The max duration (5s) elapses as a safety fallback
+ */
+export function SplashProvider({ children }: { children: ReactNode }) {
     const [showSplash, setShowSplash] = useState(true);
 
     const hideSplash = useCallback(() => {
@@ -32,7 +34,7 @@ export function SplashProvider({ children, duration = 2000 }: SplashProviderProp
 
     return (
         <SplashContext.Provider value={{ showSplash, hideSplash }}>
-            {showSplash && <SplashScreen duration={duration} onComplete={hideSplash} />}
+            {showSplash && <SplashScreen onComplete={hideSplash} duration={5000} />}
             {children}
         </SplashContext.Provider>
     );

@@ -10,23 +10,24 @@ import { SplashProvider } from "./SplashProvider";
  * Root Providers - Wraps entire app with necessary providers.
  *
  * Provider order matters:
- * 1. OnchainKitProvider (OnchainKit context)
- * 2. AppInitializer (handles onboarding for new users)
- * 3. SoundProvider (Audio)
+ * 1. OnchainKitProvider (wallet, MiniKit context)
+ * 2. SplashProvider (must be OUTSIDE AppInitializer so splash shows during init)
+ * 3. AppInitializer (handles onboarding — returns null while loading)
+ * 4. SoundProvider (Audio)
  *
  * Note: RealtimeProvider is at the game layout level, not root.
  */
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <OnchainKitProvider>
-      <AppInitializer>
-        <SoundProvider>
-          <SplashProvider>
+      <SplashProvider>
+        <AppInitializer>
+          <SoundProvider>
             {children}
             <GlobalToaster />
-          </SplashProvider>
-        </SoundProvider>
-      </AppInitializer>
+          </SoundProvider>
+        </AppInitializer>
+      </SplashProvider>
     </OnchainKitProvider>
   );
 }

@@ -52,29 +52,32 @@ async function fetchUser(url: string): Promise<UserData | null> {
  * Fetch current user data with SWR.
  * - Global cache: all components share the same data
  * - Deduplication: multiple calls = single request
- * - Auto refetch on focus (disabled by default)
+ *
+ * Loading is true when:
+ * - MiniKit context hasn't provided FID yet, OR
+ * - SWR is fetching user data
  */
 export function useUser() {
   const { context } = useMiniKit();
   const fid = context?.user?.fid;
 
-  const { data, error, isLoading, mutate } = useSWR<UserData | null>(
+  const { data, error, isLoading: swrLoading, mutate } = useSWR<UserData | null>(
     fid ? `/api/v1/users/${fid}` : null,
     fetchUser,
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
-      dedupingInterval: 5000, // Dedupe requests within 5s
+      dedupingInterval: 5000,
     }
   );
 
-  // If no FID, we are waiting for MiniKit context (loading)
-  // If SWR is fetching, we are loading
-  const isGlobalLoading = isLoading || !fid;
+  // Waiting for MiniKit context (no FID yet) = loading
+  // SWR actively fetching = loading
+  const isLoading = !fid || swrLoading;
 
   return {
     user: data ?? null,
-    isLoading: isGlobalLoading,
+    isLoading,
     error: error ? "Failed to load user" : null,
     refetch: mutate,
   };

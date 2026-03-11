@@ -29,13 +29,11 @@ export type AggregateUser = {
 export type UserAvgAggregateOutputType = {
   fid: number | null
   inviteQuota: number | null
-  waitlistPoints: number | null
 }
 
 export type UserSumAggregateOutputType = {
   fid: number | null
   inviteQuota: number | null
-  waitlistPoints: number | null
 }
 
 export type UserMinAggregateOutputType = {
@@ -55,8 +53,6 @@ export type UserMinAggregateOutputType = {
   isBanned: boolean | null
   bannedAt: Date | null
   bannedBy: string | null
-  joinedWaitlistAt: Date | null
-  waitlistPoints: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -78,8 +74,6 @@ export type UserMaxAggregateOutputType = {
   isBanned: boolean | null
   bannedAt: Date | null
   bannedBy: string | null
-  joinedWaitlistAt: Date | null
-  waitlistPoints: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -101,8 +95,6 @@ export type UserCountAggregateOutputType = {
   isBanned: number
   bannedAt: number
   bannedBy: number
-  joinedWaitlistAt: number
-  waitlistPoints: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -112,13 +104,11 @@ export type UserCountAggregateOutputType = {
 export type UserAvgAggregateInputType = {
   fid?: true
   inviteQuota?: true
-  waitlistPoints?: true
 }
 
 export type UserSumAggregateInputType = {
   fid?: true
   inviteQuota?: true
-  waitlistPoints?: true
 }
 
 export type UserMinAggregateInputType = {
@@ -138,8 +128,6 @@ export type UserMinAggregateInputType = {
   isBanned?: true
   bannedAt?: true
   bannedBy?: true
-  joinedWaitlistAt?: true
-  waitlistPoints?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -161,8 +149,6 @@ export type UserMaxAggregateInputType = {
   isBanned?: true
   bannedAt?: true
   bannedBy?: true
-  joinedWaitlistAt?: true
-  waitlistPoints?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -184,8 +170,6 @@ export type UserCountAggregateInputType = {
   isBanned?: true
   bannedAt?: true
   bannedBy?: true
-  joinedWaitlistAt?: true
-  waitlistPoints?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -294,8 +278,6 @@ export type UserGroupByOutputType = {
   isBanned: boolean
   bannedAt: Date | null
   bannedBy: string | null
-  joinedWaitlistAt: Date | null
-  waitlistPoints: number
   createdAt: Date
   updatedAt: Date
   _count: UserCountAggregateOutputType | null
@@ -340,8 +322,6 @@ export type UserWhereInput = {
   isBanned?: Prisma.BoolFilter<"User"> | boolean
   bannedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   bannedBy?: Prisma.StringNullableFilter<"User"> | string | null
-  joinedWaitlistAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
-  waitlistPoints?: Prisma.IntFilter<"User"> | number
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   referredBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
@@ -372,8 +352,6 @@ export type UserOrderByWithRelationInput = {
   isBanned?: Prisma.SortOrder
   bannedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   bannedBy?: Prisma.SortOrderInput | Prisma.SortOrder
-  joinedWaitlistAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  waitlistPoints?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   referredBy?: Prisma.UserOrderByWithRelationInput
@@ -407,8 +385,6 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   isBanned?: Prisma.BoolFilter<"User"> | boolean
   bannedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   bannedBy?: Prisma.StringNullableFilter<"User"> | string | null
-  joinedWaitlistAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
-  waitlistPoints?: Prisma.IntFilter<"User"> | number
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   referredBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
@@ -439,8 +415,6 @@ export type UserOrderByWithAggregationInput = {
   isBanned?: Prisma.SortOrder
   bannedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   bannedBy?: Prisma.SortOrderInput | Prisma.SortOrder
-  joinedWaitlistAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  waitlistPoints?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
@@ -470,8 +444,6 @@ export type UserScalarWhereWithAggregatesInput = {
   isBanned?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   bannedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   bannedBy?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
-  joinedWaitlistAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
-  waitlistPoints?: Prisma.IntWithAggregatesFilter<"User"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
@@ -492,8 +464,6 @@ export type UserCreateInput = {
   isBanned?: boolean
   bannedAt?: Date | string | null
   bannedBy?: string | null
-  joinedWaitlistAt?: Date | string | null
-  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   referredBy?: Prisma.UserCreateNestedOneWithoutReferralsInput
@@ -524,8 +494,6 @@ export type UserUncheckedCreateInput = {
   isBanned?: boolean
   bannedAt?: Date | string | null
   bannedBy?: string | null
-  joinedWaitlistAt?: Date | string | null
-  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
@@ -554,8 +522,6 @@ export type UserUpdateInput = {
   isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bannedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referredBy?: Prisma.UserUpdateOneWithoutReferralsNestedInput
@@ -586,8 +552,6 @@ export type UserUncheckedUpdateInput = {
   isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bannedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referrals?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
@@ -617,8 +581,6 @@ export type UserCreateManyInput = {
   isBanned?: boolean
   bannedAt?: Date | string | null
   bannedBy?: string | null
-  joinedWaitlistAt?: Date | string | null
-  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -639,8 +601,6 @@ export type UserUpdateManyMutationInput = {
   isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bannedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -662,8 +622,6 @@ export type UserUncheckedUpdateManyInput = {
   isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bannedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -700,8 +658,6 @@ export type UserCountOrderByAggregateInput = {
   isBanned?: Prisma.SortOrder
   bannedAt?: Prisma.SortOrder
   bannedBy?: Prisma.SortOrder
-  joinedWaitlistAt?: Prisma.SortOrder
-  waitlistPoints?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -709,7 +665,6 @@ export type UserCountOrderByAggregateInput = {
 export type UserAvgOrderByAggregateInput = {
   fid?: Prisma.SortOrder
   inviteQuota?: Prisma.SortOrder
-  waitlistPoints?: Prisma.SortOrder
 }
 
 export type UserMaxOrderByAggregateInput = {
@@ -729,8 +684,6 @@ export type UserMaxOrderByAggregateInput = {
   isBanned?: Prisma.SortOrder
   bannedAt?: Prisma.SortOrder
   bannedBy?: Prisma.SortOrder
-  joinedWaitlistAt?: Prisma.SortOrder
-  waitlistPoints?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -752,8 +705,6 @@ export type UserMinOrderByAggregateInput = {
   isBanned?: Prisma.SortOrder
   bannedAt?: Prisma.SortOrder
   bannedBy?: Prisma.SortOrder
-  joinedWaitlistAt?: Prisma.SortOrder
-  waitlistPoints?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -761,7 +712,6 @@ export type UserMinOrderByAggregateInput = {
 export type UserSumOrderByAggregateInput = {
   fid?: Prisma.SortOrder
   inviteQuota?: Prisma.SortOrder
-  waitlistPoints?: Prisma.SortOrder
 }
 
 export type UserScalarRelationFilter = {
@@ -975,8 +925,6 @@ export type UserCreateWithoutReferralsInput = {
   isBanned?: boolean
   bannedAt?: Date | string | null
   bannedBy?: string | null
-  joinedWaitlistAt?: Date | string | null
-  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   referredBy?: Prisma.UserCreateNestedOneWithoutReferralsInput
@@ -1006,8 +954,6 @@ export type UserUncheckedCreateWithoutReferralsInput = {
   isBanned?: boolean
   bannedAt?: Date | string | null
   bannedBy?: string | null
-  joinedWaitlistAt?: Date | string | null
-  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   redeemedCodes?: Prisma.InviteCodeUncheckedCreateNestedManyWithoutUsedByInput
@@ -1040,8 +986,6 @@ export type UserCreateWithoutReferredByInput = {
   isBanned?: boolean
   bannedAt?: Date | string | null
   bannedBy?: string | null
-  joinedWaitlistAt?: Date | string | null
-  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   referrals?: Prisma.UserCreateNestedManyWithoutReferredByInput
@@ -1070,8 +1014,6 @@ export type UserUncheckedCreateWithoutReferredByInput = {
   isBanned?: boolean
   bannedAt?: Date | string | null
   bannedBy?: string | null
-  joinedWaitlistAt?: Date | string | null
-  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
@@ -1121,8 +1063,6 @@ export type UserUpdateWithoutReferralsInput = {
   isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bannedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referredBy?: Prisma.UserUpdateOneWithoutReferralsNestedInput
@@ -1152,8 +1092,6 @@ export type UserUncheckedUpdateWithoutReferralsInput = {
   isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bannedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   redeemedCodes?: Prisma.InviteCodeUncheckedUpdateManyWithoutUsedByNestedInput
@@ -1201,8 +1139,6 @@ export type UserScalarWhereInput = {
   isBanned?: Prisma.BoolFilter<"User"> | boolean
   bannedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   bannedBy?: Prisma.StringNullableFilter<"User"> | string | null
-  joinedWaitlistAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
-  waitlistPoints?: Prisma.IntFilter<"User"> | number
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
 }
@@ -1223,8 +1159,6 @@ export type UserCreateWithoutRewardsInput = {
   isBanned?: boolean
   bannedAt?: Date | string | null
   bannedBy?: string | null
-  joinedWaitlistAt?: Date | string | null
-  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   referredBy?: Prisma.UserCreateNestedOneWithoutReferralsInput
@@ -1254,8 +1188,6 @@ export type UserUncheckedCreateWithoutRewardsInput = {
   isBanned?: boolean
   bannedAt?: Date | string | null
   bannedBy?: string | null
-  joinedWaitlistAt?: Date | string | null
-  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
@@ -1299,8 +1231,6 @@ export type UserUpdateWithoutRewardsInput = {
   isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bannedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referredBy?: Prisma.UserUpdateOneWithoutReferralsNestedInput
@@ -1330,8 +1260,6 @@ export type UserUncheckedUpdateWithoutRewardsInput = {
   isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bannedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referrals?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
@@ -1359,8 +1287,6 @@ export type UserCreateWithoutCompletedQuestsInput = {
   isBanned?: boolean
   bannedAt?: Date | string | null
   bannedBy?: string | null
-  joinedWaitlistAt?: Date | string | null
-  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   referredBy?: Prisma.UserCreateNestedOneWithoutReferralsInput
@@ -1390,8 +1316,6 @@ export type UserUncheckedCreateWithoutCompletedQuestsInput = {
   isBanned?: boolean
   bannedAt?: Date | string | null
   bannedBy?: string | null
-  joinedWaitlistAt?: Date | string | null
-  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
@@ -1435,8 +1359,6 @@ export type UserUpdateWithoutCompletedQuestsInput = {
   isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bannedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referredBy?: Prisma.UserUpdateOneWithoutReferralsNestedInput
@@ -1466,8 +1388,6 @@ export type UserUncheckedUpdateWithoutCompletedQuestsInput = {
   isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bannedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referrals?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
@@ -1495,8 +1415,6 @@ export type UserCreateWithoutEntriesInput = {
   isBanned?: boolean
   bannedAt?: Date | string | null
   bannedBy?: string | null
-  joinedWaitlistAt?: Date | string | null
-  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   referredBy?: Prisma.UserCreateNestedOneWithoutReferralsInput
@@ -1526,8 +1444,6 @@ export type UserUncheckedCreateWithoutEntriesInput = {
   isBanned?: boolean
   bannedAt?: Date | string | null
   bannedBy?: string | null
-  joinedWaitlistAt?: Date | string | null
-  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
@@ -1571,8 +1487,6 @@ export type UserUpdateWithoutEntriesInput = {
   isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bannedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referredBy?: Prisma.UserUpdateOneWithoutReferralsNestedInput
@@ -1602,8 +1516,6 @@ export type UserUncheckedUpdateWithoutEntriesInput = {
   isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bannedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referrals?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
@@ -1631,8 +1543,6 @@ export type UserCreateWithoutChatsInput = {
   isBanned?: boolean
   bannedAt?: Date | string | null
   bannedBy?: string | null
-  joinedWaitlistAt?: Date | string | null
-  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   referredBy?: Prisma.UserCreateNestedOneWithoutReferralsInput
@@ -1662,8 +1572,6 @@ export type UserUncheckedCreateWithoutChatsInput = {
   isBanned?: boolean
   bannedAt?: Date | string | null
   bannedBy?: string | null
-  joinedWaitlistAt?: Date | string | null
-  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
@@ -1707,8 +1615,6 @@ export type UserUpdateWithoutChatsInput = {
   isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bannedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referredBy?: Prisma.UserUpdateOneWithoutReferralsNestedInput
@@ -1738,8 +1644,6 @@ export type UserUncheckedUpdateWithoutChatsInput = {
   isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bannedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referrals?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
@@ -1767,8 +1671,6 @@ export type UserCreateWithoutNotifsInput = {
   isBanned?: boolean
   bannedAt?: Date | string | null
   bannedBy?: string | null
-  joinedWaitlistAt?: Date | string | null
-  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   referredBy?: Prisma.UserCreateNestedOneWithoutReferralsInput
@@ -1798,8 +1700,6 @@ export type UserUncheckedCreateWithoutNotifsInput = {
   isBanned?: boolean
   bannedAt?: Date | string | null
   bannedBy?: string | null
-  joinedWaitlistAt?: Date | string | null
-  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
@@ -1843,8 +1743,6 @@ export type UserUpdateWithoutNotifsInput = {
   isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bannedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referredBy?: Prisma.UserUpdateOneWithoutReferralsNestedInput
@@ -1874,8 +1772,6 @@ export type UserUncheckedUpdateWithoutNotifsInput = {
   isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bannedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referrals?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
@@ -1903,8 +1799,6 @@ export type UserCreateWithoutAuditLogsInput = {
   isBanned?: boolean
   bannedAt?: Date | string | null
   bannedBy?: string | null
-  joinedWaitlistAt?: Date | string | null
-  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   referredBy?: Prisma.UserCreateNestedOneWithoutReferralsInput
@@ -1934,8 +1828,6 @@ export type UserUncheckedCreateWithoutAuditLogsInput = {
   isBanned?: boolean
   bannedAt?: Date | string | null
   bannedBy?: string | null
-  joinedWaitlistAt?: Date | string | null
-  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
@@ -1979,8 +1871,6 @@ export type UserUpdateWithoutAuditLogsInput = {
   isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bannedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referredBy?: Prisma.UserUpdateOneWithoutReferralsNestedInput
@@ -2010,8 +1900,6 @@ export type UserUncheckedUpdateWithoutAuditLogsInput = {
   isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bannedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referrals?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
@@ -2039,8 +1927,6 @@ export type UserCreateWithoutRedeemedCodesInput = {
   isBanned?: boolean
   bannedAt?: Date | string | null
   bannedBy?: string | null
-  joinedWaitlistAt?: Date | string | null
-  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   referredBy?: Prisma.UserCreateNestedOneWithoutReferralsInput
@@ -2070,8 +1956,6 @@ export type UserUncheckedCreateWithoutRedeemedCodesInput = {
   isBanned?: boolean
   bannedAt?: Date | string | null
   bannedBy?: string | null
-  joinedWaitlistAt?: Date | string | null
-  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferredByInput
@@ -2115,8 +1999,6 @@ export type UserUpdateWithoutRedeemedCodesInput = {
   isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bannedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referredBy?: Prisma.UserUpdateOneWithoutReferralsNestedInput
@@ -2146,8 +2028,6 @@ export type UserUncheckedUpdateWithoutRedeemedCodesInput = {
   isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bannedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referrals?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
@@ -2175,8 +2055,6 @@ export type UserCreateManyReferredByInput = {
   isBanned?: boolean
   bannedAt?: Date | string | null
   bannedBy?: string | null
-  joinedWaitlistAt?: Date | string | null
-  waitlistPoints?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -2197,8 +2075,6 @@ export type UserUpdateWithoutReferredByInput = {
   isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bannedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referrals?: Prisma.UserUpdateManyWithoutReferredByNestedInput
@@ -2227,8 +2103,6 @@ export type UserUncheckedUpdateWithoutReferredByInput = {
   isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bannedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   referrals?: Prisma.UserUncheckedUpdateManyWithoutReferredByNestedInput
@@ -2257,8 +2131,6 @@ export type UserUncheckedUpdateManyWithoutReferredByInput = {
   isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   bannedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  joinedWaitlistAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  waitlistPoints?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -2374,8 +2246,6 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   isBanned?: boolean
   bannedAt?: boolean
   bannedBy?: boolean
-  joinedWaitlistAt?: boolean
-  waitlistPoints?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   referredBy?: boolean | Prisma.User$referredByArgs<ExtArgs>
@@ -2407,8 +2277,6 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   isBanned?: boolean
   bannedAt?: boolean
   bannedBy?: boolean
-  joinedWaitlistAt?: boolean
-  waitlistPoints?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   referredBy?: boolean | Prisma.User$referredByArgs<ExtArgs>
@@ -2431,8 +2299,6 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   isBanned?: boolean
   bannedAt?: boolean
   bannedBy?: boolean
-  joinedWaitlistAt?: boolean
-  waitlistPoints?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   referredBy?: boolean | Prisma.User$referredByArgs<ExtArgs>
@@ -2455,13 +2321,11 @@ export type UserSelectScalar = {
   isBanned?: boolean
   bannedAt?: boolean
   bannedBy?: boolean
-  joinedWaitlistAt?: boolean
-  waitlistPoints?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "fid" | "username" | "pfpUrl" | "wallet" | "role" | "password" | "referredById" | "inviteCode" | "inviteQuota" | "hasGameAccess" | "accessGrantedAt" | "accessGrantedBy" | "isBanned" | "bannedAt" | "bannedBy" | "joinedWaitlistAt" | "waitlistPoints" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "fid" | "username" | "pfpUrl" | "wallet" | "role" | "password" | "referredById" | "inviteCode" | "inviteQuota" | "hasGameAccess" | "accessGrantedAt" | "accessGrantedBy" | "isBanned" | "bannedAt" | "bannedBy" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   referredBy?: boolean | Prisma.User$referredByArgs<ExtArgs>
   referrals?: boolean | Prisma.User$referralsArgs<ExtArgs>
@@ -2511,8 +2375,6 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     isBanned: boolean
     bannedAt: Date | null
     bannedBy: string | null
-    joinedWaitlistAt: Date | null
-    waitlistPoints: number
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["user"]>
@@ -2963,8 +2825,6 @@ export interface UserFieldRefs {
   readonly isBanned: Prisma.FieldRef<"User", 'Boolean'>
   readonly bannedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly bannedBy: Prisma.FieldRef<"User", 'String'>
-  readonly joinedWaitlistAt: Prisma.FieldRef<"User", 'DateTime'>
-  readonly waitlistPoints: Prisma.FieldRef<"User", 'Int'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
 }

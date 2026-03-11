@@ -24,7 +24,9 @@ import type { LiveGameData } from "./page";
 
 export default function LiveGameScreen({ game }: { game: LiveGameData }) {
   const router = useRouter();
-  const { state: { entrants } } = useRealtime();
+  const {
+    state: { entrants },
+  } = useRealtime();
   const {
     phase,
     secondsRemaining,
@@ -65,12 +67,7 @@ export default function LiveGameScreen({ game }: { game: LiveGameData }) {
       );
 
     case "countdown":
-      return (
-        <GameCountdownScreen
-          onComplete={startGame}
-          entrants={entrants}
-        />
-      );
+      return <GameCountdownScreen onComplete={startGame} entrants={entrants} />;
 
     case "question":
       if (!currentQuestion) {
@@ -140,4 +137,3 @@ export default function LiveGameScreen({ game }: { game: LiveGameData }) {
       );
   }
 }
-
