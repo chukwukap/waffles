@@ -13,8 +13,9 @@ function getDomain(): string {
     const url = new URL(env.rootUrl);
     return url.hostname;
   } catch {
-    // Fallback for localhost
-    return "localhost:3000";
+    throw new Error(
+      `Invalid rootUrl "${env.rootUrl}" — set NEXT_PUBLIC_URL to your production domain`
+    );
   }
 }
 

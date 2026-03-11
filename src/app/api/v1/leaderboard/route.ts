@@ -7,7 +7,6 @@ import { z } from "zod";
 // CONFIGURATION
 // ============================================
 const PAGE_SIZE = env.nextPublicLeaderboardPageSize;
-const USE_MOCK_DATA = false; // TODO: Set to false for production
 
 // ============================================
 // TYPES
@@ -27,45 +26,6 @@ interface LeaderboardResponse {
   totalPlayers: number;
   gameTitle?: string;
   gameNumber?: number;
-}
-
-// ============================================
-// MOCK DATA
-// ============================================
-const MOCK_USERNAMES = [
-  "CryptoKing",
-  "WaffleQueen",
-  "BlockchainBoss",
-  "TokenMaster",
-  "DeFiDegen",
-  "NFTNinja",
-  "ChainChamp",
-  "MintMaster",
-  "GasGuru",
-  "StakeSlayer",
-];
-
-function getMockEntries(page: number): LeaderboardEntry[] {
-  const start = page * PAGE_SIZE;
-  const end = start + PAGE_SIZE;
-
-  // Generate 100 total mock entries, paginated
-  return Array.from({ length: PAGE_SIZE }, (_, i) => {
-    const rank = start + i + 1;
-    if (rank > 100) return null; // Only 100 mock entries total
-    return {
-      id: `mock-${rank}`,
-      fid: 100000 + rank,
-      rank,
-      username:
-        MOCK_USERNAMES[(rank - 1) % MOCK_USERNAMES.length] +
-        (rank > MOCK_USERNAMES.length
-          ? `_${Math.floor((rank - 1) / MOCK_USERNAMES.length)}`
-          : ""),
-      prize: Math.max(10000 - (rank - 1) * 100, 100),
-      pfpUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${rank}`,
-    };
-  }).filter(Boolean) as LeaderboardEntry[];
 }
 
 // ============================================
@@ -137,12 +97,11 @@ async function handleAllTime(
 
   const totalPlayers = allUsers.length;
 
-  // No data - return mock if enabled
   if (aggregated.length === 0) {
     return NextResponse.json({
-      entries: USE_MOCK_DATA ? getMockEntries(page) : [],
-      hasMore: USE_MOCK_DATA ? (page + 1) * PAGE_SIZE < 100 : false,
-      totalPlayers: USE_MOCK_DATA ? 100 : 0,
+      entries: [],
+      hasMore: false,
+      totalPlayers: 0,
     });
   }
 
@@ -191,14 +150,11 @@ async function handleGame(
     targetGameId = latest?.id;
   }
 
-  // No games exist at all - return mock
   if (!targetGameId) {
     return NextResponse.json({
-      entries: USE_MOCK_DATA ? getMockEntries(page) : [],
-      hasMore: USE_MOCK_DATA ? (page + 1) * PAGE_SIZE < 100 : false,
-      totalPlayers: USE_MOCK_DATA ? 100 : 0,
-      gameTitle: "Demo Game",
-      gameNumber: 1,
+      entries: [],
+      hasMore: false,
+      totalPlayers: 0,
     });
   }
 
@@ -225,12 +181,11 @@ async function handleGame(
     }),
   ]);
 
-  // No entries for this game - return mock
   if (players.length === 0) {
     return NextResponse.json({
-      entries: USE_MOCK_DATA ? getMockEntries(page) : [],
-      hasMore: USE_MOCK_DATA ? (page + 1) * PAGE_SIZE < 100 : false,
-      totalPlayers: USE_MOCK_DATA ? 100 : 0,
+      entries: [],
+      hasMore: false,
+      totalPlayers: 0,
       gameTitle: game?.title ?? "Game",
       gameNumber: game?.gameNumber ?? 1,
     });

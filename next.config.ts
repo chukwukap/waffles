@@ -18,10 +18,12 @@ const nextConfig: NextConfig = {
     ],
   },
   rewrites: async () => {
+    const partykitHost =
+      process.env.NEXT_PUBLIC_PARTYKIT_HOST || "http://127.0.0.1:1999";
     return [
       {
         source: "/parties/:path*",
-        destination: "http://127.0.0.1:1999/parties/:path*",
+        destination: `${partykitHost}/parties/:path*`,
       },
     ];
   },
