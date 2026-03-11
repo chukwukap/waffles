@@ -18,10 +18,10 @@ import { useSplash } from "./SplashProvider";
 /**
  * AppInitializer - Handles user initialization and app-wide setup.
  *
- * Responsibilities:
- * 1. Signal MiniApp ready to Farcaster SDK as early as possible
- * 2. Check if user exists, show onboarding if not
- * 3. Prompt to add miniapp (once per session) for notifications
+ * Key timing issue: When opened from Farcaster, MiniKit context (FID)
+ * loads asynchronously. We must call setMiniAppReady() for Farcaster to
+ * dismiss its loading screen, AND we must not leave a blank screen if
+ * the context is slow or never arrives.
  */
 export function AppInitializer({ children }: { children: ReactNode }) {
   const { address } = useAccount();
@@ -37,12 +37,14 @@ export function AppInitializer({ children }: { children: ReactNode }) {
   const hasPromptedAddFrameRef = useRef(false);
   const hasSignaledReadyRef = useRef(false);
 
-  // Signal ready to Farcaster as soon as we have context OR after a timeout.
-  // This MUST happen for the Farcaster client to dismiss its own loading state.
+  // Whether we've given up waiting for MiniKit context to provide FID
+  const [contextTimedOut, setContextTimedOut] = useState(false);
+
+  // Signal ready to Farcaster as soon as we know user status.
   useEffect(() => {
     if (hasSignaledReadyRef.current) return;
 
-    // Signal ready once we know the user status
+    // Happy path: FID arrived, user fetch completed
     if (!isLoading) {
       hasSignaledReadyRef.current = true;
       setMiniAppReady();
@@ -50,21 +52,29 @@ export function AppInitializer({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Fallback: signal ready after 3s even if still loading,
-    // so the Farcaster client doesn't get stuck on its loading screen.
+    // Fallback: after 3s, signal ready regardless.
+    // Without this, Farcaster shows its own loading screen forever,
+    // and after our splash dismisses the user sees a blank screen.
     const timeout = setTimeout(() => {
       if (!hasSignaledReadyRef.current) {
         hasSignaledReadyRef.current = true;
         setMiniAppReady();
         hideSplash();
+        setContextTimedOut(true);
       }
     }, 3000);
 
     return () => clearTimeout(timeout);
   }, [isLoading, setMiniAppReady, hideSplash]);
 
+  // If FID arrives after timeout, clear timeout state so normal flow resumes
+  useEffect(() => {
+    if (contextTimedOut && fid) {
+      setContextTimedOut(false);
+    }
+  }, [contextTimedOut, fid]);
+
   // Prompt to add miniapp on first visit (once per session)
-  // This enables push notifications via Farcaster
   useEffect(() => {
     if (hasPromptedAddFrameRef.current) return;
     if (isLoading || !user) return;
@@ -100,10 +110,18 @@ export function AppInitializer({ children }: { children: ReactNode }) {
     await refetch();
   }, [fid, username, pfpUrl, address, refetch]);
 
-  // Still loading — show nothing (splash screen covers this)
+  // Still waiting for MiniKit context AND haven't timed out — splash covers this
+  if (isLoading && !contextTimedOut) return null;
+
+  // Context timed out or no FID — show onboarding so user isn't stuck on blank
+  if (!fid) {
+    return <OnboardingOverlay onComplete={handleOnboardingComplete} />;
+  }
+
+  // FID available but still fetching user
   if (isLoading) return null;
 
-  // Error fetching user — treat as new user rather than hanging forever
+  // Error fetching user — show onboarding rather than hanging
   if (error && !user) {
     return <OnboardingOverlay onComplete={handleOnboardingComplete} />;
   }
