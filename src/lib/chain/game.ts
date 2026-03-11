@@ -6,7 +6,7 @@
 
 import { parseUnits } from "viem";
 
-import { publicClient, getWalletClient } from "./client";
+import { publicClient, getOperatorWalletClient } from "./client";
 import waffleGameAbi from "./abi.json";
 import { withBuilderCodeDataSuffix } from "./builderCode";
 import { PAYMENT_TOKEN_DECIMALS, WAFFLE_CONTRACT_ADDRESS } from "./config";
@@ -50,7 +50,7 @@ export async function createGameOnChain(
   onchainId: `0x${string}`,
   minTicketPriceUSDC: number,
 ): Promise<`0x${string}`> {
-  const walletClient = getWalletClient();
+  const walletClient = getOperatorWalletClient();
   const minimumTicketPrice = parseUnits(
     minTicketPriceUSDC.toString(),
     PAYMENT_TOKEN_DECIMALS,
@@ -77,7 +77,7 @@ export async function createGameOnChain(
 export async function closeSalesOnChain(
   onchainId: `0x${string}`,
 ): Promise<`0x${string}`> {
-  const walletClient = getWalletClient();
+  const walletClient = getOperatorWalletClient();
 
   const hash = await walletClient.writeContract(
     withBuilderCodeDataSuffix({

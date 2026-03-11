@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Check if wallet is configured
-    const isConfigured = !!env.settlementPrivateKey;
+    const isConfigured = !!env.operatorPrivateKey && !!env.settlerPrivateKey;
     // let address = null;
     // let balance = null;
 

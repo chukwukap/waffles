@@ -1,6 +1,9 @@
 /**
  * Viem Clients for Chain Interaction
- * Provides public and wallet clients for reading and writing to chain
+ *
+ * Provides separate wallet clients for each on-chain role:
+ * - Operator: createGame, closeSales
+ * - Settler: submitResults, correctResultsRoot
  */
 
 import { createWalletClient, createPublicClient, http } from "viem";
@@ -19,26 +22,36 @@ export const publicClient = createPublicClient({
 });
 
 // ============================================================================
-// Wallet Client (Admin Operations)
+// Role-based Wallet Clients
 // ============================================================================
 
 /**
- * Get the admin wallet account from environment
- * @throws Error if SETTLEMENT_PRIVATE_KEY is not set
+ * Get the operator wallet client for game creation and sales closure.
+ * @throws Error if OPERATOR_PRIVATE_KEY is not set
  */
-export function getAdminWallet() {
-  const privateKey = env.settlementPrivateKey;
+export function getOperatorWalletClient() {
+  const privateKey = env.operatorPrivateKey;
   if (!privateKey) {
-    throw new Error("SETTLEMENT_PRIVATE_KEY environment variable not set");
+    throw new Error("OPERATOR_PRIVATE_KEY environment variable not set");
   }
-  return privateKeyToAccount(privateKey as `0x${string}`);
+  const account = privateKeyToAccount(privateKey as `0x${string}`);
+  return createWalletClient({
+    account,
+    chain,
+    transport: http(),
+  });
 }
 
 /**
- * Create a wallet client for admin operations (create game, settle, etc.)
+ * Get the settler wallet client for result submission.
+ * @throws Error if SETTLER_PRIVATE_KEY is not set
  */
-export function getWalletClient() {
-  const account = getAdminWallet();
+export function getSettlerWalletClient() {
+  const privateKey = env.settlerPrivateKey;
+  if (!privateKey) {
+    throw new Error("SETTLER_PRIVATE_KEY environment variable not set");
+  }
+  const account = privateKeyToAccount(privateKey as `0x${string}`);
   return createWalletClient({
     account,
     chain,

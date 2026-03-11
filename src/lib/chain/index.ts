@@ -1,5 +1,5 @@
 // Clients
-export { publicClient, getAdminWallet, getWalletClient } from "./client";
+export { publicClient, getOperatorWalletClient, getSettlerWalletClient } from "./client";
 
 export {
   chain,

@@ -7,7 +7,7 @@
 
 import { parseUnits } from "viem";
 import { prisma } from "@/lib/db";
-import { publicClient, getWalletClient } from "@/lib/chain/client";
+import { publicClient, getSettlerWalletClient } from "@/lib/chain/client";
 import { withBuilderCodeDataSuffix } from "@/lib/chain/builderCode";
 import {
   buildMerkleTree,
@@ -274,7 +274,7 @@ export async function publishResults(gameId: string): Promise<PublishResult> {
   const allProofs = generateAllProofs(winners);
 
   // Submit to chain
-  const walletClient = getWalletClient();
+  const walletClient = getSettlerWalletClient();
   const txHash = await walletClient.writeContract(
     withBuilderCodeDataSuffix({
       address: WAFFLE_CONTRACT_ADDRESS,

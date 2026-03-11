@@ -13,8 +13,9 @@ const envSchema = z.object({
     ? z.string().min(1, "DATABASE_URL is required")
     : z.string().optional(),
 
-  // Settlement (server-only, optional - only needed for admin)
-  SETTLEMENT_PRIVATE_KEY: z.string().optional(),
+  // Chain role keys (server-only, optional - only needed for admin operations)
+  OPERATOR_PRIVATE_KEY: z.string().optional(),
+  SETTLER_PRIVATE_KEY: z.string().optional(),
 
   // PartyKit
   PARTYKIT_SECRET: isServer
@@ -70,7 +71,8 @@ const getEnv = () => {
   const parsed = envSchema.safeParse({
     NEYNAR_API_KEY: process.env.NEYNAR_API_KEY,
     DATABASE_URL: process.env.DATABASE_URL,
-    SETTLEMENT_PRIVATE_KEY: process.env.SETTLEMENT_PRIVATE_KEY,
+    OPERATOR_PRIVATE_KEY: process.env.OPERATOR_PRIVATE_KEY,
+    SETTLER_PRIVATE_KEY: process.env.SETTLER_PRIVATE_KEY,
     PARTYKIT_SECRET: process.env.PARTYKIT_SECRET,
     NEXT_PUBLIC_PARTYKIT_HOST: process.env.NEXT_PUBLIC_PARTYKIT_HOST,
     CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
@@ -114,7 +116,8 @@ const getEnv = () => {
         rootUrl: "http://localhost:3000",
         neynarApiKey: "",
         databaseUrl: "",
-        settlementPrivateKey: undefined,
+        operatorPrivateKey: undefined,
+        settlerPrivateKey: undefined,
         partykitSecret: "",
         partykitHost: "",
         cloudinaryCloudName: "",
@@ -155,8 +158,9 @@ const getEnv = () => {
     neynarApiKey: data.NEYNAR_API_KEY!,
     // Database
     databaseUrl: data.DATABASE_URL,
-    // Settlement
-    settlementPrivateKey: data.SETTLEMENT_PRIVATE_KEY,
+    // Chain role keys
+    operatorPrivateKey: data.OPERATOR_PRIVATE_KEY,
+    settlerPrivateKey: data.SETTLER_PRIVATE_KEY,
     // PartyKit
     partykitSecret: data.PARTYKIT_SECRET,
     partykitHost: data.NEXT_PUBLIC_PARTYKIT_HOST,
